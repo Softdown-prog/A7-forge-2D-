@@ -1,7 +1,8 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_broadleaf_early_autumn_v1",
-  "pipelineRevision": 10,
+  "pipelineRevision": 11,
+  "sceneryType": "structured_broadleaf",
   "canvas": [
     192,
     256
@@ -42,13 +43,13 @@
     }
   },
   "lightingIntent": {
-    "top": "muted autumn gold",
-    "front": "mixed amber and olive clusters",
-    "base": "dark olive interior",
+    "top": "muted autumn gold on discrete upper-left leaf groups",
+    "front": "mixed amber and olive branch-guided clusters",
+    "base": "dark olive interior with visible wood structure",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "continuous",
+    "layout": "branch_guided_groups",
     "center": [
       96,
       117
@@ -57,7 +58,9 @@
       68,
       72
     ],
-    "masses": 48
+    "masses": 48,
+    "negativeSpace": "controlled",
+    "leafDetail": "defined"
   },
   "palette": {
     "ground_shadow": "#2B281B",
@@ -77,7 +80,7 @@
     "shadowDabs": 0,
     "highlightDabs": 0,
     "needleStrokes": 0,
-    "finalGrain": 65,
+    "finalGrain": 0,
     "finalNeedles": 0
   },
   "trunkBranches": [
