@@ -21,12 +21,16 @@ def test_structured_broadleaf_is_deterministic_and_not_single_blob() -> None:
 
     assert first.tobytes() == second.tobytes()
     assert metadata["bounds"] == repeated["bounds"]
-    assert metadata["authoringMode"] == "branch_guided_macro_subgroups_v1"
-    assert metadata["critic"]["singleCanopyBlob"] is False
-    assert metadata["critic"]["randomFinalGrain"] is False
-    assert metadata["critic"]["branchDerivedMassCount"] >= 6
-    assert metadata["critic"]["macroMassCount"] >= 10
-    assert metadata["critic"]["explicitLeafCount"] >= 100
+    assert metadata["authoringMode"] == "branch_guided_overlapping_groups_v2"
+    critic = metadata["critic"]
+    assert critic["singleCanopyBlob"] is False
+    assert critic["randomFinalGrain"] is False
+    assert critic["detachedEdgeStamps"] is False
+    assert critic["punchedGapCutters"] is False
+    assert critic["foregroundBranchOverlay"] is False
+    assert critic["branchDerivedMassCount"] >= 6
+    assert critic["macroMassCount"] >= 16
+    assert critic["explicitLeafCount"] >= 100
 
 
 def test_structured_broadleaf_four_views_are_distinct_and_rgba() -> None:
@@ -45,8 +49,12 @@ def test_structured_broadleaf_worker_exports_review_and_critic(tmp_path: Path) -
     result = run_workers(_recipe_path(), tmp_path)
     assert result["kind"] == "structured_broadleaf"
     assert result["status"] == "review_ready"
-    assert result["audit"]["critic"]["singleCanopyBlob"] is False
-    assert result["audit"]["critic"]["randomFinalGrain"] is False
+    critic = result["audit"]["critic"]
+    assert critic["singleCanopyBlob"] is False
+    assert critic["randomFinalGrain"] is False
+    assert critic["detachedEdgeStamps"] is False
+    assert critic["punchedGapCutters"] is False
+    assert critic["foregroundBranchOverlay"] is False
 
     with Image.open(result["png"]) as image:
         assert image.mode == "RGBA"
