@@ -24,6 +24,7 @@ from .core import (
     scene_composer_v3,
     scene_composer_v4,
     shape_recipe,
+    structured_broadleaf_scenery,
 )
 
 SHAPE_CONTRACT = "CH_2D_SHAPE_RECIPE_V1"
@@ -103,6 +104,14 @@ def validate_recipe(recipe: dict) -> str:
         if not isinstance(recipe.get("trunkBranches"), list) or len(recipe["trunkBranches"]) < 2:
             raise ValueError("flowering_tree scenery requires authored trunkBranches")
         return "flowering_tree"
+    if recipe.get("sceneryType") == "structured_broadleaf":
+        if recipe.get("crownStyle") != "broadleaf":
+            raise ValueError("structured_broadleaf scenery requires crownStyle broadleaf")
+        if not isinstance(recipe.get("broadleafStructure"), dict):
+            raise ValueError("structured_broadleaf scenery requires broadleafStructure")
+        if not isinstance(recipe.get("trunkBranches"), list) or len(recipe["trunkBranches"]) < 3:
+            raise ValueError("structured_broadleaf scenery requires at least three authored trunkBranches")
+        return "structured_broadleaf"
     if recipe.get("sceneryType") is not None:
         raise ValueError("unknown organic sceneryType")
     return "conifer_or_broadleaf"
@@ -162,6 +171,8 @@ def run_workers(recipe_path: Path, output_root: Path) -> dict:
         result = red_mapple_scenery.export(recipe_path, folder)
     elif kind == "flowering_tree":
         result = flowering_tree_scenery.export(recipe_path, folder)
+    elif kind == "structured_broadleaf":
+        result = structured_broadleaf_scenery.export(recipe_path, folder)
     else:
         result = organic_scenery.export(recipe_path, folder)
     audit = audit_export(recipe, result, kind)
