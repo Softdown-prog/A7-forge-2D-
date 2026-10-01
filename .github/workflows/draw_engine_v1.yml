@@ -4,12 +4,15 @@ on:
   push:
     paths:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_engine_v2.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/geometry_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/distribution_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/node_graph.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/graph_scenery.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/graph_worker.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/brush_library/**'
       - 'tools/visitor_forge_2d/examples/park_tree_brush_graph_pilot_01.json'
       - 'tools/visitor_forge_2d/tests/test_node_graph_v1.py'
+      - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
       - '.github/workflows/draw_engine_v1.yml'
   workflow_dispatch:
 
@@ -23,11 +26,11 @@ jobs:
           python-version: '3.12'
       - name: Install test dependencies
         run: python -m pip install pillow pytest
-      - name: Run Draw Engine V1 tests
+      - name: Run Draw Engine structural tests
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
         run: python -m pytest -q tools/visitor_forge_2d/tests/test_node_graph_v1.py
-      - name: Render node-graph tree pilot
+      - name: Render legacy node-graph pilot for compatibility only
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
         run: |
@@ -38,9 +41,9 @@ jobs:
           result = run_graph_workers(recipe, Path('rendered_draw_engine_v1'))
           print(result)
           PY
-      - name: Upload Draw Engine V1 pilot
+      - name: Upload compatibility artifact
         uses: actions/upload-artifact@v4
         with:
-          name: a7-draw-engine-v1-tree-pilot
+          name: a7-draw-engine-v1-compatibility-pilot
           path: rendered_draw_engine_v1/
           if-no-files-found: error

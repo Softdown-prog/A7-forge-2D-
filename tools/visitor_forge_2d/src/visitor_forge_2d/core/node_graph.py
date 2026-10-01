@@ -1,12 +1,28 @@
 """A7 Node Graph V1: deterministic data-driven 2D composition."""
 from __future__ import annotations
-import copy, hashlib, re
+
+import copy
+import hashlib
+import re
+
 from PIL import Image, ImageEnhance
+
 from .brush_engine_v2 import BRUSH_CONTRACT, BrushEngineV2
+from .distribution_engine import DISTRIBUTION_CONTRACT, DistributionEngineV1
+from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
 
 GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V1"
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9_-]*\Z")
-SUPPORTED_NODE_TYPES = {"canvas", "brush_scatter", "path_brush", "blend", "levels", "output"}
+SUPPORTED_NODE_TYPES = {
+    "canvas",
+    "brush_scatter",
+    "path_brush",
+    "tapered_path",
+    "spaced_scatter",
+    "blend",
+    "levels",
+    "output",
+}
 
 
 def validate_recipe(recipe: dict) -> None:
@@ -62,47 +78,135 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
     validate_recipe(recipe)
     graph = recipe["graph"]
     seed = int(graph.get("seed", recipe.get("seed", 1)))
-    results, node_stats, final = {}, {}, None
+    results: dict[str, Image.Image] = {}
+    node_stats: dict[str, dict] = {}
+    final = None
+
     for node_index, node in enumerate(graph["nodes"]):
         node_id, node_type = node["id"], node["type"]
         params = copy.deepcopy(node.get("params", {}))
+
         if node_type == "canvas":
             image = Image.new("RGBA", tuple(recipe["canvas"]), tuple(params.get("color", [0, 0, 0, 0])))
             stats = {"type": node_type}
+
         elif node_type == "brush_scatter":
             image = _input_image(results, node)
             local = BrushEngineV2(seed + node_index * 104729 + int(params.get("seedOffset", 0)))
-            stamps = local.scatter_regions(image, params.get("brushes", []), params.get("regions", []), int(params.get("count", 0)), scale=params.get("scale", [1.0, 1.0]), rotation_deg=params.get("rotationDeg", [0.0, 360.0]), opacity=params.get("opacity", [255, 255]), tints=params.get("tints", ["#FFFFFF"]))
+            stamps = local.scatter_regions(
+                image,
+                params.get("brushes", []),
+                params.get("regions", []),
+                int(params.get("count", 0)),
+                scale=params.get("scale", [1.0, 1.0]),
+                rotation_deg=params.get("rotationDeg", [0.0, 360.0]),
+                opacity=params.get("opacity", [255, 255]),
+                tints=params.get("tints", ["#FFFFFF"]),
+            )
             stats = {"type": node_type, "stampCount": len(stamps), "brushes": list(params.get("brushes", []))}
+
         elif node_type == "path_brush":
             image = _input_image(results, node)
             local = BrushEngineV2(seed + node_index * 130363 + int(params.get("seedOffset", 0)))
-            stamps = local.stroke_paths(image, params["brush"], params.get("paths", []), spacing=float(params.get("spacing", 4.0)), scale=params.get("scale", [1.0, 1.0]), opacity=params.get("opacity", [255, 255]), tints=params.get("tints", ["#FFFFFF"]), follow_tangent=bool(params.get("followTangent", True)), rotation_jitter_deg=float(params.get("rotationJitterDeg", 0.0)))
+            stamps = local.stroke_paths(
+                image,
+                params["brush"],
+                params.get("paths", []),
+                spacing=float(params.get("spacing", 4.0)),
+                scale=params.get("scale", [1.0, 1.0]),
+                opacity=params.get("opacity", [255, 255]),
+                tints=params.get("tints", ["#FFFFFF"]),
+                follow_tangent=bool(params.get("followTangent", True)),
+                rotation_jitter_deg=float(params.get("rotationJitterDeg", 0.0)),
+            )
             stats = {"type": node_type, "stampCount": len(stamps), "brush": params["brush"]}
+
+        elif node_type == "tapered_path":
+            image = _input_image(results, node)
+            geometry_stats = draw_tapered_paths(
+                image,
+                params.get("paths", []),
+                supersample=int(params.get("supersample", 4)),
+            )
+            stats = {"type": node_type, **geometry_stats}
+
+        elif node_type == "spaced_scatter":
+            image = _input_image(results, node)
+            local = DistributionEngineV1(seed + node_index * 15485863 + int(params.get("seedOffset", 0)))
+            stamps, distribution_stats = local.scatter_spaced(
+                image,
+                params.get("brushes", []),
+                params.get("regions", []),
+                int(params.get("count", 0)),
+                min_distance=float(params.get("minDistance", 0.0)),
+                scale=params.get("scale", [1.0, 1.0]),
+                rotation_deg=params.get("rotationDeg", [0.0, 360.0]),
+                opacity=params.get("opacity", [255, 255]),
+                tints=params.get("tints", ["#FFFFFF"]),
+                max_attempts=params.get("maxAttempts"),
+            )
+            stats = {
+                "type": node_type,
+                "stampCount": len(stamps),
+                "brushes": list(params.get("brushes", [])),
+                **distribution_stats,
+            }
+
         elif node_type == "blend":
-            base, over = _input_image(results, node, "base"), _input_image(results, node, "over")
+            base = _input_image(results, node, "base")
+            over = _input_image(results, node, "over")
             opacity = max(0, min(255, int(params.get("opacity", 255))))
             if opacity != 255:
                 over.putalpha(over.getchannel("A").point(lambda a: round(a * opacity / 255)))
-            base.alpha_composite(over); image = base
+            base.alpha_composite(over)
+            image = base
             stats = {"type": node_type, "opacity": opacity}
+
         elif node_type == "levels":
             image = _input_image(results, node)
             alpha, rgb = image.getchannel("A"), image.convert("RGB")
-            contrast, brightness = float(params.get("contrast", 1.0)), float(params.get("brightness", 1.0))
-            if abs(contrast - 1.0) > 1e-6: rgb = ImageEnhance.Contrast(rgb).enhance(contrast)
-            if abs(brightness - 1.0) > 1e-6: rgb = ImageEnhance.Brightness(rgb).enhance(brightness)
-            image = rgb.convert("RGBA"); image.putalpha(alpha)
+            contrast = float(params.get("contrast", 1.0))
+            brightness = float(params.get("brightness", 1.0))
+            if abs(contrast - 1.0) > 1e-6:
+                rgb = ImageEnhance.Contrast(rgb).enhance(contrast)
+            if abs(brightness - 1.0) > 1e-6:
+                rgb = ImageEnhance.Brightness(rgb).enhance(brightness)
+            image = rgb.convert("RGBA")
+            image.putalpha(alpha)
             stats = {"type": node_type, "contrast": contrast, "brightness": brightness}
+
         elif node_type == "output":
-            image = _input_image(results, node); final = image.copy(); stats = {"type": node_type}
+            image = _input_image(results, node)
+            final = image.copy()
+            stats = {"type": node_type}
+
+        else:  # validate_recipe protects this, but keeps execution explicit.
+            raise ValueError(f"unsupported graph node type: {node_type}")
+
         results[node_id], node_stats[node_id] = image, stats
+
     assert final is not None
+    node_types = {node["type"] for node in graph["nodes"]}
     metadata = {
-        "contract": GRAPH_CONTRACT, "brushContract": BRUSH_CONTRACT, "id": recipe["id"],
-        "canvas": recipe["canvas"], "anchor": recipe["anchor"], "seed": seed,
-        "nodeCount": len(graph["nodes"]), "nodes": node_stats,
-        "pixelSha256": hashlib.sha256(final.tobytes()).hexdigest(), "camera": recipe["camera"],
-        "critic": {"nodeGraph": True, "bitmapBrushTips": True, "assetSpecificRenderer": False, "deterministic": True},
+        "contract": GRAPH_CONTRACT,
+        "brushContract": BRUSH_CONTRACT,
+        "geometryContract": GEOMETRY_CONTRACT,
+        "distributionContract": DISTRIBUTION_CONTRACT,
+        "id": recipe["id"],
+        "canvas": recipe["canvas"],
+        "anchor": recipe["anchor"],
+        "seed": seed,
+        "nodeCount": len(graph["nodes"]),
+        "nodes": node_stats,
+        "pixelSha256": hashlib.sha256(final.tobytes()).hexdigest(),
+        "camera": recipe["camera"],
+        "critic": {
+            "nodeGraph": True,
+            "bitmapBrushTips": True,
+            "assetSpecificRenderer": False,
+            "deterministic": True,
+            "continuousGeometry": "tapered_path" in node_types,
+            "minimumDistanceDistribution": "spaced_scatter" in node_types,
+        },
     }
     return final, metadata
