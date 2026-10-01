@@ -1,7 +1,7 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 7,
+  "pipelineRevision": 8,
   "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
@@ -37,9 +37,9 @@
   "broadleafStructure": {
     "layout": "branch_guided_groups",
     "profile": "domed",
-    "center": [128, 162],
-    "radius": [100, 86],
-    "density": 1.14,
+    "center": [128, 168],
+    "radius": [102, 92],
+    "density": 1.24,
     "species": "oiti",
     "negativeSpace": "controlled_between_groups",
     "leafDetail": "defined",
@@ -57,7 +57,7 @@
     "front_top": "#72A05B",
     "front_bottom": "#406A46",
     "highlight": "#9CBC72",
-    "occlusion": "#163325"
+    "occlusion": "#234932"
   },
   "raster": {
     "shadowDabs": 0,
@@ -76,5 +76,5 @@
     {"p0": [119, 205], "p1": [96, 188], "p2": [70, 168], "w0": 4.5, "w1": 1.5},
     {"p0": [137, 205], "p1": [159, 187], "p2": [187, 166], "w0": 4.5, "w1": 1.5}
   ],
-  "paletteId": "green_canopy_city_horizon_v2"
+  "paletteId": "green_canopy_city_horizon_v3"
 }
