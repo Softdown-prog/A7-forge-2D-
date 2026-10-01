@@ -1,7 +1,8 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 5,
+  "pipelineRevision": 6,
+  "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
   "seed": 6102026,
@@ -29,17 +30,19 @@
   },
   "lightingIntent": {
     "top": "warm daylight over fresh green upper-left foliage",
-    "front": "dense rounded broadleaf clusters with readable simple leaves",
+    "front": "branch-guided rounded broadleaf groups with readable simple leaves",
     "base": "cool deep-green interior with medium brown branching trunk",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "species_canopy",
+    "layout": "branch_guided_groups",
     "profile": "domed",
     "center": [128, 150],
     "radius": [90, 82],
     "density": 1.07,
-    "species": "oiti"
+    "species": "oiti",
+    "negativeSpace": "controlled",
+    "leafDetail": "defined"
   },
   "palette": {
     "ground_shadow": "#263129",
@@ -59,7 +62,7 @@
     "shadowDabs": 0,
     "highlightDabs": 0,
     "needleStrokes": 0,
-    "finalGrain": 64,
+    "finalGrain": 0,
     "finalNeedles": 0
   },
   "trunkBranches": [
