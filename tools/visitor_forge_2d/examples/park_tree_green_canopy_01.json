@@ -1,14 +1,14 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 6,
+  "pipelineRevision": 7,
   "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
   "seed": 6102026,
   "crownStyle": "broadleaf",
   "crownCx": 128,
-  "shadowWidth": 116,
+  "shadowWidth": 112,
   "camera": {
     "contract": "CH_CAMERA_V1",
     "projection": "orthographic_dimetric",
@@ -29,34 +29,35 @@
     }
   },
   "lightingIntent": {
-    "top": "warm daylight over fresh green upper-left foliage",
-    "front": "branch-guided rounded broadleaf groups with readable simple leaves",
-    "base": "cool deep-green interior with medium brown branching trunk",
+    "top": "soft warm daylight across overlapping upper-left leaf masses",
+    "front": "full adult broadleaf crown with branch-guided overlapping groups and readable leaf detail",
+    "base": "deep cool-green interior; woody structure mostly occluded by foliage",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
     "layout": "branch_guided_groups",
     "profile": "domed",
-    "center": [128, 150],
-    "radius": [90, 82],
-    "density": 1.07,
+    "center": [128, 162],
+    "radius": [100, 86],
+    "density": 1.14,
     "species": "oiti",
-    "negativeSpace": "controlled",
-    "leafDetail": "defined"
+    "negativeSpace": "controlled_between_groups",
+    "leafDetail": "defined",
+    "branchVisibility": "mostly_occluded"
   },
   "palette": {
     "ground_shadow": "#263129",
-    "trunk_top": "#7A5C3C",
-    "trunk_bottom": "#3E2D20",
-    "trunk_light": "#AD8458",
-    "back_top": "#2D5C3A",
-    "back_bottom": "#183B28",
-    "mid_top": "#4F7D48",
-    "mid_bottom": "#28543A",
-    "front_top": "#79A95E",
-    "front_bottom": "#3F7149",
-    "highlight": "#A8C97A",
-    "occlusion": "#153525"
+    "trunk_top": "#76583C",
+    "trunk_bottom": "#3B2B20",
+    "trunk_light": "#9D7954",
+    "back_top": "#294F35",
+    "back_bottom": "#173524",
+    "mid_top": "#4C7546",
+    "mid_bottom": "#294F37",
+    "front_top": "#72A05B",
+    "front_bottom": "#406A46",
+    "highlight": "#9CBC72",
+    "occlusion": "#163325"
   },
   "raster": {
     "shadowDabs": 0,
@@ -66,12 +67,14 @@
     "finalNeedles": 0
   },
   "trunkBranches": [
-    {"p0": [128, 311], "p1": [126, 247], "p2": [127, 183], "w0": 17, "w1": 7.0},
-    {"p0": [126, 231], "p1": [106, 196], "p2": [82, 168], "w0": 7.6, "w1": 2.9},
-    {"p0": [130, 229], "p1": [151, 194], "p2": [177, 165], "w0": 7.5, "w1": 2.8},
-    {"p0": [123, 205], "p1": [105, 166], "p2": [98, 128], "w0": 5.8, "w1": 2.1},
-    {"p0": [133, 204], "p1": [151, 165], "p2": [162, 126], "w0": 5.8, "w1": 2.1},
-    {"p0": [127, 192], "p1": [126, 155], "p2": [126, 116], "w0": 5.2, "w1": 1.8}
+    {"p0": [128, 311], "p1": [127, 257], "p2": [128, 211], "w0": 18, "w1": 8.0},
+    {"p0": [127, 236], "p1": [109, 207], "p2": [82, 178], "w0": 6.8, "w1": 2.4},
+    {"p0": [129, 235], "p1": [148, 206], "p2": [177, 179], "w0": 6.8, "w1": 2.4},
+    {"p0": [125, 220], "p1": [108, 187], "p2": [98, 149], "w0": 5.5, "w1": 1.9},
+    {"p0": [131, 219], "p1": [150, 187], "p2": [160, 148], "w0": 5.5, "w1": 1.9},
+    {"p0": [128, 211], "p1": [126, 180], "p2": [124, 137], "w0": 5.0, "w1": 1.7},
+    {"p0": [119, 205], "p1": [96, 188], "p2": [70, 168], "w0": 4.5, "w1": 1.5},
+    {"p0": [137, 205], "p1": [159, 187], "p2": [187, 166], "w0": 4.5, "w1": 1.5}
   ],
-  "paletteId": "green_canopy_city_horizon"
+  "paletteId": "green_canopy_city_horizon_v2"
 }
