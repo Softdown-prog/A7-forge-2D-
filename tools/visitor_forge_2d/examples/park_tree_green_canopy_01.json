@@ -1,14 +1,14 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 10,
+  "pipelineRevision": 11,
   "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
   "seed": 6102026,
   "crownStyle": "broadleaf",
   "crownCx": 128,
-  "shadowWidth": 112,
+  "shadowWidth": 104,
   "camera": {
     "contract": "CH_CAMERA_V1",
     "projection": "orthographic_dimetric",
@@ -29,36 +29,36 @@
     }
   },
   "lightingIntent": {
-    "top": "localized warm daylight on front and upper-left foliage masses with rounded apex",
-    "front": "three readable foliage depth bands with connected branch-guided groups and lower canopy skirt",
-    "base": "continuous cool-green interior without punched holes; wood mostly occluded",
+    "top": "crisp localized daylight on separated upper-left leaf clusters",
+    "front": "readable clustered broadleaf crown with three distinct depth bands and opaque leaf marks",
+    "base": "deep cool-green interior with short visible trunk and branch forks hidden inside foliage",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "branch_guided_volumetric_groups",
+    "layout": "crisp_clustered_depth_groups",
     "profile": "domed",
-    "center": [128, 168],
-    "radius": [102, 90],
-    "density": 1.08,
+    "center": [128, 176],
+    "radius": [104, 86],
+    "density": 0.98,
     "species": "oiti",
-    "negativeSpace": "valleys_between_connected_masses",
-    "leafDetail": "defined",
+    "negativeSpace": "small_valleys_between_clusters",
+    "leafDetail": "opaque_defined",
     "branchVisibility": "mostly_occluded",
     "depthBands": 3
   },
   "palette": {
     "ground_shadow": "#263129",
-    "trunk_top": "#76583C",
-    "trunk_bottom": "#3B2B20",
-    "trunk_light": "#9D7954",
-    "back_top": "#2A5136",
-    "back_bottom": "#173524",
-    "mid_top": "#527B49",
-    "mid_bottom": "#294F37",
-    "front_top": "#7CAC61",
-    "front_bottom": "#426F49",
-    "highlight": "#A6C77A",
-    "occlusion": "#1D402C"
+    "trunk_top": "#73563B",
+    "trunk_bottom": "#38291F",
+    "trunk_light": "#9B7651",
+    "back_top": "#24482F",
+    "back_bottom": "#142F21",
+    "mid_top": "#4D7945",
+    "mid_bottom": "#274C34",
+    "front_top": "#78AA5D",
+    "front_bottom": "#3D6945",
+    "highlight": "#B0CF80",
+    "occlusion": "#203D2B"
   },
   "raster": {
     "shadowDabs": 0,
@@ -68,14 +68,14 @@
     "finalNeedles": 0
   },
   "trunkBranches": [
-    {"p0": [128, 311], "p1": [127, 257], "p2": [128, 211], "w0": 18, "w1": 8.0},
-    {"p0": [127, 236], "p1": [109, 207], "p2": [82, 178], "w0": 6.8, "w1": 2.4},
-    {"p0": [129, 235], "p1": [148, 206], "p2": [177, 179], "w0": 6.8, "w1": 2.4},
-    {"p0": [125, 220], "p1": [108, 187], "p2": [98, 149], "w0": 5.5, "w1": 1.9},
-    {"p0": [131, 219], "p1": [150, 187], "p2": [160, 148], "w0": 5.5, "w1": 1.9},
-    {"p0": [128, 211], "p1": [126, 180], "p2": [124, 137], "w0": 5.0, "w1": 1.7},
-    {"p0": [119, 205], "p1": [96, 188], "p2": [70, 168], "w0": 4.5, "w1": 1.5},
-    {"p0": [137, 205], "p1": [159, 187], "p2": [187, 166], "w0": 4.5, "w1": 1.5}
+    {"p0": [128, 311], "p1": [128, 268], "p2": [128, 226], "w0": 18, "w1": 8.0},
+    {"p0": [127, 248], "p1": [110, 219], "p2": [84, 188], "w0": 6.6, "w1": 2.3},
+    {"p0": [129, 248], "p1": [147, 219], "p2": [174, 189], "w0": 6.6, "w1": 2.3},
+    {"p0": [125, 231], "p1": [109, 201], "p2": [99, 163], "w0": 5.2, "w1": 1.8},
+    {"p0": [131, 231], "p1": [148, 201], "p2": [159, 162], "w0": 5.2, "w1": 1.8},
+    {"p0": [128, 224], "p1": [127, 193], "p2": [125, 151], "w0": 4.8, "w1": 1.6},
+    {"p0": [119, 218], "p1": [96, 200], "p2": [72, 180], "w0": 4.2, "w1": 1.4},
+    {"p0": [137, 218], "p1": [159, 199], "p2": [184, 178], "w0": 4.2, "w1": 1.4}
   ],
-  "paletteId": "green_canopy_city_horizon_v4"
+  "paletteId": "green_canopy_city_horizon_v5"
 }
