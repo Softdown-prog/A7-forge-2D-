@@ -1,0 +1,39 @@
+name: Render V5 Broadleaf Tree
+
+on:
+  push:
+    paths:
+      - 'tools/visitor_forge_2d/examples/park_tree_green_canopy_01.json'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/structured_broadleaf_scenery*.py'
+      - '.github/workflows/render_tree_v5.yml'
+      - 'tools/visitor_forge_2d/.render_v5_trigger'
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow
+        run: python -m pip install pillow
+      - name: Render V5 tree
+        env:
+          PYTHONPATH: tools/visitor_forge_2d/src
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from visitor_forge_2d.core import structured_broadleaf_scenery
+          recipe = Path('tools/visitor_forge_2d/examples/park_tree_green_canopy_01.json')
+          out = Path('rendered_tree_v5')
+          result = structured_broadleaf_scenery.export(recipe, out)
+          print(result)
+          PY
+      - name: Upload PNG bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: park-tree-green-canopy-v5
+          path: rendered_tree_v5/
+          if-no-files-found: error
