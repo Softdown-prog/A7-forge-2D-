@@ -1,7 +1,8 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_oiti_species_v4",
-  "pipelineRevision": 4,
+  "pipelineRevision": 6,
+  "sceneryType": "structured_broadleaf",
   "canvas": [
     256,
     320
@@ -42,13 +43,13 @@
     }
   },
   "lightingIntent": {
-    "top": "soft warm daylight over yellow-green outer foliage",
-    "front": "dense simple elliptic foliage, mature dark green and restrained young yellow-green leaves",
-    "base": "deep cool green interior beneath a dense umbrella canopy",
+    "top": "soft warm daylight over yellow-green upper leaf groups",
+    "front": "dense simple elliptic foliage organized by branch families",
+    "base": "deep cool green interior with visible fork structure",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "species_canopy",
+    "layout": "branch_guided_groups",
     "profile": "domed",
     "center": [
       128,
@@ -59,7 +60,9 @@
       77
     ],
     "density": 1.1,
-    "species": "oiti"
+    "species": "oiti",
+    "negativeSpace": "controlled",
+    "leafDetail": "defined"
   },
   "palette": {
     "ground_shadow": "#26302B",
@@ -79,7 +82,7 @@
     "shadowDabs": 0,
     "highlightDabs": 0,
     "needleStrokes": 0,
-    "finalGrain": 52,
+    "finalGrain": 0,
     "finalNeedles": 0
   },
   "trunkBranches": [
