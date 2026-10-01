@@ -1,7 +1,8 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_oiti_leaves_v5",
-  "pipelineRevision": 4,
+  "pipelineRevision": 6,
+  "sceneryType": "structured_broadleaf",
   "canvas": [
     256,
     320
@@ -43,12 +44,12 @@
   },
   "lightingIntent": {
     "top": "soft warm daylight over yellow-green outer foliage",
-    "front": "dense simple elliptic foliage, mature dark green and restrained young yellow-green leaves; defined leaf shapes at gameplay scale",
-    "base": "deep cool green interior beneath a dense umbrella canopy",
+    "front": "defined simple leaves grouped into branch-guided macro masses at gameplay scale",
+    "base": "deep cool green interior with visible fork structure",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "leaf_canopy",
+    "layout": "branch_guided_groups",
     "profile": "domed",
     "center": [
       128,
@@ -60,7 +61,8 @@
     ],
     "density": 1.1,
     "species": "oiti",
-    "leafDetail": "defined"
+    "leafDetail": "defined",
+    "negativeSpace": "controlled"
   },
   "palette": {
     "ground_shadow": "#26302B",
@@ -80,7 +82,7 @@
     "shadowDabs": 0,
     "highlightDabs": 0,
     "needleStrokes": 0,
-    "finalGrain": 52,
+    "finalGrain": 0,
     "finalNeedles": 0
   },
   "trunkBranches": [
