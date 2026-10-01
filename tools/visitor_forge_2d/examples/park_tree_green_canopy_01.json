@@ -1,7 +1,7 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 8,
+  "pipelineRevision": 9,
   "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
@@ -29,35 +29,36 @@
     }
   },
   "lightingIntent": {
-    "top": "soft warm daylight across overlapping upper-left leaf masses",
-    "front": "full adult broadleaf crown with branch-guided overlapping groups and readable leaf detail",
-    "base": "deep cool-green interior; woody structure mostly occluded by foliage",
+    "top": "localized warm daylight on front and upper-left foliage masses",
+    "front": "three readable foliage depth bands with connected branch-guided groups",
+    "base": "continuous cool-green interior without punched holes; wood mostly occluded",
     "rotationSpace": "screen_camera_relative"
   },
   "broadleafStructure": {
-    "layout": "branch_guided_groups",
+    "layout": "branch_guided_volumetric_groups",
     "profile": "domed",
     "center": [128, 168],
-    "radius": [102, 92],
-    "density": 1.24,
+    "radius": [102, 90],
+    "density": 1.08,
     "species": "oiti",
-    "negativeSpace": "controlled_between_groups",
+    "negativeSpace": "valleys_between_connected_masses",
     "leafDetail": "defined",
-    "branchVisibility": "mostly_occluded"
+    "branchVisibility": "mostly_occluded",
+    "depthBands": 3
   },
   "palette": {
     "ground_shadow": "#263129",
     "trunk_top": "#76583C",
     "trunk_bottom": "#3B2B20",
     "trunk_light": "#9D7954",
-    "back_top": "#294F35",
+    "back_top": "#2A5136",
     "back_bottom": "#173524",
-    "mid_top": "#4C7546",
+    "mid_top": "#527B49",
     "mid_bottom": "#294F37",
-    "front_top": "#72A05B",
-    "front_bottom": "#406A46",
-    "highlight": "#9CBC72",
-    "occlusion": "#234932"
+    "front_top": "#7CAC61",
+    "front_bottom": "#426F49",
+    "highlight": "#A6C77A",
+    "occlusion": "#1D402C"
   },
   "raster": {
     "shadowDabs": 0,
@@ -76,5 +77,5 @@
     {"p0": [119, 205], "p1": [96, 188], "p2": [70, 168], "w0": 4.5, "w1": 1.5},
     {"p0": [137, 205], "p1": [159, 187], "p2": [187, 166], "w0": 4.5, "w1": 1.5}
   ],
-  "paletteId": "green_canopy_city_horizon_v3"
+  "paletteId": "green_canopy_city_horizon_v4"
 }
