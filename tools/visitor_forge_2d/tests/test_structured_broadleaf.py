@@ -21,16 +21,18 @@ def test_structured_broadleaf_is_deterministic_and_not_single_blob() -> None:
 
     assert first.tobytes() == second.tobytes()
     assert metadata["bounds"] == repeated["bounds"]
-    assert metadata["authoringMode"] == "branch_guided_overlapping_groups_v2"
+    assert metadata["authoringMode"] == "crisp_clustered_depth_groups_v5"
     critic = metadata["critic"]
     assert critic["singleCanopyBlob"] is False
     assert critic["randomFinalGrain"] is False
     assert critic["detachedEdgeStamps"] is False
     assert critic["punchedGapCutters"] is False
     assert critic["foregroundBranchOverlay"] is False
-    assert critic["branchDerivedMassCount"] >= 6
-    assert critic["macroMassCount"] >= 16
-    assert critic["explicitLeafCount"] >= 100
+    assert critic["opaqueLeafDetail"] is True
+    assert critic["depthBands"] == 3
+    assert critic["branchDerivedMassCount"] >= 10
+    assert critic["macroMassCount"] >= 30
+    assert critic["explicitLeafCount"] >= 180
 
 
 def test_structured_broadleaf_four_views_are_distinct_and_rgba() -> None:
@@ -55,6 +57,7 @@ def test_structured_broadleaf_worker_exports_review_and_critic(tmp_path: Path) -
     assert critic["detachedEdgeStamps"] is False
     assert critic["punchedGapCutters"] is False
     assert critic["foregroundBranchOverlay"] is False
+    assert critic["opaqueLeafDetail"] is True
 
     with Image.open(result["png"]) as image:
         assert image.mode == "RGBA"
