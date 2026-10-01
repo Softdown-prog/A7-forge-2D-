@@ -1,0 +1,60 @@
+name: Clone Forge 2D Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/clone-forge2d-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  clone-forge2d:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout destination
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sparse checkout Forge 2D from City Horizon
+        shell: bash
+        run: |
+          set -euo pipefail
+          SOURCE_SHA='99cb2f19113415724d68af04c1949bae48c49e8a'
+          git clone --filter=blob:none --no-checkout https://github.com/Softdown-prog/City-horizon-.git /tmp/city-horizon
+          git -C /tmp/city-horizon sparse-checkout init --cone
+          git -C /tmp/city-horizon sparse-checkout set tools/visitor_forge_2d
+          git -C /tmp/city-horizon checkout "$SOURCE_SHA"
+          mkdir -p tools/visitor_forge_2d
+          rsync -a --delete /tmp/city-horizon/tools/visitor_forge_2d/ tools/visitor_forge_2d/
+
+      - name: Verify scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f tools/visitor_forge_2d/pyproject.toml
+          test -d tools/visitor_forge_2d/src
+          test -d tools/visitor_forge_2d/examples
+          test -d tools/visitor_forge_2d/worker_requests
+          python - <<'PY'
+          from pathlib import Path
+          root = Path('tools/visitor_forge_2d')
+          files = [p for p in root.rglob('*') if p.is_file()]
+          assert files, 'Forge 2D copy is empty'
+          print(f'Forge 2D files copied: {len(files)}')
+          PY
+
+      - name: Commit Forge 2D only and remove helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/clone-forge2d-once.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'Clone Forge 2D from City Horizon'
+          git push origin HEAD:main
