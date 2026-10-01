@@ -1,7 +1,7 @@
 {
   "contract": "CH_2D_ORGANIC_SCENERY_V1",
   "id": "park_tree_green_canopy_01",
-  "pipelineRevision": 9,
+  "pipelineRevision": 10,
   "sceneryType": "structured_broadleaf",
   "canvas": [256, 320],
   "anchor": [128, 311],
@@ -29,8 +29,8 @@
     }
   },
   "lightingIntent": {
-    "top": "localized warm daylight on front and upper-left foliage masses",
-    "front": "three readable foliage depth bands with connected branch-guided groups",
+    "top": "localized warm daylight on front and upper-left foliage masses with rounded apex",
+    "front": "three readable foliage depth bands with connected branch-guided groups and lower canopy skirt",
     "base": "continuous cool-green interior without punched holes; wood mostly occluded",
     "rotationSpace": "screen_camera_relative"
   },
