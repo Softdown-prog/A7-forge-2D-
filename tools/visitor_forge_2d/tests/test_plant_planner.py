@@ -79,6 +79,7 @@ def test_ipe_profile_matches_approved_four_by_ten_fork_rhythm() -> None:
     assert profile["secondaryPattern"] == [3, 2, 3, 2]
     assert profile["visibleWood"] == 0.34
     assert profile["secondaryAttach"][0] <= 0.34
+    assert profile["primaryRiseRatioMin"] == 0.50
 
     structure = generate_plant_structure(_intent()["seed"], profile)
     primaries = [branch for branch in structure.branches if branch.order == 1]
@@ -90,6 +91,22 @@ def test_ipe_profile_matches_approved_four_by_ten_fork_rhythm() -> None:
     assert len(twigs) == 20
     assert [sum(branch.parent_id == primary.branch_id for branch in secondaries) for primary in primaries] == [3, 2, 3, 2]
     assert len(structure.terminal_points) == 20
+
+
+def test_ipe_primary_forks_keep_a_rising_silhouette_in_all_views() -> None:
+    profile = profile_from_intent(_intent())
+    structure = generate_plant_structure(_intent()["seed"], profile)
+    views = project_four_views(structure)
+
+    for projection in views.values():
+        primary_paths = [path for path in projection.paths if path["order"] == 1]
+        assert len(primary_paths) == 4
+        for path in primary_paths:
+            start = path["points"][0]
+            end = path["points"][-1]
+            dx = abs(end[0] - start[0])
+            dy = end[1] - start[1]
+            assert dy < -0.18 * max(1.0, dx)
 
 
 def test_four_views_share_topology_but_change_projection() -> None:
