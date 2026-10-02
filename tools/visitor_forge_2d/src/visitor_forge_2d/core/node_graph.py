@@ -11,7 +11,9 @@ from .brush_engine_v2 import BRUSH_CONTRACT, BrushEngineV2
 from .brush_engine_v3 import BRUSH_V3_CONTRACT, BrushEngineV3
 from .cluster_engine import CLUSTER_CONTRACT, ClusterEngineV1
 from .distribution_engine import DISTRIBUTION_CONTRACT, DistributionEngineV1
+from .dynamics_mapping import DYNAMICS_MAPPING_CONTRACT
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
+from .mapped_brush_engine import MAPPED_BRUSH_CONTRACT, MappedBrushEngineV1
 
 GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V1"
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9_-]*\Z")
@@ -21,6 +23,7 @@ SUPPORTED_NODE_TYPES = {
     "path_brush",
     "dynamic_scatter",
     "dynamic_path_brush",
+    "mapped_dynamic_scatter",
     "tapered_path",
     "spaced_scatter",
     "cluster_scatter",
@@ -69,6 +72,8 @@ def validate_recipe(recipe: dict) -> None:
                 raise ValueError("output node requires inputs.image")
         if node_type == "cluster_scatter" and not isinstance(node.get("params", {}).get("cluster"), dict):
             raise ValueError("cluster_scatter requires params.cluster")
+        if node_type == "mapped_dynamic_scatter" and not isinstance(node.get("params", {}).get("mappings"), dict):
+            raise ValueError("mapped_dynamic_scatter requires params.mappings")
         seen.add(node_id)
     if outputs != 1:
         raise ValueError("graph must contain exactly one output node")
@@ -182,6 +187,23 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 "brushContract": BRUSH_V3_CONTRACT,
             }
 
+        elif node_type == "mapped_dynamic_scatter":
+            image = _input_image(results, node)
+            local = MappedBrushEngineV1(seed + node_index * 86028121 + int(params.get("seedOffset", 0)))
+            stamps, mapping_stats = local.scatter_regions(
+                image,
+                params.get("brushes", []),
+                params.get("regions", []),
+                int(params.get("count", 0)),
+                mappings=params.get("mappings", {}),
+                dynamics=_dynamic_kwargs(params),
+            )
+            stats = {
+                "type": node_type,
+                "brushes": list(params.get("brushes", [])),
+                **mapping_stats,
+            }
+
         elif node_type == "tapered_path":
             image = _input_image(results, node)
             geometry_stats = draw_tapered_paths(
@@ -268,6 +290,8 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         "contract": GRAPH_CONTRACT,
         "brushContract": BRUSH_CONTRACT,
         "brushDynamicsContract": BRUSH_V3_CONTRACT,
+        "mappedBrushContract": MAPPED_BRUSH_CONTRACT,
+        "dynamicsMappingContract": DYNAMICS_MAPPING_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "distributionContract": DISTRIBUTION_CONTRACT,
         "clusterContract": CLUSTER_CONTRACT,
@@ -286,7 +310,8 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "deterministic": True,
             "continuousGeometry": "tapered_path" in node_types,
             "minimumDistanceDistribution": "spaced_scatter" in node_types or "cluster_scatter" in node_types,
-            "brushDynamics": bool({"dynamic_scatter", "dynamic_path_brush", "cluster_scatter"} & node_types),
+            "brushDynamics": bool({"dynamic_scatter", "dynamic_path_brush", "mapped_dynamic_scatter", "cluster_scatter"} & node_types),
+            "mappedDynamics": "mapped_dynamic_scatter" in node_types,
             "hierarchicalClusters": "cluster_scatter" in node_types,
         },
     }
