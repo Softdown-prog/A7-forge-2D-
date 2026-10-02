@@ -9,6 +9,7 @@ from typing import Sequence
 from PIL import Image, ImageOps
 
 from .brush_engine_v2 import BRUSH_LIBRARY, load_brush_tip, tint_tip
+from .dab_density import DAB_DENSITY_CONTRACT, spacing_from_density
 
 BRUSH_V3_CONTRACT = "A7_BRUSH_ENGINE_V3"
 
@@ -216,6 +217,13 @@ class BrushEngineV3:
         tangent = math.degrees(math.atan2(float(end[1]) - float(start[1]), float(end[0]) - float(start[0])))
         return float(end[0]), float(end[1]), tangent
 
+    @staticmethod
+    def _equivalent_radius(tip: Image.Image, stamp: DynamicBrushStamp) -> float:
+        """Area-preserving equivalent radius for an anisotropically scaled tip."""
+        width = max(1e-6, float(tip.width) * max(0.05, float(stamp.scale_x)))
+        height = max(1e-6, float(tip.height) * max(0.05, float(stamp.scale_y)))
+        return max(0.1, math.sqrt(width * height) * 0.5)
+
     def stroke_paths(
         self,
         canvas: Image.Image,
@@ -225,11 +233,27 @@ class BrushEngineV3:
         spacing: float = 8.0,
         spacing_jitter: float = 0.0,
         follow_tangent: bool = True,
+        dabs_per_actual_radius: float = 0.0,
+        dabs_per_basic_radius: float = 0.0,
+        basic_radius_px: float | None = None,
         **dynamics,
     ) -> list[DynamicBrushStamp]:
+        """Stroke bitmap tips along paths.
+
+        Legacy recipes may keep explicit `spacing`. If either dab-density value
+        is above zero, spacing becomes proportional to brush radius using the
+        MyPaint-informed A7_DAB_DENSITY_V1 model.
+        """
         stamps: list[DynamicBrushStamp] = []
         base_spacing = max(0.5, float(spacing))
         jitter = _clamp(abs(float(spacing_jitter)), 0.0, 0.95)
+        actual_density = max(0.0, float(dabs_per_actual_radius))
+        basic_density = max(0.0, float(dabs_per_basic_radius))
+        density_enabled = actual_density > 0.0 or basic_density > 0.0
+        tip = self.tip(brush)
+        default_base_radius = max(0.1, math.sqrt(float(tip.width) * float(tip.height)) * 0.5)
+        base_radius = default_base_radius if basic_radius_px is None else max(0.1, float(basic_radius_px))
+
         for points in paths:
             lengths, total = self._polyline_metrics(points)
             if total <= 1e-9:
@@ -241,6 +265,23 @@ class BrushEngineV3:
                 stamp = self.random_stamp(x, y, base_rotation_deg=base_rotation, **dynamics)
                 self.stamp(canvas, brush, stamp)
                 stamps.append(stamp)
-                step = base_spacing * self.rng.uniform(1.0 - jitter, 1.0 + jitter)
+
+                if density_enabled:
+                    actual_radius = self._equivalent_radius(tip, stamp)
+                    step = spacing_from_density(
+                        actual_radius=actual_radius,
+                        base_radius=base_radius,
+                        dabs_per_actual_radius=actual_density,
+                        dabs_per_basic_radius=basic_density,
+                        fallback_spacing=base_spacing,
+                    )
+                else:
+                    step = base_spacing
+
+                step *= self.rng.uniform(1.0 - jitter, 1.0 + jitter)
                 distance += max(0.5, step)
         return stamps
+
+    @staticmethod
+    def dab_density_contract() -> str:
+        return DAB_DENSITY_CONTRACT
