@@ -6,6 +6,7 @@ flat broad values and weak local detail.
 """
 from __future__ import annotations
 
+import random
 from typing import Sequence
 
 from PIL import Image, ImageEnhance, ImageFilter
@@ -26,6 +27,20 @@ def _rgb(value: str | Sequence[int]) -> tuple[int, int, int]:
     if len(value) < 3:
         raise ValueError("processing fill colors require RGB channels")
     return tuple(int(_clamp(channel, 0, 255)) for channel in value[:3])  # type: ignore[return-value]
+
+
+def _smooth_noise(size: tuple[int, int], seed: int, cell_px: int) -> Image.Image:
+    width, height = size
+    cell = max(3, int(cell_px))
+    grid_w = max(2, width // cell + 2)
+    grid_h = max(2, height // cell + 2)
+    rng = random.Random(int(seed))
+    small = Image.new("L", (grid_w, grid_h), 128)
+    pixels = small.load()
+    for y in range(grid_h):
+        for x in range(grid_w):
+            pixels[x, y] = rng.randrange(0, 256)
+    return small.resize((width, height), Image.Resampling.BICUBIC)
 
 
 def alpha_cleanup(
@@ -111,6 +126,58 @@ def depth_lighting(
                 round(_clamp(g * multiplier, 0, 255)),
                 round(_clamp(b * multiplier, 0, 255)),
                 a if preserve_alpha else round(_clamp(a * multiplier, 0, 255)),
+            )
+    return out
+
+
+def masked_material_variation(
+    image: Image.Image,
+    mask: Image.Image,
+    *,
+    seed: int = 1,
+    coarse_px: int = 11,
+    coarse_amount: float = 0.13,
+    fine_amount: float = 0.035,
+    vertical_light: float = 0.05,
+) -> Image.Image:
+    """Apply deterministic material variation inside an authored mask.
+
+    This is deliberately generic: bark, wall plaster, stone, roof tiles or metal
+    may all receive restrained broad/fine value variation without changing the
+    source geometry or alpha.
+    """
+    if image.mode != "RGBA":
+        raise ValueError("masked material variation requires RGBA input")
+    material_mask = mask if mask.mode == "L" else mask.convert("L")
+    if material_mask.size != image.size:
+        raise ValueError("material mask must match image size")
+    coarse_amount = _clamp(coarse_amount, 0.0, 0.5)
+    fine_amount = _clamp(fine_amount, 0.0, 0.2)
+    vertical_light = _clamp(vertical_light, -0.3, 0.3)
+    coarse = _smooth_noise(image.size, int(seed), int(coarse_px))
+    rng = random.Random(int(seed) + 104729)
+    out = image.copy()
+    src = image.load()
+    dst = out.load()
+    mask_px = material_mask.load()
+    coarse_px_data = coarse.load()
+    height = max(1, image.height - 1)
+    for y in range(image.height):
+        y_norm = y / height
+        for x in range(image.width):
+            weight = mask_px[x, y] / 255.0
+            if weight <= 0.0:
+                continue
+            r, g, b, a = src[x, y]
+            coarse_n = coarse_px_data[x, y] / 255.0 - 0.5
+            fine_n = rng.random() - 0.5
+            value_delta = coarse_n * coarse_amount + fine_n * fine_amount + (0.5 - y_norm) * vertical_light
+            multiplier = 1.0 + value_delta * weight
+            dst[x, y] = (
+                round(_clamp(r * multiplier, 0, 255)),
+                round(_clamp(g * multiplier, 0, 255)),
+                round(_clamp(b * multiplier, 0, 255)),
+                a,
             )
     return out
 
