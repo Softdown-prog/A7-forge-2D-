@@ -31,6 +31,8 @@ def _structure_payload(structure) -> dict:
                 "widthStart": branch.width_start,
                 "widthEnd": branch.width_end,
                 "terminal": branch.terminal,
+                "flowerBearing": branch.flower_bearing,
+                "exposure": branch.exposure,
                 "points": [[point.x, point.y, point.z] for point in branch.points],
             }
             for branch in structure.branches
@@ -104,6 +106,10 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
     board_path = output_root / "plant_planner_four_views.png"
     board.save(board_path)
 
+    branch_counts = {
+        str(order): sum(1 for branch in structure.branches if branch.order == order)
+        for order in sorted({branch.order for branch in structure.branches})
+    }
     report = {
         "contract": WORKER_CONTRACT,
         "plannerContract": ART_PLANNER_CONTRACT,
@@ -113,7 +119,10 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
         "intentSha256": hashlib.sha256(raw).hexdigest(),
         "structure": str(structure_path),
         "branchCount": len(structure.branches),
+        "branchCountByOrder": branch_counts,
         "terminalCount": len(structure.terminal_points),
+        "flowerBearingCount": len(structure.flower_bearing_points),
+        "visibleWoodTarget": structure.profile.get("visibleWood"),
         "topologySignature": [list(entry) for entry in expected_topology],
         "views": view_reports,
         "board": str(board_path),
