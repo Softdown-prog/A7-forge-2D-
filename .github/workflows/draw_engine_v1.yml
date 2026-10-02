@@ -19,6 +19,7 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_cluster_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_mass_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flower_cluster_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_visual_critic.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flowering_brushes.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brushes.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/image_processing.py'
@@ -48,7 +49,9 @@ on:
       - 'tools/visitor_forge_2d/tests/test_layer_material.py'
       - 'tools/visitor_forge_2d/tests/test_flower_cluster_engine.py'
       - 'tools/visitor_forge_2d/tests/test_plant_planner.py'
+      - 'tools/visitor_forge_2d/tests/test_plant_visual_critic.py'
       - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
+      - 'tools/visitor_forge_2d/docs/A7_ART_PLANNER_V1.md'
       - 'tools/visitor_forge_2d/docs/OPEN_SOURCE_REFERENCE_MATRIX.md'
       - 'tools/visitor_forge_2d/third_party/**'
       - '.github/workflows/draw_engine_v1.yml'
@@ -79,7 +82,8 @@ jobs:
             tools/visitor_forge_2d/tests/test_mass_processing.py \
             tools/visitor_forge_2d/tests/test_layer_material.py \
             tools/visitor_forge_2d/tests/test_flower_cluster_engine.py \
-            tools/visitor_forge_2d/tests/test_plant_planner.py
+            tools/visitor_forge_2d/tests/test_plant_planner.py \
+            tools/visitor_forge_2d/tests/test_plant_visual_critic.py
       - name: Render legacy compatibility pilot
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
