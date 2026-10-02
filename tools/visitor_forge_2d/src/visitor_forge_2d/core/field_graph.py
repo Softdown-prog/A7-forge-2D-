@@ -23,6 +23,7 @@ from .field_engine import (
     radial_density,
 )
 from .field_mass_engine import FIELD_MASS_CONTRACT, paint_field_mass
+from .flower_cluster_engine import FLOWER_CLUSTER_CONTRACT, FlowerClusterEngineV1
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
 from .image_processing import (
     IMAGE_PROCESSING_CONTRACT,
@@ -50,6 +51,7 @@ SUPPORTED_NODE_TYPES = {
     "field_mass_fill",
     "field_mapped_scatter",
     "field_cluster_scatter",
+    "field_flower_clusters",
     "image_alpha_cleanup",
     "image_depth_light",
     "image_masked_material",
@@ -107,6 +109,11 @@ def validate_recipe(recipe: dict) -> None:
                 raise ValueError(f"{node_type} params.mappings must be an object")
         if node_type == "field_cluster_scatter" and not isinstance(node.get("params", {}).get("cluster"), dict):
             raise ValueError("field_cluster_scatter requires params.cluster")
+        if node_type == "field_flower_clusters":
+            if "image" not in inputs or "density" not in inputs:
+                raise ValueError("field_flower_clusters requires inputs.image and inputs.density")
+            if not isinstance(node.get("params", {}).get("palette", {}), dict):
+                raise ValueError("field_flower_clusters params.palette must be an object")
         if node_type == "field_mass_fill" and ("image" not in inputs or "density" not in inputs):
             raise ValueError("field_mass_fill requires inputs.image and inputs.density")
         if node_type == "image_depth_light" and ("image" not in inputs or "depth" not in inputs):
@@ -272,6 +279,27 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, **cluster_stats}
 
+        elif node_type == "field_flower_clusters":
+            image = _copy_input(results, node, "image")
+            engine = FlowerClusterEngineV1(seed + index * 86028121 + int(params.get("seedOffset", 0)))
+            flower_stats = engine.scatter(
+                image,
+                _copy_input(results, node, "density"),
+                avoid_field=_optional_input(results, node, "avoid"),
+                depth_field=_optional_input(results, node, "depth"),
+                count=int(params.get("count", 12)),
+                bounds=params.get("bounds"),
+                min_distance=float(params.get("minDistance", 10.0)),
+                radius_x=params.get("radiusX", [11.0, 16.0]),
+                radius_y=params.get("radiusY", [8.0, 12.0]),
+                palette=params.get("palette", {}),
+                blossom_density=float(params.get("blossomDensity", 1.0)),
+                gap_windows=params.get("gapWindows", [2, 3]),
+                edge_spray_probability=float(params.get("edgeSprayProbability", 0.42)),
+                max_attempts=int(params.get("maxAttempts", 24000)),
+            )
+            stats = {"type": node_type, **flower_stats}
+
         elif node_type == "image_alpha_cleanup":
             image = alpha_cleanup(
                 _copy_input(results, node, "image"),
@@ -381,13 +409,14 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
 
     assert final is not None
     node_types = {node["type"] for node in recipe["graph"]["nodes"]}
-    field_aware = bool({"field_mapped_scatter", "field_cluster_scatter"} & node_types)
+    field_aware = bool({"field_mapped_scatter", "field_cluster_scatter", "field_flower_clusters"} & node_types)
     metadata = {
         "contract": FIELD_GRAPH_CONTRACT,
         "fieldContract": FIELD_ENGINE_CONTRACT,
         "fieldBrushContract": FIELD_BRUSH_CONTRACT,
         "fieldClusterContract": FIELD_CLUSTER_CONTRACT,
         "fieldMassContract": FIELD_MASS_CONTRACT,
+        "flowerClusterContract": FLOWER_CLUSTER_CONTRACT,
         "imageProcessingContract": IMAGE_PROCESSING_CONTRACT,
         "layerEngineContract": LAYER_ENGINE_CONTRACT,
         "materialEngineContract": MATERIAL_ENGINE_CONTRACT,
@@ -405,6 +434,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "nodeGraphV2": True,
             "fieldAwareDistribution": field_aware,
             "fieldConditionedClusters": "field_cluster_scatter" in node_types,
+            "fieldConditionedFlowers": "field_flower_clusters" in node_types,
             "densityField": "field_radial_density" in node_types,
             "avoidMask": "field_alpha_mask" in node_types,
             "distanceField": "field_distance" in node_types,
