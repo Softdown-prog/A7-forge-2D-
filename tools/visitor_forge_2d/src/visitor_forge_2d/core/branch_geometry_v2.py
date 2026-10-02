@@ -82,46 +82,53 @@ def _organic_path(path: dict, *, order: int, branch_id: str, seed: int, view: st
     raw_points = path.get("points", [])
     start_width = float(path.get("widthStart", path.get("width", 1.0)))
     end_width = float(path.get("widthEnd", start_width))
-    samples = {0: 10, 1: 9, 2: 7, 3: 5}.get(int(order), 6)
+    samples = {0: 11, 1: 10, 2: 8, 3: 6}.get(int(order), 7)
     rng = random.Random(_stable_seed(seed, branch_id, view))
     points = _sample_polyline(raw_points, samples)
 
-    # Child paths penetrate slightly into the parent.  Rounded caps therefore
-    # overlap instead of meeting edge-to-edge, removing the cut/pasted Y-joint.
+    # Child paths penetrate into their parent and receive a short base flare.
+    # This turns a hard Y-junction into a fused shoulder without adding a blob.
     if order > 0 and len(points) >= 2:
         ux, uy = _unit(points[1][0] - points[0][0], points[1][1] - points[0][1])
-        overlap = _clamp(start_width * (0.28 if order == 1 else 0.22), 0.45, 2.4)
+        overlap_factor = 0.38 if order == 1 else (0.30 if order == 2 else 0.24)
+        overlap = _clamp(start_width * overlap_factor, 0.55, 3.0)
         points[0][0] -= ux * overlap
         points[0][1] -= uy * overlap
 
-    jitter_limit = {0: 0.72, 1: 0.82, 2: 0.52, 3: 0.24}.get(int(order), 0.35)
-    jitter_limit = min(jitter_limit, max(0.18, start_width * 0.11))
+    # Low-frequency screen-space drift breaks the spline/ruler look while
+    # remaining small enough to preserve the canonical branch direction.
+    jitter_cap = {0: 1.00, 1: 1.15, 2: 0.72, 3: 0.34}.get(int(order), 0.45)
+    jitter_limit = min(jitter_cap, max(0.28, start_width * 0.20))
     phase = rng.uniform(0.0, math.tau)
     previous_noise = 0.0
     for index in range(1, len(points) - 1):
         t = index / (len(points) - 1)
         raw_noise = rng.uniform(-1.0, 1.0)
-        noise = previous_noise * 0.42 + raw_noise * 0.58
+        noise = previous_noise * 0.58 + raw_noise * 0.42
         previous_noise = noise
-        wave = math.sin(math.pi * t) * (0.72 + 0.28 * math.sin(phase + t * math.tau))
+        broad_wave = math.sin(math.pi * t)
+        modulation = 0.78 + 0.22 * math.sin(phase + t * math.tau * 0.82)
         nx, ny = _normal(points, index)
-        offset = noise * jitter_limit * wave
+        offset = noise * jitter_limit * broad_wave * modulation
         points[index][0] += nx * offset
         points[index][1] += ny * offset
 
     width_noise_phase = rng.uniform(0.0, math.tau)
-    irregularity = {0: 0.055, 1: 0.075, 2: 0.085, 3: 0.06}.get(int(order), 0.06)
+    irregularity = {0: 0.050, 1: 0.080, 2: 0.090, 3: 0.060}.get(int(order), 0.06)
     widths: list[float] = []
     for index in range(len(points)):
         t = index / (len(points) - 1)
-        # Slightly eased taper looks less like a cone than a linear interpolation.
         eased = t ** 0.82
         width = start_width + (end_width - start_width) * eased
-        width *= 1.0 + math.sin(width_noise_phase + t * math.tau * 1.65) * irregularity * math.sin(math.pi * t)
-        if order == 0 and t < 0.18:
-            width *= 1.0 + 0.10 * (1.0 - t / 0.18)
-        elif order > 0 and t < 0.16:
+        width *= 1.0 + math.sin(width_noise_phase + t * math.tau * 1.45) * irregularity * math.sin(math.pi * t)
+        if order == 0 and t < 0.16:
             width *= 1.0 + 0.08 * (1.0 - t / 0.16)
+        elif order == 1 and t < 0.22:
+            width *= 1.0 + 0.17 * (1.0 - t / 0.22)
+        elif order == 2 and t < 0.19:
+            width *= 1.0 + 0.12 * (1.0 - t / 0.19)
+        elif order >= 3 and t < 0.15:
+            width *= 1.0 + 0.07 * (1.0 - t / 0.15)
         widths.append(round(max(0.28, width), 4))
 
     out["points"] = [[round(p[0], 4), round(p[1], 4)] for p in points]
@@ -136,9 +143,16 @@ def _offset_points(points: Sequence[Sequence[float]], widths: Sequence[float], s
     out: list[list[float]] = []
     for index, point in enumerate(points):
         nx, ny = _normal(points, index)
-        offset = float(widths[index]) * 0.17 * side
+        offset = float(widths[index]) * 0.15 * side
         out.append([round(float(point[0]) + nx * offset, 4), round(float(point[1]) + ny * offset, 4)])
     return out
+
+
+def _fragment(points: Sequence[Sequence[float]], widths: Sequence[float], start_t: float, end_t: float) -> tuple[list, list]:
+    last = len(points) - 1
+    start = max(0, min(last - 1, round(last * start_t)))
+    end = max(start + 2, min(len(points), round(last * end_t) + 1))
+    return list(points[start:end]), list(widths[start:end])
 
 
 def _bark_accents(path: dict, *, order: int, exposure: float) -> list[dict]:
@@ -149,24 +163,39 @@ def _bark_accents(path: dict, *, order: int, exposure: float) -> list[dict]:
     if len(points) < 5 or len(widths) != len(points) or max(widths, default=0.0) < 1.15:
         return []
 
+    # Short broken marks follow the branch tangent.  They suggest bark without
+    # creating the long parallel racing stripes seen in the first V2 pilot.
+    if order == 0:
+        specs = [
+            (0.12, 0.25, "#3A2418", 0.22, 1.0),
+            (0.36, 0.49, "#B98661", 0.16, -1.0),
+            (0.60, 0.72, "#3A2418", 0.18, 1.0),
+            (0.78, 0.88, "#B98661", 0.13, -1.0),
+        ]
+    elif order == 1:
+        specs = [
+            (0.18, 0.34, "#3A2418", 0.20, 1.0),
+            (0.56, 0.70, "#B98661", 0.14, -1.0),
+        ]
+    else:
+        specs = [(0.30, 0.52, "#3A2418", 0.14, 1.0)]
+
     accents: list[dict] = []
-    # Keep the accents fragmented; a full center stripe would read as a vector line.
-    fragments = [(1, max(3, len(points) // 2 + 1)), (max(2, len(points) // 2), len(points) - 1)]
-    colors = (("#3A2418", 0.34, 1.0), ("#B98661", 0.26, -1.0))
-    for color, opacity, side in colors:
+    for start_t, end_t, color, opacity, side in specs:
         shifted = _offset_points(points, widths, side)
-        for frag_index, (start, end) in enumerate(fragments):
-            frag_points = shifted[start:end]
-            frag_widths = widths[start:end]
-            if len(frag_points) < 2:
-                continue
-            line_widths = [round(max(0.24, float(w) * (0.085 if order == 0 else 0.075)), 4) for w in frag_widths]
-            accents.append({
-                "points": frag_points,
-                "widths": line_widths,
-                "fill": _alpha_hex(color, opacity * exposure * (0.86 if frag_index else 1.0)),
-                "branchGeometryDetail": True,
-            })
+        frag_points, frag_widths = _fragment(shifted, widths, start_t, end_t)
+        if len(frag_points) < 2:
+            continue
+        line_widths = [
+            round(max(0.22, float(w) * (0.060 if order == 0 else 0.052)), 4)
+            for w in frag_widths
+        ]
+        accents.append({
+            "points": frag_points,
+            "widths": line_widths,
+            "fill": _alpha_hex(color, opacity * exposure),
+            "branchGeometryDetail": True,
+        })
     return accents
 
 
@@ -205,12 +234,12 @@ def upgrade_plant_wood_recipe(recipe: dict, structure, *, view: str | None = Non
     if base_paths is None:
         raise ValueError("branch geometry could not find wood_structure node")
 
-    # The path-aligned accents now provide anisotropy, so the generic material
-    # grain can stay subtle instead of forcing a vertical texture onto diagonals.
+    # Path-aligned accents now carry most anisotropy. Keep generic material grain
+    # low so diagonal limbs are not stamped with a vertical trunk texture.
     for node in out.get("graph", {}).get("nodes", []):
         if node.get("id") == "wood_material":
             params = node.setdefault("params", {})
-            params["grainAmount"] = min(float(params.get("grainAmount", 0.15)), 0.085)
+            params["grainAmount"] = min(float(params.get("grainAmount", 0.15)), 0.045)
             params["coarseAmount"] = max(float(params.get("coarseAmount", 0.15)), 0.13)
 
     planner = out.setdefault("planner", {})
