@@ -1,3 +1,5 @@
+import math
+
 from visitor_forge_2d.core.art_planner import (
     ART_PLANNER_CONTRACT,
     PLANT_INTENT_CONTRACT,
@@ -28,14 +30,45 @@ def _intent() -> dict:
     }
 
 
+def _planar_length(branch) -> float:
+    start, end = branch.points[0], branch.points[-1]
+    return math.hypot(end.x - start.x, end.y - start.y)
+
+
 def test_structural_plant_engine_is_deterministic() -> None:
     first = generate_plant_structure(12345, {"primaryCount": 5, "secondaryPerPrimary": 2})
     second = generate_plant_structure(12345, {"primaryCount": 5, "secondaryPerPrimary": 2})
 
-    assert PLANT_STRUCTURE_CONTRACT == "A7_PLANT_STRUCTURE_V1"
+    assert PLANT_STRUCTURE_CONTRACT == "A7_PLANT_STRUCTURE_V2"
     assert first == second
     assert topology_signature(first.branches) == topology_signature(second.branches)
-    assert len(first.terminal_points) == 10
+    assert len(first.terminal_points) == 20
+    assert first.terminal_points == first.flower_bearing_points
+
+
+def test_v2_ramification_uses_short_flower_bearing_twigs() -> None:
+    structure = generate_plant_structure(
+        11881,
+        {
+            "primaryCount": 5,
+            "secondaryPerPrimary": 2,
+            "tertiaryPerSecondary": 2,
+            "visibleWood": 0.34,
+        },
+    )
+    primaries = [branch for branch in structure.branches if branch.order == 1]
+    secondaries = [branch for branch in structure.branches if branch.order == 2]
+    twigs = [branch for branch in structure.branches if branch.order == 3]
+
+    assert len(primaries) == 5
+    assert len(secondaries) == 10
+    assert len(twigs) == 20
+    assert all(not branch.terminal for branch in secondaries)
+    assert all(branch.terminal and branch.flower_bearing for branch in twigs)
+    assert max(_planar_length(branch) for branch in secondaries) < 0.34
+    assert max(_planar_length(branch) for branch in twigs) < 0.18
+    assert max(branch.exposure for branch in twigs) < min(branch.exposure for branch in secondaries)
+    assert max(branch.exposure for branch in secondaries) < min(branch.exposure for branch in primaries)
 
 
 def test_four_views_share_topology_but_change_projection() -> None:
@@ -48,6 +81,7 @@ def test_four_views_share_topology_but_change_projection() -> None:
     assert views["south"].terminals != views["west"].terminals
     assert views["north"].terminals != views["east"].terminals
     assert all(len(projection.terminals) == len(structure.terminal_points) for projection in views.values())
+    assert all(any(path.get("flowerBearing") for path in projection.paths) for projection in views.values())
 
 
 def test_art_planner_compiles_valid_v2_recipes_for_all_views() -> None:
