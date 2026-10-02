@@ -135,16 +135,23 @@ def profile_from_intent(intent: dict) -> dict:
 
 
 def _bounds_from_terminals(terminals: tuple[tuple[float, float], ...], canvas: list[int]) -> list[int]:
+    """Brush-center bounds with a safety inset so tips cannot be clipped by the canvas."""
+    safe_x = 34
+    safe_top = 30
+    safe_bottom = 28
     if not terminals:
-        return [20, 20, canvas[0] - 20, canvas[1] - 60]
+        return [safe_x, safe_top, canvas[0] - safe_x, canvas[1] - safe_bottom]
     xs = [point[0] for point in terminals]
     ys = [point[1] for point in terminals]
-    return [
-        max(4, int(min(xs) - 46)),
-        max(4, int(min(ys) - 38)),
-        min(canvas[0] - 4, int(max(xs) + 46)),
-        min(canvas[1] - 16, int(max(ys) + 42)),
-    ]
+    left = max(safe_x, int(min(xs) - 34))
+    top = max(safe_top, int(min(ys) - 30))
+    right = min(canvas[0] - safe_x, int(max(xs) + 34))
+    bottom = min(canvas[1] - safe_bottom, int(max(ys) + 34))
+    if right <= left:
+        left, right = safe_x, canvas[0] - safe_x
+    if bottom <= top:
+        top, bottom = safe_top, canvas[1] - safe_bottom
+    return [left, top, right, bottom]
 
 
 def _crown_lobes(projection: PlantProjection, intent: dict) -> list[dict]:
@@ -166,6 +173,22 @@ def _crown_lobes(projection: PlantProjection, intent: dict) -> list[dict]:
     mean_x = sum(point[0] for point in terminals) / len(terminals)
     mean_y = sum(point[1] for point in terminals) / len(terminals)
     lobes.append({"center": [round(mean_x, 2), round(mean_y + 10, 2)], "radius": [round(64 * wide, 2), 46], "weight": 0.76})
+    return lobes
+
+
+def _flower_lobes(projection: PlantProjection, amount: float) -> list[dict]:
+    """Flowering zones stay near terminal branch tips instead of filling the whole crown."""
+    strength = _clamp(float(amount), 0.0, 1.0)
+    lobes = []
+    for index, (x, y) in enumerate(projection.terminals):
+        variation = 0.90 + (index % 3) * 0.08
+        lobes.append(
+            {
+                "center": [round(x, 2), round(y, 2)],
+                "radius": [round((15.0 + 9.0 * strength) * variation, 2), round((12.0 + 6.0 * strength) * variation, 2)],
+                "weight": round(0.72 + 0.25 * strength, 2),
+            }
+        )
     return lobes
 
 
@@ -245,9 +268,6 @@ def build_plant_graph_recipe(
     terminal_count = max(1, len(terminals))
     flowering = normalized["flowering"]
     flowering_amount = flowering["amount"]
-    detail_tints = _GREEN_FRONT if flowering_amount < 0.2 else [flowering["color"], "#E7B92B", "#F6D65A"]
-    # Until a dedicated flower brush pack lands, the flowering layer is explicitly
-    # marked as a proxy. The planner contract is real; flower material quality is not.
     flower_proxy = flowering_amount >= 0.2
 
     paths = _wood_paths(projection)
@@ -307,10 +327,10 @@ def build_plant_graph_recipe(
             "inputs": {"image": "detail_canvas", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
                 "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
-                "count": max(18, round(terminal_count * (1.25 + flowering_amount * 0.8))),
+                "count": max(16, round(terminal_count * 1.20)),
                 "bounds": bounds, "minDistance": 5.0, "maxAttempts": 28000,
-                "scale": [0.48, 0.70], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
-                "opacity": [225, 255], "tints": detail_tints, "hueJitterDeg": 3,
+                "scale": [0.44, 0.64], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
+                "opacity": [220, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
                 "saturation": [0.96, 1.06], "value": [0.98, 1.08],
                 "mappings": {
                     "scale_mul": {"base": 0.98, "inputs": {"density": [[0.0, -0.08], [1.0, 0.12]]}},
@@ -320,9 +340,43 @@ def build_plant_graph_recipe(
         },
         {"id": "detail_shadow", "type": "image_contact_occlusion", "inputs": {"base": "front_composite", "occluder": "detail_foliage"}, "params": {"radius": 1.6, "strength": 0.14, "offset": [0, 1], "color": "#122016", "expandPx": 0, "baseAlphaOnly": True}},
         {"id": "detail_composite", "type": "image_composite", "inputs": {"base": "detail_shadow", "layer": "detail_foliage"}, "params": {"opacity": 1.0}},
-        {"id": "finish", "type": "image_local_contrast", "inputs": {"image": "detail_composite"}, "params": {"radius": 1.2, "amount": 0.28, "globalContrast": 1.02}},
-        {"id": "out", "type": "output", "inputs": {"image": "finish"}},
     ]
+
+    finish_input = "detail_composite"
+    if flower_proxy:
+        flower_lobes = _flower_lobes(projection, flowering_amount)
+        nodes.extend(
+            [
+                {"id": "flower_density", "type": "field_radial_density", "params": {"power": 1.55, "lobes": flower_lobes}},
+                {"id": "flower_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
+                {
+                    "id": "flower_proxy", "type": "field_mapped_scatter",
+                    "inputs": {"image": "flower_canvas", "density": "flower_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction"},
+                    "params": {
+                        "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
+                        "count": max(10, round(terminal_count * (0.55 + flowering_amount * 0.70))),
+                        "bounds": bounds, "minDistance": 5.5, "maxAttempts": 24000,
+                        "scale": [0.28, 0.46], "aspect": [0.88, 1.12], "rotationDeg": [-32, 32],
+                        "opacity": [228, 255], "tints": [flowering["color"], "#E7B92B", "#F6D65A"],
+                        "hueJitterDeg": 2, "saturation": [0.96, 1.05], "value": [0.98, 1.10],
+                        "mappings": {
+                            "scale_mul": {"base": 0.98, "inputs": {"density": [[0.0, -0.10], [1.0, 0.12]]}},
+                            "opacity_mul": {"base": 1.0, "inputs": {"depth": [[0.0, -0.08], [1.0, 0.03]]}},
+                        },
+                    },
+                },
+                {"id": "flower_shadow", "type": "image_contact_occlusion", "inputs": {"base": "detail_composite", "occluder": "flower_proxy"}, "params": {"radius": 1.2, "strength": 0.10, "offset": [0, 1], "color": "#2A2411", "expandPx": 0, "baseAlphaOnly": True}},
+                {"id": "flower_composite", "type": "image_composite", "inputs": {"base": "flower_shadow", "layer": "flower_proxy"}, "params": {"opacity": 1.0}},
+            ]
+        )
+        finish_input = "flower_composite"
+
+    nodes.extend(
+        [
+            {"id": "finish", "type": "image_local_contrast", "inputs": {"image": finish_input}, "params": {"radius": 1.2, "amount": 0.28, "globalContrast": 1.02}},
+            {"id": "out", "type": "output", "inputs": {"image": "finish"}},
+        ]
+    )
 
     recipe = {
         "contract": FIELD_GRAPH_CONTRACT,
@@ -340,7 +394,9 @@ def build_plant_graph_recipe(
             "structureContract": PLANT_STRUCTURE_CONTRACT,
             "species": normalized["species"], "view": view, "style": normalized["style"],
             "branchIds": list(projection.branch_ids), "terminalCount": len(terminals),
-            "floweringAmount": flowering_amount, "temporaryFlowerProxy": flower_proxy,
+            "floweringAmount": flowering_amount,
+            "flowerPlacement": "terminal_density" if flower_proxy else "none",
+            "temporaryFlowerProxy": flower_proxy,
         },
         "graph": {"seed": seed, "nodes": nodes},
     }
