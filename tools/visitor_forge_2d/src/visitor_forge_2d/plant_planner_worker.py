@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from .core import field_graph
 from .core.art_planner import ART_PLANNER_CONTRACT, PLANT_INTENT_CONTRACT, plan_plant_four_views
+from .core.plant_repair_policy import propose_repair
 from .core.plant_structure import CARDINAL_VIEWS, PLANT_STRUCTURE_CONTRACT, topology_signature
 from .core.plant_visual_critic import (
     PLANT_REPAIR_CONTRACT,
@@ -16,7 +17,6 @@ from .core.plant_visual_critic import (
     aggregate_critic_reports,
     apply_repair_plan,
     evaluate_plant_render,
-    propose_repair,
 )
 
 WORKER_CONTRACT = "A7_PLANT_PLANNER_WORKER_V1"
