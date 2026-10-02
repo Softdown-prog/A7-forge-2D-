@@ -1,7 +1,7 @@
 """A7 Art Planner V1.
 
 The planner turns a semantic plant intent plus one canonical Structural Plant V1
-skeleton into ordinary CH_2D_GRAPH_RECIPE_V2 recipes.  It does not paint pixels
+skeleton into ordinary CH_2D_GRAPH_RECIPE_V2 recipes. It does not paint pixels
 itself and deliberately stays separate from species-specific renderers.
 
 An AI/LLM can author the intent later; this module is the deterministic execution
@@ -14,6 +14,7 @@ import re
 from typing import Any
 
 from .field_graph import FIELD_GRAPH_CONTRACT, validate_recipe
+from .flower_cluster_engine import FLOWER_CLUSTER_CONTRACT
 from .plant_structure import (
     CARDINAL_VIEWS,
     PLANT_STRUCTURE_CONTRACT,
@@ -73,6 +74,15 @@ _SPECIES_PROFILES: dict[str, dict[str, Any]] = {
 _GREEN_REAR = ["#244B30", "#2C5936", "#35643C"]
 _GREEN_MID = ["#315E38", "#3B6D3F", "#477A46"]
 _GREEN_FRONT = ["#39703F", "#478348", "#559250"]
+_IPE_FLOWER_PALETTE = {
+    "backTop": "#D59B08",
+    "backBottom": "#9A6700",
+    "midTop": "#F2B705",
+    "midBottom": "#C38300",
+    "frontTop": "#FFD21A",
+    "highlight": "#FFE96A",
+    "occlusion": "#62431B",
+}
 
 
 def _safe_id(value: str) -> str:
@@ -92,21 +102,20 @@ def normalize_plant_intent(intent: dict) -> dict:
     species = _safe_id(str(intent.get("species", "generic_broadleaf")))
     if species not in _SPECIES_PROFILES:
         species = "generic_broadleaf"
-    crown = str(intent.get("crown", "wide_irregular")).lower()
-    age = str(intent.get("age", "adult")).lower()
     flowering = intent.get("flowering", {})
     if not isinstance(flowering, dict):
         flowering = {}
-    amount = _clamp(float(flowering.get("amount", 0.0)), 0.0, 1.0)
-    color = str(flowering.get("color", "#F3C62F"))
     return {
         "contract": PLANT_INTENT_CONTRACT,
         "id": _safe_id(str(intent.get("id", f"{species}_planner"))),
         "species": species,
-        "age": age,
-        "crown": crown,
+        "age": str(intent.get("age", "adult")).lower(),
+        "crown": str(intent.get("crown", "wide_irregular")).lower(),
         "style": str(intent.get("style", "classic_tycoon_pre_rendered")),
-        "flowering": {"amount": amount, "color": color},
+        "flowering": {
+            "amount": _clamp(float(flowering.get("amount", 0.0)), 0.0, 1.0),
+            "color": str(flowering.get("color", "#F3C62F")),
+        },
         "seed": int(intent.get("seed", 1)),
         "canvas": list(intent.get("canvas", [256, 320])),
         "anchor": list(intent.get("anchor", [128, 310])),
@@ -135,10 +144,8 @@ def profile_from_intent(intent: dict) -> dict:
 
 
 def _bounds_from_terminals(terminals: tuple[tuple[float, float], ...], canvas: list[int]) -> list[int]:
-    """Brush-center bounds with a safety inset so tips cannot be clipped by the canvas."""
-    safe_x = 34
-    safe_top = 30
-    safe_bottom = 28
+    """Safe center bounds keep supersampled clusters inside the asset canvas."""
+    safe_x, safe_top, safe_bottom = 34, 30, 28
     if not terminals:
         return [safe_x, safe_top, canvas[0] - safe_x, canvas[1] - safe_bottom]
     xs = [point[0] for point in terminals]
@@ -162,14 +169,12 @@ def _crown_lobes(projection: PlantProjection, intent: dict) -> list[dict]:
     wide = 1.12 if "wide" in crown else 1.0
     lobes = []
     for index, (x, y) in enumerate(terminals):
-        lobe_scale = 0.92 + (index % 3) * 0.07
-        lobes.append(
-            {
-                "center": [round(x, 2), round(y, 2)],
-                "radius": [round(37 * wide * lobe_scale, 2), round(29 * lobe_scale, 2)],
-                "weight": round(0.82 + (index % 4) * 0.05, 2),
-            }
-        )
+        scale = 0.92 + (index % 3) * 0.07
+        lobes.append({
+            "center": [round(x, 2), round(y, 2)],
+            "radius": [round(37 * wide * scale, 2), round(29 * scale, 2)],
+            "weight": round(0.82 + (index % 4) * 0.05, 2),
+        })
     mean_x = sum(point[0] for point in terminals) / len(terminals)
     mean_y = sum(point[1] for point in terminals) / len(terminals)
     lobes.append({"center": [round(mean_x, 2), round(mean_y + 10, 2)], "radius": [round(64 * wide, 2), 46], "weight": 0.76})
@@ -177,19 +182,32 @@ def _crown_lobes(projection: PlantProjection, intent: dict) -> list[dict]:
 
 
 def _flower_lobes(projection: PlantProjection, amount: float) -> list[dict]:
-    """Flowering zones stay near terminal branch tips instead of filling the whole crown."""
+    """Flowering zones stay near terminal branch tips instead of filling the crown."""
     strength = _clamp(float(amount), 0.0, 1.0)
     lobes = []
     for index, (x, y) in enumerate(projection.terminals):
         variation = 0.90 + (index % 3) * 0.08
-        lobes.append(
-            {
-                "center": [round(x, 2), round(y, 2)],
-                "radius": [round((15.0 + 9.0 * strength) * variation, 2), round((12.0 + 6.0 * strength) * variation, 2)],
-                "weight": round(0.72 + 0.25 * strength, 2),
-            }
-        )
+        lobes.append({
+            "center": [round(x, 2), round(y, 2)],
+            "radius": [round((15.0 + 9.0 * strength) * variation, 2), round((12.0 + 6.0 * strength) * variation, 2)],
+            "weight": round(0.72 + 0.25 * strength, 2),
+        })
     return lobes
+
+
+def _flower_palette(normalized: dict) -> dict:
+    if normalized["species"] == "ipe_amarelo":
+        return dict(_IPE_FLOWER_PALETTE)
+    color = normalized["flowering"]["color"]
+    return {
+        "backTop": color,
+        "backBottom": color,
+        "midTop": color,
+        "midBottom": color,
+        "frontTop": color,
+        "highlight": color,
+        "occlusion": "#5A4B28",
+    }
 
 
 def _wood_paths(projection: PlantProjection) -> list[dict]:
@@ -200,87 +218,77 @@ def _wood_paths(projection: PlantProjection) -> list[dict]:
 
 
 def _rear_cluster() -> dict:
-    return {
-        "members": [
-            {
-                "type": "brush", "offset": [0, 0],
-                "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
-                "scale": [0.82, 1.10], "aspect": [0.82, 1.20], "rotationDeg": [-24, 24],
-                "opacity": [170, 210], "tints": _GREEN_REAR, "value": [0.88, 1.0],
-            },
-            {
-                "type": "brush", "offset": [-8, -2],
-                "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
-                "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
-                "opacity": [178, 220], "tints": _GREEN_MID, "value": [0.90, 1.02],
-            },
-            {
-                "type": "brush", "offset": [9, 3],
-                "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
-                "scale": [0.58, 0.76], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
-                "opacity": [178, 220], "tints": _GREEN_MID, "value": [0.90, 1.02],
-            },
-        ]
-    }
+    return {"members": [
+        {
+            "type": "brush", "offset": [0, 0],
+            "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
+            "scale": [0.82, 1.10], "aspect": [0.82, 1.20], "rotationDeg": [-24, 24],
+            "opacity": [170, 210], "tints": _GREEN_REAR, "value": [0.88, 1.0],
+        },
+        {
+            "type": "brush", "offset": [-8, -2],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
+            "opacity": [178, 220], "tints": _GREEN_MID, "value": [0.90, 1.02],
+        },
+        {
+            "type": "brush", "offset": [9, 3],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.58, 0.76], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
+            "opacity": [178, 220], "tints": _GREEN_MID, "value": [0.90, 1.02],
+        },
+    ]}
 
 
 def _front_cluster() -> dict:
-    return {
-        "members": [
-            {
-                "type": "brush", "offset": [0, 0],
-                "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
-                "scale": [0.64, 0.84], "aspect": [0.86, 1.16], "rotationDeg": [-22, 22],
-                "opacity": [138, 178], "tints": _GREEN_MID, "value": [0.94, 1.04],
-            },
-            {
-                "type": "brush", "offset": [-7, -4],
-                "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
-                "scale": [0.58, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-30, 30],
-                "opacity": [228, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
-                "saturation": [0.95, 1.05], "value": [0.96, 1.09],
-            },
-            {
-                "type": "brush", "offset": [7, -2],
-                "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
-                "scale": [0.58, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-30, 30],
-                "opacity": [228, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
-                "saturation": [0.95, 1.05], "value": [0.96, 1.09],
-            },
-        ]
-    }
+    return {"members": [
+        {
+            "type": "brush", "offset": [0, 0],
+            "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
+            "scale": [0.64, 0.84], "aspect": [0.86, 1.16], "rotationDeg": [-22, 22],
+            "opacity": [138, 178], "tints": _GREEN_MID, "value": [0.94, 1.04],
+        },
+        {
+            "type": "brush", "offset": [-7, -4],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.58, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-30, 30],
+            "opacity": [228, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
+            "saturation": [0.95, 1.05], "value": [0.96, 1.09],
+        },
+        {
+            "type": "brush", "offset": [7, -2],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.58, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-30, 30],
+            "opacity": [228, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
+            "saturation": [0.95, 1.05], "value": [0.96, 1.09],
+        },
+    ]}
 
 
-def build_plant_graph_recipe(
-    intent: dict,
-    structure: PlantStructure,
-    projection: PlantProjection,
-) -> dict:
+def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection: PlantProjection) -> dict:
     """Compile semantic plant intent into an ordinary Graph V2 recipe."""
     normalized = normalize_plant_intent(intent)
-    canvas = normalized["canvas"]
-    anchor = normalized["anchor"]
-    seed = normalized["seed"]
+    canvas, anchor, seed = normalized["canvas"], normalized["anchor"], normalized["seed"]
     view = projection.view
-    base_id = _safe_id(normalized["id"])
     terminals = projection.terminals
     bounds = _bounds_from_terminals(terminals, canvas)
     terminal_count = max(1, len(terminals))
     flowering = normalized["flowering"]
     flowering_amount = flowering["amount"]
-    flower_proxy = flowering_amount >= 0.2
-
+    has_flowers = flowering_amount >= 0.2
     paths = _wood_paths(projection)
-    lobes = _crown_lobes(projection, normalized)
     center_x = sum(point[0] for point in terminals) / terminal_count if terminals else anchor[0]
     center_y = sum(point[1] for point in terminals) / terminal_count if terminals else anchor[1] - 150
+
+    # Heavily flowering trees keep foliage as structure/support, not as the dominant surface.
+    foliage_factor = 1.0 - (0.32 * flowering_amount if normalized["species"] == "ipe_amarelo" else 0.0)
 
     nodes: list[dict] = [
         {"id": "base", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
         {"id": "wood_structure", "type": "tapered_path", "inputs": {"image": "base"}, "params": {"supersample": 4, "paths": paths}},
         {"id": "wood_mask", "type": "field_alpha_mask", "inputs": {"source": "wood_structure"}, "params": {"threshold": 10, "expandPx": 1, "blurRadius": 0.7}},
         {"id": "branch_proximity", "type": "field_distance", "inputs": {"field": "wood_mask"}, "params": {"maxDistance": 54, "threshold": 64, "proximity": True}},
-        {"id": "crown_density", "type": "field_radial_density", "params": {"power": 0.74, "lobes": lobes}},
+        {"id": "crown_density", "type": "field_radial_density", "params": {"power": 0.74, "lobes": _crown_lobes(projection, normalized)}},
         {"id": "structured_density", "type": "field_multiply", "inputs": {"a_crown": "crown_density", "b_branch": "branch_proximity"}},
         {"id": "rear_core_density", "type": "field_multiply", "inputs": {"a": "structured_density", "b": "structured_density"}},
         {"id": "depth", "type": "field_linear_depth", "params": {"start": [anchor[0], max(0, bounds[1])], "end": [anchor[0], min(canvas[1] - 1, bounds[3])]}},
@@ -290,7 +298,7 @@ def build_plant_graph_recipe(
             "id": "rear_foliage", "type": "field_cluster_scatter",
             "inputs": {"image": "rear_canvas", "density": "rear_core_density", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
-                "count": max(8, round(terminal_count * 0.85)), "bounds": bounds,
+                "count": max(6, round(terminal_count * 0.85 * foliage_factor)), "bounds": bounds,
                 "minDistance": 14.0, "maxAttempts": 32000, "scale": [0.90, 1.14],
                 "rotationDeg": [-14, 14], "mirrorXProbability": 0.5,
                 "mappings": {"scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.04], [1.0, 0.14]], "depth": [[0.0, -0.03], [1.0, 0.05]]}}},
@@ -312,7 +320,7 @@ def build_plant_graph_recipe(
             "id": "front_foliage", "type": "field_cluster_scatter",
             "inputs": {"image": "front_canvas", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
-                "count": max(14, round(terminal_count * 1.45)), "bounds": bounds,
+                "count": max(10, round(terminal_count * 1.45 * foliage_factor)), "bounds": bounds,
                 "minDistance": 10.5, "maxAttempts": 36000, "scale": [0.78, 1.06],
                 "rotationDeg": [-14, 14], "mirrorXProbability": 0.5,
                 "mappings": {"scale_mul": {"base": 0.98, "inputs": {"density": [[0.0, -0.06], [1.0, 0.15]], "depth": [[0.0, -0.03], [1.0, 0.08]]}}},
@@ -327,7 +335,7 @@ def build_plant_graph_recipe(
             "inputs": {"image": "detail_canvas", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
                 "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
-                "count": max(16, round(terminal_count * 1.20)),
+                "count": max(10, round(terminal_count * 1.20 * foliage_factor)),
                 "bounds": bounds, "minDistance": 5.0, "maxAttempts": 28000,
                 "scale": [0.44, 0.64], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
                 "opacity": [220, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
@@ -343,44 +351,34 @@ def build_plant_graph_recipe(
     ]
 
     finish_input = "detail_composite"
-    if flower_proxy:
-        flower_lobes = _flower_lobes(projection, flowering_amount)
-        nodes.extend(
-            [
-                {"id": "flower_density", "type": "field_radial_density", "params": {"power": 1.55, "lobes": flower_lobes}},
-                {"id": "flower_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
-                {
-                    "id": "flower_proxy", "type": "field_mapped_scatter",
-                    "inputs": {"image": "flower_canvas", "density": "flower_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction"},
-                    "params": {
-                        "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
-                        "count": max(10, round(terminal_count * (0.55 + flowering_amount * 0.70))),
-                        "bounds": bounds, "minDistance": 5.5, "maxAttempts": 24000,
-                        "scale": [0.28, 0.46], "aspect": [0.88, 1.12], "rotationDeg": [-32, 32],
-                        "opacity": [228, 255], "tints": [flowering["color"], "#E7B92B", "#F6D65A"],
-                        "hueJitterDeg": 2, "saturation": [0.96, 1.05], "value": [0.98, 1.10],
-                        "mappings": {
-                            "scale_mul": {"base": 0.98, "inputs": {"density": [[0.0, -0.10], [1.0, 0.12]]}},
-                            "opacity_mul": {"base": 1.0, "inputs": {"depth": [[0.0, -0.08], [1.0, 0.03]]}},
-                        },
-                    },
+    if has_flowers:
+        nodes.extend([
+            {"id": "flower_density", "type": "field_radial_density", "params": {"power": 1.55, "lobes": _flower_lobes(projection, flowering_amount)}},
+            {"id": "flower_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
+            {
+                "id": "flower_clusters", "type": "field_flower_clusters",
+                "inputs": {"image": "flower_canvas", "density": "flower_density", "avoid": "wood_mask", "depth": "depth"},
+                "params": {
+                    "count": max(8, round(terminal_count * (0.72 + flowering_amount * 0.48))),
+                    "bounds": bounds, "minDistance": 9.0, "maxAttempts": 26000,
+                    "radiusX": [10.5, 16.0], "radiusY": [7.8, 11.8],
+                    "blossomDensity": 1.12, "gapWindows": [2, 3], "edgeSprayProbability": 0.46,
+                    "palette": _flower_palette(normalized),
                 },
-                {"id": "flower_shadow", "type": "image_contact_occlusion", "inputs": {"base": "detail_composite", "occluder": "flower_proxy"}, "params": {"radius": 1.2, "strength": 0.10, "offset": [0, 1], "color": "#2A2411", "expandPx": 0, "baseAlphaOnly": True}},
-                {"id": "flower_composite", "type": "image_composite", "inputs": {"base": "flower_shadow", "layer": "flower_proxy"}, "params": {"opacity": 1.0}},
-            ]
-        )
+            },
+            {"id": "flower_shadow", "type": "image_contact_occlusion", "inputs": {"base": "detail_composite", "occluder": "flower_clusters"}, "params": {"radius": 1.5, "strength": 0.15, "offset": [0, 1], "color": "#4B3617", "expandPx": 0, "baseAlphaOnly": True}},
+            {"id": "flower_composite", "type": "image_composite", "inputs": {"base": "flower_shadow", "layer": "flower_clusters"}, "params": {"opacity": 1.0}},
+        ])
         finish_input = "flower_composite"
 
-    nodes.extend(
-        [
-            {"id": "finish", "type": "image_local_contrast", "inputs": {"image": finish_input}, "params": {"radius": 1.2, "amount": 0.28, "globalContrast": 1.02}},
-            {"id": "out", "type": "output", "inputs": {"image": "finish"}},
-        ]
-    )
+    nodes.extend([
+        {"id": "finish", "type": "image_local_contrast", "inputs": {"image": finish_input}, "params": {"radius": 1.2, "amount": 0.28, "globalContrast": 1.02}},
+        {"id": "out", "type": "output", "inputs": {"image": "finish"}},
+    ])
 
     recipe = {
         "contract": FIELD_GRAPH_CONTRACT,
-        "id": f"{base_id}_{view}",
+        "id": f"{_safe_id(normalized['id'])}_{view}",
         "canvas": canvas,
         "anchor": anchor,
         "seed": seed,
@@ -395,8 +393,9 @@ def build_plant_graph_recipe(
             "species": normalized["species"], "view": view, "style": normalized["style"],
             "branchIds": list(projection.branch_ids), "terminalCount": len(terminals),
             "floweringAmount": flowering_amount,
-            "flowerPlacement": "terminal_density" if flower_proxy else "none",
-            "temporaryFlowerProxy": flower_proxy,
+            "flowerPlacement": "terminal_density" if has_flowers else "none",
+            "flowerEngineContract": FLOWER_CLUSTER_CONTRACT if has_flowers else None,
+            "temporaryFlowerProxy": False,
         },
         "graph": {"seed": seed, "nodes": nodes},
     }
@@ -414,8 +413,5 @@ def plan_plant_four_views(intent: dict) -> tuple[PlantStructure, dict[str, dict]
         raise ValueError("plant intent anchor must contain two integers")
     structure = generate_plant_structure(normalized["seed"], profile_from_intent(normalized))
     projections = project_four_views(structure, canvas=canvas, anchor=anchor)
-    recipes = {
-        view: build_plant_graph_recipe(normalized, structure, projections[view])
-        for view in CARDINAL_VIEWS
-    }
+    recipes = {view: build_plant_graph_recipe(normalized, structure, projections[view]) for view in CARDINAL_VIEWS}
     return structure, recipes
