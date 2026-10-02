@@ -1,8 +1,9 @@
-"""A7 Structural Plant Engine V1.
+"""A7 Structural Plant Engine V2.
 
-Builds a deterministic canonical plant skeleton in lightweight 3D and projects the
-same structure into the four City Horizon cardinal views.  This module owns plant
-identity/branch topology only; painting is delegated to the Draw Engine graph.
+Builds one deterministic canonical plant skeleton in lightweight 3D and projects
+the same identity into the four City Horizon cardinal views. V2 adds botanical
+ramification: primary branches feed shorter secondary branches, which terminate
+in compact flower-bearing twigs. Painting remains delegated to the Draw Engine.
 """
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ import math
 import random
 from typing import Iterable
 
-PLANT_STRUCTURE_CONTRACT = "A7_PLANT_STRUCTURE_V1"
+PLANT_STRUCTURE_CONTRACT = "A7_PLANT_STRUCTURE_V2"
 CARDINAL_VIEWS = ("south", "west", "north", "east")
 _VIEW_ROTATION_DEG = {"south": 0.0, "west": 90.0, "north": 180.0, "east": 270.0}
 
@@ -39,6 +40,8 @@ class Branch3D:
     width_start: float
     width_end: float
     terminal: bool = False
+    flower_bearing: bool = False
+    exposure: float = 1.0
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,10 @@ class PlantStructure:
     @property
     def terminal_points(self) -> tuple[Vec3, ...]:
         return tuple(branch.points[-1] for branch in self.branches if branch.terminal)
+
+    @property
+    def flower_bearing_points(self) -> tuple[Vec3, ...]:
+        return tuple(branch.points[-1] for branch in self.branches if branch.flower_bearing)
 
 
 @dataclass(frozen=True)
@@ -71,6 +78,10 @@ def _range_pair(value: object, default: tuple[float, float]) -> tuple[float, flo
     return (min(lo, hi), max(lo, hi))
 
 
+def _clamp(value: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, float(value)))
+
+
 def _profile(raw: dict | None) -> dict:
     source = dict(raw or {})
     return {
@@ -80,14 +91,37 @@ def _profile(raw: dict | None) -> dict:
         "crownStart": float(source.get("crownStart", 0.46)),
         "primaryCount": max(3, min(9, int(source.get("primaryCount", 6)))),
         "secondaryPerPrimary": max(1, min(4, int(source.get("secondaryPerPrimary", 2)))),
+        "tertiaryPerSecondary": max(0, min(3, int(source.get("tertiaryPerSecondary", 2)))),
         "primaryLength": _range_pair(source.get("primaryLength"), (0.46, 0.70)),
         "secondaryLength": _range_pair(source.get("secondaryLength"), (0.22, 0.38)),
+        "tertiaryLength": _range_pair(source.get("tertiaryLength"), (0.075, 0.145)),
         "primaryRise": _range_pair(source.get("primaryRise"), (0.18, 0.34)),
         "secondaryRise": _range_pair(source.get("secondaryRise"), (0.08, 0.20)),
+        "tertiaryRise": _range_pair(source.get("tertiaryRise"), (0.025, 0.085)),
+        "secondaryShortenFactor": _clamp(source.get("secondaryShortenFactor", 0.72), 0.45, 1.0),
+        "tertiaryFanDeg": _range_pair(source.get("tertiaryFanDeg"), (16.0, 38.0)),
+        "tertiaryAttach": _range_pair(source.get("tertiaryAttach"), (0.62, 0.90)),
+        "visibleWood": _clamp(source.get("visibleWood", 0.34), 0.05, 0.95),
         "radialJitterDeg": float(source.get("radialJitterDeg", 18.0)),
         "bend": float(source.get("bend", 0.12)),
         "asymmetry": float(source.get("asymmetry", 0.16)),
     }
+
+
+def _branch_exposure(order: int, visible_wood: float) -> float:
+    """Convert one authored wood target into order-aware screen exposure.
+
+    High-order twigs remain structurally present for fields and flower placement,
+    but they are intentionally less visible than trunk/primary wood.
+    """
+    target = _clamp(visible_wood, 0.05, 0.95)
+    if order <= 0:
+        return 1.0
+    if order == 1:
+        return _clamp(0.84 + target * 0.16, 0.0, 1.0)
+    if order == 2:
+        return _clamp(0.40 + target * 0.62, 0.0, 1.0)
+    return _clamp(0.16 + target * 0.50, 0.0, 1.0)
 
 
 def _polar_xy(length: float, angle_deg: float) -> tuple[float, float]:
@@ -105,11 +139,17 @@ def _curved_points(start: Vec3, end: Vec3, rng: random.Random, bend: float) -> t
     return (start, mid, end)
 
 
+def _segment_angle(points: tuple[Vec3, ...]) -> float:
+    start, end = points[-2], points[-1]
+    return math.degrees(math.atan2(end.y - start.y, end.x - start.x))
+
+
 def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStructure:
     """Generate deterministic canonical 3D branch topology.
 
-    The topology is intentionally species-neutral. Species/art intent changes the
-    profile; renderers should not be added here.
+    V2 is still species-neutral. Species/art intent changes only the profile.
+    The terminal order is deliberately compact so foliage/flowers can cover the
+    ramification rather than exposing long line-like branches.
     """
     cfg = _profile(profile)
     rng = random.Random(int(seed))
@@ -126,7 +166,7 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
             "trunk", None, 0,
             (Vec3(0.0, 0.0, 0.0), trunk_mid, trunk_top),
             cfg["trunkWidth"], cfg["trunkWidth"] * 0.34,
-            False,
+            False, False, _branch_exposure(0, cfg["visibleWood"]),
         )
     )
 
@@ -149,30 +189,70 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
                 branch_id, "trunk", 1, primary_points,
                 cfg["trunkWidth"] * rng.uniform(0.42, 0.58),
                 cfg["trunkWidth"] * rng.uniform(0.13, 0.22),
-                cfg["secondaryPerPrimary"] == 0,
+                False, False, _branch_exposure(1, cfg["visibleWood"]),
             )
         )
 
-        for child_index in range(cfg["secondaryPerPrimary"]):
+        secondary_count = cfg["secondaryPerPrimary"]
+        for child_index in range(secondary_count):
             child_id = f"{branch_id}s{child_index:02d}"
-            attach_t = 0.62 + child_index * (0.22 / max(1, cfg["secondaryPerPrimary"] - 1))
+            attach_t = 0.66 + child_index * (0.20 / max(1, secondary_count - 1))
             child_start = primary_points[1].lerp(primary_points[2], attach_t)
             fan_sign = -1.0 if child_index % 2 == 0 else 1.0
-            fan = fan_sign * rng.uniform(22.0, 54.0) + rng.uniform(-10.0, 10.0)
+            fan = fan_sign * rng.uniform(22.0, 50.0) + rng.uniform(-8.0, 8.0)
             child_angle = angle + fan
-            child_length = rng.uniform(*cfg["secondaryLength"]) * (1.0 + rng.uniform(-cfg["asymmetry"], cfg["asymmetry"]))
-            child_rise = rng.uniform(*cfg["secondaryRise"])
+            child_length = (
+                rng.uniform(*cfg["secondaryLength"])
+                * cfg["secondaryShortenFactor"]
+                * (1.0 + rng.uniform(-cfg["asymmetry"], cfg["asymmetry"]))
+            )
+            child_rise = rng.uniform(*cfg["secondaryRise"]) * 0.86
             cx, cy = _polar_xy(child_length, child_angle)
-            child_end = Vec3(child_start.x + cx, child_start.y + cy, min(trunk_h * 1.23, child_start.z + child_rise))
-            child_points = _curved_points(child_start, child_end, rng, cfg["bend"] * 1.18)
+            child_end = Vec3(child_start.x + cx, child_start.y + cy, min(trunk_h * 1.20, child_start.z + child_rise))
+            child_points = _curved_points(child_start, child_end, rng, cfg["bend"] * 1.10)
+            tertiary_count = cfg["tertiaryPerSecondary"]
             branches.append(
                 Branch3D(
                     child_id, branch_id, 2, child_points,
-                    cfg["trunkWidth"] * rng.uniform(0.16, 0.22),
-                    cfg["trunkWidth"] * rng.uniform(0.045, 0.075),
-                    True,
+                    cfg["trunkWidth"] * rng.uniform(0.15, 0.21),
+                    cfg["trunkWidth"] * rng.uniform(0.040, 0.065),
+                    tertiary_count == 0,
+                    tertiary_count == 0,
+                    _branch_exposure(2, cfg["visibleWood"]),
                 )
             )
+
+            if tertiary_count <= 0:
+                continue
+
+            base_child_angle = _segment_angle(child_points)
+            attach_lo, attach_hi = cfg["tertiaryAttach"]
+            fan_lo, fan_hi = cfg["tertiaryFanDeg"]
+            for twig_index in range(tertiary_count):
+                twig_id = f"{child_id}t{twig_index:02d}"
+                attach_u = 0.5 if tertiary_count == 1 else twig_index / (tertiary_count - 1)
+                twig_attach = attach_lo + (attach_hi - attach_lo) * attach_u + rng.uniform(-0.035, 0.035)
+                twig_attach = _clamp(twig_attach, 0.54, 0.96)
+                twig_start = child_points[1].lerp(child_points[2], twig_attach)
+                sign = -1.0 if twig_index % 2 == 0 else 1.0
+                twig_angle = base_child_angle + sign * rng.uniform(fan_lo, fan_hi) + rng.uniform(-7.0, 7.0)
+                twig_length = rng.uniform(*cfg["tertiaryLength"]) * (1.0 + rng.uniform(-cfg["asymmetry"] * 0.55, cfg["asymmetry"] * 0.55))
+                twig_rise = rng.uniform(*cfg["tertiaryRise"])
+                tx, ty = _polar_xy(twig_length, twig_angle)
+                twig_end = Vec3(
+                    twig_start.x + tx,
+                    twig_start.y + ty,
+                    min(trunk_h * 1.24, twig_start.z + twig_rise),
+                )
+                twig_points = _curved_points(twig_start, twig_end, rng, cfg["bend"] * 0.92)
+                branches.append(
+                    Branch3D(
+                        twig_id, child_id, 3, twig_points,
+                        cfg["trunkWidth"] * rng.uniform(0.060, 0.090),
+                        cfg["trunkWidth"] * rng.uniform(0.018, 0.032),
+                        True, True, _branch_exposure(3, cfg["visibleWood"]),
+                    )
+                )
 
     return PlantStructure(PLANT_STRUCTURE_CONTRACT, int(seed), cfg, tuple(branches))
 
@@ -189,6 +269,12 @@ def _project_point(point: Vec3, anchor: tuple[int, int], scale: float) -> tuple[
     sy_ground = (point.x + point.y) * scale * 0.36
     sy_height = point.z * scale * 1.10
     return (anchor[0] + sx, anchor[1] + sy_ground - sy_height)
+
+
+def _rgba_hex(rgb: str, exposure: float) -> str:
+    text = rgb.lstrip("#")
+    alpha = round(_clamp(exposure, 0.0, 1.0) * 255)
+    return f"#{text}{alpha:02X}"
 
 
 def project_plant_structure(
@@ -210,37 +296,32 @@ def project_plant_structure(
     for branch in structure.branches:
         points_2d = [_project_point(_rotate_xy(point, rotation), anchor, scale) for point in branch.points]
         width_scale = scale * 0.64
-        paths.append(
-            {
-                "branchId": branch.branch_id,
-                "parentId": branch.parent_id,
-                "order": branch.order,
-                "points": [[round(x, 3), round(y, 3)] for x, y in points_2d],
-                "widthStart": round(max(0.8, branch.width_start * width_scale), 3),
-                "widthEnd": round(max(0.55, branch.width_end * width_scale), 3),
-                "fill": "#795337",
-                "outline": "#4A2F1D" if branch.order <= 1 else None,
-                "outlineWidth": 0.9 if branch.order == 0 else (0.6 if branch.order == 1 else 0.0),
-            }
-        )
+        fill = _rgba_hex("#795337", branch.exposure)
+        path = {
+            "branchId": branch.branch_id,
+            "parentId": branch.parent_id,
+            "order": branch.order,
+            "flowerBearing": branch.flower_bearing,
+            "exposure": round(branch.exposure, 4),
+            "points": [[round(x, 3), round(y, 3)] for x, y in points_2d],
+            "widthStart": round(max(0.55 if branch.order >= 3 else 0.8, branch.width_start * width_scale), 3),
+            "widthEnd": round(max(0.35 if branch.order >= 3 else 0.55, branch.width_end * width_scale), 3),
+            "fill": fill,
+        }
+        if branch.order <= 1:
+            path["outline"] = _rgba_hex("#4A2F1D", branch.exposure)
+            path["outlineWidth"] = 0.9 if branch.order == 0 else 0.6
+        paths.append(path)
         branch_ids.append(branch.branch_id)
         if branch.terminal:
             terminals.append(points_2d[-1])
-
-    cleaned_paths = []
-    for path in paths:
-        cleaned = dict(path)
-        if cleaned["outline"] is None:
-            cleaned.pop("outline")
-            cleaned.pop("outlineWidth")
-        cleaned_paths.append(cleaned)
 
     return PlantProjection(
         PLANT_STRUCTURE_CONTRACT,
         name,
         tuple(canvas),
         tuple(anchor),
-        tuple(cleaned_paths),
+        tuple(paths),
         tuple((round(x, 3), round(y, 3)) for x, y in terminals),
         tuple(branch_ids),
     )
