@@ -21,7 +21,7 @@
         "params": {"color": [0, 0, 0, 0]}
       },
       {
-        "id": "wood",
+        "id": "wood_structure",
         "type": "tapered_path",
         "inputs": {"image": "base"},
         "params": {
@@ -40,26 +40,27 @@
       {
         "id": "wood_mask",
         "type": "field_alpha_mask",
-        "inputs": {"source": "wood"},
-        "params": {"threshold": 12, "expandPx": 1, "blurRadius": 1.0}
+        "inputs": {"source": "wood_structure"},
+        "params": {"threshold": 12, "expandPx": 1, "blurRadius": 0.8}
       },
       {
         "id": "branch_proximity",
         "type": "field_distance",
         "inputs": {"field": "wood_mask"},
-        "params": {"maxDistance": 48, "threshold": 64, "proximity": true}
+        "params": {"maxDistance": 50, "threshold": 64, "proximity": true}
       },
       {
         "id": "crown_density",
         "type": "field_radial_density",
         "params": {
-          "power": 0.62,
+          "power": 0.58,
           "lobes": [
-            {"center": [88, 111], "radius": [61, 48], "weight": 0.96},
-            {"center": [126, 88], "radius": [64, 50], "weight": 1.0},
-            {"center": [170, 109], "radius": [60, 47], "weight": 0.95},
-            {"center": [108, 139], "radius": [58, 42], "weight": 0.88},
-            {"center": [153, 137], "radius": [56, 40], "weight": 0.86}
+            {"center": [82, 112], "radius": [58, 45], "weight": 0.92},
+            {"center": [112, 91], "radius": [58, 48], "weight": 0.98},
+            {"center": [145, 87], "radius": [60, 47], "weight": 1.0},
+            {"center": [177, 111], "radius": [56, 43], "weight": 0.91},
+            {"center": [101, 137], "radius": [55, 39], "weight": 0.86},
+            {"center": [147, 137], "radius": [59, 40], "weight": 0.88}
           ]
         }
       },
@@ -71,18 +72,63 @@
       {
         "id": "depth",
         "type": "field_linear_depth",
-        "params": {"start": [128, 62], "end": [128, 182]}
+        "params": {"start": [128, 56], "end": [128, 184]}
       },
       {
         "id": "direction",
         "type": "field_direction_to_point",
-        "params": {"point": [128, 119], "offsetDeg": 180}
+        "params": {"point": [128, 118], "offsetDeg": 180}
+      },
+      {
+        "id": "support_mass",
+        "type": "field_mass_fill",
+        "inputs": {"image": "base", "density": "crown_density", "depth": "depth"},
+        "params": {
+          "color": "#285332",
+          "threshold": 0.205,
+          "feather": 0.085,
+          "opacity": 218,
+          "closePx": 2,
+          "edgeNoise": 0.17,
+          "noiseCellPx": 17,
+          "depthShade": 0.24,
+          "seedOffset": 31
+        }
+      },
+      {
+        "id": "wood_visible",
+        "type": "tapered_path",
+        "inputs": {"image": "support_mass"},
+        "params": {
+          "supersample": 4,
+          "paths": [
+            {"points": [[128, 241], [127, 213], [124, 184], [126, 156], [121, 131]], "widthStart": 17, "widthEnd": 6, "fill": "#775137", "outline": "#4B301F", "outlineWidth": 1.1},
+            {"points": [[125, 178], [104, 158], [83, 143], [66, 125]], "widthStart": 8, "widthEnd": 2.5, "fill": "#775137", "outline": "#4B301F", "outlineWidth": 0.7},
+            {"points": [[124, 169], [145, 151], [166, 136], [184, 116]], "widthStart": 8, "widthEnd": 2.5, "fill": "#775137", "outline": "#4B301F", "outlineWidth": 0.7},
+            {"points": [[121, 150], [102, 132], [92, 110], [80, 91]], "widthStart": 6, "widthEnd": 2, "fill": "#775137"},
+            {"points": [[123, 149], [139, 127], [151, 105], [162, 86]], "widthStart": 6, "widthEnd": 2, "fill": "#775137"},
+            {"points": [[104, 158], [92, 151], [75, 151]], "widthStart": 4.5, "widthEnd": 1.4, "fill": "#775137"},
+            {"points": [[145, 151], [160, 151], [177, 145]], "widthStart": 4.5, "widthEnd": 1.4, "fill": "#775137"}
+          ]
+        }
+      },
+      {
+        "id": "wood_material",
+        "type": "image_masked_material",
+        "inputs": {"image": "wood_visible", "mask": "wood_mask"},
+        "params": {
+          "coarsePx": 10,
+          "coarseAmount": 0.17,
+          "fineAmount": 0.055,
+          "verticalLight": 0.07,
+          "seedOffset": 97
+        }
       },
       {
         "id": "foliage",
         "type": "field_cluster_scatter",
         "inputs": {
-          "image": "wood",
+          "image": "wood_material",
           "density": "structured_density",
           "avoid": "wood_mask",
           "depth": "depth",
@@ -90,24 +136,24 @@
           "distance": "branch_proximity"
         },
         "params": {
-          "count": 30,
-          "bounds": [42, 48, 214, 182],
-          "minDistance": 11.5,
-          "maxAttempts": 22000,
-          "scale": [0.84, 1.10],
-          "rotationDeg": [-12, 12],
+          "count": 26,
+          "bounds": [40, 47, 216, 184],
+          "minDistance": 12.5,
+          "maxAttempts": 24000,
+          "scale": [0.80, 1.08],
+          "rotationDeg": [-11, 11],
           "mirrorXProbability": 0.5,
           "mappings": {
             "scale_mul": {
-              "base": 0.92,
+              "base": 0.94,
               "inputs": {
-                "density": [[0.0, -0.10], [1.0, 0.20]],
+                "density": [[0.0, -0.08], [1.0, 0.16]],
                 "depth": [[0.0, -0.04], [1.0, 0.10]]
               }
             },
             "rotation_add_deg": {
               "base": 0.0,
-              "inputs": {"field_distance": [[0.0, -5.0], [1.0, 5.0]]}
+              "inputs": {"field_distance": [[0.0, -4.0], [1.0, 4.0]]}
             }
           },
           "cluster": {
@@ -116,85 +162,85 @@
                 "type": "brush",
                 "offset": [-9, 2],
                 "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
-                "scale": [0.48, 0.64],
-                "aspect": [0.76, 1.28],
-                "rotationDeg": [-24, 24],
-                "opacity": [238, 255],
+                "scale": [0.50, 0.65],
+                "aspect": [0.80, 1.24],
+                "rotationDeg": [-20, 20],
+                "opacity": [244, 255],
                 "tints": ["#315E36", "#3D7440", "#4D8648"],
-                "hueJitterDeg": 4,
-                "saturation": [0.94, 1.06],
-                "value": [0.92, 1.05]
+                "hueJitterDeg": 3,
+                "saturation": [0.95, 1.05],
+                "value": [0.94, 1.05]
               },
               {
                 "type": "brush",
                 "offset": [-4, -7],
                 "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
-                "scale": [0.50, 0.68],
-                "aspect": [0.76, 1.30],
-                "rotationDeg": [-24, 24],
-                "opacity": [240, 255],
+                "scale": [0.52, 0.68],
+                "aspect": [0.80, 1.25],
+                "rotationDeg": [-20, 20],
+                "opacity": [244, 255],
                 "tints": ["#3B6D3D", "#4B8245", "#5A9650"],
-                "hueJitterDeg": 4,
-                "saturation": [0.94, 1.06],
-                "value": [0.94, 1.08]
+                "hueJitterDeg": 3,
+                "saturation": [0.95, 1.05],
+                "value": [0.96, 1.07]
               },
               {
                 "type": "brush",
                 "offset": [5, -8],
                 "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
-                "scale": [0.50, 0.68],
-                "aspect": [0.76, 1.30],
-                "rotationDeg": [-24, 24],
-                "opacity": [240, 255],
+                "scale": [0.52, 0.68],
+                "aspect": [0.80, 1.25],
+                "rotationDeg": [-20, 20],
+                "opacity": [244, 255],
                 "tints": ["#416F3F", "#568B49", "#66A158"],
-                "hueJitterDeg": 4,
-                "saturation": [0.94, 1.06],
-                "value": [0.96, 1.10]
+                "hueJitterDeg": 3,
+                "saturation": [0.95, 1.05],
+                "value": [0.97, 1.08]
               },
               {
                 "type": "brush",
                 "offset": [10, 1],
                 "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
-                "scale": [0.48, 0.64],
-                "aspect": [0.76, 1.28],
-                "rotationDeg": [-24, 24],
-                "opacity": [238, 255],
+                "scale": [0.50, 0.65],
+                "aspect": [0.80, 1.24],
+                "rotationDeg": [-20, 20],
+                "opacity": [244, 255],
                 "tints": ["#315E36", "#3D7440", "#4D8648"],
-                "hueJitterDeg": 4,
-                "saturation": [0.94, 1.06],
-                "value": [0.92, 1.05]
+                "hueJitterDeg": 3,
+                "saturation": [0.95, 1.05],
+                "value": [0.94, 1.05]
               },
               {
                 "type": "brush",
                 "offset": [3, 7],
                 "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
-                "scale": [0.52, 0.70],
-                "aspect": [0.78, 1.25],
-                "rotationDeg": [-22, 22],
-                "opacity": [242, 255],
+                "scale": [0.54, 0.70],
+                "aspect": [0.82, 1.22],
+                "rotationDeg": [-18, 18],
+                "opacity": [246, 255],
                 "tints": ["#396A3A", "#4A8144", "#5B9650"],
-                "hueJitterDeg": 4,
-                "saturation": [0.95, 1.05],
-                "value": [0.94, 1.07]
+                "hueJitterDeg": 3,
+                "saturation": [0.96, 1.04],
+                "value": [0.96, 1.07]
               },
               {
                 "type": "brush",
                 "offset": [-5, 8],
                 "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
-                "scale": [0.52, 0.70],
-                "aspect": [0.78, 1.25],
-                "rotationDeg": [-22, 22],
-                "opacity": [242, 255],
+                "scale": [0.54, 0.70],
+                "aspect": [0.82, 1.22],
+                "rotationDeg": [-18, 18],
+                "opacity": [246, 255],
                 "tints": ["#396A3A", "#4A8144", "#5B9650"],
-                "hueJitterDeg": 4,
-                "saturation": [0.95, 1.05],
-                "value": [0.94, 1.07]
+                "hueJitterDeg": 3,
+                "saturation": [0.96, 1.04],
+                "value": [0.96, 1.07]
               },
               {
                 "type": "cluster",
                 "offset": [0, 0],
-                "scale": [0.88, 1.02],
-                "rotationDeg": [-16, 16],
+                "scale": [0.90, 1.03],
+                "rotationDeg": [-14, 14],
                 "mirrorXProbability": 0.5,
                 "cluster": {
                   "members": [
@@ -202,34 +248,34 @@
                       "type": "brush",
                       "offset": [-3, -2],
                       "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
-                      "scale": [0.46, 0.60],
-                      "aspect": [0.82, 1.20],
-                      "rotationDeg": [-18, 18],
-                      "opacity": [244, 255],
+                      "scale": [0.48, 0.61],
+                      "aspect": [0.84, 1.18],
+                      "rotationDeg": [-16, 16],
+                      "opacity": [246, 255],
                       "tints": ["#477F43", "#5A9650", "#6AA35B"],
-                      "value": [0.96, 1.08]
+                      "value": [0.98, 1.08]
                     },
                     {
                       "type": "brush",
                       "offset": [3, -1],
                       "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
-                      "scale": [0.46, 0.60],
-                      "aspect": [0.82, 1.20],
-                      "rotationDeg": [-18, 18],
-                      "opacity": [244, 255],
+                      "scale": [0.48, 0.61],
+                      "aspect": [0.84, 1.18],
+                      "rotationDeg": [-16, 16],
+                      "opacity": [246, 255],
                       "tints": ["#477F43", "#5A9650", "#6AA35B"],
-                      "value": [0.96, 1.08]
+                      "value": [0.98, 1.08]
                     },
                     {
                       "type": "brush",
                       "offset": [0, 4],
                       "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
-                      "scale": [0.48, 0.62],
-                      "aspect": [0.84, 1.18],
-                      "rotationDeg": [-18, 18],
-                      "opacity": [246, 255],
+                      "scale": [0.50, 0.63],
+                      "aspect": [0.86, 1.16],
+                      "rotationDeg": [-16, 16],
+                      "opacity": [248, 255],
                       "tints": ["#4B8245", "#5D9851", "#6AA35B"],
-                      "value": [0.98, 1.10]
+                      "value": [1.00, 1.10]
                     }
                   ]
                 }
@@ -239,10 +285,34 @@
         }
       },
       {
+        "id": "alpha_repair",
+        "type": "image_alpha_cleanup",
+        "inputs": {"image": "foliage"},
+        "params": {
+          "closePx": 1,
+          "openPx": 0,
+          "featherRadius": 0.28,
+          "fillColor": "#2B5733",
+          "fillStrength": 0.55
+        }
+      },
+      {
+        "id": "broad_light",
+        "type": "image_depth_light",
+        "inputs": {"image": "alpha_repair", "depth": "depth"},
+        "params": {"strength": 0.10, "bias": -0.02, "preserveAlpha": true}
+      },
+      {
+        "id": "detail_finish",
+        "type": "image_local_contrast",
+        "inputs": {"image": "broad_light"},
+        "params": {"radius": 1.1, "amount": 0.34, "globalContrast": 1.03}
+      },
+      {
         "id": "finish",
         "type": "levels",
-        "inputs": {"image": "foliage"},
-        "params": {"contrast": 1.05, "brightness": 1.01}
+        "inputs": {"image": "detail_finish"},
+        "params": {"contrast": 1.02, "brightness": 1.01}
       },
       {"id": "output", "type": "output", "inputs": {"image": "finish"}}
     ]
