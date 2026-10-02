@@ -19,8 +19,8 @@ creating an unauditable license mix.
 
 | Project | License posture for A7 | Studied subsystem | A7 status |
 | --- | --- | --- | --- |
-| mypaint/libmypaint | ISC; direct adaptation allowed with notice | brush inputs, setting mappings, radius/opacity/dab dynamics | `A7_DYNAMICS_MAPPING_V1` adapts the additive piecewise-linear mapping model |
-| KDE/krita | GPLv3 repository; reference-only by default | dynamic sensors, brush-engine separation, masked/texture/scatter concepts | architecture reference only; no Krita source copied |
+| mypaint/libmypaint | ISC; direct adaptation allowed with notice | brush inputs, setting mappings, radius/opacity/dab dynamics | `A7_DYNAMICS_MAPPING_V1` and `A7_DAB_DENSITY_V1` adapt permissively licensed concepts with notice |
+| KDE/krita | GPL repository; reference-only by default | dynamic sensors, brush-option separation, masked/texture/scatter concepts | `A7_SENSOR_CONTEXT_V1` and `A7_BRUSH_OPTION_BINDINGS_V1` are independent A7 implementations inspired only by the architectural separation |
 | inkscape/inkscape | copyleft/GPL family; reference-only until file-level audit | paths, vector editing, transforms, geometry workflows | architecture reference only; no Inkscape source copied |
 | Skia | permissive/BSD-style project; candidate for later audit | paths, rasterization, masks, shaders, path effects | not integrated |
 | G'MIC | mixed/project-specific licensing; audit before reuse | morphology, filtering, local processing, image pipelines | not integrated |
@@ -43,31 +43,51 @@ Studied files:
 The useful architectural lesson is that a setting is not just a random range.
 A base value can be driven by named inputs through editable curves. In MyPaint,
 examples of inputs include pressure, random, stroke progress, direction, speed,
-tilt and custom channels. A7 can use the same *kind* of mapping for deterministic
+tilt and custom channels. A7 uses the same kind of mapping for deterministic
 asset-authoring signals such as stroke progress, radial position, branch depth,
 cluster index, direction, density and seeded random values.
+
+Two permissively licensed ideas are now adapted with provenance:
+
+- `A7_DYNAMICS_MAPPING_V1`: additive piecewise-linear setting mappings;
+- `A7_DAB_DENSITY_V1`: radius-aware dab density for path strokes.
 
 ### Krita
 
 Studied architecture:
 
 - `plugins/paintops/libpaintop/sensors/KisDynamicSensor.h`
+- `plugins/paintops/libpaintop/KisCurveOptionDataCommon.h`
 - related dynamic sensor implementations
 
 The useful lesson is the separation of *sensor/input* from *brush option*.
-A7 will follow that separation conceptually, but the implementation must remain
-independently written while Krita is treated as GPL reference material.
+Krita remains GPL reference material. No Krita implementation code is copied.
 
-## First imported capability
+A7 now applies the same architectural separation independently:
 
-`A7_DYNAMICS_MAPPING_V1` is the first deliberately upstream-informed subsystem.
+- `A7_SENSOR_CONTEXT_V1` produces generic named signals (`stroke`, `direction`,
+  `radial`, normalized position, depth, density, pressure, speed, etc.);
+- `A7_BRUSH_OPTION_BINDINGS_V1` maps those signals through A7 dynamics curves
+  into semantic brush options (`scale_mul`, `opacity_mul`, rotation, color,
+  offsets and aspect);
+- `A7_MAPPED_BRUSH_ENGINE_V1` consumes those two layers instead of fabricating
+  sensor semantics internally.
 
-It implements:
+The sensor context is intentionally not brush-specific. Future cluster, field,
+mask, lighting and image-processing nodes can consume the same signal contract.
+
+## Imported/adapted capability summary
+
+`A7_DYNAMICS_MAPPING_V1` implements:
 
 `output = base + curve(input_1) + curve(input_2) + ...`
 
 with piecewise-linear control points and the interpolation/extrapolation
-behavior used by libmypaint's mapping engine.
+behavior used by libmypaint's permissively licensed mapping engine.
 
-This is intentionally generic. It will be consumed by Brush Dynamics, Cluster
-Engine and later field/mask nodes rather than being tied to trees.
+`A7_DAB_DENSITY_V1` adapts the idea that dab density should be relative to the
+brush radius instead of using only fixed pixel spacing.
+
+`A7_SENSOR_CONTEXT_V1` and `A7_BRUSH_OPTION_BINDINGS_V1` are original A7 code
+created after studying Krita's GPL architecture. They copy no Krita code and
+exist specifically to keep sensor production separate from option behavior.
