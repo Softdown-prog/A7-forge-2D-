@@ -17,6 +17,8 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_brush_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_cluster_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_mass_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/image_processing.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_graph.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_scenery.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/node_graph.py'
