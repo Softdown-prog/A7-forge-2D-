@@ -17,6 +17,8 @@ Do not create another asset-specific `*_renderer_vN.py` to solve this class of p
 
 The Draw Engine must grow reusable drawing primitives. Asset recipes should compose those primitives.
 
+A7 may study mature open-source art engines, but reuse must be license-aware and auditable. Direct adaptations record upstream project, source file, pinned commit and license. GPL/copy-left implementations are reference-only unless separately approved. See `OPEN_SOURCE_REFERENCE_MATRIX.md`.
+
 ## Phase 1 — implemented
 
 ### `A7_GEOMETRY_ENGINE_V1`
@@ -57,7 +59,27 @@ Nodes:
 
 V2 stays available for recipe compatibility.
 
-Still planned for later V3 increments: dual-tip masks, texture maps and richer flow/pressure curves.
+### `A7_DYNAMICS_MAPPING_V1`
+
+The first deliberately upstream-informed subsystem. It adapts the permissively licensed libmypaint mapping model: each output has a base value plus piecewise-linear curves driven by named inputs.
+
+Current deterministic A7 inputs include `stroke`, `index`, `random`, `direction`, `radial`, `x`, `y` and `region`. This allows brush properties to be authored as curves rather than only random ranges.
+
+### `A7_MAPPED_BRUSH_ENGINE_V1`
+
+Connects Brush V3 to the mapping system.
+
+Node: `mapped_dynamic_scatter`
+
+Current mapped outputs include scale, aspect, rotation, opacity, hue, saturation, value and X/Y offsets.
+
+### `A7_DAB_DENSITY_V1`
+
+Adapts libmypaint's radius-aware spatial dab-density decomposition. Dynamic path brushes may now use `dabsPerActualRadius` and `dabsPerBasicRadius` instead of a fixed pixel spacing. Larger brush tips naturally move farther between dabs while smaller tips become proportionally denser.
+
+The old `spacing` parameter remains as the compatibility fallback when both density values are zero.
+
+Still planned for later Brush V3 increments: dual-tip masks, texture maps and richer flow/pressure behavior.
 
 ## Phase 3 foundation — implemented
 
@@ -84,11 +106,29 @@ The key production rule is that foliage-scale recipes should distribute tens of 
 
 `path_brush` is still useful for genuine repeated motifs, but it must not be the default way to draw a continuous object such as a trunk.
 
+## Open-source engineering direction
+
+### libmypaint
+
+ISC-licensed and suitable for selective direct adaptation with retained notice. Current A7 adaptations are mapping curves and radius-aware dab density. MyPaint remains a study target for stroke state, opacity/flow behavior and brush input semantics.
+
+### Krita
+
+GPLv3 reference by default. Its sensor/brush-option separation, multiple paint engines, masked brushes, texture/scatter systems and preset architecture are design references. No Krita implementation code is copied into A7.
+
+### Inkscape
+
+Reference target for vector/path authoring, transforms and geometry workflow. Treat implementation as copy-left reference unless a specific file/component is audited otherwise.
+
+### Skia and image-processing projects
+
+Candidates for later permissive components or architecture study, especially rasterization, masks, path effects, morphology and filters. Each integration gets a separate provenance/license audit.
+
 ## Next phases
 
 ### Phase 4 — fields and masks
 
-Add density maps, avoid masks, direction fields, depth fields and distance fields. Distribution should be conditioned by structure rather than by an ellipse alone.
+Add density maps, avoid masks, direction fields, depth fields and distance fields. Distribution should be conditioned by structure rather than by an ellipse alone. These field values should also become inputs to `A7_DYNAMICS_MAPPING_V1`, allowing one curve system to drive both brushes and structured asset generation.
 
 ### Phase 5 — image processing nodes
 
@@ -108,7 +148,8 @@ A production organic asset should eventually satisfy all of the following:
 4. depth/light information is explicit in the graph;
 5. final alpha and edge cleanup are deterministic;
 6. render remains reproducible from recipe + seed + brush pack;
-7. runtime promotion remains separate from art generation and requires visual approval.
+7. runtime promotion remains separate from art generation and requires visual approval;
+8. upstream-informed code has explicit provenance and license records.
 
 ## Tree validation plan
 
