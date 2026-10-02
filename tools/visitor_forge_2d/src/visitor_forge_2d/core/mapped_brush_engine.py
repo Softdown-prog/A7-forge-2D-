@@ -1,7 +1,7 @@
 """A7 mapped brush engine.
 
-Connects Brush Engine V3 to A7_DYNAMICS_MAPPING_V1 so deterministic brush
-properties can be driven by named signals instead of random ranges alone.
+Connects Brush Engine V3 to generic sensor contexts and option bindings so
+brush properties can be driven by named signals instead of random ranges alone.
 """
 from __future__ import annotations
 
@@ -13,7 +13,9 @@ from typing import Mapping, Sequence
 from PIL import Image
 
 from .brush_engine_v3 import BRUSH_V3_CONTRACT, BrushEngineV3, DynamicBrushStamp
-from .dynamics_mapping import DYNAMICS_MAPPING_CONTRACT, evaluate_mapping_set
+from .brush_option_bindings import BRUSH_OPTION_BINDINGS_CONTRACT, BrushOptionBindings
+from .dynamics_mapping import DYNAMICS_MAPPING_CONTRACT
+from .sensor_context import SENSOR_CONTEXT_CONTRACT, SensorContext, canonical_sensor_names
 
 MAPPED_BRUSH_CONTRACT = "A7_MAPPED_BRUSH_ENGINE_V1"
 
@@ -23,7 +25,7 @@ def _clamp(value: float, lo: float, hi: float) -> float:
 
 
 class MappedBrushEngineV1:
-    """Brush V3 plus MyPaint-style curve mappings for authored signals."""
+    """Brush V3 plus curve-driven semantic brush options."""
 
     contract = MAPPED_BRUSH_CONTRACT
 
@@ -33,13 +35,10 @@ class MappedBrushEngineV1:
         self.brush = BrushEngineV3(self.seed + 104729)
 
     @staticmethod
-    def apply_mappings(
+    def apply_option_values(
         stamp: DynamicBrushStamp,
-        mappings: Mapping[str, Mapping],
-        inputs: Mapping[str, float],
+        values: Mapping[str, float],
     ) -> DynamicBrushStamp:
-        values = evaluate_mapping_set(mappings, inputs) if mappings else {}
-
         scale_mul = max(0.05, float(values.get("scale_mul", 1.0)))
         aspect_mul = max(0.1, float(values.get("aspect_mul", 1.0)))
         aspect_root = math.sqrt(aspect_mul)
@@ -56,6 +55,16 @@ class MappedBrushEngineV1:
             saturation_mul=max(0.0, stamp.saturation_mul * float(values.get("saturation_mul", 1.0))),
             value_mul=max(0.0, stamp.value_mul * float(values.get("value_mul", 1.0))),
         )
+
+    @staticmethod
+    def apply_mappings(
+        stamp: DynamicBrushStamp,
+        mappings: Mapping[str, Mapping],
+        inputs: Mapping[str, float] | SensorContext,
+    ) -> DynamicBrushStamp:
+        """Compatibility entry point retained for existing callers/tests."""
+        bindings = BrushOptionBindings(mappings)
+        return MappedBrushEngineV1.apply_option_values(stamp, bindings.evaluate(inputs))
 
     def scatter_regions(
         self,
@@ -82,6 +91,7 @@ class MappedBrushEngineV1:
             raise ValueError("mapped scatter region weights must sum above zero")
 
         dynamics = dict(dynamics or {})
+        bindings = BrushOptionBindings(mappings)
         stamps: list[DynamicBrushStamp] = []
 
         for index in range(count):
@@ -101,28 +111,34 @@ class MappedBrushEngineV1:
             x = float(center[0]) + math.cos(angle) * float(radius[0]) * radial
             y = float(center[1]) + math.sin(angle) * float(radius[1]) * radial
 
-            mapping_inputs = {
-                "stroke": 0.0 if count <= 1 else index / (count - 1),
-                "index": float(index),
-                "random": self.rng.random(),
-                "direction": math.degrees(angle) % 360.0,
-                "radial": radial,
-                "x": x,
-                "y": y,
-                "region": float(region_index),
-            }
+            sensors = SensorContext.scatter(
+                index=index,
+                count=count,
+                random_value=self.rng.random(),
+                direction_deg=math.degrees(angle),
+                radial=radial,
+                x=x,
+                y=y,
+                canvas_width=canvas.width,
+                canvas_height=canvas.height,
+                region=region_index,
+                depth=float(region.get("depth", 0.0)),
+                density=float(region.get("density", 1.0)),
+            )
 
             brush_name = self.rng.choice(tuple(brushes))
             base_stamp = self.brush.random_stamp(x, y, **dynamics)
-            stamp = self.apply_mappings(base_stamp, mappings, mapping_inputs)
+            stamp = self.apply_option_values(base_stamp, bindings.evaluate(sensors))
             self.brush.stamp(canvas, brush_name, stamp)
             stamps.append(stamp)
 
         return stamps, {
             "contract": MAPPED_BRUSH_CONTRACT,
             "brushContract": BRUSH_V3_CONTRACT,
+            "sensorContract": SENSOR_CONTEXT_CONTRACT,
+            "optionBindingsContract": BRUSH_OPTION_BINDINGS_CONTRACT,
             "mappingContract": DYNAMICS_MAPPING_CONTRACT,
             "stampCount": len(stamps),
             "mappingOutputs": sorted(str(key) for key in mappings.keys()),
-            "mappingInputs": ["direction", "index", "radial", "random", "region", "stroke", "x", "y"],
+            "mappingInputs": list(canonical_sensor_names()),
         }
