@@ -45,13 +45,20 @@ _SPECIES_PROFILES: dict[str, dict[str, Any]] = {
         "trunkHeight": 1.0,
         "trunkWidth": 0.105,
         "crownStart": 0.43,
-        "primaryCount": 6,
+        "primaryCount": 4,
         "secondaryPerPrimary": 2,
-        "primaryLength": [0.48, 0.72],
-        "secondaryLength": [0.25, 0.40],
-        "primaryRise": [0.20, 0.38],
-        "secondaryRise": [0.10, 0.23],
-        "radialJitterDeg": 23,
+        "secondaryPattern": [3, 2, 3, 2],
+        "primaryLength": [0.44, 0.64],
+        "secondaryLength": [0.23, 0.36],
+        "primaryRise": [0.18, 0.32],
+        "secondaryRise": [0.09, 0.20],
+        "primaryForkSpread": [0.06, 0.30],
+        "primaryForkAngleDeg": [52.0, 74.0],
+        "secondaryAttach": [0.34, 0.76],
+        "secondaryContinuationDeg": [4.0, 14.0],
+        "secondaryLateralFanDeg": [27.0, 48.0],
+        "visibleWood": 0.34,
+        "radialJitterDeg": 18,
         "bend": 0.15,
         "asymmetry": 0.20,
     },
@@ -136,6 +143,7 @@ def profile_from_intent(intent: dict) -> dict:
     if normalized["age"] in {"young", "juvenile"}:
         profile["primaryCount"] = max(4, int(profile["primaryCount"]) - 1)
         profile["secondaryPerPrimary"] = 1
+        profile.pop("secondaryPattern", None)
         profile["trunkWidth"] *= 0.82
     elif normalized["age"] in {"old", "mature_old"}:
         profile["trunkWidth"] *= 1.14
