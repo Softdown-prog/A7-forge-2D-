@@ -41,25 +41,25 @@
         "id": "wood_mask",
         "type": "field_alpha_mask",
         "inputs": {"source": "wood"},
-        "params": {"threshold": 12, "expandPx": 2, "blurRadius": 1.5}
+        "params": {"threshold": 12, "expandPx": 1, "blurRadius": 1.0}
       },
       {
         "id": "branch_proximity",
         "type": "field_distance",
         "inputs": {"field": "wood_mask"},
-        "params": {"maxDistance": 42, "threshold": 64, "proximity": true}
+        "params": {"maxDistance": 48, "threshold": 64, "proximity": true}
       },
       {
         "id": "crown_density",
         "type": "field_radial_density",
         "params": {
-          "power": 0.72,
+          "power": 0.62,
           "lobes": [
-            {"center": [90, 112], "radius": [58, 46], "weight": 0.96},
-            {"center": [128, 91], "radius": [61, 49], "weight": 1.0},
-            {"center": [169, 108], "radius": [57, 45], "weight": 0.95},
-            {"center": [111, 137], "radius": [55, 39], "weight": 0.86},
-            {"center": [151, 136], "radius": [53, 38], "weight": 0.84}
+            {"center": [88, 111], "radius": [61, 48], "weight": 0.96},
+            {"center": [126, 88], "radius": [64, 50], "weight": 1.0},
+            {"center": [170, 109], "radius": [60, 47], "weight": 0.95},
+            {"center": [108, 139], "radius": [58, 42], "weight": 0.88},
+            {"center": [153, 137], "radius": [56, 40], "weight": 0.86}
           ]
         }
       },
@@ -71,16 +71,16 @@
       {
         "id": "depth",
         "type": "field_linear_depth",
-        "params": {"start": [128, 66], "end": [128, 177]}
+        "params": {"start": [128, 62], "end": [128, 182]}
       },
       {
         "id": "direction",
         "type": "field_direction_to_point",
-        "params": {"point": [128, 118], "offsetDeg": 180}
+        "params": {"point": [128, 119], "offsetDeg": 180}
       },
       {
         "id": "foliage",
-        "type": "field_mapped_scatter",
+        "type": "field_cluster_scatter",
         "inputs": {
           "image": "wood",
           "density": "structured_density",
@@ -90,40 +90,151 @@
           "distance": "branch_proximity"
         },
         "params": {
-          "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
-          "count": 145,
-          "bounds": [47, 55, 207, 176],
-          "minDistance": 5.2,
-          "maxAttempts": 26000,
-          "scale": [0.46, 0.72],
-          "aspect": [0.68, 1.38],
-          "rotationDeg": [-20, 20],
-          "opacity": [226, 255],
-          "tints": ["#315E36", "#3D7440", "#4D8648", "#5A9650", "#6AA35B"],
+          "count": 30,
+          "bounds": [42, 48, 214, 182],
+          "minDistance": 11.5,
+          "maxAttempts": 22000,
+          "scale": [0.84, 1.10],
+          "rotationDeg": [-12, 12],
           "mirrorXProbability": 0.5,
-          "hueJitterDeg": 5,
-          "saturation": [0.92, 1.08],
-          "value": [0.90, 1.08],
           "mappings": {
             "scale_mul": {
-              "base": 0.88,
-              "inputs": {
-                "density": [[0.0, -0.10], [1.0, 0.18]],
-                "depth": [[0.0, -0.05], [1.0, 0.13]]
-              }
-            },
-            "opacity_mul": {
               "base": 0.92,
-              "inputs": {"depth": [[0.0, -0.08], [1.0, 0.08]]}
+              "inputs": {
+                "density": [[0.0, -0.10], [1.0, 0.20]],
+                "depth": [[0.0, -0.04], [1.0, 0.10]]
+              }
             },
             "rotation_add_deg": {
               "base": 0.0,
-              "inputs": {"field_distance": [[0.0, -6.0], [1.0, 6.0]]}
-            },
-            "value_mul": {
-              "base": 0.92,
-              "inputs": {"depth": [[0.0, -0.05], [1.0, 0.16]]}
+              "inputs": {"field_distance": [[0.0, -5.0], [1.0, 5.0]]}
             }
+          },
+          "cluster": {
+            "members": [
+              {
+                "type": "brush",
+                "offset": [-9, 2],
+                "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
+                "scale": [0.48, 0.64],
+                "aspect": [0.76, 1.28],
+                "rotationDeg": [-24, 24],
+                "opacity": [238, 255],
+                "tints": ["#315E36", "#3D7440", "#4D8648"],
+                "hueJitterDeg": 4,
+                "saturation": [0.94, 1.06],
+                "value": [0.92, 1.05]
+              },
+              {
+                "type": "brush",
+                "offset": [-4, -7],
+                "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
+                "scale": [0.50, 0.68],
+                "aspect": [0.76, 1.30],
+                "rotationDeg": [-24, 24],
+                "opacity": [240, 255],
+                "tints": ["#3B6D3D", "#4B8245", "#5A9650"],
+                "hueJitterDeg": 4,
+                "saturation": [0.94, 1.06],
+                "value": [0.94, 1.08]
+              },
+              {
+                "type": "brush",
+                "offset": [5, -8],
+                "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
+                "scale": [0.50, 0.68],
+                "aspect": [0.76, 1.30],
+                "rotationDeg": [-24, 24],
+                "opacity": [240, 255],
+                "tints": ["#416F3F", "#568B49", "#66A158"],
+                "hueJitterDeg": 4,
+                "saturation": [0.94, 1.06],
+                "value": [0.96, 1.10]
+              },
+              {
+                "type": "brush",
+                "offset": [10, 1],
+                "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
+                "scale": [0.48, 0.64],
+                "aspect": [0.76, 1.28],
+                "rotationDeg": [-24, 24],
+                "opacity": [238, 255],
+                "tints": ["#315E36", "#3D7440", "#4D8648"],
+                "hueJitterDeg": 4,
+                "saturation": [0.94, 1.06],
+                "value": [0.92, 1.05]
+              },
+              {
+                "type": "brush",
+                "offset": [3, 7],
+                "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
+                "scale": [0.52, 0.70],
+                "aspect": [0.78, 1.25],
+                "rotationDeg": [-22, 22],
+                "opacity": [242, 255],
+                "tints": ["#396A3A", "#4A8144", "#5B9650"],
+                "hueJitterDeg": 4,
+                "saturation": [0.95, 1.05],
+                "value": [0.94, 1.07]
+              },
+              {
+                "type": "brush",
+                "offset": [-5, 8],
+                "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
+                "scale": [0.52, 0.70],
+                "aspect": [0.78, 1.25],
+                "rotationDeg": [-22, 22],
+                "opacity": [242, 255],
+                "tints": ["#396A3A", "#4A8144", "#5B9650"],
+                "hueJitterDeg": 4,
+                "saturation": [0.95, 1.05],
+                "value": [0.94, 1.07]
+              },
+              {
+                "type": "cluster",
+                "offset": [0, 0],
+                "scale": [0.88, 1.02],
+                "rotationDeg": [-16, 16],
+                "mirrorXProbability": 0.5,
+                "cluster": {
+                  "members": [
+                    {
+                      "type": "brush",
+                      "offset": [-3, -2],
+                      "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
+                      "scale": [0.46, 0.60],
+                      "aspect": [0.82, 1.20],
+                      "rotationDeg": [-18, 18],
+                      "opacity": [244, 255],
+                      "tints": ["#477F43", "#5A9650", "#6AA35B"],
+                      "value": [0.96, 1.08]
+                    },
+                    {
+                      "type": "brush",
+                      "offset": [3, -1],
+                      "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"],
+                      "scale": [0.46, 0.60],
+                      "aspect": [0.82, 1.20],
+                      "rotationDeg": [-18, 18],
+                      "opacity": [244, 255],
+                      "tints": ["#477F43", "#5A9650", "#6AA35B"],
+                      "value": [0.96, 1.08]
+                    },
+                    {
+                      "type": "brush",
+                      "offset": [0, 4],
+                      "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"],
+                      "scale": [0.48, 0.62],
+                      "aspect": [0.84, 1.18],
+                      "rotationDeg": [-18, 18],
+                      "opacity": [246, 255],
+                      "tints": ["#4B8245", "#5D9851", "#6AA35B"],
+                      "value": [0.98, 1.10]
+                    }
+                  ]
+                }
+              }
+            ]
           }
         }
       },
@@ -131,7 +242,7 @@
         "id": "finish",
         "type": "levels",
         "inputs": {"image": "foliage"},
-        "params": {"contrast": 1.06, "brightness": 1.01}
+        "params": {"contrast": 1.05, "brightness": 1.01}
       },
       {"id": "output", "type": "output", "inputs": {"image": "finish"}}
     ]
