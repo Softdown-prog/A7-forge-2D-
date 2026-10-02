@@ -60,14 +60,14 @@
         "type": "field_mass_fill",
         "inputs": {"image": "base", "density": "support_density", "depth": "depth"},
         "params": {
-          "color": "#244B2E",
-          "threshold": 0.105,
-          "feather": 0.055,
-          "opacity": 162,
+          "color": "#203F29",
+          "threshold": 0.12,
+          "feather": 0.05,
+          "opacity": 112,
           "closePx": 1,
-          "edgeNoise": 0.29,
-          "noiseCellPx": 11,
-          "depthShade": 0.28,
+          "edgeNoise": 0.18,
+          "noiseCellPx": 10,
+          "depthShade": 0.30,
           "seedOffset": 31
         }
       },
@@ -94,37 +94,33 @@
         "type": "field_cluster_scatter",
         "inputs": {"image": "wood_material", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
         "params": {
-          "count": 24,
+          "count": 18,
           "bounds": [40, 47, 216, 184],
-          "minDistance": 12.8,
-          "maxAttempts": 24000,
-          "scale": [0.78, 1.04],
-          "rotationDeg": [-11, 11],
+          "minDistance": 14.8,
+          "maxAttempts": 26000,
+          "scale": [0.74, 1.00],
+          "rotationDeg": [-12, 12],
           "mirrorXProbability": 0.5,
           "mappings": {
-            "scale_mul": {"base": 0.94, "inputs": {"density": [[0.0, -0.08], [1.0, 0.16]], "depth": [[0.0, -0.04], [1.0, 0.10]]}},
+            "scale_mul": {"base": 0.94, "inputs": {"density": [[0.0, -0.08], [1.0, 0.14]], "depth": [[0.0, -0.04], [1.0, 0.08]]}},
             "rotation_add_deg": {"base": 0.0, "inputs": {"field_distance": [[0.0, -4.0], [1.0, 4.0]]}}
           },
           "cluster": {
             "members": [
-              {"type": "brush", "offset": [-9, 2], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"], "scale": [0.50, 0.65], "aspect": [0.80, 1.24], "rotationDeg": [-20, 20], "opacity": [244, 255], "tints": ["#315E36", "#3D7440", "#4D8648"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.94, 1.05]},
-              {"type": "brush", "offset": [-4, -7], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"], "scale": [0.52, 0.68], "aspect": [0.80, 1.25], "rotationDeg": [-20, 20], "opacity": [244, 255], "tints": ["#3B6D3D", "#4B8245", "#5A9650"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.96, 1.07]},
-              {"type": "brush", "offset": [5, -8], "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"], "scale": [0.52, 0.68], "aspect": [0.80, 1.25], "rotationDeg": [-20, 20], "opacity": [244, 255], "tints": ["#416F3F", "#568B49", "#66A158"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.97, 1.08]},
-              {"type": "brush", "offset": [10, 1], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"], "scale": [0.50, 0.65], "aspect": [0.80, 1.24], "rotationDeg": [-20, 20], "opacity": [244, 255], "tints": ["#315E36", "#3D7440", "#4D8648"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.94, 1.05]},
-              {"type": "brush", "offset": [3, 7], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"], "scale": [0.54, 0.70], "aspect": [0.82, 1.22], "rotationDeg": [-18, 18], "opacity": [246, 255], "tints": ["#396A3A", "#4A8144", "#5B9650"], "hueJitterDeg": 3, "saturation": [0.96, 1.04], "value": [0.96, 1.07]},
-              {"type": "brush", "offset": [-5, 8], "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"], "scale": [0.54, 0.70], "aspect": [0.82, 1.22], "rotationDeg": [-18, 18], "opacity": [246, 255], "tints": ["#396A3A", "#4A8144", "#5B9650"], "hueJitterDeg": 3, "saturation": [0.96, 1.04], "value": [0.96, 1.07]},
-              {"type": "cluster", "offset": [0, 0], "scale": [0.90, 1.03], "rotationDeg": [-14, 14], "mirrorXProbability": 0.5, "cluster": {"members": [
-                {"type": "brush", "offset": [-3, -2], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"], "scale": [0.48, 0.61], "aspect": [0.84, 1.18], "rotationDeg": [-16, 16], "opacity": [246, 255], "tints": ["#477F43", "#5A9650", "#6AA35B"], "value": [0.98, 1.08]},
-                {"type": "brush", "offset": [3, -1], "brushes": ["foliage/leaf_oval_02.png", "foliage/leaf_oval_03.png"], "scale": [0.48, 0.61], "aspect": [0.84, 1.18], "rotationDeg": [-16, 16], "opacity": [246, 255], "tints": ["#477F43", "#5A9650", "#6AA35B"], "value": [0.98, 1.08]},
-                {"type": "brush", "offset": [0, 4], "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_03.png"], "scale": [0.50, 0.63], "aspect": [0.86, 1.16], "rotationDeg": [-16, 16], "opacity": [248, 255], "tints": ["#4B8245", "#5D9851", "#6AA35B"], "value": [1.00, 1.10]}
-              ]}}
+              {"type": "brush", "offset": [0, 0], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"], "scale": [0.66, 0.84], "aspect": [0.88, 1.14], "rotationDeg": [-18, 18], "opacity": [178, 218], "tints": ["#315A38", "#386840", "#3F7446"], "hueJitterDeg": 2, "saturation": [0.96, 1.04], "value": [0.90, 1.02]},
+              {"type": "brush", "offset": [-8, -4], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [230, 255], "tints": ["#39703F", "#478348", "#559250"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.94, 1.07]},
+              {"type": "brush", "offset": [8, -3], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [230, 255], "tints": ["#3D7442", "#4B874A", "#5A9852"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.95, 1.08]},
+              {"type": "brush", "offset": [0, 7], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.58, 0.75], "aspect": [0.90, 1.12], "rotationDeg": [-22, 22], "opacity": [228, 252], "tints": ["#345F39", "#427744", "#50894B"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.92, 1.04]},
+              {"type": "brush", "offset": [-13, 1], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.48, 0.64], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [238, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
+              {"type": "brush", "offset": [13, 0], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.48, 0.64], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [238, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
+              {"type": "brush", "offset": [0, -10], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.50, 0.66], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [240, 255], "tints": ["#4A8449", "#599452", "#68A45C"], "hueJitterDeg": 4, "saturation": [0.97, 1.05], "value": [1.00, 1.12]}
             ]
           }
         }
       },
-      {"id": "alpha_repair", "type": "image_alpha_cleanup", "inputs": {"image": "foliage"}, "params": {"closePx": 0, "openPx": 0, "featherRadius": 0.18}},
-      {"id": "broad_light", "type": "image_depth_light", "inputs": {"image": "alpha_repair", "depth": "depth"}, "params": {"strength": 0.11, "bias": -0.02, "preserveAlpha": true}},
-      {"id": "detail_finish", "type": "image_local_contrast", "inputs": {"image": "broad_light"}, "params": {"radius": 1.0, "amount": 0.38, "globalContrast": 1.04}},
+      {"id": "alpha_repair", "type": "image_alpha_cleanup", "inputs": {"image": "foliage"}, "params": {"closePx": 0, "openPx": 0, "featherRadius": 0.12}},
+      {"id": "broad_light", "type": "image_depth_light", "inputs": {"image": "alpha_repair", "depth": "depth"}, "params": {"strength": 0.12, "bias": -0.02, "preserveAlpha": true}},
+      {"id": "detail_finish", "type": "image_local_contrast", "inputs": {"image": "broad_light"}, "params": {"radius": 0.9, "amount": 0.40, "globalContrast": 1.04}},
       {"id": "finish", "type": "levels", "inputs": {"image": "detail_finish"}, "params": {"contrast": 1.02, "brightness": 1.01}},
       {"id": "output", "type": "output", "inputs": {"image": "finish"}}
     ]
