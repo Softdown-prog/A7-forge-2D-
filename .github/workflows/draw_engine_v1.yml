@@ -14,18 +14,24 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/geometry_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/vector_path.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/distribution_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_brush_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_graph.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_scenery.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/node_graph.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/graph_scenery.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/graph_worker.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/brush_library/**'
       - 'tools/visitor_forge_2d/examples/park_tree_brush_graph_pilot_01.json'
       - 'tools/visitor_forge_2d/examples/draw_engine_cluster_pilot_01.json'
+      - 'tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json'
       - 'tools/visitor_forge_2d/tests/test_node_graph_v1.py'
       - 'tools/visitor_forge_2d/tests/test_dynamics_mapping.py'
       - 'tools/visitor_forge_2d/tests/test_mapped_brush_engine.py'
       - 'tools/visitor_forge_2d/tests/test_dab_density.py'
       - 'tools/visitor_forge_2d/tests/test_sensor_context.py'
       - 'tools/visitor_forge_2d/tests/test_vector_path.py'
+      - 'tools/visitor_forge_2d/tests/test_field_engine.py'
       - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
       - 'tools/visitor_forge_2d/docs/OPEN_SOURCE_REFERENCE_MATRIX.md'
       - 'tools/visitor_forge_2d/third_party/**'
@@ -52,7 +58,8 @@ jobs:
             tools/visitor_forge_2d/tests/test_mapped_brush_engine.py \
             tools/visitor_forge_2d/tests/test_dab_density.py \
             tools/visitor_forge_2d/tests/test_sensor_context.py \
-            tools/visitor_forge_2d/tests/test_vector_path.py
+            tools/visitor_forge_2d/tests/test_vector_path.py \
+            tools/visitor_forge_2d/tests/test_field_engine.py
       - name: Render legacy compatibility pilot
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
@@ -79,6 +86,19 @@ jobs:
           )
           print(result)
           PY
+      - name: Render field-aware tree pilot
+        env:
+          PYTHONPATH: tools/visitor_forge_2d/src
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from visitor_forge_2d.graph_worker import run_graph_workers
+          result = run_graph_workers(
+              Path('tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json'),
+              Path('rendered_draw_engine_fields'),
+          )
+          print(result)
+          PY
       - name: Upload compatibility artifact
         uses: actions/upload-artifact@v4
         with:
@@ -90,4 +110,10 @@ jobs:
         with:
           name: a7-draw-engine-v2-cluster-pilot
           path: rendered_draw_engine_v2/
+          if-no-files-found: error
+      - name: Upload field-aware tree pilot
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-draw-engine-v2-field-tree-pilot
+          path: rendered_draw_engine_fields/
           if-no-files-found: error
