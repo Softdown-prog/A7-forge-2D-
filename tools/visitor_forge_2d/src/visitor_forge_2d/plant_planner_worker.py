@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 from .core import field_graph
 from .core.art_planner import ART_PLANNER_CONTRACT, PLANT_INTENT_CONTRACT, plan_plant_four_views
+from .core.branch_geometry_v2 import BRANCH_GEOMETRY_CONTRACT, upgrade_plant_wood_recipe
 from .core.plant_repair_policy import apply_repair_plan, propose_repair
 from .core.plant_structure import CARDINAL_VIEWS, PLANT_STRUCTURE_CONTRACT, topology_signature
 from .core.plant_visual_critic import (
@@ -75,6 +76,8 @@ def _render_recipe_set(recipes: dict[str, dict], expected_ids: list[str]) -> tup
         planner = recipe.get("planner", {})
         if planner.get("branchIds") != expected_ids:
             raise ValueError(f"{view} planner lost canonical branch identity")
+        if planner.get("branchGeometryContract") != BRANCH_GEOMETRY_CONTRACT:
+            raise ValueError(f"{view} planner lost Branch Geometry V2 contract")
         frame, metadata = field_graph.execute(recipe)
         if frame.getchannel("A").getbbox() is None:
             raise ValueError(f"{view} planner render is fully transparent")
@@ -90,7 +93,11 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
     if intent.get("contract") != PLANT_INTENT_CONTRACT:
         raise ValueError(f"plant intent must declare {PLANT_INTENT_CONTRACT}")
 
-    structure, baseline_recipes = plan_plant_four_views(intent)
+    structure, planned_recipes = plan_plant_four_views(intent)
+    baseline_recipes = {
+        view: upgrade_plant_wood_recipe(planned_recipes[view], structure, view=view)
+        for view in CARDINAL_VIEWS
+    }
     output_root.mkdir(parents=True, exist_ok=True)
     structure_path = output_root / "canonical_structure.json"
     structure_path.write_text(json.dumps(_structure_payload(structure), indent=2) + "\n", encoding="utf-8")
@@ -184,6 +191,7 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
         "plannerContract": ART_PLANNER_CONTRACT,
         "intentContract": PLANT_INTENT_CONTRACT,
         "structureContract": PLANT_STRUCTURE_CONTRACT,
+        "branchGeometryContract": BRANCH_GEOMETRY_CONTRACT,
         "visualCriticContract": PLANT_VISUAL_CRITIC_CONTRACT,
         "repairLoopContract": PLANT_REPAIR_CONTRACT,
         "intent": str(intent_path),
