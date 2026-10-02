@@ -106,6 +106,7 @@ def _profile(raw: dict | None) -> dict:
         "secondaryLength": _range_pair(source.get("secondaryLength"), (0.22, 0.38)),
         "tertiaryLength": _range_pair(source.get("tertiaryLength"), (0.075, 0.145)),
         "primaryRise": _range_pair(source.get("primaryRise"), (0.18, 0.34)),
+        "primaryRiseRatioMin": _clamp(source.get("primaryRiseRatioMin", 0.0), 0.0, 0.75),
         "secondaryRise": _range_pair(source.get("secondaryRise"), (0.08, 0.20)),
         "tertiaryRise": _range_pair(source.get("tertiaryRise"), (0.025, 0.085)),
         "primaryForkSpread": (
@@ -246,6 +247,7 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
         angle = pair_axis + side * fork_half + rng.uniform(-cfg["radialJitterDeg"] * 0.45, cfg["radialJitterDeg"] * 0.45)
         length = rng.uniform(*cfg["primaryLength"]) * (1.0 + rng.uniform(-cfg["asymmetry"], cfg["asymmetry"]))
         rise = rng.uniform(*cfg["primaryRise"])
+        rise = max(rise, length * cfg["primaryRiseRatioMin"])
         off_x, off_y = _polar_xy(length, angle)
         end = Vec3(start.x + off_x, start.y + off_y, min(trunk_h * 1.15, start.z + rise))
         primary_points = _curved_points(start, end, rng, cfg["bend"])
