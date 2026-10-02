@@ -33,9 +33,41 @@ def test_field_mass_is_deterministic_and_coherent() -> None:
     )
     assert stats_a == stats_b
     assert stats_a["contract"] == FIELD_MASS_CONTRACT
+    assert stats_a["noiseFieldGated"] is True
     assert first.tobytes() == second.tobytes()
     assert first.getchannel("A").getbbox() is not None
     assert 0.03 < stats_a["coverage"] < 0.8
+
+
+def test_field_mass_noise_cannot_spawn_outside_zero_density() -> None:
+    density = Image.new("L", (72, 72), 0)
+    for y in range(26, 46):
+        for x in range(28, 44):
+            density.putpixel((x, y), 180)
+    canvas = Image.new("RGBA", (72, 72), (0, 0, 0, 0))
+    paint_field_mass(
+        canvas,
+        density,
+        color="#285332",
+        threshold=0.08,
+        feather=0.04,
+        close_px=1,
+        edge_noise=0.45,
+        noise_cell_px=5,
+        seed=123,
+    )
+    alpha = canvas.getchannel("A")
+    # The engine may feather by one pixel around authored support, but it must
+    # never create disconnected islands/tendrils in distant zero-density space.
+    assert alpha.getpixel((0, 0)) == 0
+    assert alpha.getpixel((71, 71)) == 0
+    assert alpha.getpixel((10, 36)) == 0
+    assert alpha.getpixel((60, 36)) == 0
+    assert alpha.getbbox() is not None
+    assert alpha.getbbox()[0] >= 27
+    assert alpha.getbbox()[1] >= 25
+    assert alpha.getbbox()[2] <= 45
+    assert alpha.getbbox()[3] <= 47
 
 
 def test_alpha_cleanup_closes_small_hole() -> None:
