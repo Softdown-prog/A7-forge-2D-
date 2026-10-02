@@ -2,8 +2,9 @@
 
 Builds one deterministic canonical plant skeleton in lightweight 3D and projects
 the same identity into the four City Horizon cardinal views. V2 adds botanical
-ramification: primary branches feed shorter secondary branches, which terminate
-in compact flower-bearing twigs. Painting remains delegated to the Draw Engine.
+ramification: paired primary forks feed earlier lateral/continuation secondaries,
+which terminate in compact flower-bearing twigs. Painting remains delegated to
+the Draw Engine.
 """
 from __future__ import annotations
 
@@ -78,12 +79,20 @@ def _range_pair(value: object, default: tuple[float, float]) -> tuple[float, flo
     return (min(lo, hi), max(lo, hi))
 
 
+def _int_pattern(value: object) -> tuple[int, ...]:
+    if not isinstance(value, (list, tuple)) or not value:
+        return ()
+    return tuple(max(1, min(4, int(item))) for item in value[:9])
+
+
 def _clamp(value: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, float(value)))
 
 
 def _profile(raw: dict | None) -> dict:
     source = dict(raw or {})
+    primary_fork_spread = _range_pair(source.get("primaryForkSpread"), (0.08, 0.48))
+    secondary_attach = _range_pair(source.get("secondaryAttach"), (0.34, 0.78))
     return {
         "trunkHeight": float(source.get("trunkHeight", 1.0)),
         "trunkLean": float(source.get("trunkLean", 0.08)),
@@ -91,6 +100,7 @@ def _profile(raw: dict | None) -> dict:
         "crownStart": float(source.get("crownStart", 0.46)),
         "primaryCount": max(3, min(9, int(source.get("primaryCount", 6)))),
         "secondaryPerPrimary": max(1, min(4, int(source.get("secondaryPerPrimary", 2)))),
+        "secondaryPattern": _int_pattern(source.get("secondaryPattern")),
         "tertiaryPerSecondary": max(0, min(3, int(source.get("tertiaryPerSecondary", 2)))),
         "primaryLength": _range_pair(source.get("primaryLength"), (0.46, 0.70)),
         "secondaryLength": _range_pair(source.get("secondaryLength"), (0.22, 0.38)),
@@ -98,9 +108,20 @@ def _profile(raw: dict | None) -> dict:
         "primaryRise": _range_pair(source.get("primaryRise"), (0.18, 0.34)),
         "secondaryRise": _range_pair(source.get("secondaryRise"), (0.08, 0.20)),
         "tertiaryRise": _range_pair(source.get("tertiaryRise"), (0.025, 0.085)),
+        "primaryForkSpread": (
+            _clamp(primary_fork_spread[0], 0.0, 0.72),
+            _clamp(primary_fork_spread[1], 0.0, 0.78),
+        ),
+        "primaryForkAngleDeg": _range_pair(source.get("primaryForkAngleDeg"), (48.0, 76.0)),
+        "secondaryAttach": (
+            _clamp(secondary_attach[0], 0.24, 0.82),
+            _clamp(secondary_attach[1], 0.34, 0.90),
+        ),
+        "secondaryContinuationDeg": _range_pair(source.get("secondaryContinuationDeg"), (4.0, 15.0)),
+        "secondaryLateralFanDeg": _range_pair(source.get("secondaryLateralFanDeg"), (27.0, 52.0)),
         "secondaryShortenFactor": _clamp(source.get("secondaryShortenFactor", 0.72), 0.45, 1.0),
         "tertiaryFanDeg": _range_pair(source.get("tertiaryFanDeg"), (16.0, 38.0)),
-        "tertiaryAttach": _range_pair(source.get("tertiaryAttach"), (0.62, 0.90)),
+        "tertiaryAttach": _range_pair(source.get("tertiaryAttach"), (0.56, 0.88)),
         "visibleWood": _clamp(source.get("visibleWood", 0.34), 0.05, 0.95),
         "radialJitterDeg": float(source.get("radialJitterDeg", 18.0)),
         "bend": float(source.get("bend", 0.12)),
@@ -109,11 +130,7 @@ def _profile(raw: dict | None) -> dict:
 
 
 def _branch_exposure(order: int, visible_wood: float) -> float:
-    """Convert one authored wood target into order-aware screen exposure.
-
-    High-order twigs remain structurally present for fields and flower placement,
-    but they are intentionally less visible than trunk/primary wood.
-    """
+    """Convert one authored wood target into order-aware screen exposure."""
     target = _clamp(visible_wood, 0.05, 0.95)
     if order <= 0:
         return 1.0
@@ -129,14 +146,26 @@ def _polar_xy(length: float, angle_deg: float) -> tuple[float, float]:
     return length * math.cos(angle), length * math.sin(angle)
 
 
-def _curved_points(start: Vec3, end: Vec3, rng: random.Random, bend: float) -> tuple[Vec3, Vec3, Vec3]:
-    mid = start.lerp(end, 0.52)
+def _curved_points(start: Vec3, end: Vec3, rng: random.Random, bend: float) -> tuple[Vec3, Vec3, Vec3, Vec3]:
+    """Build a low-frequency organic centerline without screen-space jitter."""
     dx, dy = end.x - start.x, end.y - start.y
     planar = max(1e-6, math.hypot(dx, dy))
     normal_x, normal_y = -dy / planar, dx / planar
     curve = rng.uniform(-bend, bend) * planar
-    mid = Vec3(mid.x + normal_x * curve, mid.y + normal_y * curve, mid.z + rng.uniform(-0.03, 0.05))
-    return (start, mid, end)
+    curve_2 = curve * rng.uniform(0.70, 1.08) + rng.uniform(-bend * 0.10, bend * 0.10) * planar
+    one = start.lerp(end, 0.29)
+    two = start.lerp(end, 0.64)
+    one = Vec3(
+        one.x + normal_x * curve * 0.68,
+        one.y + normal_y * curve * 0.68,
+        one.z + rng.uniform(-0.018, 0.032),
+    )
+    two = Vec3(
+        two.x + normal_x * curve_2,
+        two.y + normal_y * curve_2,
+        two.z + rng.uniform(-0.022, 0.040),
+    )
+    return (start, one, two, end)
 
 
 def _segment_angle(points: tuple[Vec3, ...]) -> float:
@@ -144,12 +173,37 @@ def _segment_angle(points: tuple[Vec3, ...]) -> float:
     return math.degrees(math.atan2(end.y - start.y, end.x - start.x))
 
 
+def _point_along_path(points: tuple[Vec3, ...], t: float) -> Vec3:
+    """Arc-length sample a branch so child attachments are not tied to one segment."""
+    amount = _clamp(t, 0.0, 1.0)
+    lengths = [0.0]
+    for a, b in zip(points, points[1:]):
+        lengths.append(lengths[-1] + math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2 + (b.z - a.z) ** 2))
+    total = lengths[-1]
+    if total <= 1e-9:
+        return points[0]
+    target = total * amount
+    segment = 0
+    while segment + 1 < len(lengths) - 1 and lengths[segment + 1] < target:
+        segment += 1
+    lo, hi = lengths[segment], lengths[segment + 1]
+    local = 0.0 if hi <= lo else (target - lo) / (hi - lo)
+    return points[segment].lerp(points[segment + 1], local)
+
+
+def _path_tangent_angle(points: tuple[Vec3, ...], t: float) -> float:
+    before = _point_along_path(points, max(0.0, t - 0.045))
+    after = _point_along_path(points, min(1.0, t + 0.045))
+    return math.degrees(math.atan2(after.y - before.y, after.x - before.x))
+
+
 def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStructure:
     """Generate deterministic canonical 3D branch topology.
 
-    V2 is still species-neutral. Species/art intent changes only the profile.
-    The terminal order is deliberately compact so foliage/flowers can cover the
-    ramification rather than exposing long line-like branches.
+    V2 remains species-neutral: species/art intent changes only the profile. The
+    macro grammar now favors botanical forks instead of long radial spokes.
+    Primary limbs emerge in paired forks, lateral secondaries attach early, and
+    one late secondary per primary behaves as a continuation arm.
     """
     cfg = _profile(profile)
     rng = random.Random(int(seed))
@@ -171,14 +225,25 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
     )
 
     primary_count = cfg["primaryCount"]
+    pair_count = max(1, (primary_count + 1) // 2)
     base_phase = rng.uniform(0.0, 360.0)
+    fork_lo, fork_hi = cfg["primaryForkSpread"]
+    fork_angle_lo, fork_angle_hi = cfg["primaryForkAngleDeg"]
+
     for index in range(primary_count):
         branch_id = f"p{index:02d}"
-        t = 0.0 if primary_count == 1 else index / (primary_count - 1)
-        start_z = crown_start + (0.12 + 0.48 * t + rng.uniform(-0.055, 0.055)) * (trunk_h - crown_start)
-        start_z = min(trunk_h * 0.91, max(crown_start, start_z))
+        pair_index = index // 2
+        pair_t = 0.5 if pair_count == 1 else pair_index / (pair_count - 1)
+        start_fraction = fork_lo + (fork_hi - fork_lo) * pair_t + rng.uniform(-0.035, 0.035)
+        start_fraction = _clamp(start_fraction, 0.0, 0.82)
+        start_z = crown_start + start_fraction * (trunk_h - crown_start)
+        start_z = min(trunk_h * 0.90, max(crown_start, start_z))
         start = Vec3(lean_x * start_z / trunk_h, lean_y * start_z / trunk_h, start_z)
-        angle = base_phase + index * (360.0 / primary_count) + rng.uniform(-cfg["radialJitterDeg"], cfg["radialJitterDeg"])
+
+        pair_axis = base_phase + pair_index * (360.0 / pair_count)
+        fork_half = rng.uniform(fork_angle_lo, fork_angle_hi) * 0.5
+        side = -1.0 if index % 2 == 0 else 1.0
+        angle = pair_axis + side * fork_half + rng.uniform(-cfg["radialJitterDeg"] * 0.45, cfg["radialJitterDeg"] * 0.45)
         length = rng.uniform(*cfg["primaryLength"]) * (1.0 + rng.uniform(-cfg["asymmetry"], cfg["asymmetry"]))
         rise = rng.uniform(*cfg["primaryRise"])
         off_x, off_y = _polar_xy(length, angle)
@@ -187,26 +252,48 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
         branches.append(
             Branch3D(
                 branch_id, "trunk", 1, primary_points,
-                cfg["trunkWidth"] * rng.uniform(0.42, 0.58),
-                cfg["trunkWidth"] * rng.uniform(0.13, 0.22),
+                cfg["trunkWidth"] * rng.uniform(0.44, 0.60),
+                cfg["trunkWidth"] * rng.uniform(0.13, 0.21),
                 False, False, _branch_exposure(1, cfg["visibleWood"]),
             )
         )
 
-        secondary_count = cfg["secondaryPerPrimary"]
+        pattern = cfg["secondaryPattern"]
+        secondary_count = pattern[index % len(pattern)] if pattern else cfg["secondaryPerPrimary"]
+        attach_lo, attach_hi = cfg["secondaryAttach"]
+        continuation_index = secondary_count - 1
+
         for child_index in range(secondary_count):
             child_id = f"{branch_id}s{child_index:02d}"
-            attach_t = 0.66 + child_index * (0.20 / max(1, secondary_count - 1))
-            child_start = primary_points[1].lerp(primary_points[2], attach_t)
-            fan_sign = -1.0 if child_index % 2 == 0 else 1.0
-            fan = fan_sign * rng.uniform(22.0, 50.0) + rng.uniform(-8.0, 8.0)
-            child_angle = angle + fan
+            attach_u = 0.5 if secondary_count == 1 else child_index / (secondary_count - 1)
+            attach_t = attach_lo + (attach_hi - attach_lo) * attach_u + rng.uniform(-0.025, 0.025)
+            attach_t = _clamp(attach_t, 0.24, 0.90)
+            child_start = _point_along_path(primary_points, attach_t)
+            tangent_angle = _path_tangent_angle(primary_points, attach_t)
+            is_continuation = child_index == continuation_index
+
+            if is_continuation:
+                cont_lo, cont_hi = cfg["secondaryContinuationDeg"]
+                continuation_side = -1.0 if (index + child_index) % 2 == 0 else 1.0
+                child_angle = tangent_angle + continuation_side * rng.uniform(cont_lo, cont_hi)
+                length_factor = 1.04
+                rise_factor = 1.0
+                width_start_factor = rng.uniform(0.18, 0.24)
+            else:
+                fan_lo, fan_hi = cfg["secondaryLateralFanDeg"]
+                fan_sign = -1.0 if child_index % 2 == 0 else 1.0
+                child_angle = tangent_angle + fan_sign * rng.uniform(fan_lo, fan_hi) + rng.uniform(-5.0, 5.0)
+                length_factor = 0.88 + 0.05 * (child_index % 2)
+                rise_factor = 0.82
+                width_start_factor = rng.uniform(0.14, 0.20)
+
             child_length = (
                 rng.uniform(*cfg["secondaryLength"])
                 * cfg["secondaryShortenFactor"]
+                * length_factor
                 * (1.0 + rng.uniform(-cfg["asymmetry"], cfg["asymmetry"]))
             )
-            child_rise = rng.uniform(*cfg["secondaryRise"]) * 0.86
+            child_rise = rng.uniform(*cfg["secondaryRise"]) * rise_factor
             cx, cy = _polar_xy(child_length, child_angle)
             child_end = Vec3(child_start.x + cx, child_start.y + cy, min(trunk_h * 1.20, child_start.z + child_rise))
             child_points = _curved_points(child_start, child_end, rng, cfg["bend"] * 1.10)
@@ -214,7 +301,7 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
             branches.append(
                 Branch3D(
                     child_id, branch_id, 2, child_points,
-                    cfg["trunkWidth"] * rng.uniform(0.15, 0.21),
+                    cfg["trunkWidth"] * width_start_factor,
                     cfg["trunkWidth"] * rng.uniform(0.040, 0.065),
                     tertiary_count == 0,
                     tertiary_count == 0,
@@ -225,17 +312,17 @@ def generate_plant_structure(seed: int, profile: dict | None = None) -> PlantStr
             if tertiary_count <= 0:
                 continue
 
-            base_child_angle = _segment_angle(child_points)
-            attach_lo, attach_hi = cfg["tertiaryAttach"]
-            fan_lo, fan_hi = cfg["tertiaryFanDeg"]
+            attach_tw_lo, attach_tw_hi = cfg["tertiaryAttach"]
+            fan_tw_lo, fan_tw_hi = cfg["tertiaryFanDeg"]
             for twig_index in range(tertiary_count):
                 twig_id = f"{child_id}t{twig_index:02d}"
                 attach_u = 0.5 if tertiary_count == 1 else twig_index / (tertiary_count - 1)
-                twig_attach = attach_lo + (attach_hi - attach_lo) * attach_u + rng.uniform(-0.035, 0.035)
-                twig_attach = _clamp(twig_attach, 0.54, 0.96)
-                twig_start = child_points[1].lerp(child_points[2], twig_attach)
+                twig_attach = attach_tw_lo + (attach_tw_hi - attach_tw_lo) * attach_u + rng.uniform(-0.030, 0.030)
+                twig_attach = _clamp(twig_attach, 0.48, 0.95)
+                twig_start = _point_along_path(child_points, twig_attach)
+                base_child_angle = _path_tangent_angle(child_points, twig_attach)
                 sign = -1.0 if twig_index % 2 == 0 else 1.0
-                twig_angle = base_child_angle + sign * rng.uniform(fan_lo, fan_hi) + rng.uniform(-7.0, 7.0)
+                twig_angle = base_child_angle + sign * rng.uniform(fan_tw_lo, fan_tw_hi) + rng.uniform(-6.0, 6.0)
                 twig_length = rng.uniform(*cfg["tertiaryLength"]) * (1.0 + rng.uniform(-cfg["asymmetry"] * 0.55, cfg["asymmetry"] * 0.55))
                 twig_rise = rng.uniform(*cfg["tertiaryRise"])
                 tx, ty = _polar_xy(twig_length, twig_angle)
