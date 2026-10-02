@@ -172,11 +172,80 @@ The field decides where a macro group may grow and which direction/depth it belo
 
 V2 is an additive graph contract. V1 remains untouched for deterministic compatibility while V2 owns field-aware authoring nodes.
 
-The first field benchmark is `draw_engine_field_tree_pilot_01.json`:
+## Phase 5 core — implemented
 
-`continuous branch geometry -> alpha mask -> branch-distance field -> crown density -> field multiplication -> depth/direction fields -> field-conditioned foliage clusters -> levels -> output`
+### `A7_FIELD_MASS_ENGINE_V1`
 
-The first brush-only field benchmark showed better branch following but still produced lace/microleaf noise. Replacing individual field stamps with field-conditioned clusters improved macro grouping and is now the baseline architecture.
+Node: `field_mass_fill`.
+
+Converts scalar fields into coherent low-frequency material/support masses. Noise is gated by the source field, so edge breakup can never create alpha outside zero-density regions.
+
+Use this for restrained support fill, shrubs, stains and other broad organic regions; it must not replace structured brush layers at the final silhouette.
+
+### `A7_IMAGE_PROCESSING_V1`
+
+Current nodes:
+
+- `image_alpha_cleanup`;
+- `image_depth_light`;
+- `image_masked_material`;
+- `image_local_contrast`.
+
+These provide deterministic alpha repair, broad depth/value modulation, masked material variation and local detail contrast.
+
+### `A7_LAYER_ENGINE_V1`
+
+Explicit RGBA layer composition and contact occlusion.
+
+Nodes:
+
+- `image_composite`;
+- `image_contact_occlusion`.
+
+The layer system makes depth order explicit instead of forcing one renderer to paint everything in-place. Contact shadows are derived from occluder alpha and, by default, are gated by base alpha so they cannot create floating shadows on transparent canvas.
+
+This establishes a reusable composition model:
+
+`rear layer -> structure/material -> front layer -> detail layer`
+
+### `A7_MATERIAL_ENGINE_V2`
+
+Node: `image_masked_relief_material`.
+
+Adds deterministic material relief inside an authored mask while preserving geometry and alpha. Current treatment combines:
+
+- mask-gradient directional relief;
+- edge shading;
+- low-frequency material breakup;
+- directional grain (vertical/horizontal);
+- restrained fine variation.
+
+Tree bark is the first benchmark, but the primitive is intentionally usable by walls, roofs, stone, wood, metal and other masked surfaces.
+
+### `Foliage Brush Pack V2`
+
+Foliage is split into semantic brush families rather than one microleaf source:
+
+- mass brushes for internal volume;
+- cluster brushes for meso structure;
+- edge/detail brushes for silhouette definition.
+
+The current production benchmark keeps rear mass brushes in a squared/core density field. Front/detail clusters own the visible crown silhouette, preventing large round support stamps from being exposed at the edge.
+
+## Current tree benchmark
+
+`draw_engine_field_tree_pilot_01.json` now validates the full architecture chain:
+
+`continuous branch geometry`
+`-> masks / branch distance / crown density`
+`-> rear-core foliage layer`
+`-> wood geometry + Material Engine V2`
+`-> front foliage layer + contact occlusion`
+`-> detail/edge foliage layer + contact occlusion`
+`-> alpha/depth/local-contrast finishing`
+`-> output`
+
+This is a benchmark, not an approved City Horizon production tree. Its purpose is to prove that a generic graph can produce coherent organic composition without an asset-specific tree renderer.
 
 ## Existing compatibility nodes
 
@@ -209,23 +278,21 @@ BSD-style permissive reference. A7 currently studies its path/contour organizati
 
 ### Image-processing projects
 
-G'MIC and similar engines are the next reference targets for morphology, filtering, local processing and image pipelines. Each integration gets a separate provenance/license audit.
+G'MIC and similar engines remain study targets for morphology, filtering, local processing and image pipelines. Each integration gets a separate provenance/license audit.
 
 ## Next phases
 
-### Phase 5 — image processing nodes
+### Image processing expansion
 
-Add morphology, blur variants, guided smoothing, local contrast, palette operations, alpha cleanup, edge treatment, warp and lighting nodes.
+Add palette operations, selective color/value mapping, edge-aware smoothing, richer morphology, warp/deformation and more explicit light/shadow fields.
 
-The field-aware tree benchmark now exposes a concrete need here: reduce pinholes/micro-gaps, unify local foliage masses without turning them into blobs, and apply depth-aware tonal separation after composition.
+### Brush/material finishing
 
-### Phase 6 — brush/material finishing
+Finish the Brush V3 backlog: dual-tip masks, texture maps, richer flow curves and brush-pack metadata. Expand Material Engine V2 with reusable material presets rather than asset-specific code.
 
-Finish the Brush V3 backlog: dual-tip masks, texture maps, richer flow curves and brush-pack metadata.
+### AI Art Planner
 
-### Phase 7 — AI Art Planner
-
-Once Fields + Processing are stable, add a planner that converts semantic art intent into graph structure, recipes and controlled repair passes. The target is an AI-directed drawing system rather than an opaque pixel generator.
+Once the drawing primitives are stable, add a planner that converts semantic art intent into graph structure, recipes and controlled repair passes. The target is an AI-directed drawing system rather than an opaque pixel generator.
 
 ## Production quality gates
 
@@ -238,14 +305,6 @@ A production organic asset should eventually satisfy all of the following:
 5. final alpha and edge cleanup are deterministic;
 6. render remains reproducible from recipe + seed + brush pack;
 7. runtime promotion remains separate from art generation and requires visual approval;
-8. upstream-informed code has explicit provenance and license records.
-
-## Tree validation plan
-
-The old high-count foliage pilot remains only as a compatibility regression artifact and is not an art target.
-
-`draw_engine_cluster_pilot_01.json` validates hierarchical groups without structural fields.
-
-`draw_engine_field_tree_pilot_01.json` is the current architecture benchmark and validates structural fields plus field-conditioned clusters. It is still a benchmark, not an approved City Horizon production tree.
-
-The next art-quality gate is Phase 5 processing: local morphology/alpha repair, depth-aware tonal separation and better foliage brush source material.
+8. upstream-informed code has explicit provenance and license records;
+9. hidden/support masses do not define the final organic silhouette;
+10. rear/front/detail depth layers are explicit when the artwork needs occlusion.
