@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 
 from visitor_forge_2d.core.field_brush_engine import FIELD_BRUSH_CONTRACT, FieldBrushEngineV1
+from visitor_forge_2d.core.field_cluster_engine import FIELD_CLUSTER_CONTRACT, FieldClusterEngineV1
 from visitor_forge_2d.core.field_engine import (
     FIELD_ENGINE_CONTRACT,
     direction_to_point,
@@ -16,6 +17,26 @@ from visitor_forge_2d.core.field_engine import (
     sample_scalar,
 )
 from visitor_forge_2d.core.field_graph import FIELD_GRAPH_CONTRACT, execute, validate_recipe
+
+
+def _cluster() -> dict:
+    leaf = {
+        "type": "brush",
+        "brushes": ["foliage/leaf_oval_01.png", "foliage/leaf_oval_02.png"],
+        "scale": [0.48, 0.62],
+        "aspect": [0.8, 1.2],
+        "rotationDeg": [-18, 18],
+        "opacity": [240, 255],
+        "tints": ["#3F7546", "#5A9650"],
+    }
+    return {
+        "members": [
+            {**leaf, "offset": [-5, 0]},
+            {**leaf, "offset": [0, -5]},
+            {**leaf, "offset": [5, 0]},
+            {**leaf, "offset": [0, 5]},
+        ]
+    }
 
 
 def test_field_primitives_are_deterministic_and_normalized() -> None:
@@ -91,6 +112,33 @@ def test_field_brush_distribution_uses_field_sensors_and_spacing() -> None:
             assert (dx * dx + dy * dy) ** 0.5 >= 6 - 1e-9
 
 
+def test_field_cluster_distribution_is_deterministic() -> None:
+    first = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
+    second = Image.new("RGBA", (112, 112), (0, 0, 0, 0))
+    density = radial_density((112, 112), [{"center": [56, 49], "radius": [42, 34]}], power=0.7)
+    depth = linear_depth((112, 112), [0, 16], [0, 88])
+    direction = direction_to_point((112, 112), [56, 52], offset_deg=180)
+    mappings = {"scale_mul": {"base": 0.9, "inputs": {"density": [[0, -0.08], [1, 0.18]]}}}
+    a = FieldClusterEngineV1(884)
+    b = FieldClusterEngineV1(884)
+    stats_a = a.scatter(
+        first, _cluster(), 10,
+        density_field=density, depth_field=depth, direction_field=direction,
+        bounds=[18, 15, 94, 84], min_distance=13, scale=[0.9, 1.1], mappings=mappings,
+    )
+    stats_b = b.scatter(
+        second, _cluster(), 10,
+        density_field=density, depth_field=depth, direction_field=direction,
+        bounds=[18, 15, 94, 84], min_distance=13, scale=[0.9, 1.1], mappings=mappings,
+    )
+    assert a.contract == FIELD_CLUSTER_CONTRACT
+    assert stats_a == stats_b
+    assert first.tobytes() == second.tobytes()
+    assert stats_a["clusterCount"] == 10
+    assert stats_a["leafStampCount"] == 40
+    assert stats_a["fieldConditioned"] is True
+
+
 def test_field_graph_tree_pilot_is_deterministic() -> None:
     path = Path(__file__).resolve().parents[1] / "examples" / "draw_engine_field_tree_pilot_01.json"
     recipe = json.loads(path.read_text(encoding="utf-8"))
@@ -102,9 +150,11 @@ def test_field_graph_tree_pilot_is_deterministic() -> None:
     assert first.tobytes() == second.tobytes()
     assert meta["pixelSha256"] == repeated["pixelSha256"]
     assert meta["critic"]["fieldAwareDistribution"] is True
+    assert meta["critic"]["fieldConditionedClusters"] is True
     assert meta["critic"]["densityField"] is True
     assert meta["critic"]["distanceField"] is True
     assert meta["critic"]["directionField"] is True
     assert meta["critic"]["depthField"] is True
-    assert meta["nodes"]["foliage"]["placed"] > 80
+    assert meta["nodes"]["foliage"]["clusterCount"] >= 24
+    assert meta["nodes"]["foliage"]["leafStampCount"] >= 200
     assert first.getchannel("A").getbbox() is not None
