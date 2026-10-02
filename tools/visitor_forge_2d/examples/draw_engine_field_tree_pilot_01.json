@@ -35,7 +35,7 @@
       },
       {"id": "wood_mask", "type": "field_alpha_mask", "inputs": {"source": "wood_structure"}, "params": {"threshold": 12, "expandPx": 1, "blurRadius": 0.8}},
       {"id": "branch_proximity", "type": "field_distance", "inputs": {"field": "wood_mask"}, "params": {"maxDistance": 50, "threshold": 64, "proximity": true}},
-      {"id": "support_branch_proximity", "type": "field_distance", "inputs": {"field": "wood_mask"}, "params": {"maxDistance": 63, "threshold": 64, "proximity": true}},
+      {"id": "support_branch_proximity", "type": "field_distance", "inputs": {"field": "wood_mask"}, "params": {"maxDistance": 55, "threshold": 64, "proximity": true}},
       {
         "id": "crown_density",
         "type": "field_radial_density",
@@ -60,14 +60,14 @@
         "type": "field_mass_fill",
         "inputs": {"image": "base", "density": "support_density", "depth": "depth"},
         "params": {
-          "color": "#203F29",
-          "threshold": 0.12,
-          "feather": 0.05,
-          "opacity": 112,
-          "closePx": 1,
-          "edgeNoise": 0.18,
-          "noiseCellPx": 10,
-          "depthShade": 0.30,
+          "color": "#193522",
+          "threshold": 0.18,
+          "feather": 0.03,
+          "opacity": 52,
+          "closePx": 0,
+          "edgeNoise": 0.24,
+          "noiseCellPx": 9,
+          "depthShade": 0.32,
           "seedOffset": 31
         }
       },
@@ -94,33 +94,33 @@
         "type": "field_cluster_scatter",
         "inputs": {"image": "wood_material", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
         "params": {
-          "count": 18,
+          "count": 22,
           "bounds": [40, 47, 216, 184],
-          "minDistance": 14.8,
-          "maxAttempts": 26000,
-          "scale": [0.74, 1.00],
+          "minDistance": 12.3,
+          "maxAttempts": 30000,
+          "scale": [0.78, 1.04],
           "rotationDeg": [-12, 12],
           "mirrorXProbability": 0.5,
           "mappings": {
-            "scale_mul": {"base": 0.94, "inputs": {"density": [[0.0, -0.08], [1.0, 0.14]], "depth": [[0.0, -0.04], [1.0, 0.08]]}},
+            "scale_mul": {"base": 0.96, "inputs": {"density": [[0.0, -0.07], [1.0, 0.15]], "depth": [[0.0, -0.04], [1.0, 0.08]]}},
             "rotation_add_deg": {"base": 0.0, "inputs": {"field_distance": [[0.0, -4.0], [1.0, 4.0]]}}
           },
           "cluster": {
             "members": [
-              {"type": "brush", "offset": [0, 0], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"], "scale": [0.66, 0.84], "aspect": [0.88, 1.14], "rotationDeg": [-18, 18], "opacity": [178, 218], "tints": ["#315A38", "#386840", "#3F7446"], "hueJitterDeg": 2, "saturation": [0.96, 1.04], "value": [0.90, 1.02]},
-              {"type": "brush", "offset": [-8, -4], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [230, 255], "tints": ["#39703F", "#478348", "#559250"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.94, 1.07]},
-              {"type": "brush", "offset": [8, -3], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.60, 0.78], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [230, 255], "tints": ["#3D7442", "#4B874A", "#5A9852"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.95, 1.08]},
-              {"type": "brush", "offset": [0, 7], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.58, 0.75], "aspect": [0.90, 1.12], "rotationDeg": [-22, 22], "opacity": [228, 252], "tints": ["#345F39", "#427744", "#50894B"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.92, 1.04]},
-              {"type": "brush", "offset": [-13, 1], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.48, 0.64], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [238, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
-              {"type": "brush", "offset": [13, 0], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.48, 0.64], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [238, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
-              {"type": "brush", "offset": [0, -10], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.50, 0.66], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [240, 255], "tints": ["#4A8449", "#599452", "#68A45C"], "hueJitterDeg": 4, "saturation": [0.97, 1.05], "value": [1.00, 1.12]}
+              {"type": "brush", "offset": [0, 0], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"], "scale": [0.70, 0.88], "aspect": [0.88, 1.14], "rotationDeg": [-18, 18], "opacity": [166, 205], "tints": ["#2E5936", "#37683F", "#417748"], "hueJitterDeg": 2, "saturation": [0.96, 1.04], "value": [0.90, 1.02]},
+              {"type": "brush", "offset": [-8, -4], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.62, 0.80], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [232, 255], "tints": ["#39703F", "#478348", "#559250"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.94, 1.07]},
+              {"type": "brush", "offset": [8, -3], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.62, 0.80], "aspect": [0.88, 1.14], "rotationDeg": [-24, 24], "opacity": [232, 255], "tints": ["#3D7442", "#4B874A", "#5A9852"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.95, 1.08]},
+              {"type": "brush", "offset": [0, 7], "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.60, 0.77], "aspect": [0.90, 1.12], "rotationDeg": [-22, 22], "opacity": [230, 254], "tints": ["#345F39", "#427744", "#50894B"], "hueJitterDeg": 3, "saturation": [0.95, 1.05], "value": [0.92, 1.04]},
+              {"type": "brush", "offset": [-13, 1], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.50, 0.66], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [240, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
+              {"type": "brush", "offset": [13, 0], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.50, 0.66], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [240, 255], "tints": ["#427D46", "#51904E", "#62A057"], "hueJitterDeg": 4, "saturation": [0.96, 1.06], "value": [0.98, 1.10]},
+              {"type": "brush", "offset": [0, -10], "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"], "scale": [0.52, 0.68], "aspect": [0.90, 1.10], "rotationDeg": [-28, 28], "opacity": [242, 255], "tints": ["#4A8449", "#599452", "#68A45C"], "hueJitterDeg": 4, "saturation": [0.97, 1.05], "value": [1.00, 1.12]}
             ]
           }
         }
       },
-      {"id": "alpha_repair", "type": "image_alpha_cleanup", "inputs": {"image": "foliage"}, "params": {"closePx": 0, "openPx": 0, "featherRadius": 0.12}},
-      {"id": "broad_light", "type": "image_depth_light", "inputs": {"image": "alpha_repair", "depth": "depth"}, "params": {"strength": 0.12, "bias": -0.02, "preserveAlpha": true}},
-      {"id": "detail_finish", "type": "image_local_contrast", "inputs": {"image": "broad_light"}, "params": {"radius": 0.9, "amount": 0.40, "globalContrast": 1.04}},
+      {"id": "alpha_repair", "type": "image_alpha_cleanup", "inputs": {"image": "foliage"}, "params": {"closePx": 0, "openPx": 0, "featherRadius": 0.08}},
+      {"id": "broad_light", "type": "image_depth_light", "inputs": {"image": "alpha_repair", "depth": "depth"}, "params": {"strength": 0.13, "bias": -0.02, "preserveAlpha": true}},
+      {"id": "detail_finish", "type": "image_local_contrast", "inputs": {"image": "broad_light"}, "params": {"radius": 0.85, "amount": 0.42, "globalContrast": 1.04}},
       {"id": "finish", "type": "levels", "inputs": {"image": "detail_finish"}, "params": {"contrast": 1.02, "brightness": 1.01}},
       {"id": "output", "type": "output", "inputs": {"image": "finish"}}
     ]
