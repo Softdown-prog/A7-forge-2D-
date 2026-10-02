@@ -5,7 +5,7 @@
 The current plant pipeline is intentionally split into independent responsibilities:
 
 1. `A7_PLANT_INTENT_V1` describes species, age, crown intent, flowering amount/color, seed and target canvas.
-2. `A7_PLANT_STRUCTURE_V1` builds one canonical lightweight 3D plant identity. The same branch IDs/topology are projected into SOUTH, WEST, NORTH and EAST.
+2. `A7_PLANT_STRUCTURE_V2` builds one canonical lightweight 3D plant identity. The same branch IDs/topology are projected into SOUTH, WEST, NORTH and EAST.
 3. `A7_ART_PLANNER_V1` compiles each projection into ordinary Draw Engine V2 nodes instead of calling an asset-specific renderer.
 4. Fields derive crown density, branch proximity, depth, direction and terminal flowering zones from the projected structure.
 5. Foliage uses the field-conditioned cluster/brush engines.
@@ -15,6 +15,23 @@ The current plant pipeline is intentionally split into independent responsibilit
 ## Four-view identity gate
 
 All four views must preserve the same canonical branch IDs and parent/order topology. A view is a projection of one plant, not an independently generated tree. `plant_planner_worker.py` validates this before publishing review artifacts.
+
+## Structural Plant V2 gate
+
+V2 uses a botanical hierarchy instead of ending the crown on long secondary branches:
+
+- order 0: trunk
+- order 1: primary structural branches
+- order 2: shorter secondary branches
+- order 3: compact terminal twigs
+
+Order-3 twigs are explicitly `flowerBearing=true`. They end inside the crown/flowering zones and become the canonical terminal points used by the Art Planner. The default topology uses two terminal twigs per secondary branch.
+
+`secondaryShortenFactor` keeps secondaries compact. `tertiaryLength`, `tertiaryRise`, `tertiaryFanDeg` and `tertiaryAttach` control terminal ramification without introducing a species-specific renderer.
+
+`visibleWood` is an explicit structural target. Trunk and primary wood remain readable; secondary wood is reduced; flower-bearing twigs receive the lowest exposure. Low-exposure twigs remain present in the alpha/field structure, so foliage and flowers can still follow them even when they are visually hidden by the crown.
+
+For the current default `visibleWood = 0.34`, the intention is readable trunk/forks with terminal ramification mostly absorbed by foliage and blossoms.
 
 ## Flowering gate
 
@@ -32,8 +49,6 @@ This is a derivation of the existing approved project grammar, not a copy of the
 
 ## Current visual status
 
-The V1 planner proves semantic intent -> canonical structure -> field-aware four-view rendering. It is **not yet production-art equivalent to the approved Ipê**.
+The planner now proves semantic intent -> canonical botanical structure -> field-aware four-view rendering, with terminal flowering driven by actual flower-bearing twigs. It is still not automatically `artApproved` and is not promoted to runtime by this worker.
 
-The next structural gate is botanical ramification quality: secondary/terminal twigs must become shorter and denser near crown masses, with flower-bearing terminal twigs ending inside those masses. Long exposed line-like branches are considered a failure even when all technical graph tests pass.
-
-After that gate, the next major layer is a Visual Critic / Repair Loop that measures silhouette balance, exposed-wood ratio, crown continuity, cluster repetition and four-view identity before an asset can be marked `artApproved`.
+The next gate is visual critique/repair: measure exposed-wood ratio, crown continuity, silhouette balance, cluster repetition and four-view identity from the rendered result. Technical graph success alone is not sufficient for production approval.
