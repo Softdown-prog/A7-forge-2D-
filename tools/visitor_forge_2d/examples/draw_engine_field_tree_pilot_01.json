@@ -52,6 +52,7 @@
         }
       },
       {"id": "structured_density", "type": "field_multiply", "inputs": {"a_crown": "crown_density", "b_branches": "branch_proximity"}},
+      {"id": "rear_core_density", "type": "field_multiply", "inputs": {"a_core": "structured_density", "b_core": "structured_density"}},
       {"id": "support_density", "type": "field_multiply", "inputs": {"a_crown": "crown_density", "b_branches": "support_branch_proximity"}},
       {"id": "depth", "type": "field_linear_depth", "params": {"start": [128, 54], "end": [128, 186]}},
       {"id": "direction", "type": "field_direction_to_point", "params": {"point": [128, 118], "offsetDeg": 180}},
@@ -63,7 +64,7 @@
           "color": "#142B1C",
           "threshold": 0.23,
           "feather": 0.025,
-          "opacity": 26,
+          "opacity": 24,
           "closePx": 0,
           "edgeNoise": 0.20,
           "noiseCellPx": 8,
@@ -75,23 +76,23 @@
       {
         "id": "rear_foliage",
         "type": "field_cluster_scatter",
-        "inputs": {"image": "rear_canvas", "density": "structured_density", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
+        "inputs": {"image": "rear_canvas", "density": "rear_core_density", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
         "params": {
-          "count": 16,
-          "bounds": [39, 45, 217, 184],
-          "minDistance": 14.5,
-          "maxAttempts": 30000,
-          "scale": [0.96, 1.24],
+          "count": 13,
+          "bounds": [50, 52, 206, 174],
+          "minDistance": 15.5,
+          "maxAttempts": 32000,
+          "scale": [0.94, 1.16],
           "rotationDeg": [-13, 13],
           "mirrorXProbability": 0.5,
           "mappings": {
-            "scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.05], [1.0, 0.16]], "depth": [[0.0, -0.05], [1.0, 0.05]]}}
+            "scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.04], [1.0, 0.14]], "depth": [[0.0, -0.04], [1.0, 0.05]]}}
           },
           "cluster": {
             "members": [
-              {"type": "brush", "offset": [0, 0], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"], "scale": [0.92, 1.16], "aspect": [0.84, 1.18], "rotationDeg": [-20, 20], "opacity": [185, 222], "tints": ["#244B30", "#2C5936", "#35643C"], "hueJitterDeg": 2, "saturation": [0.95, 1.04], "value": [0.86, 0.98]},
-              {"type": "brush", "offset": [-10, -4], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_cluster_01.png"], "scale": [0.72, 0.94], "aspect": [0.88, 1.14], "rotationDeg": [-22, 22], "opacity": [170, 215], "tints": ["#294F32", "#315E38", "#396B3D"], "value": [0.88, 1.0]},
-              {"type": "brush", "offset": [10, 4], "brushes": ["foliage_v2/foliage_mass_02.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.72, 0.94], "aspect": [0.88, 1.14], "rotationDeg": [-22, 22], "opacity": [170, 215], "tints": ["#294F32", "#315E38", "#396B3D"], "value": [0.88, 1.0]}
+              {"type": "brush", "offset": [0, 0], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"], "scale": [0.88, 1.08], "aspect": [0.84, 1.18], "rotationDeg": [-20, 20], "opacity": [164, 202], "tints": ["#244B30", "#2C5936", "#35643C"], "hueJitterDeg": 2, "saturation": [0.95, 1.04], "value": [0.86, 0.98]},
+              {"type": "brush", "offset": [-9, -3], "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_cluster_01.png"], "scale": [0.68, 0.88], "aspect": [0.88, 1.14], "rotationDeg": [-22, 22], "opacity": [154, 196], "tints": ["#294F32", "#315E38", "#396B3D"], "value": [0.88, 1.0]},
+              {"type": "brush", "offset": [9, 3], "brushes": ["foliage_v2/foliage_mass_02.png", "foliage_v2/foliage_cluster_02.png"], "scale": [0.68, 0.88], "aspect": [0.88, 1.14], "rotationDeg": [-22, 22], "opacity": [154, 196], "tints": ["#294F32", "#315E38", "#396B3D"], "value": [0.88, 1.0]}
             ]
           }
         }
@@ -120,14 +121,14 @@
         "inputs": {"image": "wood_visible", "mask": "wood_mask"},
         "params": {
           "lightDirection": [-0.9, -0.35],
-          "reliefStrength": 0.30,
-          "edgeShade": 0.14,
+          "reliefStrength": 0.32,
+          "edgeShade": 0.15,
           "coarsePx": 12,
-          "coarseAmount": 0.13,
+          "coarseAmount": 0.14,
           "grainAxis": "vertical",
           "grainScalePx": 6,
-          "grainAmount": 0.12,
-          "fineAmount": 0.022,
+          "grainAmount": 0.14,
+          "fineAmount": 0.024,
           "seedOffset": 97
         }
       },
