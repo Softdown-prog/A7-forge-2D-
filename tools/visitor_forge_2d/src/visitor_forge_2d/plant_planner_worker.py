@@ -9,13 +9,12 @@ from PIL import Image, ImageDraw
 
 from .core import field_graph
 from .core.art_planner import ART_PLANNER_CONTRACT, PLANT_INTENT_CONTRACT, plan_plant_four_views
-from .core.plant_repair_policy import propose_repair
+from .core.plant_repair_policy import apply_repair_plan, propose_repair
 from .core.plant_structure import CARDINAL_VIEWS, PLANT_STRUCTURE_CONTRACT, topology_signature
 from .core.plant_visual_critic import (
     PLANT_REPAIR_CONTRACT,
     PLANT_VISUAL_CRITIC_CONTRACT,
     aggregate_critic_reports,
-    apply_repair_plan,
     evaluate_plant_render,
 )
 
