@@ -155,6 +155,15 @@ def test_field_graph_tree_pilot_is_deterministic() -> None:
     assert meta["critic"]["distanceField"] is True
     assert meta["critic"]["directionField"] is True
     assert meta["critic"]["depthField"] is True
-    assert meta["nodes"]["foliage"]["clusterCount"] >= 24
-    assert meta["nodes"]["foliage"]["leafStampCount"] >= 200
+
+    foliage_recipe = next(node for node in recipe["graph"]["nodes"] if node["id"] == "foliage")
+    requested = int(foliage_recipe["params"]["count"])
+    foliage_stats = meta["nodes"]["foliage"]
+    # Production foliage now uses a small number of meaningful macro groups.
+    # The gate checks structural density rather than forcing the old high-count
+    # strategy that produced sponge/moss-like canopies.
+    assert requested <= 24
+    assert foliage_stats["requestedClusters"] == requested
+    assert foliage_stats["clusterCount"] >= max(12, requested - 2)
+    assert foliage_stats["leafStampCount"] >= foliage_stats["clusterCount"] * 6
     assert first.getchannel("A").getbbox() is not None
