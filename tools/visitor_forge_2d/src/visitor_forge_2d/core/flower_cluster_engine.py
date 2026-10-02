@@ -1,17 +1,16 @@
 """A7 field-aware flowering cluster engine.
 
 This engine lifts the reusable flowering grammar already proven by the approved
-Ipê Amarelo asset into Node Graph V2.  It remains species-neutral: callers
+Ipê Amarelo asset into Node Graph V2. It remains species-neutral: callers
 provide density, palette and scale; this module provides deterministic macro
 clusters, micro-blossoms, warm internal occlusion and negative-space windows.
 """
 from __future__ import annotations
 
-import math
 import random
 from dataclasses import dataclass
 
-from PIL import Image, ImageChops, ImageDraw, ImageFilter
+from PIL import Image, ImageChops, ImageDraw
 
 from . import brushes, flowering_brushes
 
@@ -63,13 +62,12 @@ def _masked_gradient(mask: Image.Image, top: str, bottom: str, *, alpha: int = 2
     return gradient
 
 
-def _sample(field: Image.Image | None, x: float, y: float, default: int = 255) -> int:
+def _sample_l(field: Image.Image | None, x: float, y: float, default: int = 255) -> int:
     if field is None:
         return default
-    source = field.convert("L")
-    ix = max(0, min(source.width - 1, int(round(x))))
-    iy = max(0, min(source.height - 1, int(round(y))))
-    return int(source.getpixel((ix, iy)))
+    ix = max(0, min(field.width - 1, int(round(x))))
+    iy = max(0, min(field.height - 1, int(round(y))))
+    return int(field.getpixel((ix, iy)))
 
 
 @dataclass(frozen=True)
@@ -109,39 +107,39 @@ class FlowerClusterEngineV1:
             left, top, right, bottom = 0, 0, width - 1, height - 1
         else:
             left, top, right, bottom = (int(v) for v in bounds)
-            left = max(0, min(width - 1, left)); right = max(left, min(width - 1, right))
-            top = max(0, min(height - 1, top)); bottom = max(top, min(height - 1, bottom))
+            left = max(0, min(width - 1, left))
+            right = max(left, min(width - 1, right))
+            top = max(0, min(height - 1, top))
+            bottom = max(top, min(height - 1, bottom))
         placed: list[FlowerGroup] = []
         attempts = 0
         target = max(0, int(count))
         min_d2 = max(0.0, float(min_distance)) ** 2
-        density = density_field.convert("L")
-        avoid = avoid_field.convert("L") if avoid_field is not None else None
-        depth = depth_field.convert("L") if depth_field is not None else None
+        density = density_field if density_field.mode == "L" else density_field.convert("L")
+        avoid = None if avoid_field is None else (avoid_field if avoid_field.mode == "L" else avoid_field.convert("L"))
+        depth = None if depth_field is None else (depth_field if depth_field.mode == "L" else depth_field.convert("L"))
 
         while len(placed) < target and attempts < max_attempts:
             attempts += 1
             x = rng.uniform(left, right)
             y = rng.uniform(top, bottom)
-            d = _sample(density, x, y, 0) / 255.0
+            d = _sample_l(density, x, y, 0) / 255.0
             if d <= 0.01 or rng.random() > d:
                 continue
-            if avoid is not None and _sample(avoid, x, y, 0) >= 128:
+            if avoid is not None and _sample_l(avoid, x, y, 0) >= 128:
                 continue
-            if min_d2 > 0.0 and any((x - g.x) ** 2 + (y - g.y) ** 2 < min_d2 for g in placed):
+            if min_d2 > 0.0 and any((x - group.x) ** 2 + (y - group.y) ** 2 < min_d2 for group in placed):
                 continue
-            z = _sample(depth, x, y, 128) / 255.0 if depth is not None else 0.5
+            z = _sample_l(depth, x, y, 128) / 255.0 if depth is not None else 0.5
             scale = 0.88 + d * 0.18 + z * 0.05
-            placed.append(
-                FlowerGroup(
-                    x=x,
-                    y=y,
-                    rx=rng.uniform(*radius_x) * scale,
-                    ry=rng.uniform(*radius_y) * scale,
-                    density=d,
-                    depth=z,
-                )
-            )
+            placed.append(FlowerGroup(
+                x=x,
+                y=y,
+                rx=rng.uniform(*radius_x) * scale,
+                ry=rng.uniform(*radius_y) * scale,
+                density=d,
+                depth=z,
+            ))
         return placed, attempts
 
     def scatter(
@@ -193,7 +191,7 @@ class FlowerClusterEngineV1:
         layer = Image.new("RGBA", work_size, (0, 0, 0, 0))
         rng = random.Random(self.seed ^ 0x7A11F10)
 
-        for index, group in enumerate(sorted(groups, key=lambda g: (g.y, g.x))):
+        for group in sorted(groups, key=lambda item: (item.y, item.x)):
             mask = Image.new("L", work_size, 0)
             brushes.leaf_cluster_broadleaf(mask, rng, group.x, group.y, group.rx, group.ry, satellites=4, fill=255)
             brushes.edge_breakup_stamp(mask, rng, group.x, group.y, max(group.rx, group.ry), count=7, fill=255)
@@ -205,8 +203,7 @@ class FlowerClusterEngineV1:
                 count=rng.randint(gap_range[0], gap_range[1]) if gap_range[1] >= gap_range[0] else gap_range[0],
             )
 
-            body = _masked_gradient(mask, pal["mid_top"], pal["mid_bottom"], alpha=236)
-            layer.alpha_composite(body)
+            layer.alpha_composite(_masked_gradient(mask, pal["mid_top"], pal["mid_bottom"], alpha=236))
 
             shade = Image.new("L", work_size, 0)
             brushes.interior_occlusion_patch(
@@ -251,8 +248,7 @@ class FlowerClusterEngineV1:
                 )
                 layer.alpha_composite(spray)
 
-        down = layer.resize(image.size, Image.Resampling.LANCZOS)
-        image.alpha_composite(down)
+        image.alpha_composite(layer.resize(image.size, Image.Resampling.LANCZOS))
         return {
             "contract": FLOWER_CLUSTER_CONTRACT,
             "requestedGroups": max(0, int(count)),
