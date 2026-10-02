@@ -10,6 +10,7 @@ from PIL import Image, ImageEnhance
 from .brush_engine_v2 import BRUSH_CONTRACT, BrushEngineV2
 from .brush_engine_v3 import BRUSH_V3_CONTRACT, BrushEngineV3
 from .cluster_engine import CLUSTER_CONTRACT, ClusterEngineV1
+from .dab_density import DAB_DENSITY_CONTRACT
 from .distribution_engine import DISTRIBUTION_CONTRACT, DistributionEngineV1
 from .dynamics_mapping import DYNAMICS_MAPPING_CONTRACT
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
@@ -169,6 +170,9 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             image = _input_image(results, node)
             local = BrushEngineV3(seed + node_index * 49979687 + int(params.get("seedOffset", 0)))
             dynamics = _dynamic_kwargs(params)
+            actual_density = float(params.get("dabsPerActualRadius", 0.0))
+            basic_density = float(params.get("dabsPerBasicRadius", 0.0))
+            basic_radius = params.get("basicRadiusPx")
             stamps = local.stroke_paths(
                 image,
                 params["brush"],
@@ -176,6 +180,9 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 spacing=float(params.get("spacing", 8.0)),
                 spacing_jitter=float(params.get("spacingJitter", 0.0)),
                 follow_tangent=bool(params.get("followTangent", True)),
+                dabs_per_actual_radius=actual_density,
+                dabs_per_basic_radius=basic_density,
+                basic_radius_px=None if basic_radius is None else float(basic_radius),
                 **dynamics,
             )
             stats = {
@@ -184,7 +191,11 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 "brush": params["brush"],
                 "spacing": float(params.get("spacing", 8.0)),
                 "spacingJitter": float(params.get("spacingJitter", 0.0)),
+                "dabsPerActualRadius": actual_density,
+                "dabsPerBasicRadius": basic_density,
+                "radiusAwareSpacing": actual_density > 0.0 or basic_density > 0.0,
                 "brushContract": BRUSH_V3_CONTRACT,
+                "dabDensityContract": DAB_DENSITY_CONTRACT,
             }
 
         elif node_type == "mapped_dynamic_scatter":
@@ -286,12 +297,21 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
 
     assert final is not None
     node_types = {node["type"] for node in graph["nodes"]}
+    radius_aware = any(
+        node["type"] == "dynamic_path_brush"
+        and (
+            float(node.get("params", {}).get("dabsPerActualRadius", 0.0)) > 0.0
+            or float(node.get("params", {}).get("dabsPerBasicRadius", 0.0)) > 0.0
+        )
+        for node in graph["nodes"]
+    )
     metadata = {
         "contract": GRAPH_CONTRACT,
         "brushContract": BRUSH_CONTRACT,
         "brushDynamicsContract": BRUSH_V3_CONTRACT,
         "mappedBrushContract": MAPPED_BRUSH_CONTRACT,
         "dynamicsMappingContract": DYNAMICS_MAPPING_CONTRACT,
+        "dabDensityContract": DAB_DENSITY_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "distributionContract": DISTRIBUTION_CONTRACT,
         "clusterContract": CLUSTER_CONTRACT,
@@ -312,6 +332,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "minimumDistanceDistribution": "spaced_scatter" in node_types or "cluster_scatter" in node_types,
             "brushDynamics": bool({"dynamic_scatter", "dynamic_path_brush", "mapped_dynamic_scatter", "cluster_scatter"} & node_types),
             "mappedDynamics": "mapped_dynamic_scatter" in node_types,
+            "radiusAwareDabDensity": radius_aware,
             "hierarchicalClusters": "cluster_scatter" in node_types,
         },
     }
