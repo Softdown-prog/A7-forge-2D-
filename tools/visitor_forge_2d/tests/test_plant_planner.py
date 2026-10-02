@@ -4,6 +4,7 @@ from visitor_forge_2d.core.art_planner import (
     ART_PLANNER_CONTRACT,
     PLANT_INTENT_CONTRACT,
     plan_plant_four_views,
+    profile_from_intent,
 )
 from visitor_forge_2d.core.field_graph import FIELD_GRAPH_CONTRACT, validate_recipe
 from visitor_forge_2d.core.flower_cluster_engine import FLOWER_CLUSTER_CONTRACT
@@ -63,12 +64,32 @@ def test_v2_ramification_uses_short_flower_bearing_twigs() -> None:
     assert len(primaries) == 5
     assert len(secondaries) == 10
     assert len(twigs) == 20
+    assert all(len(branch.points) == 4 for branch in primaries + secondaries + twigs)
     assert all(not branch.terminal for branch in secondaries)
     assert all(branch.terminal and branch.flower_bearing for branch in twigs)
     assert max(_planar_length(branch) for branch in secondaries) < 0.34
     assert max(_planar_length(branch) for branch in twigs) < 0.18
     assert max(branch.exposure for branch in twigs) < min(branch.exposure for branch in secondaries)
     assert max(branch.exposure for branch in secondaries) < min(branch.exposure for branch in primaries)
+
+
+def test_ipe_profile_matches_approved_four_by_ten_fork_rhythm() -> None:
+    profile = profile_from_intent(_intent())
+    assert profile["primaryCount"] == 4
+    assert profile["secondaryPattern"] == [3, 2, 3, 2]
+    assert profile["visibleWood"] == 0.34
+    assert profile["secondaryAttach"][0] <= 0.34
+
+    structure = generate_plant_structure(_intent()["seed"], profile)
+    primaries = [branch for branch in structure.branches if branch.order == 1]
+    secondaries = [branch for branch in structure.branches if branch.order == 2]
+    twigs = [branch for branch in structure.branches if branch.order == 3]
+
+    assert len(primaries) == 4
+    assert len(secondaries) == 10
+    assert len(twigs) == 20
+    assert [sum(branch.parent_id == primary.branch_id for branch in secondaries) for primary in primaries] == [3, 2, 3, 2]
+    assert len(structure.terminal_points) == 20
 
 
 def test_four_views_share_topology_but_change_projection() -> None:
