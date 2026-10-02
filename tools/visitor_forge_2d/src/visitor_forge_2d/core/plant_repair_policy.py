@@ -4,13 +4,37 @@ The base critic proposes independent fixes. This policy resolves conflicts
 between them before the shared four-view repair is applied. Structural clipping
 is repaired by uniformly scaling the projected graph around the same anchor in
 all four views; canonical 3D seed/topology remains untouched.
+
+V1.1 also handles a failure mode that an aggregate mean can hide: one cardinal
+view may have a broken crown while the other three are strong. In that case we
+close *internal* gaps with small midpoint crown lobes and tighter foliage
+spacing, without expanding the authored outer silhouette or changing flowers.
 """
 from __future__ import annotations
+
+import math
 
 from .plant_visual_critic import (
     apply_repair_plan as _base_apply_repair_plan,
     propose_repair as _base_propose_repair,
 )
+
+
+def _single_view_fragmentation(aggregate: dict) -> bool:
+    """Detect a likely hidden bad view without treating a healthy open crown as sparse.
+
+    `passed == False` matters here: with a healthy mean continuity but one failed
+    view, the old mean-only policy produced no repair at all.  Fill/clipping
+    guards keep this path from solving other failures by blindly adding foliage.
+    """
+    return (
+        not bool(aggregate.get("passed", True))
+        and 0.78 <= float(aggregate.get("meanContinuity", 1.0)) < 0.94
+        and 0.32 <= float(aggregate.get("meanCrownFill", 0.5)) <= 0.82
+        and int(aggregate.get("maxIsolatedMasses", 0)) <= 4
+        and float(aggregate.get("meanCrownWoodExposure", 0.0)) <= 0.70
+        and int(aggregate.get("minClippingMarginPx", 99)) >= 4
+    )
 
 
 def propose_repair(aggregate: dict) -> dict:
@@ -22,6 +46,21 @@ def propose_repair(aggregate: dict) -> dict:
         or int(aggregate.get("maxIsolatedMasses", 0)) > 4
     )
     plan.setdefault("projectionScale", 1.0)
+    plan.setdefault("bridgeCrownLobes", False)
+
+    # A single bad view can be hidden by the four-view mean. Do not enlarge the
+    # crown here: add density *inside* the current convex envelope instead.
+    if _single_view_fragmentation(aggregate):
+        plan["crownRadiusScale"] = 1.0
+        plan["brushScale"] = min(float(plan.get("brushScale", 1.0)), 1.0)
+        plan["foliageCountScale"] = max(float(plan.get("foliageCountScale", 1.0)), 1.10)
+        plan["frontCountScale"] = max(float(plan.get("frontCountScale", 1.0)), 1.14)
+        plan["flowerCountScale"] = min(float(plan.get("flowerCountScale", 1.0)), 1.0)
+        plan["minDistanceScale"] = min(float(plan.get("minDistanceScale", 1.0)), 0.88)
+        plan["bridgeCrownLobes"] = True
+        if "close_internal_crown_gaps" not in plan["reasons"]:
+            plan["reasons"].append("close_internal_crown_gaps")
+        plan["changed"] = True
 
     if clipping < 4:
         # Clipping can come from projected wood itself, not only brush stamps.
@@ -57,13 +96,90 @@ def _scale_pair(value, factor: float):
     return [round(float(value[0]) * factor, 4), round(float(value[1]) * factor, 4)]
 
 
-def apply_repair_plan(recipe: dict, plan: dict) -> dict:
-    """Apply visual repair plus optional uniform projected fit.
+def _add_internal_crown_bridges(recipe: dict) -> int:
+    """Add conservative midpoint lobes between nearby terminal crown lobes.
 
-    This transform never changes canonical branch IDs/seed/topology. It only
-    changes the 2D projection already compiled into Graph V2.
+    The Art Planner emits terminal lobes first and a broad center-support lobe
+    last. Midpoints of terminal pairs lie inside their envelope, and the bridge
+    radii are deliberately smaller than the endpoint radii, so this increases
+    valley density without growing a new outer silhouette.
+    """
+    planner = recipe.get("planner", {})
+    terminal_count = max(0, int(planner.get("terminalCount", 0)))
+    if terminal_count < 2:
+        return 0
+
+    crown = next(
+        (node for node in recipe.get("graph", {}).get("nodes", []) if node.get("id") == "crown_density"),
+        None,
+    )
+    if crown is None:
+        return 0
+    lobes = crown.get("params", {}).get("lobes", [])
+    terminal_lobes = lobes[: min(terminal_count, len(lobes))]
+    if len(terminal_lobes) < 2:
+        return 0
+
+    candidates: list[tuple[float, int, int]] = []
+    for i, a in enumerate(terminal_lobes):
+        ac = a.get("center", [])
+        if not isinstance(ac, list) or len(ac) != 2:
+            continue
+        for j in range(i + 1, len(terminal_lobes)):
+            b = terminal_lobes[j]
+            bc = b.get("center", [])
+            if not isinstance(bc, list) or len(bc) != 2:
+                continue
+            distance = math.hypot(float(ac[0]) - float(bc[0]), float(ac[1]) - float(bc[1]))
+            # Tiny gaps already overlap; very distant pairs would create a plate.
+            if 30.0 <= distance <= 78.0:
+                candidates.append((distance, i, j))
+    candidates.sort(key=lambda item: (item[0], item[1], item[2]))
+
+    max_bridges = max(2, min(6, terminal_count // 3))
+    degree = [0] * len(terminal_lobes)
+    bridges: list[dict] = []
+    for distance, i, j in candidates:
+        if degree[i] >= 1 or degree[j] >= 1:
+            continue
+        a, b = terminal_lobes[i], terminal_lobes[j]
+        ac, bc = a["center"], b["center"]
+        ar, br = a.get("radius", [28, 22]), b.get("radius", [28, 22])
+        if not isinstance(ar, list) or len(ar) != 2 or not isinstance(br, list) or len(br) != 2:
+            continue
+        # A slightly stronger bridge for a wider gap, still well below endpoint size.
+        gap_mix = max(0.0, min(1.0, (distance - 30.0) / 48.0))
+        rx_factor = 0.50 + 0.06 * gap_mix
+        ry_factor = 0.54 + 0.06 * gap_mix
+        bridges.append({
+            "center": [round((float(ac[0]) + float(bc[0])) * 0.5, 2), round((float(ac[1]) + float(bc[1])) * 0.5, 2)],
+            "radius": [round(min(float(ar[0]), float(br[0])) * rx_factor, 2), round(min(float(ar[1]), float(br[1])) * ry_factor, 2)],
+            "weight": 0.70,
+            "repairBridge": True,
+        })
+        degree[i] += 1
+        degree[j] += 1
+        if len(bridges) >= max_bridges:
+            break
+
+    lobes.extend(bridges)
+    return len(bridges)
+
+
+def apply_repair_plan(recipe: dict, plan: dict) -> dict:
+    """Apply visual repair plus optional internal bridges/projected fit.
+
+    These transforms never change canonical branch IDs/seed/topology. They only
+    change visual density or the 2D projection already compiled into Graph V2.
     """
     out = _base_apply_repair_plan(recipe, plan)
+
+    bridge_count = 0
+    if bool(plan.get("bridgeCrownLobes", False)):
+        bridge_count = _add_internal_crown_bridges(out)
+    repair_meta = out.setdefault("planner", {}).setdefault("repair", {})
+    repair_meta["crownBridgeCount"] = bridge_count
+
     factor = float(plan.get("projectionScale", 1.0))
     if abs(factor - 1.0) <= 1e-6:
         return out
@@ -111,5 +227,5 @@ def apply_repair_plan(recipe: dict, plan: dict) -> dict:
                 int(round(max(p0[1], p1[1]))),
             ]
 
-    out.setdefault("planner", {}).setdefault("repair", {})["projectionScale"] = factor
+    repair_meta["projectionScale"] = factor
     return out
