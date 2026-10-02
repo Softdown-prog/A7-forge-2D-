@@ -77,10 +77,10 @@ def paint_field_mass(
 ) -> dict:
     """Composite a coherent field-defined material mass onto an RGBA canvas.
 
-    The field supplies the large-scale silhouette. Smooth deterministic noise only
-    perturbs the threshold near the edge, while morphological closing repairs tiny
-    holes. Depth may modulate value so the mass already carries broad volume before
-    detail brushes are added.
+    Noise may perturb an existing field edge, but it is field-gated and can
+    never create material where the authored density is zero. This invariant is
+    important for masks and organic support masses: edge breakup must deform a
+    silhouette, not invent disconnected islands elsewhere on the canvas.
     """
     if canvas.mode != "RGBA":
         raise ValueError("Field Mass Engine canvas must be RGBA")
@@ -103,21 +103,36 @@ def paint_field_mass(
     alpha_px = alpha.load()
     density_px = density.load()
     noise_px = noise.load()
+    gate_end = max(0.02, threshold + feather * 1.5)
     for y in range(canvas.height):
         for x in range(canvas.width):
             d = density_px[x, y] / 255.0
+            if d <= 0.0:
+                alpha_px[x, y] = 0
+                continue
             n = noise_px[x, y] / 255.0 - 0.5
-            adjusted = d + n * edge_noise
+            noise_gate = _smoothstep(0.0, gate_end, d)
+            adjusted = d + n * edge_noise * noise_gate
             a = _smoothstep(threshold - feather, threshold + feather, adjusted)
             alpha_px[x, y] = round(a * opacity)
 
     close = max(0, int(close_px))
     if close:
         kernel = close * 2 + 1
-        # Closing = dilate then erode. It closes pinholes without globally
-        # inflating the silhouette like dilation alone would.
         alpha = alpha.filter(ImageFilter.MaxFilter(kernel)).filter(ImageFilter.MinFilter(kernel))
     alpha = alpha.filter(ImageFilter.GaussianBlur(0.45))
+
+    # Morphology/feathering may spread a subpixel fringe from a valid edge, but
+    # it must not resurrect distant zero-density pixels. Constrain the result to
+    # a tiny dilation of the authored source-field support.
+    support = density.point(lambda px: 255 if px > 0 else 0)
+    support = support.filter(ImageFilter.MaxFilter(3))
+    alpha_px = alpha.load()
+    support_px = support.load()
+    for y in range(canvas.height):
+        for x in range(canvas.width):
+            if support_px[x, y] == 0:
+                alpha_px[x, y] = 0
 
     layer = Image.new("RGBA", canvas.size, (0, 0, 0, 0))
     layer_px = layer.load()
@@ -129,8 +144,6 @@ def paint_field_mass(
             if a <= 0:
                 continue
             depth_value = 0.5 if depth_px is None else depth_px[x, y] / 255.0
-            # Rear/top regions stay slightly darker; front/lower regions receive
-            # broad value lift. Fine highlights belong to later detail passes.
             value_mul = 1.0 + (depth_value - 0.5) * depth_shade
             r = round(_clamp(base[0] * value_mul, 0, 255))
             g = round(_clamp(base[1] * value_mul, 0, 255))
@@ -148,6 +161,7 @@ def paint_field_mass(
         "opacity": opacity,
         "closePx": close,
         "edgeNoise": edge_noise,
+        "noiseFieldGated": True,
         "depthShade": depth_shade,
         "coverage": round(coverage, 6),
         "bounds": None if bbox is None else list(bbox),
