@@ -196,7 +196,7 @@ def project_plant_structure(
     view: str,
     canvas: tuple[int, int] = (256, 320),
     anchor: tuple[int, int] = (128, 310),
-    scale: float = 148.0,
+    scale: float = 118.0,
 ) -> PlantProjection:
     """Project one canonical plant into a cardinal City Horizon view."""
     name = str(view).lower()
@@ -250,7 +250,7 @@ def project_four_views(
     structure: PlantStructure,
     canvas: tuple[int, int] = (256, 320),
     anchor: tuple[int, int] = (128, 310),
-    scale: float = 148.0,
+    scale: float = 118.0,
 ) -> dict[str, PlantProjection]:
     return {
         view: project_plant_structure(structure, view, canvas=canvas, anchor=anchor, scale=scale)
