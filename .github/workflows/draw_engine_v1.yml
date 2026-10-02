@@ -19,6 +19,7 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_cluster_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_mass_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flower_cluster_engine.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/branch_geometry_v2.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_visual_critic.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_repair_policy.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flowering_brushes.py'
@@ -49,6 +50,7 @@ on:
       - 'tools/visitor_forge_2d/tests/test_mass_processing.py'
       - 'tools/visitor_forge_2d/tests/test_layer_material.py'
       - 'tools/visitor_forge_2d/tests/test_flower_cluster_engine.py'
+      - 'tools/visitor_forge_2d/tests/test_branch_geometry_v2.py'
       - 'tools/visitor_forge_2d/tests/test_plant_planner.py'
       - 'tools/visitor_forge_2d/tests/test_plant_visual_critic.py'
       - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
@@ -83,6 +85,7 @@ jobs:
             tools/visitor_forge_2d/tests/test_mass_processing.py \
             tools/visitor_forge_2d/tests/test_layer_material.py \
             tools/visitor_forge_2d/tests/test_flower_cluster_engine.py \
+            tools/visitor_forge_2d/tests/test_branch_geometry_v2.py \
             tools/visitor_forge_2d/tests/test_plant_planner.py \
             tools/visitor_forge_2d/tests/test_plant_visual_critic.py
       - name: Render legacy compatibility pilot
