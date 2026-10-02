@@ -29,6 +29,31 @@ Node: `tapered_path`
 
 Use it for trunks, branches, stems, roots, cracks, seams, pipes, cables, curbs, rivers and other width-varying paths. Continuous objects must not be faked by repeating bitmap stamps.
 
+### `A7_VECTOR_PATH_V1`
+
+General vector paths inspired by the path/contour organization used in mature engines such as Skia, implemented independently for A7.
+
+Node: `vector_path`
+
+Current commands:
+
+- `move`
+- `line`
+- `quad`
+- `cubic`
+- `close`
+
+Current capabilities:
+
+- multiple contours;
+- adaptive Bézier flattening;
+- authored scale/rotation/translation around an origin;
+- fill and stroke;
+- round/butt caps;
+- supersampled antialiasing.
+
+Use `vector_path` for general shape/path geometry and `tapered_path` when width must vary continuously along the authored path.
+
 ### `A7_DISTRIBUTION_ENGINE_V1`
 
 Deterministic minimum-distance placement using a spatial hash.
@@ -63,19 +88,36 @@ V2 stays available for recipe compatibility.
 
 The first deliberately upstream-informed subsystem. It adapts the permissively licensed libmypaint mapping model: each output has a base value plus piecewise-linear curves driven by named inputs.
 
-Current deterministic A7 inputs include `stroke`, `index`, `random`, `direction`, `radial`, `x`, `y` and `region`. This allows brush properties to be authored as curves rather than only random ranges.
+### `A7_SENSOR_CONTEXT_V1`
+
+Generic deterministic sensor/input contract. It is an independent A7 implementation after studying Krita's GPL sensor/option separation.
+
+Current common signals include:
+
+- `stroke`, `index`, `random`;
+- `direction`, `direction_01`;
+- `radial`;
+- `x`, `y`, `x_norm`, `y_norm`;
+- `distance`, `distance_norm`;
+- `region`;
+- `pressure`, `speed`;
+- `depth`, `density`.
+
+The contract is intentionally not brush-specific. Cluster, field, mask, lighting and processing nodes should be able to consume the same signals later.
+
+### `A7_BRUSH_OPTION_BINDINGS_V1`
+
+Separates semantic brush options from sensor production. Sensor values pass through `A7_DYNAMICS_MAPPING_V1` curves and produce options such as scale, aspect, rotation, opacity, hue/value/saturation and offsets.
 
 ### `A7_MAPPED_BRUSH_ENGINE_V1`
 
-Connects Brush V3 to the mapping system.
+Connects Brush V3 to the generic sensor context and option-binding system.
 
 Node: `mapped_dynamic_scatter`
 
-Current mapped outputs include scale, aspect, rotation, opacity, hue, saturation, value and X/Y offsets.
-
 ### `A7_DAB_DENSITY_V1`
 
-Adapts libmypaint's radius-aware spatial dab-density decomposition. Dynamic path brushes may now use `dabsPerActualRadius` and `dabsPerBasicRadius` instead of a fixed pixel spacing. Larger brush tips naturally move farther between dabs while smaller tips become proportionally denser.
+Adapts libmypaint's radius-aware spatial dab-density decomposition. Dynamic path brushes may use `dabsPerActualRadius` and `dabsPerBasicRadius` instead of a fixed pixel spacing. Larger brush tips naturally move farther between dabs while smaller tips become proportionally denser.
 
 The old `spacing` parameter remains as the compatibility fallback when both density values are zero.
 
@@ -114,21 +156,25 @@ ISC-licensed and suitable for selective direct adaptation with retained notice. 
 
 ### Krita
 
-GPLv3 reference by default. Its sensor/brush-option separation, multiple paint engines, masked brushes, texture/scatter systems and preset architecture are design references. No Krita implementation code is copied into A7.
+GPL reference by default. Its sensor/brush-option separation, multiple paint engines, masked brushes, texture/scatter systems and preset architecture are design references. No Krita implementation code is copied into A7.
 
 ### Inkscape
 
 Reference target for vector/path authoring, transforms and geometry workflow. Treat implementation as copy-left reference unless a specific file/component is audited otherwise.
 
-### Skia and image-processing projects
+### Skia
 
-Candidates for later permissive components or architecture study, especially rasterization, masks, path effects, morphology and filters. Each integration gets a separate provenance/license audit.
+BSD-style permissive reference. A7 currently studies its path/contour organization and independently implements the useful subset in `A7_VECTOR_PATH_V1`. Skia is not currently a runtime dependency.
+
+### Image-processing projects
+
+G'MIC and similar engines are the next reference targets for morphology, filtering, local processing and image pipelines. Each integration gets a separate provenance/license audit.
 
 ## Next phases
 
 ### Phase 4 — fields and masks
 
-Add density maps, avoid masks, direction fields, depth fields and distance fields. Distribution should be conditioned by structure rather than by an ellipse alone. These field values should also become inputs to `A7_DYNAMICS_MAPPING_V1`, allowing one curve system to drive both brushes and structured asset generation.
+Add density maps, avoid masks, direction fields, depth fields and distance fields. Distribution should be conditioned by structure rather than by an ellipse alone. These field values should also become inputs to `A7_SENSOR_CONTEXT_V1`/`A7_DYNAMICS_MAPPING_V1`, allowing one curve system to drive brushes and structured asset generation.
 
 ### Phase 5 — image processing nodes
 
@@ -142,7 +188,7 @@ Finish the Brush V3 backlog: dual-tip masks, texture maps, richer flow curves an
 
 A production organic asset should eventually satisfy all of the following:
 
-1. primary structure is continuous geometry or an authored source image;
+1. primary structure is continuous geometry, vector geometry or an authored source image;
 2. repeated elements have explicit spacing/density control;
 3. secondary detail is grouped hierarchically rather than emitted as thousands of independent micro-stamps;
 4. depth/light information is explicit in the graph;
