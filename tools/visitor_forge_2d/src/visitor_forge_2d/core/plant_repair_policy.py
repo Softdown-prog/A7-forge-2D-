@@ -19,6 +19,8 @@ from .plant_visual_critic import (
     propose_repair as _base_propose_repair,
 )
 
+PLANT_REPAIR_POLICY_REVISION = "A7_PLANT_REPAIR_POLICY_INTERNAL_BRIDGE_V1"
+
 
 def _single_view_fragmentation(aggregate: dict) -> bool:
     """Detect a likely hidden bad view without treating a healthy open crown as sparse.
