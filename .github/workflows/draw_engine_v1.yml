@@ -20,6 +20,7 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_mass_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flower_cluster_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_visual_critic.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_repair_policy.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flowering_brushes.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brushes.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/image_processing.py'
