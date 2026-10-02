@@ -31,6 +31,8 @@ from .image_processing import (
     local_contrast,
     masked_material_variation,
 )
+from .layer_engine import LAYER_ENGINE_CONTRACT, composite, contact_occlusion
+from .material_engine import MATERIAL_ENGINE_CONTRACT, masked_relief_material
 from .vector_path import VECTOR_PATH_CONTRACT, draw_vector_paths
 
 FIELD_GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V2"
@@ -51,7 +53,10 @@ SUPPORTED_NODE_TYPES = {
     "image_alpha_cleanup",
     "image_depth_light",
     "image_masked_material",
+    "image_masked_relief_material",
     "image_local_contrast",
+    "image_composite",
+    "image_contact_occlusion",
     "levels",
     "output",
 }
@@ -106,8 +111,12 @@ def validate_recipe(recipe: dict) -> None:
             raise ValueError("field_mass_fill requires inputs.image and inputs.density")
         if node_type == "image_depth_light" and ("image" not in inputs or "depth" not in inputs):
             raise ValueError("image_depth_light requires inputs.image and inputs.depth")
-        if node_type == "image_masked_material" and ("image" not in inputs or "mask" not in inputs):
-            raise ValueError("image_masked_material requires inputs.image and inputs.mask")
+        if node_type in {"image_masked_material", "image_masked_relief_material"} and ("image" not in inputs or "mask" not in inputs):
+            raise ValueError(f"{node_type} requires inputs.image and inputs.mask")
+        if node_type == "image_composite" and ("base" not in inputs or "layer" not in inputs):
+            raise ValueError("image_composite requires inputs.base and inputs.layer")
+        if node_type == "image_contact_occlusion" and ("base" not in inputs or "occluder" not in inputs):
+            raise ValueError("image_contact_occlusion requires inputs.base and inputs.occluder")
         if node_type in {"image_alpha_cleanup", "image_local_contrast"} and "image" not in inputs:
             raise ValueError(f"{node_type} requires inputs.image")
         seen.add(node_id)
@@ -296,6 +305,44 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, "contract": IMAGE_PROCESSING_CONTRACT, "operation": "masked_material"}
 
+        elif node_type == "image_masked_relief_material":
+            image = masked_relief_material(
+                _copy_input(results, node, "image"),
+                _copy_input(results, node, "mask"),
+                seed=seed + index * 49979687 + int(params.get("seedOffset", 0)),
+                light_direction=params.get("lightDirection", [-0.8, -0.45]),
+                relief_strength=float(params.get("reliefStrength", 0.22)),
+                edge_shade=float(params.get("edgeShade", 0.16)),
+                coarse_px=int(params.get("coarsePx", 13)),
+                coarse_amount=float(params.get("coarseAmount", 0.11)),
+                grain_axis=str(params.get("grainAxis", "vertical")),
+                grain_scale_px=int(params.get("grainScalePx", 7)),
+                grain_amount=float(params.get("grainAmount", 0.10)),
+                fine_amount=float(params.get("fineAmount", 0.025)),
+            )
+            stats = {"type": node_type, "contract": MATERIAL_ENGINE_CONTRACT, "operation": "masked_relief_material"}
+
+        elif node_type == "image_composite":
+            image = composite(
+                _copy_input(results, node, "base"),
+                _copy_input(results, node, "layer"),
+                opacity=float(params.get("opacity", 1.0)),
+            )
+            stats = {"type": node_type, "contract": LAYER_ENGINE_CONTRACT, "operation": "composite"}
+
+        elif node_type == "image_contact_occlusion":
+            image = contact_occlusion(
+                _copy_input(results, node, "base"),
+                _copy_input(results, node, "occluder"),
+                radius=float(params.get("radius", 3.0)),
+                strength=float(params.get("strength", 0.28)),
+                offset=params.get("offset", [0, 2]),
+                color=params.get("color", "#102016"),
+                expand_px=int(params.get("expandPx", 1)),
+                base_alpha_only=bool(params.get("baseAlphaOnly", True)),
+            )
+            stats = {"type": node_type, "contract": LAYER_ENGINE_CONTRACT, "operation": "contact_occlusion"}
+
         elif node_type == "image_local_contrast":
             image = local_contrast(
                 _copy_input(results, node, "image"),
@@ -342,6 +389,8 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         "fieldClusterContract": FIELD_CLUSTER_CONTRACT,
         "fieldMassContract": FIELD_MASS_CONTRACT,
         "imageProcessingContract": IMAGE_PROCESSING_CONTRACT,
+        "layerEngineContract": LAYER_ENGINE_CONTRACT,
+        "materialEngineContract": MATERIAL_ENGINE_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "vectorPathContract": VECTOR_PATH_CONTRACT,
         "id": recipe["id"],
@@ -365,6 +414,9 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "alphaCleanup": "image_alpha_cleanup" in node_types,
             "depthLighting": "image_depth_light" in node_types,
             "maskedMaterial": "image_masked_material" in node_types,
+            "maskedReliefMaterial": "image_masked_relief_material" in node_types,
+            "layerComposite": "image_composite" in node_types,
+            "contactOcclusion": "image_contact_occlusion" in node_types,
             "localContrast": "image_local_contrast" in node_types,
             "assetSpecificRenderer": False,
             "deterministic": True,
