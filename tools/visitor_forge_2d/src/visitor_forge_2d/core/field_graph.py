@@ -22,7 +22,15 @@ from .field_engine import (
     multiply_fields,
     radial_density,
 )
+from .field_mass_engine import FIELD_MASS_CONTRACT, paint_field_mass
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
+from .image_processing import (
+    IMAGE_PROCESSING_CONTRACT,
+    alpha_cleanup,
+    depth_lighting,
+    local_contrast,
+    masked_material_variation,
+)
 from .vector_path import VECTOR_PATH_CONTRACT, draw_vector_paths
 
 FIELD_GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V2"
@@ -37,8 +45,13 @@ SUPPORTED_NODE_TYPES = {
     "field_linear_depth",
     "field_direction_to_point",
     "field_multiply",
+    "field_mass_fill",
     "field_mapped_scatter",
     "field_cluster_scatter",
+    "image_alpha_cleanup",
+    "image_depth_light",
+    "image_masked_material",
+    "image_local_contrast",
     "levels",
     "output",
 }
@@ -89,6 +102,14 @@ def validate_recipe(recipe: dict) -> None:
                 raise ValueError(f"{node_type} params.mappings must be an object")
         if node_type == "field_cluster_scatter" and not isinstance(node.get("params", {}).get("cluster"), dict):
             raise ValueError("field_cluster_scatter requires params.cluster")
+        if node_type == "field_mass_fill" and ("image" not in inputs or "density" not in inputs):
+            raise ValueError("field_mass_fill requires inputs.image and inputs.density")
+        if node_type == "image_depth_light" and ("image" not in inputs or "depth" not in inputs):
+            raise ValueError("image_depth_light requires inputs.image and inputs.depth")
+        if node_type == "image_masked_material" and ("image" not in inputs or "mask" not in inputs):
+            raise ValueError("image_masked_material requires inputs.image and inputs.mask")
+        if node_type in {"image_alpha_cleanup", "image_local_contrast"} and "image" not in inputs:
+            raise ValueError(f"{node_type} requires inputs.image")
         seen.add(node_id)
     if outputs != 1:
         raise ValueError("graph must contain exactly one output node")
@@ -182,6 +203,24 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             image = multiply_fields(*fields)
             stats = {"type": node_type, "contract": FIELD_ENGINE_CONTRACT, "fieldKind": "scalar", "inputCount": len(fields)}
 
+        elif node_type == "field_mass_fill":
+            image = _copy_input(results, node, "image")
+            mass_stats = paint_field_mass(
+                image,
+                _copy_input(results, node, "density"),
+                depth_field=_optional_input(results, node, "depth"),
+                color=params.get("color", "#315E36"),
+                threshold=float(params.get("threshold", 0.16)),
+                feather=float(params.get("feather", 0.10)),
+                opacity=int(params.get("opacity", 220)),
+                close_px=int(params.get("closePx", 2)),
+                edge_noise=float(params.get("edgeNoise", 0.10)),
+                noise_cell_px=int(params.get("noiseCellPx", 18)),
+                depth_shade=float(params.get("depthShade", 0.22)),
+                seed=seed + index * 15485863 + int(params.get("seedOffset", 0)),
+            )
+            stats = {"type": node_type, **mass_stats}
+
         elif node_type == "field_mapped_scatter":
             image = _copy_input(results, node, "image")
             engine = FieldBrushEngineV1(seed + index * 982451653 + int(params.get("seedOffset", 0)))
@@ -224,6 +263,48 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, **cluster_stats}
 
+        elif node_type == "image_alpha_cleanup":
+            image = alpha_cleanup(
+                _copy_input(results, node, "image"),
+                close_px=int(params.get("closePx", 1)),
+                open_px=int(params.get("openPx", 0)),
+                feather_radius=float(params.get("featherRadius", 0.35)),
+                fill_color=params.get("fillColor"),
+                fill_strength=float(params.get("fillStrength", 0.75)),
+            )
+            stats = {"type": node_type, "contract": IMAGE_PROCESSING_CONTRACT, "operation": "alpha_cleanup"}
+
+        elif node_type == "image_depth_light":
+            image = depth_lighting(
+                _copy_input(results, node, "image"),
+                _copy_input(results, node, "depth"),
+                strength=float(params.get("strength", 0.18)),
+                bias=float(params.get("bias", 0.0)),
+                preserve_alpha=bool(params.get("preserveAlpha", True)),
+            )
+            stats = {"type": node_type, "contract": IMAGE_PROCESSING_CONTRACT, "operation": "depth_lighting"}
+
+        elif node_type == "image_masked_material":
+            image = masked_material_variation(
+                _copy_input(results, node, "image"),
+                _copy_input(results, node, "mask"),
+                seed=seed + index * 32452843 + int(params.get("seedOffset", 0)),
+                coarse_px=int(params.get("coarsePx", 11)),
+                coarse_amount=float(params.get("coarseAmount", 0.13)),
+                fine_amount=float(params.get("fineAmount", 0.035)),
+                vertical_light=float(params.get("verticalLight", 0.05)),
+            )
+            stats = {"type": node_type, "contract": IMAGE_PROCESSING_CONTRACT, "operation": "masked_material"}
+
+        elif node_type == "image_local_contrast":
+            image = local_contrast(
+                _copy_input(results, node, "image"),
+                radius=float(params.get("radius", 1.4)),
+                amount=float(params.get("amount", 0.55)),
+                global_contrast=float(params.get("globalContrast", 1.0)),
+            )
+            stats = {"type": node_type, "contract": IMAGE_PROCESSING_CONTRACT, "operation": "local_contrast"}
+
         elif node_type == "levels":
             image = _copy_input(results, node, "image")
             alpha = image.getchannel("A")
@@ -259,6 +340,8 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         "fieldContract": FIELD_ENGINE_CONTRACT,
         "fieldBrushContract": FIELD_BRUSH_CONTRACT,
         "fieldClusterContract": FIELD_CLUSTER_CONTRACT,
+        "fieldMassContract": FIELD_MASS_CONTRACT,
+        "imageProcessingContract": IMAGE_PROCESSING_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "vectorPathContract": VECTOR_PATH_CONTRACT,
         "id": recipe["id"],
@@ -278,6 +361,11 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "distanceField": "field_distance" in node_types,
             "directionField": "field_direction_to_point" in node_types,
             "depthField": "field_linear_depth" in node_types,
+            "coherentMass": "field_mass_fill" in node_types,
+            "alphaCleanup": "image_alpha_cleanup" in node_types,
+            "depthLighting": "image_depth_light" in node_types,
+            "maskedMaterial": "image_masked_material" in node_types,
+            "localContrast": "image_local_contrast" in node_types,
             "assetSpecificRenderer": False,
             "deterministic": True,
         },
