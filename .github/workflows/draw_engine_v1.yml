@@ -6,6 +6,8 @@ on:
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_engine_v2.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_engine_v3.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/dynamics_mapping.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/sensor_context.py'
+      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_option_bindings.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/mapped_brush_engine.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/dab_density.py'
       - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/cluster_engine.py'
@@ -21,6 +23,7 @@ on:
       - 'tools/visitor_forge_2d/tests/test_dynamics_mapping.py'
       - 'tools/visitor_forge_2d/tests/test_mapped_brush_engine.py'
       - 'tools/visitor_forge_2d/tests/test_dab_density.py'
+      - 'tools/visitor_forge_2d/tests/test_sensor_context.py'
       - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
       - 'tools/visitor_forge_2d/docs/OPEN_SOURCE_REFERENCE_MATRIX.md'
       - 'tools/visitor_forge_2d/third_party/**'
@@ -45,7 +48,8 @@ jobs:
             tools/visitor_forge_2d/tests/test_node_graph_v1.py \
             tools/visitor_forge_2d/tests/test_dynamics_mapping.py \
             tools/visitor_forge_2d/tests/test_mapped_brush_engine.py \
-            tools/visitor_forge_2d/tests/test_dab_density.py
+            tools/visitor_forge_2d/tests/test_dab_density.py \
+            tools/visitor_forge_2d/tests/test_sensor_context.py
       - name: Render legacy compatibility pilot
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
