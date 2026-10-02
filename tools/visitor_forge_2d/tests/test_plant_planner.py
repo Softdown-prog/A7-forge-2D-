@@ -65,17 +65,33 @@ def test_art_planner_compiles_valid_v2_recipes_for_all_views() -> None:
         assert recipe["planner"]["branchIds"] == expected_branch_ids
         assert recipe["planner"]["terminalCount"] == len(structure.terminal_points)
         assert recipe["planner"]["temporaryFlowerProxy"] is True
+        assert recipe["planner"]["flowerPlacement"] == "terminal_density"
         node_types = {node["type"] for node in recipe["graph"]["nodes"]}
+        node_ids = {node["id"] for node in recipe["graph"]["nodes"]}
         assert "field_cluster_scatter" in node_types
         assert "image_masked_relief_material" in node_types
         assert "image_contact_occlusion" in node_types
+        assert {"flower_density", "flower_proxy", "flower_composite"} <= node_ids
+
+        scatters = [node for node in recipe["graph"]["nodes"] if node["type"] in {"field_cluster_scatter", "field_mapped_scatter"}]
+        for node in scatters:
+            bounds = node.get("params", {}).get("bounds")
+            if bounds is not None:
+                assert bounds[0] >= 34
+                assert bounds[2] <= recipe["canvas"][0] - 34
+                assert bounds[1] >= 30
+                assert bounds[3] <= recipe["canvas"][1] - 28
 
 
-def test_planner_crown_is_derived_from_projected_terminals() -> None:
+def test_planner_crown_and_flowers_are_derived_from_projected_terminals() -> None:
     structure, recipes = plan_plant_four_views(_intent())
     recipe = recipes["south"]
-    density = next(node for node in recipe["graph"]["nodes"] if node["id"] == "crown_density")
+    crown = next(node for node in recipe["graph"]["nodes"] if node["id"] == "crown_density")
+    flowers = next(node for node in recipe["graph"]["nodes"] if node["id"] == "flower_density")
 
-    lobes = density["params"]["lobes"]
-    assert len(lobes) == len(structure.terminal_points) + 1
-    assert all("center" in lobe and "radius" in lobe for lobe in lobes)
+    crown_lobes = crown["params"]["lobes"]
+    flower_lobes = flowers["params"]["lobes"]
+    assert len(crown_lobes) == len(structure.terminal_points) + 1
+    assert len(flower_lobes) == len(structure.terminal_points)
+    assert all("center" in lobe and "radius" in lobe for lobe in crown_lobes)
+    assert all("center" in lobe and "radius" in lobe for lobe in flower_lobes)
