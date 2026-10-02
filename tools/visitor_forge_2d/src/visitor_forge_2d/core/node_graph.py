@@ -9,12 +9,15 @@ from PIL import Image, ImageEnhance
 
 from .brush_engine_v2 import BRUSH_CONTRACT, BrushEngineV2
 from .brush_engine_v3 import BRUSH_V3_CONTRACT, BrushEngineV3
+from .brush_option_bindings import BRUSH_OPTION_BINDINGS_CONTRACT
 from .cluster_engine import CLUSTER_CONTRACT, ClusterEngineV1
 from .dab_density import DAB_DENSITY_CONTRACT
 from .distribution_engine import DISTRIBUTION_CONTRACT, DistributionEngineV1
 from .dynamics_mapping import DYNAMICS_MAPPING_CONTRACT
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
 from .mapped_brush_engine import MAPPED_BRUSH_CONTRACT, MappedBrushEngineV1
+from .sensor_context import SENSOR_CONTEXT_CONTRACT
+from .vector_path import VECTOR_PATH_CONTRACT, draw_vector_paths
 
 GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V1"
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9_-]*\Z")
@@ -26,6 +29,7 @@ SUPPORTED_NODE_TYPES = {
     "dynamic_path_brush",
     "mapped_dynamic_scatter",
     "tapered_path",
+    "vector_path",
     "spaced_scatter",
     "cluster_scatter",
     "blend",
@@ -75,6 +79,8 @@ def validate_recipe(recipe: dict) -> None:
             raise ValueError("cluster_scatter requires params.cluster")
         if node_type == "mapped_dynamic_scatter" and not isinstance(node.get("params", {}).get("mappings"), dict):
             raise ValueError("mapped_dynamic_scatter requires params.mappings")
+        if node_type == "vector_path" and not isinstance(node.get("params", {}).get("paths", []), list):
+            raise ValueError("vector_path requires params.paths as a list")
         seen.add(node_id)
     if outputs != 1:
         raise ValueError("graph must contain exactly one output node")
@@ -224,6 +230,15 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, **geometry_stats}
 
+        elif node_type == "vector_path":
+            image = _input_image(results, node)
+            vector_stats = draw_vector_paths(
+                image,
+                params.get("paths", []),
+                supersample=int(params.get("supersample", 4)),
+            )
+            stats = {"type": node_type, **vector_stats}
+
         elif node_type == "spaced_scatter":
             image = _input_image(results, node)
             local = DistributionEngineV1(seed + node_index * 15485863 + int(params.get("seedOffset", 0)))
@@ -310,9 +325,12 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         "brushContract": BRUSH_CONTRACT,
         "brushDynamicsContract": BRUSH_V3_CONTRACT,
         "mappedBrushContract": MAPPED_BRUSH_CONTRACT,
+        "sensorContextContract": SENSOR_CONTEXT_CONTRACT,
+        "brushOptionBindingsContract": BRUSH_OPTION_BINDINGS_CONTRACT,
         "dynamicsMappingContract": DYNAMICS_MAPPING_CONTRACT,
         "dabDensityContract": DAB_DENSITY_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
+        "vectorPathContract": VECTOR_PATH_CONTRACT,
         "distributionContract": DISTRIBUTION_CONTRACT,
         "clusterContract": CLUSTER_CONTRACT,
         "id": recipe["id"],
@@ -329,9 +347,11 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "assetSpecificRenderer": False,
             "deterministic": True,
             "continuousGeometry": "tapered_path" in node_types,
+            "vectorGeometry": "vector_path" in node_types,
             "minimumDistanceDistribution": "spaced_scatter" in node_types or "cluster_scatter" in node_types,
             "brushDynamics": bool({"dynamic_scatter", "dynamic_path_brush", "mapped_dynamic_scatter", "cluster_scatter"} & node_types),
             "mappedDynamics": "mapped_dynamic_scatter" in node_types,
+            "genericSensorContext": "mapped_dynamic_scatter" in node_types,
             "radiusAwareDabDensity": radius_aware,
             "hierarchicalClusters": "cluster_scatter" in node_types,
         },
