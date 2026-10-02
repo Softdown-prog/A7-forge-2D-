@@ -51,6 +51,7 @@ _SPECIES_PROFILES: dict[str, dict[str, Any]] = {
         "primaryLength": [0.44, 0.64],
         "secondaryLength": [0.23, 0.36],
         "primaryRise": [0.18, 0.32],
+        "primaryRiseRatioMin": 0.50,
         "secondaryRise": [0.09, 0.20],
         "primaryForkSpread": [0.06, 0.30],
         "primaryForkAngleDeg": [52.0, 74.0],
