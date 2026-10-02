@@ -1,7 +1,7 @@
 """A7 Node Graph V2: field-aware deterministic 2D composition.
 
 V2 is additive: V1 remains available for old recipes. This executor introduces
-field nodes and field-conditioned brush placement without changing V1 output.
+field nodes and field-conditioned brush/cluster placement without changing V1 output.
 """
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ import re
 from PIL import Image, ImageEnhance
 
 from .field_brush_engine import FIELD_BRUSH_CONTRACT, FieldBrushEngineV1
+from .field_cluster_engine import FIELD_CLUSTER_CONTRACT, FieldClusterEngineV1
 from .field_engine import (
     FIELD_ENGINE_CONTRACT,
     direction_to_point,
@@ -37,6 +38,7 @@ SUPPORTED_NODE_TYPES = {
     "field_direction_to_point",
     "field_multiply",
     "field_mapped_scatter",
+    "field_cluster_scatter",
     "levels",
     "output",
 }
@@ -80,11 +82,13 @@ def validate_recipe(recipe: dict) -> None:
             outputs += 1
             if "image" not in inputs:
                 raise ValueError("output requires inputs.image")
-        if node_type == "field_mapped_scatter":
+        if node_type in {"field_mapped_scatter", "field_cluster_scatter"}:
             if "image" not in inputs or "density" not in inputs:
-                raise ValueError("field_mapped_scatter requires inputs.image and inputs.density")
+                raise ValueError(f"{node_type} requires inputs.image and inputs.density")
             if not isinstance(node.get("params", {}).get("mappings", {}), dict):
-                raise ValueError("field_mapped_scatter params.mappings must be an object")
+                raise ValueError(f"{node_type} params.mappings must be an object")
+        if node_type == "field_cluster_scatter" and not isinstance(node.get("params", {}).get("cluster"), dict):
+            raise ValueError("field_cluster_scatter requires params.cluster")
         seen.add(node_id)
     if outputs != 1:
         raise ValueError("graph must contain exactly one output node")
@@ -198,6 +202,28 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, **field_stats}
 
+        elif node_type == "field_cluster_scatter":
+            image = _copy_input(results, node, "image")
+            engine = FieldClusterEngineV1(seed + index * 961748941 + int(params.get("seedOffset", 0)))
+            cluster_stats = engine.scatter(
+                image,
+                params["cluster"],
+                int(params.get("count", 0)),
+                density_field=_copy_input(results, node, "density"),
+                avoid_field=_optional_input(results, node, "avoid"),
+                depth_field=_optional_input(results, node, "depth"),
+                direction_field=_optional_input(results, node, "direction"),
+                distance_field=_optional_input(results, node, "distance"),
+                bounds=params.get("bounds"),
+                min_distance=float(params.get("minDistance", 0.0)),
+                scale=params.get("scale", [1.0, 1.0]),
+                rotation_deg=params.get("rotationDeg", [-15.0, 15.0]),
+                mirror_x_probability=float(params.get("mirrorXProbability", 0.5)),
+                mappings=params.get("mappings", {}),
+                max_attempts=params.get("maxAttempts"),
+            )
+            stats = {"type": node_type, **cluster_stats}
+
         elif node_type == "levels":
             image = _copy_input(results, node, "image")
             alpha = image.getchannel("A")
@@ -227,10 +253,12 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
 
     assert final is not None
     node_types = {node["type"] for node in recipe["graph"]["nodes"]}
+    field_aware = bool({"field_mapped_scatter", "field_cluster_scatter"} & node_types)
     metadata = {
         "contract": FIELD_GRAPH_CONTRACT,
         "fieldContract": FIELD_ENGINE_CONTRACT,
         "fieldBrushContract": FIELD_BRUSH_CONTRACT,
+        "fieldClusterContract": FIELD_CLUSTER_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "vectorPathContract": VECTOR_PATH_CONTRACT,
         "id": recipe["id"],
@@ -243,7 +271,8 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         "camera": recipe["camera"],
         "critic": {
             "nodeGraphV2": True,
-            "fieldAwareDistribution": "field_mapped_scatter" in node_types,
+            "fieldAwareDistribution": field_aware,
+            "fieldConditionedClusters": "field_cluster_scatter" in node_types,
             "densityField": "field_radial_density" in node_types,
             "avoidMask": "field_alpha_mask" in node_types,
             "distanceField": "field_distance" in node_types,
