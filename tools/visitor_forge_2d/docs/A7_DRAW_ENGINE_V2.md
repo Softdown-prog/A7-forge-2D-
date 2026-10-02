@@ -137,6 +137,47 @@ Cluster centers are distributed with `A7_DISTRIBUTION_ENGINE_V1`, so macro group
 
 The key production rule is that foliage-scale recipes should distribute tens of meaningful groups, not thousands of independent micro-stamps.
 
+## Phase 4 — fields and masks implemented
+
+### `A7_FIELD_ENGINE_V1`
+
+Reusable deterministic field images. Current primitives:
+
+- radial density fields;
+- alpha-derived masks with dilation/blur;
+- distance/proximity fields;
+- linear depth fields;
+- direction-to-point fields;
+- scalar field multiplication.
+
+Fields are ordinary inspectable Pillow images instead of hidden renderer state.
+
+### `A7_FIELD_BRUSH_ENGINE_V1`
+
+Field-conditioned Brush V3 distribution.
+
+Node: `field_mapped_scatter` in `CH_2D_GRAPH_RECIPE_V2`.
+
+Placement probability is driven by density and avoid fields. Depth, direction and distance are injected into `A7_SENSOR_CONTEXT_V1`, so existing curve mappings can react to structure.
+
+### `A7_FIELD_CLUSTER_ENGINE_V1`
+
+Combines field-aware placement with hierarchical foliage/detail clusters.
+
+Node: `field_cluster_scatter` in `CH_2D_GRAPH_RECIPE_V2`.
+
+The field decides where a macro group may grow and which direction/depth it belongs to; `A7_CLUSTER_ENGINE_V1` defines the internal leaf/twig organization. This is the preferred organic-detail path over hundreds of independent leaf stamps.
+
+### `CH_2D_GRAPH_RECIPE_V2`
+
+V2 is an additive graph contract. V1 remains untouched for deterministic compatibility while V2 owns field-aware authoring nodes.
+
+The first field benchmark is `draw_engine_field_tree_pilot_01.json`:
+
+`continuous branch geometry -> alpha mask -> branch-distance field -> crown density -> field multiplication -> depth/direction fields -> field-conditioned foliage clusters -> levels -> output`
+
+The first brush-only field benchmark showed better branch following but still produced lace/microleaf noise. Replacing individual field stamps with field-conditioned clusters improved macro grouping and is now the baseline architecture.
+
 ## Existing compatibility nodes
 
 - `canvas`
@@ -172,17 +213,19 @@ G'MIC and similar engines are the next reference targets for morphology, filteri
 
 ## Next phases
 
-### Phase 4 — fields and masks
-
-Add density maps, avoid masks, direction fields, depth fields and distance fields. Distribution should be conditioned by structure rather than by an ellipse alone. These field values should also become inputs to `A7_SENSOR_CONTEXT_V1`/`A7_DYNAMICS_MAPPING_V1`, allowing one curve system to drive brushes and structured asset generation.
-
 ### Phase 5 — image processing nodes
 
 Add morphology, blur variants, guided smoothing, local contrast, palette operations, alpha cleanup, edge treatment, warp and lighting nodes.
 
+The field-aware tree benchmark now exposes a concrete need here: reduce pinholes/micro-gaps, unify local foliage masses without turning them into blobs, and apply depth-aware tonal separation after composition.
+
 ### Phase 6 — brush/material finishing
 
 Finish the Brush V3 backlog: dual-tip masks, texture maps, richer flow curves and brush-pack metadata.
+
+### Phase 7 — AI Art Planner
+
+Once Fields + Processing are stable, add a planner that converts semantic art intent into graph structure, recipes and controlled repair passes. The target is an AI-directed drawing system rather than an opaque pixel generator.
 
 ## Production quality gates
 
@@ -201,10 +244,8 @@ A production organic asset should eventually satisfy all of the following:
 
 The old high-count foliage pilot remains only as a compatibility regression artifact and is not an art target.
 
-`draw_engine_cluster_pilot_01.json` is the first architecture pilot using:
+`draw_engine_cluster_pilot_01.json` validates hierarchical groups without structural fields.
 
-`continuous tapered wood -> hierarchical foliage clusters -> levels -> output`
+`draw_engine_field_tree_pilot_01.json` is the current architecture benchmark and validates structural fields plus field-conditioned clusters. It is still a benchmark, not an approved City Horizon production tree.
 
-It exists to validate the new primitives, not to declare a final City Horizon tree style.
-
-The next art-quality tree should wait for at least one Phase 4 field primitive so cluster placement can follow structural masks/depth instead of broad ellipse regions alone.
+The next art-quality gate is Phase 5 processing: local morphology/alpha repair, depth-aware tonal separation and better foliage brush source material.
