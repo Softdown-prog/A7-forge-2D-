@@ -155,15 +155,29 @@ def test_field_graph_tree_pilot_is_deterministic() -> None:
     assert meta["critic"]["distanceField"] is True
     assert meta["critic"]["directionField"] is True
     assert meta["critic"]["depthField"] is True
+    assert meta["critic"]["layerComposite"] is True
+    assert meta["critic"]["contactOcclusion"] is True
+    assert meta["critic"]["maskedReliefMaterial"] is True
 
-    foliage_recipe = next(node for node in recipe["graph"]["nodes"] if node["id"] == "foliage")
-    requested = int(foliage_recipe["params"]["count"])
-    foliage_stats = meta["nodes"]["foliage"]
-    # Production foliage now uses a small number of meaningful macro groups.
-    # The gate checks structural density rather than forcing the old high-count
-    # strategy that produced sponge/moss-like canopies.
-    assert requested <= 24
-    assert foliage_stats["requestedClusters"] == requested
-    assert foliage_stats["clusterCount"] >= max(12, requested - 2)
-    assert foliage_stats["leafStampCount"] >= foliage_stats["clusterCount"] * 6
+    # The production benchmark now has explicit rear/front/detail foliage layers.
+    layer_ids = ("rear_foliage", "front_foliage", "detail_foliage")
+    requested_total = 0
+    placed_total = 0
+    leaf_total = 0
+    for node_id in layer_ids:
+        foliage_recipe = next(node for node in recipe["graph"]["nodes"] if node["id"] == node_id)
+        requested = int(foliage_recipe["params"]["count"])
+        stats = meta["nodes"][node_id]
+        assert requested <= 24
+        assert stats["requestedClusters"] == requested
+        assert stats["clusterCount"] >= max(10, requested - 3)
+        requested_total += requested
+        placed_total += stats["clusterCount"]
+        leaf_total += stats["leafStampCount"]
+
+    # Quality gate: use a few dozen meaningful groups across depth layers,
+    # never the old thousand-micro-stamp strategy.
+    assert requested_total <= 60
+    assert placed_total >= 42
+    assert leaf_total >= placed_total * 3
     assert first.getchannel("A").getbbox() is not None
