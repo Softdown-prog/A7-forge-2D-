@@ -8,6 +8,8 @@ import re
 from PIL import Image, ImageEnhance
 
 from .brush_engine_v2 import BRUSH_CONTRACT, BrushEngineV2
+from .brush_engine_v3 import BRUSH_V3_CONTRACT, BrushEngineV3
+from .cluster_engine import CLUSTER_CONTRACT, ClusterEngineV1
 from .distribution_engine import DISTRIBUTION_CONTRACT, DistributionEngineV1
 from .geometry_engine import GEOMETRY_CONTRACT, draw_tapered_paths
 
@@ -17,8 +19,11 @@ SUPPORTED_NODE_TYPES = {
     "canvas",
     "brush_scatter",
     "path_brush",
+    "dynamic_scatter",
+    "dynamic_path_brush",
     "tapered_path",
     "spaced_scatter",
+    "cluster_scatter",
     "blend",
     "levels",
     "output",
@@ -62,6 +67,8 @@ def validate_recipe(recipe: dict) -> None:
             outputs += 1
             if "image" not in inputs:
                 raise ValueError("output node requires inputs.image")
+        if node_type == "cluster_scatter" and not isinstance(node.get("params", {}).get("cluster"), dict):
+            raise ValueError("cluster_scatter requires params.cluster")
         seen.add(node_id)
     if outputs != 1:
         raise ValueError("graph must contain exactly one output node")
@@ -72,6 +79,21 @@ def _input_image(results: dict[str, Image.Image], node: dict, key: str = "image"
     if dependency is None:
         raise ValueError(f"{node['id']} requires inputs.{key}")
     return results[dependency].copy()
+
+
+def _dynamic_kwargs(params: dict) -> dict:
+    return {
+        "scale": params.get("scale", [1.0, 1.0]),
+        "aspect": params.get("aspect", [1.0, 1.0]),
+        "rotation_deg": params.get("rotationDeg", [0.0, 0.0]),
+        "opacity": params.get("opacity", [255, 255]),
+        "tints": params.get("tints", ["#FFFFFF"]),
+        "mirror_x_probability": float(params.get("mirrorXProbability", 0.0)),
+        "mirror_y_probability": float(params.get("mirrorYProbability", 0.0)),
+        "hue_jitter_deg": float(params.get("hueJitterDeg", 0.0)),
+        "saturation": params.get("saturation", [1.0, 1.0]),
+        "value": params.get("value", [1.0, 1.0]),
+    }
 
 
 def execute(recipe: dict) -> tuple[Image.Image, dict]:
@@ -121,6 +143,45 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             )
             stats = {"type": node_type, "stampCount": len(stamps), "brush": params["brush"]}
 
+        elif node_type == "dynamic_scatter":
+            image = _input_image(results, node)
+            local = BrushEngineV3(seed + node_index * 32452843 + int(params.get("seedOffset", 0)))
+            stamps = local.scatter_regions(
+                image,
+                params.get("brushes", []),
+                params.get("regions", []),
+                int(params.get("count", 0)),
+                **_dynamic_kwargs(params),
+            )
+            stats = {
+                "type": node_type,
+                "stampCount": len(stamps),
+                "brushes": list(params.get("brushes", [])),
+                "brushContract": BRUSH_V3_CONTRACT,
+            }
+
+        elif node_type == "dynamic_path_brush":
+            image = _input_image(results, node)
+            local = BrushEngineV3(seed + node_index * 49979687 + int(params.get("seedOffset", 0)))
+            dynamics = _dynamic_kwargs(params)
+            stamps = local.stroke_paths(
+                image,
+                params["brush"],
+                params.get("paths", []),
+                spacing=float(params.get("spacing", 8.0)),
+                spacing_jitter=float(params.get("spacingJitter", 0.0)),
+                follow_tangent=bool(params.get("followTangent", True)),
+                **dynamics,
+            )
+            stats = {
+                "type": node_type,
+                "stampCount": len(stamps),
+                "brush": params["brush"],
+                "spacing": float(params.get("spacing", 8.0)),
+                "spacingJitter": float(params.get("spacingJitter", 0.0)),
+                "brushContract": BRUSH_V3_CONTRACT,
+            }
+
         elif node_type == "tapered_path":
             image = _input_image(results, node)
             geometry_stats = draw_tapered_paths(
@@ -152,6 +213,22 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 **distribution_stats,
             }
 
+        elif node_type == "cluster_scatter":
+            image = _input_image(results, node)
+            local = ClusterEngineV1(seed + node_index * 67867967 + int(params.get("seedOffset", 0)))
+            cluster_stats = local.scatter_clusters(
+                image,
+                params["cluster"],
+                params.get("regions", []),
+                int(params.get("count", 0)),
+                min_distance=float(params.get("minDistance", 0.0)),
+                scale=params.get("scale", [1.0, 1.0]),
+                rotation_deg=params.get("rotationDeg", [0.0, 360.0]),
+                mirror_x_probability=float(params.get("mirrorXProbability", 0.5)),
+                max_attempts=params.get("maxAttempts"),
+            )
+            stats = {"type": node_type, **cluster_stats}
+
         elif node_type == "blend":
             base = _input_image(results, node, "base")
             over = _input_image(results, node, "over")
@@ -180,7 +257,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             final = image.copy()
             stats = {"type": node_type}
 
-        else:  # validate_recipe protects this, but keeps execution explicit.
+        else:
             raise ValueError(f"unsupported graph node type: {node_type}")
 
         results[node_id], node_stats[node_id] = image, stats
@@ -190,8 +267,10 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
     metadata = {
         "contract": GRAPH_CONTRACT,
         "brushContract": BRUSH_CONTRACT,
+        "brushDynamicsContract": BRUSH_V3_CONTRACT,
         "geometryContract": GEOMETRY_CONTRACT,
         "distributionContract": DISTRIBUTION_CONTRACT,
+        "clusterContract": CLUSTER_CONTRACT,
         "id": recipe["id"],
         "canvas": recipe["canvas"],
         "anchor": recipe["anchor"],
@@ -206,7 +285,9 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             "assetSpecificRenderer": False,
             "deterministic": True,
             "continuousGeometry": "tapered_path" in node_types,
-            "minimumDistanceDistribution": "spaced_scatter" in node_types,
+            "minimumDistanceDistribution": "spaced_scatter" in node_types or "cluster_scatter" in node_types,
+            "brushDynamics": bool({"dynamic_scatter", "dynamic_path_brush", "cluster_scatter"} & node_types),
+            "hierarchicalClusters": "cluster_scatter" in node_types,
         },
     }
     return final, metadata
