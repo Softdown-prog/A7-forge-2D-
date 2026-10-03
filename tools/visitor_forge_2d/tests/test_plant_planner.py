@@ -140,13 +140,23 @@ def test_art_planner_compiles_valid_v2_recipes_for_all_views() -> None:
         assert recipe["planner"]["temporaryFlowerProxy"] is False
         assert recipe["planner"]["flowerPlacement"] == "terminal_density"
         assert recipe["planner"]["flowerEngineContract"] == FLOWER_CLUSTER_CONTRACT
+        assert recipe["planner"]["foliageComposition"] == "rear_meso_front_detail"
+        assert recipe["planner"]["mesoFoliage"] == "compound_asymmetric_internal"
         node_types = {node["type"] for node in recipe["graph"]["nodes"]}
         node_ids = {node["id"] for node in recipe["graph"]["nodes"]}
         assert "field_cluster_scatter" in node_types
         assert "field_flower_clusters" in node_types
         assert "image_masked_relief_material" in node_types
         assert "image_contact_occlusion" in node_types
+        assert {"meso_foliage", "meso_shadow", "meso_composite"} <= node_ids
         assert {"flower_density", "flower_clusters", "flower_composite"} <= node_ids
+
+        by_id = {node["id"]: node for node in recipe["graph"]["nodes"]}
+        assert by_id["meso_foliage"]["inputs"]["density"] == "rear_core_density"
+        assert by_id["meso_foliage"]["inputs"]["avoid"] == "wood_mask"
+        assert by_id["front_shadow"]["inputs"]["base"] == "meso_composite"
+        assert by_id["meso_foliage"]["params"]["count"] < by_id["front_foliage"]["params"]["count"]
+        assert len(by_id["meso_foliage"]["params"]["cluster"]["members"]) >= 5
 
         scatters = [
             node for node in recipe["graph"]["nodes"]
@@ -167,6 +177,7 @@ def test_planner_crown_and_flowers_are_derived_from_projected_terminals() -> Non
     crown = next(node for node in recipe["graph"]["nodes"] if node["id"] == "crown_density")
     flowers = next(node for node in recipe["graph"]["nodes"] if node["id"] == "flower_density")
     flower_clusters = next(node for node in recipe["graph"]["nodes"] if node["id"] == "flower_clusters")
+    meso = next(node for node in recipe["graph"]["nodes"] if node["id"] == "meso_foliage")
 
     crown_lobes = crown["params"]["lobes"]
     flower_lobes = flowers["params"]["lobes"]
@@ -174,6 +185,7 @@ def test_planner_crown_and_flowers_are_derived_from_projected_terminals() -> Non
     assert len(flower_lobes) == len(structure.terminal_points)
     assert all("center" in lobe and "radius" in lobe for lobe in crown_lobes)
     assert all("center" in lobe and "radius" in lobe for lobe in flower_lobes)
+    assert meso["inputs"]["density"] == "rear_core_density"
     assert flower_clusters["type"] == "field_flower_clusters"
     assert flower_clusters["params"]["palette"]["highlight"] == "#FFE96A"
     assert flower_clusters["params"]["gapWindows"] == [2, 3]
