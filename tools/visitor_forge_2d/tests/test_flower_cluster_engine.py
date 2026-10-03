@@ -47,6 +47,8 @@ def test_flower_cluster_engine_is_deterministic_and_field_conditioned() -> None:
     assert stats_a == stats_b
     assert stats_a["contract"] == FLOWER_CLUSTER_CONTRACT
     assert stats_a["placedGroups"] == 5
+    assert stats_a["compoundSilhouette"] is True
+    assert stats_a["compoundLobes"] == [2, 3]
     assert stats_a["negativeSpaceWindows"] is True
     assert stats_a["internalOcclusion"] is True
     assert first.getchannel("A").getbbox() is not None
@@ -128,3 +130,4 @@ def test_graph_v2_reports_flower_cluster_contract() -> None:
     assert metadata["flowerClusterContract"] == FLOWER_CLUSTER_CONTRACT
     assert metadata["critic"]["fieldConditionedFlowers"] is True
     assert metadata["nodes"]["flowers"]["placedGroups"] == 4
+    assert metadata["nodes"]["flowers"]["compoundSilhouette"] is True
