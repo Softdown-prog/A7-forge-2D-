@@ -10,6 +10,7 @@ from __future__ import annotations
 from copy import deepcopy
 
 from ..component_gallery import get_component
+from .component_templates import build_component
 
 
 _MATERIAL_PRESETS = {
@@ -32,7 +33,7 @@ _MATERIAL_PRESETS = {
 
 def _material(alias: str) -> dict:
     try:
-        return deepcopy(_MATERIAL_PRESETS[alias])
+        return {**deepcopy(_MATERIAL_PRESETS[alias]), "space": "object"}
     except KeyError as exc:
         raise ValueError(f"component material alias {alias!r} has no Scene Composer preset") from exc
 
@@ -53,37 +54,6 @@ def _effects(item: dict, supplied: object) -> dict:
     return out
 
 
-def _shape_for(item: dict, material: dict, effects: dict, role: str | None) -> dict:
-    w, h = [float(v) for v in item["sizePx"]]
-    primitive = item["primitive"]
-    # Gallery primitives such as group/stamp/decal are semantic building-block
-    # kinds. Until a family-specific template is registered, they resolve to a
-    # bounded silhouette instead of becoming arbitrary code execution.
-    mapped = {
-        "rounded_rect": "rounded_rect",
-        "capsule": "capsule",
-        "ellipse": "ellipse",
-        "curve": "capsule",
-        "group": "rounded_rect",
-        "stamp": "ellipse",
-        "decal": "rounded_rect",
-    }.get(primitive)
-    if mapped is None:
-        raise ValueError(f"component primitive {primitive!r} is not supported by the resolver")
-    node = {
-        "type": "shape",
-        "primitive": mapped,
-        "box": [-w/2, -h/2, w/2, h/2],
-        "material": material,
-        "effects": effects,
-    }
-    if mapped == "rounded_rect":
-        node["radius"] = max(0.6, min(w, h) * 0.16)
-    if role:
-        node["role"] = role
-    return node
-
-
 def _resolve_component(node: dict) -> dict:
     allowed = {"type", "componentId", "material", "transform", "effects", "role"}
     extra = set(node) - allowed
@@ -99,11 +69,11 @@ def _resolve_component(node: dict) -> dict:
     transform = deepcopy(node.get("transform", {}))
     if "rotateDeg" not in transform:
         transform["rotateDeg"] = item["orientationDeg"]
-    shape = _shape_for(item, _material(alias), _effects(item, node.get("effects")), node.get("role"))
+    shapes = build_component(item, _material(alias), _effects(item, node.get("effects")), node.get("role"))
     return {
         "type": "group",
         "transform": transform,
-        "children": [shape],
+        "children": shapes,
         "componentId": component_id,
     }
 

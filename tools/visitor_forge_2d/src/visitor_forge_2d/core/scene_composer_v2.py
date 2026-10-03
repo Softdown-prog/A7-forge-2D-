@@ -7,6 +7,8 @@ without requiring a 3D asset.
 """
 from __future__ import annotations
 
+from .scene_geometry import box_contour, shift_mask, stroke_scale
+
 import hashlib
 import json
 import math
@@ -93,14 +95,8 @@ def _shape_mask(size, primitive: dict, transform: dict, label: str) -> Image.Ima
     if kind not in _ALLOWED_PRIMITIVES: raise ValueError(f"{label}.primitive must be one of {sorted(_ALLOWED_PRIMITIVES)}")
     mask=Image.new("L",size); draw=ImageDraw.Draw(mask)
     def px(p): x,y=_transform_point(p,transform); return round(x*SCALE),round(y*SCALE)
-    if kind in ("ellipse","rect","rounded_rect","capsule"):
-        box=primitive.get("box")
-        if not isinstance(box,list) or len(box)!=4: raise ValueError(f"{label}.box must be [x0,y0,x1,y1]")
-        x0,y0,x1,y1=map(float,box); corners=[px((x0,y0)),px((x1,y0)),px((x1,y1)),px((x0,y1))]; xs=[p[0] for p in corners]; ys=[p[1] for p in corners]; bbox=(min(xs),min(ys),max(xs),max(ys))
-        if kind=="ellipse": draw.ellipse(bbox,fill=255)
-        elif kind=="rect": draw.rectangle(bbox,fill=255)
-        else:
-            radius=_num(primitive.get("radius",min(x1-x0,y1-y0)/2 if kind=="capsule" else 4),label+".radius"); draw.rounded_rectangle(bbox,radius=max(0,round(abs(radius)*SCALE)),fill=255)
+    if kind in ("ellipse", "rect", "rounded_rect", "capsule"):
+        draw.polygon([px(p) for p in box_contour(primitive, label)], fill=255)
     elif kind=="diamond":
         cx,cy=_pair(primitive.get("center"),label+".center"); rx,ry=_pair(primitive.get("radius"),label+".radius"); draw.polygon([px((cx,cy-ry)),px((cx+rx,cy)),px((cx,cy+ry)),px((cx-rx,cy))],fill=255)
     elif kind=="polygon":
@@ -112,7 +108,14 @@ def _shape_mask(size, primitive: dict, transform: dict, label: str) -> Image.Ima
         if not isinstance(raw,list) or len(raw)!=need: raise ValueError(f"{label}.points needs {need} points")
         width=_num(primitive.get("width",1),label+".width")
         if width<=0: raise ValueError(f"{label}.width must be positive")
-        draw.line([px(p) for p in _curve(kind,[_pair(p,label+".points") for p in raw])],fill=255,width=max(1,round(width*SCALE)),joint="curve")
+        draw.line([px(p) for p in _curve(kind,[_pair(p,label+".points") for p in raw])],fill=255,width=max(1,round(width*SCALE*stroke_scale(transform))),joint="curve")
+    holes = primitive.get("cutouts", [])
+    if not isinstance(holes, list) or len(holes) > 32:
+        raise ValueError(f"{label}.cutouts must contain at most 32 shapes")
+    for hole in holes:
+        if not isinstance(hole, dict) or "cutouts" in hole or hole.get("primitive") not in ("ellipse", "rect", "rounded_rect", "capsule", "polygon", "diamond"):
+            raise ValueError(f"{label}.cutouts require closed shapes without nested cutouts")
+        mask = ImageChops.subtract(mask, _shape_mask(size, hole, transform, label + ".cutouts"))
     return mask
 
 
@@ -172,20 +175,22 @@ def _effects(base, mask, effects: dict | None, label: str, light: dict) -> Image
     out=Image.new("RGBA",base.size)
     shadow=effects.get("shadow")
     if shadow:
-        dx,dy=_pair(shadow.get("offset",light.get("shadowOffset",[3,4])),label+".shadow.offset"); blur=_num(shadow.get("blur",3),label+".shadow.blur"); color=_color(shadow.get("color","#11151A88"),label+".shadow.color"); shifted=ImageChops.offset(mask,round(dx*SCALE),round(dy*SCALE)).filter(ImageFilter.GaussianBlur(max(0,blur*SCALE))); layer=Image.new("RGBA",base.size,color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"),shifted)); out.alpha_composite(layer)
+        dx,dy=_pair(shadow.get("offset",light.get("shadowOffset",[3,4])),label+".shadow.offset"); blur=_num(shadow.get("blur",3),label+".shadow.blur"); color=_color(shadow.get("color","#11151A88"),label+".shadow.color"); shifted=shift_mask(mask,round(dx*SCALE),round(dy*SCALE)).filter(ImageFilter.GaussianBlur(max(0,blur*SCALE))); layer=Image.new("RGBA",base.size,color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"),shifted)); out.alpha_composite(layer)
     outline=effects.get("outline")
     if outline:
         width=max(1,int(_num(outline.get("width",1),label+".outline.width")*SCALE)); color=_color(outline.get("color","#30261FFF"),label+".outline.color"); expanded=mask.filter(ImageFilter.MaxFilter(width*2+1)); ring=ImageChops.subtract(expanded,mask); layer=Image.new("RGBA",base.size,color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"),ring)); out.alpha_composite(layer)
     out.alpha_composite(base)
+    surface_alpha = out.getchannel("A")
     ao=effects.get("ambientOcclusion")
     if ao:
         width=max(1,int(_num(ao.get("width",3),label+".ambientOcclusion.width")*SCALE)); strength=_num(ao.get("strength",0.28),label+".ambientOcclusion.strength"); k=width*2+1; inner=mask.filter(ImageFilter.MinFilter(k)); ring=ImageChops.subtract(mask,inner).filter(ImageFilter.GaussianBlur(0.5*SCALE)); layer=Image.new("RGBA",base.size,(20,16,13,0)); layer.putalpha(ring.point(lambda v: round(v*strength))); out.alpha_composite(layer)
     bevel=effects.get("bevel")
     if bevel:
-        width=max(1,int(_num(bevel.get("width",1.5),label+".bevel.width")*SCALE)); strength=_num(bevel.get("strength",0.32),label+".bevel.strength"); dx,dy=_pair(light.get("direction",[-1,-1]),"lighting.direction"); lit=ImageChops.subtract(mask,ImageChops.offset(mask,round(dx*width),round(dy*width))); layer=Image.new("RGBA",base.size,(255,240,208,0)); layer.putalpha(lit.point(lambda v: round(v*strength))); out.alpha_composite(layer); shade=ImageChops.subtract(mask,ImageChops.offset(mask,-round(dx*width),-round(dy*width))); layer2=Image.new("RGBA",base.size,(37,24,18,0)); layer2.putalpha(shade.point(lambda v: round(v*strength*0.85))); out.alpha_composite(layer2)
+        width=max(1,int(_num(bevel.get("width",1.5),label+".bevel.width")*SCALE)); strength=_num(bevel.get("strength",0.32),label+".bevel.strength"); dx,dy=_pair(light.get("direction",[-1,-1]),"lighting.direction"); lit=ImageChops.subtract(mask,shift_mask(mask,round(dx*width),round(dy*width))); layer=Image.new("RGBA",base.size,(255,240,208,0)); layer.putalpha(lit.point(lambda v: round(v*strength))); out.alpha_composite(layer); shade=ImageChops.subtract(mask,shift_mask(mask,-round(dx*width),-round(dy*width))); layer2=Image.new("RGBA",base.size,(37,24,18,0)); layer2.putalpha(shade.point(lambda v: round(v*strength*0.85))); out.alpha_composite(layer2)
     highlight=effects.get("highlight")
     if highlight:
-        width=max(1,int(_num(highlight.get("width",1),label+".highlight.width")*SCALE)); color=_color(highlight.get("color","#FFFFFF55"),label+".highlight.color"); edge=ImageChops.subtract(mask,ImageChops.offset(mask,-width,-width)); layer=Image.new("RGBA",base.size,color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"),edge)); out.alpha_composite(layer)
+        width=max(1,int(_num(highlight.get("width",1),label+".highlight.width")*SCALE)); color=_color(highlight.get("color","#FFFFFF55"),label+".highlight.color"); edge=ImageChops.subtract(mask,shift_mask(mask,-width,-width)); layer=Image.new("RGBA",base.size,color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"),edge)); out.alpha_composite(layer)
+    out.putalpha(surface_alpha)
     return out
 
 

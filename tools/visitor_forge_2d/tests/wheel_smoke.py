@@ -34,6 +34,11 @@ assert Path(visitor_forge_2d.__file__).resolve().is_relative_to(Path(sys.argv[1]
 for path in BRUSH_LIBRARY.rglob('*.png'):
  tip=load_brush_tip(path)
  assert tip.mode == 'RGBA' and tip.getchannel('A').getbbox()
+from visitor_forge_2d.component_gallery import load_component_gallery
+from visitor_forge_2d.core.scene_composer_v4 import render_scene
+assert load_component_gallery()['currentCount']==704
+frame,metadata=render_scene({'contract':'CH_2D_SCENE_RECIPE_V4','id':'portable_anchor','canvas':[64,64],'anchor':[32,60],'layers':[{'type':'component','componentId':'marine_anchor_anchor_md_000','transform':{'translate':[32,32]}}],'finish':{'edgeBreakupPx':0,'brushStamps':0,'surfaceVariation':0}})
+assert frame.getchannel('A').getbbox() and metadata['componentInstanceCount']==1
 result=run_graph_workers(Path(sys.argv[2]),Path(sys.argv[3]))
 print(json.dumps({'installedPackage':True,'brushCount':len(list(BRUSH_LIBRARY.rglob('*.png'))),'status':result['status'],'png':result['png']}))
 '''

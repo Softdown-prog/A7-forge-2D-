@@ -106,6 +106,7 @@ def _surface_finish(frame: Image.Image, seed: int, finish: dict) -> Image.Image:
         tint = Image.new("RGBA", (w, h), (255, 242, 220, 0))
         tint.putalpha(ImageChops.multiply(field.point(lambda v: round(abs(v-128) * variation)), alpha))
         image = Image.alpha_composite(image, tint)
+    image.putalpha(alpha)
     return image
 
 

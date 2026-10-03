@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 CONTRACT = "CH_2D_REUSABLE_COMPONENT_GALLERY_V1"
-GALLERY_DIR = Path(__file__).resolve().parents[2] / "examples" / "component_gallery"
+GALLERY_DIR = Path(__file__).resolve().parent / "component_library"
 DEFAULT_GALLERY = GALLERY_DIR / "reusable_components_v1.json"
 DEFAULT_GALLERY_SHARDS = (
     GALLERY_DIR / "reusable_components_v1.json",

@@ -21,7 +21,7 @@ package-dir = {"" = "src"}
 license-files = ["third_party/libmypaint/NOTICE.txt"]
 
 [tool.setuptools.package-data]
-visitor_forge_2d = ["brush_library/**/*.png"]
+visitor_forge_2d = ["brush_library/**/*.png", "component_library/*.json"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

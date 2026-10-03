@@ -7,6 +7,8 @@ one drawing engine.
 """
 from __future__ import annotations
 
+from .scene_geometry import box_contour, shift_mask, stroke_scale
+
 import hashlib
 import json
 import math
@@ -121,20 +123,7 @@ def _shape_mask(size: tuple[int, int], primitive: dict, transform: dict, label: 
         x, y = _transform_point(p, transform)
         return round(x * SCALE), round(y * SCALE)
     if kind in ("ellipse", "rect", "rounded_rect", "capsule"):
-        box = primitive.get("box")
-        if not isinstance(box, list) or len(box) != 4:
-            raise ValueError(f"{label}.box must be [x0,y0,x1,y1]")
-        x0, y0, x1, y1 = map(float, box)
-        corners = [px((x0,y0)), px((x1,y0)), px((x1,y1)), px((x0,y1))]
-        xs, ys = [p[0] for p in corners], [p[1] for p in corners]
-        bbox = (min(xs), min(ys), max(xs), max(ys))
-        if kind == "ellipse":
-            draw.ellipse(bbox, fill=255)
-        elif kind == "rect":
-            draw.rectangle(bbox, fill=255)
-        else:
-            radius = _num(primitive.get("radius", min(x1-x0, y1-y0)/2 if kind == "capsule" else 4), label+".radius")
-            draw.rounded_rectangle(bbox, radius=max(0, round(abs(radius) * SCALE)), fill=255)
+        draw.polygon([px(p) for p in box_contour(primitive, label)], fill=255)
     elif kind == "diamond":
         center = _pair(primitive.get("center"), label+".center")
         radius = _pair(primitive.get("radius"), label+".radius")
@@ -155,7 +144,14 @@ def _shape_mask(size: tuple[int, int], primitive: dict, transform: dict, label: 
         width = _num(primitive.get("width", 1), label+".width")
         if width <= 0:
             raise ValueError(f"{label}.width must be positive")
-        draw.line([px(p) for p in points], fill=255, width=max(1, round(width*SCALE)), joint="curve")
+        draw.line([px(p) for p in points], fill=255, width=max(1, round(width*SCALE*stroke_scale(transform))), joint="curve")
+    holes = primitive.get("cutouts", [])
+    if not isinstance(holes, list) or len(holes) > 32:
+        raise ValueError(f"{label}.cutouts must contain at most 32 shapes")
+    for hole in holes:
+        if not isinstance(hole, dict) or "cutouts" in hole or hole.get("primitive") not in ("ellipse", "rect", "rounded_rect", "capsule", "polygon", "diamond"):
+            raise ValueError(f"{label}.cutouts require closed shapes without nested cutouts")
+        mask = ImageChops.subtract(mask, _shape_mask(size, hole, transform, label + ".cutouts"))
     return mask
 
 
@@ -209,7 +205,7 @@ def _apply_effects(base: Image.Image, mask: Image.Image, effects: dict | None, l
         dx,dy = _pair(shadow.get("offset", [2,2]), label+".shadow.offset")
         blur = _num(shadow.get("blur", 2), label+".shadow.blur")
         color = _color(shadow.get("color", "#18202A88"), label+".shadow.color")
-        shifted = ImageChops.offset(mask, round(dx*SCALE), round(dy*SCALE))
+        shifted = shift_mask(mask, round(dx*SCALE), round(dy*SCALE))
         shifted = shifted.filter(ImageFilter.GaussianBlur(max(0, blur*SCALE)))
         layer = Image.new("RGBA", base.size, color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"), shifted))
         out.alpha_composite(layer)
@@ -222,14 +218,16 @@ def _apply_effects(base: Image.Image, mask: Image.Image, effects: dict | None, l
         layer = Image.new("RGBA", base.size, color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"), ring))
         out.alpha_composite(layer)
     out.alpha_composite(base)
+    surface_alpha = out.getchannel("A")
     highlight = effects.get("highlight")
     if highlight:
         width = _num(highlight.get("width", 1), label+".highlight.width")
         color = _color(highlight.get("color", "#FFFFFF66"), label+".highlight.color")
-        shifted = ImageChops.offset(mask, -round(width*SCALE), -round(width*SCALE))
+        shifted = shift_mask(mask, -round(width*SCALE), -round(width*SCALE))
         edge = ImageChops.subtract(mask, shifted)
         layer = Image.new("RGBA", base.size, color); layer.putalpha(ImageChops.multiply(layer.getchannel("A"), edge))
         out.alpha_composite(layer)
+    out.putalpha(surface_alpha)
     return out
 
 

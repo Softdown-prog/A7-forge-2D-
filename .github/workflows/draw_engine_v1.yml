@@ -37,6 +37,14 @@ jobs:
             --wheel-dir out/a7-wheel \
             --recipe tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json \
             --output out/a7-package-smoke
+      - name: Render all 44 component families and 88 styles
+        run: python -m visitor_forge_2d.gallery_preview --output rendered_general_gallery
+      - name: Upload general drawing gallery
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-general-drawing-88-styles
+          path: rendered_general_gallery/
+          if-no-files-found: error
       - name: Render legacy compatibility pilot
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
