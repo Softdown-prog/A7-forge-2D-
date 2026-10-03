@@ -22,6 +22,49 @@ from .plant_visual_critic import (
 PLANT_REPAIR_POLICY_REVISION = "A7_PLANT_REPAIR_POLICY_INTERNAL_BRIDGE_V1"
 
 
+def evaluate_repair_selection(baseline: dict, repaired: dict) -> dict:
+    """Accept a gain only when no cardinal view or previously passing gate regresses."""
+    from .plant_structure import CARDINAL_VIEWS
+
+    if set(baseline) != set(CARDINAL_VIEWS) or set(repaired) != set(CARDINAL_VIEWS):
+        raise ValueError("repair comparison requires the same four cardinal views")
+    reasons = []
+    before_scores, after_scores = [], []
+    before_failures = after_failures = 0
+    for view in CARDINAL_VIEWS:
+        old, new = baseline[view], repaired[view]
+        old_score, new_score = float(old["score"]), float(new["score"])
+        if not all(math.isfinite(score) and 0 <= score <= 100 for score in (old_score, new_score)):
+            raise ValueError("repair comparison scores must be finite within 0..100")
+        if set(old["gates"]) != set(new["gates"]):
+            raise ValueError("repair comparison gate sets must match")
+        before_scores.append(old_score)
+        after_scores.append(new_score)
+        before_failures += sum(not passed for passed in old["gates"].values())
+        after_failures += sum(not passed for passed in new["gates"].values())
+        if new_score < old_score - 0.05:
+            reasons.append(f"{view}:score_regression")
+        for gate, passed in old["gates"].items():
+            if passed and not new["gates"][gate]:
+                reasons.append(f"{view}:new_failure:{gate}")
+    before_mean = sum(before_scores) / 4
+    after_mean = sum(after_scores) / 4
+    improved = (after_mean > before_mean + 0.05 or
+                (after_failures < before_failures and after_mean >= before_mean - 0.05))
+    if not improved:
+        reasons.append("no_measurable_gain")
+    return {
+        "accepted": not reasons,
+        "reasons": reasons,
+        "baselineMeanScore": round(before_mean, 2),
+        "repairedMeanScore": round(after_mean, 2),
+        "baselineWorstScore": min(before_scores),
+        "repairedWorstScore": min(after_scores),
+        "baselineFailedGates": before_failures,
+        "repairedFailedGates": after_failures,
+    }
+
+
 def _single_view_fragmentation(aggregate: dict) -> bool:
     """Detect a likely hidden bad view without treating a healthy open crown as sparse.
 

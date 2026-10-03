@@ -75,6 +75,8 @@ class FieldBrushEngineV1:
         cell_size = max(1.0, minimum)
         grid: dict[tuple[int, int], list[tuple[float, float]]] = {}
         attempts_limit = int(max_attempts) if max_attempts is not None else max(256, count * 120)
+        if attempts_limit <= 0:
+            raise ValueError("field scatter max_attempts must be positive")
         dynamics = dict(dynamics or {})
         bindings = BrushOptionBindings(mappings or {})
         stamps: list[DynamicBrushStamp] = []
@@ -130,9 +132,19 @@ class FieldBrushEngineV1:
             brush_name = self.rng.choice(tuple(brushes))
             base = self.brush.random_stamp(x, y, base_rotation_deg=direction, **dynamics)
             stamp = MappedBrushEngineV1.apply_option_values(base, bindings.evaluate(sensors))
+            # Dynamics can move a candidate after its field/spacing test. Enforce
+            # the authored region on the final center, not the pre-mapping point.
+            if not math.isfinite(stamp.x) or not math.isfinite(stamp.y):
+                raise ValueError("mapped brush coordinates must be finite")
+            if (not x0 <= stamp.x <= x1 or not y0 <= stamp.y <= y1 or
+                    not 0 <= stamp.x < canvas.width or not 0 <= stamp.y < canvas.height or
+                    sample_scalar(density_field, stamp.x, stamp.y, 0.0) <= 0 or
+                    sample_scalar(avoid_field, stamp.x, stamp.y, 0.0) >= 1 or
+                    not can_place(stamp.x, stamp.y)):
+                continue
             self.brush.stamp(canvas, brush_name, stamp)
             stamps.append(stamp)
-            register(x, y)
+            register(stamp.x, stamp.y)
 
         stats = self._stats(len(stamps), attempts, minimum, mappings or {})
         stats["requested"] = count

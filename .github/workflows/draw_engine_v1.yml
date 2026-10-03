@@ -3,91 +3,40 @@ name: Validate A7 Draw Engine V2
 on:
   push:
     paths:
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_engine_v2.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_engine_v3.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/dynamics_mapping.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/sensor_context.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brush_option_bindings.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/mapped_brush_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/dab_density.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/cluster_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/geometry_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/vector_path.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/distribution_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_brush_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_cluster_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_mass_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flower_cluster_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/branch_geometry_v2.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_visual_critic.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_repair_policy.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/flowering_brushes.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/brushes.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/image_processing.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/layer_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/material_engine.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/plant_structure.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/art_planner.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_graph.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/field_scenery.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/node_graph.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/core/graph_scenery.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/graph_worker.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/plant_planner_worker.py'
-      - 'tools/visitor_forge_2d/src/visitor_forge_2d/brush_library/**'
-      - 'tools/visitor_forge_2d/examples/park_tree_brush_graph_pilot_01.json'
-      - 'tools/visitor_forge_2d/examples/draw_engine_cluster_pilot_01.json'
-      - 'tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json'
-      - 'tools/visitor_forge_2d/examples/plant_intent_ipe_planner_pilot_01.json'
-      - 'tools/visitor_forge_2d/tests/test_node_graph_v1.py'
-      - 'tools/visitor_forge_2d/tests/test_dynamics_mapping.py'
-      - 'tools/visitor_forge_2d/tests/test_mapped_brush_engine.py'
-      - 'tools/visitor_forge_2d/tests/test_dab_density.py'
-      - 'tools/visitor_forge_2d/tests/test_sensor_context.py'
-      - 'tools/visitor_forge_2d/tests/test_vector_path.py'
-      - 'tools/visitor_forge_2d/tests/test_field_engine.py'
-      - 'tools/visitor_forge_2d/tests/test_mass_processing.py'
-      - 'tools/visitor_forge_2d/tests/test_layer_material.py'
-      - 'tools/visitor_forge_2d/tests/test_flower_cluster_engine.py'
-      - 'tools/visitor_forge_2d/tests/test_branch_geometry_v2.py'
-      - 'tools/visitor_forge_2d/tests/test_plant_planner.py'
-      - 'tools/visitor_forge_2d/tests/test_plant_visual_critic.py'
-      - 'tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md'
-      - 'tools/visitor_forge_2d/docs/A7_ART_PLANNER_V1.md'
-      - 'tools/visitor_forge_2d/docs/OPEN_SOURCE_REFERENCE_MATRIX.md'
-      - 'tools/visitor_forge_2d/third_party/**'
+      - 'tools/visitor_forge_2d/**'
+      - '.github/workflows/draw_engine_v1.yml'
+  pull_request:
+    paths:
+      - 'tools/visitor_forge_2d/**'
       - '.github/workflows/draw_engine_v1.yml'
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - name: Install test dependencies
-        run: python -m pip install pillow pytest
+        run: python -m pip install -e tools/visitor_forge_2d pytest
       - name: Run Draw Engine V2 tests
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
         run: |
-          python -m pytest -q \
-            tools/visitor_forge_2d/tests/test_node_graph_v1.py \
-            tools/visitor_forge_2d/tests/test_dynamics_mapping.py \
-            tools/visitor_forge_2d/tests/test_mapped_brush_engine.py \
-            tools/visitor_forge_2d/tests/test_dab_density.py \
-            tools/visitor_forge_2d/tests/test_sensor_context.py \
-            tools/visitor_forge_2d/tests/test_vector_path.py \
-            tools/visitor_forge_2d/tests/test_field_engine.py \
-            tools/visitor_forge_2d/tests/test_mass_processing.py \
-            tools/visitor_forge_2d/tests/test_layer_material.py \
-            tools/visitor_forge_2d/tests/test_flower_cluster_engine.py \
-            tools/visitor_forge_2d/tests/test_branch_geometry_v2.py \
-            tools/visitor_forge_2d/tests/test_plant_planner.py \
-            tools/visitor_forge_2d/tests/test_plant_visual_critic.py
+          python -m pytest -q tools/visitor_forge_2d/tests
+      - name: Build and test the portable wheel outside the checkout
+        run: |
+          python -m pip wheel --no-deps tools/visitor_forge_2d -w out/a7-wheel
+          python tools/visitor_forge_2d/tests/wheel_smoke.py \
+            --wheel-dir out/a7-wheel \
+            --recipe tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json \
+            --output out/a7-package-smoke
       - name: Render legacy compatibility pilot
         env:
           PYTHONPATH: tools/visitor_forge_2d/src
@@ -163,4 +112,10 @@ jobs:
         with:
           name: a7-plant-art-planner-v1-four-view-pilot
           path: rendered_plant_planner/
+          if-no-files-found: error
+      - name: Upload portable package smoke output
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-portable-package-smoke
+          path: out/a7-package-smoke/
           if-no-files-found: error

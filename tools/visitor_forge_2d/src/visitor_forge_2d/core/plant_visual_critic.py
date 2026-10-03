@@ -213,6 +213,10 @@ def aggregate_critic_reports(reports: dict[str, dict]) -> dict:
     aggregate = {
         "score": round(sum(report["score"] for report in values) / len(values), 2),
         "passed": all(report["passed"] for report in values),
+        "worstScore": min(report["score"] for report in values),
+        "failedViews": [view for view, report in reports.items() if not report["passed"]],
+        "failedGatesByView": {view: [gate for gate, passed in report["gates"].items() if not passed]
+                              for view, report in reports.items()},
         "meanContinuity": round(sum(item["crownContinuity"] for item in metrics) / len(metrics), 4),
         "meanCrownFill": round(sum(item["crownFill"] for item in metrics) / len(metrics), 4),
         "maxIsolatedMasses": max(item["isolatedMasses"] for item in metrics),

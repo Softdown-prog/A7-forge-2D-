@@ -9,7 +9,7 @@ from __future__ import annotations
 import random
 from typing import Sequence
 
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageChops, ImageFilter
 
 IMAGE_PROCESSING_CONTRACT = "A7_IMAGE_PROCESSING_V1"
 
@@ -189,22 +189,41 @@ def local_contrast(
     amount: float = 0.55,
     global_contrast: float = 1.0,
 ) -> Image.Image:
-    """Enhance medium/small detail while keeping alpha untouched."""
+    """Enhance visible detail using alpha-weighted neighborhoods.
+
+    Transparent RGB must not brighten, darken or tint the artwork's edge.
+    Alpha is preserved byte-for-byte, including soft partially covered pixels.
+    """
     if image.mode != "RGBA":
         raise ValueError("local contrast requires RGBA input")
     alpha = image.getchannel("A")
-    rgb = image.convert("RGB")
-    amount = max(0.0, float(amount))
-    if amount > 0.0:
-        # Unsharp mask is used as a deterministic local-contrast operator; radius
-        # and percent are deliberately modest so it does not invent hard halos.
-        rgb = rgb.filter(ImageFilter.UnsharpMask(
-            radius=max(0.1, float(radius)),
-            percent=round(min(300.0, amount * 100.0)),
-            threshold=2,
-        ))
-    if abs(float(global_contrast) - 1.0) > 1e-6:
-        rgb = ImageEnhance.Contrast(rgb).enhance(float(global_contrast))
-    out = rgb.convert("RGBA")
-    out.putalpha(alpha)
+    amount = min(3.0, max(0.0, float(amount)))
+    blur = ImageFilter.GaussianBlur(max(0.1, float(radius)))
+    blurred_alpha = alpha.filter(blur)
+    blurred_channels = [ImageChops.multiply(channel, alpha).filter(blur)
+                        for channel in image.convert("RGB").split()]
+    out = Image.new("RGBA", image.size)
+    values = []
+    for pixel, coverage, *weighted in zip(image.getdata(), blurred_alpha.getdata(),
+                                         *(channel.getdata() for channel in blurred_channels)):
+        r, g, b, a = pixel
+        if a == 0:
+            values.append((0, 0, 0, 0))
+            continue
+        channels = []
+        for original, total in zip((r, g, b), weighted):
+            average = total * 255.0 / coverage if coverage else original
+            difference = original - average
+            value = original + difference * amount if abs(difference) > 2 else original
+            channels.append(round(_clamp(value, 0, 255)))
+        values.append((*channels, a))
+
+    contrast = max(0.0, float(global_contrast))
+    if abs(contrast - 1.0) > 1e-6:
+        # The contrast reference is computed only from visible artwork.
+        weight = sum(pixel[3] for pixel in values)
+        mean = sum((0.299*r + 0.587*g + 0.114*b)*a for r, g, b, a in values) / weight if weight else 0.0
+        values = [tuple(round(_clamp(mean + (c - mean) * contrast, 0, 255)) for c in pixel[:3]) + (pixel[3],)
+                  if pixel[3] else (0, 0, 0, 0) for pixel in values]
+    out.putdata(values)
     return out

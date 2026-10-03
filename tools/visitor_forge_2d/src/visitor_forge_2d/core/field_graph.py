@@ -76,7 +76,7 @@ def validate_recipe(recipe: dict) -> None:
     if not isinstance(anchor, list) or len(anchor) != 2 or any(type(v) is not int or v < 0 or v > limit for v, limit in zip(anchor, canvas)):
         raise ValueError("graph anchor must lie inside canvas")
     camera = recipe.get("camera", {})
-    if camera.get("contract") != "CH_CAMERA_V1" or camera.get("tile") != [128, 64] or camera.get("yawDeg", 45) != 45 or camera.get("elevationDeg", 30) != 30:
+    if not isinstance(camera, dict) or camera.get("contract") != "CH_CAMERA_V1" or camera.get("tile") != [128, 64] or camera.get("yawDeg", 45) != 45 or camera.get("elevationDeg", 30) != 30:
         raise ValueError("graph recipe requires CH_CAMERA_V1, tile 128x64, yaw 45, elevation 30")
     graph = recipe.get("graph")
     nodes = graph.get("nodes") if isinstance(graph, dict) else None
@@ -93,15 +93,25 @@ def validate_recipe(recipe: dict) -> None:
         if node_type not in SUPPORTED_NODE_TYPES:
             raise ValueError(f"unsupported V2 graph node type: {node_type}")
         inputs = node.get("inputs", {})
+        if not isinstance(node.get("params", {}), dict):
+            raise ValueError(f"node {node_id} params must be an object")
         if not isinstance(inputs, dict):
             raise ValueError(f"node {node_id} inputs must be an object")
         for dependency in inputs.values():
-            if dependency not in seen:
+            if not isinstance(dependency, str) or dependency not in seen:
                 raise ValueError(f"node {node_id} references unavailable node {dependency}")
         if node_type == "output":
             outputs += 1
             if "image" not in inputs:
                 raise ValueError("output requires inputs.image")
+        if node_type in {"tapered_path", "vector_path", "levels"} and "image" not in inputs:
+            raise ValueError(f"{node_type} requires inputs.image")
+        if node_type == "field_alpha_mask" and "source" not in inputs:
+            raise ValueError("field_alpha_mask requires inputs.source")
+        if node_type == "field_distance" and "field" not in inputs:
+            raise ValueError("field_distance requires inputs.field")
+        if node_type == "field_multiply" and not inputs:
+            raise ValueError("field_multiply requires at least one input field")
         if node_type in {"field_mapped_scatter", "field_cluster_scatter"}:
             if "image" not in inputs or "density" not in inputs:
                 raise ValueError(f"{node_type} requires inputs.image and inputs.density")
@@ -383,11 +393,9 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
         elif node_type == "levels":
             image = _copy_input(results, node, "image")
             alpha = image.getchannel("A")
-            rgb = image.convert("RGB")
             contrast = float(params.get("contrast", 1.0))
             brightness = float(params.get("brightness", 1.0))
-            if abs(contrast - 1.0) > 1e-6:
-                rgb = ImageEnhance.Contrast(rgb).enhance(contrast)
+            rgb = local_contrast(image, amount=0.0, global_contrast=contrast).convert("RGB")
             if abs(brightness - 1.0) > 1e-6:
                 rgb = ImageEnhance.Brightness(rgb).enhance(brightness)
             image = rgb.convert("RGBA")

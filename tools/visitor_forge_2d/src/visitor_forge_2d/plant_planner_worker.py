@@ -10,7 +10,7 @@ from PIL import Image, ImageDraw
 from .core import field_graph
 from .core.art_planner import ART_PLANNER_CONTRACT, PLANT_INTENT_CONTRACT, plan_plant_four_views
 from .core.branch_geometry_v2 import BRANCH_GEOMETRY_CONTRACT, upgrade_plant_wood_recipe
-from .core.plant_repair_policy import apply_repair_plan, propose_repair
+from .core.plant_repair_policy import apply_repair_plan, propose_repair, evaluate_repair_selection
 from .core.plant_structure import CARDINAL_VIEWS, PLANT_STRUCTURE_CONTRACT, topology_signature
 from .core.plant_visual_critic import (
     PLANT_REPAIR_CONTRACT,
@@ -119,6 +119,7 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
     repaired_visual: dict[str, dict] | None = None
     repaired_aggregate: dict | None = None
     repair_accepted = False
+    repair_selection = None
 
     if repaired_attempted:
         repaired_recipes = {
@@ -129,7 +130,8 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
         repaired_aggregate = aggregate_critic_reports(repaired_visual)
         repaired_board_path = output_root / "plant_planner_repaired_four_views.png"
         _four_view_board(repaired_frames).save(repaired_board_path)
-        repair_accepted = float(repaired_aggregate["score"]) > float(baseline_aggregate["score"]) + 0.05
+        repair_selection = evaluate_repair_selection(baseline_visual, repaired_visual)
+        repair_accepted = repair_selection["accepted"]
     else:
         repaired_board_path = None
 
@@ -209,6 +211,7 @@ def run_plant_planner(intent_path: Path, output_root: Path) -> dict:
             "repaired": repaired_aggregate,
             "repairAttempted": repaired_attempted,
             "repairAccepted": repair_accepted,
+            "selectionDecision": repair_selection,
             "selectedStage": selected_stage,
             "selected": selected_aggregate,
         },

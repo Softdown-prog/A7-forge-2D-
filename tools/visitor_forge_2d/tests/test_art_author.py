@@ -13,8 +13,8 @@ def test_author_round_trip_from_portuguese_intent(tmp_path: Path) -> None:
     second, _ = author_recipe(brief)
     assert first == second
     assert first["camera"]["contract"] == "CH_CAMERA_V1"
-    assert first["broadleafStructure"]["layout"] == "continuous"
-    assert first["broadleafStructure"]["masses"] == 59
+    assert first["broadleafStructure"]["layout"] == "branch_guided_groups"
+    assert first["broadleafStructure"]["density"] == 1.28
     assert report["artApproved"] is False
 
     result = run_art_author(brief, tmp_path)
@@ -49,8 +49,9 @@ def test_visual_profiles_route_known_tree_and_flower_grammars() -> None:
     })
     assert tropical["visualProfile"] == "drooping_lanceolate_tropical"
     assert tropical["authorIntent"]["visualProfile"] == "drooping_lanceolate_tropical"
-    assert tropical["broadleafStructure"]["radius"] == [78, 64]
-    assert tropical["broadleafStructure"]["masses"] == 59
+    assert tropical["broadleafStructure"]["radius"] == [73, 66]
+    assert tropical["broadleafStructure"]["layout"] == "branch_guided_groups"
+    assert tropical["broadleafStructure"]["density"] == 1.28
     assert tropical["visualProfileData"]["foliage"]["microLeafBrush"] == "leaf_cluster_lanceolate"
     assert "visualProfile=drooping_lanceolate_tropical" in report["decisions"]
 
@@ -88,7 +89,7 @@ def test_organic_styles_choose_distinct_canopies_and_named_palettes() -> None:
                                "prompt": "angico de copa aberta, verde profundo", "seed": 11})
     assert oiti["broadleafStructure"]["profile"] == "domed"
     assert angico["broadleafStructure"]["profile"] == "branching"
-    assert oiti["broadleafStructure"]["layout"] == "species_canopy"
+    assert oiti["broadleafStructure"]["layout"] == "branch_guided_groups"
     assert angico["broadleafStructure"]["layout"] == "species_canopy"
     assert oiti["broadleafStructure"]["species"] == "oiti"
     assert angico["broadleafStructure"]["species"] == "angico"
@@ -98,7 +99,7 @@ def test_organic_styles_choose_distinct_canopies_and_named_palettes() -> None:
     leaves, _ = author_recipe({"contract": CONTRACT, "id": "defined_oiti",
                                "subject": "broadleaf", "species": "oiti",
                                "leaf_detail": "defined", "seed": 11})
-    assert leaves["broadleafStructure"]["layout"] == "leaf_canopy"
+    assert leaves["broadleafStructure"]["layout"] == "branch_guided_groups"
     assert leaves["broadleafStructure"]["leafDetail"] == "defined"
     assert oiti["palette"]["highlight"] != angico["palette"]["highlight"]
     assert oiti["camera"] == angico["camera"]

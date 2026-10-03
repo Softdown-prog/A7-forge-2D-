@@ -18,6 +18,8 @@ from .character.gait_warp import render_directional_gait
 from .character.preview_audit import audit_preview
 from .core.shape_recipe import export_palette_family, export_shape_recipe
 from .workers import run_workers
+from .graph_worker import run_graph_workers
+from .plant_planner_worker import run_plant_planner
 from .art_author import CONTRACT as ART_BRIEF_CONTRACT, run_art_author
 from .core import LayerComposer, alpha_safe_resize, export_frame, load_character_definition, load_pose
 
@@ -270,13 +272,20 @@ def command_review_concept_directions(args: argparse.Namespace) -> int:
     tool_root = Path(args.tool_root)
     asset_root = Path(args.asset_root)
     output = Path(args.output)
+    direction_order = ("south", "east", "north", "west")
+    sources = [tool_root / "art" / "concepts" / f"visitor_male_01_{direction}_master.png"
+               for direction in direction_order]
+    sources += [tool_root / "poses" / "concept" / f"{direction}_{name}.json"
+                for direction in direction_order for name in ("idle", "walk_a", "walk_b")]
+    missing = [str(path) for path in sources if not path.is_file()]
+    if missing:
+        raise ValueError("Four-view concept review is missing authored sources: " + ", ".join(missing))
     output.mkdir(parents=True, exist_ok=True)
     background = None
     if args.background:
         with Image.open(args.background) as source:
             background = source.convert("RGBA")
 
-    direction_order = ("south", "east", "north", "west")
     panels = []
     manifest = {"contract": "CH_VISITOR_2D_DIRECTIONAL_REVIEW_V1",
                 "characterId": "visitor_male_01", "directions": {},
@@ -354,6 +363,15 @@ def build_parser() -> argparse.ArgumentParser:
         description="City Horizon procedural 2D visitor composer",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    graph = subparsers.add_parser("draw-graph", help="Render a reusable Draw Engine V1/V2 graph and audit its package")
+    graph.add_argument("--recipe", required=True)
+    graph.add_argument("--output", required=True)
+    graph.set_defaults(func=command_draw_graph)
+    plant = subparsers.add_parser("plan-plant", help="Compile, render and compare one plant intent in four coherent views")
+    plant.add_argument("--intent", required=True)
+    plant.add_argument("--output", required=True)
+    plant.set_defaults(func=command_plan_plant)
 
     validate = subparsers.add_parser("validate", help="validate V1 character/pose contracts")
     validate.add_argument("--definition", required=True)
@@ -463,6 +481,16 @@ def build_parser() -> argparse.ArgumentParser:
     map_scale.set_defaults(func=command_review_map_scale)
 
     return parser
+
+
+def command_draw_graph(args: argparse.Namespace) -> int:
+    print(json.dumps(run_graph_workers(Path(args.recipe), Path(args.output)), indent=2))
+    return 0
+
+
+def command_plan_plant(args: argparse.Namespace) -> int:
+    print(json.dumps(run_plant_planner(Path(args.intent), Path(args.output)), indent=2))
+    return 0
 
 
 def main() -> int:

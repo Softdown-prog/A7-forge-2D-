@@ -84,8 +84,8 @@ def _line(draw: ImageDraw.ImageDraw, points, fill, width: float) -> None:
     draw.line([_pt(point) for point in points], fill=fill, width=max(1, round(width * SCALE)), joint="curve")
 
 
-def _shadow(draw: ImageDraw.ImageDraw, p0, p1, cfg) -> None:
-    colour = (*cfg["groundShadow"][:3], 72)
+def _shadow(draw: ImageDraw.ImageDraw, p0, p1, cfg, *, gate=False) -> None:
+    colour = (*cfg["groundShadow"][:3], 48 if gate else 72)
     _line(draw, [(p0[0] + 3, p0[1] + 4), (p1[0] + 3, p1[1] + 4)], colour, 5.5)
 
 
@@ -105,7 +105,7 @@ def _draw_post(draw, point, cfg) -> None:
 
 def _draw_iron(draw, p0, p1, cfg, gate=False) -> None:
     h = cfg["height"]
-    _shadow(draw, p0, p1, cfg)
+    _shadow(draw, p0, p1, cfg, gate=gate)
     if not gate:
         _line(draw, [p0, p1], cfg["stoneShadow"], cfg["base_width"] + 2)
         _line(draw, [p0, p1], cfg["stone"], cfg["base_width"])
@@ -123,7 +123,7 @@ def _draw_iron(draw, p0, p1, cfg, gate=False) -> None:
 
 def _draw_chainlink(draw, p0, p1, cfg, gate=False) -> None:
     h = cfg["height"]
-    _shadow(draw, p0, p1, cfg)
+    _shadow(draw, p0, p1, cfg, gate=gate)
     for rise in (h, 4):
         _line(draw, [(p0[0], p0[1]-rise), (p1[0], p1[1]-rise)], cfg["metalShadow"], cfg["rail_width"] + 1)
         _line(draw, [(p0[0], p0[1]-rise-.4), (p1[0], p1[1]-rise-.4)], cfg["metal"], cfg["rail_width"])
@@ -142,7 +142,7 @@ def _draw_chainlink(draw, p0, p1, cfg, gate=False) -> None:
 
 def _draw_wood(draw, p0, p1, cfg, gate=False) -> None:
     h = cfg["height"]
-    _shadow(draw, p0, p1, cfg)
+    _shadow(draw, p0, p1, cfg, gate=gate)
     for rise in (h*.72, h*.30):
         _line(draw, [(p0[0], p0[1]-rise), (p1[0], p1[1]-rise)], cfg["woodShadow"], cfg["rail_width"] + 1.4)
         _line(draw, [(p0[0], p0[1]-rise-.5), (p1[0], p1[1]-rise-.5)], cfg["wood"], cfg["rail_width"])
@@ -254,7 +254,7 @@ def export_fence_scenery(recipe_path: Path, output_dir: Path) -> dict:
         "artApproved":False,"runtimePromotion":False,
     }
     metadata_path.write_text(json.dumps(metadata,indent=2)+"\n",encoding="utf-8")
-    return {"png":str(png),"review":str(review_path),"isometricReview":str(iso_path),"metadata":str(metadata_path)}
+    return {**metadata, "metadata":str(metadata_path)}
 
 
 def main() -> int:

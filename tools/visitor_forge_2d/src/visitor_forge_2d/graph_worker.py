@@ -37,8 +37,11 @@ def run_graph_workers(recipe_path: Path, output_root: Path) -> dict:
     critic = metadata.get("critic", {})
     if kind == "node_graph_v1" and critic.get("bitmapBrushTips") is not True:
         raise ValueError("V1 graph export did not use Brush Engine bitmap tips")
-    if kind == "node_graph_v2_fields" and critic.get("fieldAwareDistribution") is not True:
-        raise ValueError("V2 field graph export did not use field-aware distribution")
+    if kind == "node_graph_v2_fields":
+        expected_fields = any(node["type"] in {"field_mapped_scatter", "field_cluster_scatter", "field_flower_clusters"}
+                              for node in recipe["graph"]["nodes"])
+        if critic.get("fieldAwareDistribution") is not expected_fields:
+            raise ValueError("V2 export field distribution metadata differs from the authored graph")
 
     report = {
         "status": "review_ready", "id": recipe["id"], "kind": kind,

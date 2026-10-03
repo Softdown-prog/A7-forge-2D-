@@ -116,9 +116,10 @@ def test_broadleaf_crown_is_deterministic_and_differs_from_conifer(tmp_path: Pat
     assert first.tobytes() != conifer_frame.tobytes(), "broadleaf and conifer produced identical pixels"
 
 
-def test_authored_oiti_study_has_four_stable_views_and_source_provenance() -> None:
+def test_authored_mango_has_four_stable_views_and_source_provenance(tmp_path: Path) -> None:
     examples = Path(__file__).resolve().parents[1] / "examples"
-    recipe = json.loads((examples / "park_tree_oiti_authored_v6_study.json").read_text())
+    source_recipe = examples / "park_tree_mango_01.json"
+    recipe = json.loads(source_recipe.read_text())
     hashes = set()
     for view in ("south", "west", "north", "east"):
         frame, meta = render(recipe, view=view, source_root=examples)
@@ -134,20 +135,19 @@ def test_authored_oiti_study_has_four_stable_views_and_source_provenance() -> No
     with pytest.raises(ValueError, match="hash mismatch"):
         render(recipe, source_root=examples)
 
-    source = tmp_path / "broadleaf.json"
-    source.write_text(json.dumps(recipe), encoding="utf-8")
-    result = export(source, tmp_path / "out")
+    result = export(source_recipe, tmp_path / "out")
     with Image.open(result["isometricReview"]) as review:
         assert review.size == (768, 480)
 
 
-def test_canonical_broadleaf_02_applies_finish_and_exports_distinct_four_views(tmp_path: Path) -> None:
+def test_current_broadleaf_applies_finish_and_exports_distinct_four_views(tmp_path: Path) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    recipe_path = project_root / "examples" / "park_tree_broadleaf_organic_02.json"
-    recipe = json.loads(recipe_path.read_text(encoding="utf-8"))
+    recipe = _recipe()
+    recipe.update(id="broadleaf_finish_fixture", crownStyle="broadleaf",
+                  rotation={"mode": "procedural_quarter_turns", "views": ["south", "west", "north", "east"]})
     # Resolve repository-relative finishRecipe when test runs from a temporary cwd.
     recipe["finishRecipe"] = str(project_root / "examples" / "finish" / "park_tree_broadleaf_organic_02.json")
-    local_recipe = tmp_path / "park_tree_broadleaf_organic_02.json"
+    local_recipe = tmp_path / "broadleaf_finish_fixture.json"
     local_recipe.write_text(json.dumps(recipe), encoding="utf-8")
 
     result = export(local_recipe, tmp_path / "out")
