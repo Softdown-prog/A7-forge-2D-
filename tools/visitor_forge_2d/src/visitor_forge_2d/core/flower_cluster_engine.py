@@ -4,9 +4,15 @@ This engine lifts the reusable flowering grammar already proven by the approved
 Ipê Amarelo asset into Node Graph V2. It remains species-neutral: callers
 provide density, palette and scale; this module provides deterministic macro
 clusters, micro-blossoms, warm internal occlusion and negative-space windows.
+
+V1.1 breaks the visible "pom-pom" stamp pattern by building every flower group
+from a small compound silhouette instead of one dominant ellipse. The group
+still owns one semantic center/radius, but its raster mask is composed from
+asymmetric overlapping lobes plus controlled edge cuts.
 """
 from __future__ import annotations
 
+import math
 import random
 from dataclasses import dataclass
 
@@ -142,6 +148,51 @@ class FlowerClusterEngineV1:
             ))
         return placed, attempts
 
+    @staticmethod
+    def _compound_group_mask(mask: Image.Image, rng: random.Random, group: FlowerGroup) -> None:
+        """Paint one irregular macro-group from overlapping internal lobes.
+
+        The companion lobes stay inside the semantic group envelope. This is
+        intentionally a silhouette operation only: blossom placement, palette,
+        field conditioning and group count remain unchanged.
+        """
+        # Main body is deliberately smaller than the old single ellipse so the
+        # companion lobes define the outline rather than merely fattening it.
+        main_rx = group.rx * rng.uniform(0.72, 0.88)
+        main_ry = group.ry * rng.uniform(0.76, 0.94)
+        main_x = group.x + rng.uniform(-0.08, 0.08) * group.rx
+        main_y = group.y + rng.uniform(-0.06, 0.06) * group.ry
+        brushes.leaf_cluster_broadleaf(
+            mask, rng, main_x, main_y, main_rx, main_ry,
+            satellites=rng.randint(1, 3), fill=255,
+        )
+
+        lobe_count = rng.randint(2, 3)
+        base_angle = rng.uniform(-math.pi, math.pi)
+        for index in range(lobe_count):
+            # Spread companions around the group while avoiding a regular ring.
+            angle = base_angle + (index / max(1, lobe_count)) * math.tau + rng.uniform(-0.48, 0.48)
+            distance = rng.uniform(0.27, 0.46)
+            lx = group.x + math.cos(angle) * group.rx * distance
+            ly = group.y + math.sin(angle) * group.ry * distance
+            lrx = group.rx * rng.uniform(0.34, 0.56)
+            lry = group.ry * rng.uniform(0.38, 0.62)
+            brushes.leaf_cluster_round(
+                mask, rng, lx, ly, lrx, lry,
+                lobes=rng.randint(9, 13), jitter=rng.uniform(0.20, 0.31), fill=255,
+            )
+
+        # Small satellites add edge rhythm; cuts prevent the merged result from
+        # becoming one smooth oval again.
+        brushes.edge_breakup_stamp(
+            mask, rng, group.x, group.y, max(group.rx, group.ry),
+            count=rng.randint(5, 8), fill=255,
+        )
+        brushes.silhouette_gap_cutter(
+            mask, rng, group.x, group.y, group.rx, group.ry,
+            count=rng.randint(1, 2),
+        )
+
     def scatter(
         self,
         image: Image.Image,
@@ -193,8 +244,7 @@ class FlowerClusterEngineV1:
 
         for group in sorted(groups, key=lambda item: (item.y, item.x)):
             mask = Image.new("L", work_size, 0)
-            brushes.leaf_cluster_broadleaf(mask, rng, group.x, group.y, group.rx, group.ry, satellites=4, fill=255)
-            brushes.edge_breakup_stamp(mask, rng, group.x, group.y, max(group.rx, group.ry), count=7, fill=255)
+            self._compound_group_mask(mask, rng, group)
             flowering_brushes.blossom_gap_windows(
                 mask,
                 rng,
@@ -255,6 +305,8 @@ class FlowerClusterEngineV1:
             "placedGroups": len(groups),
             "attempts": attempts,
             "blossomStyle": "many_small_round",
+            "compoundSilhouette": True,
+            "compoundLobes": [2, 3],
             "negativeSpaceWindows": True,
             "internalOcclusion": True,
             "supersample": _WORK_SCALE,
