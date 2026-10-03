@@ -81,3 +81,56 @@ def test_four_views_share_topology_but_receive_view_specific_organic_projection(
     south_trunk = _node(upgraded["south"], "wood_structure")["params"]["paths"][0]["points"]
     west_trunk = _node(upgraded["west"], "wood_structure")["params"]["paths"][0]["points"]
     assert south_trunk != west_trunk
+
+
+def test_roots_share_identity_and_rotate_as_ground_geometry():
+    import pytest
+    structure, recipes = plan_plant_four_views(_intent())
+    upgraded = {view: upgrade_plant_wood_recipe(recipe, structure, view=view)
+                for view, recipe in recipes.items()}
+    vectors = {}
+    for view, recipe in upgraded.items():
+        trunk = _node(recipe, 'wood_structure')['params']['paths'][0]
+        roots = _node(recipe, 'root_structure')['params']['paths']
+        assert recipe['planner']['rootIds'] == [f'root_{i}' for i in range(5)]
+        assert _node(recipe,'root_visible')['params']['paths'] == roots
+        vectors[view] = {}
+        bx,by = trunk['points'][0]; width = trunk['widths'][0]
+        for root in roots:
+            x,y = root['points'][-1]
+            vectors[view][root['rootId']] = (x-bx, y-by-width*.06)
+    for root_id, (dx,dy) in vectors['south'].items():
+        nx,ny = vectors['north'][root_id]
+        assert nx == pytest.approx(-dx,abs=.002)
+        assert ny == pytest.approx(-dy,abs=.002)
+        wx,wy = vectors['west'][root_id]
+        assert wx == pytest.approx(-2*dy,abs=.002)
+        assert wy == pytest.approx(dx/2,abs=.002)
+
+
+def test_root_and_trunk_raster_stays_connected_and_inside_canvas():
+    from PIL import Image
+    from visitor_forge_2d.core.geometry_engine import draw_tapered_paths
+    from visitor_forge_2d.core.plant_visual_critic import _connected_components
+    structure, recipes = plan_plant_four_views(_intent())
+    for view, recipe in recipes.items():
+        upgraded = upgrade_plant_wood_recipe(recipe, structure, view=view)
+        image = Image.new('RGBA',tuple(recipe['canvas']))
+        roots = _node(upgraded,'root_structure')['params']['paths']
+        trunk = _node(upgraded,'wood_structure')['params']['paths'][0]
+        draw_tapered_paths(image,roots + [trunk])
+        alpha = image.getchannel('A').point(lambda value:255 if value>=32 else 0)
+        assert len(_connected_components(alpha,min_area=2)) == 1
+        left,top,right,bottom = alpha.getbbox()
+        assert left>4 and top>4 and right<252 and bottom<316
+        assert right-left > trunk['widths'][0]*1.5
+
+
+def test_bark_plates_do_not_change_canonical_branch_mask():
+    structure, recipes = plan_plant_four_views(_intent())
+    upgraded = upgrade_plant_wood_recipe(recipes['south'],structure,view='south')
+    structural = _node(upgraded,'wood_structure')['params']['paths']
+    plates = [path for path in _node(upgraded,'wood_visible')['params']['paths'] if path.get('barkPlate')]
+    assert len(plates)>=18
+    assert all(not path.get('barkPlate') for path in structural)
+    assert len({path['fill'] for path in plates})>=3

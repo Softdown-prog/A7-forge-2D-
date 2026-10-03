@@ -1,0 +1,50 @@
+{
+  "baselineCommit": "6266aea4412ce01ceba712b9f128d1e20a38ec37",
+  "intent": "tools/visitor_forge_2d/examples/plant_intent_ipe_reference_01.json",
+  "before": {
+    "critic": {
+      "score": 95.2,
+      "passed": true,
+      "worstScore": 90.4,
+      "failedViews": [],
+      "failedGatesByView": {
+        "south": [],
+        "west": [],
+        "north": [],
+        "east": []
+      },
+      "meanContinuity": 0.98,
+      "meanCrownFill": 0.752,
+      "maxIsolatedMasses": 3,
+      "meanCrownWoodExposure": 0.4294,
+      "maxSilhouetteImbalance": 0.0939,
+      "minClippingMarginPx": 11
+    },
+    "roots": 0,
+    "branchCount": 35,
+    "distinctViews": 4
+  },
+  "after": {
+    "critic": {
+      "score": 94.4,
+      "passed": true,
+      "worstScore": 87.2,
+      "failedViews": [],
+      "failedGatesByView": {
+        "south": [],
+        "west": [],
+        "north": [],
+        "east": []
+      },
+      "meanContinuity": 0.9778,
+      "meanCrownFill": 0.7522,
+      "maxIsolatedMasses": 4,
+      "meanCrownWoodExposure": 0.4283,
+      "maxSilhouetteImbalance": 0.0938,
+      "minClippingMarginPx": 9
+    },
+    "roots": 5,
+    "branchCount": 35,
+    "distinctViews": 4
+  }
+}

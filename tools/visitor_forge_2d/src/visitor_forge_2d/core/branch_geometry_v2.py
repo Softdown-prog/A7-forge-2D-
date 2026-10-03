@@ -122,7 +122,7 @@ def _organic_path(path: dict, *, order: int, branch_id: str, seed: int, view: st
         width = start_width + (end_width - start_width) * eased
         width *= 1.0 + math.sin(width_noise_phase + t * math.tau * 1.45) * irregularity * math.sin(math.pi * t)
         if order == 0 and t < 0.16:
-            width *= 1.0 + 0.08 * (1.0 - t / 0.16)
+            width *= 1.0 + 0.28 * (1.0 - t / 0.16)
         elif order == 1 and t < 0.22:
             width *= 1.0 + 0.17 * (1.0 - t / 0.22)
         elif order == 2 and t < 0.19:
@@ -131,6 +131,8 @@ def _organic_path(path: dict, *, order: int, branch_id: str, seed: int, view: st
             width *= 1.0 + 0.07 * (1.0 - t / 0.15)
         widths.append(round(max(0.28, width), 4))
 
+    if order == 0:
+        out["startCap"] = "butt"
     out["points"] = [[round(p[0], 4), round(p[1], 4)] for p in points]
     out["widths"] = widths
     out.pop("widthStart", None)
@@ -155,7 +157,7 @@ def _fragment(points: Sequence[Sequence[float]], widths: Sequence[float], start_
     return list(points[start:end]), list(widths[start:end])
 
 
-def _bark_accents(path: dict, *, order: int, exposure: float) -> list[dict]:
+def _bark_accents(path: dict, *, order: int, exposure: float, seed: int = 0) -> list[dict]:
     if order > 2:
         return []
     points = path.get("points", [])
@@ -196,12 +198,59 @@ def _bark_accents(path: dict, *, order: int, exposure: float) -> list[dict]:
             "fill": _alpha_hex(color, min(1.0, opacity * 2.8) * exposure),
             "branchGeometryDetail": True,
         })
+    # Staggered tapered plates give broad trunks surface structure at native
+    # resolution. Each mark stays inside the ribbon and follows its tangent.
+    if order <= 1 and max(widths) >= 3.0:
+        rng = random.Random(seed)
+        fine_points = _sample_polyline(points, 48)
+        fine_widths = [widths[min(len(widths)-1, round(i * (len(widths)-1) / 47))] for i in range(48)]
+        count = 18 if order == 0 else 5
+        for index in range(count):
+            start_t = (index + rng.uniform(0.05, 0.5)) / count
+            end_t = min(0.98, start_t + rng.uniform(0.045, 0.095))
+            side = rng.uniform(-1.4, 1.4)
+            shifted = _offset_points(fine_points, fine_widths, side)
+            plate_points, plate_widths = _fragment(shifted, fine_widths, start_t, end_t)
+            color = rng.choice(["#55301C", "#A57547", "#C69A63", "#795337"])
+            thickness = rng.uniform(0.10, 0.24)
+            last = max(1, len(plate_widths)-1)
+            accents.append({
+                "points": plate_points,
+                "widths": [round(max(0.18, width * thickness * (0.25 + 0.75 * math.sin(math.pi*i/last))),4) for i,width in enumerate(plate_widths)],
+                "fill": _alpha_hex(color, rng.uniform(0.45,0.78) * exposure),
+                "branchGeometryDetail": True,
+                "barkPlate": True,
+            })
     return accents
+
+
+def _root_paths(trunk: dict, *, seed: int, view: str) -> list[dict]:
+    """Project shared radial root buttresses onto the CH 2:1 ground plane."""
+    x,y = trunk["points"][0]
+    width = trunk["widths"][0]
+    rotation = {"south": 0, "west": 90, "north": 180, "east": 270}[view]
+    rng = random.Random(_stable_seed(seed,"root_structure","canonical"))
+    roots=[]
+    for index in range(5):
+        angle=math.radians(index*72 + rng.uniform(-14,14) + rotation)
+        length=width*rng.uniform(0.85,1.15)
+        wx,wy=math.cos(angle)*length,math.sin(angle)*length
+        dx,dy=(wx-wy)*0.72,(wx+wy)*0.36
+        # Lift at the shoulder and fall toward the ground at the tip.
+        points=[[x,y-width*.36],[x+dx*.27,y-width*.12+dy*.27],
+                [x+dx*.65,y+dy*.65],[x+dx,y+dy+width*.06]]
+        roots.append({"points": [[round(a,4),round(b,4)] for a,b in points],
+                      "widths": [round(width*.30,4),round(width*.25,4),round(width*.13,4),0.45],
+                      "fill": "#A57547FF" if dx < 0 else "#6E482CFF", "outline": "#4A2F1DFF", "outlineWidth": .35,
+                      "rootId": f"root_{index}", "rootButtress": True})
+    return sorted(roots,key=lambda root:root["points"][-1][1])
 
 
 def upgrade_plant_wood_recipe(recipe: dict, structure, *, view: str | None = None) -> dict:
     """Upgrade planner wood nodes while preserving plant identity and graph contract."""
     out = copy.deepcopy(recipe)
+    from .field_graph import freeze_node_seeds
+    freeze_node_seeds(out)
     branches = list(structure.branches)
     view_name = str(view or out.get("planner", {}).get("view", "south"))
     seed = int(out.get("graph", {}).get("seed", getattr(structure, "seed", 1)))
@@ -228,11 +277,20 @@ def upgrade_plant_wood_recipe(recipe: dict, structure, *, view: str | None = Non
         else:
             visible = copy.deepcopy(upgraded)
             for path, branch in zip(upgraded, branches):
-                visible.extend(_bark_accents(path, order=int(branch.order), exposure=float(branch.exposure)))
+                visible.extend(_bark_accents(path, order=int(branch.order), exposure=float(branch.exposure), seed=_stable_seed(seed, str(branch.branch_id), view_name)))
             node["params"]["paths"] = visible
 
     if base_paths is None:
         raise ValueError("branch geometry could not find wood_structure node")
+
+    roots = _root_paths(base_paths[0], seed=seed, view=view_name)
+    nodes = out["graph"]["nodes"]
+    for target, node_id in (("wood_structure", "root_structure"), ("wood_material", "root_visible")):
+        index = next(i for i,node in enumerate(nodes) if node["id"] == target)
+        previous = nodes[index]["inputs"]["image"]
+        nodes.insert(index, {"id": node_id, "type": "tapered_path", "inputs": {"image": previous},
+                             "params": {"supersample": 4, "paths": copy.deepcopy(roots)}})
+        nodes[index+1]["inputs"]["image"] = node_id
 
     # Path-aligned accents now carry most anisotropy. Keep generic material grain
     # low so diagonal limbs are not stamped with a vertical trunk texture.
@@ -245,5 +303,9 @@ def upgrade_plant_wood_recipe(recipe: dict, structure, *, view: str | None = Non
     planner = out.setdefault("planner", {})
     planner["branchGeometryContract"] = BRANCH_GEOMETRY_CONTRACT
     planner["branchGeometryV2"] = True
+    planner["rootCount"] = len(roots)
+    planner["rootIds"] = sorted(root["rootId"] for root in roots)
+    planner["rootProjection"] = "canonical_radial_ground_2_to_1"
+    planner["barkSurface"] = "staggered_tapered_plates"
     planner["branchGeometryPathCount"] = len(base_paths)
     return out

@@ -38,6 +38,28 @@ from .vector_path import VECTOR_PATH_CONTRACT, draw_vector_paths
 
 FIELD_GRAPH_CONTRACT = "CH_2D_GRAPH_RECIPE_V2"
 _SAFE_ID = re.compile(r"[a-z0-9][a-z0-9_-]*\Z")
+# Legacy recipes use position-derived randomness. Compilers that insert nodes
+# can freeze these values without changing existing renders.
+_NODE_SEED_STRIDES = {
+    "field_mass_fill": 15485863, "field_mapped_scatter": 982451653,
+    "field_cluster_scatter": 961748941, "field_flower_clusters": 86028121,
+    "image_masked_material": 32452843, "image_masked_relief_material": 49979687,
+}
+
+
+def freeze_node_seeds(recipe: dict) -> None:
+    """Assign explicit seeds in place before editing a graph's node order."""
+    seed = int(recipe.get("graph", {}).get("seed", recipe.get("seed", 1)))
+    for index,node in enumerate(recipe["graph"]["nodes"]):
+        stride = _NODE_SEED_STRIDES.get(node["type"])
+        if stride is not None:
+            node.setdefault("seed", seed + index * stride)
+
+
+def _node_seed(seed: int, node: dict, index: int) -> int:
+    return int(node.get("seed", seed + index * _NODE_SEED_STRIDES[node["type"]])) + int(node.get("params", {}).get("seedOffset", 0))
+
+
 SUPPORTED_NODE_TYPES = {
     "canvas",
     "tapered_path",
@@ -92,6 +114,8 @@ def validate_recipe(recipe: dict) -> None:
             raise ValueError("graph node ids must be unique safe ids")
         if node_type not in SUPPORTED_NODE_TYPES:
             raise ValueError(f"unsupported V2 graph node type: {node_type}")
+        if "seed" in node and (not isinstance(node["seed"], int) or isinstance(node["seed"], bool)):
+            raise ValueError(f"node {node_id} seed must be an integer")
         inputs = node.get("inputs", {})
         if not isinstance(node.get("params", {}), dict):
             raise ValueError(f"node {node_id} params must be an object")
@@ -243,13 +267,13 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 edge_noise=float(params.get("edgeNoise", 0.10)),
                 noise_cell_px=int(params.get("noiseCellPx", 18)),
                 depth_shade=float(params.get("depthShade", 0.22)),
-                seed=seed + index * 15485863 + int(params.get("seedOffset", 0)),
+                seed=_node_seed(seed, node, index),
             )
             stats = {"type": node_type, **mass_stats}
 
         elif node_type == "field_mapped_scatter":
             image = _copy_input(results, node, "image")
-            engine = FieldBrushEngineV1(seed + index * 982451653 + int(params.get("seedOffset", 0)))
+            engine = FieldBrushEngineV1(_node_seed(seed, node, index))
             stamps, field_stats = engine.scatter(
                 image,
                 params.get("brushes", []),
@@ -269,7 +293,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
 
         elif node_type == "field_cluster_scatter":
             image = _copy_input(results, node, "image")
-            engine = FieldClusterEngineV1(seed + index * 961748941 + int(params.get("seedOffset", 0)))
+            engine = FieldClusterEngineV1(_node_seed(seed, node, index))
             cluster_stats = engine.scatter(
                 image,
                 params["cluster"],
@@ -291,7 +315,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
 
         elif node_type == "field_flower_clusters":
             image = _copy_input(results, node, "image")
-            engine = FlowerClusterEngineV1(seed + index * 86028121 + int(params.get("seedOffset", 0)))
+            engine = FlowerClusterEngineV1(_node_seed(seed, node, index))
             flower_stats = engine.scatter(
                 image,
                 _copy_input(results, node, "density"),
@@ -336,7 +360,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             image = masked_material_variation(
                 _copy_input(results, node, "image"),
                 _copy_input(results, node, "mask"),
-                seed=seed + index * 32452843 + int(params.get("seedOffset", 0)),
+                seed=_node_seed(seed, node, index),
                 coarse_px=int(params.get("coarsePx", 11)),
                 coarse_amount=float(params.get("coarseAmount", 0.13)),
                 fine_amount=float(params.get("fineAmount", 0.035)),
@@ -348,7 +372,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
             image = masked_relief_material(
                 _copy_input(results, node, "image"),
                 _copy_input(results, node, "mask"),
-                seed=seed + index * 49979687 + int(params.get("seedOffset", 0)),
+                seed=_node_seed(seed, node, index),
                 light_direction=params.get("lightDirection", [-0.8, -0.45]),
                 relief_strength=float(params.get("reliefStrength", 0.22)),
                 edge_shade=float(params.get("edgeShade", 0.16)),

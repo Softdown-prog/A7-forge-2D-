@@ -256,7 +256,10 @@ def propose_repair(aggregate: dict) -> dict:
         plan["minDistanceScale"] = 0.90
         plan["reasons"].append("close_sparse_or_fragmented_crown")
     elif fill > 0.82:
-        plan["crownRadiusScale"] = 0.97
+        # Preserve the authored crown zone: shrinking the measurement field
+        # can increase reported fill even when the painted masses get smaller.
+        plan["crownRadiusScale"] = 1.0
+        plan["flowerCountScale"] = 0.92
         plan["foliageCountScale"] = 0.92
         plan["frontCountScale"] = 0.92
         plan["brushScale"] = 0.95
@@ -331,12 +334,12 @@ def apply_repair_plan(recipe: dict, plan: dict) -> dict:
                 params["scale"] = _scale_pair(params["scale"], brush_scale)
             if "minDistance" in params:
                 params["minDistance"] = round(float(params["minDistance"]) * distance_scale, 4)
-        if node_id == "flower_clusters":
+        if node.get("type") == "field_flower_clusters":
             if "radiusX" in params:
                 params["radiusX"] = _scale_pair(params["radiusX"], brush_scale)
             if "radiusY" in params:
                 params["radiusY"] = _scale_pair(params["radiusY"], brush_scale)
-            if "minDistance" in params:
+            if "minDistance" in params and node_id not in {"rear_foliage", "front_foliage", "detail_foliage"}:
                 params["minDistance"] = round(float(params["minDistance"]) * distance_scale, 4)
 
         if inset > 0 and isinstance(params.get("bounds"), list) and len(params["bounds"]) == 4:

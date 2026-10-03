@@ -164,3 +164,28 @@ def test_mapped_brush_cannot_escape_authored_bounds_or_fields(restriction):
         max_attempts=80)
     assert not stamps and stats['saturated']
     assert canvas.getchannel('A').getbbox() is None
+
+
+def test_explicit_graph_seeds_preserve_pixels_when_nodes_are_inserted():
+    import copy
+    from visitor_forge_2d.core.field_graph import execute, freeze_node_seeds
+    recipe={
+        'contract':'CH_2D_GRAPH_RECIPE_V2','id':'seed_insertion_regression',
+        'seed':91,'canvas':[64,64],'anchor':[32,60],
+        'camera':{'contract':'CH_CAMERA_V1','projection':'orthographic_dimetric','tile':[128,64],'yawDeg':45,'elevationDeg':30},
+        'graph':{'seed':91,'nodes':[
+            {'id':'base','type':'canvas'},
+            {'id':'density','type':'field_radial_density','params':{'lobes':[{'center':[32,32],'radius':[25,25],'weight':1}]}},
+            {'id':'flowers','type':'field_flower_clusters','inputs':{'image':'base','density':'density'},'params':{'count':4,'bounds':[12,12,52,52],'radiusX':[5,7],'radiusY':[4,6],'seedOffset':17}},
+            {'id':'out','type':'output','inputs':{'image':'flowers'}},
+        ]}}
+    before,_=execute(recipe)
+    frozen=copy.deepcopy(recipe); freeze_node_seeds(frozen)
+    same,_=execute(frozen)
+    assert before.tobytes()==same.tobytes()
+    frozen['graph']['nodes'].insert(1,{'id':'unrelated','type':'canvas'})
+    after,_=execute(frozen)
+    assert after.tobytes()==before.tobytes()
+    frozen['graph']['nodes'][3]['seed']=True
+    with pytest.raises(ValueError,match='seed must be an integer'):
+        execute(frozen)

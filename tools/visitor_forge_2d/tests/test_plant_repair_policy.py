@@ -101,3 +101,40 @@ def test_internal_bridge_repair_preserves_identity_and_original_terminal_centers
     original_flowers = next(node for node in recipe["graph"]["nodes"] if node["id"] == "flower_clusters")
     repaired_flowers = next(node for node in repaired["graph"]["nodes"] if node["id"] == "flower_clusters")
     assert repaired_flowers["params"]["count"] == original_flowers["params"]["count"]
+
+
+def test_repair_scales_background_blossoms_and_roots_with_the_projection():
+    from visitor_forge_2d.core.art_planner import plan_plant_four_views
+    from visitor_forge_2d.core.branch_geometry_v2 import upgrade_plant_wood_recipe
+    from visitor_forge_2d.core.plant_repair_policy import apply_repair_plan
+    import pytest
+    structure,recipes=plan_plant_four_views(dict(species='ipe_amarelo',seed=73,flowering=dict(amount=.96,color='#FFD21A')))
+    original=upgrade_plant_wood_recipe(recipes['south'],structure,view='south')
+    repaired=apply_repair_plan(original,dict(changed=True,brushScale=.9,minDistanceScale=1.1,projectionScale=.95))
+    def node(recipe,name):
+        return next(n for n in recipe['graph']['nodes'] if n['id']==name)
+    for name in ['rear_foliage','flower_clusters']:
+        a,b=node(original,name)['params'],node(repaired,name)['params']
+        assert b['radiusX'][0] == pytest.approx(a['radiusX'][0]*.9*.95,abs=.001)
+        assert b['minDistance'] == pytest.approx(a['minDistance']*1.1*.95,abs=.001)
+    anchor=original['anchor']
+    for name in ['root_structure','root_visible']:
+        a=node(original,name)['params']['paths'][0]
+        b=node(repaired,name)['params']['paths'][0]
+        assert b['points'][0][0] == pytest.approx(anchor[0]+(a['points'][0][0]-anchor[0])*.95,abs=.001)
+    assert repaired['planner']['rootIds']==original['planner']['rootIds']
+
+
+def test_overfilled_repair_preserves_authored_crown_zone():
+    from visitor_forge_2d.core.art_planner import plan_plant_four_views
+    from visitor_forge_2d.core.plant_repair_policy import apply_repair_plan,propose_repair
+    _,recipes=plan_plant_four_views(dict(species='ipe_amarelo',seed=73,flowering=dict(amount=.96,color='#FFD21A')))
+    original=recipes['south']
+    plan=propose_repair(dict(meanContinuity=.99,meanCrownFill=.88,maxIsolatedMasses=0,meanCrownWoodExposure=.3,minClippingMarginPx=8))
+    assert plan['crownRadiusScale']==1
+    assert plan['flowerCountScale']<1
+    repaired=apply_repair_plan(original,plan)
+    for name in ['crown_density','flower_density']:
+        a=next(n for n in original['graph']['nodes'] if n['id']==name)
+        b=next(n for n in repaired['graph']['nodes'] if n['id']==name)
+        assert a==b

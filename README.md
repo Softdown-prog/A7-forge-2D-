@@ -71,3 +71,5 @@ O teste diagnóstico do rig WEST verifica o algoritmo, sem inventar ou aprovar
 uma imagem artística para essa direção.
 
 Veja a [comparação do ipê amarelo e os controles de copa florida](docs/A7_FLOWERING_REFERENCE.md), com imagens reais antes/depois e receita reproduzível.
+
+Veja também o [refinamento de casca, raízes e estabilidade dos reparos](docs/A7_WOOD_AND_REPAIR.md).

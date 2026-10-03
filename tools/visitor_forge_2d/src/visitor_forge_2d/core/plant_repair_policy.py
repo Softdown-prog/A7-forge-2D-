@@ -235,7 +235,7 @@ def apply_repair_plan(recipe: dict, plan: dict) -> dict:
         node_type = node.get("type")
         params = node.get("params", {})
 
-        if node_id in {"wood_structure", "wood_visible"}:
+        if node_id in {"wood_structure", "wood_visible", "root_structure", "root_visible"}:
             for path in params.get("paths", []):
                 path["points"] = [_scale_point(point, anchor, factor) for point in path.get("points", [])]
                 if "widthStart" in path:
@@ -260,6 +260,13 @@ def apply_repair_plan(recipe: dict, plan: dict) -> dict:
                 params["end"] = _scale_point(params["end"], anchor, factor)
         elif node_type == "field_direction_to_point" and "point" in params:
             params["point"] = _scale_point(params["point"], anchor, factor)
+
+        if node_type in {"field_mapped_scatter", "field_cluster_scatter", "field_flower_clusters"}:
+            for key in ("scale", "radiusX", "radiusY"):
+                if key in params:
+                    params[key] = _scale_pair(params[key], factor)
+            if "minDistance" in params:
+                params["minDistance"] = round(float(params["minDistance"]) * factor, 4)
 
         if isinstance(params.get("bounds"), list) and len(params["bounds"]) == 4:
             left, top, right, bottom = params["bounds"]
