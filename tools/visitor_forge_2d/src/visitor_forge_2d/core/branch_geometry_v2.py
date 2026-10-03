@@ -187,13 +187,13 @@ def _bark_accents(path: dict, *, order: int, exposure: float) -> list[dict]:
         if len(frag_points) < 2:
             continue
         line_widths = [
-            round(max(0.22, float(w) * (0.060 if order == 0 else 0.052)), 4)
+            round(max(0.22, float(w) * (0.20 if order == 0 else 0.13)), 4)
             for w in frag_widths
         ]
         accents.append({
             "points": frag_points,
             "widths": line_widths,
-            "fill": _alpha_hex(color, opacity * exposure),
+            "fill": _alpha_hex(color, min(1.0, opacity * 2.8) * exposure),
             "branchGeometryDetail": True,
         })
     return accents

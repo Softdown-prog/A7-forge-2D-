@@ -1,0 +1,83 @@
+{
+  "before": {
+    "colorByView": {
+      "south": {
+        "goldShare": 0.3865,
+        "greenShare": 0.5596
+      },
+      "west": {
+        "goldShare": 0.4187,
+        "greenShare": 0.5474
+      },
+      "north": {
+        "goldShare": 0.3776,
+        "greenShare": 0.5894
+      },
+      "east": {
+        "goldShare": 0.4029,
+        "greenShare": 0.5675
+      }
+    },
+    "criticWithCurrentRules": {
+      "score": 96.8,
+      "passed": true,
+      "worstScore": 90.4,
+      "failedViews": [],
+      "failedGatesByView": {
+        "south": [],
+        "west": [],
+        "north": [],
+        "east": []
+      },
+      "meanContinuity": 0.9951,
+      "meanCrownFill": 0.7787,
+      "maxIsolatedMasses": 3,
+      "meanCrownWoodExposure": 0.1815,
+      "maxSilhouetteImbalance": 0.1534,
+      "minClippingMarginPx": 4
+    }
+  },
+  "after": {
+    "colorByView": {
+      "south": {
+        "goldShare": 0.8871,
+        "greenShare": 0.0267
+      },
+      "west": {
+        "goldShare": 0.9255,
+        "greenShare": 0.0052
+      },
+      "north": {
+        "goldShare": 0.9279,
+        "greenShare": 0.0088
+      },
+      "east": {
+        "goldShare": 0.9156,
+        "greenShare": 0.0104
+      }
+    },
+    "criticWithCurrentRules": {
+      "score": 95.2,
+      "passed": true,
+      "worstScore": 90.4,
+      "failedViews": [],
+      "failedGatesByView": {
+        "south": [],
+        "west": [],
+        "north": [],
+        "east": []
+      },
+      "meanContinuity": 0.98,
+      "meanCrownFill": 0.752,
+      "maxIsolatedMasses": 3,
+      "meanCrownWoodExposure": 0.4294,
+      "maxSilhouetteImbalance": 0.0939,
+      "minClippingMarginPx": 11
+    }
+  },
+  "baselineCommit": "11adf5b116c6d0cf067acf8f6047213758376871",
+  "intent": "tools/visitor_forge_2d/examples/plant_intent_ipe_reference_01.json",
+  "reference": "tools/visitor_forge_2d/examples/Ip\u00ea_amarelo/park_tree_ipe_amarelo_01_south.png",
+  "referenceSha256": "ab219e2db1996f014ebe4996a1ae740374547914ce9385ce6870e676c3f6a86d",
+  "artApproved": false
+}

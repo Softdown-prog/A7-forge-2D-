@@ -304,6 +304,7 @@ def execute(recipe: dict) -> tuple[Image.Image, dict]:
                 radius_y=params.get("radiusY", [8.0, 12.0]),
                 palette=params.get("palette", {}),
                 blossom_density=float(params.get("blossomDensity", 1.0)),
+                blossom_style=str(params.get("blossomStyle", "round")),
                 gap_windows=params.get("gapWindows", [2, 3]),
                 edge_spray_probability=float(params.get("edgeSprayProbability", 0.42)),
                 max_attempts=int(params.get("maxAttempts", 24000)),

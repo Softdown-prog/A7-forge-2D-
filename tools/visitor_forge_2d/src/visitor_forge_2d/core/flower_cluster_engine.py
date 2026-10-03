@@ -61,8 +61,9 @@ def _masked_gradient(mask: Image.Image, top: str, bottom: str, *, alpha: int = 2
     width, height = mask.size
     gradient = Image.new("RGBA", (width, height))
     draw = ImageDraw.Draw(gradient)
+    bounds = mask.getbbox() or (0, 0, width, height)
     for y in range(height):
-        rgb = _lerp_color(top, bottom, y / max(1, height - 1))
+        rgb = _lerp_color(top, bottom, (y - bounds[1]) / max(1, bounds[3] - bounds[1] - 1))
         draw.line((0, y, width, y), fill=(*rgb, alpha))
     gradient.putalpha(ImageChops.multiply(gradient.getchannel("A"), mask))
     return gradient
@@ -207,10 +208,13 @@ class FlowerClusterEngineV1:
         radius_y=(8.0, 12.0),
         palette: dict | None = None,
         blossom_density: float = 1.0,
+        blossom_style: str = "round",
         gap_windows: tuple[int, int] | list[int] = (2, 3),
         edge_spray_probability: float = 0.42,
         max_attempts: int = 24000,
     ) -> dict:
+        if blossom_style not in {"round", "petalled"}:
+            raise ValueError("blossom style must be round or petalled")
         if image.mode != "RGBA":
             raise ValueError("flower cluster image must be RGBA")
         if density_field.size != image.size:
@@ -282,6 +286,7 @@ class FlowerClusterEngineV1:
                 count=blossom_count,
                 highlight_color=pal["highlight"],
                 shadow_color=pal["back_bottom"],
+                blossom_style=blossom_style,
             )
             layer.alpha_composite(blossoms)
 
@@ -304,7 +309,7 @@ class FlowerClusterEngineV1:
             "requestedGroups": max(0, int(count)),
             "placedGroups": len(groups),
             "attempts": attempts,
-            "blossomStyle": "many_small_round",
+            "blossomStyle": "many_small_round" if blossom_style == "round" else "five_petalled",
             "compoundSilhouette": True,
             "compoundLobes": [2, 3],
             "negativeSpaceWindows": True,

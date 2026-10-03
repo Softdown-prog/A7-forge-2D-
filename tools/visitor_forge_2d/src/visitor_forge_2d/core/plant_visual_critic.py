@@ -59,7 +59,7 @@ def _brown_mask(frame: Image.Image) -> Image.Image:
                 continue
             # Warm wood family.  This intentionally ignores dark green/gold crown
             # pixels while tolerating the relief/material variations used by V2.
-            if r >= 52 and r > g * 1.08 and g > b * 1.08 and (r - b) >= 24:
+            if r >= 52 and r > g * 1.08 and g > b * 1.08 and (r - b) >= 24 and g < r * 0.78 and b > g * 0.30:
                 dst[x, y] = a
     return out
 

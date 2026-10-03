@@ -187,5 +187,6 @@ def test_planner_crown_and_flowers_are_derived_from_projected_terminals() -> Non
     assert all("center" in lobe and "radius" in lobe for lobe in flower_lobes)
     assert meso["inputs"]["density"] == "rear_core_density"
     assert flower_clusters["type"] == "field_flower_clusters"
-    assert flower_clusters["params"]["palette"]["highlight"] == "#FFE96A"
+    assert flower_clusters["params"]["palette"]["midTop"] == _intent()["flowering"]["color"]
+    assert flower_clusters["params"]["palette"]["highlight"] != _intent()["flowering"]["color"]
     assert flower_clusters["params"]["gapWindows"] == [2, 3]

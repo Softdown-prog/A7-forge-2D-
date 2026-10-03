@@ -10,6 +10,8 @@ contract that makes such plans reproducible and testable.
 from __future__ import annotations
 
 import copy
+import colorsys
+import math
 import re
 from typing import Any
 
@@ -42,17 +44,17 @@ _SPECIES_PROFILES: dict[str, dict[str, Any]] = {
         "asymmetry": 0.16,
     },
     "ipe_amarelo": {
-        "trunkHeight": 1.0,
-        "trunkWidth": 0.105,
+        "trunkHeight": 1.18,
+        "trunkWidth": 0.16,
         "crownStart": 0.43,
         "primaryCount": 4,
         "secondaryPerPrimary": 2,
         "secondaryPattern": [3, 2, 3, 2],
         "primaryLength": [0.44, 0.64],
         "secondaryLength": [0.23, 0.36],
-        "primaryRise": [0.18, 0.32],
+        "primaryRise": [0.30, 0.48],
         "primaryRiseRatioMin": 0.50,
-        "secondaryRise": [0.09, 0.20],
+        "secondaryRise": [0.12, 0.25],
         "primaryForkSpread": [0.06, 0.30],
         "primaryForkAngleDeg": [52.0, 74.0],
         "secondaryAttach": [0.34, 0.76],
@@ -82,15 +84,6 @@ _SPECIES_PROFILES: dict[str, dict[str, Any]] = {
 _GREEN_REAR = ["#244B30", "#2C5936", "#35643C"]
 _GREEN_MID = ["#315E38", "#3B6D3F", "#477A46"]
 _GREEN_FRONT = ["#39703F", "#478348", "#559250"]
-_IPE_FLOWER_PALETTE = {
-    "backTop": "#D59B08",
-    "backBottom": "#9A6700",
-    "midTop": "#F2B705",
-    "midBottom": "#C38300",
-    "frontTop": "#FFD21A",
-    "highlight": "#FFE96A",
-    "occlusion": "#62431B",
-}
 
 
 def _safe_id(value: str) -> str:
@@ -123,6 +116,7 @@ def normalize_plant_intent(intent: dict) -> dict:
         "flowering": {
             "amount": _clamp(float(flowering.get("amount", 0.0)), 0.0, 1.0),
             "color": str(flowering.get("color", "#F3C62F")),
+            "leafRetention": _clamp(float(flowering.get("leafRetention", 0.14 if species == "ipe_amarelo" else 1.0)), 0.0, 1.0),
         },
         "seed": int(intent.get("seed", 1)),
         "canvas": list(intent.get("canvas", [256, 320])),
@@ -198,24 +192,27 @@ def _flower_lobes(projection: PlantProjection, amount: float) -> list[dict]:
         variation = 0.90 + (index % 3) * 0.08
         lobes.append({
             "center": [round(x, 2), round(y, 2)],
-            "radius": [round((15.0 + 9.0 * strength) * variation, 2), round((12.0 + 6.0 * strength) * variation, 2)],
+            "radius": [round((18.0 + 16.0 * strength) * variation, 2), round((14.0 + 10.0 * strength) * variation, 2)],
             "weight": round(0.72 + 0.25 * strength, 2),
         })
     return lobes
 
 
 def _flower_palette(normalized: dict) -> dict:
-    if normalized["species"] == "ipe_amarelo":
-        return dict(_IPE_FLOWER_PALETTE)
     color = normalized["flowering"]["color"]
+    if not re.fullmatch(r"#[0-9a-fA-F]{6}", color):
+        raise ValueError("flowering.color must be #RRGGBB")
+    rgb = tuple(int(color[i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, saturation, value = colorsys.rgb_to_hsv(*rgb)
+    def tone(value_scale, saturation_scale=1.0):
+        shadow_hue = h - 0.045 * max(0.0, 1.0 - value_scale) if 0.10 <= h <= 0.20 else h
+        channels = colorsys.hsv_to_rgb(shadow_hue % 1, min(1, saturation * saturation_scale), min(1, value * value_scale))
+        return "#" + "".join(f"{round(channel * 255):02X}" for channel in channels)
     return {
-        "backTop": color,
-        "backBottom": color,
-        "midTop": color,
-        "midBottom": color,
-        "frontTop": color,
-        "highlight": color,
-        "occlusion": "#5A4B28",
+        "backTop": tone(0.86), "backBottom": tone(0.52),
+        "midTop": color.upper(), "midBottom": tone(0.72),
+        "frontTop": tone(1.10, 0.90), "highlight": tone(1.20, 0.58),
+        "occlusion": tone(0.36, 0.82),
     }
 
 
@@ -326,7 +323,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
     center_y = sum(point[1] for point in terminals) / terminal_count if terminals else anchor[1] - 150
 
     # Heavily flowering trees keep foliage as structure/support, not as the dominant surface.
-    foliage_factor = 1.0 - (0.32 * flowering_amount if normalized["species"] == "ipe_amarelo" else 0.0)
+    foliage_factor = (1.0 - flowering_amount) ** 2 + flowering_amount * flowering["leafRetention"]
 
     nodes: list[dict] = [
         {"id": "base", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
@@ -343,7 +340,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "id": "rear_foliage", "type": "field_cluster_scatter",
             "inputs": {"image": "rear_canvas", "density": "rear_core_density", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
-                "count": max(6, round(terminal_count * 0.85 * foliage_factor)), "bounds": bounds,
+                "count": max(1, round(terminal_count * 0.85 * foliage_factor)), "bounds": bounds,
                 "minDistance": 14.0, "maxAttempts": 32000, "scale": [0.90, 1.14],
                 "rotationDeg": [-14, 14], "mirrorXProbability": 0.5,
                 "mappings": {"scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.04], [1.0, 0.14]], "depth": [[0.0, -0.03], [1.0, 0.05]]}}},
@@ -365,7 +362,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "id": "meso_foliage", "type": "field_cluster_scatter",
             "inputs": {"image": "meso_canvas", "density": "rear_core_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
-                "count": max(5, round(terminal_count * 0.52 * foliage_factor)), "bounds": bounds,
+                "count": max(1, round(terminal_count * 0.52 * foliage_factor)), "bounds": bounds,
                 "minDistance": 16.0, "maxAttempts": 30000, "scale": [0.92, 1.18],
                 "rotationDeg": [-30, 30], "mirrorXProbability": 0.5,
                 "mappings": {"scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.08], [1.0, 0.10]], "depth": [[0.0, -0.04], [1.0, 0.04]]}}},
@@ -379,7 +376,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "id": "front_foliage", "type": "field_cluster_scatter",
             "inputs": {"image": "front_canvas", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
-                "count": max(10, round(terminal_count * 1.45 * foliage_factor)), "bounds": bounds,
+                "count": max(1, round(terminal_count * 1.45 * foliage_factor)), "bounds": bounds,
                 "minDistance": 10.5, "maxAttempts": 36000, "scale": [0.78, 1.06],
                 "rotationDeg": [-14, 14], "mirrorXProbability": 0.5,
                 "mappings": {"scale_mul": {"base": 0.98, "inputs": {"density": [[0.0, -0.06], [1.0, 0.15]], "depth": [[0.0, -0.03], [1.0, 0.08]]}}},
@@ -394,7 +391,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "inputs": {"image": "detail_canvas", "density": "structured_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
             "params": {
                 "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
-                "count": max(10, round(terminal_count * 1.20 * foliage_factor)),
+                "count": max(1, round(terminal_count * 1.20 * foliage_factor)),
                 "bounds": bounds, "minDistance": 5.0, "maxAttempts": 28000,
                 "scale": [0.44, 0.64], "aspect": [0.88, 1.14], "rotationDeg": [-28, 28],
                 "opacity": [220, 255], "tints": _GREEN_FRONT, "hueJitterDeg": 3,
@@ -409,19 +406,36 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
         {"id": "detail_composite", "type": "image_composite", "inputs": {"base": "detail_shadow", "layer": "detail_foliage"}, "params": {"opacity": 1.0}},
     ]
 
+    # Dense blossom crowns need a warm connected rear mass; leaf retention
+    # controls green surfaces independently of this flowering support.
+    if has_flowers and flowering_amount >= 0.5:
+        palette = _flower_palette(normalized)
+        rear = next(node for node in nodes if node["id"] == "rear_foliage")
+        rear["type"] = "field_flower_clusters"
+        rear["inputs"] = {"image": "rear_canvas", "density": "structured_density", "depth": "depth"}
+        rear["params"] = {
+            "count": max(12, round(terminal_count * 2.2 * flowering_amount)),
+            "bounds": bounds, "minDistance": 7.0, "maxAttempts": 40000,
+            "radiusX": [13.0, 19.0], "radiusY": [10.0, 14.0],
+            "blossomStyle": "petalled", "blossomDensity": 1.1,
+            "gapWindows": [1, 2], "edgeSprayProbability": 0.25,
+            "palette": {**palette, "midTop": palette["backTop"], "frontTop": palette["midTop"], "highlight": palette["frontTop"]},
+        }
+
+
     finish_input = "detail_composite"
     if has_flowers:
         nodes.extend([
-            {"id": "flower_density", "type": "field_radial_density", "params": {"power": 1.55, "lobes": _flower_lobes(projection, flowering_amount)}},
+            {"id": "flower_density", "type": "field_radial_density", "params": {"power": 0.85, "lobes": _flower_lobes(projection, flowering_amount)}},
             {"id": "flower_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
             {
                 "id": "flower_clusters", "type": "field_flower_clusters",
                 "inputs": {"image": "flower_canvas", "density": "flower_density", "avoid": "wood_mask", "depth": "depth"},
                 "params": {
-                    "count": max(8, round(terminal_count * (0.72 + flowering_amount * 0.48))),
-                    "bounds": bounds, "minDistance": 9.0, "maxAttempts": 26000,
-                    "radiusX": [10.5, 16.0], "radiusY": [7.8, 11.8],
-                    "blossomDensity": 1.12, "gapWindows": [2, 3], "edgeSprayProbability": 0.46,
+                    "count": max(8, round(terminal_count * (0.6 + flowering_amount * 4.4))),
+                    "bounds": bounds, "minDistance": 6.0, "maxAttempts": 40000,
+                    "radiusX": [7.0, 12.0], "radiusY": [5.5, 9.0],
+                    "blossomStyle": "petalled", "blossomDensity": 1.45, "gapWindows": [2, 3], "edgeSprayProbability": 0.46,
                     "palette": _flower_palette(normalized),
                 },
             },
@@ -452,6 +466,8 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "species": normalized["species"], "view": view, "style": normalized["style"],
             "branchIds": list(projection.branch_ids), "terminalCount": len(terminals),
             "floweringAmount": flowering_amount,
+            "leafRetention": flowering["leafRetention"],
+            "rearCanopySurface": "blossoms" if has_flowers and flowering_amount >= 0.5 else "leaves",
             "flowerPlacement": "terminal_density" if has_flowers else "none",
             "flowerEngineContract": FLOWER_CLUSTER_CONTRACT if has_flowers else None,
             "foliageComposition": "rear_meso_front_detail",
@@ -473,6 +489,26 @@ def plan_plant_four_views(intent: dict) -> tuple[PlantStructure, dict[str, dict]
     if len(anchor) != 2:
         raise ValueError("plant intent anchor must contain two integers")
     structure = generate_plant_structure(normalized["seed"], profile_from_intent(normalized))
-    projections = project_four_views(structure, canvas=canvas, anchor=anchor)
+    # Fit one shared scale across all rotations; never stretch each sprite separately.
+    previews = project_four_views(structure, canvas=canvas, anchor=anchor, scale=1.0)
+    padding = 42.0
+    scale_limits = []
+    for projection in previews.values():
+        for path in projection.paths:
+            for x, y in path["points"]:
+                dx, dy = x - anchor[0], y - anchor[1]
+                if dx < 0: scale_limits.append((anchor[0] - padding) / -dx)
+                if dx > 0: scale_limits.append((canvas[0] - anchor[0] - padding) / dx)
+                if dy < 0: scale_limits.append((anchor[1] - padding) / -dy)
+    if not scale_limits or min(scale_limits) <= 0:
+        raise ValueError("plant canvas and anchor must leave room for the crown")
+    scale = min(scale_limits)
+    # The intent anchor marks the foot, whereas projected paths start at the
+    # trunk centerline. Reserve its round cap so thick trunks keep that foot.
+    root_cap = math.ceil(structure.branches[0].width_start * scale * 0.64 / 2 + 2)
+    path_anchor = (anchor[0], anchor[1] - root_cap)
+    projections = project_four_views(structure, canvas=canvas, anchor=path_anchor, scale=scale)
     recipes = {view: build_plant_graph_recipe(normalized, structure, projections[view]) for view in CARDINAL_VIEWS}
+    for recipe in recipes.values():
+        recipe["planner"]["projectionScale"] = round(scale, 6)
     return structure, recipes

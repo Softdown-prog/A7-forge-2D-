@@ -30,6 +30,7 @@ def flower_cluster_small_round(
     count: int = 46,
     highlight_color: str | None = None,
     shadow_color: str | None = None,
+    blossom_style: str = "round",
 ) -> None:
     """Paint many tiny rounded blossoms clipped to one authored crown mass."""
     colors = tuple(palette)
@@ -55,7 +56,19 @@ def flower_cluster_small_round(
         r = rng.uniform(1.5, 3.25) * WORK_SCALE
         squash = rng.uniform(.72, 1.0)
         xw, yw = x * WORK_SCALE, y * WORK_SCALE
-        draw.ellipse((xw-r, yw-r*squash, xw+r, yw+r*squash), fill=(*_hex(color), rng.randint(205, 248)))
+        if blossom_style == "petalled":
+            # Five separate lobes and a warm throat remain readable at sprite scale.
+            r *= 0.75
+            phase = rng.uniform(0, math.tau)
+            for petal in range(5):
+                angle = phase + petal * math.tau / 5
+                ox, oy = math.cos(angle) * r * 0.58, math.sin(angle) * r * 0.58 * squash
+                pr = r * 0.52
+                draw.ellipse((xw+ox-pr, yw+oy-pr*squash, xw+ox+pr, yw+oy+pr*squash), fill=(*_hex(color), 248))
+            throat = r * 0.22
+            draw.ellipse((xw-throat, yw-throat, xw+throat, yw+throat), fill=(*_hex(shadow_color or color), 235))
+        else:
+            draw.ellipse((xw-r, yw-r*squash, xw+r, yw+r*squash), fill=(*_hex(color), rng.randint(205, 248)))
     layer.putalpha(ImageChops.multiply(layer.getchannel("A"), mask))
 
 

@@ -69,3 +69,5 @@ EAST e NORTH; o master WEST não está incluído. O comando de revisão das quat
 direções exige todas as fontes e informa a ausência antes de escrever saídas.
 O teste diagnóstico do rig WEST verifica o algoritmo, sem inventar ou aprovar
 uma imagem artística para essa direção.
+
+Veja a [comparação do ipê amarelo e os controles de copa florida](docs/A7_FLOWERING_REFERENCE.md), com imagens reais antes/depois e receita reproduzível.
