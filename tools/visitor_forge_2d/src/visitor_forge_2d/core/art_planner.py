@@ -249,6 +249,42 @@ def _rear_cluster() -> dict:
     ]}
 
 
+def _meso_cluster() -> dict:
+    """Compound asymmetric foliage mass used only to unify the crown interior."""
+    return {"members": [
+        {
+            "type": "brush", "offset": [-2, 1],
+            "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
+            "scale": [0.78, 1.04], "aspect": [0.72, 1.34], "rotationDeg": [-34, 34],
+            "opacity": [132, 168], "tints": _GREEN_MID, "value": [0.91, 1.01],
+        },
+        {
+            "type": "brush", "offset": [11, -4],
+            "brushes": ["foliage_v2/foliage_mass_01.png", "foliage_v2/foliage_mass_02.png"],
+            "scale": [0.50, 0.72], "aspect": [0.70, 1.38], "rotationDeg": [-42, 42],
+            "opacity": [122, 158], "tints": _GREEN_REAR, "value": [0.88, 0.98],
+        },
+        {
+            "type": "brush", "offset": [-12, -5],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.48, 0.70], "aspect": [0.78, 1.28], "rotationDeg": [-38, 38],
+            "opacity": [172, 214], "tints": _GREEN_MID, "value": [0.92, 1.03],
+        },
+        {
+            "type": "brush", "offset": [-5, 9],
+            "brushes": ["foliage_v2/foliage_cluster_01.png", "foliage_v2/foliage_cluster_02.png"],
+            "scale": [0.42, 0.64], "aspect": [0.80, 1.24], "rotationDeg": [-46, 46],
+            "opacity": [178, 222], "tints": _GREEN_MID, "value": [0.94, 1.04],
+        },
+        {
+            "type": "brush", "offset": [12, 7],
+            "brushes": ["foliage_v2/foliage_edge_01.png", "foliage_v2/foliage_edge_02.png"],
+            "scale": [0.34, 0.54], "aspect": [0.84, 1.22], "rotationDeg": [-52, 52],
+            "opacity": [188, 228], "tints": _GREEN_FRONT, "value": [0.96, 1.06],
+        },
+    ]}
+
+
 def _front_cluster() -> dict:
     return {"members": [
         {
@@ -324,6 +360,20 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
                 "grainScalePx": 6, "grainAmount": 0.15, "fineAmount": 0.025, "seedOffset": 97,
             },
         },
+        {"id": "meso_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
+        {
+            "id": "meso_foliage", "type": "field_cluster_scatter",
+            "inputs": {"image": "meso_canvas", "density": "rear_core_density", "avoid": "wood_mask", "depth": "depth", "direction": "direction", "distance": "branch_proximity"},
+            "params": {
+                "count": max(5, round(terminal_count * 0.52 * foliage_factor)), "bounds": bounds,
+                "minDistance": 16.0, "maxAttempts": 30000, "scale": [0.92, 1.18],
+                "rotationDeg": [-30, 30], "mirrorXProbability": 0.5,
+                "mappings": {"scale_mul": {"base": 1.0, "inputs": {"density": [[0.0, -0.08], [1.0, 0.10]], "depth": [[0.0, -0.04], [1.0, 0.04]]}}},
+                "cluster": _meso_cluster(),
+            },
+        },
+        {"id": "meso_shadow", "type": "image_contact_occlusion", "inputs": {"base": "wood_material", "occluder": "meso_foliage"}, "params": {"radius": 2.0, "strength": 0.16, "offset": [0, 1], "color": "#132018", "expandPx": 0, "baseAlphaOnly": True}},
+        {"id": "meso_composite", "type": "image_composite", "inputs": {"base": "meso_shadow", "layer": "meso_foliage"}, "params": {"opacity": 1.0}},
         {"id": "front_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
         {
             "id": "front_foliage", "type": "field_cluster_scatter",
@@ -336,7 +386,7 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
                 "cluster": _front_cluster(),
             },
         },
-        {"id": "front_shadow", "type": "image_contact_occlusion", "inputs": {"base": "wood_material", "occluder": "front_foliage"}, "params": {"radius": 2.4, "strength": 0.25, "offset": [0, 2], "color": "#101B13", "expandPx": 1, "baseAlphaOnly": True}},
+        {"id": "front_shadow", "type": "image_contact_occlusion", "inputs": {"base": "meso_composite", "occluder": "front_foliage"}, "params": {"radius": 2.4, "strength": 0.25, "offset": [0, 2], "color": "#101B13", "expandPx": 1, "baseAlphaOnly": True}},
         {"id": "front_composite", "type": "image_composite", "inputs": {"base": "front_shadow", "layer": "front_foliage"}, "params": {"opacity": 1.0}},
         {"id": "detail_canvas", "type": "canvas", "params": {"color": [0, 0, 0, 0]}},
         {
@@ -404,6 +454,8 @@ def build_plant_graph_recipe(intent: dict, structure: PlantStructure, projection
             "floweringAmount": flowering_amount,
             "flowerPlacement": "terminal_density" if has_flowers else "none",
             "flowerEngineContract": FLOWER_CLUSTER_CONTRACT if has_flowers else None,
+            "foliageComposition": "rear_meso_front_detail",
+            "mesoFoliage": "compound_asymmetric_internal",
             "temporaryFlowerProxy": False,
         },
         "graph": {"seed": seed, "nodes": nodes},
