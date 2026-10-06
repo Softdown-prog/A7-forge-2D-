@@ -22,6 +22,7 @@ from .graph_worker import run_graph_workers
 from .plant_planner_worker import run_plant_planner
 from .art_author import CONTRACT as ART_BRIEF_CONTRACT, run_art_author
 from .animation import package_animation
+from .pixel_character import render_pixel_character
 from .core import LayerComposer, alpha_safe_resize, export_frame, load_character_definition, load_pose
 
 
@@ -119,6 +120,12 @@ def command_author_art(args: argparse.Namespace) -> int:
 
 def command_pack_animation(args: argparse.Namespace) -> int:
     result = package_animation(Path(args.recipe), Path(args.output))
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def command_render_pixel_character(args: argparse.Namespace) -> int:
+    result = render_pixel_character(Path(args.recipe), Path(args.output))
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
@@ -427,6 +434,14 @@ def build_parser() -> argparse.ArgumentParser:
     draw_variant.add_argument("--seed", type=int, help="Deterministically select a palette variant")
     draw_variant.add_argument("--all-variants", action="store_true", help="Render all colorways and one gameplay-size board")
     draw.set_defaults(func=command_draw_recipe)
+
+    pixel_character = subparsers.add_parser(
+        "render-pixel-character",
+        help="render a deterministic four-direction pixel character with idle and 4-frame walk",
+    )
+    pixel_character.add_argument("--recipe", required=True, help="A7_FORGE_2D_PIXEL_CHARACTER_V1 JSON file")
+    pixel_character.add_argument("--output", required=True, help="Output directory")
+    pixel_character.set_defaults(func=command_render_pixel_character)
 
     animation = subparsers.add_parser(
         "pack-animation",
