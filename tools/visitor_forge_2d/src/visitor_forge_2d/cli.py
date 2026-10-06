@@ -21,6 +21,7 @@ from .workers import run_workers
 from .graph_worker import run_graph_workers
 from .plant_planner_worker import run_plant_planner
 from .art_author import CONTRACT as ART_BRIEF_CONTRACT, run_art_author
+from .animation import package_animation
 from .core import LayerComposer, alpha_safe_resize, export_frame, load_character_definition, load_pose
 
 
@@ -112,6 +113,12 @@ def command_author_art(args: argparse.Namespace) -> int:
     else:
         brief = {"contract": ART_BRIEF_CONTRACT, "id": args.id, "prompt": args.prompt}
     result = run_art_author(brief, Path(args.output))
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def command_pack_animation(args: argparse.Namespace) -> int:
+    result = package_animation(Path(args.recipe), Path(args.output))
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
@@ -420,6 +427,14 @@ def build_parser() -> argparse.ArgumentParser:
     draw_variant.add_argument("--seed", type=int, help="Deterministically select a palette variant")
     draw_variant.add_argument("--all-variants", action="store_true", help="Render all colorways and one gameplay-size board")
     draw.set_defaults(func=command_draw_recipe)
+
+    animation = subparsers.add_parser(
+        "pack-animation",
+        help="validate Forge 2D frames and export spritesheet, manifest and GIF preview",
+    )
+    animation.add_argument("--recipe", required=True, help="A7_FORGE_2D_ANIMATION_V1 JSON file")
+    animation.add_argument("--output", required=True, help="Output directory")
+    animation.set_defaults(func=command_pack_animation)
 
     workers = subparsers.add_parser(
         "run-workers", help="validate, render and audit a procedural 2D recipe",
