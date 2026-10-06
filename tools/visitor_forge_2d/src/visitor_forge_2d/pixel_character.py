@@ -202,7 +202,9 @@ def _pixel_character(
         hair_x0 = hx0 if facing > 0 else hx0 + 2 * scale
         _rect(draw, (hair_x0, head_top, hair_x0 + 3 * scale, head_top + 3 * scale), hair)
         eye_x = front + facing * scale
-        _rect(draw, (eye_x, head_top + 3 * scale, eye_x + facing * scale, head_top + 4 * scale - 1), outline)
+        eye_x2 = eye_x + facing * scale
+        _rect(draw, (min(eye_x, eye_x2), head_top + 3 * scale,
+                     max(eye_x, eye_x2), head_top + 4 * scale - 1), outline)
 
     return image
 
