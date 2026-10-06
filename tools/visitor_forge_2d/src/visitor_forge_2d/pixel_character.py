@@ -284,15 +284,15 @@ def _draw_wizard_overlay(
         draw.polygon([
             (cx - 3 * scale, brim_y),
             (cx + 3 * scale, brim_y),
-            (tip_x + 2 * scale, head_top - 5 * scale),
-            (tip_x, head_top - 7 * scale),
-            (tip_x - scale, head_top - 4 * scale),
+            (tip_x + 2 * scale, head_top - 3 * scale),
+            (tip_x, head_top - 3 * scale),
+            (tip_x - scale, head_top - 3 * scale),
         ], fill=outline)
         draw.polygon([
             (cx - 2 * scale, brim_y - scale),
             (cx + 2 * scale, brim_y - scale),
-            (tip_x + scale, head_top - 5 * scale),
-            (tip_x, head_top - 6 * scale),
+            (tip_x + scale, head_top - 3 * scale),
+            (tip_x, head_top - 3 * scale),
         ], fill=hat)
     else:
         facing = 1 if direction == "east" else -1
@@ -302,15 +302,15 @@ def _draw_wizard_overlay(
         draw.polygon([
             (cx - 2 * scale, brim_y),
             (cx + 2 * scale, brim_y),
-            (tip_x, head_top - 4 * scale),
-            (tip_x - facing * scale, head_top - 7 * scale),
-            (cx, head_top - 4 * scale),
+            (tip_x, head_top - 3 * scale),
+            (tip_x - facing * scale, head_top - 3 * scale),
+            (cx, head_top - 3 * scale),
         ], fill=outline)
         draw.polygon([
             (cx - scale, brim_y - scale),
             (cx + scale, brim_y - scale),
-            (tip_x - facing * scale, head_top - 4 * scale),
-            (tip_x - facing * scale, head_top - 6 * scale),
+            (tip_x - facing * scale, head_top - 3 * scale),
+            (tip_x - facing * scale, head_top - 3 * scale),
         ], fill=hat)
 
     # Staff remains on the outside silhouette so it is visible at native size.
