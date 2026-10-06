@@ -1,0 +1,86 @@
+name: A7 Forge 2D - Windows Self-Hosted
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_command:
+        description: "Optional repository command to run after environment validation"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: a7-forge-2d-windows
+  cancel-in-progress: false
+
+jobs:
+  windows-runner:
+    name: A7 Forge 2D / Windows
+    runs-on: [self-hosted, Windows, X64]
+    timeout-minutes: 120
+
+    defaults:
+      run:
+        shell: powershell
+
+    steps:
+      - name: Checkout A7 Forge 2D
+        uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 1
+
+      - name: Runner diagnostics
+        run: |
+          Write-Host "Runner: $env:RUNNER_NAME"
+          Write-Host "OS: $env:RUNNER_OS"
+          Write-Host "Architecture: $env:RUNNER_ARCH"
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+          git --version
+
+      - name: Resolve Python
+        id: python
+        run: |
+          $python = Get-Command python -ErrorAction SilentlyContinue
+          if (-not $python) {
+            $python = Get-Command py -ErrorAction SilentlyContinue
+          }
+          if (-not $python) {
+            throw "Python was not found on the Windows self-hosted runner PATH."
+          }
+          Write-Host "Python executable: $($python.Source)"
+          & $python.Source --version
+
+      - name: Install requirements when present
+        run: |
+          if (Test-Path "requirements.txt") {
+            python -m pip install --upgrade pip
+            python -m pip install -r requirements.txt
+          } elseif (Test-Path "pyproject.toml") {
+            python -m pip install --upgrade pip
+            python -m pip install -e .
+          } else {
+            Write-Host "No root requirements.txt or pyproject.toml found; skipping dependency installation."
+          }
+
+      - name: Run requested Forge command
+        if: ${{ inputs.run_command != '' }}
+        env:
+          A7_RUN_COMMAND: ${{ inputs.run_command }}
+        run: |
+          Write-Host "Executing requested A7 Forge 2D command..."
+          Invoke-Expression $env:A7_RUN_COMMAND
+
+      - name: Inventory generated outputs
+        if: always()
+        run: |
+          $candidateDirs = @("out", "output", "outputs", "artifacts", "build")
+          foreach ($dir in $candidateDirs) {
+            if (Test-Path $dir) {
+              Write-Host "Found output directory: $dir"
+              Get-ChildItem $dir -Recurse -File | Select-Object -First 200 FullName, Length
+            }
+          }
