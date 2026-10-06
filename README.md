@@ -26,6 +26,17 @@ python -m visitor_forge_2d draw-graph \
   --output out/graph
 ```
 
+Gerar um piloto de personagem pixel art em quatro direções:
+
+```bash
+python -m visitor_forge_2d render-pixel-character \
+  --recipe tools/visitor_forge_2d/examples/pixel_character_adventurer_01.json \
+  --output out/pixel_character
+```
+
+O render trabalha na grade final, sem anti-aliasing, e entrega `idle` + quatro
+frames de caminhada por direção já conectados ao empacotador de animação.
+
 Empacotar uma sequência de frames 2D já gerados pelo Forge:
 
 ```bash
