@@ -55,7 +55,7 @@ def test_pixel_character_is_deterministic(tmp_path: Path) -> None:
     a = Path(json.loads(Path(first["manifest"]).read_text())["frames"]["east"]["walk_2"])
     b = Path(json.loads(Path(second["manifest"]).read_text())["frames"]["east"]["walk_2"])
     assert a.read_bytes() == b.read_bytes()
-\n
+
 def test_pixel_wizard_archetype_is_class_readable(tmp_path: Path) -> None:
     recipe = {
         "contract": PIXEL_CHARACTER_CONTRACT,
