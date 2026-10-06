@@ -28,6 +28,12 @@ DEFAULT_PALETTE = {
     "pants": "#33435a",
     "pantsShadow": "#253244",
     "shoes": "#20262e",
+    "robe": "#6750a4",
+    "robeShadow": "#49377d",
+    "hat": "#4f46a5",
+    "hatBand": "#d2a93b",
+    "staff": "#7a5230",
+    "crystal": "#74d7ff",
 }
 
 
@@ -76,6 +82,7 @@ def _pixel_character(
     direction: str,
     pose: str,
     colors: dict[str, tuple[int, int, int, int]],
+    archetype: str = "adventurer",
 ) -> Image.Image:
     if direction not in DIRECTIONS:
         raise ValueError(f"unsupported direction: {direction}")
@@ -206,7 +213,121 @@ def _pixel_character(
         _rect(draw, (min(eye_x, eye_x2), head_top + 3 * scale,
                      max(eye_x, eye_x2), head_top + 4 * scale - 1), outline)
 
+    if archetype == "wizard":
+        _draw_wizard_overlay(image, direction, pose, colors)
+    elif archetype != "adventurer":
+        raise ValueError("archetype must be adventurer or wizard")
+
     return image
+
+
+def _draw_wizard_overlay(
+    image: Image.Image,
+    direction: str,
+    pose: str,
+    colors: dict[str, tuple[int, int, int, int]],
+) -> None:
+    """Add a miniature pixel-wizard silhouette without resampling.
+
+    The overlay deliberately uses chunky integer-grid shapes: pointed hat,
+    robe, staff and crystal. It keeps the generic walk cycle underneath, so
+    gait stays deterministic while the archetype changes the readable class.
+    """
+    draw = ImageDraw.Draw(image)
+    width, height = image.size
+    cx = width // 2
+    ground = height - 2
+    scale = max(1, min(width // 16, height // 24))
+    phase = {"idle": 0, "walk_0": -1, "walk_1": 0, "walk_2": 1, "walk_3": 0}[pose]
+    bob = -scale if pose in ("walk_1", "walk_3") else 0
+    body_bottom = ground - 5 * scale + bob
+    torso_top = body_bottom - 7 * scale
+    head_top = torso_top - 6 * scale
+
+    outline = colors["outline"]
+    robe = colors["robe"]
+    robe_shadow = colors["robeShadow"]
+    hat = colors["hat"]
+    hat_band = colors["hatBand"]
+    staff = colors["staff"]
+    crystal = colors["crystal"]
+
+    # Robe widens toward the ground and obscures most trouser pixels.
+    robe_top = torso_top
+    robe_bottom = ground - scale
+    if direction in ("south", "north"):
+        _rect(draw, (cx - 4 * scale, robe_top, cx + 4 * scale, robe_bottom), outline)
+        _rect(draw, (cx - 3 * scale, robe_top + scale, cx + 3 * scale, robe_bottom - scale), robe)
+        _rect(draw, (cx + scale, robe_top + 2 * scale, cx + 3 * scale, robe_bottom - scale), robe_shadow)
+        # Split hem so the walk still reads under the robe.
+        hem_shift = phase * scale
+        _rect(draw, (cx - 3 * scale + hem_shift, robe_bottom - 2 * scale,
+                     cx - scale + hem_shift, robe_bottom), robe_shadow)
+        _rect(draw, (cx + scale - hem_shift, robe_bottom - 2 * scale,
+                     cx + 3 * scale - hem_shift, robe_bottom), robe)
+    else:
+        facing = 1 if direction == "east" else -1
+        x0 = cx - 3 * scale
+        x1 = cx + 3 * scale
+        _rect(draw, (x0 - scale, robe_top, x1 + scale, robe_bottom), outline)
+        _rect(draw, (x0, robe_top + scale, x1, robe_bottom - scale), robe)
+        shade_x0 = x0 if facing < 0 else cx + scale
+        _rect(draw, (shade_x0, robe_top + 2 * scale,
+                     shade_x0 + 2 * scale, robe_bottom - scale), robe_shadow)
+
+    # Pointed hat. Its asymmetric tip helps EAST/WEST read immediately.
+    brim_y = head_top + scale
+    if direction in ("south", "north"):
+        _rect(draw, (cx - 5 * scale, brim_y, cx + 5 * scale, brim_y + scale), outline)
+        _rect(draw, (cx - 4 * scale, brim_y - scale, cx + 4 * scale, brim_y), hat_band)
+        tip_x = cx + (scale if direction == "south" else -scale)
+        draw.polygon([
+            (cx - 3 * scale, brim_y),
+            (cx + 3 * scale, brim_y),
+            (tip_x + 2 * scale, head_top - 5 * scale),
+            (tip_x, head_top - 7 * scale),
+            (tip_x - scale, head_top - 4 * scale),
+        ], fill=outline)
+        draw.polygon([
+            (cx - 2 * scale, brim_y - scale),
+            (cx + 2 * scale, brim_y - scale),
+            (tip_x + scale, head_top - 5 * scale),
+            (tip_x, head_top - 6 * scale),
+        ], fill=hat)
+    else:
+        facing = 1 if direction == "east" else -1
+        _rect(draw, (cx - 4 * scale, brim_y, cx + 4 * scale, brim_y + scale), outline)
+        _rect(draw, (cx - 3 * scale, brim_y - scale, cx + 3 * scale, brim_y), hat_band)
+        tip_x = cx + facing * 5 * scale
+        draw.polygon([
+            (cx - 2 * scale, brim_y),
+            (cx + 2 * scale, brim_y),
+            (tip_x, head_top - 4 * scale),
+            (tip_x - facing * scale, head_top - 7 * scale),
+            (cx, head_top - 4 * scale),
+        ], fill=outline)
+        draw.polygon([
+            (cx - scale, brim_y - scale),
+            (cx + scale, brim_y - scale),
+            (tip_x - facing * scale, head_top - 4 * scale),
+            (tip_x - facing * scale, head_top - 6 * scale),
+        ], fill=hat)
+
+    # Staff remains on the outside silhouette so it is visible at native size.
+    if direction == "south":
+        staff_x = cx + 6 * scale
+    elif direction == "north":
+        staff_x = cx - 6 * scale
+    else:
+        facing = 1 if direction == "east" else -1
+        staff_x = cx + facing * 6 * scale
+    sway = phase * scale // 2
+    staff_x += sway
+    _rect(draw, (staff_x, torso_top, staff_x + scale, ground), outline)
+    _rect(draw, (staff_x + 1, torso_top + scale, staff_x + scale, ground - scale), staff)
+    gem_y = torso_top - 2 * scale
+    _rect(draw, (staff_x - scale, gem_y - scale, staff_x + 2 * scale, gem_y + 2 * scale), outline)
+    _rect(draw, (staff_x, gem_y, staff_x + scale, gem_y + scale), crystal)
 
 
 def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
@@ -225,6 +346,9 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         raise ValueError("anchor lies outside canvas")
 
     colors = _palette(recipe)
+    archetype = str(recipe.get("archetype", "adventurer"))
+    if archetype not in ("adventurer", "wizard"):
+        raise ValueError("archetype must be adventurer or wizard")
     frame_duration = int(recipe.get("walkFrameDurationMs", 140))
     if not (40 <= frame_duration <= 1000):
         raise ValueError("walkFrameDurationMs must be between 40 and 1000")
@@ -243,7 +367,7 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         frame_records[direction] = {}
         walk_frames = []
         for pose in poses:
-            image = _pixel_character(size, direction, pose, colors)
+            image = _pixel_character(size, direction, pose, colors, archetype)
             name = f"{character_id}_{direction}_{pose}.png"
             destination = frames_dir / name
             image.save(destination, format="PNG", optimize=False)
@@ -281,6 +405,7 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "contract": PIXEL_CHARACTER_CONTRACT,
         "id": character_id,
         "pixelArt": True,
+        "archetype": archetype,
         "canvas": list(size),
         "anchor": anchor,
         "directions": list(DIRECTIONS),
@@ -300,6 +425,7 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "status": "ok",
         "contract": PIXEL_CHARACTER_CONTRACT,
         "id": character_id,
+        "archetype": archetype,
         "canvas": list(size),
         "directions": len(DIRECTIONS),
         "frames": len(DIRECTIONS) * len(poses),
