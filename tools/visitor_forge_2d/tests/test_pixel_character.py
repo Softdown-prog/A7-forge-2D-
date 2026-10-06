@@ -55,3 +55,37 @@ def test_pixel_character_is_deterministic(tmp_path: Path) -> None:
     a = Path(json.loads(Path(first["manifest"]).read_text())["frames"]["east"]["walk_2"])
     b = Path(json.loads(Path(second["manifest"]).read_text())["frames"]["east"]["walk_2"])
     assert a.read_bytes() == b.read_bytes()
+\n
+def test_pixel_wizard_archetype_is_class_readable(tmp_path: Path) -> None:
+    recipe = {
+        "contract": PIXEL_CHARACTER_CONTRACT,
+        "id": "wizard",
+        "archetype": "wizard",
+        "canvas": [32, 48],
+        "anchor": [16, 46],
+        "palette": {
+            "robe": "#6750A4",
+            "hat": "#4B4597",
+            "hatBand": "#D1A93A",
+            "staff": "#79502F",
+            "crystal": "#77D9FF"
+        },
+    }
+    recipe_path = tmp_path / "wizard.json"
+    recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
+
+    result = render_pixel_character(recipe_path, tmp_path / "wizard_out")
+    manifest = json.loads(Path(result["manifest"]).read_text(encoding="utf-8"))
+
+    assert manifest["archetype"] == "wizard"
+    assert result["archetype"] == "wizard"
+    with Image.open(manifest["frames"]["south"]["idle"]) as frame:
+        assert frame.size == (32, 48)
+        alpha = frame.getchannel("A")
+        bounds = alpha.getbbox()
+        assert bounds is not None
+        assert bounds[1] >= 0
+        assert bounds[2] <= 32
+        assert bounds[3] <= 48
+        # The staff extends the class silhouette beyond the ordinary torso.
+        assert bounds[2] - bounds[0] >= 24
