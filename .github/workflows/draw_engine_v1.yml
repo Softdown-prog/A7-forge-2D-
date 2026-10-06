@@ -111,6 +111,13 @@ jobs:
           python -m visitor_forge_2d.core.organic_scenery \
             --recipe tools/visitor_forge_2d/examples/street_tree_dense_lanceolate_01.json \
             --output rendered_street_tree_dense_lanceolate
+      - name: Render miniature wizard pixel character
+        env:
+          PYTHONPATH: tools/visitor_forge_2d/src
+        run: |
+          python -m visitor_forge_2d render-pixel-character \
+            --recipe tools/visitor_forge_2d/examples/pixel_character_wizard_mini_01.json \
+            --output rendered_pixel_wizard_mini
       - name: Upload flowering reference comparison output
         uses: actions/upload-artifact@v4
         with:
@@ -122,6 +129,12 @@ jobs:
         with:
           name: a7-street-tree-dense-lanceolate-reference
           path: rendered_street_tree_dense_lanceolate/
+          if-no-files-found: error
+      - name: Upload miniature wizard pixel character
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-pixel-wizard-mini-01
+          path: rendered_pixel_wizard_mini/
           if-no-files-found: error
       - name: Upload compatibility artifact
         uses: actions/upload-artifact@v4
