@@ -714,6 +714,119 @@ def _paint_defined_leaves(work, mask, rng, palette, center, radius, species):
                    patch_shape="simple_leaves")
 
 
+def _lanceolate_droop_mask(size, rng, cx, cy, rx, ry, *, droop=.18):
+    """Wide crown envelope with pendant lower-edge foliage.
+
+    The historical leaf canopy used a regular cloud silhouette. This opt-in
+    envelope keeps the same dense interior but adds downward branch-end masses
+    so elongated leaves can break the lower contour without turning the crown
+    into disconnected foliage balls.
+    """
+    mask = _cloud_mask(size, rng, cx, cy, rx, ry, scallops=25)
+    fringe = Image.new("L", size)
+    count = 13
+    for index in range(count):
+        x_norm = -0.92 + (1.84 * (index + .5) / count)
+        x_norm += rng.uniform(-.045, .045)
+        ellipse_y = math.sqrt(max(0.0, 1.0 - min(.98, abs(x_norm)) ** 2))
+        px = cx + x_norm * rx * rng.uniform(.91, 1.00)
+        py = cy + ellipse_y * ry * rng.uniform(.70, .84)
+        sx = rx * rng.uniform(.070, .125)
+        sy = ry * rng.uniform(.085, .145) * (1 + droop * rng.uniform(.75, 1.35))
+        _irregular_blob(fringe, rng, px, py + sy * .40, sx, sy, 9, 255, .23)
+    return ImageChops.lighter(mask, fringe)
+
+
+def _paint_lanceolate_droop_leaves(work, mask, rng, palette, center, radius, cfg):
+    """Paint elongated leaves in branch-end sprays over a dark dense canopy."""
+    cx, cy = center
+    rx, ry = radius
+    W, H = mask.size
+    _foliage_paint(work, mask, rng, palette, center, radius,
+                   patch_count=105, patch_alpha=(50, 88))
+
+    layer = Image.new("RGBA", (W, H))
+    draw = ImageDraw.Draw(layer, "RGBA")
+    pixels = mask.load()
+    leaf_count = max(280, min(980, int(cfg.get("leafCount", 620))))
+    length_min, length_max = cfg.get("leafLength", [7.2, 12.8])
+    width_min, width_max = cfg.get("leafWidth", [1.55, 2.75])
+    droop_bias = max(0.0, min(1.0, float(cfg.get("leafDroop", .72))))
+
+    colors = [
+        palette["mid_bottom"], palette["mid_top"], palette["front_bottom"],
+        palette["front_top"], palette["highlight"],
+    ]
+    weights = (0.12, 0.28, 0.20, 0.34, 0.06)
+
+    # Sprays share a branch-end origin so the crown reads as foliage borne by
+    # branches rather than hundreds of unrelated specks.
+    spray_count = max(44, leaf_count // 10)
+    leaves_left = leaf_count
+    for spray in range(spray_count):
+        for _attempt in range(16):
+            x = cx + rng.uniform(-.96, .96) * rx
+            y = cy + rng.uniform(-.90, .99) * ry
+            ix, iy = round(x * WORK_SCALE), round(y * WORK_SCALE)
+            if 0 <= ix < W and 0 <= iy < H and pixels[ix, iy] >= 210:
+                break
+        else:
+            continue
+
+        vertical = max(-1.0, min(1.0, (y - cy) / max(1.0, ry)))
+        base_angle = rng.uniform(.60, 1.36)
+        base_angle = _lerp(base_angle, math.pi / 2, droop_bias * (.45 + .42 * max(0.0, vertical)))
+        spray_size = min(leaves_left, rng.randint(6, 12))
+        leaves_left -= spray_size
+
+        for leaf_index in range(spray_size):
+            fan = (leaf_index - (spray_size - 1) / 2) / max(1.0, spray_size - 1)
+            angle = base_angle + fan * rng.uniform(.48, .86) + rng.uniform(-.12, .12)
+            radial = rng.uniform(0.5, 1.0)
+            lx = x + fan * rng.uniform(3.0, 7.0) + rng.uniform(-1.2, 1.2)
+            ly = y + abs(fan) * rng.uniform(.5, 2.4) + radial * rng.uniform(-1.2, 2.2)
+            ixx, iyy = round(lx * WORK_SCALE), round(ly * WORK_SCALE)
+            if not (0 <= ixx < W and 0 <= iyy < H and pixels[ixx, iyy] >= 160):
+                continue
+
+            lit_zone = lx < cx + rx * .18 and ly < cy + ry * .15
+            roll = rng.random()
+            if lit_zone and roll < .13:
+                color = palette["highlight"]
+            elif lit_zone and roll < .65:
+                color = palette["front_top"]
+            elif vertical > .32 and roll < .45:
+                color = palette["front_bottom"]
+            else:
+                color = rng.choices(colors, weights=weights, k=1)[0]
+
+            length = rng.uniform(float(length_min), float(length_max))
+            width = rng.uniform(float(width_min), float(width_max))
+            opacity = rng.randint(188, 242)
+
+            # A dark offset under-leaf gives separation in the dense crown.
+            _draw_leaflet(draw, lx + .45, ly + .60, length * 1.01, width * 1.04,
+                          angle, palette["occlusion"], rng.randint(70, 115))
+            _draw_leaflet(draw, lx, ly, length, width, angle, color, opacity)
+
+            # Subtle midrib survives the 4x -> 1x downsample without making
+            # every leaf outlined.
+            dx, dy = math.cos(angle), math.sin(angle)
+            vein = _hex(palette["highlight"] if lit_zone else palette["mid_top"])
+            v0 = (lx - dx * length * .27, ly - dy * length * .27)
+            v1 = (lx + dx * length * .34, ly + dy * length * .34)
+            draw.line((v0[0] * WORK_SCALE, v0[1] * WORK_SCALE,
+                       v1[0] * WORK_SCALE, v1[1] * WORK_SCALE),
+                      fill=(*vein, rng.randint(55, 95)),
+                      width=max(1, round(.42 * WORK_SCALE)))
+
+        if leaves_left <= 0:
+            break
+
+    layer.putalpha(ImageChops.multiply(layer.getchannel("A"), mask))
+    work.alpha_composite(layer)
+
+
 def _paint_leaf_canopy(work, recipe, rng, palette, W, H, view):
     """A leaf-shaped opt-in canopy for the two documented tree species."""
     cfg = recipe["broadleafStructure"]
@@ -729,8 +842,20 @@ def _paint_leaf_canopy(work, recipe, rng, palette, W, H, view):
         cy += rng.uniform(-2.5, 2.5) + math.sin(phase + .35) * 2.0
         rx *= rng.uniform(.94, 1.04) * (1 + .027 * math.cos(phase + .8)) * math.sqrt(density)
         ry *= rng.uniform(.96, 1.05) * (1 + .023 * math.sin(phase + .4)) * math.sqrt(density)
-        mask = _cloud_mask((W, H), rng, cx, cy, rx, ry, 19)
-        _paint_defined_leaves(work, mask, rng, palette, (cx, cy), (rx, ry), species)
+        leaf_profile = cfg.get("leafProfile", "defined")
+        if leaf_profile == "lanceolate_droop":
+            mask = _lanceolate_droop_mask(
+                (W, H), rng, cx, cy, rx, ry,
+                droop=float(cfg.get("edgeDroop", .18)),
+            )
+            _paint_lanceolate_droop_leaves(
+                work, mask, rng, palette, (cx, cy), (rx, ry), cfg,
+            )
+        elif leaf_profile == "defined":
+            mask = _cloud_mask((W, H), rng, cx, cy, rx, ry, 19)
+            _paint_defined_leaves(work, mask, rng, palette, (cx, cy), (rx, ry), species)
+        else:
+            raise ValueError("oiti leafProfile must be defined or lanceolate_droop")
         return
 
     if not recipe.get("trunkBranches", [])[1:]:
