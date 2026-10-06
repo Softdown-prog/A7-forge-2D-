@@ -104,11 +104,24 @@ jobs:
           python tools/visitor_forge_2d/tests/reference_render_smoke.py \
             tools/visitor_forge_2d/examples/plant_intent_ipe_reference_01.json \
             rendered_flowering_reference
+      - name: Render dense street tree reference
+        env:
+          PYTHONPATH: tools/visitor_forge_2d/src
+        run: |
+          python -m visitor_forge_2d.core.organic_scenery \
+            --recipe tools/visitor_forge_2d/examples/street_tree_dense_lanceolate_01.json \
+            --output rendered_street_tree_dense_lanceolate
       - name: Upload flowering reference comparison output
         uses: actions/upload-artifact@v4
         with:
           name: a7-flowering-reference-four-views
           path: rendered_flowering_reference/
+          if-no-files-found: error
+      - name: Upload dense street tree reference
+        uses: actions/upload-artifact@v4
+        with:
+          name: a7-street-tree-dense-lanceolate-reference
+          path: rendered_street_tree_dense_lanceolate/
           if-no-files-found: error
       - name: Upload compatibility artifact
         uses: actions/upload-artifact@v4
