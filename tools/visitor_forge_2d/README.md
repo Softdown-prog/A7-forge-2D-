@@ -437,6 +437,31 @@ na versão procedural. Não incluir um `art-root` na receita de produção até 
 arte correspondente passar pela revisão visual em tamanho real.
 
 
+
+## Pixel art nativa
+
+O Forge agora possui um primeiro gerador de personagem em pixel art que trabalha
+diretamente no canvas final, sem supersampling e sem anti-aliasing. O contrato é
+`A7_FORGE_2D_PIXEL_CHARACTER_V1`.
+
+Ele gera quatro direções (`south/east/north/west`), uma pose `idle` e quatro
+frames de caminhada por direção. Cada frame usa a mesma paleta, canvas e anchor.
+As animações de caminhada são empacotadas automaticamente com
+`A7_FORGE_2D_ANIMATION_V1`, produzindo spritesheet, manifesto e GIF de revisão.
+
+Exemplo:
+
+```bash
+a7-forge-2d render-pixel-character \
+  --recipe tools/visitor_forge_2d/examples/pixel_character_adventurer_01.json \
+  --output out/pixel_character_adventurer_01
+```
+
+A saída inicial é deliberadamente um piloto estrutural. Ela valida a arquitetura
+de grid, identidade, direções, poses e export. Qualidade comercial continua sendo
+um gate artístico separado; melhorar silhueta, clusters, roupa, equipamento,
+ataque, dano e morte não exige trocar o contrato de animação.
+
 ## Animação 2D genérica
 
 A animação permanece dentro do A7 Forge 2D. O Blender não participa deste
