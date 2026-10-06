@@ -227,12 +227,7 @@ def _draw_wizard_overlay(
     pose: str,
     colors: dict[str, tuple[int, int, int, int]],
 ) -> None:
-    """Add a miniature pixel-wizard silhouette without resampling.
-
-    The overlay deliberately uses chunky integer-grid shapes: pointed hat,
-    robe, staff and crystal. It keeps the generic walk cycle underneath, so
-    gait stays deterministic while the archetype changes the readable class.
-    """
+    """Draw a compact readable wizard directly on the native pixel grid."""
     draw = ImageDraw.Draw(image)
     width, height = image.size
     cx = width // 2
@@ -245,6 +240,8 @@ def _draw_wizard_overlay(
     head_top = torso_top - 6 * scale
 
     outline = colors["outline"]
+    skin = colors["skin"]
+    hair = colors["hair"]
     robe = colors["robe"]
     robe_shadow = colors["robeShadow"]
     hat = colors["hat"]
@@ -252,47 +249,118 @@ def _draw_wizard_overlay(
     staff = colors["staff"]
     crystal = colors["crystal"]
 
-    # Robe widens toward the ground and obscures most trouser pixels.
+    # Replace the boxy torso with a tapered robe silhouette.
     robe_top = torso_top
     robe_bottom = ground - scale
+    hem = 4 * scale
+    shoulder = 3 * scale
+
     if direction in ("south", "north"):
-        _rect(draw, (cx - 4 * scale, robe_top, cx + 4 * scale, robe_bottom), outline)
-        _rect(draw, (cx - 3 * scale, robe_top + scale, cx + 3 * scale, robe_bottom - scale), robe)
-        _rect(draw, (cx + scale, robe_top + 2 * scale, cx + 3 * scale, robe_bottom - scale), robe_shadow)
-        # Split hem so the walk still reads under the robe.
-        hem_shift = phase * scale
-        _rect(draw, (cx - 3 * scale + hem_shift, robe_bottom - 2 * scale,
-                     cx - scale + hem_shift, robe_bottom), robe_shadow)
-        _rect(draw, (cx + scale - hem_shift, robe_bottom - 2 * scale,
-                     cx + 3 * scale - hem_shift, robe_bottom), robe)
+        robe_poly = [
+            (cx - shoulder, robe_top),
+            (cx + shoulder, robe_top),
+            (cx + hem, robe_bottom),
+            (cx + 2 * scale, robe_bottom),
+            (cx + scale, robe_bottom - scale),
+            (cx - scale, robe_bottom - scale),
+            (cx - 2 * scale, robe_bottom),
+            (cx - hem, robe_bottom),
+        ]
+        draw.polygon(robe_poly, fill=outline)
+        inner = [
+            (cx - 2 * scale, robe_top + scale),
+            (cx + 2 * scale, robe_top + scale),
+            (cx + 3 * scale, robe_bottom - scale),
+            (cx + scale, robe_bottom - scale),
+            (cx, robe_bottom - 2 * scale),
+            (cx - scale, robe_bottom - scale),
+            (cx - 3 * scale, robe_bottom - scale),
+        ]
+        draw.polygon(inner, fill=robe)
+        # One vertical fold and a darker lower-side fold.
+        _rect(draw, (cx + scale, robe_top + 2 * scale,
+                     cx + 2 * scale, robe_bottom - 2 * scale), robe_shadow)
+        fold_x = cx - scale + phase * scale
+        _rect(draw, (fold_x, robe_bottom - 3 * scale,
+                     fold_x + scale, robe_bottom - scale), robe_shadow)
     else:
         facing = 1 if direction == "east" else -1
-        x0 = cx - 3 * scale
-        x1 = cx + 3 * scale
-        _rect(draw, (x0 - scale, robe_top, x1 + scale, robe_bottom), outline)
-        _rect(draw, (x0, robe_top + scale, x1, robe_bottom - scale), robe)
-        shade_x0 = x0 if facing < 0 else cx + scale
-        _rect(draw, (shade_x0, robe_top + 2 * scale,
-                     shade_x0 + 2 * scale, robe_bottom - scale), robe_shadow)
+        robe_poly = [
+            (cx - 2 * scale, robe_top),
+            (cx + 2 * scale, robe_top),
+            (cx + 3 * scale, robe_bottom),
+            (cx - 3 * scale, robe_bottom),
+        ]
+        draw.polygon(robe_poly, fill=outline)
+        inner = [
+            (cx - scale, robe_top + scale),
+            (cx + scale, robe_top + scale),
+            (cx + 2 * scale, robe_bottom - scale),
+            (cx - 2 * scale, robe_bottom - scale),
+        ]
+        draw.polygon(inner, fill=robe)
+        shade_x = cx - 2 * scale if facing < 0 else cx + scale
+        _rect(draw, (shade_x, robe_top + 2 * scale,
+                     shade_x + scale, robe_bottom - scale), robe_shadow)
 
-    # Pointed hat. Its asymmetric tip helps EAST/WEST read immediately.
+    # Belt + buckle gives the body a readable midpoint at native size.
+    belt_y = robe_top + 4 * scale
+    _rect(draw, (cx - 3 * scale, belt_y, cx + 3 * scale, belt_y + scale), outline)
+    _rect(draw, (cx - 2 * scale, belt_y, cx + 2 * scale, belt_y), hat_band)
+    _rect(draw, (cx, belt_y, cx + scale, belt_y + scale), hat_band)
+
+    # Face re-emphasized after the robe so it does not disappear into purple.
+    if direction == "south":
+        face_y = head_top + 2 * scale
+        _rect(draw, (cx - 2 * scale, face_y, cx + 2 * scale, face_y + 2 * scale), skin)
+        _rect(draw, (cx - 2 * scale, face_y + 2 * scale,
+                     cx + 2 * scale, face_y + 4 * scale), hair)
+        # beard point
+        draw.polygon([
+            (cx - 2 * scale, face_y + 3 * scale),
+            (cx + 2 * scale, face_y + 3 * scale),
+            (cx, face_y + 5 * scale),
+        ], fill=hair)
+        _rect(draw, (cx - scale, face_y + scale, cx - scale, face_y + scale), outline)
+        _rect(draw, (cx + scale, face_y + scale, cx + scale, face_y + scale), outline)
+    elif direction in ("east", "west"):
+        facing = 1 if direction == "east" else -1
+        face_x0 = cx - 2 * scale
+        face_x1 = cx + 2 * scale
+        _rect(draw, (face_x0, head_top + 2 * scale,
+                     face_x1, head_top + 4 * scale), skin)
+        beard_tip_x = cx + facing * scale
+        draw.polygon([
+            (cx - 2 * scale, head_top + 4 * scale),
+            (cx + 2 * scale, head_top + 4 * scale),
+            (beard_tip_x, head_top + 6 * scale),
+        ], fill=hair)
+        eye_x = cx + facing * scale
+        _rect(draw, (eye_x, head_top + 3 * scale, eye_x, head_top + 3 * scale), outline)
+    else:
+        # Back view: hair/beard mass under the hat brim.
+        _rect(draw, (cx - 2 * scale, head_top + 2 * scale,
+                     cx + 2 * scale, head_top + 5 * scale), hair)
+
+    # More stepped and asymmetric hat silhouette, still fully inside 32x48.
     brim_y = head_top + scale
     if direction in ("south", "north"):
         _rect(draw, (cx - 5 * scale, brim_y, cx + 5 * scale, brim_y + scale), outline)
         _rect(draw, (cx - 4 * scale, brim_y - scale, cx + 4 * scale, brim_y), hat_band)
-        tip_x = cx + (scale if direction == "south" else -scale)
+        lean = scale if direction == "south" else -scale
         draw.polygon([
             (cx - 3 * scale, brim_y),
             (cx + 3 * scale, brim_y),
-            (tip_x + 2 * scale, head_top - 3 * scale),
-            (tip_x, head_top - 3 * scale),
-            (tip_x - scale, head_top - 3 * scale),
+            (cx + 2 * scale + lean, head_top - scale),
+            (cx + scale + lean, head_top - 2 * scale),
+            (cx + lean, head_top - 3 * scale),
+            (cx - scale + lean, head_top - 2 * scale),
         ], fill=outline)
         draw.polygon([
             (cx - 2 * scale, brim_y - scale),
             (cx + 2 * scale, brim_y - scale),
-            (tip_x + scale, head_top - 3 * scale),
-            (tip_x, head_top - 3 * scale),
+            (cx + scale + lean, head_top - scale),
+            (cx + lean, head_top - 2 * scale),
         ], fill=hat)
     else:
         facing = 1 if direction == "east" else -1
@@ -302,18 +370,19 @@ def _draw_wizard_overlay(
         draw.polygon([
             (cx - 2 * scale, brim_y),
             (cx + 2 * scale, brim_y),
-            (tip_x, head_top - 3 * scale),
-            (tip_x - facing * scale, head_top - 3 * scale),
-            (cx, head_top - 3 * scale),
+            (cx + facing * 2 * scale, head_top - scale),
+            (tip_x, head_top - 2 * scale),
+            (cx + facing * 3 * scale, head_top - 3 * scale),
+            (cx + facing * scale, head_top - 2 * scale),
         ], fill=outline)
         draw.polygon([
             (cx - scale, brim_y - scale),
             (cx + scale, brim_y - scale),
-            (tip_x - facing * scale, head_top - 3 * scale),
-            (tip_x - facing * scale, head_top - 3 * scale),
+            (cx + facing * 2 * scale, head_top - scale),
+            (cx + facing * 3 * scale, head_top - 2 * scale),
         ], fill=hat)
 
-    # Staff remains on the outside silhouette so it is visible at native size.
+    # Staff: slimmer shaft, larger gem silhouette and small highlight pixel.
     if direction == "south":
         staff_x = cx + 6 * scale
     elif direction == "north":
@@ -321,14 +390,23 @@ def _draw_wizard_overlay(
     else:
         facing = 1 if direction == "east" else -1
         staff_x = cx + facing * 6 * scale
-    sway = phase * scale // 2
-    staff_x += sway
-    _rect(draw, (staff_x, torso_top, staff_x + scale, ground), outline)
-    _rect(draw, (staff_x + 1, torso_top + scale, staff_x + scale, ground - scale), staff)
-    gem_y = torso_top - 2 * scale
-    _rect(draw, (staff_x - scale, gem_y - scale, staff_x + 2 * scale, gem_y + 2 * scale), outline)
-    _rect(draw, (staff_x, gem_y, staff_x + scale, gem_y + scale), crystal)
-
+    staff_x += phase * scale // 2
+    _rect(draw, (staff_x, torso_top + scale, staff_x + scale, ground), outline)
+    _rect(draw, (staff_x, torso_top + 2 * scale, staff_x, ground - scale), staff)
+    gem_y = torso_top - scale
+    draw.polygon([
+        (staff_x, gem_y - 2 * scale),
+        (staff_x + 2 * scale, gem_y),
+        (staff_x, gem_y + 2 * scale),
+        (staff_x - 2 * scale, gem_y),
+    ], fill=outline)
+    draw.polygon([
+        (staff_x, gem_y - scale),
+        (staff_x + scale, gem_y),
+        (staff_x, gem_y + scale),
+        (staff_x - scale, gem_y),
+    ], fill=crystal)
+    _rect(draw, (staff_x, gem_y - scale, staff_x, gem_y - scale), (255, 255, 255, 255))
 
 def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
     recipe_path = recipe_path.resolve()
