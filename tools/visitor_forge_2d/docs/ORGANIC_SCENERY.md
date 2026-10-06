@@ -135,3 +135,23 @@ The candidate PNGs, 1x/2x boards, map-grid boards and export metadata live in
 respectively (including the soft contact shadow). These are art candidates;
 runtime promotion awaits visual approval. The workflow above now regenerates
 all four pines with Visitor Forge 2D and runs the focused size test.
+
+
+## Ficha técnica visual
+
+Além do PNG RGBA transparente, do board 1x/2x e do review isométrico, o export
+orgânico gera `*_technical_sheet.png`.
+
+Essa ficha é somente um artefato de revisão. Ela não substitui o PNG canônico e
+não altera seus pixels. O layout reúne:
+
+- preview em fundo claro;
+- preview em fundo escuro;
+- preview ampliado sobre grid 2:1 sintético;
+- ID do asset e resolução;
+- direção, yaw e tile;
+- anchor e contrato do renderer.
+
+O cabeçalho deixa explícito que o grid é sintético e não é uma captura do
+runtime. Isso permite usar a mesma linguagem visual de revisão adotada em outras
+ferramentas sem acoplar o Forge 2D ao CH Blender.
