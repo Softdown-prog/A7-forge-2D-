@@ -12,6 +12,7 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
 from .exporter import alpha_safe_resize as _alpha_safe_resize
 from .render_finish import finish_render
+from .technical_sheet import technical_sheet
 
 CONTRACT = "CH_2D_ORGANIC_SCENERY_V1"
 CAMERA_CONTRACT = "CH_CAMERA_V1"
@@ -1079,14 +1080,29 @@ def export(recipe_path, output_dir):
             final.write_bytes(source.read_bytes())
         with Image.open(final) as image:
             finished = image.convert("RGBA")
-        review_board(finished).save(output_dir / f"{stem}_{view}_review.png")
-        isometric_board(finished, meta["anchor"], f"CH_CAMERA_V1 / {view} / yaw {meta['yawDeg']} / 128x64").save(output_dir / f"{stem}_{view}_isometric_review.png")
+        review_path = output_dir / f"{stem}_{view}_review.png"
+        iso_path = output_dir / f"{stem}_{view}_isometric_review.png"
+        sheet_path = output_dir / f"{stem}_{view}_technical_sheet.png"
+        review_board(finished).save(review_path)
+        isometric_board(finished, meta["anchor"], f"CH_CAMERA_V1 / {view} / yaw {meta['yawDeg']} / 128x64").save(iso_path)
+        technical_sheet(
+            finished,
+            asset_id=stem,
+            direction=view,
+            anchor=meta["anchor"],
+            contract=CONTRACT,
+            yaw_deg=meta["yawDeg"],
+            tile=recipe["camera"]["tile"],
+        ).save(sheet_path)
         slots[view] = {
             "path": str(final),
             "source": str(source),
             "yawDeg": meta["yawDeg"],
             "sha256": hashlib.sha256(final.read_bytes()).hexdigest(),
             "finish": finish_result,
+            "review": str(review_path),
+            "isometricReview": str(iso_path),
+            "technicalSheet": str(sheet_path),
         }
     canonical_view = "south" if "south" in slots else views[0]
     canonical = output_dir / f"{stem}.png"
@@ -1095,8 +1111,18 @@ def export(recipe_path, output_dir):
         final = image.convert("RGBA")
     review = output_dir / f"{stem}_review.png"
     iso = output_dir / f"{stem}_isometric_review.png"
+    sheet = output_dir / f"{stem}_technical_sheet.png"
     review_board(final).save(review)
     isometric_board(final, first_meta["anchor"]).save(iso)
+    technical_sheet(
+        final,
+        asset_id=stem,
+        direction=canonical_view,
+        anchor=first_meta["anchor"],
+        contract=CONTRACT,
+        yaw_deg=first_meta.get("yawDeg"),
+        tile=recipe["camera"]["tile"],
+    ).save(sheet)
     manifest = {
         "contract": ROTATION_CONTRACT,
         "id": stem,
@@ -1114,6 +1140,7 @@ def export(recipe_path, output_dir):
         "png": str(canonical),
         "review": str(review),
         "isometricReview": str(iso),
+        "technicalSheet": str(sheet),
         "finishRecipe": str(finish_recipe) if finish_recipe else None,
         "rotationManifest": str(manifest_path),
         "views": slots,
@@ -1124,6 +1151,7 @@ def export(recipe_path, output_dir):
         "png": str(canonical),
         "review": str(review),
         "isometricReview": str(iso),
+        "technicalSheet": str(sheet),
         "metadata": str(report),
         "rotationManifest": str(manifest_path),
         "views": {view: slot["path"] for view, slot in slots.items()},
