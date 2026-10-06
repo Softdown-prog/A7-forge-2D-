@@ -3,7 +3,8 @@
 Ferramenta determinística para desenhar assets 2D por receitas, grafos, pincéis,
 camadas e materiais. O núcleo atual é o Draw Engine V2; o Art Planner transforma
 uma intenção de planta em uma estrutura compartilhada e quatro vistas coerentes.
-Também existem módulos de personagens, cercas, objetos e acabamento.
+Também existem módulos de personagens, cercas, objetos, acabamento e um empacotador
+de animação 2D que gera spritesheet, manifesto e GIF de revisão sem depender do Blender.
 
 ## Instalação e uso
 
@@ -24,6 +25,17 @@ python -m visitor_forge_2d draw-graph \
   --recipe tools/visitor_forge_2d/examples/draw_engine_field_tree_pilot_01.json \
   --output out/graph
 ```
+
+Empacotar uma sequência de frames 2D já gerados pelo Forge:
+
+```bash
+python -m visitor_forge_2d pack-animation \
+  --recipe caminho/animation.json \
+  --output out/animation
+```
+
+O contrato `A7_FORGE_2D_ANIMATION_V1` preserva os pixels originais no
+spritesheet; `pixelArt: true` não aplica suavização ou redimensionamento.
 
 Planejar, renderizar e comparar uma planta nas quatro vistas:
 
