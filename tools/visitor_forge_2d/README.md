@@ -436,6 +436,60 @@ relativo e SHA-256 da peça efetivamente usada. Uma peça invalidada causa erro 
 na versão procedural. Não incluir um `art-root` na receita de produção até a
 arte correspondente passar pela revisão visual em tamanho real.
 
+
+## Animação 2D genérica
+
+A animação permanece dentro do A7 Forge 2D. O Blender não participa deste
+fluxo. O movimento pode ser produzido por poses de um rig 2D, por deformação
+controlada, por frames pixel art desenhados pelo próprio gerador ou por outro
+worker 2D. Depois que os frames existem, o contrato
+`A7_FORGE_2D_ANIMATION_V1` valida e empacota a sequência.
+
+O empacotador exige PNG RGBA, mesmo canvas em todos os frames e, quando
+informado, um anchor único. Para pixel art o spritesheet copia os pixels sem
+qualquer resampling. O GIF é apenas preview; o runtime deve usar os PNGs ou o
+spritesheet + manifesto.
+
+Exemplo de receita:
+
+```json
+{
+  "contract": "A7_FORGE_2D_ANIMATION_V1",
+  "id": "hero_walk_south",
+  "pixelArt": true,
+  "loop": true,
+  "frameDurationMs": 140,
+  "anchor": [16, 31],
+  "frames": [
+    {"id": "walk_0", "path": "frames/walk_0.png"},
+    {"id": "walk_1", "path": "frames/walk_1.png"},
+    {"id": "walk_2", "path": "frames/walk_2.png"},
+    {"id": "walk_3", "path": "frames/walk_3.png"}
+  ]
+}
+```
+
+Empacotar:
+
+```bash
+a7-forge-2d pack-animation \
+  --recipe caminho/animation.json \
+  --output out/hero_walk_south
+```
+
+A saída contém:
+
+- `*_spritesheet.png` com layout row-major e sem reamostragem;
+- `*.animation.json` com retângulo, duração e SHA-256 de cada frame;
+- `*_preview.gif` para revisão rápida;
+- `runtimePromotion: false` por padrão, porque empacotar não equivale a
+  aprovar visualmente a animação.
+
+Para personagens, o repositório já possui o princípio necessário:
+`idle / walk A / walk B`, rig em camadas, identity lock e gait controlado. Um
+modo pixel art futuro pode produzir mais poses no mesmo contrato sem criar um
+segundo sistema de animação.
+
 ## Metadata de saída
 
 Cada frame exportado inclui PNG e JSON com, no mínimo:
