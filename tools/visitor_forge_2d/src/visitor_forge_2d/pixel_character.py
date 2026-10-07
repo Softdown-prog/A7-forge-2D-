@@ -15,6 +15,7 @@ from typing import Any
 from PIL import Image, ImageDraw
 
 from .animation import ANIMATION_CONTRACT, package_animation
+from .pixel_polish import PIXEL_POLISH_PROFILES, polish_native_pixel_art
 
 
 PIXEL_CHARACTER_CONTRACT = "A7_FORGE_2D_PIXEL_CHARACTER_V1"
@@ -517,6 +518,9 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
     frame_duration = int(recipe.get("walkFrameDurationMs", 140))
     if not (40 <= frame_duration <= 1000):
         raise ValueError("walkFrameDurationMs must be between 40 and 1000")
+    polish_profile = str(recipe.get("pixelPolishProfile", "conservative"))
+    if polish_profile not in PIXEL_POLISH_PROFILES:
+        raise ValueError(f"pixelPolishProfile must be one of {PIXEL_POLISH_PROFILES}")
 
     output_dir.mkdir(parents=True, exist_ok=True)
     frames_dir = output_dir / "frames"
@@ -525,14 +529,18 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
     animation_dir.mkdir(exist_ok=True)
 
     frame_records: dict[str, dict[str, str]] = {}
+    polish_records: dict[str, dict[str, dict[str, Any]]] = {}
     packages: dict[str, Any] = {}
     poses = ("idle", "walk_0", "walk_1", "walk_2", "walk_3")
 
     for direction in DIRECTIONS:
         frame_records[direction] = {}
+        polish_records[direction] = {}
         walk_frames = []
         for pose in poses:
             image = _pixel_character(size, direction, pose, colors, archetype)
+            image, polish_report = polish_native_pixel_art(image, polish_profile)
+            polish_records[direction][pose] = polish_report
             name = f"{character_id}_{direction}_{pose}.png"
             destination = frames_dir / name
             image.save(destination, format="PNG", optimize=False)
@@ -576,6 +584,21 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "directions": list(DIRECTIONS),
         "poses": list(poses),
         "palette": {key: recipe.get("palette", {}).get(key, value) for key, value in DEFAULT_PALETTE.items()},
+        "pixelPolish": {
+            "profile": polish_profile,
+            "changedPixels": sum(
+                report["changedPixels"]
+                for direction_reports in polish_records.values()
+                for report in direction_reports.values()
+            ),
+            "framesChanged": sum(
+                1
+                for direction_reports in polish_records.values()
+                for report in direction_reports.values()
+                if report["changedPixels"] > 0
+            ),
+            "reports": polish_records,
+        },
         "frames": frame_records,
         "walkAnimations": {direction: package["manifest"] for direction, package in packages.items()},
         "review": str(board_path),
@@ -594,6 +617,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "canvas": list(size),
         "directions": len(DIRECTIONS),
         "frames": len(DIRECTIONS) * len(poses),
+        "pixelPolishProfile": polish_profile,
+        "pixelPolishChangedPixels": manifest["pixelPolish"]["changedPixels"],
         "review": str(board_path),
         "manifest": str(manifest_path),
         "animationManifests": {key: value["manifest"] for key, value in packages.items()},
