@@ -32,10 +32,13 @@ DEFAULT_PALETTE = {
     "shoes": "#20262e",
     "robe": "#6750a4",
     "robeShadow": "#49377d",
+    "robeHighlight": "#7665b8",
     "hat": "#4f46a5",
-    "hatBand": "#d2a93b",
+    "hatBand": "#3f477f",
+    "hatHighlight": "#6268a5",
     "staff": "#7a5230",
     "crystal": "#74d7ff",
+    "crystalHighlight": "#b9efff",
 }
 
 
@@ -251,10 +254,13 @@ def _draw_wizard_overlay(
     beard_shadow = colors["beardShadow"]
     robe = colors["robe"]
     robe_shadow = colors["robeShadow"]
+    robe_highlight = colors["robeHighlight"]
     hat = colors["hat"]
     hat_band = colors["hatBand"]
+    hat_highlight = colors["hatHighlight"]
     staff = colors["staff"]
     crystal = colors["crystal"]
+    crystal_highlight = colors["crystalHighlight"]
     shoes = colors["shoes"]
 
     body_bottom = ground - 5 * scale + bob
@@ -303,6 +309,8 @@ def _draw_wizard_overlay(
         ]
         draw.polygon(inner, fill=robe)
         _rect(draw, (cx + scale, robe_top + scale, cx + 2 * scale, robe_bottom - 2 * scale), robe_shadow)
+        _rect(draw, (cx - 2 * scale, robe_top + 2 * scale, cx - scale, robe_top + 5 * scale), robe_highlight)
+        _rect(draw, (cx - 2 * scale, robe_bottom - 5 * scale, cx - scale, robe_bottom - 2 * scale), robe_highlight)
         fold_x = cx - scale + phase * scale
         _rect(draw, (fold_x, robe_bottom - 4 * scale, fold_x + scale, robe_bottom - scale), robe_shadow)
     else:
@@ -325,6 +333,8 @@ def _draw_wizard_overlay(
         ], fill=robe)
         shade_x = cx - 2 * scale if facing < 0 else cx + scale
         _rect(draw, (shade_x, robe_top + 2 * scale, shade_x + scale, robe_bottom - 2 * scale), robe_shadow)
+        light_x = cx - scale if facing > 0 else cx
+        _rect(draw, (light_x, robe_top + 2 * scale, light_x + scale, robe_top + 5 * scale), robe_highlight)
 
     # Puffy sleeves and hands. Opposite arm motion matches the validated gait.
     sleeve_y0 = torso_top + scale
@@ -353,6 +363,15 @@ def _draw_wizard_overlay(
     _rect(draw, (cx - 3 * scale, belt_y, cx + 3 * scale, belt_y + scale), outline)
     _rect(draw, (cx - 2 * scale, belt_y, cx + 2 * scale, belt_y + scale - 1), belt)
     _rect(draw, (cx, belt_y, cx + scale, belt_y + scale), buckle)
+    collar_y = torso_top + scale
+    if direction == "south":
+        draw.polygon([
+            (cx - 2 * scale, collar_y),
+            (cx + 2 * scale, collar_y),
+            (cx + scale, collar_y + 2 * scale),
+            (cx - scale, collar_y + 2 * scale),
+        ], fill=outline)
+        _rect(draw, (cx - scale, collar_y, cx + scale, collar_y + scale), robe_shadow)
 
     # Square face and large white beard.
     if direction == "south":
@@ -362,6 +381,7 @@ def _draw_wizard_overlay(
         eye_y = face_y + scale
         _rect(draw, (cx - 2 * scale, eye_y, cx - scale, eye_y + scale - 1), outline)
         _rect(draw, (cx + scale, eye_y, cx + 2 * scale, eye_y + scale - 1), outline)
+        _rect(draw, (cx, face_y + 2 * scale, cx + scale, face_y + 2 * scale), skin)
         draw.polygon([
             (cx - 2 * scale, face_y + 2 * scale),
             (cx + 2 * scale, face_y + 2 * scale),
@@ -413,8 +433,9 @@ def _draw_wizard_overlay(
             (cx + lean, head_top - 3 * scale),
             (cx - scale + lean, head_top - 2 * scale),
         ], fill=hat)
-        # Highlight patch helps match the purple-blue material blocks in the reference.
-        _rect(draw, (cx + lean, head_top - 2 * scale, cx + lean + scale, head_top - scale), hat_band)
+        # Block highlights reproduce the purple-blue lighting of the reference.
+        _rect(draw, (cx + lean, head_top - 2 * scale, cx + lean + scale, head_top - scale), hat_highlight)
+        _rect(draw, (cx + scale + lean, head_top - scale, cx + 2 * scale + lean, brim_y - scale), hat_highlight)
     else:
         facing = 1 if direction == "east" else -1
         _rect(draw, (cx - 5 * scale, brim_y, cx + 5 * scale, brim_y + scale), outline)
@@ -435,6 +456,8 @@ def _draw_wizard_overlay(
             (cx, head_top - 3 * scale),
             (cx - facing * 3 * scale, head_top - 3 * scale),
         ], fill=hat)
+        highlight_x = cx if facing > 0 else cx - scale
+        _rect(draw, (highlight_x, head_top - 2 * scale, highlight_x + scale, head_top - scale), hat_highlight)
 
     # Staff sits outside the body silhouette. It only shifts one native pixel
     # with the gait so it feels held rather than swinging like a second leg.
@@ -468,7 +491,8 @@ def _draw_wizard_overlay(
         (staff_x - scale, gem_y + scale),
         (staff_x - scale, gem_y - scale),
     ], fill=crystal)
-    _rect(draw, (staff_x, gem_y - 2 * scale, staff_x, gem_y - scale), (255, 255, 255, 255))
+    _rect(draw, (staff_x, gem_y - 2 * scale, staff_x, gem_y - scale), crystal_highlight)
+    _rect(draw, (staff_x + scale, gem_y - scale, staff_x + scale, gem_y), (255, 255, 255, 255))
 
 
 def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
