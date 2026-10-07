@@ -7,6 +7,7 @@ from visitor_forge_2d.pixel_character import (
     PIXEL_CHARACTER_CONTRACT,
     render_pixel_character,
 )
+from visitor_forge_2d.pixel_polish import polish_native_pixel_art
 
 
 def test_pixel_character_generates_four_direction_walks(tmp_path: Path) -> None:
@@ -89,3 +90,56 @@ def test_pixel_wizard_archetype_is_class_readable(tmp_path: Path) -> None:
         assert bounds[3] <= 48
         # The staff extends the class silhouette beyond the ordinary torso.
         assert bounds[2] - bounds[0] >= 24
+
+
+def test_pixel_polish_removes_only_true_island_and_fills_enclosed_hole() -> None:
+    image = Image.new("RGBA", (7, 7), (0, 0, 0, 0))
+    fill = (100, 80, 160, 255)
+
+    # Solid 3x3 cluster with a one-pixel pinhole in the centre.
+    for y in range(2, 5):
+        for x in range(2, 5):
+            image.putpixel((x, y), fill)
+    image.putpixel((3, 3), (0, 0, 0, 0))
+
+    # True isolated pixel: no 8-neighbour contact with the main cluster.
+    image.putpixel((0, 0), (255, 255, 255, 255))
+
+    polished, report = polish_native_pixel_art(image, "conservative")
+
+    assert polished.getpixel((0, 0))[3] == 0
+    assert polished.getpixel((3, 3)) == fill
+    assert report["isolatedPixelsRemoved"] == 1
+    assert report["pinholesFilled"] == 1
+    assert report["changedPixels"] == 2
+
+
+def test_pixel_polish_preserves_connected_diagonal_detail() -> None:
+    image = Image.new("RGBA", (5, 5), (0, 0, 0, 0))
+    color = (80, 120, 200, 255)
+    image.putpixel((2, 2), color)
+    image.putpixel((3, 3), color)
+
+    polished, report = polish_native_pixel_art(image, "conservative")
+
+    assert polished.getpixel((2, 2)) == color
+    assert polished.getpixel((3, 3)) == color
+    assert report["changedPixels"] == 0
+
+
+def test_pixel_character_records_polish_audit(tmp_path: Path) -> None:
+    recipe_path = tmp_path / "polished.json"
+    recipe_path.write_text(json.dumps({
+        "contract": PIXEL_CHARACTER_CONTRACT,
+        "id": "polished",
+        "canvas": [32, 48],
+        "pixelPolishProfile": "conservative",
+    }), encoding="utf-8")
+
+    result = render_pixel_character(recipe_path, tmp_path / "out")
+    manifest = json.loads(Path(result["manifest"]).read_text(encoding="utf-8"))
+
+    assert result["pixelPolishProfile"] == "conservative"
+    assert manifest["pixelPolish"]["profile"] == "conservative"
+    assert manifest["pixelPolish"]["changedPixels"] >= 0
+    assert set(manifest["pixelPolish"]["reports"]) == {"south", "east", "north", "west"}
