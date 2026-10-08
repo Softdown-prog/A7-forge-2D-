@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw
 
 from .animation import ANIMATION_CONTRACT, package_animation
 from .pixel_polish import PIXEL_POLISH_PROFILES, polish_native_pixel_art
+from .pixel_projectile import projectile_trajectory, render_energy_orb
 
 
 PIXEL_CHARACTER_CONTRACT = "A7_FORGE_2D_PIXEL_CHARACTER_V1"
@@ -577,6 +578,70 @@ def _draw_wizard_overlay(
             )
 
 
+def _compose_wizard_full_attack_preview(
+    frame_records: dict[str, dict[str, str]],
+    projectile_paths: list[str],
+    trajectory: list[list[int]],
+    direction: str,
+    destination: Path,
+    frame_duration_ms: int,
+) -> str:
+    """Compose cast, projectile travel and recovery into one review GIF."""
+    stage_size = (112, 112)
+    char_origin = (stage_size[0] // 2 - 16, stage_size[1] // 2 - 24)
+    projectile_start = {
+        "south": (stage_size[0] // 2, stage_size[1] // 2 + 24),
+        "east": (stage_size[0] // 2 + 20, stage_size[1] // 2 - 10),
+        "north": (stage_size[0] // 2, stage_size[1] // 2 - 30),
+        "west": (stage_size[0] // 2 - 20, stage_size[1] // 2 - 10),
+    }[direction]
+
+    sequence: list[Image.Image] = []
+
+    # Cast buildup through the release frame.
+    for index in range(5):
+        stage = Image.new("RGBA", stage_size, (245, 245, 245, 255))
+        with Image.open(frame_records[direction][f"attack_{index}"]) as character:
+            stage.alpha_composite(character.convert("RGBA"), char_origin)
+        sequence.append(stage)
+
+    # Hold the release pose while the independent projectile moves through space.
+    with Image.open(frame_records[direction]["attack_4"]) as release:
+        release_frame = release.convert("RGBA")
+    for projectile_path, offset in zip(projectile_paths, trajectory):
+        stage = Image.new("RGBA", stage_size, (245, 245, 245, 255))
+        stage.alpha_composite(release_frame, char_origin)
+        with Image.open(projectile_path) as projectile:
+            projectile = projectile.convert("RGBA")
+            px = projectile_start[0] + offset[0] - projectile.width // 2
+            py = projectile_start[1] + offset[1] - projectile.height // 2
+            stage.alpha_composite(projectile, (px, py))
+        sequence.append(stage)
+
+    # Recovery after the projectile leaves the caster.
+    recovery = Image.new("RGBA", stage_size, (245, 245, 245, 255))
+    with Image.open(frame_records[direction]["attack_5"]) as character:
+        recovery.alpha_composite(character.convert("RGBA"), char_origin)
+    sequence.append(recovery)
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    scale = 4
+    gif_frames = [
+        frame.resize((stage_size[0] * scale, stage_size[1] * scale), Image.Resampling.NEAREST)
+        for frame in sequence
+    ]
+    gif_frames[0].save(
+        destination,
+        save_all=True,
+        append_images=gif_frames[1:],
+        duration=frame_duration_ms,
+        loop=0,
+        disposal=2,
+        optimize=False,
+    )
+    return str(destination)
+
+
 def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
     recipe_path = recipe_path.resolve()
     recipe = _load_recipe(recipe_path)
@@ -616,6 +681,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
     polish_records: dict[str, dict[str, dict[str, Any]]] = {}
     walk_packages: dict[str, Any] = {}
     attack_packages: dict[str, Any] = {}
+    projectile_packages: dict[str, Any] = {}
+    full_attack_previews: dict[str, str] = {}
     base_poses = ("idle", "walk_0", "walk_1", "walk_2", "walk_3")
     poses = base_poses + WIZARD_ATTACK_POSES if archetype == "wizard" else base_poses
 
@@ -674,6 +741,64 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
                 attack_recipe_out, animation_dir / direction / "attack"
             )
 
+            projectile_dir = output_dir / "projectiles" / direction
+            projectile_frames_dir = projectile_dir / "frames"
+            projectile_frames_dir.mkdir(parents=True, exist_ok=True)
+            trajectory = projectile_trajectory(direction, steps=8, step_px=6)
+            projectile_frame_paths: list[str] = []
+            projectile_animation_frames: list[dict[str, Any]] = []
+            for projectile_index, _offset in enumerate(trajectory):
+                projectile = render_energy_orb(direction, projectile_index)
+                projectile_path = projectile_frames_dir / (
+                    f"{character_id}_{direction}_spell_{projectile_index:02d}.png"
+                )
+                projectile.save(projectile_path, format="PNG", optimize=False)
+                projectile_frame_paths.append(str(projectile_path))
+                projectile_animation_frames.append({
+                    "id": f"travel_{projectile_index:02d}",
+                    "path": str(Path("frames") / projectile_path.name),
+                    "durationMs": 70,
+                })
+
+            projectile_recipe = {
+                "contract": ANIMATION_CONTRACT,
+                "id": f"{character_id}_{direction}_spell_travel",
+                "pixelArt": True,
+                "loop": False,
+                "frameDurationMs": 70,
+                "anchor": [8, 8],
+                "frames": projectile_animation_frames,
+            }
+            projectile_recipe_path = projectile_dir / (
+                f"{character_id}_{direction}_spell_travel.recipe.json"
+            )
+            projectile_recipe_path.write_text(
+                json.dumps(projectile_recipe, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            projectile_package = package_animation(
+                projectile_recipe_path, projectile_dir / "animation"
+            )
+            projectile_packages[direction] = {
+                "manifest": projectile_package["manifest"],
+                "preview": projectile_package["preview"],
+                "trajectory": trajectory,
+                "frames": projectile_frame_paths,
+                "stepPx": 6,
+            }
+
+            full_preview_path = (
+                output_dir / "full_attack" / f"{character_id}_{direction}_full_attack.gif"
+            )
+            full_attack_previews[direction] = _compose_wizard_full_attack_preview(
+                frame_records,
+                projectile_frame_paths,
+                trajectory,
+                direction,
+                full_preview_path,
+                attack_frame_duration,
+            )
+
     # Native-scale board: rows are directions; columns are idle + four walk frames.
     board = Image.new("RGBA", (size[0] * len(poses), size[1] * len(DIRECTIONS)), (0, 0, 0, 0))
     for row, direction in enumerate(DIRECTIONS):
@@ -711,6 +836,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "frames": frame_records,
         "walkAnimations": {direction: package["manifest"] for direction, package in walk_packages.items()},
         "attackAnimations": {direction: package["manifest"] for direction, package in attack_packages.items()},
+        "projectiles": projectile_packages,
+        "fullAttackPreviews": full_attack_previews,
         "review": str(board_path),
         "recipeSha256": hashlib.sha256(recipe_path.read_bytes()).hexdigest(),
         "artApproved": False,
@@ -733,6 +860,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "manifest": str(manifest_path),
         "animationManifests": {key: value["manifest"] for key, value in walk_packages.items()},
         "attackAnimationManifests": {key: value["manifest"] for key, value in attack_packages.items()},
+        "projectileManifests": {key: value["manifest"] for key, value in projectile_packages.items()},
+        "fullAttackPreviews": full_attack_previews,
         "artApproved": False,
         "runtimePromotion": False,
     }
