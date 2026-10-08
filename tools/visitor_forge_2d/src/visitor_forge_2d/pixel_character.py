@@ -20,6 +20,7 @@ from .pixel_polish import PIXEL_POLISH_PROFILES, polish_native_pixel_art
 
 PIXEL_CHARACTER_CONTRACT = "A7_FORGE_2D_PIXEL_CHARACTER_V1"
 DIRECTIONS = ("south", "east", "north", "west")
+WIZARD_ATTACK_POSES = tuple(f"attack_{index}" for index in range(6))
 DEFAULT_PALETTE = {
     "outline": "#17202a",
     "skin": "#e7ad82",
@@ -105,7 +106,9 @@ def _pixel_character(
     ground = height - 2
     scale = max(1, min(width // 16, height // 24))
     # Keep all motion on the integer grid.
-    phase = {"idle": 0, "walk_0": -1, "walk_1": 0, "walk_2": 1, "walk_3": 0}.get(pose)
+    phase_map = {"idle": 0, "walk_0": -1, "walk_1": 0, "walk_2": 1, "walk_3": 0}
+    phase_map.update({attack_pose: 0 for attack_pose in WIZARD_ATTACK_POSES})
+    phase = phase_map.get(pose)
     if phase is None:
         raise ValueError(f"unsupported pixel pose: {pose}")
 
@@ -246,7 +249,10 @@ def _draw_wizard_overlay(
     cx = width // 2
     ground = height - 2
     scale = max(1, min(width // 16, height // 24))
-    phase = {"idle": 0, "walk_0": -1, "walk_1": 0, "walk_2": 1, "walk_3": 0}[pose]
+    phase_map = {"idle": 0, "walk_0": -1, "walk_1": 0, "walk_2": 1, "walk_3": 0}
+    phase_map.update({attack_pose: 0 for attack_pose in WIZARD_ATTACK_POSES})
+    phase = phase_map[pose]
+    attack_index = int(pose.split("_", 1)[1]) if pose.startswith("attack_") else None
     bob = -scale if pose in ("walk_1", "walk_3") else 0
 
     outline = colors["outline"]
@@ -460,40 +466,115 @@ def _draw_wizard_overlay(
         highlight_x = cx if facing > 0 else cx - scale
         _rect(draw, (highlight_x, head_top - 2 * scale, highlight_x + scale, head_top - scale), hat_highlight)
 
-    # Staff sits outside the body silhouette. It only shifts one native pixel
-    # with the gait so it feels held rather than swinging like a second leg.
+    # Staff sits outside the body silhouette during idle/walk. During an attack
+    # it is deliberately re-posed and becomes the focal line of action.
     if direction == "south":
-        staff_x = cx + 6 * scale
+        base_staff_x = cx + 6 * scale
+        attack_sign = 1
     elif direction == "north":
-        staff_x = cx - 6 * scale
+        base_staff_x = cx - 6 * scale
+        attack_sign = -1
     else:
         facing = 1 if direction == "east" else -1
-        staff_x = cx + facing * 6 * scale
-    staff_x += phase * max(1, scale // 2)
+        base_staff_x = cx + facing * 6 * scale
+        attack_sign = facing
 
-    _rect(draw, (staff_x, torso_top + scale, staff_x + scale, ground), outline)
-    _rect(draw, (staff_x, torso_top + 2 * scale, staff_x, ground - scale), staff)
+    if attack_index is None:
+        staff_x = base_staff_x + phase * max(1, scale // 2)
+        _rect(draw, (staff_x, torso_top + scale, staff_x + scale, ground), outline)
+        _rect(draw, (staff_x, torso_top + 2 * scale, staff_x, ground - scale), staff)
 
-    # Blue faceted crystal with a light pixel, like the supplied wizard.
-    gem_y = torso_top
+        gem_x = staff_x
+        gem_y = torso_top
+    else:
+        # Six-stage cast: ready -> raise -> charge -> peak -> release -> recover.
+        raise_steps = (0, 2, 4, 5, 4, 1)
+        reach_steps = (0, 1, 2, 3, 3, 1)
+        staff_bottom_x = cx + attack_sign * 3 * scale
+        staff_bottom_y = ground - scale
+        gem_x = base_staff_x + attack_sign * reach_steps[attack_index] * scale
+        gem_y = torso_top - raise_steps[attack_index] * scale
+
+        draw.line(
+            (staff_bottom_x, staff_bottom_y, gem_x, gem_y + scale),
+            fill=outline,
+            width=max(1, 2 * scale),
+        )
+        draw.line(
+            (staff_bottom_x, staff_bottom_y, gem_x, gem_y + scale),
+            fill=staff,
+            width=max(1, scale),
+        )
+
+    # Blue faceted crystal.
     draw.polygon([
-        (staff_x, gem_y - 3 * scale),
-        (staff_x + 2 * scale, gem_y - scale),
-        (staff_x + 2 * scale, gem_y + scale),
-        (staff_x, gem_y + 3 * scale),
-        (staff_x - 2 * scale, gem_y + scale),
-        (staff_x - 2 * scale, gem_y - scale),
+        (gem_x, gem_y - 3 * scale),
+        (gem_x + 2 * scale, gem_y - scale),
+        (gem_x + 2 * scale, gem_y + scale),
+        (gem_x, gem_y + 3 * scale),
+        (gem_x - 2 * scale, gem_y + scale),
+        (gem_x - 2 * scale, gem_y - scale),
     ], fill=outline)
     draw.polygon([
-        (staff_x, gem_y - 2 * scale),
-        (staff_x + scale, gem_y - scale),
-        (staff_x + scale, gem_y + scale),
-        (staff_x, gem_y + 2 * scale),
-        (staff_x - scale, gem_y + scale),
-        (staff_x - scale, gem_y - scale),
+        (gem_x, gem_y - 2 * scale),
+        (gem_x + scale, gem_y - scale),
+        (gem_x + scale, gem_y + scale),
+        (gem_x, gem_y + 2 * scale),
+        (gem_x - scale, gem_y + scale),
+        (gem_x - scale, gem_y - scale),
     ], fill=crystal)
-    _rect(draw, (staff_x, gem_y - 2 * scale, staff_x, gem_y - scale), crystal_highlight)
-    _rect(draw, (staff_x + scale, gem_y - scale, staff_x + scale, gem_y), (255, 255, 255, 255))
+    _rect(draw, (gem_x, gem_y - 2 * scale, gem_x, gem_y - scale), crystal_highlight)
+
+    if attack_index is not None:
+        # Deterministic native-pixel spell effect. No blur or interpolation:
+        # the orb grows in explicit clusters and the rays are authored lines.
+        orb_radius = (0, 1, 2, 3, 4, 1)[attack_index] * scale
+        if orb_radius > 0:
+            orb_x = gem_x + attack_sign * (3 + attack_index // 2) * scale
+            orb_y = gem_y - scale
+
+            outer_radius = orb_radius + scale
+            draw.ellipse(
+                (orb_x - outer_radius, orb_y - outer_radius,
+                 orb_x + outer_radius, orb_y + outer_radius),
+                fill=outline,
+            )
+            draw.ellipse(
+                (orb_x - orb_radius, orb_y - orb_radius,
+                 orb_x + orb_radius, orb_y + orb_radius),
+                fill=crystal,
+            )
+            core = max(scale, orb_radius // 2)
+            draw.rectangle(
+                (orb_x - core, orb_y - core, orb_x + core, orb_y + core),
+                fill=crystal_highlight,
+            )
+            if attack_index >= 2:
+                ray = (2 + attack_index) * scale
+                rays = (
+                    (-ray, 0, -outer_radius, 0),
+                    (outer_radius, 0, ray, 0),
+                    (0, -ray, 0, -outer_radius),
+                    (0, outer_radius, 0, ray),
+                    (-ray, -ray, -outer_radius, -outer_radius),
+                    (outer_radius, -outer_radius, ray, -ray),
+                )
+                for x0, y0, x1, y1 in rays:
+                    draw.line(
+                        (orb_x + x0, orb_y + y0, orb_x + x1, orb_y + y1),
+                        fill=crystal_highlight,
+                        width=max(1, scale),
+                    )
+
+        # A small robe recoil makes the cast read as body motion rather than a
+        # static character with an effect pasted beside it.
+        if attack_index in (2, 3, 4):
+            recoil_x = cx - attack_sign * 2 * scale
+            _rect(
+                draw,
+                (recoil_x, robe_top + 2 * scale, recoil_x + scale, robe_top + 5 * scale),
+                robe_highlight,
+            )
 
 
 def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any]:
@@ -518,6 +599,9 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
     frame_duration = int(recipe.get("walkFrameDurationMs", 140))
     if not (40 <= frame_duration <= 1000):
         raise ValueError("walkFrameDurationMs must be between 40 and 1000")
+    attack_frame_duration = int(recipe.get("attackFrameDurationMs", 110))
+    if not (40 <= attack_frame_duration <= 1000):
+        raise ValueError("attackFrameDurationMs must be between 40 and 1000")
     polish_profile = str(recipe.get("pixelPolishProfile", "conservative"))
     if polish_profile not in PIXEL_POLISH_PROFILES:
         raise ValueError(f"pixelPolishProfile must be one of {PIXEL_POLISH_PROFILES}")
@@ -530,13 +614,16 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
 
     frame_records: dict[str, dict[str, str]] = {}
     polish_records: dict[str, dict[str, dict[str, Any]]] = {}
-    packages: dict[str, Any] = {}
-    poses = ("idle", "walk_0", "walk_1", "walk_2", "walk_3")
+    walk_packages: dict[str, Any] = {}
+    attack_packages: dict[str, Any] = {}
+    base_poses = ("idle", "walk_0", "walk_1", "walk_2", "walk_3")
+    poses = base_poses + WIZARD_ATTACK_POSES if archetype == "wizard" else base_poses
 
     for direction in DIRECTIONS:
         frame_records[direction] = {}
         polish_records[direction] = {}
         walk_frames = []
+        attack_frames = []
         for pose in poses:
             image = _pixel_character(size, direction, pose, colors, archetype)
             image, polish_report = polish_native_pixel_art(image, polish_profile)
@@ -551,6 +638,12 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
                     "path": str(Path("..") / "frames" / name),
                     "durationMs": frame_duration,
                 })
+            elif pose.startswith("attack_"):
+                attack_frames.append({
+                    "id": pose,
+                    "path": str(Path("..") / "frames" / name),
+                    "durationMs": attack_frame_duration,
+                })
 
         animation_recipe = {
             "contract": ANIMATION_CONTRACT,
@@ -563,7 +656,23 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         }
         recipe_out = animation_dir / f"{character_id}_{direction}_walk.recipe.json"
         recipe_out.write_text(json.dumps(animation_recipe, indent=2) + "\n", encoding="utf-8")
-        packages[direction] = package_animation(recipe_out, animation_dir / direction)
+        walk_packages[direction] = package_animation(recipe_out, animation_dir / direction / "walk")
+
+        if attack_frames:
+            attack_recipe = {
+                "contract": ANIMATION_CONTRACT,
+                "id": f"{character_id}_{direction}_attack",
+                "pixelArt": True,
+                "loop": False,
+                "frameDurationMs": attack_frame_duration,
+                "anchor": anchor,
+                "frames": attack_frames,
+            }
+            attack_recipe_out = animation_dir / f"{character_id}_{direction}_attack.recipe.json"
+            attack_recipe_out.write_text(json.dumps(attack_recipe, indent=2) + "\n", encoding="utf-8")
+            attack_packages[direction] = package_animation(
+                attack_recipe_out, animation_dir / direction / "attack"
+            )
 
     # Native-scale board: rows are directions; columns are idle + four walk frames.
     board = Image.new("RGBA", (size[0] * len(poses), size[1] * len(DIRECTIONS)), (0, 0, 0, 0))
@@ -600,7 +709,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
             "reports": polish_records,
         },
         "frames": frame_records,
-        "walkAnimations": {direction: package["manifest"] for direction, package in packages.items()},
+        "walkAnimations": {direction: package["manifest"] for direction, package in walk_packages.items()},
+        "attackAnimations": {direction: package["manifest"] for direction, package in attack_packages.items()},
         "review": str(board_path),
         "recipeSha256": hashlib.sha256(recipe_path.read_bytes()).hexdigest(),
         "artApproved": False,
@@ -621,7 +731,8 @@ def render_pixel_character(recipe_path: Path, output_dir: Path) -> dict[str, Any
         "pixelPolishChangedPixels": manifest["pixelPolish"]["changedPixels"],
         "review": str(board_path),
         "manifest": str(manifest_path),
-        "animationManifests": {key: value["manifest"] for key, value in packages.items()},
+        "animationManifests": {key: value["manifest"] for key, value in walk_packages.items()},
+        "attackAnimationManifests": {key: value["manifest"] for key, value in attack_packages.items()},
         "artApproved": False,
         "runtimePromotion": False,
     }
