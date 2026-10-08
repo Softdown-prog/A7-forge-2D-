@@ -143,3 +143,39 @@ def test_pixel_character_records_polish_audit(tmp_path: Path) -> None:
     assert manifest["pixelPolish"]["profile"] == "conservative"
     assert manifest["pixelPolish"]["changedPixels"] >= 0
     assert set(manifest["pixelPolish"]["reports"]) == {"south", "east", "north", "west"}
+
+
+def test_pixel_wizard_generates_staff_attack_animation(tmp_path: Path) -> None:
+    recipe = {
+        "contract": PIXEL_CHARACTER_CONTRACT,
+        "id": "wizard_attack",
+        "archetype": "wizard",
+        "canvas": [32, 48],
+        "anchor": [16, 46],
+        "attackFrameDurationMs": 95,
+    }
+    recipe_path = tmp_path / "wizard_attack.json"
+    recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
+
+    result = render_pixel_character(recipe_path, tmp_path / "wizard_attack_out")
+    manifest = json.loads(Path(result["manifest"]).read_text(encoding="utf-8"))
+
+    assert result["frames"] == 44
+    assert set(result["attackAnimationManifests"]) == {"south", "east", "north", "west"}
+    assert all(pose in manifest["poses"] for pose in (
+        "attack_0", "attack_1", "attack_2", "attack_3", "attack_4", "attack_5"
+    ))
+
+    attack_manifest = json.loads(
+        Path(result["attackAnimationManifests"]["south"]).read_text(encoding="utf-8")
+    )
+    assert attack_manifest["frameCount"] == 6
+    assert attack_manifest["loop"] is False
+    assert attack_manifest["pixelArt"] is True
+    assert attack_manifest["sheet"]["resampling"] == "none"
+
+    attack_frames = [
+        Path(manifest["frames"]["south"][f"attack_{index}"]).read_bytes()
+        for index in range(6)
+    ]
+    assert len(set(attack_frames)) >= 4
