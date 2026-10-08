@@ -179,3 +179,38 @@ def test_pixel_wizard_generates_staff_attack_animation(tmp_path: Path) -> None:
         for index in range(6)
     ]
     assert len(set(attack_frames)) >= 4
+
+
+def test_pixel_wizard_projectile_trajectory_and_full_preview(tmp_path: Path) -> None:
+    recipe = {
+        "contract": PIXEL_CHARACTER_CONTRACT,
+        "id": "wizard_projectile",
+        "archetype": "wizard",
+        "canvas": [32, 48],
+        "anchor": [16, 46],
+    }
+    recipe_path = tmp_path / "wizard_projectile.json"
+    recipe_path.write_text(json.dumps(recipe), encoding="utf-8")
+
+    result = render_pixel_character(recipe_path, tmp_path / "wizard_projectile_out")
+    manifest = json.loads(Path(result["manifest"]).read_text(encoding="utf-8"))
+
+    assert set(result["projectileManifests"]) == {"south", "east", "north", "west"}
+    assert set(result["fullAttackPreviews"]) == {"south", "east", "north", "west"}
+
+    east = manifest["projectiles"]["east"]
+    assert east["stepPx"] == 6
+    assert len(east["trajectory"]) == 8
+    assert east["trajectory"][0] == [0, 0]
+    assert east["trajectory"][-1][0] > 0
+    assert east["trajectory"][-1][1] == 0
+
+    north = manifest["projectiles"]["north"]
+    assert north["trajectory"][-1][0] == 0
+    assert north["trajectory"][-1][1] < 0
+
+    for preview in result["fullAttackPreviews"].values():
+        path = Path(preview)
+        assert path.is_file()
+        with Image.open(path) as gif:
+            assert getattr(gif, "n_frames", 1) == 14
