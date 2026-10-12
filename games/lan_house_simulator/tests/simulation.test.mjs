@@ -151,3 +151,27 @@ test("mesas próximas da parede e cadeiras no corredor interno",async()=>{
     assert.ok(seat.y<AISLE_Y);
   }
 });
+
+test("máquinas compartilham a mesma parede e cliente aguarda diante das vitrines",async()=>{
+  const {VENDING_MACHINES,VENDING_WIDTH,VENDING_DEPTH,VENDING_APPROACH}=await import("../dist/js/sim/layout.js");
+  const {VENDING_QUEUE,AISLE_Y}=await import("../dist/js/sim/route.js");
+  assert.equal(VENDING_MACHINES.length,2);
+  assert.equal(VENDING_MACHINES[0].y,VENDING_MACHINES[1].y);
+  assert.ok(VENDING_MACHINES[0].x+VENDING_WIDTH<VENDING_MACHINES[1].x);
+  assert.deepEqual(VENDING_QUEUE,VENDING_APPROACH);
+  assert.ok(VENDING_QUEUE.y>VENDING_MACHINES[0].y+VENDING_DEPTH);
+  assert.ok(VENDING_QUEUE.y<AISLE_Y);
+  assert.ok(VENDING_QUEUE.x>VENDING_MACHINES[0].x);
+  assert.ok(VENDING_QUEUE.x<VENDING_MACHINES[1].x+VENDING_WIDTH);
+});
+test("fileira de computadores não cruza o corredor nem a profundidade das máquinas",async()=>{
+  const {pcPosition}=await import("../dist/js/sim/engine.js");
+  const {VENDING_MACHINES,VENDING_DEPTH}=await import("../dist/js/sim/layout.js");
+  const {computerSeat,AISLE_Y}=await import("../dist/js/sim/route.js");
+  for(let i=0;i<3;i++){
+    const p=pcPosition(i);
+    assert.ok(p.y-0.18>VENDING_MACHINES[0].y+VENDING_DEPTH);
+    assert.ok(computerSeat(p).y<AISLE_Y);
+    if(i>0)assert.ok(p.x-pcPosition(i-1).x>0.95);
+  }
+});

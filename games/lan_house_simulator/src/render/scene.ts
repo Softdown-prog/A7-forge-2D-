@@ -4,6 +4,7 @@ import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometri
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
+import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -24,9 +25,10 @@ export class SceneRenderer {
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:1.7,paint:()=>this.shelf(camera)},
-      // As duas máquinas partilham a parede do fundo e apresentam a vitrine ao corredor.
-      {depth:5.65,paint:()=>this.machine(camera,5.22,0.18,"soda",elapsedSeconds)},
-      {depth:6.45,paint:()=>this.machine(camera,6.02,0.18,"candy",elapsedSeconds)},
+      ...VENDING_MACHINES.map(m=>({
+        depth:m.x+m.y+0.25,
+        paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds)
+      })),
       {depth:2.0,paint:()=>this.owner(camera,elapsedSeconds)},
       {depth:3.15,paint:()=>this.counter(camera)},
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
@@ -187,7 +189,7 @@ export class SceneRenderer {
   }
   private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number):void {
     const ctx=this.ctx, soda=kind==="soda",h=soda?106:94,z=camera.zoom;
-    const w=0.66,d=0.59;
+    const w=VENDING_WIDTH,d=VENDING_DEPTH;
     cuboid(ctx,camera,x,y,w,d,h,soda?
       ["#DB6265","#953447","#B94D59"]:["#E7B65B","#A87840","#C78E50"]);
     // A frente agora olha para o salão (Y+), como os monitores dos clientes.

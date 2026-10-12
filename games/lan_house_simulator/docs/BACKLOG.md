@@ -126,3 +126,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Frente das máquinas reconstruída em um único plano: 3 fileiras de produtos, reflexo discreto, botoeira, gaveta e rodapé.
 - [x] Fila de compra posicionada junto às máquinas; lógica de preços e estoque preservada.
 - [ ] Inspecionar captura real após CI para verificar sobreposição com terceiro PC e caixilhos.
+
+## Contrato de layout único para PCs e máquinas (12/10/2026)
+- [x] Posições, largura e profundidade das vitrines agora em `sim/layout.ts`, compartilhado entre a cena e a fila de compra.
+- [x] Fila de atendimento calculada a partir da posição física das máquinas, sem coordenada avulsa.
+- [x] Testes automáticos impedem máquinas sobrepostas, vitrine inacessível e bancada cruzando a profundidade das máquinas.
+- [ ] Conferir a captura do novo CI antes de aprovar o visual.

@@ -1,9 +1,10 @@
 import type { Point } from "./types.js";
+import { VENDING_APPROACH } from "./layout.js";
 
 /** Circulação simples e determinística pelo corredor frontal. */
 export const AISLE_Y = 4.48;
 export const COUNTER_QUEUE: Point = { x: 1.55, y: 2.56 };
-export const VENDING_QUEUE: Point = { x: 6.15, y: 1.65 };
+export const VENDING_QUEUE: Point = VENDING_APPROACH;
 export function computerSeat(computer: Point): Point {
   return { x: computer.x + 0.35, y: computer.y + 0.82 };
 }
