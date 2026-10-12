@@ -1,3 +1,36 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Magic Castle — Protótipo</title><link rel="stylesheet" href="style.css"></head>
-<body><main><h1>✦ MAGIC CASTLE ✦</h1><p class="hint">A/D ou ←/→: andar · W/Espaço: pular · Enter/J: magia · R: reiniciar</p><canvas id="game" width="800" height="450" aria-label="Jogo Magic Castle" tabindex="0"></canvas><div class="touch"><button data-key="ArrowLeft">◀</button><button data-key="Space">▲</button><button data-key="ArrowRight">▶</button><button data-key="Enter">✦ ATACAR</button></div><p id="status">Derrote os inimigos e alcance a porta!</p><footer>Primeira sala jogável • Protótipo independente • A7 Forge 2D</footer></main><script src="game.js"></script></body></html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#10101d">
+  <title>Magic Castle — Protótipo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="app">
+    <header class="header">
+      <h1>✦ MAGIC CASTLE ✦</h1>
+      <p class="hint">PC: A/D ou ←/→ · W/Espaço: pular · Enter/J: magia · R: reiniciar</p>
+      <button id="restart" class="restart" type="button" aria-label="Reiniciar a partida">↻ Reiniciar</button>
+    </header>
+    <section class="game-shell" aria-label="Área do jogo">
+      <canvas id="game" width="800" height="450" aria-label="Magic Castle, plataforma lateral" tabindex="0"></canvas>
+    </section>
+    <nav class="touch" aria-label="Controles para celular">
+      <div class="touch-pad" aria-label="Movimentação">
+        <button type="button" data-key="ArrowLeft" aria-label="Andar para esquerda">◀</button>
+        <button type="button" data-key="ArrowRight" aria-label="Andar para direita">▶</button>
+      </div>
+      <div class="touch-actions" aria-label="Ações">
+        <button type="button" data-key="Space" aria-label="Pular">↑<small>PULAR</small></button>
+        <button type="button" data-key="Enter" class="cast" aria-label="Atacar com magia">✦<small>MAGIA</small></button>
+      </div>
+    </nav>
+    <p id="status" role="status" aria-live="polite">Derrote os inimigos e alcance a porta!</p>
+    <p class="rotate-tip">Para enxergar melhor o castelo, vire o celular na horizontal.</p>
+    <footer>Primeira sala jogável • Protótipo independente • A7 Forge 2D</footer>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
