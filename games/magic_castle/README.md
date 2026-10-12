@@ -13,7 +13,7 @@ Todo o jogo e suas fontes de arte ficam nesta pasta. A receita do mago está em 
 - R: recomeçar
 - Celulares: botões de toque abaixo do canvas
 
-## Para jogar
+## Celulares e tablets\n\nLayout responsivo em retrato ou paisagem, com controles de dois dedos (andar + pular ou disparar), botões grandes, respeito às áreas seguras de tela e recuperação de teclas pressionadas quando o aplicativo perde foco. A câmera mantém a área lógica de 800×450, sem distorcer o pixel art. É recomendado jogar em paisagem. O modo paisagem compacto dispõe comandos sobrepostos nas laterais. Reinício disponível por botão de interface.\n\n## Para jogar
 Abra `index.html` em um navegador. Para usar sprites oficiais em vez do desenho provisório incorporado, baixe o artefato do workflow `Magic Castle playable prototype`; ele inclui `assets/wizard/` com os PNGs do mago gerados diretamente da receita versionada no A7.
 
 O protótipo inclui plataforma, gravidade, colisão no chão, câmera fixa, projéteis, três comportamentos de inimigo, HP, invulnerabilidade após dano, vitória e reinício. Inimigos/cenário são placeholders desenhados no Canvas e **não são arte aprovada**. A revisão de sprites e jogabilidade precede promoção para um repositório independente ou publicação.
