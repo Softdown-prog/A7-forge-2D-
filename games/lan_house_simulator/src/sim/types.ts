@@ -1,0 +1,46 @@
+export type CustomerStage = "arriving" | "waiting" | "to_pc" | "using" | "shopping" | "leaving";
+export type Costume = "regular" | "clown" | "vampire" | "stitched-monster" | "rabbit" | "mouse-mascot";
+export type Item = "soda" | "candy" | "snacks";
+
+export interface Point { x: number; y: number }
+export interface Customer {
+  id: number;
+  x: number; y: number;
+  stage: CustomerStage;
+  target: Point;
+  costume: Costume;
+  pcIndex: number | null;
+  usedMinutes: number;
+  waitingMinutes: number;
+  offlineWait: number;
+  happy: boolean;
+}
+export interface Inventory { soda: number; candy: number; snacks: number }
+export interface GameState {
+  version: 1;
+  totalMinutes: number;
+  leftoverMinutes: number;
+  rng: number;
+  cash: number;
+  revenue: number;
+  expenses: number;
+  reputation: number;
+  pricePerHour: number;
+  internetTier: number;
+  offlineUntil: number;
+  licensedGames: boolean;
+  expansionLevel: number;
+  inventory: Inventory;
+  customers: Customer[];
+  nextCustomerId: number;
+  served: number;
+  lostCustomers: number;
+  purchases: number;
+  weather: "sun" | "rain";
+  eventLog: string[];
+}
+export interface Result { ok: boolean; message: string }
+export const SESSION_MINUTES = 45;
+export const DAY_MINUTES = 720;
+export const OPEN_HOUR = 10;
+export const GAME_SAVE_KEY = "lhs-save-v1";

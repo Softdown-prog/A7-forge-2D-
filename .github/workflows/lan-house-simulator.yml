@@ -1,0 +1,74 @@
+name: Lan House Simulator - worker pool
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lan-house-simulator.yml'
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lan-house-simulator.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  small-worker-pool:
+    name: worker-${{ matrix.worker }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        worker: [simulation, scene, forge-art]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        if: matrix.worker != 'forge-art'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install TypeScript
+        if: matrix.worker != 'forge-art'
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Validate simulation
+        if: matrix.worker == 'simulation'
+        working-directory: games/lan_house_simulator
+        run: npm test
+      - name: Build playable scene
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          npm run build
+          npm run audit
+      - name: Upload standalone game
+        if: matrix.worker == 'scene'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-playable-build
+          path: games/lan_house_simulator/dist/
+          retention-days: 7
+      - name: Setup Python
+        if: matrix.worker == 'forge-art'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install A7 renderer
+        if: matrix.worker == 'forge-art'
+        run: python -m pip install -e tools/visitor_forge_2d
+      - name: Render vending machine staging candidate
+        if: matrix.worker == 'forge-art'
+        run: |
+          python -m visitor_forge_2d draw-recipe \
+            --recipe games/lan_house_simulator/authoring/recipes/vending_machine_study.json \
+            --output out/lhs-forge/vending
+      - name: Upload art review (not approved)
+        if: matrix.worker == 'forge-art'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-forge-review
+          path: out/lhs-forge/
+          retention-days: 7

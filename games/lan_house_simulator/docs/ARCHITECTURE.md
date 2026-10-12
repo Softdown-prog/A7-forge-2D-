@@ -1,0 +1,52 @@
+# Arquitetura técnica — Lan House Simulator
+
+## Limites
+
+```text
+games/lan_house_simulator/
+  index.html, style.css, package.json, tsconfig.json
+  src/
+    main.ts                    bootstrap + UI + save
+    sim/{types,economy,engine}.ts simulação pura, sem Canvas/DOM
+    render/{isometric,scene}.ts Canvas, animações e hit testing
+    ui/nineSlice.ts            skin procedural para painéis e botões DOM
+  authoring/recipes/           receitas A7 (não consumidas pelo jogo em runtime)
+  assets/audio/               efeitos originais aprovados, quando enviados
+  docs/                       design, contratos e backlog
+  scripts/                    build estático, servidor local, auditoria
+  tests/                      testes em Node sobre JS compilado
+```
+
+## Renderização
+
+Unidade lógica CH: 128×64, grade de coordenadas `(x,y)`, projeção `screenX=originX + (x-y)*64*zoom`, `screenY=originY + (x+y)*32*zoom - z*zoom`. Zoom fixo para caber na janela, sem rotação de câmera. Ordenação por profundidade aproximada `x+y`; personagens desenhados em camadas frente/atrás do balcão. O mundo NÃO usa `three.js`, WebGL nem física 3D.
+
+A interface é DOM/CSS sobre Canvas para acessibilidade. Nove fatias são uma textura procedural de borda/miolo aplicada por CSS border-image, com cantos não deformados.
+
+## Simulação determinística
+
+`GameState` serializável e versionado. A função `step(state, minutes)` avança o relógio, os clientes e eventos com PRNG por seed. O desenho é consumidor passivo de estado. Cada cliente tem posição/objetivo, estado de atendimento, vaga e tempo de sessão. A cobrança ocorre ao chegar ao balcão; saída libera estação. A progressão do relógio é por tempo de jogo, não por `Date.now()`.
+
+Persistência inicial: `localStorage` com chave versionada, leitura com falha segura e botão reiniciar. Salvar não inclui Canvas ou objetos Audio. Migração de save é tarefa futura.
+
+## Balanço inicial (ajustável)
+
+- Saldo R$ 850; 3 PCs; preço R$ 12/h; 45 min por sessão; dinheiro creditado no balcão.
+- Receita sessão: `round(pricePerHour * 45/60)`, comissão zero na versão inicial.
+- Demanda cai conforme preço sobe; indisponibilidade de internet e reputação ruim reduzem chegadas.
+- Estoque inicial de refrigerantes e doces; restock consome caixa, venda de produto reduz unidades e gera margem.
+- Dia de trabalho 10:00–22:00; mês de 30 dias; aluguel + link + energia e manutenção cobrados na virada mensal.
+- Chuvas, falhas e inspeções entram como eventos de estado, sem animações desnecessárias.
+- Política de licenças: catálogo de jogos comerciais sem licença expõe a multas; upgrade de licenças custa dinheiro e encerra esse risco.
+
+Valores são parâmetros de balanceamento e serão refinados com playtests.
+
+## Pipeline de arte
+
+`brief/receita A7 -> render PNG de staging -> review 1x/2x -> teste no cenário -> aprovação -> assets/ -> catálogo JSON`.
+
+Nunca promover arte sem revisão. O Forge não é dependência do cliente HTML5. Pelo menos uma receita simples inicial serve de piloto para o worker. Não desenhar artes finais copiando personagens de marcas registradas.
+
+## Qualidade e concorrência
+
+GitHub Actions pode executar jobs independentes em paralelo, sem agentes de IA embutidos. Usar arquivos dentro da pasta do jogo, gatilho restrito e artifacts nomeados; ações não fazem commit nem sobrescrevem masters. Alterações simultâneas devem usar branches isoladas ou commit atômico com verificação do HEAD; evitar conflitos com City Horizon, Magic Castle e o núcleo A7.

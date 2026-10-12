@@ -1,0 +1,103 @@
+{
+  "contract": "CH_2D_SHAPE_RECIPE_V1",
+  "id": "lhs_vending_machine_study",
+  "canvas": [
+    128,
+    160
+  ],
+  "anchor": [
+    64,
+    151
+  ],
+  "layers": [
+    {
+      "name": "machine_shadow",
+      "fill": {
+        "top": "#39445B",
+        "bottom": "#1A253B",
+        "opacity": 0.9
+      },
+      "shapes": [
+        {
+          "type": "rounded_rect",
+          "box": [
+            31,
+            14,
+            98,
+            147
+          ],
+          "radius": 7
+        }
+      ]
+    },
+    {
+      "name": "machine_body",
+      "fill": {
+        "top": "#F04D56",
+        "bottom": "#8C243D",
+        "opacity": 1
+      },
+      "shapes": [
+        {
+          "type": "rounded_rect",
+          "box": [
+            25,
+            8,
+            92,
+            141
+          ],
+          "radius": 6
+        }
+      ],
+      "shadow": {
+        "offset": [
+          2,
+          3
+        ],
+        "blur": 2,
+        "opacity": 0.22,
+        "color": "#151C33"
+      }
+    },
+    {
+      "name": "screen",
+      "fill": {
+        "top": "#A9E5F4",
+        "bottom": "#316585",
+        "opacity": 1
+      },
+      "shapes": [
+        {
+          "type": "rounded_rect",
+          "box": [
+            37,
+            24,
+            80,
+            85
+          ],
+          "radius": 4
+        }
+      ]
+    },
+    {
+      "name": "coin_panel",
+      "fill": {
+        "top": "#F1D788",
+        "bottom": "#A77535",
+        "opacity": 1
+      },
+      "shapes": [
+        {
+          "type": "rounded_rect",
+          "box": [
+            36,
+            101,
+            83,
+            125
+          ],
+          "radius": 3
+        }
+      ]
+    }
+  ]
+}

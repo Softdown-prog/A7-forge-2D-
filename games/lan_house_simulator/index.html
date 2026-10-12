@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="theme-color" content="#172036"/>
+  <meta name="description" content="Lan House Simulator: abra, administre e expanda sua lan house em um tycoon 2D isométrico."/>
+  <title>Lan House Simulator — Protótipo</title>
+  <link rel="stylesheet" href="./style.css"/>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand"><span class="logo">LH</span><div><h1>Lan House Simulator</h1><p>O sonho começou. Agora vem a administração.</p></div></div>
+      <button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button>
+    </header>
+    <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
+    <main class="layout">
+      <section class="stage" aria-label="Salão isométrico da lan house">
+        <canvas id="game" width="1000" height="610" aria-label="Cenário da lan house com balcão, proprietário, clientes e computadores">Seu navegador precisa de Canvas 2D.</canvas>
+        <p class="note">Clique no dono atrás do balcão para abrir o painel. O jogo avança automaticamente. Imagens geométricas provisórias.</p>
+      </section>
+      <aside class="sidebar">
+        <div class="side-title"><h2>Acontecendo agora</h2><span class="live-dot"></span></div>
+        <ul id="events" aria-label="Últimos acontecimentos"></ul>
+        <div class="tip"><strong>Dica:</strong> baixar preços aumenta a procura, mas não garante maior lucro. Reserve caixa para aluguel e internet.</div>
+      </aside>
+    </main>
+    <section id="admin" class="admin slice" aria-label="Painel administrativo" hidden>
+      <div class="admin-title"><h2>Administração da Lan House</h2><button id="close-admin" class="slice" aria-label="Fechar painel">✕</button></div>
+      <div class="admin-grid">
+        <div class="stat"><h3>Preço dos PCs</h3><div class="action-row"><button id="price-down" class="slice" aria-label="Diminuir preço">−</button><strong id="price">R$ 12/h</strong><button id="price-up" class="slice" aria-label="Aumentar preço">+</button></div><p id="pc">3 computadores</p></div>
+        <div class="stat"><h3>Produtos e estoque</h3><p id="stock"></p><div class="action-row wrap"><button id="stock-soda" class="slice">+ Bebidas R$ 40</button><button id="stock-candy" class="slice">+ Doces R$ 28</button><button id="stock-snacks" class="slice">+ Salgados R$ 48</button></div></div>
+        <div class="stat"><h3>Serviços</h3><p id="internet"></p><p id="license-status"></p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
+        <div class="stat"><h3>Investimento e finanças</h3><p id="finance"></p><p id="expansion"></p><div class="action-row wrap"><button id="expand" class="slice">Ampliar salão</button><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
+      </div>
+    </section>
+    <footer>Vertical slice V0.1 · HTML5 + TypeScript + Canvas 2D · Visual provisório criado com código</footer>
+  </div>
+</body>
+</html>
