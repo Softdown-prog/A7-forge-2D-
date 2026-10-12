@@ -8,7 +8,7 @@ Todo o jogo e suas fontes de arte ficam nesta pasta. A receita do mago está em 
 
 ## Controles
 - A/D ou setas: movimento lateral
-- W / Espaço / seta para cima: salto
+- W / Espaço: salto\n- ↑ / Shift junto da porta após eliminar os inimigos: subir ao próximo andar
 - Enter / J: lançar magia na direção do personagem
 - R: recomeçar
 - Celulares: botões de toque abaixo do canvas
@@ -19,4 +19,8 @@ Abra `index.html` em um navegador. Para usar sprites oficiais em vez do desenho 
 O protótipo inclui plataforma, gravidade, colisão no chão, câmera fixa, projéteis, três comportamentos de inimigo, HP, invulnerabilidade após dano, vitória e reinício. Inimigos/cenário são placeholders desenhados no Canvas e **não são arte aprovada**. A revisão de sprites e jogabilidade precede promoção para um repositório independente ou publicação.
 
 ## Escopo
-Somente a sala 1 de 5. Não há ainda áudio, boss, save, menus completos nem assets finalizados de inimigos. O workflow aceita execução manual e mudanças restritas à pasta do jogo; commits de outras ferramentas não devem dispará-lo.
+Somente as salas 1 e 2 do plano de 5 andares. Não há ainda áudio, boss, save, menus completos nem assets finalizados de inimigos. O workflow aceita execução manual e mudanças restritas à pasta do jogo; commits de outras ferramentas não devem dispará-lo.
+
+## Segundo andar e progresso
+
+Duas salas próprias, com dois inimigos por andar. Ao vencer os inimigos aproxime-se da porta e use seta para cima, Shift ou o botão ENTRAR no mobile. A transição em cubos é desenhada diretamente pelo Canvas (sem dependência do A7 em runtime). Barra de vida com cinco pontos; no segundo andar uma poção recupera até dois pontos, uma única vez. Após concluir o andar 2 a partida termina em vitória. `stages.js` define salas, regras de porta e cura.
