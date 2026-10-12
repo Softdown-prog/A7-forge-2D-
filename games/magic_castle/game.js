@@ -8,6 +8,8 @@ const spriteRoot="assets/wizard/";
 for(const d of ["east","west"])for(const pose of ["idle","walk_0","walk_1","walk_2","walk_3","attack_0","attack_1","attack_2","attack_3","attack_4","attack_5"]){
  const name=d+"_"+pose,im=new Image();im.src=spriteRoot+"pixel_wizard_mini_01_"+name+".png";images[name]=im;
 }
+const art={};for(const [key,path] of Object.entries({hall:"assets/scene/castle_hall.svg",platform:"assets/scene/platform_stone.svg",door:"assets/scene/exit_door.svg",slime:"assets/enemies/slime.svg",bat:"assets/enemies/bat.svg",guardian:"assets/enemies/guardian.svg"})){const im=new Image();im.src=path;art[key]=im;}
+function drawArt(key,x,y,w,h){const im=art[key];if(!im?.complete||!im.naturalWidth)return false;ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}
 let player,enemies,bolts,particles,won,lost,tick,damageAt,lastShot,gameTime;
 const platforms=[{x:0,y:GROUND,w:800,h:60},{x:180,y:307,w:145,h:15},{x:460,y:276,w:135,h:15}];
 function reset(){player={x:48,y:GROUND-42,w:27,h:42,vx:0,vy:0,onGround:false,face:1,hp:5,attackUntil:0};
@@ -40,17 +42,19 @@ function update(dt){
 }
 function sprite(d,pose,x,y,w=32,h=48){const im=images[d+"_"+pose];if(im?.complete&&im.naturalWidth){ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}return false;}
 function background(){
- rect(0,0,W,H,"#1e1d32");for(let y=40;y<390;y+=42)for(let x=((y/42|0)%2)*38-40;x<W;x+=76){rect(x,y,73,39,"#302d44");rect(x+2,y+2,69,35,"#353148");}
- for(let x of [74,396,710]){rect(x,44,18,318,"#454058");rect(x-8,43,34,17,"#59526a");rect(x-7,355,32,20,"#59526a");}
- for(let x of [123,410,701]){rect(x,150,8,30,"#6c4238");rect(x-6,140,20,12,"#ffad46");rect(x-3,135,13,7,"#ffd37b");}
- for(const p of platforms){rect(p.x,p.y,p.w,p.h,"#544e65");rect(p.x,p.y,p.w,7,"#94849b");for(let x=p.x+12;x<p.x+p.w;x+=32)rect(x,p.y+11,2,17,"#3d384e");}
- rect(752,306,36,84,"#3e243e");rect(754,308,32,82,"#714567");rect(763,350,4,5,"#f7cc7d");
+ if(!drawArt("hall",0,0,W,H)){rect(0,0,W,H,"#29283d");rect(0,GROUND,W,H-GROUND,"#554c61");}
+ for(const p of platforms.slice(1)){
+  if(!drawArt("platform",p.x,p.y,p.w,p.h))rect(p.x,p.y,p.w,p.h,"#94849b");
+ }
+ if(!drawArt("door",748,300,46,90))rect(752,306,36,84,"#70495c");
 }
+
 function paint(){
  background();for(const e of enemies){if(e.hp<=0)continue;
- if(e.type==="bat"){rect(e.x+4,e.y+5,22,14,"#65569e");rect(e.x-7,e.y+(tick%20<10?0:9),15,9,"#8069aa");rect(e.x+23,e.y+(tick%20<10?0:9),15,9,"#8069aa");rect(e.x+10,e.y+8,3,3,"#f4c45d");}
- if(e.type==="slime"){rect(e.x+2,e.y+8,29,14,"#519878");rect(e.x+7,e.y+3,20,13,"#6ac49b");rect(e.x+10,e.y+9,3,3,"#1c3c37");}
- if(e.type==="guardian"){rect(e.x+3,e.y+4,28,40,"#716c79");rect(e.x+9,e.y,16,14,"#a69ba0");rect(e.x+10,e.y+10,4,3,"#f6a962");rect(e.x+25,e.y+21,6,27,"#c6ae92");}
+ const flutter=e.type==="bat"?(tick%16<8?-4:3):0;
+ if(!drawArt(e.type,e.x+(e.type==="bat"?-7:0),e.y+flutter,e.type==="bat"?44:e.w,e.type==="bat"?32:e.h)){
+  rect(e.x,e.y,e.w,e.h,e.type==="slime"?"#5ab892":e.type==="bat"?"#7664ad":"#888697");
+ }
  rect(e.x,e.y-12,e.w,4,"#34283e");rect(e.x,e.y-12,e.w*e.hp/e.maxHp,4,"#d75e77");
  }
  for(const b of bolts){rect(b.x-4,b.y-4,18,18,"#376baa");rect(b.x,b.y,12,10,"#56c9ff");rect(b.x+3,b.y+2,6,6,"#e0faff");}
