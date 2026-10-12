@@ -68,8 +68,7 @@ function update(dt){
  MagicCombat.advanceReaction(e,dt,0,W);
  if(e.hp<=0)continue;
  if(e.stun>0)continue;
- if(e.type==="bat"){e.y=185+Math.sin(gameTime*2+e.x/120)*30; e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
- else {e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
+ MagicEnemyAI.update(e,player,dt,gameTime,{left:0,right:W,ground:GROUND});
  if(overlap(player,e)&&gameTime-damageAt>1){
  damageAt=gameTime;player.hp--;player.vy=-140;
  player.x=Math.max(0,Math.min(W-player.w,player.x+(player.x<e.x?-24:24)));
