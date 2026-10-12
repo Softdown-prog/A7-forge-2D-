@@ -95,3 +95,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Ajustar joelhos e mãos na transição de sentado, encurtando silhueta e aproximando braços do teclado.
 - [x] A prancha passa a mostrar o uso de PC sempre voltado ao monitor, independentemente da coluna da direção da caminhada.
 - [ ] Conferir visual gerado no próximo CI; oclusão real das mãos sobre teclado ainda pode exigir sprite dedicado.
+
+## Overlay do teclado integrado à cena (12/10/2026)
+- [x] Novo overlay de braços/mãos ligado aos ombros e às coordenadas reais do teclado; é renderizado **depois** do corpo.
+- [x] Preserva as fases sentar, usar e levantar com fade proporcional ao progresso da transição.
+- [x] Mantém a identidade da roupa e pele por ID; não interfere no estado da economia.
+- [ ] Revisar mãos no PNG real, especialmente sobreposição e silhueta do encosto.

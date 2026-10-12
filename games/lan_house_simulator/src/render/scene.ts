@@ -1,8 +1,8 @@
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometric.js";
-import { drawRetroComputer } from "./retroComputer.js";
-import { drawActor, actorHitbox, type ActorPose } from "./actorArt.js";
+import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
+import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
 
 export class SceneRenderer {
@@ -258,6 +258,14 @@ export class SceneRenderer {
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition
     });
+    if(seated && c.pcIndex!==null){
+      const style=actorStyleFor(c.costume,c.id);
+      const weight=c.stage==="using"?1:
+        c.stage==="sitting"?transition:
+        c.stage==="standing"?1-transition:0;
+      drawSeatedKeyboardOverlay(this.ctx,camera,pcPosition(c.pcIndex),t,
+        style.skin,style.shirt,weight);
+    }
     if(c.stage==="waiting"){
       const p=iso({x,y},camera,91);
       this.ctx.fillStyle="#FFF4BC";

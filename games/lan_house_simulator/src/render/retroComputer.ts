@@ -141,3 +141,31 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
     }
   }
 }
+
+/** Overlay após o corpo: braços partem dos ombros e terminam fisicamente sobre o teclado.
+ * A mesa é desenhada antes; a frente das mãos deve ser a última camada do ator sentado. */
+export function drawSeatedKeyboardOverlay(ctx:CanvasRenderingContext2D,camera:Projection,
+  p:Point,time:number,skin:string,sleeve:string,weight=1):void{
+  const factor=Math.min(1,Math.max(0,weight));
+  if(factor<=0)return;
+  const z=camera.zoom,seat={x:p.x+0.35,y:p.y+0.82};
+  ctx.save();ctx.globalAlpha=factor;ctx.lineCap="round";
+  for(const side of [-1,1]){
+    const shoulder=iso({x:seat.x+side*0.12,y:seat.y},camera,46);
+    const elbow=iso({x:seat.x+side*0.16,y:seat.y-0.22},camera,39);
+    const touch=iso({x:p.x+0.31+side*0.11,y:p.y+0.44},camera,36.5);
+    const beat=Math.sin(time*7+side*1.3)*1.25*z;
+    const key={x:touch.x,y:touch.y+beat};
+    ctx.strokeStyle="#26344A";ctx.lineWidth=8*z;
+    ctx.beginPath();ctx.moveTo(shoulder.x,shoulder.y);ctx.lineTo(elbow.x,elbow.y);
+    ctx.lineTo(key.x,key.y);ctx.stroke();
+    ctx.strokeStyle=sleeve;ctx.lineWidth=5.8*z;
+    ctx.beginPath();ctx.moveTo(shoulder.x,shoulder.y);ctx.lineTo(elbow.x,elbow.y);
+    ctx.stroke();
+    ctx.strokeStyle=skin;ctx.lineWidth=4*z;
+    ctx.beginPath();ctx.moveTo(elbow.x,elbow.y);ctx.lineTo(key.x,key.y);ctx.stroke();
+    ctx.fillStyle=skin;ctx.beginPath();
+    ctx.ellipse(key.x,key.y,3.6*z,2.5*z,0,0,Math.PI*2);ctx.fill();
+  }
+  ctx.restore();
+}
