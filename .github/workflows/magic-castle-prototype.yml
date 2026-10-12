@@ -17,7 +17,7 @@ jobs:
       - name: Install A7
         run: python -m pip install -e tools/visitor_forge_2d
       - name: Render canonical wizard
-        run: python -m visitor_forge_2d render-pixel-character --recipe tools/visitor_forge_2d/examples/pixel_character_wizard_mini_01.json --output out/wizard
+        run: python -m visitor_forge_2d render-pixel-character --recipe games/magic_castle/authoring/wizard/pixel_character_wizard_mini_01.json --output out/wizard
       - name: Package playable web build
         run: |
           mkdir -p out/magic_castle/assets/wizard
