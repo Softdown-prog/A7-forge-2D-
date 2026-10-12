@@ -139,3 +139,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] City Horizon recebe cartaz diferenciado com silhueta urbana e friso dourado.
 - [x] Montagem sob perspectiva isométrica de parede, sem cobrir as janelas do fundo.
 - [ ] Revisar legibilidade no PNG real do runtime antes da aprovação visual.
+
+## Funcionalidade incremental — reparo emergencial de internet (12/10/2026)
+- [x] Serviço pago no painel de Administração, disponível apenas com internet fora do ar.
+- [x] Cobrança real R$ 75/100/125 conforme nível, contabilizada em despesas; caixa insuficiente não muda estado.
+- [x] Técnico encerra o incidente atual, sem conceder upgrade e sem alterar a lógica de falhas futuras.
+- [x] Testes para internet online, falta de caixa, custo progressivo, reparo único e recuperação.
+- [ ] Verificar painel em captura real e jogo sob queda natural após CI.

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createGame, stepGame, online, dayNumber, pcCount } from "../dist/js/sim/engine.js";
-import { demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
+import { demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
 test("preço alto reduz procura, rede offline reduz ainda mais",()=>{
   assert.ok(demandFactor(10,75,true,false)>demandFactor(20,75,true,false));
   assert.ok(demandFactor(10,75,true,false)>demandFactor(10,75,false,false));
@@ -174,4 +174,28 @@ test("fileira de computadores não cruza o corredor nem a profundidade das máqu
     assert.ok(computerSeat(p).y<AISLE_Y);
     if(i>0)assert.ok(p.x-pcPosition(i-1).x>0.95);
   }
+});
+
+test("reparo emergencial só cobra durante queda e devolve a conexão",()=>{
+  const s=createGame();s.totalMinutes=10;
+  assert.equal(repairInternet(s).ok,false);
+  assert.equal(s.cash,850);
+  s.offlineUntil=36;
+  const expense=s.expenses;
+  assert.equal(repairInternet(s).ok,true);
+  assert.equal(s.cash,775);
+  assert.equal(s.expenses,expense+75);
+  assert.equal(online(s),true);
+  assert.equal(repairInternet(s).ok,false);
+  assert.equal(s.cash,775);
+});
+test("reparo de fibra custa mais, sem gerar dinheiro ou alterar upgrades",()=>{
+  const s=createGame();s.internetTier=3;s.totalMinutes=15;s.offlineUntil=60;s.cash=20;
+  assert.equal(repairInternet(s).ok,false);
+  assert.equal(s.offlineUntil,60);
+  s.cash=130;
+  assert.equal(repairInternet(s).ok,true);
+  assert.equal(s.cash,5);
+  assert.equal(s.internetTier,3);
+  assert.equal(s.offlineUntil,15);
 });

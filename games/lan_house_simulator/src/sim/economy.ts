@@ -46,6 +46,15 @@ export function licenseGames(state: GameState): Result {
   state.cash -= 450; state.expenses += 450; state.licensedGames = true;
   return { ok: true, message: "Catálogo de jogos licenciado: -R$ 450." };
 }
+/** Serviço emergencial: tem custo real e só pode ser comprado durante uma falha. */
+export function repairInternet(state: GameState): Result {
+  if(state.totalMinutes>=state.offlineUntil) return {ok:false,message:"A internet já está funcionando."};
+  const cost=75+25*(state.internetTier-1);
+  if(state.cash<cost) return {ok:false,message:"Caixa insuficiente para reparo: R$ "+cost+"."};
+  state.cash-=cost;state.expenses+=cost;
+  state.offlineUntil=state.totalMinutes;
+  return {ok:true,message:"Técnico restabeleceu a internet: -R$ "+cost+"."};
+}
 export function upgradeInternet(state: GameState): Result {
   if (state.internetTier >= 3) return { ok: false, message: "Internet já está no nível máximo." };
   const cost = 250 * state.internetTier;

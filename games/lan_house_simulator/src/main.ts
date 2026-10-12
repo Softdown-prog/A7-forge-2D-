@@ -1,5 +1,5 @@
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { expandShop, licenseGames, setHourlyPrice, stockItem, upgradeInternet } from "./sim/economy.js";
+import { expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, upgradeInternet } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
@@ -58,6 +58,7 @@ button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();sav
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
 button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
+button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
 button("reset-game",()=>{
@@ -80,7 +81,9 @@ function renderUI():void {
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   setText("price", "R$ "+game.pricePerHour+"/h");
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
-  setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Estável":" · Instável"));
+  setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Online":" · Sem conexão até "+(game.offlineUntil-game.totalMinutes)+" min de jogo"));
+  const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
+  if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · início: era Windows 98");
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
