@@ -38,3 +38,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [ ] Conferir captura real do runtime em navegador no tamanho 1x, sem confundir com a maquete de validação.
 - [ ] Revisar profundidade/oclusão do balcão, telas CRT e ponto de chegada dos visitantes, antes de novos assets.
 - [ ] Depois: evolução de PCs Windows 98 -> 2000 -> XP -> Vista -> 7 -> 8/8.1 -> 10 -> 11, implementada por upgrade isolado e com custo real.
+
+## Etapa de circulação (12/10/2026)
+- [x] Corrigir sintaxe TypeScript do piso suspenso que falhou no CI.
+- [x] Trajeto interno por corredor com waypoints determinísticos entre entrada, balcão, estação, venda e saída.
+- [x] Separar transições de sentar/usar/levantar e manter reserva do computador durante a animação.
+- [x] Adicionar testes de waypoints, ocupação e liberação da estação.
+- [ ] Validar fluxo visual no navegador via artifact do GitHub Actions antes de trocar placeholders por sprites definitivos.

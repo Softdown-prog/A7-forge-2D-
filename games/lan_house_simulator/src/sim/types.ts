@@ -1,4 +1,4 @@
-export type CustomerStage = "arriving" | "waiting" | "to_pc" | "using" | "shopping" | "leaving";
+export type CustomerStage = "arriving" | "waiting" | "to_pc" | "sitting" | "using" | "standing" | "shopping" | "leaving";
 export type Costume = "regular" | "clown" | "vampire" | "stitched-monster" | "rabbit" | "mouse-mascot";
 export type Item = "soda" | "candy" | "snacks";
 
@@ -8,6 +8,11 @@ export interface Customer {
   x: number; y: number;
   stage: CustomerStage;
   target: Point;
+  /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
+  route?: Point[];
+  /** Minutos de transição sentando/levantando. */
+  poseMinutes?: number;
+  wantsSnack?: boolean;
   costume: Costume;
   pcIndex: number | null;
   usedMinutes: number;

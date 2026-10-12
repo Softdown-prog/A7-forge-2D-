@@ -31,7 +31,7 @@ export class SceneRenderer {
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
     }
     for (const c of s.customers) {
-      const seated=c.stage==="using";
+      const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
       entries.push({depth:c.x+c.y+0.08,paint:()=>this.customer(camera,c,elapsedSeconds,seated)});
     }
     entries.sort((a,b)=>a.depth-b.depth);
@@ -60,7 +60,7 @@ export class SceneRenderer {
     polygon(ctx,[rearRight,frontRight,
       {x:frontRight.x,y:frontRight.y+bottom},
       {x:rearRight.x,y:rearRight.y+bottom}],"#6E5862","#3B3A49");
-    for(let y=0;y<6;y> for(let x=0;x<w;x++) {
+    for(let y=0;y<6;y++) for(let x=0;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
       const tone=(x+y)%2===0?"#C4B7A8":"#B9AC9F";
       polygon(ctx,ps,tone,"#938579");
@@ -124,7 +124,7 @@ export class SceneRenderer {
     ctx.fillStyle="#C9CEDA";ctx.fillRect(screen.x-8,screen.y+1,16,2);
     const seat=iso({x:p.x+0.35,y:p.y+0.86},camera,25);
     ctx.fillStyle="#3B4863";ctx.beginPath();ctx.ellipse(seat.x,seat.y,18,8,0,0,Math.PI*2);ctx.fill();
-    if(!s.customers.some(c=>c.pcIndex===i && c.stage==="using")) {
+    if(!s.customers.some(c=>c.pcIndex===i && (c.stage==="sitting" || c.stage==="using" || c.stage==="standing"))) {
       ctx.fillStyle="#2D4864";ctx.fillRect(seat.x-13,seat.y-29,26,19);
     }
   }

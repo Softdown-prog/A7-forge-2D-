@@ -1,6 +1,7 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
+import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -50,21 +51,39 @@ function move(c: Customer, speed = 0.38): boolean {
   c.y += dy / distance * speed;
   return false;
 }
+function setTravel(c: Customer, destination: Point): void {
+  const points = hallwayRoute({ x: c.x, y: c.y }, destination);
+  c.target = points[0]!;
+  c.route = points.slice(1);
+}
+function moveRoute(c: Customer): boolean {
+  if (!move(c)) return false;
+  const next = c.route?.shift();
+  if (next) { c.target = next; return false; }
+  return true;
+}
+function startStanding(c: Customer, wantsSnack: boolean): void {
+  c.stage = "standing";
+  c.poseMinutes = 0;
+  c.wantsSnack = wantsSnack;
+}
 function isReserved(s: GameState, index: number): boolean {
-  return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "using"));
+  return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "sitting" || c.stage === "using" || c.stage === "standing"));
 }
 function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.target = entrance(s); c.pcIndex = null;
+  c.stage = "leaving"; c.pcIndex = null;
+  setTravel(c, entrance(s));
 }
 function spawn(s: GameState): void {
   const e = entrance(s);
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y,
-    stage: "arriving", target: { x: 1.8, y: 1.65 },
+    stage: "arriving", target: { ...COUNTER_QUEUE },
     costume, pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true
   };
+  setTravel(c, COUNTER_QUEUE);
   s.customers.push(c);
 }
 function tryServe(s: GameState, c: Customer): void {
@@ -79,7 +98,7 @@ function tryServe(s: GameState, c: Customer): void {
   }
   c.pcIndex = index;
   c.stage = "to_pc";
-  c.target = pcPosition(index);
+  setTravel(c, computerSeat(pcPosition(index)));
   const paid = sessionRevenue(s.pricePerHour);
   s.cash += paid; s.revenue += paid; s.served++;
   addLog(s, "Cliente pagou R$ " + paid + " por 45 minutos.");
@@ -94,11 +113,15 @@ function resolvePurchase(s: GameState, c: Customer): void {
 function advanceCustomer(s: GameState, c: Customer): void {
   switch (c.stage) {
     case "arriving":
-      if (move(c)) c.stage = "waiting";
+      if (moveRoute(c)) c.stage = "waiting";
       return;
     case "waiting": tryServe(s, c); return;
     case "to_pc":
-      if (move(c)) c.stage = "using";
+      if (moveRoute(c)) { c.stage = "sitting"; c.poseMinutes = 0; }
+      return;
+    case "sitting":
+      c.poseMinutes = (c.poseMinutes ?? 0) + 1;
+      if (c.poseMinutes >= 3) { c.stage = "using"; c.poseMinutes = 0; }
       return;
     case "using":
       if (!online(s)) {
@@ -107,24 +130,30 @@ function advanceCustomer(s: GameState, c: Customer): void {
           c.happy = false;
           s.reputation = Math.max(10, s.reputation - 1.1);
           addLog(s, "Cliente saiu insatisfeito com a internet.");
-          sendHome(s, c);
+          startStanding(c, false);
         }
         return;
       }
       c.usedMinutes++;
       if (c.usedMinutes >= SESSION_MINUTES) {
         s.reputation = Math.min(100, s.reputation + (c.happy ? 0.08 : 0));
-        if (random(s) < 0.47) {
+        startStanding(c, random(s) < 0.47);
+      }
+      return;
+    case "standing":
+      c.poseMinutes = (c.poseMinutes ?? 0) + 1;
+      if (c.poseMinutes >= 3) {
+        c.pcIndex = null;
+        if (c.wantsSnack) {
           c.stage = "shopping";
-          c.pcIndex = null;
-          c.target = { x: 5.65, y: 1.05 };
+          setTravel(c, VENDING_QUEUE);
         } else sendHome(s, c);
       }
       return;
     case "shopping":
-      if (move(c)) resolvePurchase(s, c);
+      if (moveRoute(c)) resolvePurchase(s, c);
       return;
-    case "leaving": move(c); return;
+    case "leaving": moveRoute(c); return;
   }
 }
 function nextDay(s: GameState): void {
