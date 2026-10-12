@@ -1,0 +1,27 @@
+name: Magic Castle playable prototype
+on:
+  workflow_dispatch:
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install A7
+        run: python -m pip install -e tools/visitor_forge_2d
+      - name: Render canonical wizard
+        run: python -m visitor_forge_2d render-pixel-character --recipe tools/visitor_forge_2d/examples/pixel_character_wizard_mini_01.json --output out/wizard
+      - name: Package playable web build
+        run: |
+          mkdir -p out/magic_castle/assets/wizard
+          cp games/magic_castle/index.html games/magic_castle/style.css games/magic_castle/game.js games/magic_castle/README.md out/magic_castle/
+          cp out/wizard/frames/*.png out/magic_castle/assets/wizard/
+          cd out && zip -qr magic_castle_playable.zip magic_castle
+      - uses: actions/upload-artifact@v4
+        with:
+          name: magic-castle-playable-html5
+          path: out/magic_castle_playable.zip
+          if-no-files-found: error
