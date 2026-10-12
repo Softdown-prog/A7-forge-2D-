@@ -82,6 +82,7 @@ vistas para revisão.
 ## Documentação
 
 - [Draw Engine V2](tools/visitor_forge_2d/docs/A7_DRAW_ENGINE_V2.md)
+- [Acabamento localizado guiado por máscara](tools/visitor_forge_2d/docs/A7_LOCALIZED_FINISH.md)
 - [A7 Pixel Polish](tools/visitor_forge_2d/docs/A7_PIXEL_POLISH.md)
 - [Art Planner](tools/visitor_forge_2d/docs/A7_ART_PLANNER_V1.md)
 - [Correções verificadas](docs/A7_QUALITY_IMPROVEMENTS.md)

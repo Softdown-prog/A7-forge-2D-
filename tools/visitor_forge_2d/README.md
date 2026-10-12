@@ -571,3 +571,11 @@ gate artístico; nada foi promovido ao runtime.
 **Próxima tarefa:** testar a escala candidata e os 12 frames na engine, sobre
 calçadas e perto de edifícios de tamanhos diferentes; retocar as juntas que
 apresentarem frestas. Congelar o estilo V1 somente após essa revisão visual.
+
+## Acabamento localizado guiado por máscara
+
+O Scene Composer V4 aceita `sampling: "mask"` em `finishRegions`, concentrando
+os oito pincéis de acabamento na região desenhada. O passe preserva o alfa
+original e permite desativar qualquer estilo com zero marcas. O modo de
+distribuição antigo continua disponível e é o padrão. Veja
+[integração, exemplo e limites](docs/A7_LOCALIZED_FINISH.md).
