@@ -153,3 +153,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Botão e custos atualizados no painel de estoque; saves anteriores sem `supplierTier` continuam no fornecedor básico.
 - [x] Testes para falta de caixa, desconto, dupla contratação, quantidades e save legado.
 - [ ] Inspecionar interface do novo painel no navegador antes de aprovação visual.
+
+## Satisfação e reputação (12/10/2026)
+- [x] Concluir sessão avalia preço/hora, tempo de espera e minutos sem conexão.
+- [x] Avaliações alteram reputação sem receita artificial; limites evitam oscilação descontrolada.
+- [x] Feedback positivo/negativo no histórico e testes para situações favoráveis/desfavoráveis.
+- [ ] Testar balanceamento em uma temporada extensa de simulação.

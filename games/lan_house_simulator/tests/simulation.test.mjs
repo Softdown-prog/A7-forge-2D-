@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createGame, stepGame, online, dayNumber, pcCount } from "../dist/js/sim/engine.js";
-import { contractSupplier, supplierLevel, wholesaleCost, demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
+import { customerSatisfactionDelta, contractSupplier, supplierLevel, wholesaleCost, demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
 test("preço alto reduz procura, rede offline reduz ainda mais",()=>{
   assert.ok(demandFactor(10,75,true,false)>demandFactor(20,75,true,false));
   assert.ok(demandFactor(10,75,true,false)>demandFactor(10,75,false,false));
@@ -229,4 +229,22 @@ test("save legado sem supplierTier usa preço padrão e preserva estoque",()=>{
   assert.equal(wholesaleCost(s,"candy"),28);
   assert.equal(stockItem(s,"candy").ok,true);
   assert.equal(s.inventory.candy,29);
+});
+
+test("qualidade do atendimento considera preço, espera e falha de conexão",()=>{
+ const good=customerSatisfactionDelta(12,0,0);
+ assert.equal(good,0.22);
+ assert.ok(customerSatisfactionDelta(30,0,0)<good);
+ assert.ok(customerSatisfactionDelta(12,18,0)<good);
+ assert.ok(customerSatisfactionDelta(12,0,8)<good);
+ assert.ok(customerSatisfactionDelta(40,100,100)>=-0.9);
+});
+test("encerramento de sessão muda reputação sem fabricar receita",()=>{
+ const s=createGame();
+ s.customers.push({id:20,x:2.5,y:2.5,stage:"using",target:{x:2.5,y:2.5},costume:"regular",pcIndex:0,usedMinutes:44,waitingMinutes:0,offlineWait:0,happy:true});
+ const before=s.cash;stepGame(s,1);
+ assert.ok(s.reputation>75);assert.equal(s.cash,before);
+ const bad=createGame();bad.pricePerHour=40;
+ bad.customers.push({id:21,x:2.5,y:2.5,stage:"using",target:{x:2.5,y:2.5},costume:"regular",pcIndex:0,usedMinutes:44,waitingMinutes:23,offlineWait:7,happy:true});
+ stepGame(bad,1);assert.ok(bad.reputation<75);assert.equal(bad.customers[0]?.happy,false);
 });

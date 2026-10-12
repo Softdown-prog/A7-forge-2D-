@@ -11,6 +11,10 @@ export function demandFactor(price: number, reputation: number, internetOnline: 
   const weatherEffect = rainy ? 0.8 : 1;
   return priceEffect * repEffect * weatherEffect * (internetOnline ? 1 : 0.12);
 }
+export function customerSatisfactionDelta(price:number,wait:number,offline:number):number {
+  const penalty=Math.max(0,price-12)*0.012+Math.max(0,wait-5)*0.014+Math.min(0.55,Math.max(0,offline)*0.025);
+  return Math.max(-0.9,Math.min(0.22,0.22-penalty));
+}
 export function sessionRevenue(hourly: number, minutes = SESSION_MINUTES): number {
   return Math.round(Math.max(0, hourly) * Math.max(0, minutes) / 60);
 }

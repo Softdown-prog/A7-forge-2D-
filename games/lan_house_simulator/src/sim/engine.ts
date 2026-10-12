@@ -1,6 +1,6 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
-import { demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
+import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { directionFromDelta } from "../render/direction.js";
 
@@ -139,7 +139,12 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       c.usedMinutes++;
       if (c.usedMinutes >= SESSION_MINUTES) {
-        s.reputation = Math.min(100, s.reputation + (c.happy ? 0.08 : 0));
+        const rating=customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait);
+        const impact=c.happy?rating:Math.min(0,rating);
+        c.happy=impact>=0;
+        s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
+        if(impact < -0.12)addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
+        else if(impact >= 0.15)addLog(s,"Cliente elogiou a experiência na lan house.");
         startStanding(c, random(s) < 0.47);
       }
       return;
