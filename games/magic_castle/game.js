@@ -8,9 +8,9 @@ const spriteRoot="assets/wizard/";
 for(const d of ["east","west"])for(const pose of ["idle","walk_0","walk_1","walk_2","walk_3","attack_0","attack_1","attack_2","attack_3","attack_4","attack_5"]){
  const name=d+"_"+pose,im=new Image();im.src=spriteRoot+"pixel_wizard_mini_01_"+name+".png";images[name]=im;
 }
-const art={};for(const [key,path] of Object.entries({hall:"assets/scene/castle_hall.svg",platform:"assets/scene/platform_stone.svg",door:"assets/scene/exit_door.svg",slime:"assets/enemies/slime.svg",bat:"assets/enemies/bat.svg",guardian:"assets/enemies/guardian.svg"})){const im=new Image();im.src=path;art[key]=im;}
+const art={};for(const [key,path] of Object.entries({hall:"assets/scene/castle_hall.svg",tower:"assets/scene/tower_gallery.svg",platform:"assets/scene/platform_stone.svg",door:"assets/scene/exit_door.svg",slime:"assets/enemies/slime.svg",bat:"assets/enemies/bat.svg",guardian:"assets/enemies/guardian.svg"})){const im=new Image();im.src=path;art[key]=im;}
 function drawArt(key,x,y,w,h){const im=art[key];if(!im?.complete||!im.naturalWidth)return false;ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}
-let player,enemies,bolts,particles,won,lost,tick,damageAt,lastShot,gameTime;
+let player,enemies,bolts,particles,won,lost,tick,damageAt,lastShot,gameTime,stageIndex,healItem,transition;
 const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches??false;
 function burst(x,y,color,count=8){
  if(reducedMotion)return;
@@ -19,18 +19,29 @@ function burst(x,y,color,count=8){
  }
 }
 
-const platforms=[{x:0,y:GROUND,w:800,h:60},{x:180,y:307,w:145,h:15},{x:460,y:276,w:135,h:15}];
-function reset(){player={x:48,y:GROUND-42,w:27,h:42,vx:0,vy:0,onGround:false,face:1,hp:5,attackUntil:0};
- enemies=[{type:"slime",x:275,y:GROUND-22,w:32,h:22,hp:5,maxHp:5,speed:35,hitAt:-10,flash:0},{type:"bat",x:482,y:187,w:30,h:22,hp:3,maxHp:3,speed:55,hitAt:-10,flash:0},{type:"guardian",x:650,y:GROUND-45,w:34,h:45,hp:8,maxHp:8,speed:24,hitAt:-10,flash:0}];
- bolts=[];particles=[];won=false;lost=false;tick=0;damageAt=-10;lastShot=-10;gameTime=0;status.textContent="Derrote os inimigos e alcance a porta!";}
+const platforms=[{x:0,y:GROUND,w:800,h:60}];
+function loadStage(index){
+ stageIndex=index;
+ const room=MagicStages.stages[index];platforms.splice(1,platforms.length-1,...room.platforms);
+ enemies=MagicStages.makeEnemies(room);healItem=room.heal?{...room.heal,taken:false}:null;
+ bolts=[];particles=[];player.x=48;player.y=GROUND-player.h;player.vx=0;player.vy=0;player.onGround=true;player.face=1;
+ damageAt=gameTime;lastShot=gameTime-.5;
+ status.textContent="Andar "+(stageIndex+1)+": derrote os monstros e vá até a porta.";
+}
+function reset(){
+ player={x:48,y:GROUND-42,w:27,h:42,vx:0,vy:0,onGround:true,face:1,hp:5,maxHp:5,attackUntil:0};
+ won=false;lost=false;tick=0;damageAt=-10;lastShot=-10;gameTime=0;transition=null;
+ loadStage(0);
+}
 // Multi-touch reference counting: releasing one finger never cancels another.
 const touchPointers=new Map();
 function touchActive(key){for(const value of touchPointers.values())if(value===key)return true;return false;}
 function input(e,down){
  const k=e.code;
- if(["ArrowLeft","ArrowRight","ArrowUp","Space","KeyA","KeyD","KeyW","KeyJ","Enter","KeyR"].includes(k))e.preventDefault();
+ if(["ArrowLeft","ArrowRight","ArrowUp","Space","KeyA","KeyD","KeyW","KeyJ","Enter","KeyR","ShiftLeft","ShiftRight"].includes(k))e.preventDefault();
  if(down)keys.add(k);else if(!touchActive(k))keys.delete(k);
  if(down&&k==="KeyR"&&!e.repeat)reset();
+ if(down&&!e.repeat&&["ArrowUp","ShiftLeft","ShiftRight"].includes(k)&&!transition&&!won&&!lost&&MagicStages.mayEnter(player,enemies)){enterExit();}
 }
 document.addEventListener("keydown",e=>input(e,true));
 document.addEventListener("keyup",e=>input(e,false));
@@ -42,6 +53,7 @@ document.querySelectorAll(".touch [data-key]").forEach(el=>{
  el.addEventListener("pointerdown",e=>{
   e.preventDefault();if(touchPointers.has(e.pointerId))return;
   touchPointers.set(e.pointerId,key);keys.add(key);el.classList.add("pressed");
+  if(key==="ShiftLeft"&&!transition&&!won&&!lost&&MagicStages.mayEnter(player,enemies))enterExit();
   try{el.setPointerCapture(e.pointerId);}catch(_){}
  });
  const release=e=>{
@@ -55,11 +67,28 @@ document.querySelectorAll(".touch [data-key]").forEach(el=>{
 document.getElementById("restart").addEventListener("click",()=>{releaseAll();reset();});
 function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
+function enterExit(){
+ if(!MagicStages.mayEnter(player,enemies))return false;
+ transition={time:0,duration:.90,next:stageIndex+1,switched:false};
+ status.textContent="Subindo para o próximo andar...";
+ return true;
+}
 function update(dt){
- gameTime+=dt;tick++;if(won||lost)return;
+ gameTime+=dt;tick++;
+ if(transition){
+  transition.time+=dt;
+  if(!transition.switched&&transition.time>=transition.duration/2){
+   transition.switched=true;
+   if(transition.next>=MagicStages.stages.length){won=true;status.textContent="Castelo conquistado! Pressione R para reiniciar.";}
+   else loadStage(transition.next);
+  }
+  if(transition.time>=transition.duration)transition=null;
+  return;
+ }
+ if(won||lost)return;
  let left=keys.has("KeyA")||keys.has("ArrowLeft"),right=keys.has("KeyD")||keys.has("ArrowRight");
  player.vx=(Number(right)-Number(left))*170;if(player.vx)player.face=Math.sign(player.vx);
- if((keys.has("KeyW")||keys.has("Space")||keys.has("ArrowUp"))&&player.onGround){player.vy=-330;player.onGround=false;}
+ if((keys.has("KeyW")||keys.has("Space")||(keys.has("ArrowUp")&&!MagicStages.mayEnter(player,enemies)))&&player.onGround){player.vy=-330;player.onGround=false;}
  if((keys.has("Enter")||keys.has("KeyJ"))&&gameTime-lastShot>.34){lastShot=gameTime;player.attackUntil=gameTime+.40;bolts.push({x:player.x+player.w/2+player.face*19,y:player.y+17,w:12,h:10,vx:player.face*330,vy:0,damage:1,life:1.7});}
  let oldY=player.y;player.x=Math.max(0,Math.min(W-player.w,player.x+player.vx*dt));player.vy=Math.min(560,player.vy+850*dt);player.y+=player.vy*dt;player.onGround=false;
  for(const p of platforms)if(player.x+player.w>p.x&&player.x<p.x+p.w&&oldY+player.h<=p.y+8&&player.y+player.h>=p.y&&player.vy>=0){player.y=p.y-player.h;player.vy=0;player.onGround=true;}
@@ -89,8 +118,9 @@ function update(dt){
  for(const e of enemies)e.flash=Math.max(0,e.flash-dt);
  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=110*dt;p.t-=dt;}
  particles=particles.filter(p=>p.t>0);
- if(player.hp<=0){lost=true;status.textContent="O mago caiu! Pressione R para tentar novamente.";}
- if(player.x>745&&enemies.every(e=>e.hp<=0)){won=true;status.textContent="Castelo conquistado! Primeira sala concluída. Pressione R para jogar novamente.";}
+ if(MagicStages.heal(player,healItem)){burst(player.x+10,player.y+12,"#92ffc5",14);status.textContent="Poção encontrada! Vida recuperada.";}
+ if(player.hp<=0){lost=true;status.textContent="O mago caiu! Reinicie para tentar novamente.";}
+ if(MagicStages.mayEnter(player,enemies))status.textContent="Porta liberada! Aperte ↑ ou Shift para subir.";
 }
 function sprite(d,pose,x,y,w=32,h=48){const im=images[d+"_"+pose];if(im?.complete&&im.naturalWidth){ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}return false;}
 function drawTorch(x){
@@ -103,7 +133,7 @@ function drawTorch(x){
  rect(x-2,128+Math.round(f*4),5,13,"#fff0ab");
 }
 function background(){
- if(!drawArt("hall",0,0,W,H)){rect(0,0,W,H,"#29283d");rect(0,GROUND,W,H-GROUND,"#554c61");}
+ if(!drawArt(MagicStages.stages[stageIndex].scene,0,0,W,H)){rect(0,0,W,H,"#29283d");rect(0,GROUND,W,H-GROUND,"#554c61");}
  drawTorch(119);drawTorch(634);
  for(const p of platforms.slice(1)){
   if(!drawArt("platform",p.x,p.y,p.w,p.h))rect(p.x,p.y,p.w,p.h,"#94849b");
@@ -153,8 +183,29 @@ function paint(){
  const d=player.face===1?"east":"west";
  if(!sprite(d,pose,player.x-3,player.y-6)){rect(player.x+4,player.y+3,20,37,"#5b4aa7");rect(player.x+2,player.y,24,14,"#403877");rect(player.x+11,player.y+14,8,8,"#e6ae86");rect(player.x+(player.face>0?24:-2),player.y+4,3,32,"#97744b");}
  }
- for(let i=0;i<5;i++){ctx.font="25px sans-serif";ctx.fillStyle=i<player.hp?"#ff607c":"#555168";ctx.fillText("♥",14+i*30,35);}
- ctx.font="13px monospace";ctx.fillStyle="#f3dfb3";ctx.fillText("ANDAR 1 / 5    •    INIMIGOS: "+enemies.filter(e=>e.hp>0).length,540,27);
+ if(healItem&&!healItem.taken){rect(healItem.x,healItem.y+5,healItem.w,healItem.h-5,"#386b60");rect(healItem.x+4,healItem.y+7,12,12,"#71e7a6");rect(healItem.x+7,healItem.y+2,6,6,"#e7f3ca");}
+ rect(12,12,168,21,"#171925");rect(15,15,162,15,"#514354");
+ rect(15,15,162*player.hp/player.maxHp,15,player.hp<=2?"#df686a":"#66c99b");
+ ctx.font="bold 11px monospace";ctx.fillStyle="#ffffff";ctx.fillText("VIDA "+player.hp+"/"+player.maxHp,73,27);
+ ctx.font="13px monospace";ctx.fillStyle="#f3dfb3";
+ ctx.fillText("ANDAR "+(stageIndex+1)+" / "+MagicStages.stages.length+"  •  INIMIGOS: "+enemies.filter(e=>e.hp>0).length,526,27);
+ if(MagicStages.mayEnter(player,enemies)){ctx.textAlign="center";ctx.font="bold 13px sans-serif";ctx.fillStyle="#ffe1a3";ctx.fillText("↑ / SHIFT — ENTRAR",765,284);ctx.textAlign="left";}
+ if(transition)drawCubeTransition();
  if(won||lost){rect(145,155,510,115,"#171325");ctx.textAlign="center";ctx.font="bold 24px sans-serif";ctx.fillStyle="#f4d38a";ctx.fillText(won?"ANDAR CONCLUÍDO!":"FIM DE JOGO",400,202);ctx.font="15px sans-serif";ctx.fillText("Pressione R para reiniciar",400,239);ctx.textAlign="left";}
+}
+function drawCubeTransition(){
+ // Original 20px pixel-cube wipe: advances from left to right, then reveals the next room.
+ const p=Math.min(1,transition.time/transition.duration);
+ const cover=p<=.5?p*2:(1-p)*2;
+ const cols=40,rows=23,size=20;
+ for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+  const threshold=(x+(y%3)*.55)/cols;
+  if(threshold>cover)continue;
+  const shade=(x+y)%4;
+  rect(x*size,y*size,size,size,["#242038","#353050","#4b3b60","#635078"][shade]);
+  rect(x*size,y*size,size,3,"#807094");
+  rect(x*size+size-3,y*size,3,size,"#1d1b34");
+ }
+ if(p>.33&&p<.68){ctx.textAlign="center";ctx.font="bold 28px sans-serif";ctx.fillStyle="#f5d59d";ctx.fillText("ANDAR "+(transition.next+1),400,218);ctx.textAlign="left";}
 }
 let last=0;function frame(now){if(!last)last=now;const dt=Math.min((now-last)/1000,.033);last=now;update(dt);paint();requestAnimationFrame(frame);}reset();requestAnimationFrame(frame);
