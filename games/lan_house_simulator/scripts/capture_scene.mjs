@@ -98,7 +98,7 @@ try{
         Buffer.from(equipment,"base64"));
       // Matriz de pose gerada pelas MESMAS funções do runtime, sem mock visual.
       const poses=await page.evaluate(async()=>{
-        const [{drawActor},{drawRetroComputer},{createGame}]=await Promise.all([
+        const [{drawActor,actorStyleFor},{drawRetroComputer,drawSeatedKeyboardOverlay},{createGame}]=await Promise.all([
           import("./js/render/actorArt.js"),
           import("./js/render/retroComputer.js"),
           import("./js/sim/engine.js")
@@ -121,7 +121,7 @@ try{
             ctx.strokeStyle="#80929D";ctx.strokeRect(x0+.5,y0+.5,247,214);
             const camera={originX:x0+124,originY:y0+188,zoom:1.7};
             ctx.fillStyle="#A7B6C8";ctx.font="bold 12px system-ui";
-            ctx.fillText(["PASSO A","PASSO B","USO DO PC - COSTAS"][row],x0+12,y0+19);
+            ctx.fillText(["PASSO A","PASSO B","PC: COSTAS + MÃOS"][row],x0+12,y0+19);
             if(row===2){
               // CRT do jogo em tamanho real aumentado, com assento ao fundo.
               const at={x:0.2,y:-0.35};
@@ -131,9 +131,12 @@ try{
                 x:at.x+0.35,y:at.y+0.82,kind:"regular",id:1,time:1.2,
                 pose:"sitting",direction:"north",transition:1
               });
+              // O mesmo overlay usado pelo SceneRenderer, depois do ator e da mesa.
+              const style=actorStyleFor("regular",1);
+              drawSeatedKeyboardOverlay(ctx,poseCamera,at,1.2,style.skin,style.shirt,1);
             }else{
               drawActor(ctx,camera,{
-                x:0,y:0,kind:"regular",id:1,time:row===0?0.0:0.22,
+                x:0,y:0,kind:"regular",id:1,time:row===0?0.20:0.60,
                 pose:"walking",direction:directions[col]
               });
             }

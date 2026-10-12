@@ -101,3 +101,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Preserva as fases sentar, usar e levantar com fade proporcional ao progresso da transição.
 - [x] Mantém a identidade da roupa e pele por ID; não interfere no estado da economia.
 - [ ] Revisar mãos no PNG real, especialmente sobreposição e silhueta do encosto.
+
+## Fidelidade da prancha com o runtime (12/10/2026)
+- [x] A prancha importa o MESMO `drawSeatedKeyboardOverlay` de `retroComputer.ts` usado no salão.
+- [x] Renderiza mãos sobre teclado depois da mesa e do corpo, com a mesma paleta por identidade.
+- [x] Dois instantes de caminhada em fases opostas do ciclo (0,20 e 0,60 s) para evidenciar os passos.
+- [ ] Conferir a nova imagem gerada; o overlay é provisório até aprovação visual e teste de vídeo no runtime.
