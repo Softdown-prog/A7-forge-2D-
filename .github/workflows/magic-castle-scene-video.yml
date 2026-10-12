@@ -30,7 +30,7 @@ jobs:
       - name: Stage playable scene
         run: |
           mkdir -p out/magic_castle/assets/wizard
-          cp games/magic_castle/{index.html,style.css,game.js,combat.js} out/magic_castle/
+          cp games/magic_castle/{index.html,style.css,game.js,combat.js,enemy_ai.js} out/magic_castle/
           cp out/wizard/frames/*.png out/magic_castle/assets/wizard/
           cp -R games/magic_castle/assets/{enemies,scene} out/magic_castle/assets/
       - name: Record real gameplay
