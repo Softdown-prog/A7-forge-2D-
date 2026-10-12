@@ -63,3 +63,19 @@ Os efeitos de moeda, refrigerante/líquido, máquinas e compras serão **arquivo
 O primeiro vertical slice deve executar no navegador, desenhar o salão 2:1 com balcão e protagonista clicável, três computadores, visitantes que entram/pagam/usam/saem, telas piscando, saldo e vendas, estoque básico, ajuste de preço, despesas mensais, queda de internet e expansão simples. Arte de forma geométrica é explicitamente temporária. A7 worker renderiza pelo menos um objeto de demonstração para avaliação, sem autoprover assets ao jogo. Testes automatizados verificam preços, demanda, despesas e contratos.
 
 Funcionalidades além do vertical slice permanecem neste documento e no backlog, sem declaração de prontidão antes do teste em runtime.
+
+## 10. Contrato visual atualizado — sala cutaway flutuante (12/10/2026)
+
+- A visão é **de cima em isometria 2:1**, como se o jogador tivesse removido o telhado para enxergar o interior inteiro. O jogo nunca desenha o telhado.
+- A lan house é **uma sala flutuante recortada (dollhouse cutaway)**, com piso de espessura visível nas bordas e parede somente no fundo/laterais. A frente fica aberta para a câmera. Sem mundo exterior, calçada, vizinhança, céu de gameplay nem garagem.
+- Entrada/saída acontece somente pela borda do salão: uma soleira e um ponto de spawn/despawn lógico. Nada é simulado do lado de fora da porta.
+- Câmera fixa por todo o jogo; manter tile 128x64 e dimensões/âncoras proporcionais. Nomes técnicos: projeção dimétrica 2:1, eixos do mundo a 45°; não confundir com pitch de 45°.
+- Um cartão discreto de **previsão do tempo**, com identidade visual própria, sinaliza "sol" ou "chuva" e muda as probabilidades de instabilidade. A chuva não precisa ser desenhada sobre a sala.
+
+## 11. Progressão tecnológica (roadmap, sem implementação prematura)
+
+**Conexão de internet**: discada (início, lenta e propensa a falhas) -> via rádio (melhor e menos instável) -> fibra óptica (rápida e mais confiável). O protótipo já tinha 3 níveis abstratos de conexão; nesta etapa só damos nomes a eles e documentamos a progressão. Custos recorrentes e eventos de chuva devem permanecer coerentes com o nível. Futuramente velocidade pode determinar número de computadores simultâneos e satisfação, mas sem expandir a simulação agora.
+
+**Computadores**: ponto de partida com máquinas da era **Windows 98**; evolução por compras/atualizações para **Windows 2000, XP, Vista, Windows 7, 8/8.1, 10 e 11**. São referências de época e progresso da loja, não softwares reais instalados no navegador. A arte deve usar computadores originais (CRT antigos até desktops modernos), sem reproduzir ícones/logos/temas gráficos protegidos. Os upgrades deverão alterar custo, demanda, manutenção e eventualmente catálogo de jogos compatíveis; por enquanto registramos a sequência, sem comprar uma quantidade enorme de equipamentos de uma vez.
+
+**Ordem de implementação**: primeiro validar sala/câmera/fluxo. Depois internet de 3 níveis; só mais tarde modelos de computador e UI de upgrades. Não inserir todos os objetos e desafios simultaneamente.

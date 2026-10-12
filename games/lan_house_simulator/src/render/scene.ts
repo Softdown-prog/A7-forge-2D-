@@ -24,7 +24,7 @@ export class SceneRenderer {
       {depth:2.8,paint:()=>this.machine(camera,4.9,0.7,"candy",elapsedSeconds)},
       {depth:2.0,paint:()=>this.character(camera,1.18,0.74,"owner",elapsedSeconds)},
       {depth:3.15,paint:()=>this.counter(camera)},
-      {depth:6,paint:()=>this.doorMarker(camera,s)}
+      {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
     ];
     for (let i=0;i<pcCount(s);i++){
       const p=pcPosition(i);
@@ -41,7 +41,26 @@ export class SceneRenderer {
   }
   private floor(camera:Projection,w:number):void {
     const ctx=this.ctx;
-    for(let y=0;y<6;y++) for(let x=0;x<w;x++) {
+    // O cenário é uma plataforma suspensa: sem exterior, sem base ligada a um terreno.
+    const rearRight=iso({x:w,y:0},camera);
+    const frontRight=iso({x:w,y:6},camera);
+    const frontLeft=iso({x:0,y:6},camera);
+    const bottom=24*camera.zoom;
+    ctx.save();
+    ctx.shadowColor="rgba(7,12,23,0.65)";
+    ctx.shadowBlur=25*camera.zoom;
+    ctx.shadowOffsetY=18*camera.zoom;
+    polygon(ctx,[frontLeft,frontRight,
+      {x:frontRight.x,y:frontRight.y+bottom},
+      {x:frontLeft.x,y:frontLeft.y+bottom}],"#514854","#343245");
+    ctx.restore();
+    polygon(ctx,[frontLeft,frontRight,
+      {x:frontRight.x,y:frontRight.y+bottom},
+      {x:frontLeft.x,y:frontLeft.y+bottom}],"#615662","#3B3A49");
+    polygon(ctx,[rearRight,frontRight,
+      {x:frontRight.x,y:frontRight.y+bottom},
+      {x:rearRight.x,y:rearRight.y+bottom}],"#6E5862","#3B3A49");
+    for(let y=0;y<6;y> for(let x=0;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
       const tone=(x+y)%2===0?"#C4B7A8":"#B9AC9F";
       polygon(ctx,ps,tone,"#938579");
@@ -151,9 +170,18 @@ export class SceneRenderer {
     }
   }
   private doorMarker(camera:Projection,s:GameState):void {
-    const x=roomWidth(s)-0.5,y=5.35,p=iso({x,y},camera);
-    this.ctx.strokeStyle="#F1E0AD";this.ctx.lineWidth=3;
-    this.ctx.beginPath();this.ctx.ellipse(p.x,p.y,21,9,0,0,Math.PI*2);this.ctx.stroke();
+    // Somente limiar de entrada dentro do salão; não há rua, fachada externa ou chuva.
+    const x=roomWidth(s)-0.5,y=6,ctx=this.ctx;
+    polygon(ctx,[
+      iso({x:x-0.45,y:y-0.24},camera),iso({x:x+0.45,y:y-0.24},camera),
+      iso({x:x+0.45,y},camera),iso({x:x-0.45,y},camera)
+    ],"#D8B98D","#856F62");
+    const left=iso({x:x-0.45,y},camera),right=iso({x:x+0.45,y},camera);
+    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(right.x,right.y);
+    ctx.strokeStyle="#FFF0BC";ctx.lineWidth=4*camera.zoom;ctx.stroke();
+    const mid=iso({x,y:5.55},camera);
+    polygon(ctx,[{x:mid.x-10,y:mid.y+5},{x:mid.x+10,y:mid.y+5},
+      {x:mid.x,y:mid.y-6}],"#F1D49B");
   }
   private sign(camera:Projection,w:number):void {
     const p=iso({x:w*0.72,y:0},camera,157);

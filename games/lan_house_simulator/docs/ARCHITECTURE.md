@@ -50,3 +50,9 @@ Nunca promover arte sem revisão. O Forge não é dependência do cliente HTML5.
 ## Qualidade e concorrência
 
 GitHub Actions pode executar jobs independentes em paralelo, sem agentes de IA embutidos. Usar arquivos dentro da pasta do jogo, gatilho restrito e artifacts nomeados; ações não fazem commit nem sobrescrevem masters. Alterações simultâneas devem usar branches isoladas ou commit atômico com verificação do HEAD; evitar conflitos com City Horizon, Magic Castle e o núcleo A7.
+
+## Contrato de visualização da sala (revisão de validação)
+
+A geometria do piso deve ter **espessura visível e sombra de flutuação**. A câmera vê o interior de cima sem nenhum telhado, em 2:1, e a parede dianteira é omitida para não ocultar mesas/clientes. A entrada é um marcador de soleira na borda frontal e não dá acesso a um mapa externo. `entrance(state)` permanece dentro da sala para spawn lógico. O fundo é abstrato; estado meteorológico aparece apenas em HUD e lógica econômica.
+
+A progressão de tecnologia é dado de jogo, independente da arte: `internetTier=1/2/3` significa discada/rádio/fibra, mantendo o save V1. Evolução dos computadores Windows 98 -> 2000 -> XP -> Vista -> 7 -> 8/8.1 -> 10 -> 11 é uma tabela de planejamento, **não** propriedade de `GameState` até haver implementação de compra e migração de save.

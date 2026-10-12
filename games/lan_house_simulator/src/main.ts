@@ -29,6 +29,8 @@ let game = readSave();
 let adminOpen = false;
 let previousServed = game.served;
 let previousPurchases = game.purchases;
+const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
+function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 const soundFiles: Record<string, string> = {
   coin: "./assets/audio/coin.wav", liquid: "./assets/audio/liquid.wav",
   vending: "./assets/audio/vending.wav"
@@ -69,15 +71,17 @@ canvas.addEventListener("click",e=>{
   if(renderer.hitOwner(x,y)){adminOpen=!adminOpen;renderUI();}
 });
 function renderUI():void {
+  // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
+  if (!status || !admin || !events || !controls) return;
   status.textContent="Dia "+dayNumber(game)+" · "+displayTime(game)+"  |  Caixa R$ "+game.cash.toLocaleString("pt-BR")+
-    "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+(online(game)?"online":"OFFLINE")+
+    "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   setText("price", "R$ "+game.pricePerHour+"/h");
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
-  setText("internet", "Nível "+game.internetTier+(online(game)?" · Estável":" · Instável"));
-  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados");
+  setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Estável":" · Instável"));
+  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · início: era Windows 98");
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");

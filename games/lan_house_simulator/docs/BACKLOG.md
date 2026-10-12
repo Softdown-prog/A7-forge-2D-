@@ -31,3 +31,10 @@
 ## Regra de pronto
 
 A tarefa só recebe status concluído se código + testes + visualização em tamanho de jogo estiverem consistentes. CI verde não significa arte aprovada. Não substituir dois objetos aprovados para refazer o terceiro. 
+
+## Próxima validação visual (restrita)
+- [x] Definir plataforma 2:1 suspensa, telhado omitido, frente recortada e soleira sem exterior.
+- [x] Documentar progressão de conexão discada -> rádio -> fibra, com rótulos dos níveis existentes.
+- [ ] Conferir captura real do runtime em navegador no tamanho 1x, sem confundir com a maquete de validação.
+- [ ] Revisar profundidade/oclusão do balcão, telas CRT e ponto de chegada dos visitantes, antes de novos assets.
+- [ ] Depois: evolução de PCs Windows 98 -> 2000 -> XP -> Vista -> 7 -> 8/8.1 -> 10 -> 11, implementada por upgrade isolado e com custo real.
