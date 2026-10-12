@@ -1,5 +1,6 @@
 import type { Costume } from "../sim/types.js";
 import { iso, type Projection } from "./isometric.js";
+import type { ActorDirection } from "./direction.js";
 
 export type ActorPose = "idle" | "walking" | "sitting" | "standing-up";
 type ActorKind = Costume | "owner";
@@ -29,6 +30,7 @@ export interface ActorRender {
   kind: ActorKind; id: number; time: number;
   pose?: ActorPose;
   facing?: -1 | 1;
+  direction?: ActorDirection;
   transition?: number;
 }
 function ell(ctx: CanvasRenderingContext2D,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
@@ -63,16 +65,20 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const headShift=seated*9;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:seated*2;
   const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
-  const flip=a.facing??1;
+  const direction=a.direction??"south";
+  const back=direction==="north";
+  const sideways=direction==="east"||direction==="west";
+  const flip=direction==="west"?-1:direction==="east"?1:(a.facing??1);
   ctx.save();
   ctx.translate(base.x,base.y-bob*z);
-  ctx.scale(z*1.00*flip,z*1.00);
+  ctx.scale(z*(sideways?0.79:1)*flip,z*1.00);
   ctx.lineJoin="round";
   ctx.lineCap="round";
 
   // A sombra fica presa aos pés (ground anchor), sem saltos na transição de pose.
   ell(ctx,0,0,14,5.1,"rgba(25,31,46,0.26)");
 
+  // Silhuetas de costas, perfil e frente são distintas: não apenas um flip.
   // Capa e acessórios que ficam atrás do corpo.
   if(a.kind==="vampire"){
     shape(ctx,[[-14,-56+headShift],[13,-56+headShift],[24,-6],[-24,-5]],"#433451","#2C2840");
@@ -143,7 +149,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
 
   // Pescoço e cabeça com contorno e sombra lateral.
   segment(ctx,-1,-53+headShift,0,-57+headShift,6,style.skin);
-  ell(ctx,lean,-67+headShift,12.0,12.3,style.skin,"#6F5962");
+  ell(ctx,lean,-67+headShift,12.0,12.3,back?style.hair:style.skin,"#6F5962");
   ell(ctx,lean+6.0,-68+headShift,3.7,8.3,"rgba(109,64,56,0.13)");
 
   // Penteado/silhueta específica. Formas grandes, sem texturas micro-pixel.
@@ -182,6 +188,24 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     }
   }
 
+  if(back){
+    // Nuca e cabelo cobrem a face. Ao usar PC, vemos as costas e não olhos na câmera.
+    shape(ctx,[[-12,-72+headShift],[-10,-79+headShift],
+      [10,-79+headShift],[12,-69+headShift],
+      [6,-57+headShift],[-7,-57+headShift]],style.hair,style.dark);
+    if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
+      ell(ctx,0,-61+headShift,5,3,style.highlight);
+    }
+    // Costura central visível na jaqueta vista de trás.
+    segment(ctx,0,-48+headShift,0,-30+headShift,1.8,style.highlight);
+  } else if(sideways){
+    // Perfil de verdade: uma orelha, apenas um olho e nariz projetado.
+    ell(ctx,7+lean,-65+headShift,4.2,6,style.skin,"#785C59");
+    ell(ctx,4+lean,-68+headShift,1.7,2.1,"#263348");
+    shape(ctx,[[10+lean,-65+headShift],[15+lean,-62+headShift],
+      [10+lean,-60+headShift]],style.skin,"#785C59");
+    segment(ctx,4+lean,-57+headShift,9+lean,-57+headShift,1.1,"#784F51");
+  } else {
   // Expressão legível; olhos não mudam entre quadros.
   ell(ctx,-4.3+lean,-66.8+headShift,1.65,2.0,"#263348");
   ell(ctx,5.2+lean,-66.8+headShift,1.65,2.0,"#263348");
@@ -197,6 +221,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   }
   if(a.kind==="vampire"){
     shape(ctx,[[-1,-58+headShift],[1,-55.5+headShift],[2,-59+headShift]],"#FFF1E8","#AC7077");
+  }
   }
   ctx.restore();
 }

@@ -3,10 +3,14 @@ export type Costume = "regular" | "clown" | "vampire" | "stitched-monster" | "ra
 export type Item = "soda" | "candy" | "snacks";
 
 export interface Point { x: number; y: number }
+import type { ActorDirection } from "../render/direction.js";
+
 export interface Customer {
   id: number;
   x: number; y: number;
   stage: CustomerStage;
+  /** Última orientação do deslocamento; persiste quando o cliente para. */
+  facing?: ActorDirection;
   target: Point;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];

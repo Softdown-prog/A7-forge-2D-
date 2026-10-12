@@ -75,3 +75,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Adicionar montante, travessa e peitoril às janelas sem cenário externo.
 - [x] Criar close-up dedicado para os equipamentos a partir do Canvas de runtime.
 - [ ] Conferir screenshot V3 gerado pelo worker de cena e aprovar visualmente antes de promover arte final.
+
+## Direção, assento e coerência espacial (12/10/2026)
+- [x] Orientação canônica norte/sul/leste/oeste derivada de cada trecho de movimento no espaço do jogo, retida durante espera e em saves novos.
+- [x] Corpo de costas com nuca/cabelo sem olhos frontais, e perfil com olho único/nariz; marcha ligada ao deslocamento.
+- [x] Usuário sentado e digitando orientado obrigatoriamente para o CRT (norte), sem olhar para câmera.
+- [x] Aproximar as três mesas iniciais da parede posterior e ampliar área do corredor; duas expansões reposicionadas.
+- [x] Testes para quatro direções, manutenção de orientação e posicionamento mesa/cadeira.
+- [ ] Validar quatro direções em PNG/filmagem do navegador, com overlay de pernas/mãos e oclusão; arte ainda procedural provisória.

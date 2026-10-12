@@ -131,3 +131,23 @@ test("paleta de personagens é estável por identidade e independente da animaç
   assert.ok(box.x<center.x&&box.x+box.width>center.x);
   assert.ok(box.y<center.y&&box.y+box.height>center.y);
 });
+
+test("quatro direções, parada e visão de costas no PC",async()=>{
+  const {directionFromDelta,movementDirection,COMPUTER_DIRECTION}=await import("../dist/js/render/direction.js");
+  assert.equal(directionFromDelta(1,0),"east");
+  assert.equal(directionFromDelta(-1,0),"west");
+  assert.equal(directionFromDelta(0,1),"south");
+  assert.equal(directionFromDelta(0,-1),"north");
+  assert.equal(directionFromDelta(0,0,"west"),"west");
+  assert.equal(movementDirection({x:3,y:4},{x:3,y:2}),"north");
+  assert.equal(COMPUTER_DIRECTION,"north");
+});
+test("mesas próximas da parede e cadeiras no corredor interno",async()=>{
+  const {pcPosition}=await import("../dist/js/sim/engine.js");
+  const {computerSeat,AISLE_Y}=await import("../dist/js/sim/route.js");
+  for(let i=0;i<3;i++){
+    const p=pcPosition(i),seat=computerSeat(p);
+    assert.ok(p.y>=1.3&&p.y<=2.1);
+    assert.ok(seat.y<AISLE_Y);
+  }
+});

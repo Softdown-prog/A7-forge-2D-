@@ -2,6 +2,7 @@ import type { Costume, Customer, GameState, Item, Point, Result } from "./types.
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
+import { directionFromDelta } from "../render/direction.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -25,9 +26,9 @@ export function roomWidth(s: GameState): number { return 7 + s.expansionLevel * 
 export function entrance(s: GameState): Point { return { x: roomWidth(s) - 0.5, y: 5.35 }; }
 export function pcPosition(i: number): Point {
   const positions: Point[] = [
-    { x: 2.25, y: 3.05 }, { x: 3.75, y: 2.65 }, { x: 5.1, y: 2.2 },
-    { x: 7.2, y: 2.2 }, { x: 7.85, y: 3.6 },
-    { x: 9.5, y: 2.2 }, { x: 9.85, y: 3.6 }
+    { x: 2.25, y: 1.85 }, { x: 3.75, y: 1.85 }, { x: 5.1, y: 1.85 },
+    { x: 7.2, y: 1.85 }, { x: 7.85, y: 2.95 },
+    { x: 9.5, y: 1.85 }, { x: 9.85, y: 2.95 }
   ];
   return positions[i] ?? positions[0];
 }
@@ -46,6 +47,7 @@ export function applyResult(s: GameState, result: Result): Result {
 function move(c: Customer, speed = 0.38): boolean {
   const dx = c.target.x - c.x, dy = c.target.y - c.y;
   const distance = Math.hypot(dx, dy);
+  if(distance>0.0001)c.facing=directionFromDelta(dx,dy,c.facing);
   if (distance <= speed) { c.x = c.target.x; c.y = c.target.y; return true; }
   c.x += dx / distance * speed;
   c.y += dy / distance * speed;
@@ -78,7 +80,7 @@ function spawn(s: GameState): void {
   const e = entrance(s);
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
-    id: s.nextCustomerId++, x: e.x, y: e.y,
+    id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: { ...COUNTER_QUEUE },
     costume, pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true

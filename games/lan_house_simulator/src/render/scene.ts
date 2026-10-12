@@ -3,6 +3,7 @@ import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
 import { drawActor, actorHitbox, type ActorPose } from "./actorArt.js";
+import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -35,7 +36,8 @@ export class SceneRenderer {
     }
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
-      entries.push({depth:c.x+c.y+0.08,paint:()=>this.customer(camera,c,elapsedSeconds,seated)});
+      const location=seated && c.pcIndex!==null ? pcPosition(c.pcIndex) : c;
+      entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated)});
     }
     entries.sort((a,b)=>a.depth-b.depth);
     for (const e of entries) e.paint();
@@ -233,7 +235,7 @@ export class SceneRenderer {
   }
   private owner(camera:Projection,t:number):void {
     // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
-    drawActor(this.ctx,camera,{x:1.45,y:1.05,kind:"owner",id:0,time:t,pose:"idle",facing:1});
+    drawActor(this.ctx,camera,{x:1.45,y:1.05,kind:"owner",id:0,time:t,pose:"idle",direction:"south"});
     this.heroHitbox=actorHitbox(camera,1.45,1.05);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean):void {
@@ -249,11 +251,12 @@ export class SceneRenderer {
       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
     }
-    const dx=c.target.x-c.x,dy=c.target.y-c.y;
-    const facing:1|-1=moving && (dx-dy)<-0.04?-1:1;
+    const direction=seated?COMPUTER_DIRECTION:
+      moving?movementDirection({x:c.x,y:c.y},c.target,c.facing??"south"):
+      (c.facing??"south");
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
-      pose,facing,transition
+      pose,direction,transition
     });
     if(c.stage==="waiting"){
       const p=iso({x,y},camera,91);
