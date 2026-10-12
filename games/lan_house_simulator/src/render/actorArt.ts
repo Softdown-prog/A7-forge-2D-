@@ -40,7 +40,7 @@ function shape(ctx:CanvasRenderingContext2D,pts:readonly [number,number][],fill:
   ctx.beginPath();ctx.moveTo(pts[0]![0],pts[0]![1]);
   for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);
   ctx.closePath();ctx.fillStyle=fill;ctx.fill();
-  ctx.strokeStyle=stroke;ctx.lineWidth=1.6;ctx.stroke();
+  ctx.strokeStyle=stroke;ctx.lineWidth=1.8;ctx.stroke();
 }
 function segment(ctx:CanvasRenderingContext2D,
   x1:number,y1:number,x2:number,y2:number,width:number,fill:string):void {
@@ -65,7 +65,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const flip=a.facing??1;
   ctx.save();
   ctx.translate(base.x,base.y-bob*z);
-  ctx.scale(z*0.94*flip,z*0.94);
+  ctx.scale(z*1.00*flip,z*1.00);
   ctx.lineJoin="round";
   ctx.lineCap="round";
 

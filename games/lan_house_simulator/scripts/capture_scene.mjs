@@ -70,6 +70,21 @@ try{
     const shot=await page.locator("#game").screenshot({type:"png"});
     if(shot.length<10000)throw Error("Canvas screenshot suspiciously small on "+config.name);
     await writeFile(resolve(output,"lhs_canvas_"+config.name+".png"),shot);
+    // Ampliação do próprio framebuffer renderizado, não uma arte recriada.
+    if(config.name==="desktop"){
+      const encoded=await page.evaluate(()=>{
+        const source=document.querySelector("#game");
+        if(!(source instanceof HTMLCanvasElement))throw Error("Canvas ausente");
+        const crop=document.createElement("canvas");crop.width=900;crop.height=560;
+        const context=crop.getContext("2d");
+        if(!context)throw Error("Canvas de detalhe ausente");
+        context.imageSmoothingEnabled=true;
+        context.drawImage(source,315,155,550,345,0,0,900,560);
+        return crop.toDataURL("image/png").split(",")[1];
+      });
+      await writeFile(resolve(output,"lhs_characters_closeup_desktop.png"),
+        Buffer.from(encoded,"base64"));
+    }
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
   }

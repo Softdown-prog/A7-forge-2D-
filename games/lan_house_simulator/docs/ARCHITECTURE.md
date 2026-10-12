@@ -62,3 +62,6 @@ A progressão de tecnologia é dado de jogo, independente da arte: `internetTier
 O módulo `src/render/actorArt.ts` é um *renderer de estudo*, feito de paths e elipses Canvas 2D em coordenadas locais com âncora de pés. Não depende de imagens online e não é asset aprovado. `actorStyleFor(kind,id)` determina paleta e aparência por identidade, não por timestamp. Poses `idle`, `walking`, `sitting`, `standing-up` compartilham silhueta e rosto, com transições animadas. A orientação esquerda/direita vem do deslocamento dos waypoints, sem rotação de câmera. Fantasias são arquétipos originais. O `actorHitbox` acompanha a cabeça/ombros do proprietário para manter painel clicável.
 
 Futuro: trocar formas por sprites A7 Forge após aprovação visual 1x mantendo a API de pose, ID, âncora e paleta, sem refazer IA ou economia. A cena continua fixa, 2:1, cutaway sem telhado/exterior.
+
+## Revisão de enquadramento pela captura real
+A placa de marca agora ocupa apenas o fundo vazio do Canvas, sem ocluir a decoração. O worker-scene passa a gerar `lhs_characters_closeup_desktop.png`, recorte ampliado do *mesmo framebuffer do jogo*, e não arte reimaginada. Cadeiras com encosto em plano vertical, rodízios e contornos mais legíveis usam a posição original do jogo. Câmera e rotas seguem inalteradas.

@@ -75,14 +75,41 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
     ctx.fillStyle="#8A8175";ctx.fillRect(dot.x-1*z,dot.y-1*z,2*z,2*z);
   }
 
-  // Cadeira na frente do PC, sem sobrepor artificialmente a cabeça do cliente.
+  // Silhueta de cadeira de escritório: rodízios, suporte, encosto e assento.
   const cx=p.x+0.35,cy=p.y+0.87;
-  raisedBox(ctx,camera,cx-0.22,cy+0.08,0.47,0.12,20,27,
-    "#495E7B","#273B56","#354861");
-  const seat=iso({x:cx,y:cy},camera,23);
-  ctx.fillStyle="#3B506D";ctx.beginPath();ctx.ellipse(seat.x,seat.y,18*z,8*z,0,0,Math.PI*2);ctx.fill();
+  const base=iso({x:cx,y:cy},camera,4);
+  const left=iso({x:cx-0.25,y:cy},camera,2);
+  const right=iso({x:cx+0.25,y:cy},camera,2);
+  ctx.strokeStyle="#27374C";ctx.lineWidth=3.5*z;
+  ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(base.x,base.y);
+  ctx.lineTo(right.x,right.y);ctx.stroke();
+  for(const foot of [left,right]){
+    ctx.beginPath();ctx.ellipse(foot.x,foot.y,2.8*z,2*z,0,0,Math.PI*2);
+    ctx.fillStyle="#1F2B3B";ctx.fill();
+  }
+  const seat=iso({x:cx,y:cy},camera,25);
+  ctx.beginPath();ctx.moveTo(base.x,base.y);ctx.lineTo(seat.x,seat.y);
+  ctx.strokeStyle="#35435A";ctx.lineWidth=4*z;ctx.stroke();
+  // Plano vertical amplo; melhora leitura também em resolução pequena.
+  const by=cy+0.19;
+  polygon(ctx,[
+    iso({x:cx-0.26,y:by},camera,55),iso({x:cx+0.26,y:by},camera,55),
+    iso({x:cx+0.26,y:by},camera,28),iso({x:cx-0.26,y:by},camera,28)
+  ],"#506985","#263A55");
+  polygon(ctx,[
+    iso({x:cx-0.20,y:by+0.006},camera,49),
+    iso({x:cx+0.20,y:by+0.006},camera,49),
+    iso({x:cx+0.20,y:by+0.006},camera,35),
+    iso({x:cx-0.20,y:by+0.006},camera,35)
+  ],"#657D97");
+  ctx.fillStyle="#3B506C";ctx.beginPath();
+  ctx.ellipse(seat.x,seat.y,19*z,9*z,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#27394F";ctx.lineWidth=1.5*z;ctx.stroke();
   if(!occupied){
-    const edge=iso({x:cx,y:cy},camera,0);
-    ctx.fillStyle="#28374F";ctx.fillRect(edge.x-2*z,edge.y-2*z,4*z,13*z);
+    for(const side of [-1,1]){
+      const arm=iso({x:cx+side*0.25,y:cy-0.04},camera,30);
+      ctx.beginPath();ctx.ellipse(arm.x,arm.y,5*z,3*z,0,0,Math.PI*2);
+      ctx.fillStyle="#516987";ctx.fill();
+    }
   }
 }

@@ -18,3 +18,8 @@ canvas{display:block;width:100%;height:auto;touch-action:manipulation;cursor:poi
 .stat{border:1px solid #586983;padding:13px;background:#213450}.stat h3{font-size:15px;color:#ffdda2;margin:0 0 6px}.stat p{color:#d3dde9;font-size:13px;margin:8px 0}.action-row{display:flex;align-items:center;gap:6px}.action-row.wrap{flex-wrap:wrap}.action-row .slice{font-size:12px}.action-row strong{padding:0 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
 footer{text-align:center;color:#a9b9d0;font-size:12px;padding:14px}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.sidebar{min-height:0}.admin{inset:auto 7px 7px}.topbar{align-items:flex-start}.brand p{display:none}}@media(max-width:560px){.app{padding:8px}.logo{width:39px;height:39px;font-size:17px}.topbar{gap:8px}.topbar button{font-size:11px;padding:4px}.status{font-size:12px}.admin-grid{grid-template-columns:1fr}.admin{padding:10px;max-height:83vh}.sidebar{padding:10px}}
+
+/* Contraste de acabamento, sem modificar câmera, layout ou mecânicas. */
+.stage{border-color:#b79878;box-shadow:0 14px 32px #0b101c,0 0 0 1px #5b6a7b inset}
+.note{background:#17263b;color:#d6e0ea}
+@media(max-width:560px){.stage{border-radius:9px}.note{font-size:13px;line-height:1.35}.brand h1{line-height:1.15}.status{line-height:1.5}}

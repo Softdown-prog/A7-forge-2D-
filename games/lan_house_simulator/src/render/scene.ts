@@ -124,6 +124,25 @@ export class SceneRenderer {
       ctx.fillText(label,middle.x,middle.y+2);
       ctx.restore();
     }
+    // Quadros no plano da parede esquerda (x=0), sem exterior.
+    for(const [start,label,accent] of [
+      [1.20,"CYBER","#587D79"],[3.28,"JOGOS","#987654"]
+    ] as const){
+      polygon(ctx,[
+        iso({x:0,y:start},camera,126),iso({x:0,y:start+1.20},camera,126),
+        iso({x:0,y:start+1.20},camera,78),iso({x:0,y:start},camera,78)
+      ],"#B18E6D","#6F5D66");
+      polygon(ctx,[
+        iso({x:0,y:start+0.09},camera,119),
+        iso({x:0,y:start+1.11},camera,119),
+        iso({x:0,y:start+1.11},camera,85),
+        iso({x:0,y:start+0.09},camera,85)
+      ],accent);
+      const p=iso({x:0,y:start+0.59},camera,103);
+      ctx.save();ctx.font="bold 8px system-ui,sans-serif";
+      ctx.fillStyle="#FFF0D9";ctx.textAlign="center";ctx.fillText(label,p.x,p.y+2);
+      ctx.restore();
+    }
     // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
     for(const x of [1.7,3.9,Math.max(5.4,w-1.2)]){
       const p=iso({x,y:0},camera,146),z=camera.zoom;
@@ -213,10 +232,18 @@ export class SceneRenderer {
       {x:mid.x,y:mid.y-6}],"#F1D49B");
   }
   private sign(camera:Projection,w:number):void {
-    const p=iso({x:w*0.72,y:0},camera,157);
-    this.ctx.fillStyle="#694D63";this.ctx.fillRect(p.x-79,p.y-21,158,29);
-    this.ctx.fillStyle="#FFF0CF";this.ctx.font="bold 14px system-ui,sans-serif";
-    this.ctx.textAlign="center";this.ctx.fillText("LAN HOUSE SIMULATOR",p.x,p.y-2);this.ctx.textAlign="start";
+    // Plaqueta de marca na área vazia do fundo: não cobre quadros nem clientes.
+    const ctx=this.ctx,x=28,y=28,label=w>7?"SALÃO AMPLIADO":"PEQUENO NEGÓCIO";
+    ctx.save();
+    ctx.fillStyle="rgba(22,35,52,0.94)";ctx.fillRect(x,y,238,53);
+    ctx.strokeStyle="#B89A78";ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,236,51);
+    ctx.fillStyle="#E6C795";ctx.fillRect(x+13,y+10,3,30);
+    ctx.font="bold 18px system-ui,sans-serif";ctx.fillStyle="#FFEDD1";
+    ctx.fillText("LAN HOUSE",x+28,y+25);
+    ctx.font="bold 10px system-ui,sans-serif";ctx.fillStyle="#A5D2C6";
+    ctx.fillText(label+"  ·  1998",x+28,y+42);
+    ctx.restore();
+    void camera;
   }
   private hudInside(ctx:CanvasRenderingContext2D,s:GameState):void {
     ctx.fillStyle="rgba(15,25,43,.88)";ctx.fillRect(18,526,395,64);

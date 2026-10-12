@@ -59,3 +59,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Caminhada com balanço contrário de braços/pernas, pose sentada, mãos voltadas ao teclado e levantar sem troca de rosto.
 - [x] Frisos, cartazes originais, luminárias discretas e tapete sobre piso isométrico sem telhado.
 - [ ] Avaliar arte no PNG real (desktop/mobile) do CI antes de promover sprites finais.
+
+## Revisão por captura real V2
+- [x] Conferir screenshots reais desktop/mobile do commit 14caace (três workers verdes).
+- [x] Mover letreiro para área livre do fundo, sem ocultar os pôsteres.
+- [x] Decorar parede lateral sem criar exterior ou telhado.
+- [x] Melhorar o contraste e a forma das cadeiras, mantendo mesas/âncoras.
+- [x] Gerar close-up de personagens a partir do mesmo Canvas de runtime.
+- [ ] Avaliar novos PNGs do CI V2 antes de dar arte como aprovada.
