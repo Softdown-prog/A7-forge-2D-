@@ -23,12 +23,14 @@ jobs:
           npm install --no-save playwright@1.56.1
           npx playwright install --with-deps chromium
           sudo apt-get install -y ffmpeg
+      - name: Test projectile physics
+        run: node --test games/magic_castle/tests/*.test.cjs
       - name: Render game-owned wizard assets
         run: python -m visitor_forge_2d render-pixel-character --recipe games/magic_castle/authoring/wizard/pixel_character_wizard_mini_01.json --output out/wizard
       - name: Stage playable scene
         run: |
           mkdir -p out/magic_castle/assets/wizard
-          cp games/magic_castle/{index.html,style.css,game.js} out/magic_castle/
+          cp games/magic_castle/{index.html,style.css,game.js,combat.js} out/magic_castle/
           cp out/wizard/frames/*.png out/magic_castle/assets/wizard/
           cp -R games/magic_castle/assets/{enemies,scene} out/magic_castle/assets/
       - name: Record real gameplay
