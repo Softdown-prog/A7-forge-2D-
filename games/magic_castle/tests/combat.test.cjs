@@ -1,7 +1,7 @@
 "use strict";
 const assert=require("node:assert/strict");
 const {test}=require("node:test");
-const {sweep,stepProjectile}=require("../combat.js");
+const {sweep,stepProjectile,advanceReaction}=require("../combat.js");
 test("fast spell cannot tunnel through a slime",()=>{
  const slime={x:100,y:20,w:24,h:24,hp:5};
  const spell={x:0,y:30,w:12,h:10,vx:1000,life:1,damage:1};
@@ -38,4 +38,32 @@ test("expired shot cannot damage after lifetime ends",()=>{
  const e={x:10,y:10,w:12,h:12,hp:3};
  assert.equal(stepProjectile({x:10,y:10,w:4,h:4,vx:0,life:0},.02,[e]).kind,"expired");
  assert.equal(e.hp,3);
+});
+
+test("impact pushes slime away and slows down",()=>{
+ const e={type:"slime",x:100,y:20,w:24,h:24,hp:5};
+ const shot={x:0,y:30,w:12,h:10,vx:1000,life:1};
+ stepProjectile(shot,.15,[e]);
+ const speed=e.knockV;
+ assert.ok(speed>0);assert.ok(e.stun>0);
+ advanceReaction(e,.05);assert.ok(e.x>100);assert.ok(e.knockV<speed);
+});
+test("guardian has greater knockback resistance than bat",()=>{
+ const g={type:"guardian",x:100,y:20,w:24,h:24,hp:8};
+ const b={type:"bat",x:100,y:20,w:24,h:24,hp:3};
+ stepProjectile({x:0,y:30,w:12,h:10,vx:1000,life:1},.15,[g]);
+ stepProjectile({x:0,y:30,w:12,h:10,vx:1000,life:1},.15,[b]);
+ assert.ok(Math.abs(g.knockV)<Math.abs(b.knockV));
+});
+test("defeated enemy animates briefly but cannot be hit again",()=>{
+ const e={type:"bat",x:100,y:20,w:24,h:24,hp:1};
+ const shot={x:0,y:30,w:12,h:10,vx:1000,life:1};
+ stepProjectile(shot,.15,[e]);assert.equal(e.hp,0);assert.ok(e.deathTime>0);
+ const newShot={x:0,y:30,w:12,h:10,vx:1000,life:1};
+ assert.equal(stepProjectile(newShot,.15,[e]),null);
+ advanceReaction(e,.5);assert.equal(e.deathTime,0);
+});
+test("knockback stays inside the room bounds",()=>{
+ const e={type:"bat",x:0,y:20,w:24,h:24,hp:3,knockV:-120,stun:.17};
+ advanceReaction(e,.1,0,800);assert.equal(e.x,0);
 });
