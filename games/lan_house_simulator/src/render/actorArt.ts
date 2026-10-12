@@ -62,6 +62,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const bob=walking?Math.abs(step)*1.5:0;
   const headShift=seated*9;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:seated*2;
+  const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const flip=a.facing??1;
   ctx.save();
   ctx.translate(base.x,base.y-bob*z);
@@ -101,7 +102,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const elbowX=side*(18-seated*2)+wave;
     const elbowY=-36+headShift+seated*3;
     const handX=side*(19-seated*5)+wave*.5;
-    const handY=-24+headShift+seated*4;
+    const handY=-24+headShift+seated*4+typing*side;
     segment(ctx,ax,ay,elbowX,elbowY,8,style.dark);
     segment(ctx,elbowX,elbowY,handX,handY,7,style.shirt);
     ell(ctx,handX,handY,4.1,4.4,style.skin,"#785C59");

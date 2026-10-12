@@ -65,3 +65,7 @@ Futuro: trocar formas por sprites A7 Forge após aprovação visual 1x mantendo 
 
 ## Revisão de enquadramento pela captura real
 A placa de marca agora ocupa apenas o fundo vazio do Canvas, sem ocluir a decoração. O worker-scene passa a gerar `lhs_characters_closeup_desktop.png`, recorte ampliado do *mesmo framebuffer do jogo*, e não arte reimaginada. Cadeiras com encosto em plano vertical, rodízios e contornos mais legíveis usam a posição original do jogo. Câmera e rotas seguem inalteradas.
+
+## Equipamentos do fim dos anos 1990: render de estudo V3
+
+Monitores CRT continuam desenhados em `retroComputer.ts`. O desktop ilustrativo utiliza um pequeno sistema de coordenadas relativas à face do monitor, preservando a projeção isométrica; não reproduz marcas ou UI de sistemas operacionais. Máquinas de venda são um estudo de geometria 2D procedural com produtos visíveis, gaveta e painel. As janelas exibem vidro abstrato, caixilho e peitoril, não existe paisagem externa. O trabalhador de cena entrega `lhs_equipment_closeup_desktop.png`, corte ampliado do framebuffer real para revisão 1x e zoom, além dos PNGs existentes. O contrato de simulação e a câmera permanecem inalterados.

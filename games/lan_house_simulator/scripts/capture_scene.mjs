@@ -84,6 +84,18 @@ try{
       });
       await writeFile(resolve(output,"lhs_characters_closeup_desktop.png"),
         Buffer.from(encoded,"base64"));
+      // Segunda inspeção, focada nos três monitores e nas vitrines das máquinas.
+      const equipment=await page.evaluate(()=>{
+        const source=document.querySelector("#game");
+        if(!(source instanceof HTMLCanvasElement))throw Error("Canvas ausente");
+        const crop=document.createElement("canvas");crop.width=1000;crop.height=570;
+        const context=crop.getContext("2d");
+        if(!context)throw Error("Canvas de detalhe indisponível");
+        context.drawImage(source,345,175,530,302,0,0,1000,570);
+        return crop.toDataURL("image/png").split(",")[1];
+      });
+      await writeFile(resolve(output,"lhs_equipment_closeup_desktop.png"),
+        Buffer.from(equipment,"base64"));
     }
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();

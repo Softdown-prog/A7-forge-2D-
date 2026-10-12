@@ -18,17 +18,40 @@ function raisedBox(ctx:CanvasRenderingContext2D,camera:Projection,
 function screenFace(ctx:CanvasRenderingContext2D,camera:Projection,
   x:number,y:number,w:number,z:number,height:number,lit:boolean,pulse:number):void {
   const left=x+0.065,right=x+w-0.065;
-  const top=iso({x:left,y},camera,z+height-5),
-    topRight=iso({x:right,y},camera,z+height-5),
-    bottomRight=iso({x:right,y},camera,z+9),
-    bottomLeft=iso({x:left,y},camera,z+9);
-  polygon(ctx,[top,topRight,bottomRight,bottomLeft],lit?(pulse?"#75BCD3":"#679DAD"):"#59616C","#3A5059");
-  if(lit){
-    const a=iso({x:left+0.025,y:y+0.003},camera,z+height-10);
-    const b=iso({x:right-0.025,y:y+0.003},camera,z+height-10);
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-    ctx.strokeStyle="#DBEDE1";ctx.lineWidth=Math.max(0.6,camera.zoom);ctx.stroke();
+  const top=iso({x:left,y},camera,z+height-5);
+  const topRight=iso({x:right,y},camera,z+height-5);
+  const bottomLeft=iso({x:left,y},camera,z+9);
+  const bottomRight=iso({x:right,y},camera,z+9);
+  // Interface de desktop fictícia, desenhada diretamente no mesmo plano do vidro CRT.
+  // Usa coordenadas 0..1 para acompanhar a projeção 2:1 em qualquer tamanho de sala.
+  const face=(u:number,v:number):Point=>({
+    x:top.x+(topRight.x-top.x)*u+(bottomLeft.x-top.x)*v,
+    y:top.y+(topRight.y-top.y)*u+(bottomLeft.y-top.y)*v
+  });
+  const panel=(u0:number,v0:number,u1:number,v1:number,color:string):void=>{
+    polygon(ctx,[face(u0,v0),face(u1,v0),face(u1,v1),face(u0,v1)],color);
+  };
+  polygon(ctx,[top,topRight,bottomRight,bottomLeft],
+    lit?(pulse?"#326A82":"#335D78"):"#434D5C","#495362");
+  if(!lit) {
+    panel(0.08,0.10,0.92,0.14,"#65717C");
+    return;
   }
+  // Barra superior, ícones e barra inferior: sugestão de software dos anos 1990,
+  // sem desenhar logos de sistemas operacionais ou copiar interfaces.
+  panel(0.04,0.05,0.96,0.20,"#7399BA");
+  panel(0.04,0.85,0.96,0.96,"#A3B6BA");
+  panel(0.08,0.86,0.30,0.95,"#527C77");
+  for(let row=0;row<2;row++){
+    for(let col=0;col<2;col++){
+      const u=0.15+col*0.37,v=0.31+row*0.22;
+      panel(u,v,u+0.17,v+0.10,row===0?"#E2D7AA":"#B2D8D8");
+      panel(u+0.02,v+0.12,u+0.25,v+0.14,"#98BDCA");
+    }
+  }
+  // Reflexo moderado do vidro curvo, evitando a aparência glossy.
+  polygon(ctx,[face(0.72,0.20),face(0.88,0.20),
+    face(0.64,0.83),face(0.55,0.83)],"rgba(222,243,244,0.12)");
 }
 
 export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection,
@@ -54,6 +77,11 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
     "#E7DAB8","#BFB297","#A79D8E");
   const power=iso({x:p.x+0.015,y:p.y+0.405},camera,43);
   ctx.fillStyle="#8CC8AD";ctx.fillRect(power.x-1.6*z,power.y-1.5*z,3*z,3*z);
+  // Duas ranhuras no gabinete beige (leitor de disco e botão), sem microtexturas.
+  for(const elevation of [49,46]){
+    const slot=iso({x:p.x-0.045,y:p.y+0.403},camera,elevation);
+    ctx.fillStyle="#827C73";ctx.fillRect(slot.x-4*z,slot.y,8*z,1.5*z);
+  }
 
   // Monitor CRT volumoso: corpo trapezoidal simplificado e tela orientada para a cadeira.
   const mx=p.x+0.22,my=p.y-0.05,mw=0.46,md=0.36,mz=36,mh=39;

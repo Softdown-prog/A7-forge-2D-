@@ -67,3 +67,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Melhorar o contraste e a forma das cadeiras, mantendo mesas/âncoras.
 - [x] Gerar close-up de personagens a partir do mesmo Canvas de runtime.
 - [ ] Avaliar novos PNGs do CI V2 antes de dar arte como aprovada.
+
+## Polimento visual do equipamento — 12/10/2026
+- [x] Dar desenho de desktop genérico aos monitores CRT (barras, ícones e vidro) sem marcas registradas.
+- [x] Acrescentar leitor de disco ao gabinete bege e digitação discreta às poses sentadas.
+- [x] Substituir círculos nas máquinas por vitrines com produtos, fileiras, moedeiro e gaveta.
+- [x] Adicionar montante, travessa e peitoril às janelas sem cenário externo.
+- [x] Criar close-up dedicado para os equipamentos a partir do Canvas de runtime.
+- [ ] Conferir screenshot V3 gerado pelo worker de cena e aprovar visualmente antes de promover arte final.

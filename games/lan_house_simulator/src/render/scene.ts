@@ -90,7 +90,22 @@ export class SceneRenderer {
         c=iso({x:position+1.2,y:0},camera,73),d=iso({x:position,y:0},camera,73);
       polygon(ctx,[a,b,c,d],"#344F62","#F9E2BE");
       polygon(ctx,[iso({x:position+0.62,y:0},camera,127),iso({x:position+0.62,y:0},camera,73),
-        c,b],"rgba(127,186,201,0.14)");
+        c,b],"rgba(127,186,201,0.19)");
+      // Montante e travessa dividem a janela, sem renderizar qualquer exterior.
+      const mullionTop=iso({x:position+0.6,y:0},camera,127);
+      const mullionBottom=iso({x:position+0.6,y:0},camera,73);
+      ctx.strokeStyle="#C5B49B";ctx.lineWidth=2.3*camera.zoom;
+      ctx.beginPath();ctx.moveTo(mullionTop.x,mullionTop.y);
+      ctx.lineTo(mullionBottom.x,mullionBottom.y);ctx.stroke();
+      const middleLeft=iso({x:position,y:0},camera,100);
+      const middleRight=iso({x:position+1.2,y:0},camera,100);
+      ctx.beginPath();ctx.moveTo(middleLeft.x,middleLeft.y);
+      ctx.lineTo(middleRight.x,middleRight.y);ctx.stroke();
+      // Peitoril projetado em 2:1, distinto do caixilho.
+      polygon(ctx,[iso({x:position-0.06,y:0.03},camera,72),
+        iso({x:position+1.26,y:0.03},camera,72),
+        iso({x:position+1.26,y:0.11},camera,70),
+        iso({x:position-0.06,y:0.11},camera,70)],"#DDD0B3","#867D79");
     }
   }
   private decor(camera:Projection,w:number):void {
@@ -168,20 +183,50 @@ export class SceneRenderer {
     }
   }
   private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number):void {
-    const ctx=this.ctx,h=kind==="soda"?106:85;
-    cuboid(ctx,camera,x,y,0.65,0.6,h,kind==="soda"?
-      ["#E65E5F","#992D45","#B74154"]:["#F5B84E","#B57634","#D68B46"]);
-    const a=iso({x:x+0.65,y:y+0.25},camera,h-17);
-    ctx.fillStyle=kind==="soda"?"#6ACACD":"#614C75";
-    ctx.beginPath();ctx.ellipse(a.x,a.y,13,17,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=t%1<0.5?"#FFF3C7":"#6C4769";
-    ctx.fillRect(a.x-6,a.y-8,12,4);
-    const label=iso({x:x+0.65,y:y+0.4},camera,38);
-    ctx.fillStyle="#FFF6DB";ctx.fillRect(label.x-8,label.y-6,16,5);
-    const slot=iso({x:x+0.65,y:y+0.43},camera,17),z=camera.zoom;
-    ctx.fillStyle="#253348";ctx.fillRect(slot.x-9*z,slot.y-5*z,18*z,7*z);
-    ctx.fillStyle=kind==="soda"?"#A5E5D6":"#F1D391";
-    ctx.fillRect(slot.x-6*z,slot.y-3*z,9*z,2*z);
+    const ctx=this.ctx,h=kind==="soda"?106:85,z=camera.zoom;
+    const soda=kind==="soda";
+    cuboid(ctx,camera,x,y,0.65,0.6,h,soda?
+      ["#E56567","#992D45","#B74154"]:["#EDBD56","#AC733C","#D49A4E"]);
+    // Uma vitrine verdadeira na face voltada ao salão; fileiras de mercadorias
+    // substituem o antigo círculo sem função. O exterior continua ausente.
+    const frontX=x+0.652,glassY=y+0.06;
+    const corner=(dy:number,height:number)=>iso({x:frontX,y:glassY+dy},camera,height);
+    polygon(ctx,[corner(0,h-11),corner(0.34,h-11),
+      corner(0.34,h-57),corner(0,h-57)],"#27374C","#F2DAB2");
+    for(let row=0;row<2;row++) {
+      const high=h-23-row*17;
+      const shelfA=corner(0.015,high-7),shelfB=corner(0.325,high-7);
+      ctx.strokeStyle="#BC9E82";ctx.lineWidth=Math.max(1,1.7*z);
+      ctx.beginPath();ctx.moveTo(shelfA.x,shelfA.y);ctx.lineTo(shelfB.x,shelfB.y);ctx.stroke();
+      for(let col=0;col<3;col++){
+        const point=corner(0.057+col*0.106,high);
+        const color=soda?
+          ["#D55C67","#D6AE72","#74B8BE"][(col+row)%3]!:
+          ["#E9C581","#D59484","#9BC5A1"][(col+row)%3]!;
+        ctx.fillStyle=color;
+        ctx.fillRect(point.x-3*z,point.y-4*z,6*z,10*z);
+        ctx.fillStyle="rgba(248,241,216,0.8)";
+        ctx.fillRect(point.x-2*z,point.y-1*z,4*z,2*z);
+      }
+    }
+    // Vidro e discreta diagonal de reflexo: detalhes lidos mesmo em zoom 1x.
+    polygon(ctx,[corner(0.28,h-13),corner(0.32,h-13),
+      corner(0.10,h-55),corner(0.06,h-55)],"rgba(183,219,235,0.17)");
+    const fascia=corner(0.18,h-6);
+    ctx.save();ctx.font="bold "+Math.max(6,8*z)+"px system-ui,sans-serif";
+    ctx.fillStyle="#FFF2D3";ctx.textAlign="center";
+    ctx.fillText(soda?"REFRI":"DOCES",fascia.x,fascia.y-1*z);
+    ctx.restore();
+    // Moedeiro e botoeira, com luz alternada em intensidade baixa.
+    const controls=corner(0.43,h-40);
+    ctx.fillStyle="#E9D8B7";ctx.fillRect(controls.x-4*z,controls.y-6*z,8*z,15*z);
+    ctx.fillStyle="#364355";ctx.fillRect(controls.x-2*z,controls.y-3*z,4*z,6*z);
+    ctx.fillStyle=Math.floor(t*1.2)%2===0?"#BCE1A8":"#83BCB0";
+    ctx.fillRect(controls.x-1*z,controls.y+5*z,2*z,2*z);
+    // Gaveta de entrega, na parte inferior do equipamento.
+    const chute=corner(0.40,18);
+    ctx.fillStyle="#28384C";ctx.fillRect(chute.x-9*z,chute.y-4*z,18*z,8*z);
+    ctx.fillStyle="#E5C8A0";ctx.fillRect(chute.x-6*z,chute.y-2*z,11*z,2*z);
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,camera,p,i,t,isOnline,s);
