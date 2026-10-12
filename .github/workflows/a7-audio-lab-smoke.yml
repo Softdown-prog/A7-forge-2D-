@@ -1,0 +1,43 @@
+name: A7 Audio Lab smoke
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/a7_audio_lab/**'
+      - '.github/workflows/a7-audio-lab-smoke.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Check Python syntax
+        run: python -m compileall -q tools/a7_audio_lab
+      - name: Generate deterministic review effect
+        run: python tools/a7_audio_lab/audio_lab.py tools/a7_audio_lab/jobs/smoke_ui_click.json
+      - name: Validate isolated preview reports
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('out/a7-audio-lab/a7_ui_click_smoke')
+          report = json.loads((p / 'audio_lab_report.json').read_text())
+          asset = json.loads((p / 'asset_report.json').read_text())
+          assert report['status'] == 'ok' and report['registered'] is False
+          assert asset['status'] == 'ok' and asset['registered'] is False
+          assert asset['probe']['codec'] == 'vorbis'
+          assert asset['probe']['sampleRate'] == 48000
+          assert (p / 'review.ogg').stat().st_size > 0
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: a7-audio-lab-smoke-review
+          path: out/a7-audio-lab/a7_ui_click_smoke/
+          if-no-files-found: error
