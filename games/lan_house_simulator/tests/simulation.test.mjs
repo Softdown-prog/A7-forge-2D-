@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createGame, stepGame, online, dayNumber, pcCount } from "../dist/js/sim/engine.js";
-import { demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
+import { contractSupplier, supplierLevel, wholesaleCost, demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
 test("preço alto reduz procura, rede offline reduz ainda mais",()=>{
   assert.ok(demandFactor(10,75,true,false)>demandFactor(20,75,true,false));
   assert.ok(demandFactor(10,75,true,false)>demandFactor(10,75,false,false));
@@ -198,4 +198,35 @@ test("reparo de fibra custa mais, sem gerar dinheiro ou alterar upgrades",()=>{
   assert.equal(s.cash,5);
   assert.equal(s.internetTier,3);
   assert.equal(s.offlineUntil,15);
+});
+
+test("fornecedor parceiro exige investimento e aplica desconto só em novas compras",()=>{
+  const s=createGame();
+  assert.equal(supplierLevel(s),1);
+  assert.equal(wholesaleCost(s,"soda"),40);
+  s.cash=100;
+  assert.equal(contractSupplier(s).ok,false);
+  assert.equal(supplierLevel(s),1);
+  s.cash=300;
+  assert.equal(contractSupplier(s).ok,true);
+  assert.equal(s.cash,120);
+  assert.equal(s.expenses,180);
+  assert.equal(supplierLevel(s),2);
+  assert.equal(wholesaleCost(s,"soda"),32);
+  assert.equal(wholesaleCost(s,"candy"),22);
+  assert.equal(wholesaleCost(s,"snacks"),38);
+  assert.equal(stockItem(s,"soda").ok,true);
+  assert.equal(s.cash,88);
+  assert.equal(s.expenses,212);
+  assert.equal(s.inventory.soda,22);
+  assert.equal(contractSupplier(s).ok,false);
+  assert.equal(s.cash,88);
+});
+test("save legado sem supplierTier usa preço padrão e preserva estoque",()=>{
+  const s=createGame();
+  delete s.supplierTier;
+  assert.equal(supplierLevel(s),1);
+  assert.equal(wholesaleCost(s,"candy"),28);
+  assert.equal(stockItem(s,"candy").ok,true);
+  assert.equal(s.inventory.candy,29);
 });

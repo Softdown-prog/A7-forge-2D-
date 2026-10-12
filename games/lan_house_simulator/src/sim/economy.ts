@@ -26,8 +26,22 @@ export function setHourlyPrice(state: GameState, amount: number): Result {
   state.pricePerHour = amount;
   return { ok: true, message: "Preço alterado para R$ " + amount + "/h." };
 }
+export function supplierLevel(state: GameState):1|2 {
+  return state.supplierTier===2?2:1;
+}
+export function wholesaleCost(state:GameState,item:Item):number {
+  // O parceiro cobra taxa de adesão e reduz o valor de novos pedidos.
+  return supplierLevel(state)===2?Math.round(ITEM_WHOLESALE[item]*0.8):ITEM_WHOLESALE[item];
+}
+export function contractSupplier(state:GameState):Result {
+  if(supplierLevel(state)===2)return {ok:false,message:"Fornecedor parceiro já contratado."};
+  const fee=180;
+  if(state.cash<fee)return {ok:false,message:"Caixa insuficiente para fornecedor parceiro: R$ "+fee+"."};
+  state.cash-=fee;state.expenses+=fee;state.supplierTier=2;
+  return {ok:true,message:"Fornecedor parceiro contratado: -R$ 180. Novos lotes custam 20% menos."};
+}
 export function stockItem(state: GameState, item: Item): Result {
-  const cost = ITEM_WHOLESALE[item];
+  const cost = wholesaleCost(state,item);
   if (state.cash < cost) return { ok: false, message: "Caixa insuficiente para repor " + item + "." };
   state.cash -= cost; state.expenses += cost;
   state.inventory[item] += ITEM_PACK[item];

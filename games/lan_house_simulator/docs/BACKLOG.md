@@ -146,3 +146,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Técnico encerra o incidente atual, sem conceder upgrade e sem alterar a lógica de falhas futuras.
 - [x] Testes para internet online, falta de caixa, custo progressivo, reparo único e recuperação.
 - [ ] Verificar painel em captura real e jogo sob queda natural após CI.
+
+## Fornecedores: contrato de atacado (12/10/2026)
+- [x] Contrato de parceiro por R$ 180 com taxa real lançada em despesas, máximo uma vez.
+- [x] Desconto de 20% somente nos novos lotes de bebidas, doces e salgados; preços de venda e quantidades mantidos.
+- [x] Botão e custos atualizados no painel de estoque; saves anteriores sem `supplierTier` continuam no fornecedor básico.
+- [x] Testes para falta de caixa, desconto, dupla contratação, quantidades e save legado.
+- [ ] Inspecionar interface do novo painel no navegador antes de aprovação visual.

@@ -35,6 +35,8 @@ export interface GameState {
   expenses: number;
   reputation: number;
   pricePerHour: number;
+  /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
+  supplierTier?: 1 | 2;
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;

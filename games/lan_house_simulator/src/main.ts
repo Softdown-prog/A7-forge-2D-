@@ -1,5 +1,5 @@
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, upgradeInternet } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
@@ -57,6 +57,7 @@ button("price-up",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour+2)
 button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();save();});
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
 button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
+button("supplier-up",()=>{applyResult(game,contractSupplier(game));renderUI();save();});
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
@@ -81,6 +82,12 @@ function renderUI():void {
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   setText("price", "R$ "+game.pricePerHour+"/h");
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
+  setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
+  const supplierButton=document.querySelector<HTMLButtonElement>("#supplier-up");
+  if(supplierButton)supplierButton.disabled=supplierLevel(game)===2;
+  setText("stock-soda"," + Bebidas R$ "+wholesaleCost(game,"soda"));
+  setText("stock-candy","+ Doces R$ "+wholesaleCost(game,"candy"));
+  setText("stock-snacks","+ Salgados R$ "+wholesaleCost(game,"snacks"));
   setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Online":" · Sem conexão até "+(game.offlineUntil-game.totalMinutes)+" min de jogo"));
   const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
   if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
