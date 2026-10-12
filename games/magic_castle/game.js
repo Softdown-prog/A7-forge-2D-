@@ -15,9 +15,36 @@ const platforms=[{x:0,y:GROUND,w:800,h:60},{x:180,y:307,w:145,h:15},{x:460,y:276
 function reset(){player={x:48,y:GROUND-42,w:27,h:42,vx:0,vy:0,onGround:false,face:1,hp:5,attackUntil:0};
  enemies=[{type:"slime",x:275,y:GROUND-22,w:32,h:22,hp:5,maxHp:5,speed:35,hitAt:-10},{type:"bat",x:482,y:187,w:30,h:22,hp:3,maxHp:3,speed:55,hitAt:-10},{type:"guardian",x:650,y:GROUND-45,w:34,h:45,hp:8,maxHp:8,speed:24,hitAt:-10}];
  bolts=[];particles=[];won=false;lost=false;tick=0;damageAt=-10;lastShot=-10;gameTime=0;status.textContent="Derrote os inimigos e alcance a porta!";}
-function input(e,down){const k=e.code;if(["ArrowLeft","ArrowRight","ArrowUp","Space","KeyA","KeyD","KeyW","KeyJ","Enter","KeyR"].includes(k))e.preventDefault();if(down)keys.add(k);else keys.delete(k);if(down&&k==="KeyR")reset();}
-document.addEventListener("keydown",e=>input(e,true));document.addEventListener("keyup",e=>input(e,false));window.addEventListener("blur",()=>keys.clear());
-document.querySelectorAll("[data-key]").forEach(el=>{const k=el.dataset.key;for(const event of ["pointerdown","pointerup","pointercancel","pointerleave"])el.addEventListener(event,e=>{e.preventDefault();if(event==="pointerdown"){keys.add(k);el.setPointerCapture?.(e.pointerId)}else keys.delete(k);});});
+// Multi-touch reference counting: releasing one finger never cancels another.
+const touchPointers=new Map();
+function touchActive(key){for(const value of touchPointers.values())if(value===key)return true;return false;}
+function input(e,down){
+ const k=e.code;
+ if(["ArrowLeft","ArrowRight","ArrowUp","Space","KeyA","KeyD","KeyW","KeyJ","Enter","KeyR"].includes(k))e.preventDefault();
+ if(down)keys.add(k);else if(!touchActive(k))keys.delete(k);
+ if(down&&k==="KeyR"&&!e.repeat)reset();
+}
+document.addEventListener("keydown",e=>input(e,true));
+document.addEventListener("keyup",e=>input(e,false));
+function releaseAll(){keys.clear();touchPointers.clear();document.querySelectorAll(".touch button").forEach(b=>b.classList.remove("pressed"));}
+window.addEventListener("blur",releaseAll);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)releaseAll();});
+document.querySelectorAll(".touch [data-key]").forEach(el=>{
+ const key=el.dataset.key;
+ el.addEventListener("pointerdown",e=>{
+  e.preventDefault();if(touchPointers.has(e.pointerId))return;
+  touchPointers.set(e.pointerId,key);keys.add(key);el.classList.add("pressed");
+  try{el.setPointerCapture(e.pointerId);}catch(_){}
+ });
+ const release=e=>{
+  if(touchPointers.get(e.pointerId)!==key)return;
+  e.preventDefault();touchPointers.delete(e.pointerId);
+  if(!touchActive(key))keys.delete(key);
+  el.classList.toggle("pressed",touchActive(key));
+ };
+ for(const name of ["pointerup","pointercancel","lostpointercapture"])el.addEventListener(name,release);
+});
+document.getElementById("restart").addEventListener("click",()=>{releaseAll();reset();});
 function overlap(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));}
 function update(dt){
@@ -60,7 +87,7 @@ function paint(){
  for(const b of bolts){rect(b.x-4,b.y-4,18,18,"#376baa");rect(b.x,b.y,12,10,"#56c9ff");rect(b.x+3,b.y+2,6,6,"#e0faff");}
  for(const p of particles)rect(p.x,p.y,4,4,"#b7ebff");
  if(gameTime-damageAt>.12||tick%6<3){
- const pose=gameTime<player.attackUntil?"attack_"+Math.min(5,Math.floor((player.attackUntil-gameTime)/.067)):Math.abs(player.vx)>0&&player.onGround?"walk_"+(Math.floor(gameTime/.15)%4):"idle";
+ const pose=gameTime<player.attackUntil?"attack_"+Math.min(5,Math.floor((.40-(player.attackUntil-gameTime))/.067)):Math.abs(player.vx)>0&&player.onGround?"walk_"+(Math.floor(gameTime/.15)%4):"idle";
  const d=player.face===1?"east":"west";
  if(!sprite(d,pose,player.x-3,player.y-6)){rect(player.x+4,player.y+3,20,37,"#5b4aa7");rect(player.x+2,player.y,24,14,"#403877");rect(player.x+11,player.y+14,8,8,"#e6ae86");rect(player.x+(player.face>0?24:-2),player.y+4,3,32,"#97744b");}
  }
