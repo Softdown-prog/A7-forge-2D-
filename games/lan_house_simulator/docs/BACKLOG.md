@@ -107,3 +107,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Renderiza mãos sobre teclado depois da mesa e do corpo, com a mesma paleta por identidade.
 - [x] Dois instantes de caminhada em fases opostas do ciclo (0,20 e 0,60 s) para evidenciar os passos.
 - [ ] Conferir a nova imagem gerada; o overlay é provisório até aprovação visual e teste de vídeo no runtime.
+
+## Storyboard de ciclo completo da cena (vídeo de revisão)
+- [x] CI captura oito estados da cena completa: aproximando, cadeira, sentando, sentado, digitando, levantando, de pé e saindo.
+- [x] Geração usa `SceneRenderer` real no Chromium, com um visitante e estação determinísticos; mantém posição dos objetos.
+- [ ] Avaliar `lhs_full_scene_lifecycle.png` e corrigir possíveis colisões/oclusões de mesa-cadeira-braços.
+- [ ] Validar sequência dinâmica automatizada do motor; snapshots são estados controlados de apresentação, não gameplay simulado.

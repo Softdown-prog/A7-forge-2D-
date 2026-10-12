@@ -146,6 +146,57 @@ try{
       });
       await writeFile(resolve(output,"lhs_four_directions_and_pc_pose.png"),
         Buffer.from(poses,"base64"));
+      // Sequência coerente da cena COMPLETA, com o mesmo renderer de runtime.
+      // Enquadra aproximação, três fases de sentar/levantar e saída.
+      const lifecycle=await page.evaluate(async()=>{
+        const [{SceneRenderer},{createGame,pcPosition},{computerSeat}]=await Promise.all([
+          import("./js/render/scene.js"),
+          import("./js/sim/engine.js"),
+          import("./js/sim/route.js")
+        ]);
+        const surface=document.createElement("canvas");
+        surface.width=1000;surface.height=610;
+        const surfaceCtx=surface.getContext("2d");
+        if(!surfaceCtx)throw Error("Sem contexto de desenho da cena");
+        const stage=document.createElement("canvas");
+        stage.width=1500;stage.height=1000;
+        const panel=stage.getContext("2d");
+        if(!panel)throw Error("Sem contexto da prancha");
+        panel.fillStyle="#16243A";panel.fillRect(0,0,1500,1000);
+        const renderer=new SceneRenderer(surfaceCtx);
+        const pc=pcPosition(0),seat=computerSeat(pc);
+        const phases=[
+          ["CHEGANDO","to_pc",{x:seat.x,y:4.48},0],
+          ["NA CADEIRA","sitting",seat,0],
+          ["SENTANDO","sitting",seat,1],
+          ["SENTADO","using",seat,0],
+          ["DIGITANDO","using",seat,0],
+          ["LEVANTANDO","standing",seat,1],
+          ["DE PE","standing",seat,3],
+          ["SAINDO","leaving",{x:seat.x,y:4.48},0]
+        ];
+        for(let i=0;i<phases.length;i++){
+          const [label,stageName,position,poseMinutes]=phases[i];
+          const state=createGame(1998);
+          state.totalMinutes=31;
+          state.customers=[{
+            id:1,costume:"regular",x:position.x,y:position.y,
+            target:stageName==="leaving"?{x:6.5,y:4.48}:seat,
+            route:[],facing:stageName==="leaving"?"east":"north",
+            stage:stageName,pcIndex:["sitting","using","standing"].includes(stageName)?0:null,
+            poseMinutes,usedMinutes:2,waitingMinutes:0,offlineWait:0,happy:true
+          }];
+          renderer.draw(state, i===4?1.2:0.2);
+          const px=(i%2)*750,py=Math.floor(i/2)*250;
+          panel.fillStyle="#E6D0A8";panel.font="bold 16px system-ui";
+          panel.fillText((i+1)+". "+label,px+22,py+24);
+          // Crop de um mesmo espaço do render real; sem rearranjar objetos.
+          panel.drawImage(surface,75,75,850,460,px+15,py+33,720,208);
+        }
+        return stage.toDataURL("image/png").split(",")[1];
+      });
+      await writeFile(resolve(output,"lhs_full_scene_lifecycle.png"),
+        Buffer.from(lifecycle,"base64"));
     }
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
