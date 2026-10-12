@@ -24,8 +24,9 @@ export class SceneRenderer {
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:1.7,paint:()=>this.shelf(camera)},
-      {depth:2.4,paint:()=>this.machine(camera,5.7,0.55,"soda",elapsedSeconds)},
-      {depth:2.8,paint:()=>this.machine(camera,4.9,0.7,"candy",elapsedSeconds)},
+      // As duas máquinas partilham a parede do fundo e apresentam a vitrine ao corredor.
+      {depth:5.65,paint:()=>this.machine(camera,5.22,0.18,"soda",elapsedSeconds)},
+      {depth:6.45,paint:()=>this.machine(camera,6.02,0.18,"candy",elapsedSeconds)},
       {depth:2.0,paint:()=>this.owner(camera,elapsedSeconds)},
       {depth:3.15,paint:()=>this.counter(camera)},
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
@@ -185,50 +186,50 @@ export class SceneRenderer {
     }
   }
   private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number):void {
-    const ctx=this.ctx,h=kind==="soda"?106:85,z=camera.zoom;
-    const soda=kind==="soda";
-    cuboid(ctx,camera,x,y,0.65,0.6,h,soda?
-      ["#E56567","#992D45","#B74154"]:["#EDBD56","#AC733C","#D49A4E"]);
-    // Uma vitrine verdadeira na face voltada ao salão; fileiras de mercadorias
-    // substituem o antigo círculo sem função. O exterior continua ausente.
-    const frontX=x+0.652,glassY=y+0.06;
-    const corner=(dy:number,height:number)=>iso({x:frontX,y:glassY+dy},camera,height);
-    polygon(ctx,[corner(0,h-11),corner(0.34,h-11),
-      corner(0.34,h-57),corner(0,h-57)],"#27374C","#F2DAB2");
-    for(let row=0;row<2;row++) {
-      const high=h-23-row*17;
-      const shelfA=corner(0.015,high-7),shelfB=corner(0.325,high-7);
-      ctx.strokeStyle="#BC9E82";ctx.lineWidth=Math.max(1,1.7*z);
-      ctx.beginPath();ctx.moveTo(shelfA.x,shelfA.y);ctx.lineTo(shelfB.x,shelfB.y);ctx.stroke();
+    const ctx=this.ctx, soda=kind==="soda",h=soda?106:94,z=camera.zoom;
+    const w=0.66,d=0.59;
+    cuboid(ctx,camera,x,y,w,d,h,soda?
+      ["#DB6265","#953447","#B94D59"]:["#E7B65B","#A87840","#C78E50"]);
+    // A frente agora olha para o salão (Y+), como os monitores dos clientes.
+    // O painel inteiro segue o plano isométrico da face: nenhum círculo colado no lado.
+    const front=(u:number,height:number)=>iso({x:x+u,y:y+d+0.003},camera,height);
+    polygon(ctx,[front(.055,h-12),front(.49,h-12),
+      front(.49,h-66),front(.055,h-66)],"#253A4A","#E7D4B1");
+    // Fileiras de garrafas/latas e doces; prateleiras pertencem ao vidro.
+    for(let row=0;row<3;row++){
+      const top=h-24-row*15;
+      const a=front(.075,top-8),b=front(.47,top-8);
+      ctx.strokeStyle="#B8B4A0";ctx.lineWidth=Math.max(1,1.4*z);
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
       for(let col=0;col<3;col++){
-        const point=corner(0.057+col*0.106,high);
-        const color=soda?
-          ["#D55C67","#D6AE72","#74B8BE"][(col+row)%3]!:
-          ["#E9C581","#D59484","#9BC5A1"][(col+row)%3]!;
-        ctx.fillStyle=color;
-        ctx.fillRect(point.x-3*z,point.y-4*z,6*z,10*z);
-        ctx.fillStyle="rgba(248,241,216,0.8)";
-        ctx.fillRect(point.x-2*z,point.y-1*z,4*z,2*z);
+        const p=front(.12+col*.142,top);
+        const tint=soda?
+          ["#C95C67","#78ADB8","#DFB770"][(col+row)%3]!:
+          ["#E5C78B","#BC8F9C","#99BD91"][(col+row)%3]!;
+        ctx.fillStyle=tint;ctx.fillRect(p.x-2.5*z,p.y-6*z,5*z,8*z);
+        ctx.fillStyle="#EFE6D1";ctx.fillRect(p.x-2*z,p.y-3*z,4*z,2*z);
       }
     }
-    // Vidro e discreta diagonal de reflexo: detalhes lidos mesmo em zoom 1x.
-    polygon(ctx,[corner(0.28,h-13),corner(0.32,h-13),
-      corner(0.10,h-55),corner(0.06,h-55)],"rgba(183,219,235,0.17)");
-    const fascia=corner(0.18,h-6);
-    ctx.save();ctx.font="bold "+Math.max(6,8*z)+"px system-ui,sans-serif";
-    ctx.fillStyle="#FFF2D3";ctx.textAlign="center";
-    ctx.fillText(soda?"REFRI":"DOCES",fascia.x,fascia.y-1*z);
+    polygon(ctx,[front(.39,h-14),front(.46,h-14),
+      front(.23,h-64),front(.15,h-64)],"rgba(182,220,234,0.16)");
+    // A faixa de marca é legível, sem copiar marca comercial.
+    const label=front(.32,h-5);
+    ctx.save();ctx.textAlign="center";ctx.font="bold "+Math.max(7,9*z)+"px system-ui,sans-serif";
+    ctx.fillStyle="#FFF2D1";ctx.fillText(soda?"REFRI":"DOCES",label.x,label.y);
     ctx.restore();
-    // Moedeiro e botoeira, com luz alternada em intensidade baixa.
-    const controls=corner(0.43,h-40);
-    ctx.fillStyle="#E9D8B7";ctx.fillRect(controls.x-4*z,controls.y-6*z,8*z,15*z);
-    ctx.fillStyle="#364355";ctx.fillRect(controls.x-2*z,controls.y-3*z,4*z,6*z);
-    ctx.fillStyle=Math.floor(t*1.2)%2===0?"#BCE1A8":"#83BCB0";
-    ctx.fillRect(controls.x-1*z,controls.y+5*z,2*z,2*z);
-    // Gaveta de entrega, na parte inferior do equipamento.
-    const chute=corner(0.40,18);
-    ctx.fillStyle="#28384C";ctx.fillRect(chute.x-9*z,chute.y-4*z,18*z,8*z);
-    ctx.fillStyle="#E5C8A0";ctx.fillRect(chute.x-6*z,chute.y-2*z,11*z,2*z);
+    // Moedeiro, seleção e porta de entrega na mesma face frontal.
+    polygon(ctx,[front(.535,h-31),front(.62,h-31),
+      front(.62,h-55),front(.535,h-55)],"#D8C2A1","#815E54");
+    const button=front(.58,h-42);
+    ctx.fillStyle=Math.floor(t*1.2)%2===0?"#A7D6AF":"#8EB5A7";
+    ctx.fillRect(button.x-2*z,button.y-3*z,4*z,5*z);
+    const hatch=front(.33,17);
+    ctx.fillStyle="#263346";ctx.fillRect(hatch.x-10*z,hatch.y-5*z,20*z,9*z);
+    ctx.fillStyle="#CFBFA3";ctx.fillRect(hatch.x-7*z,hatch.y-3*z,14*z,2*z);
+    // Rodapé sólido e sombra de contato reforçam a escala física.
+    const foot=front(.33,2);
+    ctx.fillStyle="rgba(32,34,45,0.24)";
+    ctx.beginPath();ctx.ellipse(foot.x,foot.y+3*z,20*z,5*z,0,0,Math.PI*2);ctx.fill();
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,camera,p,i,t,isOnline,s);

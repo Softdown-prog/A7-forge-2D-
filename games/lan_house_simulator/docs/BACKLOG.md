@@ -119,3 +119,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Corrigida a transição: tronco desce só 3px e coxas dobram na altura da cadeira; pernas mantêm contato com o chão.
 - [x] Mantido o overlay externo das mãos com âncoras no teclado e quatro direções da caminhada.
 - [ ] Conferir a nova prancha CI e corrigir eventual cruzamento da cadeira com as pernas.
+
+## Acabamento restrito: PCs e máquinas (12/10/2026)
+- [x] Alinhados os três computadores iniciais na mesma linha, paralelos à parede posterior, com espaço consistente entre bancadas.
+- [x] Máquinas REFRI/DOCES lado a lado contra a parede do fundo, com vitrines voltadas para o corredor (Y+), altura e leitura coerentes.
+- [x] Frente das máquinas reconstruída em um único plano: 3 fileiras de produtos, reflexo discreto, botoeira, gaveta e rodapé.
+- [x] Fila de compra posicionada junto às máquinas; lógica de preços e estoque preservada.
+- [ ] Inspecionar captura real após CI para verificar sobreposição com terceiro PC e caixilhos.

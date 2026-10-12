@@ -3,7 +3,7 @@ import type { Point } from "./types.js";
 /** Circulação simples e determinística pelo corredor frontal. */
 export const AISLE_Y = 4.48;
 export const COUNTER_QUEUE: Point = { x: 1.55, y: 2.56 };
-export const VENDING_QUEUE: Point = { x: 6.6, y: 1.62 };
+export const VENDING_QUEUE: Point = { x: 6.15, y: 1.65 };
 export function computerSeat(computer: Point): Point {
   return { x: computer.x + 0.35, y: computer.y + 0.82 };
 }
