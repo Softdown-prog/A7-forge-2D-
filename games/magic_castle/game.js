@@ -60,7 +60,7 @@ function update(dt){
  let left=keys.has("KeyA")||keys.has("ArrowLeft"),right=keys.has("KeyD")||keys.has("ArrowRight");
  player.vx=(Number(right)-Number(left))*170;if(player.vx)player.face=Math.sign(player.vx);
  if((keys.has("KeyW")||keys.has("Space")||keys.has("ArrowUp"))&&player.onGround){player.vy=-330;player.onGround=false;}
- if((keys.has("Enter")||keys.has("KeyJ"))&&gameTime-lastShot>.34){lastShot=gameTime;player.attackUntil=gameTime+.40;bolts.push({x:player.x+player.w/2+player.face*19,y:player.y+17,w:12,h:10,vx:player.face*330,life:1.7});}
+ if((keys.has("Enter")||keys.has("KeyJ"))&&gameTime-lastShot>.34){lastShot=gameTime;player.attackUntil=gameTime+.40;bolts.push({x:player.x+player.w/2+player.face*19,y:player.y+17,w:12,h:10,vx:player.face*330,vy:0,damage:1,life:1.7});}
  let oldY=player.y;player.x=Math.max(0,Math.min(W-player.w,player.x+player.vx*dt));player.vy=Math.min(560,player.vy+850*dt);player.y+=player.vy*dt;player.onGround=false;
  for(const p of platforms)if(player.x+player.w>p.x&&player.x<p.x+p.w&&oldY+player.h<=p.y+8&&player.y+player.h>=p.y&&player.vy>=0){player.y=p.y-player.h;player.vy=0;player.onGround=true;}
  if(player.y>H){player.hp=0;}
@@ -73,7 +73,16 @@ function update(dt){
  burst(player.x+player.w/2,player.y+18,"#f77c9d",10);
 }
  }
- for(const b of bolts){b.x+=b.vx*dt;b.life-=dt;for(const e of enemies){if(e.hp>0&&overlap(b,e)){e.hp--;e.flash=.15;b.life=0;burst(b.x+6,b.y+5,e.hp===0?"#f8db83":"#86e5ff",12);break;}}}
+ for(const b of bolts){
+  // Use continuous collision to prevent tunnelling at high speed / low FPS.
+  const hit=MagicCombat.stepProjectile(b,dt,enemies,platforms.slice(1));
+  if(hit?.kind==="enemy"){
+   hit.target.flash=.15;
+   burst(b.x+b.w/2,b.y+b.h/2,hit.target.hp===0?"#f8db83":"#86e5ff",12);
+  }else if(hit?.kind==="solid"){
+   burst(b.x+b.w/2,b.y+b.h/2,"#a4a1c5",5);
+  }
+ }
  bolts=bolts.filter(b=>b.life>0&&b.x>-30&&b.x<W+30);
  for(const e of enemies)e.flash=Math.max(0,e.flash-dt);
  for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=110*dt;p.t-=dt;}
