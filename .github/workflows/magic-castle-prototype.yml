@@ -19,11 +19,14 @@ jobs:
       - name: Render canonical wizard
         run: python -m visitor_forge_2d render-pixel-character --recipe games/magic_castle/authoring/wizard/pixel_character_wizard_mini_01.json --output out/wizard
       - name: Validate game JavaScript
-        run: node --check games/magic_castle/game.js
+        run: |
+          node --check games/magic_castle/combat.js
+          node --check games/magic_castle/game.js
+          node --test games/magic_castle/tests/*.test.cjs
       - name: Package playable web build
         run: |
           mkdir -p out/magic_castle/assets/wizard
-          cp games/magic_castle/index.html games/magic_castle/style.css games/magic_castle/game.js games/magic_castle/README.md out/magic_castle/
+          cp games/magic_castle/index.html games/magic_castle/style.css games/magic_castle/game.js games/magic_castle/combat.js games/magic_castle/README.md out/magic_castle/
           cp out/wizard/frames/*.png out/magic_castle/assets/wizard/
           cp -R games/magic_castle/assets/scene games/magic_castle/assets/enemies out/magic_castle/assets/
           test -s out/magic_castle/assets/scene/castle_hall.svg
