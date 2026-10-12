@@ -11,7 +11,7 @@
   <main id="app">
     <header class="header">
       <h1>✦ MAGIC CASTLE ✦</h1>
-      <p class="hint">PC: A/D ou ←/→ · W/Espaço: pular · Enter/J: magia · R: reiniciar</p>
+      <p class="hint">PC: A/D ou ←/→ · W/Espaço: pular · ↑/Shift na porta: subir · Enter/J: magia · R: reiniciar</p>
       <button id="restart" class="restart" type="button" aria-label="Reiniciar a partida">↻ Reiniciar</button>
     </header>
     <section class="game-shell" aria-label="Área do jogo">
@@ -23,14 +23,14 @@
         <button type="button" data-key="ArrowRight" aria-label="Andar para direita">▶</button>
       </div>
       <div class="touch-actions" aria-label="Ações">
-        <button type="button" data-key="Space" aria-label="Pular">↑<small>PULAR</small></button>
+        <button type="button" data-key="ShiftLeft" class="door" aria-label="Entrar na porta">⇧<small>ENTRAR</small></button><button type="button" data-key="Space" aria-label="Pular">↑<small>PULAR</small></button>
         <button type="button" data-key="Enter" class="cast" aria-label="Atacar com magia">✦<small>MAGIA</small></button>
       </div>
     </nav>
     <p id="status" role="status" aria-live="polite">Derrote os inimigos e alcance a porta!</p>
     <p class="rotate-tip">Para enxergar melhor o castelo, vire o celular na horizontal.</p>
-    <footer>Primeira sala jogável • Protótipo independente • A7 Forge 2D</footer>
+    <footer>Dois andares jogáveis • Protótipo independente • A7 Forge 2D</footer>
   </main>
-  <script src="combat.js"></script><script src="enemy_ai.js"></script><script src="game.js"></script>
+  <script src="stages.js"></script><script src="combat.js"></script><script src="enemy_ai.js"></script><script src="game.js"></script>
 </body>
 </html>
