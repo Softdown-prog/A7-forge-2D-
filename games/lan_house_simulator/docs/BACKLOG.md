@@ -113,3 +113,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Geração usa `SceneRenderer` real no Chromium, com um visitante e estação determinísticos; mantém posição dos objetos.
 - [ ] Avaliar `lhs_full_scene_lifecycle.png` e corrigir possíveis colisões/oclusões de mesa-cadeira-braços.
 - [ ] Validar sequência dinâmica automatizada do motor; snapshots são estados controlados de apresentação, não gameplay simulado.
+
+## Ajuste de assento após storyboard real (12/10/2026)
+- [x] Identificado o afundamento do quadril nas oito capturas: deslocamento de cabeça 18px incompatível com a altura do assento de 25px.
+- [x] Corrigida a transição: tronco desce só 3px e coxas dobram na altura da cadeira; pernas mantêm contato com o chão.
+- [x] Mantido o overlay externo das mãos com âncoras no teclado e quatro direções da caminhada.
+- [ ] Conferir a nova prancha CI e corrigir eventual cruzamento da cadeira com as pernas.

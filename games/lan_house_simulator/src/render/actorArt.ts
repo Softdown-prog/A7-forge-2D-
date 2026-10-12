@@ -62,7 +62,9 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const seated=pose==="sitting"?transition:pose==="standing-up"?1-transition:0;
   const step=walking?Math.sin(a.time*7.7+a.id*.27):0;
   const bob=walking?Math.abs(step)*1.5:0;
-  const headShift=seated*18;
+  // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
+  // Antes, o corpo afundava 18px e parecia agachado no chão.
+  const headShift=seated*3;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:seated*2;
   const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south";
@@ -94,8 +96,9 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   for(const side of [-1,1]){
     const swing=step*7*side*(1-seated);
     const kneeX=side*7+swing*.55+side*seated*10;
-    const kneeY=-13+seated*8;
-    const toeX=side*7+swing+side*seated*15;
+    // Coxa dobra junto à altura do assento; panturrilha desce até o chão.
+    const kneeY=-13-seated*8;
+    const toeX=side*7+swing+side*seated*12;
     segment(ctx,side*5,legY,kneeX,kneeY,8,style.pants);
     segment(ctx,kneeX,kneeY,toeX,footY-seated*4,7,style.pants);
     ell(ctx,toeX+2,footY-seated*4,6.3,3.3,a.kind==="rabbit"?"#E5D5D5":"#283647","#1D2736");
@@ -108,7 +111,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const elbowX=side*(18-seated*2)+wave;
     const elbowY=-36+headShift+seated*3;
     const handX=side*(19-seated*15)+wave*.5+seated*12;
-    const handY=-24+headShift-seated*5+typing*side;
+    const handY=-24+headShift-seated*6+typing*side;
     segment(ctx,ax,ay,elbowX,elbowY,8,style.dark);
     segment(ctx,elbowX,elbowY,handX,handY,7,style.shirt);
     ell(ctx,handX,handY,4.1,4.4,style.skin,"#785C59");
