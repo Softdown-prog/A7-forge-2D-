@@ -1,6 +1,10 @@
 name: Magic Castle playable prototype
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'games/magic_castle/**'
+      - '.github/workflows/magic-castle-prototype.yml'
 jobs:
   package:
     runs-on: ubuntu-latest
