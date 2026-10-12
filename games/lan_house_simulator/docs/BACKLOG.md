@@ -132,3 +132,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Fila de atendimento calculada a partir da posição física das máquinas, sem coordenada avulsa.
 - [x] Testes automáticos impedem máquinas sobrepostas, vitrine inacessível e bancada cruzando a profundidade das máquinas.
 - [ ] Conferir a captura do novo CI antes de aprovar o visual.
+
+## Pôsteres temáticos na parede (12/10/2026)
+- [x] Cinco cartazes na parede esquerda: RollerCoaster Tycoon, Counter-Strike, Pangya, Gunbound e City Horizon.
+- [x] Designs vetoriais próprios com nomes escritos e símbolos abstratos, sem reproduzir capas ou logotipos alheios.
+- [x] City Horizon recebe cartaz diferenciado com silhueta urbana e friso dourado.
+- [x] Montagem sob perspectiva isométrica de parede, sem cobrir as janelas do fundo.
+- [ ] Revisar legibilidade no PNG real do runtime antes da aprovação visual.

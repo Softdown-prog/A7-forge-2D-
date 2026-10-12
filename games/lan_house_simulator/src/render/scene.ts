@@ -144,23 +144,67 @@ export class SceneRenderer {
       ctx.fillText(label,middle.x,middle.y+2);
       ctx.restore();
     }
-    // Quadros no plano da parede esquerda (x=0), sem exterior.
-    for(const [start,label,accent] of [
-      [1.20,"CYBER","#587D79"],[3.28,"JOGOS","#987654"]
-    ] as const){
-      polygon(ctx,[
-        iso({x:0,y:start},camera,126),iso({x:0,y:start+1.20},camera,126),
-        iso({x:0,y:start+1.20},camera,78),iso({x:0,y:start},camera,78)
-      ],"#B18E6D","#6F5D66");
-      polygon(ctx,[
-        iso({x:0,y:start+0.09},camera,119),
-        iso({x:0,y:start+1.11},camera,119),
-        iso({x:0,y:start+1.11},camera,85),
-        iso({x:0,y:start+0.09},camera,85)
-      ],accent);
-      const p=iso({x:0,y:start+0.59},camera,103);
-      ctx.save();ctx.font="bold 8px system-ui,sans-serif";
-      ctx.fillStyle="#FFF0D9";ctx.textAlign="center";ctx.fillText(label,p.x,p.y+2);
+    // Cinco cartazes de jogos no plano da parede esquerda (x=0).
+    // Lettering e ilustrações procedurais de homenagem, sem copiar capas/logotipos.
+    // Todos acima dos móveis, com o próprio City Horizon em destaque.
+    const posters=[
+      {y:0.27,lines:["ROLLERCOASTER","TYCOON"],base:"#416F66",accent:"#F2D28C",symbol:"wheel"},
+      {y:1.40,lines:["COUNTER","STRIKE"],base:"#3B5265",accent:"#E3C38B",symbol:"cross"},
+      {y:2.53,lines:["PANGYA"],base:"#457C86",accent:"#E7EBCC",symbol:"ball"},
+      {y:3.66,lines:["GUNBOUND"],base:"#594C85",accent:"#E8BD89",symbol:"star"},
+      {y:4.79,lines:["CITY","HORIZON"],base:"#2D746F",accent:"#F1D39B",symbol:"city"}
+    ] as const;
+    for(const poster of posters){
+      const a=poster.y,b=poster.y+0.96;
+      const at=(y:number,z:number)=>iso({x:0.012,y},camera,z);
+      polygon(ctx,[at(a,133),at(b,133),at(b,74),at(a,74)],
+        "#DFCAA6","#695969");
+      polygon(ctx,[at(a+0.06,128),at(b-0.06,128),
+        at(b-0.06,79),at(a+0.06,79)],poster.base);
+      // Geometria abstrata pequena no terço superior, exclusiva a cada jogo.
+      const center=at((a+b)/2,117),z=camera.zoom;
+      ctx.save();
+      ctx.strokeStyle=poster.accent;ctx.fillStyle=poster.accent;
+      ctx.lineWidth=Math.max(1,1.8*z);
+      if(poster.symbol==="wheel"){
+        ctx.beginPath();ctx.arc(center.x,center.y,8*z,0,Math.PI*2);ctx.stroke();
+        for(let n=0;n<5;n++){
+          const ang=n*Math.PI*2/5;
+          ctx.beginPath();ctx.moveTo(center.x,center.y);
+          ctx.lineTo(center.x+Math.cos(ang)*7*z,center.y+Math.sin(ang)*7*z);ctx.stroke();
+        }
+      } else if(poster.symbol==="cross"){
+        ctx.beginPath();ctx.moveTo(center.x-7*z,center.y);ctx.lineTo(center.x+7*z,center.y);
+        ctx.moveTo(center.x,center.y-7*z);ctx.lineTo(center.x,center.y+7*z);ctx.stroke();
+        ctx.strokeRect(center.x-5*z,center.y-5*z,10*z,10*z);
+      } else if(poster.symbol==="ball"){
+        ctx.beginPath();ctx.arc(center.x,center.y,7*z,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle=poster.base;ctx.beginPath();ctx.arc(center.x+2*z,center.y-2*z,2*z,0,Math.PI*2);ctx.fill();
+      } else if(poster.symbol==="star"){
+        ctx.beginPath();
+        for(let n=0;n<10;n++){
+          const ang=n*Math.PI/5-Math.PI/2,r=(n%2?3.3:8)*z;
+          const px=center.x+Math.cos(ang)*r,py=center.y+Math.sin(ang)*r;
+          if(n===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+        }
+        ctx.closePath();ctx.fill();
+      } else {
+        for(const [offset,height] of [[-8,9],[-1,14],[6,11]] as const){
+          ctx.fillRect(center.x+offset*z,center.y-height*z/2,6*z,height*z);
+        }
+      }
+      // Legibilidade 1x: duas linhas somente onde necessário; o nome é textual.
+      const fontSize=Math.max(5,7.6*z);
+      ctx.font="bold "+fontSize+"px system-ui,sans-serif";
+      ctx.textAlign="center";ctx.fillStyle="#F8EAD5";
+      const label=at((a+b)/2,91);
+      poster.lines.forEach((line,i)=>{
+        ctx.fillText(line,label.x,label.y+(i-(poster.lines.length-1)/2)*8*z,69*z);
+      });
+      if(poster.symbol==="city"){
+        const underline=at((a+b)/2,82);
+        ctx.fillStyle="#F1D39B";ctx.fillRect(underline.x-13*z,underline.y,26*z,2*z);
+      }
       ctx.restore();
     }
     // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
