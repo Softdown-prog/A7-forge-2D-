@@ -50,3 +50,7 @@ O jogo é uma obra original: figurinos cômicos são arquétipos próprios, sem 
 ## Captura de validação visual
 
 O job `worker-scene` gera duas capturas reais do jogo em Chromium (desktop e mobile), com três visitantes posicionados por seed de revisão. Veja o artifact `lhs-visual-validation` na execução do workflow. A câmera permanece fixa, sem telhado e sem exterior. As capturas são de *placeholders*, não de arte aprovada.
+
+### Acabamento dos personagens
+
+A aparência procedural V1 dos personagens é desenhada por `src/render/actorArt.ts` e diferencia figurinos, cabelos, cores e poses sem novas dependências. É visual provisório com intenção estética definida; PNGs capturados pelo worker-scene continuam sendo a etapa de validação antes dos sprites definitivos do A7 Forge.

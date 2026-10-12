@@ -2,6 +2,7 @@ import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
+import { drawActor, actorHitbox, type ActorPose } from "./actorArt.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -18,12 +19,13 @@ export class SceneRenderer {
     ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
     this.floor(camera,roomW);
     this.walls(camera,roomW);
+    this.decor(camera,roomW);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:1.7,paint:()=>this.shelf(camera)},
       {depth:2.4,paint:()=>this.machine(camera,5.7,0.55,"soda",elapsedSeconds)},
       {depth:2.8,paint:()=>this.machine(camera,4.9,0.7,"candy",elapsedSeconds)},
-      {depth:2.0,paint:()=>this.character(camera,1.18,0.74,"owner",elapsedSeconds)},
+      {depth:2.0,paint:()=>this.owner(camera,elapsedSeconds)},
       {depth:3.15,paint:()=>this.counter(camera)},
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
     ];
@@ -71,6 +73,11 @@ export class SceneRenderer {
         ctx.fillRect(c.x-4,c.y-2,8,4);
       }
     }
+    // Tapete de circulação feito no mesmo plano da grade; sem geometria 3D.
+    polygon(ctx,[
+      iso({x:0.7,y:4.15},camera),iso({x:Math.min(w-0.5,5.1),y:4.15},camera),
+      iso({x:Math.min(w-0.5,5.1),y:4.83},camera),iso({x:0.7,y:4.83},camera)
+    ],"rgba(66,105,106,0.17)","rgba(73,106,105,0.27)");
   }
   private walls(camera:Projection,w:number):void {
     const ctx=this.ctx;
@@ -84,6 +91,44 @@ export class SceneRenderer {
       polygon(ctx,[a,b,c,d],"#344F62","#F9E2BE");
       polygon(ctx,[iso({x:position+0.62,y:0},camera,127),iso({x:position+0.62,y:0},camera,73),
         c,b],"rgba(127,186,201,0.14)");
+    }
+  }
+  private decor(camera:Projection,w:number):void {
+    const ctx=this.ctx;
+    // Frisos ao pé das paredes; ajudam a perceber o interior sem adicionar telhado.
+    polygon(ctx,[
+      iso({x:0,y:0.02},camera,9),iso({x:w,y:0.02},camera,9),
+      iso({x:w,y:0.02},camera,2),iso({x:0,y:0.02},camera,2)
+    ],"#967D78");
+    polygon(ctx,[
+      iso({x:0.02,y:0},camera,9),iso({x:0.02,y:6},camera,9),
+      iso({x:0.02,y:6},camera,2),iso({x:0.02,y:0},camera,2)
+    ],"#817A84");
+    // Quadros montados sobre a parede do fundo, altura consistente em world pixels.
+    for(const [x,label,accent] of [
+      [0.82,"LAN","#52766C"],[Math.max(3.25,w-2.2),"JOGOS","#927053"]
+    ] as const){
+      const corners=[
+        iso({x,y:0},camera,128),iso({x:x+0.92,y:0},camera,128),
+        iso({x:x+0.92,y:0},camera,79),iso({x,y:0},camera,79)
+      ];
+      polygon(ctx,corners,"#E4D3B6","#856957");
+      const inner=[
+        iso({x:x+0.09,y:0},camera,118),iso({x:x+0.83,y:0},camera,118),
+        iso({x:x+0.83,y:0},camera,86),iso({x:x+0.09,y:0},camera,86)
+      ];
+      polygon(ctx,inner,accent);
+      const middle=iso({x:x+0.46,y:0},camera,97);
+      ctx.save();ctx.font="bold 9px system-ui,sans-serif";
+      ctx.textAlign="center";ctx.fillStyle="#F7E4C9";
+      ctx.fillText(label,middle.x,middle.y+2);
+      ctx.restore();
+    }
+    // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
+    for(const x of [1.7,3.9,Math.max(5.4,w-1.2)]){
+      const p=iso({x,y:0},camera,146),z=camera.zoom;
+      ctx.fillStyle="#7B6261";ctx.fillRect(p.x-17*z,p.y-4*z,34*z,9*z);
+      ctx.fillStyle="#F6E1B2";ctx.fillRect(p.x-14*z,p.y-1*z,28*z,3*z);
     }
   }
   private counter(camera:Projection):void {
@@ -114,49 +159,43 @@ export class SceneRenderer {
     ctx.fillRect(a.x-6,a.y-8,12,4);
     const label=iso({x:x+0.65,y:y+0.4},camera,38);
     ctx.fillStyle="#FFF6DB";ctx.fillRect(label.x-8,label.y-6,16,5);
+    const slot=iso({x:x+0.65,y:y+0.43},camera,17),z=camera.zoom;
+    ctx.fillStyle="#253348";ctx.fillRect(slot.x-9*z,slot.y-5*z,18*z,7*z);
+    ctx.fillStyle=kind==="soda"?"#A5E5D6":"#F1D391";
+    ctx.fillRect(slot.x-6*z,slot.y-3*z,9*z,2*z);
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,camera,p,i,t,isOnline,s);
   }
-  private character(camera:Projection,x:number,y:number,costume:string,t:number,seated=false):void {
-    const ctx=this.ctx,base=iso({x,y},camera),z=camera.zoom,scale=seated?0.72:1;
-    const height=52*z*scale;
-    ctx.fillStyle="rgba(26,29,45,.3)";ctx.beginPath();ctx.ellipse(base.x,base.y,13*z,6*z,0,0,Math.PI*2);ctx.fill();
-    const torso=costume==="owner"?"#277964":costume==="clown"?"#E6A240":costume==="vampire"?"#553D78":
-      costume==="stitched-monster"?"#5F8D65":costume==="rabbit"?"#F4DEE0":costume==="mouse-mascot"?"#8F98A5":"#4B85A1";
-    const face=costume==="stitched-monster"?"#93B685":costume==="vampire"?"#DEB1BB":"#E7BA92";
-    const sway=seated?Math.sin(t*6)*2:Math.sin(t*5+x)*2.2;
-    ctx.fillStyle="#22324A";
-    if(!seated){ctx.fillRect(base.x-9*z,base.y-20*z,7*z,18*z);ctx.fillRect(base.x+3*z,base.y-20*z,7*z,18*z);}
-    ctx.fillStyle=torso;ctx.fillRect(base.x-12*z,base.y-height+22*z,24*z,24*z);
-    ctx.fillStyle=torso;ctx.fillRect(base.x-17*z,base.y-height+24*z+sway,6*z,18*z);
-    ctx.fillRect(base.x+11*z,base.y-height+24*z-sway,6*z,18*z);
-    ctx.fillStyle=face;ctx.beginPath();ctx.ellipse(base.x,base.y-height+13*z,11*z,13*z,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle=costume==="owner"?"#30262D":costume==="clown"?"#EA4D5E":"#3A293C";
-    ctx.fillRect(base.x-11*z,base.y-height-1*z,22*z,6*z);
-    if(costume==="rabbit") {
-      ctx.fillStyle="#F7E7E9";ctx.fillRect(base.x-9*z,base.y-height-23*z,6*z,21*z);
-      ctx.fillRect(base.x+4*z,base.y-height-25*z,6*z,23*z);
-    }
-    if(costume==="mouse-mascot") {
-      ctx.fillStyle="#9DA6B1";ctx.beginPath();ctx.arc(base.x-12*z,base.y-height+1*z,7*z,0,Math.PI*2);ctx.arc(base.x+12*z,base.y-height+1*z,7*z,0,Math.PI*2);ctx.fill();
-    }
-    if(costume==="vampire") {ctx.fillStyle="#1C2037";ctx.fillRect(base.x-4*z,base.y-height+19*z,8*z,2*z);}
-    ctx.fillStyle="#1F2A3B";ctx.fillRect(base.x-5*z,base.y-height+12*z,2*z,2*z);
-    ctx.fillRect(base.x+4*z,base.y-height+12*z,2*z,2*z);
-    if(costume==="owner")
-      this.heroHitbox={x:base.x-20,y:base.y-height-12,width:40,height:height+18};
+  private owner(camera:Projection,t:number):void {
+    // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
+    drawActor(this.ctx,camera,{x:1.45,y:1.05,kind:"owner",id:0,time:t,pose:"idle",facing:1});
+    this.heroHitbox=actorHitbox(camera,1.45,1.05);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean):void {
     let x=c.x,y=c.y;
+    const moving=c.stage==="arriving" || c.stage==="to_pc" ||
+      c.stage==="shopping" || c.stage==="leaving";
+    let pose:ActorPose=moving?"walking":"idle";
+    let transition=1;
     if(seated && c.pcIndex!==null){
-      const p=pcPosition(c.pcIndex);x=p.x+0.33;y=p.y+0.72;
+      const p=pcPosition(c.pcIndex);
+      x=p.x+0.35;y=p.y+0.82;
+      pose=c.stage==="standing"?"standing-up":"sitting";
+      transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
+        c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
     }
-    this.character(camera,x,y,c.costume,t+0.4*c.id,seated);
-    if(c.stage==="waiting") {
-      const p=iso({x,y},camera,66);
-      this.ctx.fillStyle="#FFF0B2";this.ctx.font="bold 16px sans-serif";
-      this.ctx.fillText("?",p.x,p.y);
+    const dx=c.target.x-c.x,dy=c.target.y-c.y;
+    const facing:1|-1=moving && (dx-dy)<-0.04?-1:1;
+    drawActor(this.ctx,camera,{
+      x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
+      pose,facing,transition
+    });
+    if(c.stage==="waiting"){
+      const p=iso({x,y},camera,91);
+      this.ctx.fillStyle="#FFF4BC";
+      this.ctx.font="bold 15px system-ui,sans-serif";
+      this.ctx.fillText("?",p.x-4,p.y);
     }
   }
   private doorMarker(camera:Projection,s:GameState):void {

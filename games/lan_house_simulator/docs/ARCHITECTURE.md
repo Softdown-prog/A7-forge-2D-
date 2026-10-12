@@ -56,3 +56,9 @@ GitHub Actions pode executar jobs independentes em paralelo, sem agentes de IA e
 A geometria do piso deve ter **espessura visível e sombra de flutuação**. A câmera vê o interior de cima sem nenhum telhado, em 2:1, e a parede dianteira é omitida para não ocultar mesas/clientes. A entrada é um marcador de soleira na borda frontal e não dá acesso a um mapa externo. `entrance(state)` permanece dentro da sala para spawn lógico. O fundo é abstrato; estado meteorológico aparece apenas em HUD e lógica econômica.
 
 A progressão de tecnologia é dado de jogo, independente da arte: `internetTier=1/2/3` significa discada/rádio/fibra, mantendo o save V1. Evolução dos computadores Windows 98 -> 2000 -> XP -> Vista -> 7 -> 8/8.1 -> 10 -> 11 é uma tabela de planejamento, **não** propriedade de `GameState` até haver implementação de compra e migração de save.
+
+## Renderização de personagens — acabamento procedural V1
+
+O módulo `src/render/actorArt.ts` é um *renderer de estudo*, feito de paths e elipses Canvas 2D em coordenadas locais com âncora de pés. Não depende de imagens online e não é asset aprovado. `actorStyleFor(kind,id)` determina paleta e aparência por identidade, não por timestamp. Poses `idle`, `walking`, `sitting`, `standing-up` compartilham silhueta e rosto, com transições animadas. A orientação esquerda/direita vem do deslocamento dos waypoints, sem rotação de câmera. Fantasias são arquétipos originais. O `actorHitbox` acompanha a cabeça/ombros do proprietário para manter painel clicável.
+
+Futuro: trocar formas por sprites A7 Forge após aprovação visual 1x mantendo a API de pose, ID, âncora e paleta, sem refazer IA ou economia. A cena continua fixa, 2:1, cutaway sem telhado/exterior.

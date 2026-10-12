@@ -51,3 +51,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Corrigir posições dos PCs de expansões para não extrapolarem o piso.
 - [x] Preparar screenshots reais do Canvas desktop e mobile via worker de cena e artifact de revisão.
 - [ ] Aprovar a composição visual por PNG antes de substituir placeholders por PNGs finais do A7 Forge.
+
+## Acabamento visual V1 (12/10/2026)
+- [x] Trocar atores-retângulo por formas orgânicas vetoriais com contorno, cabelo, roupa, pernas e braços articulados.
+- [x] Diferenciar proprietário, clientes regulares e cinco arquétipos originais de fantasia sem copiar personagens registrados.
+- [x] Identidade visual determinada pelo ID da pessoa, sem aleatoriedade por frame.
+- [x] Caminhada com balanço contrário de braços/pernas, pose sentada, mãos voltadas ao teclado e levantar sem troca de rosto.
+- [x] Frisos, cartazes originais, luminárias discretas e tapete sobre piso isométrico sem telhado.
+- [ ] Avaliar arte no PNG real (desktop/mobile) do CI antes de promover sprites finais.

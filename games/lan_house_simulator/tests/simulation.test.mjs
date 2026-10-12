@@ -118,3 +118,16 @@ test("PCs e cadeiras permanecem dentro das salas em todas as expansões",async()
     }
   }
 });
+
+test("paleta de personagens é estável por identidade e independente da animação",async()=>{
+  const { actorStyleFor, actorHitbox }=await import("../dist/js/render/actorArt.js");
+  const { cameraForRoom,iso }=await import("../dist/js/render/isometric.js");
+  assert.deepEqual(actorStyleFor("regular",19),actorStyleFor("regular",19));
+  assert.notDeepEqual(actorStyleFor("regular",19),actorStyleFor("regular",20));
+  assert.notEqual(actorStyleFor("owner",0).shirt,actorStyleFor("clown",0).shirt);
+  assert.notEqual(actorStyleFor("vampire",0).skin,actorStyleFor("stitched-monster",0).skin);
+  const camera=cameraForRoom(7),center=iso({x:1.45,y:1.05},camera);
+  const box=actorHitbox(camera,1.45,1.05);
+  assert.ok(box.x<center.x&&box.x+box.width>center.x);
+  assert.ok(box.y<center.y&&box.y+box.height>center.y);
+});
