@@ -83,3 +83,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Aproximar as três mesas iniciais da parede posterior e ampliar área do corredor; duas expansões reposicionadas.
 - [x] Testes para quatro direções, manutenção de orientação e posicionamento mesa/cadeira.
 - [ ] Validar quatro direções em PNG/filmagem do navegador, com overlay de pernas/mãos e oclusão; arte ainda procedural provisória.
+
+## Prancha de orientação 4 vistas
+- [x] Novo artifact `lhs_four_directions_and_pc_pose.png` gerado em Chromium pelas funções reais de desenho de ator e CRT.
+- [x] Grade 4 direções x 3 poses, dois instantes distintos de passo e vista sentada diante da estação.
+- [ ] Inspecionar visualmente perfil, nuca, braço e pernas para detectar inversões ou pose artificial.
+- [ ] Validar em movimento no runtime completo antes de declarar a caminhada aprovada.

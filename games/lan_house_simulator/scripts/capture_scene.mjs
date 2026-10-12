@@ -96,6 +96,53 @@ try{
       });
       await writeFile(resolve(output,"lhs_equipment_closeup_desktop.png"),
         Buffer.from(equipment,"base64"));
+      // Matriz de pose gerada pelas MESMAS funções do runtime, sem mock visual.
+      const poses=await page.evaluate(async()=>{
+        const [{drawActor},{drawRetroComputer},{createGame}]=await Promise.all([
+          import("./js/render/actorArt.js"),
+          import("./js/render/retroComputer.js"),
+          import("./js/sim/engine.js")
+        ]);
+        const directions=["south","north","east","west"];
+        const names=["FRENTE","COSTAS","DIREITA","ESQUERDA"];
+        const canvas=document.createElement("canvas");
+        canvas.width=1080;canvas.height=760;
+        const ctx=canvas.getContext("2d");
+        if(!ctx)throw Error("Canvas de prancha indisponível");
+        ctx.fillStyle="#17243A";ctx.fillRect(0,0,canvas.width,canvas.height);
+        const state=createGame(1998);
+        for(let col=0;col<4;col++){
+          const x0=20+col*264;
+          ctx.fillStyle="#EAD6B9";ctx.font="bold 18px system-ui";
+          ctx.fillText(names[col],x0+45,36);
+          for(let row=0;row<3;row++){
+            const y0=54+row*229;
+            ctx.fillStyle="#2C3C51";ctx.fillRect(x0,y0,248,215);
+            ctx.strokeStyle="#80929D";ctx.strokeRect(x0+.5,y0+.5,247,214);
+            const camera={originX:x0+124,originY:y0+188,zoom:1.7};
+            ctx.fillStyle="#A7B6C8";ctx.font="bold 12px system-ui";
+            ctx.fillText(["PASSO A","PASSO B","USO DO PC"][row],x0+12,y0+19);
+            if(row===2){
+              // CRT do jogo em tamanho real aumentado, com assento ao fundo.
+              const at={x:0.2,y:-0.35};
+              const poseCamera={originX:x0+90,originY:y0+157,zoom:1.5};
+              drawRetroComputer(ctx,poseCamera,at,0,1,true,state);
+              drawActor(ctx,poseCamera,{
+                x:at.x+0.35,y:at.y+0.82,kind:"regular",id:1,time:1.2,
+                pose:"sitting",direction:directions[col],transition:1
+              });
+            }else{
+              drawActor(ctx,camera,{
+                x:0,y:0,kind:"regular",id:1,time:row===0?0.0:0.22,
+                pose:"walking",direction:directions[col]
+              });
+            }
+          }
+        }
+        return canvas.toDataURL("image/png").split(",")[1];
+      });
+      await writeFile(resolve(output,"lhs_four_directions_and_pc_pose.png"),
+        Buffer.from(poses,"base64"));
     }
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
