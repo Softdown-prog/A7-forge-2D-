@@ -11,9 +11,17 @@ for(const d of ["east","west"])for(const pose of ["idle","walk_0","walk_1","walk
 const art={};for(const [key,path] of Object.entries({hall:"assets/scene/castle_hall.svg",platform:"assets/scene/platform_stone.svg",door:"assets/scene/exit_door.svg",slime:"assets/enemies/slime.svg",bat:"assets/enemies/bat.svg",guardian:"assets/enemies/guardian.svg"})){const im=new Image();im.src=path;art[key]=im;}
 function drawArt(key,x,y,w,h){const im=art[key];if(!im?.complete||!im.naturalWidth)return false;ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}
 let player,enemies,bolts,particles,won,lost,tick,damageAt,lastShot,gameTime;
+const reducedMotion=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches??false;
+function burst(x,y,color,count=8){
+ if(reducedMotion)return;
+ for(let i=0;i<count;i++){const angle=i*6.28318530718/count;
+  const speed=35+(i%3)*23;particles.push({x,y,vx:Math.cos(angle)*speed,vy:Math.sin(angle)*speed-20,t:.35,color,size:2+(i%2)});
+ }
+}
+
 const platforms=[{x:0,y:GROUND,w:800,h:60},{x:180,y:307,w:145,h:15},{x:460,y:276,w:135,h:15}];
 function reset(){player={x:48,y:GROUND-42,w:27,h:42,vx:0,vy:0,onGround:false,face:1,hp:5,attackUntil:0};
- enemies=[{type:"slime",x:275,y:GROUND-22,w:32,h:22,hp:5,maxHp:5,speed:35,hitAt:-10},{type:"bat",x:482,y:187,w:30,h:22,hp:3,maxHp:3,speed:55,hitAt:-10},{type:"guardian",x:650,y:GROUND-45,w:34,h:45,hp:8,maxHp:8,speed:24,hitAt:-10}];
+ enemies=[{type:"slime",x:275,y:GROUND-22,w:32,h:22,hp:5,maxHp:5,speed:35,hitAt:-10,flash:0},{type:"bat",x:482,y:187,w:30,h:22,hp:3,maxHp:3,speed:55,hitAt:-10,flash:0},{type:"guardian",x:650,y:GROUND-45,w:34,h:45,hp:8,maxHp:8,speed:24,hitAt:-10,flash:0}];
  bolts=[];particles=[];won=false;lost=false;tick=0;damageAt=-10;lastShot=-10;gameTime=0;status.textContent="Derrote os inimigos e alcance a porta!";}
 // Multi-touch reference counting: releasing one finger never cancels another.
 const touchPointers=new Map();
@@ -59,17 +67,33 @@ function update(dt){
  for(const e of enemies){if(e.hp<=0)continue;
  if(e.type==="bat"){e.y=185+Math.sin(gameTime*2+e.x/120)*30; e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
  else {e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
- if(overlap(player,e)&&gameTime-damageAt>1){damageAt=gameTime;player.hp--;player.vy=-140;player.x=Math.max(0,Math.min(W-player.w,player.x+(player.x<e.x?-24:24)));}
+ if(overlap(player,e)&&gameTime-damageAt>1){
+ damageAt=gameTime;player.hp--;player.vy=-140;
+ player.x=Math.max(0,Math.min(W-player.w,player.x+(player.x<e.x?-24:24)));
+ burst(player.x+player.w/2,player.y+18,"#f77c9d",10);
+}
  }
- for(const b of bolts){b.x+=b.vx*dt;b.life-=dt;for(const e of enemies){if(e.hp>0&&overlap(b,e)){e.hp--;b.life=0;for(let i=0;i<6;i++)particles.push({x:b.x,y:b.y,vx:(Math.random()-.5)*90,vy:(Math.random()-.5)*90,t:.22});break;}}}
+ for(const b of bolts){b.x+=b.vx*dt;b.life-=dt;for(const e of enemies){if(e.hp>0&&overlap(b,e)){e.hp--;e.flash=.15;b.life=0;burst(b.x+6,b.y+5,e.hp===0?"#f8db83":"#86e5ff",12);break;}}}
  bolts=bolts.filter(b=>b.life>0&&b.x>-30&&b.x<W+30);
- for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.t-=dt;}particles=particles.filter(p=>p.t>0);
+ for(const e of enemies)e.flash=Math.max(0,e.flash-dt);
+ for(const p of particles){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=110*dt;p.t-=dt;}
+ particles=particles.filter(p=>p.t>0);
  if(player.hp<=0){lost=true;status.textContent="O mago caiu! Pressione R para tentar novamente.";}
  if(player.x>745&&enemies.every(e=>e.hp<=0)){won=true;status.textContent="Castelo conquistado! Primeira sala concluída. Pressione R para jogar novamente.";}
 }
 function sprite(d,pose,x,y,w=32,h=48){const im=images[d+"_"+pose];if(im?.complete&&im.naturalWidth){ctx.drawImage(im,Math.round(x),Math.round(y),w,h);return true;}return false;}
+function drawTorch(x){
+ // Canvas-only animated flames layered over the static stone hall; no new asset dependency.
+ const f=reducedMotion?0:Math.sin(gameTime*10+x);
+ ctx.save();ctx.globalAlpha=.10+(.03*Math.abs(f));rect(x-18,113,40,50,"#ec994e");ctx.restore();
+ rect(x-3,151,7,16,"#70503f");
+ rect(x-7,137+Math.round(f*2),15,19,"#d67838");
+ rect(x-4,131+Math.round(f*3),9,19,"#ffb84d");
+ rect(x-2,128+Math.round(f*4),5,13,"#fff0ab");
+}
 function background(){
  if(!drawArt("hall",0,0,W,H)){rect(0,0,W,H,"#29283d");rect(0,GROUND,W,H-GROUND,"#554c61");}
+ drawTorch(119);drawTorch(634);
  for(const p of platforms.slice(1)){
   if(!drawArt("platform",p.x,p.y,p.w,p.h))rect(p.x,p.y,p.w,p.h,"#94849b");
  }
@@ -77,15 +101,31 @@ function background(){
 }
 
 function paint(){
- background();for(const e of enemies){if(e.hp<=0)continue;
- const flutter=e.type==="bat"?(tick%16<8?-4:3):0;
- if(!drawArt(e.type,e.x+(e.type==="bat"?-7:0),e.y+flutter,e.type==="bat"?44:e.w,e.type==="bat"?32:e.h)){
-  rect(e.x,e.y,e.w,e.h,e.type==="slime"?"#5ab892":e.type==="bat"?"#7664ad":"#888697");
+ background();
+ for(const e of enemies){if(e.hp<=0)continue;
+ const animation=reducedMotion?0:Math.sin(gameTime*(e.type==="bat"?17:e.type==="slime"?8:5)+e.x*.03);
+ const flutter=e.type==="bat"?Math.round(animation*4):0;
+ const squash=e.type==="slime"?Math.round(Math.abs(animation)*3):0;
+ const stride=e.type==="guardian"?Math.round(animation*2):0;
+ const dx=e.type==="bat"?-7:stride;
+ const dw=e.type==="bat"?44:e.w;
+ const dh=e.type==="bat"?32:e.h-squash;
+ const dy=e.y+flutter+squash;
+ if(!drawArt(e.type,e.x+dx,dy,dw,dh)){
+  rect(e.x+dx,dy,dw,dh,e.type==="slime"?"#5ab892":e.type==="bat"?"#7664ad":"#888697");
  }
+ if(e.flash>0){ctx.save();ctx.globalAlpha=Math.min(.65,e.flash*4);rect(e.x+dx,dy,dw,dh,"#ffffff");ctx.restore();}
+
  rect(e.x,e.y-12,e.w,4,"#34283e");rect(e.x,e.y-12,e.w*e.hp/e.maxHp,4,"#d75e77");
  }
- for(const b of bolts){rect(b.x-4,b.y-4,18,18,"#376baa");rect(b.x,b.y,12,10,"#56c9ff");rect(b.x+3,b.y+2,6,6,"#e0faff");}
- for(const p of particles)rect(p.x,p.y,4,4,"#b7ebff");
+ for(const b of bolts){
+  const tail=b.vx>0?-1:1;
+  rect(b.x+tail*10,b.y+4,10,3,"#427bd2");
+  rect(b.x-4,b.y-4,18,18,"#376baa");
+  rect(b.x,b.y,12,10,"#56c9ff");rect(b.x+3,b.y+2,6,6,"#e0faff");
+ }
+ for(const p of particles)rect(p.x,p.y,p.size,p.size,p.color);
+
  if(gameTime-damageAt>.12||tick%6<3){
  const pose=gameTime<player.attackUntil?"attack_"+Math.min(5,Math.floor((.40-(player.attackUntil-gameTime))/.067)):Math.abs(player.vx)>0&&player.onGround?"walk_"+(Math.floor(gameTime/.15)%4):"idle";
  const d=player.face===1?"east":"west";
