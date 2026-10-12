@@ -62,7 +62,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const seated=pose==="sitting"?transition:pose==="standing-up"?1-transition:0;
   const step=walking?Math.sin(a.time*7.7+a.id*.27):0;
   const bob=walking?Math.abs(step)*1.5:0;
-  const headShift=seated*9;
+  const headShift=seated*18;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:seated*2;
   const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south";
@@ -93,9 +93,9 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const footY=-4;
   for(const side of [-1,1]){
     const swing=step*7*side*(1-seated);
-    const kneeX=side*7+swing*.55+side*seated*2;
-    const kneeY=-13+seated*4;
-    const toeX=side*7+swing+side*seated*8;
+    const kneeX=side*7+swing*.55+side*seated*10;
+    const kneeY=-13+seated*8;
+    const toeX=side*7+swing+side*seated*15;
     segment(ctx,side*5,legY,kneeX,kneeY,8,style.pants);
     segment(ctx,kneeX,kneeY,toeX,footY-seated*4,7,style.pants);
     ell(ctx,toeX+2,footY-seated*4,6.3,3.3,a.kind==="rabbit"?"#E5D5D5":"#283647","#1D2736");
@@ -107,8 +107,8 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const wave=step*5*-side*(1-seated);
     const elbowX=side*(18-seated*2)+wave;
     const elbowY=-36+headShift+seated*3;
-    const handX=side*(19-seated*5)+wave*.5;
-    const handY=-24+headShift+seated*4+typing*side;
+    const handX=side*(19-seated*15)+wave*.5+seated*12;
+    const handY=-24+headShift-seated*5+typing*side;
     segment(ctx,ax,ay,elbowX,elbowY,8,style.dark);
     segment(ctx,elbowX,elbowY,handX,handY,7,style.shirt);
     ell(ctx,handX,handY,4.1,4.4,style.skin,"#785C59");
@@ -120,14 +120,16 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     style.dark);
   shape(ctx,[[-10,-49+headShift],[-3,-52+headShift],[11,-49+headShift],
     [10,-30+headShift],[7,-24+headShift],[-9,-26+headShift]],style.shirt);
-  shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
+  if(!back)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
     [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
   // Gola e botões têm leitura em resolução baixa.
-  shape(ctx,[[-8,-50+headShift],[0,-46+headShift],[6,-51+headShift],
-    [3,-53+headShift],[-5,-53+headShift]],style.trim);
-  ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
+  if(!back){
+    shape(ctx,[[-8,-50+headShift],[0,-46+headShift],[6,-51+headShift],
+      [3,-53+headShift],[-5,-53+headShift]],style.trim);
+    ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
+  }
 
-  if(a.kind==="owner"){
+  if(!back && a.kind==="owner"){
     // Avental de atendente: personagem central legível mesmo atrás do balcão.
     shape(ctx,[[-7,-44+headShift],[7,-44+headShift],[10,-21+headShift],
       [-11,-21+headShift]],"#315C5A","#23444C");
@@ -135,13 +137,13 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     shape(ctx,[[-7,-31+headShift],[7,-31+headShift],[7,-26+headShift],
       [-7,-26+headShift]],"#517F71");
     ell(ctx,5,-43+headShift,2.4,2.4,"#F2D7A0");
-  } else if(a.kind==="clown"){
+  } else if(!back && a.kind==="clown"){
     ell(ctx,-8,-40+headShift,3.5,3.5,"#E65A61");
     ell(ctx,8,-31+headShift,3.3,3.3,"#76C4B4");
-  } else if(a.kind==="stitched-monster"){
+  } else if(!back && a.kind==="stitched-monster"){
     segment(ctx,-9,-44+headShift,8,-43+headShift,1.5,"#DBB882");
     for(const offset of [-5,2,7]) segment(ctx,offset,-46+headShift,offset+2,-41+headShift,1,"#43584A");
-  } else if(a.kind==="vampire"){
+  } else if(!back && a.kind==="vampire"){
     shape(ctx,[[-8,-50+headShift],[1,-44+headShift],[9,-50+headShift],
       [3,-51+headShift],[0,-46+headShift],[-3,-51+headShift]],"#DDC8CC");
     ell(ctx,0,-41+headShift,3,3,"#BA5971");

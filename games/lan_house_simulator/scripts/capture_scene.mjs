@@ -121,7 +121,7 @@ try{
             ctx.strokeStyle="#80929D";ctx.strokeRect(x0+.5,y0+.5,247,214);
             const camera={originX:x0+124,originY:y0+188,zoom:1.7};
             ctx.fillStyle="#A7B6C8";ctx.font="bold 12px system-ui";
-            ctx.fillText(["PASSO A","PASSO B","USO DO PC"][row],x0+12,y0+19);
+            ctx.fillText(["PASSO A","PASSO B","USO DO PC - COSTAS"][row],x0+12,y0+19);
             if(row===2){
               // CRT do jogo em tamanho real aumentado, com assento ao fundo.
               const at={x:0.2,y:-0.35};
@@ -129,7 +129,7 @@ try{
               drawRetroComputer(ctx,poseCamera,at,0,1,true,state);
               drawActor(ctx,poseCamera,{
                 x:at.x+0.35,y:at.y+0.82,kind:"regular",id:1,time:1.2,
-                pose:"sitting",direction:directions[col],transition:1
+                pose:"sitting",direction:"north",transition:1
               });
             }else{
               drawActor(ctx,camera,{

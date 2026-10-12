@@ -89,3 +89,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Grade 4 direções x 3 poses, dois instantes distintos de passo e vista sentada diante da estação.
 - [ ] Inspecionar visualmente perfil, nuca, braço e pernas para detectar inversões ou pose artificial.
 - [ ] Validar em movimento no runtime completo antes de declarar a caminhada aprovada.
+
+## Correção após olhar a prancha real (12/10/2026)
+- [x] Remover gola, botões e detalhes de peito na vista de costas.
+- [x] Ajustar joelhos e mãos na transição de sentado, encurtando silhueta e aproximando braços do teclado.
+- [x] A prancha passa a mostrar o uso de PC sempre voltado ao monitor, independentemente da coluna da direção da caminhada.
+- [ ] Conferir visual gerado no próximo CI; oclusão real das mãos sobre teclado ainda pode exigir sprite dedicado.
