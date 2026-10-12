@@ -105,3 +105,16 @@ test("cliente termina sessão, levanta e libera a estação",()=>{
   assert.equal(customer.pcIndex,null);
   assert.ok(customer.stage==="shopping" || customer.stage==="leaving");
 });
+
+test("PCs e cadeiras permanecem dentro das salas em todas as expansões",async()=>{
+  const s=createGame();
+  const { pcPosition, roomWidth }=await import("../dist/js/sim/engine.js");
+  for(let expansion=0;expansion<=2;expansion++){
+    s.expansionLevel=expansion;
+    for(let i=0;i<pcCount(s);i++){
+      const p=pcPosition(i);
+      assert.ok(p.x-0.16>=0&&p.x+0.8<roomWidth(s), "mesa "+i+" deve caber na largura");
+      assert.ok(p.y-0.2>=0&&p.y+1.1<6, "cadeira "+i+" deve caber no piso");
+    }
+  }
+});

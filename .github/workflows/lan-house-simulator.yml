@@ -44,6 +44,24 @@ jobs:
         run: |
           npm run build
           npm run audit
+      - name: Install Chromium for real Canvas validation
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Capture actual runtime desktop and mobile
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_scene.mjs out/validation
+      - name: Upload Canvas visual validation
+        if: matrix.worker == 'scene'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-visual-validation
+          path: games/lan_house_simulator/out/validation/
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload standalone game
         if: matrix.worker == 'scene'
         uses: actions/upload-artifact@v4

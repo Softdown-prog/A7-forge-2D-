@@ -46,3 +46,7 @@ Documentação canônica:
 - [Áudio original do usuário](assets/audio/README.md)
 
 O jogo é uma obra original: figurinos cômicos são arquétipos próprios, sem copiar personagens ou marcas de terceiros.
+
+## Captura de validação visual
+
+O job `worker-scene` gera duas capturas reais do jogo em Chromium (desktop e mobile), com três visitantes posicionados por seed de revisão. Veja o artifact `lhs-visual-validation` na execução do workflow. A câmera permanece fixa, sem telhado e sem exterior. As capturas são de *placeholders*, não de arte aprovada.

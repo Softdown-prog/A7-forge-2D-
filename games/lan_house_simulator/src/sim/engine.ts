@@ -26,8 +26,8 @@ export function entrance(s: GameState): Point { return { x: roomWidth(s) - 0.5, 
 export function pcPosition(i: number): Point {
   const positions: Point[] = [
     { x: 2.25, y: 3.05 }, { x: 3.75, y: 2.65 }, { x: 5.1, y: 2.2 },
-    { x: 7.2, y: 2.2 }, { x: 8.3, y: 3.6 },
-    { x: 9.5, y: 2.2 }, { x: 10.5, y: 3.6 }
+    { x: 7.2, y: 2.2 }, { x: 7.85, y: 3.6 },
+    { x: 9.5, y: 2.2 }, { x: 9.85, y: 3.6 }
   ];
   return positions[i] ?? positions[0];
 }

@@ -45,3 +45,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Separar transições de sentar/usar/levantar e manter reserva do computador durante a animação.
 - [x] Adicionar testes de waypoints, ocupação e liberação da estação.
 - [ ] Validar fluxo visual no navegador via artifact do GitHub Actions antes de trocar placeholders por sprites definitivos.
+
+## Validação retro/CRT (12/10/2026)
+- [x] Estudo procedural 2D de mesa, gabinete, teclado, cadeira e monitor CRT, sem logos ou imagens externas.
+- [x] Corrigir posições dos PCs de expansões para não extrapolarem o piso.
+- [x] Preparar screenshots reais do Canvas desktop e mobile via worker de cena e artifact de revisão.
+- [ ] Aprovar a composição visual por PNG antes de substituir placeholders por PNGs finais do A7 Forge.

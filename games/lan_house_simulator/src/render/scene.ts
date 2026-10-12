@@ -1,6 +1,7 @@
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometric.js";
+import { drawRetroComputer } from "./retroComputer.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -115,18 +116,7 @@ export class SceneRenderer {
     ctx.fillStyle="#FFF6DB";ctx.fillRect(label.x-8,label.y-6,16,5);
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
-    const ctx=this.ctx;
-    cuboid(ctx,camera,p.x-0.18,p.y-0.22,0.98,0.8,33,["#C69A70","#7E5B52","#9B6E51"]);
-    cuboid(ctx,camera,p.x+0.22,p.y+0.02,0.42,0.2,62,["#253146","#10182A","#202E40"]);
-    const screen=iso({x:p.x+0.64,y:p.y+0.11},camera,77);
-    ctx.fillStyle=isOnline?(Math.floor(t*2+i)%2?"#8DE7E0":"#66AFEA"):"#6A6D79";
-    ctx.fillRect(screen.x-9,screen.y-13,18,12);
-    ctx.fillStyle="#C9CEDA";ctx.fillRect(screen.x-8,screen.y+1,16,2);
-    const seat=iso({x:p.x+0.35,y:p.y+0.86},camera,25);
-    ctx.fillStyle="#3B4863";ctx.beginPath();ctx.ellipse(seat.x,seat.y,18,8,0,0,Math.PI*2);ctx.fill();
-    if(!s.customers.some(c=>c.pcIndex===i && (c.stage==="sitting" || c.stage==="using" || c.stage==="standing"))) {
-      ctx.fillStyle="#2D4864";ctx.fillRect(seat.x-13,seat.y-29,26,19);
-    }
+    drawRetroComputer(this.ctx,camera,p,i,t,isOnline,s);
   }
   private character(camera:Projection,x:number,y:number,costume:string,t:number,seated=false):void {
     const ctx=this.ctx,base=iso({x,y},camera),z=camera.zoom,scale=seated?0.72:1;
