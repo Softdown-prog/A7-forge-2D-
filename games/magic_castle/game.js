@@ -64,7 +64,10 @@ function update(dt){
  let oldY=player.y;player.x=Math.max(0,Math.min(W-player.w,player.x+player.vx*dt));player.vy=Math.min(560,player.vy+850*dt);player.y+=player.vy*dt;player.onGround=false;
  for(const p of platforms)if(player.x+player.w>p.x&&player.x<p.x+p.w&&oldY+player.h<=p.y+8&&player.y+player.h>=p.y&&player.vy>=0){player.y=p.y-player.h;player.vy=0;player.onGround=true;}
  if(player.y>H){player.hp=0;}
- for(const e of enemies){if(e.hp<=0)continue;
+ for(const e of enemies){
+ MagicCombat.advanceReaction(e,dt,0,W);
+ if(e.hp<=0)continue;
+ if(e.stun>0)continue;
  if(e.type==="bat"){e.y=185+Math.sin(gameTime*2+e.x/120)*30; e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
  else {e.x+=Math.sign(player.x-e.x)*e.speed*dt;}
  if(overlap(player,e)&&gameTime-damageAt>1){
@@ -111,7 +114,18 @@ function background(){
 
 function paint(){
  background();
- for(const e of enemies){if(e.hp<=0)continue;
+ for(const e of enemies){
+ if(e.hp<=0){
+  if(e.deathTime>0){
+   const progress=1-e.deathTime/.42;
+   ctx.save();ctx.globalAlpha=Math.max(0,1-progress);
+   const width=e.type==="bat"?44:e.w;
+   const height=e.type==="bat"?32:e.h;
+   drawArt(e.type,e.x,e.y+progress*16,width,Math.max(2,height*(1-progress*.8)));
+   ctx.restore();
+  }
+  continue;
+ }
  const animation=reducedMotion?0:Math.sin(gameTime*(e.type==="bat"?17:e.type==="slime"?8:5)+e.x*.03);
  const flutter=e.type==="bat"?Math.round(animation*4):0;
  const squash=e.type==="slime"?Math.round(Math.abs(animation)*3):0;
