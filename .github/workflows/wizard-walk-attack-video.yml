@@ -16,6 +16,11 @@ jobs:
         with:
           python-version: '3.11'
       - run: python -m pip install -e tools/visitor_forge_2d
+      - name: Install video encoder
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -version | head -n 1
       - name: Render canonical wizard
         run: python -m visitor_forge_2d render-pixel-character --recipe tools/visitor_forge_2d/examples/pixel_character_wizard_mini_01.json --output out/wizard
       - name: Create walk and attack MP4
