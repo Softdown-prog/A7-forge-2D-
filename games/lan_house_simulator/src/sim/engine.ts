@@ -3,7 +3,7 @@ import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { vendingApproach } from "./layout.js";
-import { ITEM_PRICES } from "./economy.js";
+import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 
@@ -12,7 +12,7 @@ export function createGame(seed = 72421): GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
-    pricePerHour: 12, internetTier: 1, offlineUntil: 0, licensedGames: false,
+    pricePerHour: 12, retailPrices:{soda:8,candy:5,snacks:9}, pcTiers:[1,1,1], internetTier: 1, offlineUntil: 0, licensedGames: false,
     expansionLevel: 0, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
@@ -122,14 +122,14 @@ function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
   const chosen = c.desiredItem ?? (items[Math.floor(random(s) * items.length)] ?? "soda");
   // Não comprar algo indisponível ou que excede o orçamento pessoal.
-  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<ITEM_PRICES[chosen])){
+  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<productPrice(s,chosen))){
     customerSays(s,c,s.inventory[chosen]<=0?"Produto esgotado!":"Está muito caro!");
     sendHome(s,c);return;
   }
   const result = sellItem(s, chosen);
   if (result.ok){
-    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-ITEM_PRICES[chosen]);
-    (s.saleEffects??=[]).push({item:chosen,amount:ITEM_PRICES[chosen],x:c.x,y:c.y});
+    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
+    (s.saleEffects??=[]).push({item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
     addLog(s,result.message);
   }
   sendHome(s, c);
@@ -161,7 +161,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       c.usedMinutes++;
       // Desgaste avança apenas durante uso; falha só bloqueia NOVAS reservas.
-      (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+0.045);
+      (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
         const rating=customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait);
         const impact=c.happy?rating:Math.min(0,rating);
@@ -175,7 +175,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
           addLog(s,"Cliente elogiou a experiência na lan house.");
           customerSays(s,c,"Curti demais!","praise");
         }
-        c.desiredItem=selectPurchase(c,s.inventory);
+        c.desiredItem=selectPurchase(c,s.inventory,s);
         startStanding(c,c.desiredItem!==null);
       }
       return;

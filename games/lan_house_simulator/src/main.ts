@@ -1,6 +1,6 @@
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills } from "./sim/economy.js";
-import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
+import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
+import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
@@ -30,6 +30,7 @@ function readSave(): GameState {
 }
 let game = readSave();
 let adminOpen = false;
+let activeAdminTab="prices";
 let previousServed = game.served;
 let previousPurchases = game.purchases;
 let sfxContext:AudioContext|null=null;
@@ -137,19 +138,37 @@ button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();sav
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
-// Botões gerados uma única vez; detalhes atualizados em renderUI sem listeners duplicados.
-const maintenancePanel=document.createElement("section");
-maintenancePanel.id="pc-maintenance";
-maintenancePanel.setAttribute("aria-label","Manutenção dos computadores");
-admin.appendChild(maintenancePanel);
+// Controles unificados em abas, sem criar novos painéis sobre o jogo.
+const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
+if(!maintenancePanel)throw new Error("Manutenção ausente no painel");
 maintenancePanel.addEventListener("click",event=>{
  const target=event.target;
  if(!(target instanceof HTMLButtonElement)||target.disabled)return;
- const index=Number(target.dataset.pcRepair);
+ const index=Number(target.dataset.pcRepair??target.dataset.pcUpgrade);
  if(!Number.isInteger(index))return;
  playOriginalSound("click");
- applyResult(game,repairComputer(game,index));renderUI();save();
+ applyResult(game,target.dataset.pcRepair!==undefined?repairComputer(game,index):upgradeComputer(game,index));
+ renderUI();save();
 });
+const tabs=admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]");
+function activateAdminTab(tab:string):void{
+ activeAdminTab=tab;
+ for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));}
+ for(const section of admin.querySelectorAll<HTMLElement>("[data-section]"))section.hidden=section.dataset.section!==tab;
+}
+for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");});
+const retailControls=document.getElementById("retail-price-controls");
+retailControls?.addEventListener("click",event=>{
+ const target=event.target;
+ if(!(target instanceof HTMLButtonElement))return;
+ const item=target.dataset.item as Item|undefined;
+ const delta=Number(target.dataset.delta);
+ if(!item||!["soda","candy","snacks"].includes(item)||![-1,1].includes(delta))return;
+ playOriginalSound("click");
+ applyResult(game,setProductPrice(game,item,productPrice(game,item)+delta));
+ renderUI();save();
+});
+activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
   game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
@@ -167,6 +186,15 @@ function renderUI():void {
     "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
+  activateAdminTab(activeAdminTab);
+  const days=dayNumber(game)-1;
+  const year=1998+Math.floor(days/360);
+  const month=Math.floor((days%360)/30)+1;
+  const monthDay=days%30+1;
+  const calendar=document.getElementById("calendar-hud");
+  if(calendar)calendar.textContent="📅 Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);
+  const weather=document.getElementById("weather-hud");
+  if(weather)weather.textContent=game.weather==="rain"?"🌧 Chuva":"☀ Tempo firme";
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monthlyRent=270+game.expansionLevel*170;
@@ -179,6 +207,26 @@ function renderUI():void {
   setText("admin-served",String(game.served));
   setText("monthly-breakdown","Custos mensais: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance));
   setText("price", "R$ "+game.pricePerHour+"/h");
+  if(retailControls){
+   retailControls.replaceChildren();
+   for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
+    const line=document.createElement("div");line.className="price-control";
+    const name=document.createElement("span");name.textContent=label;
+    const actions=document.createElement("div");actions.className="price-actions";
+    for(const delta of [-1,1]){
+      const button=document.createElement("button");button.type="button";button.dataset.item=item;
+      button.dataset.delta=String(delta);button.textContent=delta<0?"−":"+";
+      button.setAttribute("aria-label",(delta<0?"Reduzir ":"Aumentar ")+label);
+      if(delta<0)button.disabled=productPrice(game,item)<=1;
+      else button.disabled=productPrice(game,item)>=40;
+      if(delta===1){
+        const amount=document.createElement("strong");amount.textContent=money(productPrice(game,item));actions.append(amount);
+      }
+      actions.append(button);
+    }
+    line.append(name,actions);retailControls.append(line);
+   }
+  }
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
   const supplierButton=document.querySelector<HTMLButtonElement>("#supplier-up");
@@ -200,7 +248,12 @@ function renderUI():void {
       const label=document.createElement("span");label.textContent="PC "+(i+1)+" · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · PARADO":"")+" ";
       const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
       repair.textContent="Reparar · R$ "+(20+Math.ceil(wear*0.7));repair.disabled=wear<1;
-      line.append(label,repair);maintenance.appendChild(line);
+      const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
+      const tier=game.pcTiers?.[i]??1;
+      upgrade.textContent=tier>=3?"Máximo nível":("Evoluir nível "+(tier+1)+" · R$ "+(tier*240));
+      upgrade.disabled=tier>=3||game.cash<tier*240;
+      label.textContent+=" · hardware nível "+tier;
+      line.append(label,repair,upgrade);maintenance.appendChild(line);
     }
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");

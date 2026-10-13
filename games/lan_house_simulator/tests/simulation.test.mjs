@@ -407,3 +407,16 @@ test("expositor e proprietário permanecem desenhados no renderizador procedural
  assert.match(source,/for\(let row=0;row<4;row\+\+\)/);
  assert.match(source,/const plate=iso/);
 });
+
+test("preços de venda individuais alteram receita e respeitam saves antigos",async()=>{
+ const {setProductPrice,productPrice,sellItem,upgradeComputer}=await import("../dist/js/sim/economy.js");
+ const s=createGame();
+ assert.equal(productPrice(s,"soda"),8);
+ assert.equal(setProductPrice(s,"soda",13).ok,true);
+ assert.equal(sellItem(s,"soda").ok,true);
+ assert.equal(s.revenue,13);
+ assert.equal(setProductPrice(s,"candy",41).ok,false);
+ delete s.retailPrices;assert.equal(productPrice(s,"soda"),8);
+ const before=s.cash;assert.equal(upgradeComputer(s,0).ok,true);
+ assert.equal(s.pcTiers?.[0],2);assert.equal(s.cash,before-240);
+});

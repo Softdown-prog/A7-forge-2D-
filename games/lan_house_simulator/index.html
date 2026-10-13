@@ -15,6 +15,7 @@
       <div class="brand"><span class="logo">LH</span><div><h1>Lan House Simulator</h1><p>O sonho começou. Agora vem a administração.</p></div></div>
       <button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button>
     </header>
+    <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">📅 Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">☀ Tempo firme</div></div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
@@ -35,11 +36,22 @@
         <div><span>Contas por mês</span><strong id="admin-bills">R$ 540</strong></div>
         <div><span>Clientes atendidos</span><strong id="admin-served">0</strong></div>
       </div>
+      <nav class="admin-tabs" aria-label="Seções da administração">
+        <button type="button" class="admin-tab active" data-admin-tab="prices" aria-selected="true">Preços</button>
+        <button type="button" class="admin-tab" data-admin-tab="computers" aria-selected="false">Computadores</button>
+        <button type="button" class="admin-tab" data-admin-tab="stock" aria-selected="false">Estoque</button>
+        <button type="button" class="admin-tab" data-admin-tab="services" aria-selected="false">Serviços</button>
+        <button type="button" class="admin-tab" data-admin-tab="finance" aria-selected="false">Finanças</button>
+      </nav>
       <div class="admin-grid">
-        <div class="stat"><h3>Preço dos PCs</h3><div class="action-row"><button id="price-down" class="slice" aria-label="Diminuir preço">−</button><strong id="price">R$ 12/h</strong><button id="price-up" class="slice" aria-label="Aumentar preço">+</button></div><p id="pc">3 computadores</p></div>
-        <div class="stat"><h3>Produtos e estoque</h3><p id="stock"></p><p id="supplier-status">Fornecedor básico</p><div class="action-row wrap"><button id="stock-soda" class="slice">+ Bebidas R$ 40</button><button id="stock-candy" class="slice">+ Doces R$ 28</button><button id="stock-snacks" class="slice">+ Salgados R$ 48</button><button id="supplier-up" class="slice">Contratar fornecedor parceiro · R$ 180</button></div></div>
-        <div class="stat"><h3>Serviços</h3><p id="internet"></p><p id="license-status"></p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="internet-repair" class="slice" disabled>Chamar técnico · R$ 75</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
-        <div class="stat"><h3>Investimento e finanças</h3><p id="finance"></p><p id="monthly-breakdown"></p><p id="expansion"></p><div class="action-row wrap"><button id="expand" class="slice">Ampliar salão</button><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
+        <div class="stat admin-section" data-section="prices"><h3>Preços de venda</h3><div class="action-row"><button id="price-down" class="slice" aria-label="Diminuir preço">−</button><strong id="price">R$ 12/h</strong><button id="price-up" class="slice" aria-label="Aumentar preço">+</button></div><p>Preço da hora do computador</p><div id="retail-price-controls" class="price-controls" aria-label="Preços das mercadorias"></div></div>
+        <div class="stat admin-section" data-section="stock"><h3>Produtos e estoque</h3><p id="stock"></p><p id="supplier-status">Fornecedor básico</p><div class="action-row wrap"><button id="stock-soda" class="slice">+ Bebidas R$ 40</button><button id="stock-candy" class="slice">+ Doces R$ 28</button><button id="stock-snacks" class="slice">+ Salgados R$ 48</button><button id="supplier-up" class="slice">Contratar fornecedor parceiro · R$ 180</button></div></div>
+        <div class="stat admin-section" data-section="services"><h3>Serviços</h3><p id="internet"></p><p id="license-status"></p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="internet-repair" class="slice" disabled>Chamar técnico · R$ 75</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
+        <div class="stat admin-section" data-section="finance"><h3>Investimento e finanças</h3><p id="finance"></p><p id="monthly-breakdown"></p><p id="expansion"></p><div class="action-row wrap"><button id="expand" class="slice">Ampliar salão</button><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
+        <div class="stat admin-section" data-section="computers">
+          <h3>Computadores e evolução</h3><p id="pc">3 computadores</p>
+          <div id="pc-maintenance" aria-label="Manutenção e evolução dos computadores"></div>
+        </div>
       </div>
       <p class="admin-hint">As contas são cobradas a cada 30 dias do jogo. Reposição de estoque e reparos são despesas adicionais.</p>
     </section>

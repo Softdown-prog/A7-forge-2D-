@@ -2,6 +2,25 @@ import type { GameState, Inventory, Item, Result } from "./types.js";
 import { SESSION_MINUTES } from "./types.js";
 
 export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
+export function productPrice(s:GameState,item:Item):number {
+ const value=s.retailPrices?.[item];
+ return Number.isInteger(value)&&value!>=1&&value!<=40?value!:ITEM_PRICES[item];
+}
+export function setProductPrice(s:GameState,item:Item,value:number):Result {
+ if(!Number.isInteger(value)||value<1||value>40)return {ok:false,message:"Preço permitido: R$ 1 a R$ 40."};
+ (s.retailPrices??={...ITEM_PRICES})[item]=value;
+ return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
+}
+export function upgradeComputer(s:GameState,index:number):Result {
+ const count=3+s.expansionLevel*2;
+ if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
+ const tier=s.pcTiers?.[index]??1;
+ if(tier>=3)return {ok:false,message:"PC no nível máximo."};
+ const cost=tier*240;
+ if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para upgrade: R$ "+cost+"."};
+ s.cash-=cost;s.expenses+=cost;(s.pcTiers??=[])[index]=tier+1;
+ return {ok:true,message:"PC "+(index+1)+" atualizado para hardware nível "+(tier+1)+": -R$ "+cost+"."};
+}
 export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
 export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
 
@@ -54,7 +73,7 @@ export function stockItem(state: GameState, item: Item): Result {
 export function sellItem(state: GameState, item: Item): Result {
   if (state.inventory[item] <= 0) return { ok: false, message: "Produto esgotado: " + item };
   state.inventory[item]--;
-  const value = ITEM_PRICES[item];
+  const value = productPrice(state,item);
   state.cash += value; state.revenue += value; state.purchases++;
   return { ok: true, message: "Venda de " + item + ": +R$ " + value + "." };
 }
