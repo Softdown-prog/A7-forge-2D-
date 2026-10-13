@@ -1,20 +1,25 @@
 import type {GameState,Result} from "./types.js";
 import {roomBounds,expansionPrice} from "./room.js";
 import {WALL_COST} from "./walls.js";
+import {annexComputerSlots,ANNEX_PC_COST,availableAnnexComputers} from "./stations.js";
 export type FurnitureKind="poster"|"plant"|"table";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
+ {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
  {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Adiciona uma faixa de 2 tiles a oeste."},
  {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Adiciona uma faixa de 2 tiles a leste."},
  {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Adiciona 2 tiles para o norte, atrás do balcão. Porta sul fixa."},
  {id:"wall",label:"Construir divisórias",category:"Construção",description:"Parede interna de 1 tile, encaixe no grid e proteção de rotas."},
+ {id:"door",label:"Instalar porta interna",category:"Construção",description:"Converte uma divisória em passagem para clientes."},
  {id:"poster",label:"Pôster",category:"Decoração",description:"Pôster geométrico de parede."},
  {id:"plant",label:"Planta",category:"Decoração",description:"Vaso com folhagens."},
  {id:"table",label:"Mesinha",category:"Móveis",description:"Mesa lateral decorativa."}
 ] as const;
 export function shopPrice(s:GameState,id:string):number{
  if(id==="wall")return WALL_COST;
+ if(id==="door")return 80;
+ if(id==="computer-annex")return ANNEX_PC_COST;
  if(id==="extend-west")return expansionPrice(s,"west");
  if(id==="extend-east")return expansionPrice(s,"east");
  if(id==="extend-north")return expansionPrice(s,"north");
@@ -25,8 +30,11 @@ export function buyComputer(s:GameState):Result{
  if(count>=capacity)return {ok:false,message:"Amplie o salão antes de instalar outro PC."};
  const cost=shopPrice(s,"computer");
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para o PC."};
+ // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
+ for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
+ (s.pcWear??=[]).splice(count,0,0);
+ (s.pcTiers??=[]).splice(count,0,1);
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
- (s.pcWear??=[])[count]=0;(s.pcTiers??=[])[count]=1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
 export function furnitureLimit(s:GameState,kind:FurnitureKind):number{

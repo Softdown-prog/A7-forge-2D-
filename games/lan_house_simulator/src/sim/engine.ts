@@ -6,7 +6,8 @@ import { vendingApproach } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
-import {roomBounds} from "./room.js";
+import {navigableRoute} from "./navigation.js";
+import {annexComputerPosition} from "./stations.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -25,12 +26,19 @@ export function displayTime(s: GameState): string {
   return String(Math.floor(value / 60)).padStart(2, "0") + ":" + String(value % 60).padStart(2, "0");
 }
 export function online(s: GameState): boolean { return s.totalMinutes >= s.offlineUntil; }
-export function pcCount(s: GameState): number {return Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)));}
+export function legacyPcCount(s:GameState):number{
+ return Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)));
+}
+export function pcCount(s:GameState):number{return legacyPcCount(s)+(s.annexPcs?.length??0);}
 export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
 export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
 export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
 export function entrance(_s: GameState): Point {return {x:7.5,y:5.35};}
-export function pcPosition(i: number): Point {
+export function pcPosition(i: number,s?:GameState): Point {
+ if(s&&i>=legacyPcCount(s)){
+   const installed=s.annexPcs?.[i-legacyPcCount(s)];
+   if(installed){const pos=annexComputerPosition(s,installed.slotId);if(pos)return pos;}
+ }
   const positions: Point[] = [
     // Três PCs iniciais alinhados à parede do fundo; prateleira de salgadinhos movida para a lateral.
     { x: 2.20, y: 1.10 }, { x: 3.65, y: 1.10 }, { x: 5.00, y: 1.10 },
@@ -60,10 +68,11 @@ function move(c: Customer, speed = 0.38): boolean {
   c.y += dy / distance * speed;
   return false;
 }
-function setTravel(c: Customer, destination: Point): void {
-  const points = hallwayRoute({ x: c.x, y: c.y }, destination);
-  c.target = points[0]!;
-  c.route = points.slice(1);
+function setTravel(s:GameState,c:Customer,destination:Point):boolean{
+ const points=navigableRoute(s,{x:c.x,y:c.y},destination);
+ if(!points?.length)return false;
+ c.target=points[0]!;c.route=points.slice(1);
+ return true;
 }
 function moveRoute(c: Customer): boolean {
   if (!move(c)) return false;
@@ -84,7 +93,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 }
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null;
-  setTravel(c, entrance(s));
+  if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
 function spawn(s: GameState): void {
   const e = entrance(s);
@@ -96,7 +105,7 @@ function spawn(s: GameState): void {
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:12+Math.floor(random(s)*18)
   };
-  setTravel(c, COUNTER_QUEUE);
+  if(!setTravel(s,c,COUNTER_QUEUE))return;
   s.customers.push(c);
 }
 function tryServe(s: GameState, c: Customer): void {
@@ -111,9 +120,12 @@ function tryServe(s: GameState, c: Customer): void {
     return;
   }
   c.sessionMinutes??=chooseSessionMinutes(c);
-  c.pcIndex = index;
-  c.stage = "to_pc";
-  setTravel(c, computerSeat(pcPosition(index)));
+  if(!setTravel(s,c,computerSeat(pcPosition(index,s)))){
+    c.waitingMinutes++;
+    return; // Não cobrar se a sala não for acessível.
+  }
+  c.pcIndex=index;
+  c.stage="to_pc";
   const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
   s.cash += paid; s.revenue += paid; s.served++;
   (s.paymentEffects??=[]).push({amount:paid,x:c.x,y:c.y});
@@ -190,7 +202,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
         c.pcIndex = null;
         if (c.wantsSnack) {
           c.stage = "shopping";
-          setTravel(c,c.desiredItem==="soda"?vendingApproach("soda"):c.desiredItem?vendingApproach("candy"):VENDING_QUEUE);
+          setTravel(s,c,c.desiredItem==="soda"?vendingApproach("soda"):c.desiredItem?vendingApproach("candy"):VENDING_QUEUE);
         } else sendHome(s, c);
       }
       return;

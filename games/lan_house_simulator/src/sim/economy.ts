@@ -12,7 +12,7 @@ export function setProductPrice(s:GameState,item:Item,value:number):Result {
  return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
 }
 export function upgradeComputer(s:GameState,index:number):Result {
- const count=s.installedPcs??(3+s.expansionLevel*2);
+ const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
  const tier=s.pcTiers?.[index]??1;
  if(tier>=3)return {ok:false,message:"PC no nível máximo."};
@@ -117,7 +117,7 @@ export function cloneInventory(stock: Inventory): Inventory {
 
 /** Reparo por estação: sem cobrança se o PC já estiver íntegro. */
 export function repairComputer(state:GameState,index:number):Result {
- const count=state.installedPcs??(3+state.expansionLevel*2);
+ const count=Math.max(3,Math.min(3+state.expansionLevel*2,state.installedPcs??(3+state.expansionLevel*2)))+(state.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"Computador inexistente."};
  const wear=Math.max(0,Math.min(100,state.pcWear?.[index]??0));
  if(wear<1)return {ok:false,message:"PC "+(index+1)+" não precisa de reparo."};
