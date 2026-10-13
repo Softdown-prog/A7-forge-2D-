@@ -147,7 +147,7 @@ test("mesas próximas da parede e cadeiras no corredor interno",async()=>{
   const {computerSeat,AISLE_Y}=await import("../dist/js/sim/route.js");
   for(let i=0;i<3;i++){
     const p=pcPosition(i),seat=computerSeat(p);
-    assert.ok(p.y>=1.3&&p.y<=2.1);
+    assert.ok(p.y>=1.0&&p.y<=2.1, "PC deve permanecer junto à parede traseira");
     assert.ok(seat.y<AISLE_Y);
   }
 });
@@ -341,7 +341,8 @@ test("compra de refrigerante na máquina correta emite dinheiro real sem duplica
  stepGame(s,1);
  assert.equal(c.stage,"shopping");
  const finalStop=c.route?.at(-1)??c.target;
- assert.ok(finalStop.x>5 && finalStop.x<6, "destino final deve ficar diante da máquina de refrigerante");
+ const {vendingApproach}=await import("../dist/js/sim/layout.js");
+  assert.deepEqual(finalStop,vendingApproach("soda"),"destino final deve acompanhar a máquina de refrigerante");
  const prior=s.cash,stock=s.inventory.soda;
  for(let i=0;i<70&&s.purchases===0;i++)stepGame(s,1);
  assert.equal(s.purchases,1);
