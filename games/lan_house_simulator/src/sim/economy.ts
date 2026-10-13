@@ -90,3 +90,16 @@ export function expandShop(state: GameState): Result {
 export function cloneInventory(stock: Inventory): Inventory {
   return { soda: stock.soda, candy: stock.candy, snacks: stock.snacks };
 }
+
+/** Reparo por estação: sem cobrança se o PC já estiver íntegro. */
+export function repairComputer(state:GameState,index:number):Result {
+ const count=3+state.expansionLevel*2;
+ if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"Computador inexistente."};
+ const wear=Math.max(0,Math.min(100,state.pcWear?.[index]??0));
+ if(wear<1)return {ok:false,message:"PC "+(index+1)+" não precisa de reparo."};
+ const cost=20+Math.ceil(wear*0.7);
+ if(state.cash<cost)return {ok:false,message:"Caixa insuficiente para reparar PC "+(index+1)+": R$ "+cost+"."};
+ state.cash-=cost;state.expenses+=cost;
+ (state.pcWear??=[])[index]=0;
+ return {ok:true,message:"PC "+(index+1)+" reparado: -R$ "+cost+"."};
+}

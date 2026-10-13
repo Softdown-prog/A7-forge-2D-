@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createGame, stepGame, online, dayNumber, pcCount } from "../dist/js/sim/engine.js";
-import { customerSatisfactionDelta, contractSupplier, supplierLevel, wholesaleCost, demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
+import { createGame, stepGame, online, dayNumber, pcCount, pcWear, pcBroken } from "../dist/js/sim/engine.js";
+import { customerSatisfactionDelta, contractSupplier, supplierLevel, wholesaleCost, demandFactor, sessionRevenue, monthlyBills, stockItem, upgradeInternet, repairInternet, repairComputer, expandShop, licenseGames, setHourlyPrice, sellItem } from "../dist/js/sim/economy.js";
 test("preço alto reduz procura, rede offline reduz ainda mais",()=>{
   assert.ok(demandFactor(10,75,true,false)>demandFactor(20,75,true,false));
   assert.ok(demandFactor(10,75,true,false)>demandFactor(10,75,false,false));
@@ -366,4 +366,16 @@ test("cliente reclama com balão quando desiste de fila sem gerar receita",()=>{
  assert.equal(s.speechEffects?.[0]?.text,"Que fila enorme!");
  assert.equal(s.speechEffects?.splice(0).length,1);
  assert.equal(s.speechEffects?.length,0);
+});
+
+test("desgaste individual bloqueia novas reservas e reparo cobra uma única vez",()=>{
+ const s=createGame();
+ s.pcWear=[100,0,0];assert.equal(pcBroken(s,0),true);
+ const c={id:42,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
+ s.customers.push(c);stepGame(s,1);assert.equal(c.pcIndex,1);
+ const before=s.cash;
+ assert.equal(repairComputer(s,0).ok,true);
+ assert.equal(s.cash,before-90);assert.equal(pcWear(s,0),0);
+ assert.equal(repairComputer(s,0).ok,false);assert.equal(s.cash,before-90);
+ const old=createGame();delete old.pcWear;assert.equal(pcWear(old,0),0);
 });

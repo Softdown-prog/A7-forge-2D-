@@ -13,7 +13,7 @@ export function createGame(seed = 72421): GameState {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     pricePerHour: 12, internetTier: 1, offlineUntil: 0, licensedGames: false,
-    expansionLevel: 0, inventory: { soda: 12, candy: 15, snacks: 10 },
+    expansionLevel: 0, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
   };
@@ -25,6 +25,8 @@ export function displayTime(s: GameState): string {
 }
 export function online(s: GameState): boolean { return s.totalMinutes >= s.offlineUntil; }
 export function pcCount(s: GameState): number { return 3 + s.expansionLevel * 2; }
+export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
+export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
 export function roomWidth(s: GameState): number { return 7 + s.expansionLevel * 2; }
 export function entrance(s: GameState): Point { return { x: roomWidth(s) - 0.5, y: 5.35 }; }
 export function pcPosition(i: number): Point {
@@ -97,7 +99,7 @@ function spawn(s: GameState): void {
   s.customers.push(c);
 }
 function tryServe(s: GameState, c: Customer): void {
-  const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i => !isReserved(s, i));
+  const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i => !isReserved(s, i) && !pcBroken(s,i));
   if (index === undefined) {
     c.waitingMinutes++;
     if (c.waitingMinutes > 25) {
@@ -158,6 +160,8 @@ function advanceCustomer(s: GameState, c: Customer): void {
         return;
       }
       c.usedMinutes++;
+      // Desgaste avança apenas durante uso; falha só bloqueia NOVAS reservas.
+      (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+0.045);
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
         const rating=customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait);
         const impact=c.happy?rating:Math.min(0,rating);
@@ -178,6 +182,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
     case "standing":
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
+        if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
         c.pcIndex = null;
         if (c.wantsSnack) {
           c.stage = "shopping";

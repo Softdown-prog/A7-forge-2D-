@@ -202,3 +202,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Elogios curtos em balões de outra cor, sem modificar a economia ou a câmera.
 - [x] Eventos transitórios limitados e drenados pela UI; teste de reclamação e conservação do caixa.
 - [ ] Aprovação visual no runtime em navegador; ajustar posição se encobrir máquinas.
+
+## Manutenção individual dos PCs
+- [x] Cada computador acumula desgaste real somente durante o uso e fica indisponível para novos clientes quando alcança 100%.
+- [x] Sessão em andamento não é interrompida pela manutenção.
+- [x] Painel administrativo apresenta desgaste, PCs parados, custo por estação e botão de reparo.
+- [x] Cobrança no caixa e despesas sem duplicação, compatibilidade com saves anteriores, testes de reserva e reparo.
+- [ ] Revisão visual do painel de manutenção em desktop e celular.

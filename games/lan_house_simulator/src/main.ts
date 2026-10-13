@@ -1,9 +1,9 @@
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
-import { roomWidth } from "./sim/engine.js";
+import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { playCandyDispense } from "./audio/vendingSfx.js";
 
@@ -137,6 +137,19 @@ button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();sav
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
+// Botões gerados uma única vez; detalhes atualizados em renderUI sem listeners duplicados.
+const maintenancePanel=document.createElement("section");
+maintenancePanel.id="pc-maintenance";
+maintenancePanel.setAttribute("aria-label","Manutenção dos computadores");
+admin.appendChild(maintenancePanel);
+maintenancePanel.addEventListener("click",event=>{
+ const target=event.target;
+ if(!(target instanceof HTMLButtonElement)||target.disabled)return;
+ const index=Number(target.dataset.pcRepair);
+ if(!Number.isInteger(index))return;
+ playOriginalSound("click");
+ applyResult(game,repairComputer(game,index));renderUI();save();
+});
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
   game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
@@ -166,7 +179,20 @@ function renderUI():void {
   setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Online":" · Sem conexão até "+(game.offlineUntil-game.totalMinutes)+" min de jogo"));
   const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
   if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
-  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · início: era Windows 98");
+  const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
+  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+broken+" em manutenção · início: era Windows 98");
+  const maintenance=document.getElementById("pc-maintenance");
+  if(maintenance){
+    const header=document.createElement("strong");header.textContent="Manutenção por computador";maintenance.replaceChildren(header);
+    for(let i=0;i<pcCount(game);i++){
+      const wear=pcWear(game,i);
+      const line=document.createElement("div");
+      const label=document.createElement("span");label.textContent="PC "+(i+1)+" · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · PARADO":"")+" ";
+      const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
+      repair.textContent="Reparar · R$ "+(20+Math.ceil(wear*0.7));repair.disabled=wear<1;
+      line.append(label,repair);maintenance.appendChild(line);
+    }
+  }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
