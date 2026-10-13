@@ -22,9 +22,11 @@ export class SceneRenderer {
     this.floor(camera,roomW);
     this.walls(camera,roomW);
     this.decor(camera,roomW);
+    this.extraPosters(camera,s);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:3.7,paint:()=>this.shelf(camera)},
+      {depth:6,paint:()=>this.extraFurniture(camera,s)},
       ...VENDING_MACHINES.map(m=>({
         depth:m.x+m.y+0.25,
         paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds)
@@ -46,6 +48,25 @@ export class SceneRenderer {
     for (const e of entries) e.paint();
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
+  }
+  private extraPosters(camera:Projection,s:GameState):void{
+    for(let i=0;i<Math.min(2,s.furniture?.poster??0);i++){
+      const x=2.1+i*2.25;
+      polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
+        iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
+    }
+  }
+  private extraFurniture(camera:Projection,s:GameState):void{
+    for(let i=0;i<Math.min(2,s.furniture?.plant??0);i++){
+      const x=i===0?0.6:roomWidth(s)-0.8,y=i===0?5.3:3.6;
+      cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
+      const center=iso({x:x+0.16,y:y+0.16},camera,42);
+      this.ctx.fillStyle="#578d68";this.ctx.beginPath();
+      this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
+    }
+    if((s.furniture?.table??0)>0){
+      cuboid(this.ctx,camera,0.75,4.12,0.55,0.4,23,["#c49a76","#8d6754","#a07b60"]);
+    }
   }
   private floor(camera:Projection,w:number):void {
     const ctx=this.ctx;

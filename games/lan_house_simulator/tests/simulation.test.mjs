@@ -30,7 +30,7 @@ test("compras e expansão alteram sistemas separadamente",()=>{
   assert.equal(s.internetTier,2);
   s.cash=1200;
   assert.equal(expandShop(s).ok,true);
-  assert.equal(pcCount(s),5);
+  assert.equal(pcCount(s),3);
 });
 test("mensalidades cobradas sem criar dinheiro",()=>{
   const s=createGame();
@@ -474,4 +474,22 @@ test("exportação e importação preservam a partida e rejeitam JSON inválido"
  const edited=JSON.parse(text);edited.state.inventory.snacks=-200;
  assert.throws(()=>parseImportedSave(JSON.stringify(edited)),/fora dos limites/);
  const tooLong="x".repeat(2_000_001);assert.throws(()=>parseImportedSave(tooLong),/muito grande/);
+});
+
+test("compras de computadores e móveis cobram e persistem sem alterar saves legados",async()=>{
+ const {buyComputer,buyFurniture}=await import("../dist/js/sim/shop.js");
+ const s=createGame();
+ assert.equal(buyComputer(s).ok,false);
+ assert.equal(expandShop(s).ok,true);
+ assert.equal(pcCount(s),3);
+ s.cash=1000;
+ assert.equal(buyComputer(s).ok,true);assert.equal(pcCount(s),4);
+ assert.equal(s.pcTiers?.[3],1);
+ const before=s.cash;
+ assert.equal(buyFurniture(s,"poster").ok,true);assert.equal(s.cash,before-45);
+ assert.equal(buyFurniture(s,"plant").ok,true);
+ assert.equal(buyFurniture(s,"table").ok,true);
+ assert.equal(buyFurniture(s,"table").ok,false);
+ const legacy=createGame();delete legacy.installedPcs;legacy.expansionLevel=1;
+ assert.equal(pcCount(legacy),5);
 });

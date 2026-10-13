@@ -1,4 +1,5 @@
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
+import {SHOP_CATALOG,shopPrice,buyComputer,buyFurniture,type FurnitureKind} from "./sim/shop.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
@@ -10,6 +11,8 @@ import { playCandyDispense } from "./audio/vendingSfx.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
+const shop=document.querySelector<HTMLElement>("#shop");
+const shopCatalog=document.querySelector<HTMLElement>("#shop-catalog");
 const events = document.querySelector<HTMLElement>("#events");
 const status = document.querySelector<HTMLElement>("#status");
 const controls = document.querySelector<HTMLElement>("#open-admin");
@@ -80,7 +83,7 @@ importFile.addEventListener("change",async()=>{
 });
 function showMenu():void{
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;
+ continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;
 }
 function beginPlay():void{
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
@@ -99,6 +102,7 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying)showMenu();});
+let shopOpen=false;
 let adminOpen = false;
 let activeAdminTab="prices";
 let previousServed = game.served;
@@ -197,7 +201,16 @@ function button(id:string, handler:()=>void):void {
     }
   });
 }
-button("open-admin",()=>{adminOpen=!adminOpen; renderUI();});
+button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();});
+button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen)adminOpen=false;renderUI();});
+button("close-shop",()=>{shopOpen=false;renderUI();});
+shopCatalog?.addEventListener("click",event=>{
+ const target=event.target;
+ if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
+ const id=target.dataset.buy;
+ const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):buyFurniture(game,id as FurnitureKind);
+ playOriginalSound("click");applyResult(game,result);renderUI();save();
+});
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("price-down",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour-2));renderUI();save();});
 button("price-up",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour+2));renderUI();save();});
@@ -208,7 +221,7 @@ button("supplier-up",()=>{applyResult(game,contractSupplier(game));renderUI();sa
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
-button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
+
 // Controles unificados em abas, sem criar novos painéis sobre o jogo.
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
 if(!maintenancePanel)throw new Error("Manutenção ausente no painel");
@@ -249,8 +262,30 @@ canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
   const x=(e.clientX-rect.left)/rect.width*canvas.width;
   const y=(e.clientY-rect.top)/rect.height*canvas.height;
-  if(renderer.hitOwner(x,y)){playOriginalSound("click");adminOpen=!adminOpen;renderUI();}
+  if(renderer.hitOwner(x,y)){playOriginalSound("click");adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
+function renderShop():void{
+ if(!shopCatalog)return;
+ const cash=document.getElementById("shop-cash");
+ if(cash)cash.textContent="Caixa R$ "+game.cash+" · Computadores "+pcCount(game)+"/"+(3+game.expansionLevel*2);
+ shopCatalog.replaceChildren();
+ for(const item of SHOP_CATALOG){
+  const card=document.createElement("article");card.className="shop-card";
+  const title=document.createElement("h3");title.textContent=item.label;
+  const category=document.createElement("small");category.textContent=item.category;
+  const description=document.createElement("p");description.textContent=item.description;
+  const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
+  const max=item.id==="poster"?2:item.id==="plant"?2:item.id==="table"?1:0;
+  const count=game.furniture?.[item.id as FurnitureKind]??0;
+  const full=item.id==="expand"?game.expansionLevel>=2:item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:max>0&&count>=max;
+  const price=shopPrice(game,item.id);
+  button.disabled=full||game.cash<price;
+  button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
+  card.append(category,title,description,button);
+  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+"/"+max;card.append(owned);}
+  shopCatalog.append(card);
+ }
+}
 function renderUI():void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
@@ -258,6 +293,10 @@ function renderUI():void {
     "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
+  if(shop)shop.hidden=!shopOpen;
+  const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
+  if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));
+  renderShop();
   activateAdminTab(activeAdminTab);
   const days=dayNumber(game)-1;
   const year=1998+Math.floor(days/360);

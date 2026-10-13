@@ -51,6 +51,8 @@ export interface GameState {
   offlineUntil: number;
   licensedGames: boolean;
   expansionLevel: number;
+  installedPcs?: number;
+  furniture?: {poster:number;plant:number;table:number};
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
   inventory: Inventory;

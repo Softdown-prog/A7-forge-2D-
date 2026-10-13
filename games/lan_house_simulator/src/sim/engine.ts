@@ -13,7 +13,7 @@ export function createGame(seed = 72421): GameState {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     pricePerHour: 12, retailPrices:{soda:8,candy:5,snacks:9}, pcTiers:[1,1,1], internetTier: 1, offlineUntil: 0, licensedGames: false,
-    expansionLevel: 0, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
+    expansionLevel: 0, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
   };
@@ -24,7 +24,7 @@ export function displayTime(s: GameState): string {
   return String(Math.floor(value / 60)).padStart(2, "0") + ":" + String(value % 60).padStart(2, "0");
 }
 export function online(s: GameState): boolean { return s.totalMinutes >= s.offlineUntil; }
-export function pcCount(s: GameState): number { return 3 + s.expansionLevel * 2; }
+export function pcCount(s: GameState): number {return Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)));}
 export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
 export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
 export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
