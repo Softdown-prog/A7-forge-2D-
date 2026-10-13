@@ -608,3 +608,88 @@ test("UI click audio uses one delegated handler and game money is event-driven",
  assert.doesNotMatch(source,/new Audio\(/);
  assert.doesNotMatch(source,/playOriginalSound/);
 });
+
+test("salão cresce oeste, leste e sul sem deslocar a parede norte ou as estações antigas",async()=>{
+ const {roomBounds,expandDirection,validRoomExtensions,expansionPrice}=await import("../dist/js/sim/room.js");
+ const {entrance,pcPosition}=await import("../dist/js/sim/engine.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=20000;
+ const original=pcPosition(0);
+ assert.deepEqual(roomBounds(s),{minX:0,maxX:8,minY:0,maxY:6});
+ assert.equal(expandDirection(s,"west").ok,true);
+ assert.equal(expandDirection(s,"east").ok,true);
+ assert.equal(expandDirection(s,"south").ok,true);
+ assert.deepEqual(roomBounds(s),{minX:-2,maxX:10,minY:0,maxY:8});
+ assert.deepEqual(entrance(s),{x:9.5,y:7.35});
+ assert.deepEqual(pcPosition(0),original);
+ assert.equal(expandDirection(s,"west").ok,true);
+ assert.equal(expandDirection(s,"east").ok,true);
+ assert.equal(expandDirection(s,"south").ok,true);
+ assert.deepEqual(roomBounds(s),{minX:-4,maxX:12,minY:0,maxY:10});
+ const cash=s.cash;
+ assert.equal(expandDirection(s,"south").ok,false);
+ assert.equal(s.cash,cash);
+ assert.equal(validRoomExtensions(s),true);
+ const restored=parseImportedSave(serializeSave(s));
+ assert.deepEqual(roomBounds(restored),roomBounds(s));
+ const corrupted=JSON.parse(serializeSave(s));corrupted.state.roomExtensions.south=77;
+ assert.throws(()=>parseImportedSave(JSON.stringify(corrupted)),/Extensões/);
+ assert.equal(expansionPrice(createGame(),"east"),500);
+});
+test("a câmera contém cantos do piso expandido, incluindo paredes e espessura da plataforma",async()=>{
+ const {cameraForGame,iso}=await import("../dist/js/render/isometric.js");
+ const {roomBounds}=await import("../dist/js/sim/room.js");
+ const s=createGame();s.expansionLevel=2;s.roomExtensions={west:2,east:2,south:2};
+ const b=roomBounds(s),camera=cameraForGame(s);
+ for(const x of [b.minX,b.maxX])for(const y of [0,b.maxY])for(const z of [0,155,-24]){
+  const projected=iso({x,y},camera,z);
+  assert.ok(projected.x>15&&projected.x<985,"projeção X dentro do canvas: "+JSON.stringify(projected));
+  assert.ok(projected.y>8&&projected.y<600,"projeção Y dentro do canvas: "+JSON.stringify(projected));
+ }
+});
+test("slots novos têm bloqueio de ocupação e móveis de piso giram pelas quatro direções",async()=>{
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {furnitureSlots,placeFurniture,rotateFurniture,relocateFurniture,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=10000;
+ for(const dir of ["west","east","south"])assert.equal(expandDirection(s,dir).ok,true);
+ const ids=furnitureSlots(s).map(x=>x.id);
+ for(const id of ["floor-west-1","floor-east-1","floor-south-1-a","wall-west-1","wall-east-1"])assert.ok(ids.includes(id),id);
+ assert.equal(placeFurniture(s,"table","floor-south-1-a").ok,true);
+ const previous={cash:s.cash,expenses:s.expenses};
+ for(let n=1;n<=4;n++){
+  assert.equal(rotateFurniture(s,"floor-south-1-a").ok,true);
+  assert.equal(s.furniturePlacements.find(p=>p.slotId==="floor-south-1-a")?.rotation,n%4);
+ }
+ assert.deepEqual({cash:s.cash,expenses:s.expenses},previous);
+ assert.equal(relocateFurniture(s,"floor-south-1-a","floor-west-1").ok,true);
+ assert.equal(s.furniturePlacements.find(p=>p.slotId==="floor-west-1")?.rotation,0);
+ assert.equal(validFurniturePlacements(s),true);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).furniturePlacements,s.furniturePlacements);
+ assert.equal(rotateFurniture(s,"missing").ok,false);
+});
+test("expansão atualiza caminho de saída de visitantes já em deslocamento",async()=>{
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {entrance}=await import("../dist/js/sim/engine.js");
+ const s=createGame();s.cash=5000;
+ const old=entrance(s);
+ s.customers=[{id:99,x:3,y:4.48,stage:"leaving",pcIndex:null,costume:"regular",
+ target:old,route:[],usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true}];
+ assert.equal(expandDirection(s,"south").ok,true);
+ const newExit=entrance(s);
+ const points=[s.customers[0].target,...(s.customers[0].route??[])];
+ assert.deepEqual(points.at(-1),newExit);
+ assert.notDeepEqual(old,newExit);
+});
+test("interfaces responsivas possuem expansão direcional e controle de rotação",async()=>{
+ const {readFileSync}=await import("node:fs");const {resolve,dirname}=await import("node:path");
+ const {fileURLToPath}=await import("node:url");
+ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
+ const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ const css=readFileSync(resolve(root,"style.css"),"utf8");
+ assert.match(html,/id="rotate-furniture"/);
+ assert.match(source,/expandDirection\(game,id.slice\(7\)/);
+ assert.match(source,/rotateFurniture\(game,relocationFrom\)/);
+ assert.match(css,/\.admin-tabs\{display:grid;grid-template-columns:repeat\(3/);
+});
