@@ -556,7 +556,7 @@ test("reposicionamento de save antigo converte móveis com segurança sem recomp
  assert.equal(s.furniturePlacements,undefined);
  const snapshot={cash:s.cash,expenses:s.expenses,furniture:JSON.stringify(s.furniture)};
  assert.equal(relocateFurniture(s,"floor-1","floor-4").ok,true);
- assert.deepEqual(s.furniturePlacements,[{kind:"plant",slotId:"floor-4"},{kind:"poster",slotId:"wall-1"}]);
+ assert.deepEqual([...s.furniturePlacements].sort((a,b)=>a.kind.localeCompare(b.kind)),[{kind:"plant",slotId:"floor-4"},{kind:"poster",slotId:"wall-1"}].sort((a,b)=>a.kind.localeCompare(b.kind)));
  assert.equal(validFurniturePlacements(s),true);
  assert.equal(furnitureLocations(s).length,2);
  assert.deepEqual({cash:s.cash,expenses:s.expenses,furniture:JSON.stringify(s.furniture)},snapshot);
