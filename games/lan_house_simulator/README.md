@@ -63,11 +63,13 @@ Quando uma versão estiver aprovada para publicação, atualize a integração n
 
 Sem hook, segredo ou workflow entre os dois repositórios. Publicação é decisão explícita, não consequência de cada alteração do jogo.
 
-## Ampliação direcional do salão e rotação de móveis (versão HTML5)
+## Salão ampliado e divisórias procedurais — contrato de construção V2
 
-- **Compras → Ampliar salão** mantém a expansão tradicional para PCs, no máximo 2 níveis. Isso preserva os 3 a 7 computadores originais e os saves de quem já jogava antes da novidade.
-- **Compras → Ampliar à esquerda (oeste), à direita (leste) ou para frente (sul)** adiciona 2 tiles em cada direção, por compra, com até 2 etapas por direção. O norte fica fixo em `y=0`. Os novos trechos são piso utilizável para decoração, mas **não instalam novos computadores automaticamente**. A entrada muda para a borda sul/leste, mantendo as rotas de atendimento, inclusive dos clientes que já estavam indo embora.
-- **Organizar móveis → selecionar um móvel de piso → Girar 90°** percorre quatro orientações, sem cobrar e sem perder as informações de rotação quando o móvel muda de posição. Pôsteres continuam fixados na parede norte; computadores/mesas de PC dependem de uma futura etapa de orientação de assentos, monitores e NPCs e **não rodam** nesta versão.
-- As novas ampliações desbloqueiam mais encaixes e aumentam o limite de pôsteres, vasos e mesinhas. Tudo é salvo no mesmo JSON opcional de `roomExtensions` e `furniturePlacements[].rotation`, preservando partidas antigas.
-- `src/sim/room.ts` controla limites do piso, preços e transações; `src/sim/shop.ts` valida encaixes/rotações; `src/render/isometric.ts` enquadra o piso expandido sem cortar; `src/render/scene.ts` pinta a geometria. Testes de simulação e capturas reais em Chromium cobrem regressões.
-- Esta etapa é somente de desenvolvimento no repositório do **A7 Forge 2D**. Não implica commit ou deploy no CH-site.
+- **Porta fixa:** entrada/saída permanece na posição original (x=7,5; y=5,35) ao sul. Nenhuma nova compra amplia o sul. Saves antigos com `roomExtensions.south` preservam o piso já comprado, mas a porta fica na referência fixa.
+- **Norte, oeste e leste:** cinco compras por direção, cada uma acrescenta **dois tiles**, total de **10 tiles novos por direção**. O salão inicial continua intacto; `roomExtensions.north` é opcional para compatibilidade com saves anteriores.
+- **Construir divisórias:** em Compras selecione Construir divisórias, toque na borda de um tile no Canvas para pré-visualizar e instalar. Cada segmento custa **R$ 30**. As paredes são procedurais, encaixadas no grid, visíveis em perspectiva e salvas em `interiorWalls`. A construção bloqueia os segmentos que atravessariam as rotas atuais de entrada, caixa, PCs, máquinas ou visitantes.
+- **Remover divisórias:** toque numa parede interna existente; remoção não tem custo, mas não devolve o material comprado. Deixe vãos entre paredes para portas/passagens. O contador de **salas** representa setores da grade separados por divisórias, não áreas funcionais já atendidas por NPCs.
+- **Limitações deliberadas desta etapa:** os novos anexos ainda não instalam computadores automaticamente; portas com animação, circulação dos clientes dentro dos novos quartos e posicionamento totalmente livre de mesas serão próximas etapas. **Não conectar salas à lógica de atendimento sem criar roteamento próprio**.
+- **Móveis:** mantidos nas quatro direções em slots seguros, inclusive novos encaixes no norte. A fachada/porta e o letreiro externo mantêm posição estável. Arte procedural como placeholder sujeita a validação por PNG.
+- **Segurança dos saves:** validar `roomExtensions`, `interiorWalls`, limites dos tiles e colocações antes de importar. Continuação automática no navegador usa a mesma estrutura.
+- **Publicação:** exclusivamente no A7 Forge 2D até autorização de integração com o repositório CH-site.

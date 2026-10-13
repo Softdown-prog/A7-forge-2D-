@@ -152,8 +152,9 @@ export class SceneRenderer {
     const positioned=(s.furniturePlacements??[]).filter(p=>p.kind==="poster");
     for(let i=0;i<Math.min(2,Math.max(0,(s.furniture?.poster??0)-positioned.length));i++){
       const x=2.1+i*2.25;
-      polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
-        iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
+      const y=roomBounds(s).minY+0.01;
+      polygon(this.ctx,[iso({x,y},camera,156),iso({x:x+0.65,y},camera,156),
+        iso({x:x+0.65,y},camera,117),iso({x,y},camera,117)],"#557e88","#e7bf81");
     }
     for(const placed of positioned){
       const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="wall");
@@ -224,26 +225,26 @@ export class SceneRenderer {
     polygon(ctx,[iso({x:minX,y:north},camera,155),iso({x:minX,y:south},camera,155),
       iso({x:minX,y:south},camera),iso({x:minX,y:north},camera)],"#B9ABB2","#786877");
     for(const position of [2.15,4.45]){
-      const a=iso({x:position,y:0},camera,127),b=iso({x:position+1.2,y:0},camera,127),
-        c=iso({x:position+1.2,y:0},camera,73),d=iso({x:position,y:0},camera,73);
+      const a=iso({x:position,y:north},camera,127),b=iso({x:position+1.2,y:north},camera,127),
+        c=iso({x:position+1.2,y:north},camera,73),d=iso({x:position,y:north},camera,73);
       polygon(ctx,[a,b,c,d],"#344F62","#F9E2BE");
-      polygon(ctx,[iso({x:position+0.62,y:0},camera,127),iso({x:position+0.62,y:0},camera,73),
+      polygon(ctx,[iso({x:position+0.62,y:north},camera,127),iso({x:position+0.62,y:north},camera,73),
         c,b],"rgba(127,186,201,0.19)");
       // Montante e travessa dividem a janela, sem renderizar qualquer exterior.
-      const mullionTop=iso({x:position+0.6,y:0},camera,127);
-      const mullionBottom=iso({x:position+0.6,y:0},camera,73);
+      const mullionTop=iso({x:position+0.6,y:north},camera,127);
+      const mullionBottom=iso({x:position+0.6,y:north},camera,73);
       ctx.strokeStyle="#C5B49B";ctx.lineWidth=2.3*camera.zoom;
       ctx.beginPath();ctx.moveTo(mullionTop.x,mullionTop.y);
       ctx.lineTo(mullionBottom.x,mullionBottom.y);ctx.stroke();
-      const middleLeft=iso({x:position,y:0},camera,100);
-      const middleRight=iso({x:position+1.2,y:0},camera,100);
+      const middleLeft=iso({x:position,y:north},camera,100);
+      const middleRight=iso({x:position+1.2,y:north},camera,100);
       ctx.beginPath();ctx.moveTo(middleLeft.x,middleLeft.y);
       ctx.lineTo(middleRight.x,middleRight.y);ctx.stroke();
       // Peitoril projetado em 2:1, distinto do caixilho.
-      polygon(ctx,[iso({x:position-0.06,y:0.03},camera,72),
-        iso({x:position+1.26,y:0.03},camera,72),
-        iso({x:position+1.26,y:0.11},camera,70),
-        iso({x:position-0.06,y:0.11},camera,70)],"#DDD0B3","#867D79");
+      polygon(ctx,[iso({x:position-0.06,y:north+0.03},camera,72),
+        iso({x:position+1.26,y:north+0.03},camera,72),
+        iso({x:position+1.26,y:north+0.11},camera,70),
+        iso({x:position-0.06,y:north+0.11},camera,70)],"#DDD0B3","#867D79");
     }
   }
   private decor(camera:Projection,bounds:RoomBounds):void {
@@ -262,16 +263,16 @@ export class SceneRenderer {
       [minX+0.82,"LAN","#52766C"],[Math.max(minX+3.25,w-2.2),"JOGOS","#927053"]
     ] as const){
       const corners=[
-        iso({x,y:0},camera,128),iso({x:x+0.92,y:0},camera,128),
-        iso({x:x+0.92,y:0},camera,79),iso({x,y:0},camera,79)
+        iso({x,y:north},camera,128),iso({x:x+0.92,y:north},camera,128),
+        iso({x:x+0.92,y:north},camera,79),iso({x,y:north},camera,79)
       ];
       polygon(ctx,corners,"#E4D3B6","#856957");
       const inner=[
-        iso({x:x+0.09,y:0},camera,118),iso({x:x+0.83,y:0},camera,118),
-        iso({x:x+0.83,y:0},camera,86),iso({x:x+0.09,y:0},camera,86)
+        iso({x:x+0.09,y:north},camera,118),iso({x:x+0.83,y:north},camera,118),
+        iso({x:x+0.83,y:north},camera,86),iso({x:x+0.09,y:north},camera,86)
       ];
       polygon(ctx,inner,accent);
-      const middle=iso({x:x+0.46,y:0},camera,97);
+      const middle=iso({x:x+0.46,y:north},camera,97);
       ctx.save();ctx.font="bold 9px system-ui,sans-serif";
       ctx.textAlign="center";ctx.fillStyle="#F7E4C9";
       ctx.fillText(label,middle.x,middle.y+2);
@@ -342,7 +343,7 @@ export class SceneRenderer {
     }
     // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
     for(const x of [1.7,3.9,Math.max(5.4,w-1.2)]){
-      const p=iso({x,y:0},camera,146),z=camera.zoom;
+      const p=iso({x,y:north},camera,146),z=camera.zoom;
       ctx.fillStyle="#7B6261";ctx.fillRect(p.x-17*z,p.y-4*z,34*z,9*z);
       ctx.fillStyle="#F6E1B2";ctx.fillRect(p.x-14*z,p.y-1*z,28*z,3*z);
     }

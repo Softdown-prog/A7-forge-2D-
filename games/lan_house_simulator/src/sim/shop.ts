@@ -58,21 +58,21 @@ export const FURNITURE_SLOTS:ReadonlyArray<PlacementSlot>=[
 const LEGACY_SLOTS:Record<FurnitureKind,string[]>={poster:["wall-1","wall-2"],plant:["floor-1","floor-4"],table:["floor-2"]};
 /** Pontos novos só surgem após pagar por cada ala; IDs originais não mudam. */
 export function furnitureSlots(s:GameState):PlacementSlot[]{
- const result=[...FURNITURE_SLOTS];
  const bounds=roomBounds(s);
+ const result=FURNITURE_SLOTS.map(slot=>slot.surface==="wall"?{...slot,y:bounds.minY+0.01}:slot);
  const e=s.roomExtensions??{west:0,east:0,south:0};
  for(let i=1;i<=e.west;i++){
    result.push({id:"floor-west-"+i,x:-2*i+0.42,y:5.17,surface:"floor"});
-   result.push({id:"wall-west-"+i,x:-2*i+0.45,y:0.01,surface:"wall"});
+   result.push({id:"wall-west-"+i,x:-2*i+0.45,y:bounds.minY+0.01,surface:"wall"});
  }
  for(let i=1;i<=e.east;i++){
    result.push({id:"floor-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.48,y:5.17,surface:"floor"});
-   result.push({id:"wall-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.52,y:0.01,surface:"wall"});
+   result.push({id:"wall-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.52,y:bounds.minY+0.01,surface:"wall"});
  }
  for(let i=1;i<=(e.north??0);i++){
    result.push({id:"floor-north-"+i+"-a",x:1.0,y:-2*i+0.7,surface:"floor"});
    result.push({id:"floor-north-"+i+"-b",x:3.0,y:-2*i+0.7,surface:"floor"});
-   result.push({id:"wall-north-"+i,x:2.5,y:-2*i+0.01,surface:"wall"});
+   result.push({id:"wall-north-"+i,x:[0.25,1.12,5.15,6.12,7.05][i-1]!,y:bounds.minY+0.01,surface:"wall"});
  }
  for(let i=1;i<=e.south;i++){
    result.push({id:"floor-south-"+i+"-a",x:Math.max(bounds.minX+1.1,1.05),y:6+2*(i-1)+0.9,surface:"floor"});
