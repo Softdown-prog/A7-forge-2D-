@@ -2,6 +2,8 @@ import type { Costume, Customer, GameState, Item, Point, Result } from "./types.
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
+import { vendingApproach } from "./layout.js";
+import { ITEM_PRICES } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 
@@ -114,11 +116,11 @@ function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
   const chosen = c.desiredItem ?? (items[Math.floor(random(s) * items.length)] ?? "soda");
   // Não comprar algo indisponível ou que excede o orçamento pessoal.
-  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<({soda:8,candy:5,snacks:9}[chosen]))){sendHome(s,c);return;}
+  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<ITEM_PRICES[chosen])){sendHome(s,c);return;}
   const result = sellItem(s, chosen);
   if (result.ok){
-    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-({soda:8,candy:5,snacks:9}[chosen]));
-    (s.saleEffects??=[]).push({item:chosen});
+    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-ITEM_PRICES[chosen]);
+    (s.saleEffects??=[]).push({item:chosen,amount:ITEM_PRICES[chosen],x:c.x,y:c.y});
     addLog(s,result.message);
   }
   sendHome(s, c);
@@ -165,7 +167,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
         c.pcIndex = null;
         if (c.wantsSnack) {
           c.stage = "shopping";
-          setTravel(c, VENDING_QUEUE);
+          setTravel(c,c.desiredItem==="soda"?vendingApproach("soda"):c.desiredItem?vendingApproach("candy"):VENDING_QUEUE);
         } else sendHome(s, c);
       }
       return;

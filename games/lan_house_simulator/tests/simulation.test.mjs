@@ -333,3 +333,23 @@ test("pagamento proporcional ao contrato e liberação da cadeira na duração i
  stepGame(s,1);assert.equal(c.stage,"using");
  c.usedMinutes=89;stepGame(s,1);assert.equal(c.stage,"standing");
 });
+
+test("compra de refrigerante na máquina correta emite dinheiro real sem duplicar",()=>{
+ const s=createGame(82);
+ const c={id:881,x:2,y:3,stage:"standing",target:{x:2,y:3},costume:"regular",pcIndex:0,usedMinutes:45,waitingMinutes:0,offlineWait:0,happy:true,poseMinutes:2,wantsSnack:true,desiredItem:"soda",wallet:20};
+ s.customers.push(c);
+ stepGame(s,1);
+ assert.equal(c.stage,"shopping");
+ assert.ok(c.target.x>5 && c.target.x<6);
+ const prior=s.cash,stock=s.inventory.soda;
+ for(let i=0;i<70&&s.purchases===0;i++)stepGame(s,1);
+ assert.equal(s.purchases,1);
+ assert.equal(s.cash-prior,8);
+ assert.equal(s.inventory.soda,stock-1);
+ assert.equal(s.saleEffects?.length,1);
+ assert.deepEqual(s.saleEffects?.[0]?.item,"soda");
+ assert.equal(s.saleEffects?.[0]?.amount,8);
+ assert.ok(Number.isFinite(s.saleEffects?.[0]?.x));
+ assert.ok(Number.isFinite(s.saleEffects?.[0]?.y));
+ stepGame(s,1);assert.equal(s.purchases,1);
+});

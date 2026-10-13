@@ -56,7 +56,7 @@ export interface GameState {
   lostCustomers: number;
   purchases: number;
   /** Eventos de venda para que o áudio use a mercadoria correta, não um contador genérico. */
-  saleEffects?: Array<{item:Item}>;
+  saleEffects?: Array<{item:Item;amount?:number;x?:number;y?:number}>;
   weather: "sun" | "rain";
   eventLog: string[];
 }

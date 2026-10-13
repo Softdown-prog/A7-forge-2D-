@@ -189,3 +189,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Assento permanece reservado até o contrato terminar; saves sem campo de sessão mantêm 45 minutos.
 - [x] Testes de duração, cobrança e liberação; sem mudar arte nem áudio não aprovado.
 - [ ] Balancear distribuição de durações e frequência de demanda em simulações longas.
+
+## Ciclo de venda e feedback visual V1
+- [x] Cliente dirige-se à frente da máquina específica de refrigerante ou doces sem trocar a câmera.
+- [x] Venda confirmada envia valor e posição para efeito verde +R$ sobre o ponto da compra, uma vez por venda.
+- [x] Estoque e caixa continuam na mesma transação, com testes de compra e consumo.
+- [x] Som de lata rejeitado continua mudo; efeitos aprovados não foram alterados.
+- [ ] Inspecionar vídeo contínuo do cliente efetivamente comprando em navegador.

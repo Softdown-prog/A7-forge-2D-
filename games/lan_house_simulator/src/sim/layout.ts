@@ -15,3 +15,9 @@ export const VENDING_APPROACH:Point={
   x:(VENDING_MACHINES[0]!.x+VENDING_MACHINES[1]!.x+VENDING_WIDTH)/2,
   y:VENDING_MACHINES[0]!.y+VENDING_DEPTH+0.88
 };
+
+/** Ponto de atendimento de cada máquina, sem atravessar sua colisão. */
+export function vendingApproach(kind:"soda"|"candy"):Point {
+ const machine=VENDING_MACHINES.find(m=>m.kind===kind)!;
+ return {x:machine.x+VENDING_WIDTH/2,y:machine.y+VENDING_DEPTH+0.88};
+}

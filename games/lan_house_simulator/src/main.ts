@@ -39,6 +39,7 @@ function audioContext():AudioContext|null{
 // Autoplay é bloqueado até o jogador tocar/clicar. Nenhum som é obrigatório para jogar.
 window.addEventListener("pointerdown",()=>{void audioContext()?.resume().catch(()=>{});},{once:true});
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
+const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 function paintPayments(dt:number):void {
   const camera=cameraForRoom(roomWidth(game));
   for(let i=paymentPopups.length-1;i>=0;i--){
@@ -57,6 +58,24 @@ function paintPayments(dt:number):void {
     view!.fillText(label,at.x,at.y-height);
     view!.restore();
   }
+}
+
+function paintSales(dt:number):void {
+ const camera=cameraForRoom(roomWidth(game));
+ for(let i=salePopups.length-1;i>=0;i--){
+  const effect=salePopups[i]!;
+  effect.age+=dt;
+  if(effect.age>=1.35){salePopups.splice(i,1);continue;}
+  const at=iso({x:effect.x,y:effect.y},camera,110);
+  view!.save();
+  view!.globalAlpha=Math.min(1,(1.35-effect.age)/0.4);
+  view!.textAlign="center";view!.lineWidth=3;
+  view!.font="bold 17px system-ui,sans-serif";
+  view!.strokeStyle="#103622";view!.fillStyle="#70F0A6";
+  const label="+R$ "+effect.amount,y=at.y-effect.age*38;
+  view!.strokeText(label,at.x,y);view!.fillText(label,at.x,y);
+  view!.restore();
+ }
 }
 
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
@@ -100,7 +119,7 @@ button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;save();renderUI();
+  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;save();renderUI();
 });
 canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
@@ -152,6 +171,10 @@ function frame(timestamp:number):void {
   if(game.served>previousServed)previousServed=game.served;
   const sales=game.saleEffects?.splice(0)??[];
   for(const sale of sales){
+    if(Number.isFinite(sale.amount) && Number.isFinite(sale.x) && Number.isFinite(sale.y)){
+      salePopups.push({amount:sale.amount!,x:sale.x!,y:sale.y!,age:0});
+      if(salePopups.length>12)salePopups.shift();
+    }
     const audio=audioContext();
     if(audio?.state==="running"){
       // Som de lata suspenso após reprovação auditiva; aguarda versão aprovada.
@@ -161,6 +184,7 @@ function frame(timestamp:number):void {
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
   renderer.draw(game,elapsed);
   paintPayments(dt);
+  paintSales(dt);
   if(timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }
