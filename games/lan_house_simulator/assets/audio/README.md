@@ -9,3 +9,8 @@ Nomes sugeridos:
 - `network_down.wav`: opcional, falha de internet.
 
 Os arquivos serão opcionais. Reprodução apenas após interação (política dos navegadores). Manter originais em `assets/audio/` e registrar licença/autoria no manifesto antes de distribuir.
+
+## Efeito aprovado de caixa
+- `money_income_01.ogg`: artefato autoral CH Audio Lab, selecionado anteriormente (versão simples de caixa registradora, run 9).
+- Fonte: `City-horizon-/assets/audio/economy/money_income_01.ogg`, blob de origem `f29a151a391c3f45468bfccd5032dd3a11367ed5`.
+- Usado apenas após pagamento confirmado no balcão; reprodução sujeita a desbloqueio de áudio do navegador.

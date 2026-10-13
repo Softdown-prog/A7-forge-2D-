@@ -55,7 +55,7 @@ function paintPayments(dt:number):void {
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 const soundFiles: Record<string, string> = {
-  coin: "./assets/audio/coin.wav", liquid: "./assets/audio/liquid.wav",
+  coin: "./assets/audio/money_income_01.ogg", liquid: "./assets/audio/liquid.wav",
   vending: "./assets/audio/vending.wav"
 };
 function playOriginalSound(name: keyof typeof soundFiles): void {
