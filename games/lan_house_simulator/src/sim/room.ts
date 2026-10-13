@@ -5,7 +5,7 @@ export interface RoomBounds {minX:number;maxX:number;minY:0;maxY:number}
 export const MAX_EXTENSION_LEVEL=2;
 export function roomBounds(s:Pick<GameState,"expansionLevel"|"roomExtensions">):RoomBounds{
  const e=s.roomExtensions??{west:0,east:0,south:0};
- return {minX:-2*e.west,maxX:8+2*s.expansionLevel+2*e.east,minY:0,maxY:6+2*e.south};
+ return {minX:e.west?-2*e.west:0,maxX:8+2*s.expansionLevel+2*e.east,minY:0,maxY:6+2*e.south};
 }
 export function expansionPrice(s:GameState,direction:ExtensionDirection):number{
  const count=s.roomExtensions?.[direction]??0;
