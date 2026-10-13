@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {hallwayRoute} from "./route.js";
 export type ExtensionDirection="west"|"east"|"south";
 export interface RoomBounds {minX:number;maxX:number;minY:0;maxY:number}
 export const MAX_EXTENSION_LEVEL=2;
@@ -22,6 +23,15 @@ export function expandDirection(s:GameState,direction:ExtensionDirection):Result
  if(s.cash<price)return {ok:false,message:"Caixa insuficiente para ampliar o terreno: R$ "+price+"."};
  s.cash-=price;s.expenses+=price;
  s.roomExtensions={...extensions,[direction]:level+1};
+ // Clientes já de saída precisam refazer o caminho para a nova porta.
+ // Caso contrário continuariam caminhando para a porta antiga, dentro do piso ampliado.
+ const destination={x:roomBounds(s).maxX-0.5,y:roomBounds(s).maxY-0.65};
+ for(const customer of s.customers){
+   if(customer.stage!=="leaving")continue;
+   const route=hallwayRoute(customer,destination);
+   customer.target=route[0]??destination;
+   customer.route=route.slice(1);
+ }
  const label={west:"oeste (esquerda)",east:"leste (direita)",south:"sul (frente)"}[direction];
  return {ok:true,message:"Salão expandido para "+label+": duas faixas novas. -R$ "+price+"."};
 }
