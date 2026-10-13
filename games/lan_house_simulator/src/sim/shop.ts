@@ -6,7 +6,7 @@ export const SHOP_CATALOG=[
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
  {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Adiciona uma faixa de 2 tiles a oeste."},
  {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Adiciona uma faixa de 2 tiles a leste."},
- {id:"extend-south",label:"Ampliar para frente",category:"Construção",description:"Adiciona uma faixa de 2 tiles ao sul. Norte permanece fixo."},
+ {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Adiciona 2 tiles para o norte, atrás do balcão. Porta sul fixa."},
  {id:"poster",label:"Pôster",category:"Decoração",description:"Pôster geométrico de parede."},
  {id:"plant",label:"Planta",category:"Decoração",description:"Vaso com folhagens."},
  {id:"table",label:"Mesinha",category:"Móveis",description:"Mesa lateral decorativa."}
@@ -14,7 +14,7 @@ export const SHOP_CATALOG=[
 export function shopPrice(s:GameState,id:string):number{
  if(id==="extend-west")return expansionPrice(s,"west");
  if(id==="extend-east")return expansionPrice(s,"east");
- if(id==="extend-south")return expansionPrice(s,"south");
+ if(id==="extend-north")return expansionPrice(s,"north");
  return id==="expand"?650+s.expansionLevel*450:id==="computer"?320:id==="poster"?45:id==="plant"?85:id==="table"?140:0;
 }
 export function buyComputer(s:GameState):Result{
@@ -27,10 +27,11 @@ export function buyComputer(s:GameState):Result{
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
 export function furnitureLimit(s:GameState,kind:FurnitureKind):number{
- const e=s.roomExtensions??{west:0,east:0,south:0};
- return kind==="poster"?2+e.west+e.east:
-   kind==="plant"?2+e.west+e.east+2*e.south:
-   kind==="table"?1+e.west+e.east+e.south:0;
+ const e=s.roomExtensions??{west:0,east:0,south:0,north:0};
+ const north=e.north??0;
+ return kind==="poster"?2+e.west+e.east+north:
+   kind==="plant"?2+e.west+e.east+2*e.south+2*north:
+   kind==="table"?1+e.west+e.east+e.south+north:0;
 }
 export function buyFurniture(s:GameState,kind:FurnitureKind):Result{
  const limits={poster:furnitureLimit(s,"poster"),plant:furnitureLimit(s,"plant"),table:furnitureLimit(s,"table")};
@@ -64,6 +65,11 @@ export function furnitureSlots(s:GameState):PlacementSlot[]{
  for(let i=1;i<=e.east;i++){
    result.push({id:"floor-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.48,y:5.17,surface:"floor"});
    result.push({id:"wall-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.52,y:0.01,surface:"wall"});
+ }
+ for(let i=1;i<=(e.north??0);i++){
+   result.push({id:"floor-north-"+i+"-a",x:1.0,y:-2*i+0.7,surface:"floor"});
+   result.push({id:"floor-north-"+i+"-b",x:3.0,y:-2*i+0.7,surface:"floor"});
+   result.push({id:"wall-north-"+i,x:2.5,y:-2*i+0.01,surface:"wall"});
  }
  for(let i=1;i<=e.south;i++){
    result.push({id:"floor-south-"+i+"-a",x:Math.max(bounds.minX+1.1,1.05),y:6+2*(i-1)+0.9,surface:"floor"});

@@ -157,9 +157,9 @@ export class SceneRenderer {
     }
   }
   private floor(camera:Projection,bounds:RoomBounds):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
     // O cenário é uma plataforma suspensa: sem exterior, sem base ligada a um terreno.
-    const rearRight=iso({x:w,y:0},camera);
+    const rearRight=iso({x:w,y:north},camera);
     const frontRight=iso({x:w,y:south},camera);
     const frontLeft=iso({x:minX,y:south},camera);
     const bottom=24*camera.zoom;
@@ -177,7 +177,7 @@ export class SceneRenderer {
     polygon(ctx,[rearRight,frontRight,
       {x:frontRight.x,y:frontRight.y+bottom},
       {x:rearRight.x,y:rearRight.y+bottom}],"#6E5862","#3B3A49");
-    for(let y=0;y<south;y++) for(let x=minX;x<w;x++) {
+    for(let y=north;y<south;y++) for(let x=minX;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
       const tone=(x+y)%2===0?"#C4B7A8":"#B9AC9F";
       polygon(ctx,ps,tone,"#938579");
@@ -194,11 +194,11 @@ export class SceneRenderer {
     ],"rgba(66,105,106,0.17)","rgba(73,106,105,0.27)");
   }
   private walls(camera:Projection,bounds:RoomBounds):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
-    polygon(ctx,[iso({x:minX,y:0},camera,155),iso({x:w,y:0},camera,155),
-      iso({x:w,y:0},camera),iso({x:minX,y:0},camera)],"#D7C6B2","#715C60");
-    polygon(ctx,[iso({x:minX,y:0},camera,155),iso({x:minX,y:south},camera,155),
-      iso({x:minX,y:south},camera),iso({x:minX,y:0},camera)],"#B9ABB2","#786877");
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
+    polygon(ctx,[iso({x:minX,y:north},camera,155),iso({x:w,y:north},camera,155),
+      iso({x:w,y:north},camera),iso({x:minX,y:north},camera)],"#D7C6B2","#715C60");
+    polygon(ctx,[iso({x:minX,y:north},camera,155),iso({x:minX,y:south},camera,155),
+      iso({x:minX,y:south},camera),iso({x:minX,y:north},camera)],"#B9ABB2","#786877");
     for(const position of [2.15,4.45]){
       const a=iso({x:position,y:0},camera,127),b=iso({x:position+1.2,y:0},camera,127),
         c=iso({x:position+1.2,y:0},camera,73),d=iso({x:position,y:0},camera,73);
@@ -223,15 +223,15 @@ export class SceneRenderer {
     }
   }
   private decor(camera:Projection,bounds:RoomBounds):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
     // Frisos ao pé das paredes; ajudam a perceber o interior sem adicionar telhado.
     polygon(ctx,[
-      iso({x:minX,y:0.02},camera,9),iso({x:w,y:0.02},camera,9),
-      iso({x:w,y:0.02},camera,2),iso({x:minX,y:0.02},camera,2)
+      iso({x:minX,y:north+0.02},camera,9),iso({x:w,y:north+0.02},camera,9),
+      iso({x:w,y:north+0.02},camera,2),iso({x:minX,y:north+0.02},camera,2)
     ],"#967D78");
     polygon(ctx,[
-      iso({x:minX+0.02,y:0},camera,9),iso({x:minX+0.02,y:south},camera,9),
-      iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:0},camera,2)
+      iso({x:minX+0.02,y:north},camera,9),iso({x:minX+0.02,y:south},camera,9),
+      iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:north},camera,2)
     ],"#817A84");
     // Quadros montados sobre a parede do fundo, altura consistente em world pixels.
     for(const [x,label,accent] of [
@@ -485,7 +485,7 @@ export class SceneRenderer {
   }
   private doorMarker(camera:Projection,s:GameState):void {
     // Somente limiar de entrada dentro do salão; não há rua, fachada externa ou chuva.
-    const bounds=roomBounds(s),x=bounds.maxX-0.5,y=bounds.maxY,ctx=this.ctx;
+    const x=7.5,y=6,ctx=this.ctx;
     polygon(ctx,[
       iso({x:x-0.45,y:y-0.24},camera),iso({x:x+0.45,y:y-0.24},camera),
       iso({x:x+0.45,y},camera),iso({x:x-0.45,y},camera)

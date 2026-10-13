@@ -11,12 +11,12 @@ export function cameraForRoom(width: number): Projection {
 /** Mantém a câmera antiga quando não há extensão, e enquadra áreas novas sem cortes. */
 export function cameraForGame(s:GameState):Projection{
  const e=s.roomExtensions;
- if(!e||(!e.west&&!e.east&&!e.south))return cameraForRoom(8+s.expansionLevel*2);
- const b=roomBounds(s),minU=b.minX-b.maxY,maxU=b.maxX;
- const minV=b.minX,maxV=b.maxX+b.maxY;
- const zoom=Math.min(0.86,860/((maxU-minU)*64),490/((maxV-minV)*32+180));
- const originX=(1000-(maxU-minU)*64*zoom)/2-minU*64*zoom;
- const originY=48-(minV*32-155)*zoom;
+ if(!e||(!e.west&&!e.east&&!e.south&&!e.north))return cameraForRoom(8+s.expansionLevel*2);
+ const b=roomBounds(s),minU=b.minX-b.maxY,maxU=b.maxX-b.minY;
+ const minV=b.minX+b.minY,maxV=b.maxX+b.maxY;
+ const zoom=Math.min(0.86,920/((maxU-minU)*64),535/((maxV-minV)*32+179));
+ const originX=500-(maxU+minU)*32*zoom;
+ const originY=305-(maxV*32+minV*32-155-24)/2*zoom;
  return {zoom,originX,originY};
 }
 export function iso(position: Point, camera: Projection, height = 0): Point {

@@ -14,7 +14,7 @@ export function createGame(seed = 72421): GameState {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     pricePerHour: 12, retailPrices:{soda:8,candy:5,snacks:9}, pcTiers:[1,1,1], internetTier: 1, offlineUntil: 0, licensedGames: false,
-    expansionLevel: 0, roomExtensions:{west:0,east:0,south:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
+    expansionLevel: 0, roomExtensions:{west:0,east:0,south:0,north:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
   };
@@ -29,10 +29,7 @@ export function pcCount(s: GameState): number {return Math.max(3,Math.min(3+s.ex
 export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
 export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
 export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
-export function entrance(s: GameState): Point {
- const bounds=roomBounds(s);
- return {x:bounds.maxX-0.5,y:bounds.maxY-0.65};
-}
+export function entrance(_s: GameState): Point {return {x:7.5,y:5.35};}
 export function pcPosition(i: number): Point {
   const positions: Point[] = [
     // Três PCs iniciais alinhados à parede do fundo; prateleira de salgadinhos movida para a lateral.

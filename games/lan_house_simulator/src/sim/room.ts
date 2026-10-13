@@ -1,45 +1,36 @@
 import type {GameState,Result} from "./types.js";
-import {hallwayRoute} from "./route.js";
-export type ExtensionDirection="west"|"east"|"south";
-export interface RoomBounds {minX:number;maxX:number;minY:0;maxY:number}
-export const MAX_EXTENSION_LEVEL=2;
+export type ExtensionDirection="west"|"east"|"north";
+export interface RoomBounds {minX:number;maxX:number;minY:number;maxY:number}
+export const MAX_EXTENSION_LEVEL=5;
 export function roomBounds(s:Pick<GameState,"expansionLevel"|"roomExtensions">):RoomBounds{
  const e=s.roomExtensions??{west:0,east:0,south:0};
- return {minX:e.west?-2*e.west:0,maxX:8+2*s.expansionLevel+2*e.east,minY:0,maxY:6+2*e.south};
+ return {minX:e.west?-2*e.west:0,maxX:8+2*s.expansionLevel+2*e.east,minY:e.north?-2*e.north:0,maxY:6+2*e.south};
 }
 export function expansionPrice(s:GameState,direction:ExtensionDirection):number{
  const count=s.roomExtensions?.[direction]??0;
- return (direction==="south"?550:500)+count*350;
+ return 500+count*350;
 }
-/** Extensão de piso; não cria PCs, não desloca ativos existentes nem altera a parede norte. */
+/** Extensão de piso; não cria PCs, não desloca ativos existentes ou a porta sul. */
 export function expandDirection(s:GameState,direction:ExtensionDirection):Result{
- if(direction!=="west"&&direction!=="east"&&direction!=="south")
+ if(direction!=="west"&&direction!=="east"&&direction!=="north")
   return {ok:false,message:"Direção de ampliação inválida."};
- const extensions=s.roomExtensions??{west:0,east:0,south:0};
- const level=extensions[direction];
+ const extensions=s.roomExtensions??{west:0,east:0,south:0,north:0};
+ const level=extensions[direction]??0;
  if(!Number.isInteger(level)||level<0||level>=MAX_EXTENSION_LEVEL)
   return {ok:false,message:"Limite de expansão dessa direção atingido."};
  const price=expansionPrice(s,direction);
  if(s.cash<price)return {ok:false,message:"Caixa insuficiente para ampliar o terreno: R$ "+price+"."};
  s.cash-=price;s.expenses+=price;
  s.roomExtensions={...extensions,[direction]:level+1};
- // Clientes já de saída precisam refazer o caminho para a nova porta.
- // Caso contrário continuariam caminhando para a porta antiga, dentro do piso ampliado.
- const destination={x:roomBounds(s).maxX-0.5,y:roomBounds(s).maxY-0.65};
- for(const customer of s.customers){
-   if(customer.stage!=="leaving")continue;
-   const route=hallwayRoute(customer,destination);
-   customer.target=route[0]??destination;
-   customer.route=route.slice(1);
- }
- const label={west:"oeste (esquerda)",east:"leste (direita)",south:"sul (frente)"}[direction];
+ const label={west:"oeste (esquerda)",east:"leste (direita)",north:"norte (fundos do balcão)"}[direction];
  return {ok:true,message:"Salão expandido para "+label+": duas faixas novas. -R$ "+price+"."};
 }
 export function validRoomExtensions(s:GameState):boolean{
  if(s.roomExtensions===undefined)return true;
  const e=s.roomExtensions;
- return !!e&&["west","east","south"].every(dir=>{
-  const n=e[dir as ExtensionDirection];
+ return !!e&&["west","east"].every(dir=>{
+  const n=e[dir as "west"|"east"];
   return Number.isInteger(n)&&n>=0&&n<=MAX_EXTENSION_LEVEL;
- });
+ })&&Number.isInteger(e.south)&&e.south>=0&&e.south<=2&&
+   (e.north===undefined||(Number.isInteger(e.north)&&e.north>=0&&e.north<=MAX_EXTENSION_LEVEL));
 }
