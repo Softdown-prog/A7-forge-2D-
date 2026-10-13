@@ -459,7 +459,7 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/if\(isPlaying&&!placingKind&&!relocating\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode\)stepGame\(game,dt\*4\.0\)/);
  assert.match(source,/if\(!isPlaying\)return;/);
  assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
 });
@@ -571,7 +571,7 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
  assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
- assert.match(main,/if\(isPlaying&&!placingKind&&!relocating\)stepGame/);
+ assert.match(main,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode\)stepGame/);
 });
 
 test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
@@ -609,37 +609,32 @@ test("UI click audio uses one delegated handler and game money is event-driven",
  assert.doesNotMatch(source,/playOriginalSound/);
 });
 
-test("salão cresce oeste, leste e sul sem deslocar a parede norte ou as estações antigas",async()=>{
- const {roomBounds,expandDirection,validRoomExtensions,expansionPrice}=await import("../dist/js/sim/room.js");
- const {entrance,pcPosition}=await import("../dist/js/sim/engine.js");
+test("mapa amplia 10 tiles norte, leste e oeste; porta sul não muda",async()=>{
+ const {roomBounds,expandDirection,validRoomExtensions}=await import("../dist/js/sim/room.js");
+ const {entrance}=await import("../dist/js/sim/engine.js");
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
- const s=createGame();s.cash=20000;
- const original=pcPosition(0);
+ const s=createGame();s.cash=50000;
  assert.deepEqual(roomBounds(s),{minX:0,maxX:8,minY:0,maxY:6});
- assert.equal(expandDirection(s,"west").ok,true);
- assert.equal(expandDirection(s,"east").ok,true);
- assert.equal(expandDirection(s,"south").ok,true);
- assert.deepEqual(roomBounds(s),{minX:-2,maxX:10,minY:0,maxY:8});
- assert.deepEqual(entrance(s),{x:9.5,y:7.35});
- assert.deepEqual(pcPosition(0),original);
- assert.equal(expandDirection(s,"west").ok,true);
- assert.equal(expandDirection(s,"east").ok,true);
- assert.equal(expandDirection(s,"south").ok,true);
- assert.deepEqual(roomBounds(s),{minX:-4,maxX:12,minY:0,maxY:10});
- const cash=s.cash;
+ for(const dir of ["west","east","north"]){
+   for(let i=0;i<5;i++)assert.equal(expandDirection(s,dir).ok,true,dir+i);
+   assert.equal(expandDirection(s,dir).ok,false,"limite em "+dir);
+ }
+ assert.deepEqual(roomBounds(s),{minX:-10,maxX:18,minY:-10,maxY:6});
+ assert.deepEqual(entrance(s),{x:7.5,y:5.35});
  assert.equal(expandDirection(s,"south").ok,false);
- assert.equal(s.cash,cash);
  assert.equal(validRoomExtensions(s),true);
- const restored=parseImportedSave(serializeSave(s));
- assert.deepEqual(roomBounds(restored),roomBounds(s));
- const corrupted=JSON.parse(serializeSave(s));corrupted.state.roomExtensions.south=77;
- assert.throws(()=>parseImportedSave(JSON.stringify(corrupted)),/Extensões/);
- assert.equal(expansionPrice(createGame(),"east"),500);
+ assert.deepEqual(roomBounds(parseImportedSave(serializeSave(s))),roomBounds(s));
+ const legacy=createGame();legacy.roomExtensions={west:2,east:1,south:2};
+ assert.equal(validRoomExtensions(legacy),true);
+ assert.deepEqual(roomBounds(legacy),{minX:-4,maxX:10,minY:0,maxY:10});
+ assert.deepEqual(entrance(legacy),{x:7.5,y:5.35});
+ const bad=JSON.parse(serializeSave(s));bad.state.roomExtensions.north=15;
+ assert.throws(()=>parseImportedSave(JSON.stringify(bad)),/Extensões/);
 });
 test("a câmera contém cantos do piso expandido, incluindo paredes e espessura da plataforma",async()=>{
  const {cameraForGame,iso}=await import("../dist/js/render/isometric.js");
  const {roomBounds}=await import("../dist/js/sim/room.js");
- const s=createGame();s.expansionLevel=2;s.roomExtensions={west:2,east:2,south:2};
+ const s=createGame();s.expansionLevel=2;s.roomExtensions={west:5,east:5,south:0,north:5};
  const b=roomBounds(s),camera=cameraForGame(s);
  for(const x of [b.minX,b.maxX])for(const y of [0,b.maxY])for(const z of [0,155,-24]){
   const projected=iso({x,y},camera,z);
@@ -652,34 +647,31 @@ test("slots novos têm bloqueio de ocupação e móveis de piso giram pelas quat
  const {furnitureSlots,placeFurniture,rotateFurniture,relocateFurniture,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
  const s=createGame();s.cash=10000;
- for(const dir of ["west","east","south"])assert.equal(expandDirection(s,dir).ok,true);
+ for(const dir of ["west","east","north"])assert.equal(expandDirection(s,dir).ok,true);
  const ids=furnitureSlots(s).map(x=>x.id);
- for(const id of ["floor-west-1","floor-east-1","floor-south-1-a","wall-west-1","wall-east-1"])assert.ok(ids.includes(id),id);
- assert.equal(placeFurniture(s,"table","floor-south-1-a").ok,true);
+ for(const id of ["floor-west-1","floor-east-1","floor-north-1-a","wall-west-1","wall-east-1"])assert.ok(ids.includes(id),id);
+ assert.equal(placeFurniture(s,"table","floor-north-1-a").ok,true);
  const previous={cash:s.cash,expenses:s.expenses};
  for(let n=1;n<=4;n++){
-  assert.equal(rotateFurniture(s,"floor-south-1-a").ok,true);
-  assert.equal(s.furniturePlacements.find(p=>p.slotId==="floor-south-1-a")?.rotation,n%4);
+  assert.equal(rotateFurniture(s,"floor-north-1-a").ok,true);
+  assert.equal(s.furniturePlacements.find(p=>p.slotId==="floor-north-1-a")?.rotation,n%4);
  }
  assert.deepEqual({cash:s.cash,expenses:s.expenses},previous);
- assert.equal(relocateFurniture(s,"floor-south-1-a","floor-west-1").ok,true);
+ assert.equal(relocateFurniture(s,"floor-north-1-a","floor-west-1").ok,true);
  assert.equal(s.furniturePlacements.find(p=>p.slotId==="floor-west-1")?.rotation,0);
  assert.equal(validFurniturePlacements(s),true);
  assert.deepEqual(parseImportedSave(serializeSave(s)).furniturePlacements,s.furniturePlacements);
  assert.equal(rotateFurniture(s,"missing").ok,false);
 });
-test("expansão atualiza caminho de saída de visitantes já em deslocamento",async()=>{
+test("ampliação norte/leste/oeste não move a porta nem desvia a saída",async()=>{
  const {expandDirection}=await import("../dist/js/sim/room.js");
  const {entrance}=await import("../dist/js/sim/engine.js");
- const s=createGame();s.cash=5000;
- const old=entrance(s);
- s.customers=[{id:99,x:3,y:4.48,stage:"leaving",pcIndex:null,costume:"regular",
- target:old,route:[],usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true}];
- assert.equal(expandDirection(s,"south").ok,true);
- const newExit=entrance(s);
- const points=[s.customers[0].target,...(s.customers[0].route??[])];
- assert.deepEqual(points.at(-1),newExit);
- assert.notDeepEqual(old,newExit);
+ const s=createGame();s.cash=9000;
+ const original=entrance(s);
+ assert.equal(expandDirection(s,"north").ok,true);
+ assert.equal(expandDirection(s,"east").ok,true);
+ assert.equal(expandDirection(s,"west").ok,true);
+ assert.deepEqual(entrance(s),original);
 });
 test("interfaces responsivas possuem expansão direcional e controle de rotação",async()=>{
  const {readFileSync}=await import("node:fs");const {resolve,dirname}=await import("node:path");
@@ -699,16 +691,60 @@ test("a ampliação libera slots e capacidade real para novas decorações",asyn
  const {furnitureLimit,placeFurniture,furnitureLocations,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
  const s=createGame();s.cash=20000;
- for(const dir of ["west","east","south"])assert.equal(expandDirection(s,dir).ok,true);
+ for(const dir of ["west","east","north"])assert.equal(expandDirection(s,dir).ok,true);
  assert.equal(furnitureLimit(s,"poster"),4);
  assert.equal(furnitureLimit(s,"plant"),6);
  assert.equal(furnitureLimit(s,"table"),4);
  for(const id of ["wall-1","wall-2","wall-west-1","wall-east-1"])
   assert.equal(placeFurniture(s,"poster",id).ok,true,id);
- for(const id of ["floor-1","floor-2","floor-west-1","floor-east-1","floor-south-1-a","floor-south-1-b"])
+ for(const id of ["floor-1","floor-2","floor-west-1","floor-east-1","floor-north-1-a","floor-north-1-b"])
   assert.equal(placeFurniture(s,"plant",id).ok,true,id);
  assert.equal(placeFurniture(s,"plant","floor-3").ok,false,"limite por tipo evita spam");
  assert.equal(furnitureLocations(s).length,10);
  assert.equal(validFurniturePlacements(s),true);
  assert.equal(parseImportedSave(serializeSave(s)).furniturePlacements.length,10);
+});
+
+test("parede interna tem prévia, custo, bloqueio das rotas e remoção sem reembolso",async()=>{
+ const {buildWall,removeWall,canBuildWall,wallCandidates,WALL_COST,wallZoneCount}=await import("../dist/js/sim/walls.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const s=createGame();s.cash=10000;
+ assert.equal(expandDirection(s,"north").ok,true);
+ assert.ok(wallCandidates(s).length>70);
+ assert.equal(WALL_COST,30);
+ const wall={axis:"x",x:1,y:-1};
+ assert.equal(canBuildWall(s,wall),true);
+ const before=s.cash;
+ assert.equal(buildWall(s,wall).ok,true);
+ assert.equal(s.cash,before-30);
+ assert.equal(buildWall(s,wall).ok,false);
+ assert.equal(s.cash,before-30);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).interiorWalls,[wall]);
+ assert.equal(removeWall(s,wall).ok,true);
+ assert.equal(s.cash,before-30);
+ assert.equal(removeWall(s,wall).ok,false);
+ assert.equal(wallZoneCount(s),1);
+});
+test("paredes não atravessam trajetos de clientes ou bordas externas",async()=>{
+ const {buildWall,canBuildWall,validInteriorWalls}=await import("../dist/js/sim/walls.js");
+ const s=createGame();s.cash=10000;
+ assert.equal(buildWall(s,{axis:"x",x:2,y:0}).ok,false);
+ assert.equal(buildWall(s,{axis:"x",x:2,y:6}).ok,false);
+ assert.equal(buildWall(s,{axis:"y",x:0,y:2}).ok,false);
+ // Segmento transversal ao corredor principal dos clientes.
+ assert.equal(canBuildWall(s,{axis:"y",x:4,y:4}),false);
+ assert.equal(validInteriorWalls(s),true);
+});
+test("paredes criam setores físicos fechados na grade sem alterar os PCs",async()=>{
+ const {buildWall,wallZoneCount}=await import("../dist/js/sim/walls.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const s=createGame();s.cash=12000;
+ assert.equal(expandDirection(s,"north").ok,true);
+ // Isola um tile no anexo norte, sem interferir nos fluxos dos computadores.
+ for(const wall of [{axis:"x",x:1,y:-1},{axis:"x",x:1,y:0},
+  {axis:"y",x:1,y:-1},{axis:"y",x:2,y:-1}]){
+  assert.equal(buildWall(s,wall).ok,true,JSON.stringify(wall));
+ }
+ assert.ok(wallZoneCount(s)>=2);
 });
