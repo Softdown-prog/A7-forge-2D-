@@ -227,3 +227,4 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Levar refrigerante e doces 0,58 tile para a direita, sem mudar suas funções e rotas automáticas.
 - [x] Encostar a fileira inicial de PCs mais perto da parede traseira, ajustando cadeiras e destinos a partir do mesmo contrato.
 - [ ] Aprovar captura visual do runtime (piso, parede, porta e afastamentos).
+\n## Expositor de salgadinhos procedural\n- [x] Substituir antigo bloco marrom por estante vazada de metal, com quatro níveis e pacotes coloridos organizados.\n- [x] Adicionar pequena bandeja/prato ao proprietário no salão, sem trocar o ator nem as máquinas.\n- [ ] Revisar PNG do jogo compilado e ajustar oclusão conforme resultado visual.\n

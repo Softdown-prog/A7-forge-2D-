@@ -224,13 +224,55 @@ export class SceneRenderer {
   }
   private shelf(camera:Projection):void {
     const ctx=this.ctx;
-    // Prateleira lateral de salgadinhos: parede esquerda, longe da fileira dos PCs.
-    cuboid(ctx,camera,0.22,2.98,0.48,1.12,75,["#B88966","#694A44","#7D5441"]);
-    for(let i=0;i<5;i++){
-      const p=iso({x:0.44,y:3.05+i*0.19},camera,81);
-      ctx.fillStyle=["#E8A644","#A4C97C","#E8B77B","#CFA6F0","#E8A644"][i]!;
-      ctx.fillRect(p.x-3,p.y-7,6,10);
+    // Expositor lateral aberto para salgadinhos, inspirado em displays de conveniência.
+    // Estrutura fina de metal com quatro bandejas e embalagens reais em perspectiva,
+    // sem logomarca comercial nem o antigo cubo maciço de madeira.
+    const x=0.23,y=2.92,w=0.46,d=1.22,z=camera.zoom;
+    const palette=["#e7a92c","#c95048","#68a86a","#6e91c8","#ca77a0","#ecbf64"];
+    const shelfLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width:number):void=>{
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+      ctx.lineWidth=width*z;ctx.strokeStyle=color;ctx.stroke();
+    };
+    // Pernas metálicas visíveis; desenho vazado permite ver a parede por trás.
+    for(const [px,py] of [[x,y],[x+w,y],[x,y+d],[x+w,y+d]]){
+      shelfLine(iso({x:px,y:py},camera,1),iso({x:px,y:py},camera,92),"#475969",4);
+      const base=iso({x:px,y:py},camera,2);
+      ctx.fillStyle="#293b4b";ctx.fillRect(base.x-3*z,base.y-2*z,6*z,4*z);
     }
+    // Prateleiras discretas e pacotinhos empilhados por fileira.
+    for(let row=0;row<4;row++){
+      const height=17+row*20;
+      const corners=[
+        iso({x,y},camera,height),iso({x:x+w,y},camera,height),
+        iso({x:x+w,y:y+d},camera,height),iso({x,y:y+d},camera,height)
+      ];
+      polygon(ctx,corners,"#c6c8ba","#52616a");
+      shelfLine(corners[2]!,corners[3]!,"#576976",3);
+      for(let i=0;i<5;i++){
+        // A frente do pacote é um pequeno quadrilátero no plano da prateleira.
+        const by=y+0.11+i*0.215;
+        const p=iso({x:x+0.24,y:by},camera,height+1);
+        const top=iso({x:x+0.24,y:by},camera,height+15);
+        const wide=iso({x:x+0.24,y:by+0.12},camera,height+1);
+        const wideTop=iso({x:x+0.24,y:by+0.12},camera,height+15);
+        const tint=palette[(i+row*2)%palette.length]!;
+        polygon(ctx,[top,wideTop,wide,p],tint,"#5e5360");
+        // Selagem da embalagem e selo circular de sabor.
+        shelfLine(top,wideTop,"#f4dfb6",1.8);
+        const middle=iso({x:x+0.246,y:by+0.06},camera,height+8);
+        ctx.fillStyle="#fff1c5";ctx.beginPath();
+        ctx.ellipse(middle.x,middle.y,2.6*z,2.9*z,0,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle="#806850";ctx.lineWidth=.7*z;ctx.stroke();
+      }
+    }
+    // Faixa de comunicação original, sem copiar a identidade de Elma Chips.
+    const a=iso({x:x-.015,y:y+.08},camera,101);
+    const b=iso({x:x-.015,y:y+d-.08},camera,101);
+    shelfLine(a,b,"#e4ad45",8);
+    const label=iso({x:x-.015,y:y+d/2},camera,106);
+    ctx.save();ctx.fillStyle="#fff4db";ctx.textAlign="center";
+    ctx.font="bold "+Math.max(7,9*z)+"px system-ui,sans-serif";
+    ctx.fillText("SALGADINHOS",label.x,label.y);ctx.restore();
   }
   private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number):void {
     const ctx=this.ctx, soda=kind==="soda",h=soda?106:94,z=camera.zoom;
@@ -284,6 +326,17 @@ export class SceneRenderer {
   private owner(camera:Projection,t:number):void {
     // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
     drawActor(this.ctx,camera,{x:1.45,y:1.05,kind:"owner",id:0,time:t,pose:"idle",direction:"south"});
+    // Bandeja oval na mão do proprietário, preservando rosto e hitbox do ator.
+    const plate=iso({x:1.63,y:1.27},camera,45),scale=camera.zoom;
+    this.ctx.save();
+    this.ctx.lineWidth=3*scale;
+    this.ctx.strokeStyle="#314859";
+    this.ctx.fillStyle="#edf1e6";
+    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,16*scale,6*scale,-0.10,0,Math.PI*2);
+    this.ctx.fill();this.ctx.stroke();
+    this.ctx.strokeStyle="#bdc9c5";this.ctx.lineWidth=1.2*scale;
+    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,11*scale,3.5*scale,-0.10,0,Math.PI*2);
+    this.ctx.stroke();this.ctx.restore();
     this.heroHitbox=actorHitbox(camera,1.45,1.05);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean):void {
