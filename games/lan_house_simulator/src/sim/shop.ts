@@ -75,3 +75,32 @@ export function validFurniturePlacements(s:GameState):boolean{
  }
  return counts.poster<=2&&counts.plant<=2&&counts.table<=1;
 }
+
+/** Lista os móveis instalados, inclusive os legados sem furniturePlacements.
+ * Os mesmos encaixes são usados para detectar ocupação e para salvar mudanças. */
+export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId:string}>{
+ const result:Array<{kind:FurnitureKind;slotId:string}>=[...(s.furniturePlacements??[])];
+ for(const kind of ["poster","plant","table"] as const){
+  const explicit=result.filter(p=>p.kind===kind).length;
+  const remaining=Math.max(0,(s.furniture?.[kind]??0)-explicit);
+  for(let i=0;i<remaining;i++){
+   const slotId=LEGACY_SLOTS[kind][i];
+   if(slotId)result.push({kind,slotId});
+  }
+ }
+ return result;
+}
+/** Uma transação de mudança de lugar nunca cobra novamente nem altera a posse. */
+export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string):Result{
+ if(fromSlotId===toSlotId)return {ok:false,message:"Escolha um destino diferente da posição atual."};
+ if(!validFurniturePlacements(s))return {ok:false,message:"Os móveis salvos precisam ser verificados."};
+ const furniture=furnitureLocations(s);
+ const from=furniture.find(p=>p.slotId===fromSlotId);
+ if(!from)return {ok:false,message:"Não há um móvel nessa posição."};
+ if(!availablePlacementSlots(s,from.kind).some(slot=>slot.id===toSlotId))
+   return {ok:false,message:"Destino ocupado ou incompatível com o móvel."};
+ // Normaliza móveis antigos apenas após confirmação válida; cancelar não toca no save.
+ s.furniturePlacements=furniture.map(item=>
+  item.slotId===fromSlotId?{kind:item.kind,slotId:toSlotId}:{kind:item.kind,slotId:item.slotId});
+ return {ok:true,message:"Móvel reposicionado sem custo adicional."};
+}
