@@ -56,14 +56,14 @@ test("clientes são atendidos por máquina de estados",()=>{
 
 test("rotas usam corredor livre antes do balcão e dos computadores", async () => {
   const { hallwayRoute, computerSeat, AISLE_Y, COUNTER_QUEUE } = await import("../dist/js/sim/route.js");
-  const { pcPosition, entrance } = await import("../dist/js/sim/engine.js");
+  const { pcPosition, entrance, roomWidth } = await import("../dist/js/sim/engine.js");
   const s=createGame();
   const from=entrance(s), route=hallwayRoute(from,COUNTER_QUEUE);
   assert.equal(route[0].y,AISLE_Y);
   assert.deepEqual(route.at(-1),COUNTER_QUEUE);
   let point=from;
   for (const waypoint of route) {
-    assert.ok(waypoint.x>=0 && waypoint.x<=7 && waypoint.y>=0 && waypoint.y<=6);
+    assert.ok(waypoint.x>=0 && waypoint.x<=roomWidth(s) && waypoint.y>=0 && waypoint.y<=6);
     assert.ok(point.x===waypoint.x || point.y===waypoint.y, "segmentos devem percorrer somente os eixos");
     point=waypoint;
   }
