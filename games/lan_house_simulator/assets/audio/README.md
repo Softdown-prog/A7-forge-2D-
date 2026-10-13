@@ -21,3 +21,8 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Doce/salgadinho: liberação curta + pequena queda, sem som de lata.
 - Emissão somente após `sellItem` retornar sucesso; não emitir com produto esgotado.
 - Não substitui o arquivo de caixa aprovado `money_income_01.ogg`.
+
+## Revisão de áudio — 13/10/2026
+- Som procedural de lata REPROVADO pelo criador na escuta; reprodução de `playVendingCan` desativada no runtime.
+- Não promover automaticamente outro som de refrigerante sem prévia audição e aprovação.
+- Efeito aprovado `money_income_01.ogg` de pagamento permanece ativo.

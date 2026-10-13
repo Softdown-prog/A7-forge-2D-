@@ -5,7 +5,7 @@ import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
 import { roomWidth } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
-import { playVendingCan, playCandyDispense } from "./audio/vendingSfx.js";
+import { playCandyDispense } from "./audio/vendingSfx.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -148,8 +148,8 @@ function frame(timestamp:number):void {
   for(const sale of sales){
     const audio=audioContext();
     if(audio?.state==="running"){
-      if(sale.item==="soda")playVendingCan(audio);
-      else playCandyDispense(audio);
+      // Som de lata suspenso após reprovação auditiva; aguarda versão aprovada.
+      if(sale.item!=="soda")playCandyDispense(audio);
     }
   }
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
