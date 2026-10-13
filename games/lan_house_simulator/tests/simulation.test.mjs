@@ -334,7 +334,7 @@ test("pagamento proporcional ao contrato e liberação da cadeira na duração i
  c.usedMinutes=89;stepGame(s,1);assert.equal(c.stage,"standing");
 });
 
-test("compra de refrigerante na máquina correta emite dinheiro real sem duplicar",()=>{
+test("compra de refrigerante na máquina correta emite dinheiro real sem duplicar",async()=>{
  const s=createGame(82);
  const c={id:881,x:2,y:3,stage:"standing",target:{x:2,y:3},costume:"regular",pcIndex:0,usedMinutes:45,waitingMinutes:0,offlineWait:0,happy:true,poseMinutes:2,wantsSnack:true,desiredItem:"soda",wallet:20};
  s.customers.push(c);
