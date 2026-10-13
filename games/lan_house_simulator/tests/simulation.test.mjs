@@ -312,3 +312,23 @@ test("cliente preserva sessão mesmo sedento e só compra ao terminar",()=>{
  assert.equal(s.customers[0].stage,"standing");
  assert.equal(s.customers[0].desiredItem,"soda");
 });
+
+test("perfil e necessidades definem duração sem mudar saves legados",async()=>{
+ const {chooseSessionMinutes}=await import("../dist/js/sim/needs.js");
+ const base={id:3,needs:{thirst:22,hunger:30,energy:95}};
+ assert.equal(chooseSessionMinutes(base),90);
+ assert.equal(chooseSessionMinutes({id:2,needs:{thirst:20,hunger:30,energy:80}}),60);
+ assert.equal(chooseSessionMinutes({id:1,needs:{thirst:90,hunger:30,energy:90}}),30);
+ assert.equal(chooseSessionMinutes({id:1,needs:{thirst:20,hunger:30,energy:60}}),45);
+});
+test("pagamento proporcional ao contrato e liberação da cadeira na duração individual",()=>{
+ const s=createGame();
+ const c={id:3,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,needs:{thirst:20,hunger:20,energy:95}};
+ s.customers.push(c);stepGame(s,1);
+ assert.equal(c.sessionMinutes,90);
+ assert.equal(s.revenue,18);
+ assert.equal(s.paymentEffects?.[0]?.amount,18);
+ c.stage="using";c.usedMinutes=45;
+ stepGame(s,1);assert.equal(c.stage,"using");
+ c.usedMinutes=89;stepGame(s,1);assert.equal(c.stage,"standing");
+});

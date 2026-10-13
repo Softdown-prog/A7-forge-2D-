@@ -24,6 +24,8 @@ export interface Customer {
   costume: Costume;
   pcIndex: number | null;
   usedMinutes: number;
+  /** Duração contratada na chegada; saves antigos usam 45 minutos. */
+  sessionMinutes?: number;
   waitingMinutes: number;
   offlineWait: number;
   happy: boolean;

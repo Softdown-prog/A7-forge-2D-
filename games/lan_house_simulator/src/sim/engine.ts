@@ -3,7 +3,7 @@ import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { directionFromDelta } from "../render/direction.js";
-import { initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
+import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -101,13 +101,14 @@ function tryServe(s: GameState, c: Customer): void {
     }
     return;
   }
+  c.sessionMinutes??=chooseSessionMinutes(c);
   c.pcIndex = index;
   c.stage = "to_pc";
   setTravel(c, computerSeat(pcPosition(index)));
-  const paid = sessionRevenue(s.pricePerHour);
+  const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
   s.cash += paid; s.revenue += paid; s.served++;
   (s.paymentEffects??=[]).push({amount:paid,x:c.x,y:c.y});
-  addLog(s, "Cliente pagou R$ " + paid + " por 45 minutos.");
+  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
@@ -147,7 +148,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
         return;
       }
       c.usedMinutes++;
-      if (c.usedMinutes >= SESSION_MINUTES) {
+      if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
         const rating=customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait);
         const impact=c.happy?rating:Math.min(0,rating);
         c.happy=impact>=0;

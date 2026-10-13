@@ -182,3 +182,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Testes sobre evolução das necessidades, prioridades, estoque, orçamento e preservação da sessão.
 - [ ] Etapa seguinte: decidir duração de PC, descanso e perfil VIP; balancear frequência de compras em simulação longa.
 - [ ] Som da lata permanece desativado até aprovação do usuário.
+
+## Contratos de tempo por cliente
+- [x] Duração decidida antes do pagamento conforme necessidades e perfil determinístico: 30, 45, 60 ou 90 minutos.
+- [x] Receita proporcional ao tempo contratado; popup e log mostram o valor verdadeiro.
+- [x] Assento permanece reservado até o contrato terminar; saves sem campo de sessão mantêm 45 minutos.
+- [x] Testes de duração, cobrança e liberação; sem mudar arte nem áudio não aprovado.
+- [ ] Balancear distribuição de durações e frequência de demanda em simulações longas.
