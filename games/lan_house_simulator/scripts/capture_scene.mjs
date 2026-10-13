@@ -316,8 +316,14 @@ try{
     await page.locator("#launch-promotion").click();
     await page.locator("#launch-promotion").waitFor({state:"visible"});
     const cashAfter=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
-    if(cashAfter.cash!==cashBefore.cash-120||cashAfter.expenses!==cashBefore.expenses+120)
-      throw Error("Panfletagem cobrou valor incorreto: "+JSON.stringify({before:cashBefore.cash,after:cashAfter.cash}));
+    // Clientes continuam pagando em paralelo à interação do usuário: descontar
+    // receitas confirmadas da variação do caixa para isolar o custo da campanha.
+    const earned=cashAfter.revenue-cashBefore.revenue;
+    const spent=cashAfter.expenses-cashBefore.expenses;
+    if(spent!==120||cashAfter.cash!==cashBefore.cash+earned-spent)
+      throw Error("Panfletagem cobrou valor incorreto: "+JSON.stringify({
+        before:cashBefore.cash,after:cashAfter.cash,earned,spent
+      }));
     if(!(await page.locator("#launch-promotion").isDisabled()))
       throw Error("A panfletagem deve ser contratada apenas uma vez no dia");
     if(!(await page.locator("#promotion-status").textContent())?.includes("Panfletagem ativa"))
