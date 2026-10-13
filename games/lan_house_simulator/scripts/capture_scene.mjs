@@ -160,11 +160,7 @@ try{
           import("./js/sim/engine.js"),
           import("./js/sim/route.js")
         ]);
-        for(const wall of [{axis:"x",x:1,y:-4},{axis:"x",x:1,y:-3},
-        {axis:"y",x:1,y:-4},{axis:"y",x:2,y:-4}]){
-        if(!buildWall(game,wall).ok)throw Error("Parede de validação não construída");
-      }
-      const surface=document.createElement("canvas");
+        const surface=document.createElement("canvas");
         surface.width=1000;surface.height=610;
         const surfaceCtx=surface.getContext("2d");
         if(!surfaceCtx)throw Error("Sem contexto de desenho da cena");
@@ -273,6 +269,10 @@ try{
       if(!placeFurniture(game,"table","floor-north-1-a").ok)throw Error("Mesa de validação não instalada");
       if(!rotateFurniture(game,"floor-north-1-a").ok)throw Error("Rotação de mesa falhou");
       if(!placeFurniture(game,"plant","floor-east-1").ok)throw Error("Planta de validação não instalada");
+      for(const wall of [{axis:"x",x:1,y:-4},{axis:"x",x:1,y:-3},
+         {axis:"y",x:1,y:-4},{axis:"y",x:2,y:-4}]){
+        if(!buildWall(game,wall).ok)throw Error("Parede de validação não construída");
+      }
       const surface=document.createElement("canvas");surface.width=1000;surface.height=610;
       const context=surface.getContext("2d");if(!context)throw Error("Canvas 2D indisponível");
       new SceneRenderer(context).draw(game,1.5);
