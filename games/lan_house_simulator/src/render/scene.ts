@@ -4,7 +4,7 @@ import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometri
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
-import {FURNITURE_SLOTS,occupiedFurnitureSlots,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
+import {FURNITURE_SLOTS,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 
 export class SceneRenderer {
@@ -65,6 +65,34 @@ export class SceneRenderer {
       ctx.fillStyle=blocked?"rgba(185,62,57,0.78)":hover?"rgba(113,233,165,0.92)":"rgba(81,182,137,0.73)";
       ctx.fill();ctx.strokeStyle=blocked?"#ffd2bd":"#edffe9";ctx.lineWidth=hover?3:1.5;ctx.stroke();
       if(hover&&!blocked){ctx.save();ctx.globalAlpha=0.73;this.renderPurchasedFurniture(camera,kind,slot.x,slot.y);ctx.restore();}
+    }
+    ctx.restore();
+  }
+  /** Modo de reorganização: proprietário escolhe primeiro um móvel e depois um encaixe livre. */
+  drawRelocationCandidates(s:GameState,fromSlot:string|null,hoveredId:string|null):void{
+    const camera=cameraForRoom(roomWidth(s)),ctx=this.ctx;
+    const items=furnitureLocations(s),moving=items.find(p=>p.slotId===fromSlot);
+    const occupied=occupiedFurnitureSlots(s);
+    ctx.save();
+    for(const slot of FURNITURE_SLOTS){
+      if(moving && ((moving.kind==="poster")!==(slot.surface==="wall")))continue;
+      const owned=items.some(p=>p.slotId===slot.id);
+      if(!moving&&!owned)continue;
+      const at=this.slotAnchor(camera,slot);
+      const selected=slot.id===fromSlot,hovered=slot.id===hoveredId;
+      ctx.beginPath();
+      ctx.ellipse(at.x,at.y,18*camera.zoom,10*camera.zoom,0,0,Math.PI*2);
+      ctx.fillStyle=selected?"rgba(94,197,255,0.93)":owned
+        ?(moving?"rgba(183,68,64,0.78)":"rgba(245,194,98,0.88)")
+        :hovered?"rgba(111,231,172,0.96)":"rgba(91,188,144,0.75)";
+      ctx.fill();
+      ctx.strokeStyle=selected?"#dbf7ff":owned&&moving?"#ffe0c4":"#fff4d9";
+      ctx.lineWidth=hovered||selected?3:1.5;ctx.stroke();
+      if(moving && hovered&&!occupied.has(slot.id)){
+        ctx.save();ctx.globalAlpha=0.76;
+        this.renderPurchasedFurniture(camera,moving.kind,slot.x,slot.y);
+        ctx.restore();
+      }
     }
     ctx.restore();
   }
