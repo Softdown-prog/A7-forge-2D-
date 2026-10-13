@@ -1,4 +1,5 @@
-import type { Point } from "../sim/types.js";
+import type { Point, GameState } from "../sim/types.js";
+import {roomBounds} from "../sim/room.js";
 export interface Projection { originX: number; originY: number; zoom: number }
 export const WORLD_TILE_WIDTH = 128;
 export const WORLD_TILE_HEIGHT = 64;
@@ -6,6 +7,17 @@ export const WORLD_TILE_HEIGHT = 64;
 export function cameraForRoom(width: number): Projection {
   const zoom = Math.min(0.86, 865 / ((width + 6) * 64));
   return { zoom, originX: 500 - (width - 6) * 32 * zoom, originY: 146 };
+}
+/** Mantém a câmera antiga quando não há extensão, e enquadra áreas novas sem cortes. */
+export function cameraForGame(s:GameState):Projection{
+ const e=s.roomExtensions;
+ if(!e||(!e.west&&!e.east&&!e.south))return cameraForRoom(8+s.expansionLevel*2);
+ const b=roomBounds(s),minU=b.minX-b.maxY,maxU=b.maxX;
+ const minV=b.minX,maxV=b.maxX+b.maxY;
+ const zoom=Math.min(0.86,860/((maxU-minU)*64),490/((maxV-minV)*32+180));
+ const originX=(1000-(maxU-minU)*64*zoom)/2-minU*64*zoom;
+ const originY=48-(minV*32-155)*zoom;
+ return {zoom,originX,originY};
 }
 export function iso(position: Point, camera: Projection, height = 0): Point {
   return { x: camera.originX + (position.x - position.y) * 64 * camera.zoom,

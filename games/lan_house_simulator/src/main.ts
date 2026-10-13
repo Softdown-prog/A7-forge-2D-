@@ -4,7 +4,7 @@ import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidS
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
-import { cameraForRoom, iso } from "./render/isometric.js";
+import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { Soundscape } from "./audio/soundscape.js";
@@ -136,7 +136,7 @@ const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
 function paintPayments(dt:number):void {
-  const camera=cameraForRoom(roomWidth(game));
+  const camera=cameraForGame(game);
   for(let i=paymentPopups.length-1;i>=0;i--){
     const effect=paymentPopups[i]!;
     effect.age+=dt;
@@ -156,7 +156,7 @@ function paintPayments(dt:number):void {
 }
 
 function paintSales(dt:number):void {
- const camera=cameraForRoom(roomWidth(game));
+ const camera=cameraForGame(game);
  for(let i=salePopups.length-1;i>=0;i--){
   const effect=salePopups[i]!;
   effect.age+=dt;
@@ -174,7 +174,7 @@ function paintSales(dt:number):void {
 }
 
 function paintSpeech(dt:number):void {
- const camera=cameraForRoom(roomWidth(game));
+ const camera=cameraForGame(game);
  for(let i=speechPopups.length-1;i>=0;i--){
   const b=speechPopups[i]!;
   b.age+=dt;if(b.age>=2.6){speechPopups.splice(i,1);continue;}
@@ -295,7 +295,7 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  if(!placingKind&&!relocating)return null;
  const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
  const surface=placingKind?(placingKind==="poster"?"wall":"floor"):moving?(moving.kind==="poster"?"wall":"floor"):null;
- const camera=cameraForRoom(roomWidth(game));
+ const camera=cameraForGame(game);
  let nearest:PlacementSlot|null=null,distance=Infinity;
  for(const slot of FURNITURE_SLOTS){
   if(surface&&slot.surface!==surface)continue;

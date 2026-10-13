@@ -1,6 +1,7 @@
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
-import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometric.js";
+import {roomBounds,type RoomBounds} from "../sim/room.js";
+import { cameraForGame, cuboid, iso, polygon, type Projection } from "./isometric.js";
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
@@ -15,14 +16,14 @@ export class SceneRenderer {
     return x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height;
   }
   draw(s: GameState, elapsedSeconds: number): void {
-    const ctx = this.ctx, w=1000, h=610, roomW=roomWidth(s), camera=cameraForRoom(roomW);
+    const ctx = this.ctx, w=1000, h=610, roomW=roomWidth(s), camera=cameraForGame(s),bounds=roomBounds(s);
     ctx.clearRect(0,0,w,h);
     const sky = ctx.createLinearGradient(0,0,0,h);
     sky.addColorStop(0,"#172036"); sky.addColorStop(1,"#34425C");
     ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
-    this.floor(camera,roomW);
-    this.walls(camera,roomW);
-    this.decor(camera,roomW);
+    this.floor(camera,bounds);
+    this.walls(camera,bounds);
+    this.decor(camera,bounds);
     this.extraPosters(camera,s);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
@@ -52,7 +53,7 @@ export class SceneRenderer {
   }
   /** The ghost shares the exact geometry with purchased furniture. */
   drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null):void{
-    const camera=cameraForRoom(roomWidth(s));
+    const camera=cameraForGame(s);
     const occupied=occupiedFurnitureSlots(s);
     const surface=kind==="poster"?"wall":"floor";
     const ctx=this.ctx;
@@ -70,7 +71,7 @@ export class SceneRenderer {
   }
   /** Modo de reorganização: proprietário escolhe primeiro um móvel e depois um encaixe livre. */
   drawRelocationCandidates(s:GameState,fromSlot:string|null,hoveredId:string|null):void{
-    const camera=cameraForRoom(roomWidth(s)),ctx=this.ctx;
+    const camera=cameraForGame(s),ctx=this.ctx;
     const items=furnitureLocations(s),moving=items.find(p=>p.slotId===fromSlot);
     const occupied=occupiedFurnitureSlots(s);
     ctx.save();
@@ -146,12 +147,12 @@ export class SceneRenderer {
       if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y);
     }
   }
-  private floor(camera:Projection,w:number):void {
-    const ctx=this.ctx;
+  private floor(camera:Projection,bounds:RoomBounds):void {
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
     // O cenário é uma plataforma suspensa: sem exterior, sem base ligada a um terreno.
     const rearRight=iso({x:w,y:0},camera);
-    const frontRight=iso({x:w,y:6},camera);
-    const frontLeft=iso({x:0,y:6},camera);
+    const frontRight=iso({x:w,y:south},camera);
+    const frontLeft=iso({x:minX,y:south},camera);
     const bottom=24*camera.zoom;
     ctx.save();
     ctx.shadowColor="rgba(7,12,23,0.65)";
@@ -167,7 +168,7 @@ export class SceneRenderer {
     polygon(ctx,[rearRight,frontRight,
       {x:frontRight.x,y:frontRight.y+bottom},
       {x:rearRight.x,y:rearRight.y+bottom}],"#6E5862","#3B3A49");
-    for(let y=0;y<6;y++) for(let x=0;x<w;x++) {
+    for(let y=0;y<south;y++) for(let x=minX;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
       const tone=(x+y)%2===0?"#C4B7A8":"#B9AC9F";
       polygon(ctx,ps,tone,"#938579");
@@ -183,12 +184,12 @@ export class SceneRenderer {
       iso({x:Math.min(w-0.5,5.1),y:4.83},camera),iso({x:0.7,y:4.83},camera)
     ],"rgba(66,105,106,0.17)","rgba(73,106,105,0.27)");
   }
-  private walls(camera:Projection,w:number):void {
-    const ctx=this.ctx;
-    polygon(ctx,[iso({x:0,y:0},camera,155),iso({x:w,y:0},camera,155),
-      iso({x:w,y:0},camera),iso({x:0,y:0},camera)],"#D7C6B2","#715C60");
-    polygon(ctx,[iso({x:0,y:0},camera,155),iso({x:0,y:6},camera,155),
-      iso({x:0,y:6},camera),iso({x:0,y:0},camera)],"#B9ABB2","#786877");
+  private walls(camera:Projection,bounds:RoomBounds):void {
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
+    polygon(ctx,[iso({x:minX,y:0},camera,155),iso({x:w,y:0},camera,155),
+      iso({x:w,y:0},camera),iso({x:minX,y:0},camera)],"#D7C6B2","#715C60");
+    polygon(ctx,[iso({x:minX,y:0},camera,155),iso({x:minX,y:south},camera,155),
+      iso({x:minX,y:south},camera),iso({x:minX,y:0},camera)],"#B9ABB2","#786877");
     for(const position of [2.15,4.45]){
       const a=iso({x:position,y:0},camera,127),b=iso({x:position+1.2,y:0},camera,127),
         c=iso({x:position+1.2,y:0},camera,73),d=iso({x:position,y:0},camera,73);
@@ -212,20 +213,20 @@ export class SceneRenderer {
         iso({x:position-0.06,y:0.11},camera,70)],"#DDD0B3","#867D79");
     }
   }
-  private decor(camera:Projection,w:number):void {
-    const ctx=this.ctx;
+  private decor(camera:Projection,bounds:RoomBounds):void {
+    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY;
     // Frisos ao pé das paredes; ajudam a perceber o interior sem adicionar telhado.
     polygon(ctx,[
-      iso({x:0,y:0.02},camera,9),iso({x:w,y:0.02},camera,9),
-      iso({x:w,y:0.02},camera,2),iso({x:0,y:0.02},camera,2)
+      iso({x:minX,y:0.02},camera,9),iso({x:w,y:0.02},camera,9),
+      iso({x:w,y:0.02},camera,2),iso({x:minX,y:0.02},camera,2)
     ],"#967D78");
     polygon(ctx,[
-      iso({x:0.02,y:0},camera,9),iso({x:0.02,y:6},camera,9),
-      iso({x:0.02,y:6},camera,2),iso({x:0.02,y:0},camera,2)
+      iso({x:minX+0.02,y:0},camera,9),iso({x:minX+0.02,y:south},camera,9),
+      iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:0},camera,2)
     ],"#817A84");
     // Quadros montados sobre a parede do fundo, altura consistente em world pixels.
     for(const [x,label,accent] of [
-      [0.82,"LAN","#52766C"],[Math.max(3.25,w-2.2),"JOGOS","#927053"]
+      [minX+0.82,"LAN","#52766C"],[Math.max(minX+3.25,w-2.2),"JOGOS","#927053"]
     ] as const){
       const corners=[
         iso({x,y:0},camera,128),iso({x:x+0.92,y:0},camera,128),
@@ -255,7 +256,7 @@ export class SceneRenderer {
     ] as const;
     for(const poster of posters){
       const a=poster.y,b=poster.y+0.96;
-      const at=(y:number,z:number)=>iso({x:0.012,y},camera,z);
+      const at=(y:number,z:number)=>iso({x:minX+0.012,y},camera,z);
       polygon(ctx,[at(a,133),at(b,133),at(b,74),at(a,74)],
         "#DFCAA6","#695969");
       polygon(ctx,[at(a+0.06,128),at(b-0.06,128),
@@ -475,7 +476,7 @@ export class SceneRenderer {
   }
   private doorMarker(camera:Projection,s:GameState):void {
     // Somente limiar de entrada dentro do salão; não há rua, fachada externa ou chuva.
-    const x=roomWidth(s)-0.5,y=6,ctx=this.ctx;
+    const bounds=roomBounds(s),x=bounds.maxX-0.5,y=bounds.maxY,ctx=this.ctx;
     polygon(ctx,[
       iso({x:x-0.45,y:y-0.24},camera),iso({x:x+0.45,y:y-0.24},camera),
       iso({x:x+0.45,y},camera),iso({x:x-0.45,y},camera)
@@ -483,7 +484,7 @@ export class SceneRenderer {
     const left=iso({x:x-0.45,y},camera),right=iso({x:x+0.45,y},camera);
     ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(right.x,right.y);
     ctx.strokeStyle="#FFF0BC";ctx.lineWidth=4*camera.zoom;ctx.stroke();
-    const mid=iso({x,y:5.55},camera);
+    const mid=iso({x,y:y-0.45},camera);
     polygon(ctx,[{x:mid.x-10,y:mid.y+5},{x:mid.x+10,y:mid.y+5},
       {x:mid.x,y:mid.y-6}],"#F1D49B");
   }
