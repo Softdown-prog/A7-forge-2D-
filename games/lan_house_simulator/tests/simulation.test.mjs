@@ -459,7 +459,7 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame\(game,dt\*4\.0\)/);
  assert.match(source,/if\(!isPlaying\)return;/);
  assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
 });
@@ -571,7 +571,7 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
  assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
- assert.match(main,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode\)stepGame/);
+ assert.match(main,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
 });
 
 test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
@@ -747,4 +747,86 @@ test("paredes criam setores físicos fechados na grade sem alterar os PCs",async
   assert.equal(buildWall(s,wall).ok,true,JSON.stringify(wall));
  }
  assert.ok(wallZoneCount(s)>=2);
+});
+
+test("anexo permite PC adicional com cobrança única e é salvo sem mudar PCs antigos",async()=>{
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {annexComputerSlots,installAnnexComputer,availableAnnexComputers}=await import("../dist/js/sim/stations.js");
+ const {pcCount,pcPosition,createGame}=await import("../dist/js/sim/engine.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=5000;
+ assert.equal(expandDirection(s,"north").ok,true);
+ const p=pcPosition(0),slot=annexComputerSlots(s).find(x=>x.wing==="north");
+ assert.ok(slot);
+ const before=s.cash;
+ assert.equal(installAnnexComputer(s,slot.id).ok,true);
+ assert.equal(s.cash,before-320);assert.equal(pcCount(s),4);
+ assert.deepEqual(pcPosition(0,s),p);
+ assert.deepEqual(pcPosition(3,s),slot.position);
+ assert.equal(installAnnexComputer(s,slot.id).ok,false);
+ assert.equal(s.cash,before-320);
+ assert.ok(!availableAnnexComputers(s).some(x=>x.id===slot.id));
+ const restored=parseImportedSave(serializeSave(s));
+ assert.deepEqual(restored.annexPcs,s.annexPcs);
+ assert.deepEqual(pcPosition(3,restored),slot.position);
+});
+test("rotas existentes não mudam com paredes fora de seus corredores",async()=>{
+ const {createGame,entrance}=await import("../dist/js/sim/engine.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {buildWall}=await import("../dist/js/sim/walls.js");
+ const {navigableRoute}=await import("../dist/js/sim/navigation.js");
+ const {COUNTER_QUEUE,hallwayRoute}=await import("../dist/js/sim/route.js");
+ const s=createGame();s.cash=5000;expandDirection(s,"north");
+ const origin=entrance(s),before=hallwayRoute(origin,COUNTER_QUEUE);
+ assert.equal(buildWall(s,{axis:"x",x:1,y:-1}).ok,true);
+ assert.deepEqual(navigableRoute(s,origin,COUNTER_QUEUE),before);
+});
+test("converter parede em porta preserva a passagem e o contador de salas",async()=>{
+ const {createGame}=await import("../dist/js/sim/engine.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {buildWall,installInteriorDoor,removeInteriorDoor,wallZoneCount,validInteriorDoors}=await import("../dist/js/sim/walls.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const {navigableRoute}=await import("../dist/js/sim/navigation.js");
+ const s=createGame();s.cash=5000;expandDirection(s,"north");
+ const segment={axis:"x",x:1,y:-1};
+ assert.equal(buildWall(s,segment).ok,true);
+ const cash=s.cash;
+ assert.equal(installInteriorDoor(s,segment).ok,true);
+ assert.equal(s.cash,cash-80);
+ assert.equal(s.interiorWalls.length,0);assert.equal(s.interiorDoors.length,1);
+ assert.equal(validInteriorDoors(s),true);
+ assert.ok(navigableRoute(s,{x:1.5,y:-.5},{x:1.5,y:-1.5}));
+ assert.deepEqual(parseImportedSave(serializeSave(s)).interiorDoors,s.interiorDoors);
+ assert.equal(installInteriorDoor(s,segment).ok,false);
+ assert.equal(removeInteriorDoor(s,segment).ok,true);
+ assert.equal(s.interiorDoors.length,0);
+});
+test("manutenção e upgrades reconhecem os PCs nas expansões",async()=>{
+ const {createGame,pcCount}=await import("../dist/js/sim/engine.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {installAnnexComputer}=await import("../dist/js/sim/stations.js");
+ const {upgradeComputer,repairComputer}=await import("../dist/js/sim/economy.js");
+ const s=createGame();s.cash=6000;expandDirection(s,"east");
+ assert.equal(installAnnexComputer(s,"pc-east-1").ok,true);
+ assert.equal(pcCount(s),4);
+ assert.equal(upgradeComputer(s,3).ok,true);
+ assert.equal(s.pcTiers[3],2);
+ s.pcWear[3]=90;
+ assert.equal(repairComputer(s,3).ok,true);
+ assert.equal(s.pcWear[3],0);
+});
+test("índices dos anexos são preservados quando o jogador instala mais PCs tradicionais",async()=>{
+ const {createGame,pcCount,pcPosition}=await import("../dist/js/sim/engine.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {installAnnexComputer}=await import("../dist/js/sim/stations.js");
+ const {expandShop}=await import("../dist/js/sim/economy.js");
+ const {buyComputer}=await import("../dist/js/sim/shop.js");
+ const s=createGame();s.cash=15000;expandDirection(s,"north");installAnnexComputer(s,"pc-north-1");
+ s.pcTiers[3]=3;s.pcWear[3]=44;
+ const pos=pcPosition(3,s);
+ assert.equal(expandShop(s).ok,true);
+ assert.equal(buyComputer(s).ok,true);
+ assert.equal(pcCount(s),5);
+ assert.deepEqual(pcPosition(4,s),pos);
+ assert.equal(s.pcTiers[4],3);assert.equal(s.pcWear[4],44);
 });

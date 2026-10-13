@@ -2,6 +2,18 @@ import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {hallwayRoute} from "./route.js";
 
+/** O traçado clássico tem prioridade enquanto não atravessa nenhuma parede. */
+function crossesClosedWall(w:{axis:"x"|"y";x:number;y:number},a:Point,b:Point):boolean{
+ const eps=1e-6;
+ if(w.axis==="x"){
+  if(Math.abs(b.y-a.y)<eps)return false;
+  const t=(w.y-a.y)/(b.y-a.y),x=a.x+(b.x-a.x)*t;
+  return t>eps&&t<1-eps&&x>w.x+eps&&x<w.x+1-eps;
+ }
+ if(Math.abs(b.x-a.x)<eps)return false;
+ const t=(w.x-a.x)/(b.x-a.x),y=a.y+(b.y-a.y)*t;
+ return t>eps&&t<1-eps&&y>w.y+eps&&y<w.y+1-eps;
+}
 /** Grade de navegação separada do desenho; portas permitem passagem, paredes bloqueiam. */
 function barrierId(axis:"x"|"y",x:number,y:number):string{return axis+":"+x+":"+y;}
 function tile(p:Point,b:{minX:number;maxX:number;minY:number;maxY:number}):[number,number]{
@@ -12,6 +24,9 @@ export function navigableRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const walls=s.interiorWalls??[];
  if(!walls.length)return hallwayRoute(from,to);
  const b=roomBounds(s);
+ const classic=hallwayRoute(from,to),closed=walls.filter(w=>!(s.interiorDoors??[]).some(d=>barrierId(d.axis,d.x,d.y)===barrierId(w.axis,w.x,w.y)));
+ const classicPoints=[from,...classic];
+ if(classicPoints.every((p,i)=>i===0||closed.every(w=>!crossesClosedWall(w,classicPoints[i-1]!,p))))return classic;
  const blocked=new Set(walls.map(w=>barrierId(w.axis,w.x,w.y)));
  const doorways=new Set((s.interiorDoors??[]).map(w=>barrierId(w.axis,w.x,w.y)));
  for(const key of doorways)blocked.delete(key);

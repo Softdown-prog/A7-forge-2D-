@@ -1,5 +1,6 @@
 import type {GameState,Point,Result} from "./types.js";
-import {roomBounds} from "./room.js";
+import {COUNTER_QUEUE,computerSeat} from "./route.js";
+import {navigableRoute} from "./navigation.js";
 
 export interface AnnexComputerSlot {id:string;position:Point;wing:"west"|"east"|"north"}
 export const ANNEX_PC_COST=320;
@@ -33,6 +34,9 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
  if(!availableAnnexComputers(s).some(slot=>slot.id===slotId))
    return {ok:false,message:"Posição de PC indisponível nesta ampliação."};
  if(s.cash<ANNEX_PC_COST)return {ok:false,message:"Caixa insuficiente para instalar computador."};
+ const slot=annexComputerSlots(s).find(p=>p.id===slotId)!;
+ if(!navigableRoute(s,COUNTER_QUEUE,computerSeat(slot.position)))
+  return {ok:false,message:"Esta sala precisa de uma passagem acessível antes de instalar o PC."};
  const legacy=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??3+s.expansionLevel*2));
  const index=legacy+(s.annexPcs?.length??0);
  s.cash-=ANNEX_PC_COST;s.expenses+=ANNEX_PC_COST;

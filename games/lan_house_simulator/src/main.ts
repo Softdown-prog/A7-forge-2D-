@@ -441,7 +441,7 @@ function renderShop():void{
      item.id==="computer-annex"?!availableAnnexComputers(game).length:
      ext?(game.roomExtensions?.[ext]??0)>=MAX_EXTENSION_LEVEL:
      item.id==="expand"?game.expansionLevel>=2:
-     item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:
+     item.id==="computer"?((game.installedPcs??(3+game.expansionLevel*2))>=3+game.expansionLevel*2):
      max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
