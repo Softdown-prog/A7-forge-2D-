@@ -31,8 +31,8 @@ export function roomWidth(s: GameState): number { return 7 + s.expansionLevel * 
 export function entrance(s: GameState): Point { return { x: roomWidth(s) - 0.5, y: 5.35 }; }
 export function pcPosition(i: number): Point {
   const positions: Point[] = [
-    // PCs em linha paralela à parede do fundo; cadeira e teclado mantêm âncoras.
-    { x: 2.20, y: 1.72 }, { x: 3.65, y: 1.72 }, { x: 5.00, y: 1.72 },
+    // Três PCs iniciais alinhados à parede do fundo; prateleira de salgadinhos movida para a lateral.
+    { x: 2.20, y: 1.35 }, { x: 3.65, y: 1.35 }, { x: 5.00, y: 1.35 },
     { x: 7.2, y: 1.85 }, { x: 7.85, y: 2.95 },
     { x: 9.5, y: 1.85 }, { x: 9.85, y: 2.95 }
   ];

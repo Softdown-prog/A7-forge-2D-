@@ -209,3 +209,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Painel administrativo apresenta desgaste, PCs parados, custo por estação e botão de reparo.
 - [x] Cobrança no caixa e despesas sem duplicação, compatibilidade com saves anteriores, testes de reserva e reparo.
 - [ ] Revisão visual do painel de manutenção em desktop e celular.
+
+## Rearranjo do salão — 13/10/2026
+- [x] Deslocar a prateleira de salgadinhos da parede dos PCs para a parede lateral esquerda.
+- [x] Alinhar três computadores iniciais mais próximos do fundo, mantendo os assentos e as rotas derivados das posições oficiais.
+- [x] Não mover máquinas de refrigerante e doces.
+- [ ] Conferir PNG real do novo layout antes de considerar a arte aprovada.

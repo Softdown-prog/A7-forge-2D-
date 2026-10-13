@@ -379,3 +379,10 @@ test("desgaste individual bloqueia novas reservas e reparo cobra uma única vez"
  assert.equal(repairComputer(s,0).ok,false);assert.equal(s.cash,before-90);
  const old=createGame();delete old.pcWear;assert.equal(pcWear(old,0),0);
 });
+
+test("prateleira lateral libera a parede dos PCs sem deslocar as máquinas de refrigerante",async()=>{
+ const {pcPosition}=await import("../dist/js/sim/engine.js");
+ const {VENDING_MACHINES}=await import("../dist/js/sim/layout.js");
+ assert.deepEqual([pcPosition(0).y,pcPosition(1).y,pcPosition(2).y],[1.35,1.35,1.35]);
+ assert.deepEqual(VENDING_MACHINES.map(m=>[m.kind,m.x,m.y]),[["soda",5.22,0.18],["candy",6.02,0.18]]);
+});

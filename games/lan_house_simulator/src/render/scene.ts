@@ -24,7 +24,7 @@ export class SceneRenderer {
     this.decor(camera,roomW);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
-      {depth:1.7,paint:()=>this.shelf(camera)},
+      {depth:3.7,paint:()=>this.shelf(camera)},
       ...VENDING_MACHINES.map(m=>({
         depth:m.x+m.y+0.25,
         paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds)
@@ -224,9 +224,10 @@ export class SceneRenderer {
   }
   private shelf(camera:Projection):void {
     const ctx=this.ctx;
-    cuboid(ctx,camera,2.9,0.4,1.1,0.45,75,["#B88966","#694A44","#7D5441"]);
+    // Prateleira lateral de salgadinhos: parede esquerda, longe da fileira dos PCs.
+    cuboid(ctx,camera,0.22,2.98,0.48,1.12,75,["#B88966","#694A44","#7D5441"]);
     for(let i=0;i<5;i++){
-      const p=iso({x:3.0+i*0.17,y:0.43},camera,81);
+      const p=iso({x:0.44,y:3.05+i*0.19},camera,81);
       ctx.fillStyle=["#E8A644","#A4C97C","#E8B77B","#CFA6F0","#E8A644"][i]!;
       ctx.fillRect(p.x-3,p.y-7,6,10);
     }
