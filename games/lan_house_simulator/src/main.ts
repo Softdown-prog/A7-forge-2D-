@@ -277,9 +277,10 @@ function stopPlacement():void{
 }
 document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
 function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
- const bounds=canvas.getBoundingClientRect();
- return {x:(e.clientX-bounds.left)/bounds.width*canvas.width,
-         y:(e.clientY-bounds.top)/bounds.height*canvas.height};
+ const element=canvas!;
+ const bounds=element.getBoundingClientRect();
+ return {x:(e.clientX-bounds.left)/bounds.width*element.width,
+         y:(e.clientY-bounds.top)/bounds.height*element.height};
 }
 function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  if(!placingKind)return null;
