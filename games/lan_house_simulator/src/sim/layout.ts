@@ -7,8 +7,8 @@ export interface VendingMachinePlacement extends Point {
 export const VENDING_WIDTH=0.66;
 export const VENDING_DEPTH=0.59;
 export const VENDING_MACHINES: readonly VendingMachinePlacement[]=[
-  {kind:"soda",x:5.22,y:0.18},
-  {kind:"candy",x:6.02,y:0.18}
+  {kind:"soda",x:5.80,y:0.18},
+  {kind:"candy",x:6.60,y:0.18}
 ];
 /** Fila centrada em frente às duas vitrines, fora da área das máquinas. */
 export const VENDING_APPROACH:Point={

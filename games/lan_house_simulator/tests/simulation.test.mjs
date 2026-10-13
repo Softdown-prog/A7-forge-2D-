@@ -383,6 +383,15 @@ test("desgaste individual bloqueia novas reservas e reparo cobra uma única vez"
 test("prateleira lateral libera a parede dos PCs sem deslocar as máquinas de refrigerante",async()=>{
  const {pcPosition}=await import("../dist/js/sim/engine.js");
  const {VENDING_MACHINES}=await import("../dist/js/sim/layout.js");
- assert.deepEqual([pcPosition(0).y,pcPosition(1).y,pcPosition(2).y],[1.35,1.35,1.35]);
- assert.deepEqual(VENDING_MACHINES.map(m=>[m.kind,m.x,m.y]),[["soda",5.22,0.18],["candy",6.02,0.18]]);
+ assert.deepEqual([pcPosition(0).y,pcPosition(1).y,pcPosition(2).y],[1.10,1.10,1.10]);
+ assert.deepEqual(VENDING_MACHINES.map(m=>[m.kind,m.x,m.y]),[["soda",5.80,0.18],["candy",6.60,0.18]]);
+});
+
+test("uma faixa adicional de piso e parede libera máquinas à direita da entrada",async()=>{
+ const {roomWidth,entrance,pcPosition,createGame}=await import("../dist/js/sim/engine.js");
+ const {VENDING_MACHINES,VENDING_WIDTH}=await import("../dist/js/sim/layout.js");
+ const s=createGame();assert.equal(roomWidth(s),8);assert.equal(entrance(s).x,7.5);
+ assert.ok(VENDING_MACHINES[1].x+VENDING_WIDTH<roomWidth(s));
+ assert.ok(pcPosition(0).y<=1.10&&pcPosition(2).y<=1.10);
+ s.expansionLevel=2;assert.equal(roomWidth(s),12);
 });

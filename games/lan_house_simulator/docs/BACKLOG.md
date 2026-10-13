@@ -221,3 +221,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Discriminação de aluguel, internet, energia e manutenção usando os mesmos valores da economia.
 - [x] Estilo responsivo para desktop/celular e reparos integrados visualmente ao painel.
 - [ ] Inspeção visual do painel aberto em desktop e mobile após CI.
+
+## Ampliação lateral direita — outubro de 2026
+- [x] Adicionar uma faixa lógica de piso à largura do salão, com paredes e entrada seguindo a mesma largura.
+- [x] Levar refrigerante e doces 0,58 tile para a direita, sem mudar suas funções e rotas automáticas.
+- [x] Encostar a fileira inicial de PCs mais perto da parede traseira, ajustando cadeiras e destinos a partir do mesmo contrato.
+- [ ] Aprovar captura visual do runtime (piso, parede, porta e afastamentos).

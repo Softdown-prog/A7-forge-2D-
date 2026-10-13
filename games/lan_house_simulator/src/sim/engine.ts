@@ -27,12 +27,12 @@ export function online(s: GameState): boolean { return s.totalMinutes >= s.offli
 export function pcCount(s: GameState): number { return 3 + s.expansionLevel * 2; }
 export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
 export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
-export function roomWidth(s: GameState): number { return 7 + s.expansionLevel * 2; }
+export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
 export function entrance(s: GameState): Point { return { x: roomWidth(s) - 0.5, y: 5.35 }; }
 export function pcPosition(i: number): Point {
   const positions: Point[] = [
     // Três PCs iniciais alinhados à parede do fundo; prateleira de salgadinhos movida para a lateral.
-    { x: 2.20, y: 1.35 }, { x: 3.65, y: 1.35 }, { x: 5.00, y: 1.35 },
+    { x: 2.20, y: 1.10 }, { x: 3.65, y: 1.10 }, { x: 5.00, y: 1.10 },
     { x: 7.2, y: 1.85 }, { x: 7.85, y: 2.95 },
     { x: 9.5, y: 1.85 }, { x: 9.85, y: 2.95 }
   ];
