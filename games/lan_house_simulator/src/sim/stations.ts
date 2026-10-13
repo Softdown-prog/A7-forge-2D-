@@ -10,7 +10,7 @@ export function annexComputerSlots(s:GameState):AnnexComputerSlot[]{
  const slots:AnnexComputerSlot[]=[];
  for(let i=1;i<=e.west;i++)slots.push({id:"pc-west-"+i,wing:"west",position:{x:-2*i+0.30,y:1.42}});
  for(let i=1;i<=e.east;i++)slots.push({id:"pc-east-"+i,wing:"east",position:{x:8+2*s.expansionLevel+2*(i-1)+0.22,y:1.42}});
- for(let i=1;i<=(e.north??0);i++)slots.push({id:"pc-north-"+i,wing:"north",position:{x:5.0,y:-2*i+0.22}});
+ for(let i=1;i<=(e.north??0);i++)slots.push({id:"pc-north-"+i,wing:"north",position:{x:5.0,y:-2*i+0.13}});
  return slots;
 }
 export function annexComputerPosition(s:GameState,slotId:string):Point|null{

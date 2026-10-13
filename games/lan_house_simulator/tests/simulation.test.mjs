@@ -830,3 +830,38 @@ test("índices dos anexos são preservados quando o jogador instala mais PCs tra
  assert.deepEqual(pcPosition(4,s),pos);
  assert.equal(s.pcTiers[4],3);assert.equal(s.pcWear[4],44);
 });
+
+test("sala norte fechada obriga cliente a atravessar a porta até o PC adicional",async()=>{
+ const {createGame,stepGame,pcCount,pcPosition,entrance}=await import("../dist/js/sim/engine.js");
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {buildWall,installInteriorDoor,wallZoneCount}=await import("../dist/js/sim/walls.js");
+ const {installAnnexComputer}=await import("../dist/js/sim/stations.js");
+ const {navigableRoute}=await import("../dist/js/sim/navigation.js");
+ const {COUNTER_QUEUE,computerSeat}=await import("../dist/js/sim/route.js");
+ const s=createGame();s.cash=20000;
+ assert.equal(expandDirection(s,"north").ok,true);
+ for(let x=0;x<8;x++)assert.equal(buildWall(s,{axis:"x",x,y:-1}).ok,true,"segmento "+x);
+ const locked=navigableRoute(s,COUNTER_QUEUE,{x:5.35,y:-1.06});
+ assert.equal(locked,null,"a porta não pode ser atravessada enquanto fechada");
+ assert.equal(installAnnexComputer(s,"pc-north-1").ok,false,"sala sem entrada não recebe PC");
+ assert.equal(installInteriorDoor(s,{axis:"x",x:4,y:-1}).ok,true);
+ assert.equal(wallZoneCount(s),2,"duas salas mesmo com portal");
+ assert.equal(installAnnexComputer(s,"pc-north-1").ok,true);
+ assert.equal(pcCount(s),4);
+ const route=navigableRoute(s,COUNTER_QUEUE,computerSeat(pcPosition(3,s)));
+ assert.ok(route&&route.some(p=>p.y< -1),"caminho passa para o lado norte da parede");
+ const make=(id,stage,pcIndex,x,y)=>({id,stage,pcIndex,x,y,target:{x,y},route:[],
+  costume:"regular",usedMinutes:0,sessionMinutes:300,waitingMinutes:0,offlineWait:0,happy:true,poseMinutes:0});
+ s.customers=[
+  make(1,"using",0,2.55,1.92),make(2,"using",1,4,1.92),make(3,"using",2,5.35,1.92),
+  make(4,"waiting",null,COUNTER_QUEUE.x,COUNTER_QUEUE.y)
+ ];
+ stepGame(s,1);
+ const customer=s.customers.find(c=>c.id===4);
+ assert.equal(customer.stage,"to_pc");
+ assert.equal(customer.pcIndex,3);
+ assert.ok([customer.target,...customer.route].some(p=>p.y< -1));
+ stepGame(s,55);
+ assert.ok(["sitting","using","standing"].includes(customer.stage),"cliente chegou à área do anexo: "+customer.stage);
+ assert.deepEqual(entrance(s),{x:7.5,y:5.35});
+});
