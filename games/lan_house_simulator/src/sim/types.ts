@@ -52,8 +52,10 @@ export interface GameState {
   licensedGames: boolean;
   expansionLevel: number;
   installedPcs?: number;
+  /** Extensões de terreno independentes; ausentes em saves anteriores. */
+  roomExtensions?: { west:number; east:number; south:number };
   furniture?: {poster:number;plant:number;table:number};
-  furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string}>;
+  furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string;rotation?:0|1|2|3}>;
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
   inventory: Inventory;
