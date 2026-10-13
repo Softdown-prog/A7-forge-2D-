@@ -21,6 +21,12 @@
         <button id="menu-continue" type="button">↪ Continuar</button>
         <button id="menu-options" type="button" aria-expanded="false" aria-controls="menu-settings">⚙ Opções</button>
       </div>
+      <div class="save-actions" aria-label="Transferir progresso">
+        <button type="button" id="save-export">↓ Exportar JSON</button>
+        <button type="button" id="save-import">↑ Importar JSON</button>
+        <input type="file" id="save-import-file" accept=".json,application/json" hidden aria-label="Selecionar arquivo JSON de partida"/>
+      </div>
+      <p id="save-message" class="save-message" role="status" aria-live="polite">Salve seu progresso em um arquivo e leve a partida para outro navegador.</p>
       <div id="menu-settings" class="menu-settings" hidden><h3>Opções</h3>
         <label><input type="checkbox" id="option-sound" checked/> Efeitos sonoros</label>
         <p>O progresso fica salvo neste navegador. As opções de som também.</p>

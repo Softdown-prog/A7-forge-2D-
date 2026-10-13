@@ -463,3 +463,15 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  assert.match(source,/if\(!isPlaying\)return;/);
  assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
 });
+
+test("exportação e importação preservam a partida e rejeitam JSON inválido",async()=>{
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=1245;s.pricePerHour=16;s.inventory.snacks=33;s.pcTiers=[1,3,1];
+ const text=serializeSave(s), restored=parseImportedSave(text);
+ assert.deepEqual(restored,s);assert.notEqual(restored,s);
+ assert.throws(()=>parseImportedSave("{broken"),/JSON inválido/);
+ assert.throws(()=>parseImportedSave(JSON.stringify(s)),/incompatível/);
+ const edited=JSON.parse(text);edited.state.inventory.snacks=-200;
+ assert.throws(()=>parseImportedSave(JSON.stringify(edited)),/fora dos limites/);
+ const tooLong="x".repeat(2_000_001);assert.throws(()=>parseImportedSave(tooLong),/muito grande/);
+});

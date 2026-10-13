@@ -1,3 +1,4 @@
+import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
@@ -42,9 +43,44 @@ let soundEnabled=true;
 try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
 soundToggle.checked=soundEnabled;
 continueButton.disabled=!hasSavedGame;
+const importFile=document.querySelector<HTMLInputElement>("#save-import-file");
+const saveMessage=document.querySelector<HTMLElement>("#save-message");
+const exportButton=document.querySelector<HTMLButtonElement>("#save-export");
+if(!importFile||!saveMessage||!exportButton)throw Error("Controles de save ausentes");
+exportButton.disabled=!hasSavedGame;
+function announceSave(message:string):void{saveMessage!.textContent=message;}
+document.getElementById("save-export")?.addEventListener("click",()=>{
+ if(!hasSavedGame){announceSave("Nenhuma partida disponível para exportar.");return;}
+ try{
+  const blob=new Blob([serializeSave(game)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");link.href=url;
+  link.download="lan-house-simulator-dia-"+dayNumber(game)+".json";
+  document.body.append(link);link.click();link.remove();
+  window.setTimeout(()=>URL.revokeObjectURL(url),1000);
+  announceSave("Arquivo JSON exportado. Guarde-o em local seguro.");
+ }catch{announceSave("Não foi possível exportar esta partida.");}
+});
+document.getElementById("save-import")?.addEventListener("click",()=>importFile!.click());
+importFile.addEventListener("change",async()=>{
+ const file=importFile!.files?.[0];importFile!.value="";
+ if(!file)return;
+ if(file.size>2_000_000){announceSave("O arquivo excede o limite de 2 MB.");return;}
+ try{
+  const state=parseImportedSave(await file.text());
+  if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
+  // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
+  localStorage.setItem(GAME_SAVE_KEY,JSON.stringify(state));
+  game=state;hasSavedGame=true;
+  previousServed=game.served;previousPurchases=game.purchases;
+  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+  continueButton!.disabled=false;exportButton!.disabled=false;
+  announceSave("Partida importada com sucesso. Clique em Continuar.");
+ }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
+});
 function showMenu():void{
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;adminOpen=false;
+ continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;
 }
 function beginPlay():void{
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
@@ -149,7 +185,7 @@ function playOriginalSound(name: keyof typeof soundFiles): void {
 }
 function save(): void {
   if(!isPlaying)return;
-  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); hasSavedGame=true; }
+  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); hasSavedGame=true; exportButton!.disabled=false; }
   catch { /* Storage cheio/bloqueado: jogo continua em memória. */ }
 }
 function button(id:string, handler:()=>void):void {
