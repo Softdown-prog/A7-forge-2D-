@@ -4,6 +4,7 @@ import { cameraForRoom, cuboid, iso, polygon, type Projection } from "./isometri
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
+import {FURNITURE_SLOTS,occupiedFurnitureSlots,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 
 export class SceneRenderer {
@@ -49,23 +50,72 @@ export class SceneRenderer {
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
   }
+  /** The ghost shares the exact geometry with purchased furniture. */
+  drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null):void{
+    const camera=cameraForRoom(roomWidth(s));
+    const occupied=occupiedFurnitureSlots(s);
+    const surface=kind==="poster"?"wall":"floor";
+    const ctx=this.ctx;
+    ctx.save();
+    for(const slot of FURNITURE_SLOTS){
+      if(slot.surface!==surface)continue;
+      const at=this.slotAnchor(camera,slot),blocked=occupied.has(slot.id);
+      const hover=slot.id===hoveredId;
+      ctx.beginPath();ctx.ellipse(at.x,at.y,16*camera.zoom,9*camera.zoom,0,0,Math.PI*2);
+      ctx.fillStyle=blocked?"rgba(185,62,57,0.78)":hover?"rgba(113,233,165,0.92)":"rgba(81,182,137,0.73)";
+      ctx.fill();ctx.strokeStyle=blocked?"#ffd2bd":"#edffe9";ctx.lineWidth=hover?3:1.5;ctx.stroke();
+      if(hover&&!blocked){ctx.save();ctx.globalAlpha=0.73;this.renderPurchasedFurniture(camera,kind,slot.x,slot.y);ctx.restore();}
+    }
+    ctx.restore();
+  }
+  private slotAnchor(camera:Projection,slot:PlacementSlot):Point{
+    return slot.surface==="wall"
+      ?iso({x:slot.x+0.33,y:0.01},camera,137)
+      :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
+  }
+  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number):void{
+    if(kind==="poster"){
+      polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
+        iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
+    }else if(kind==="plant"){
+      cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
+      const center=iso({x:x+0.16,y:y+0.16},camera,42);
+      this.ctx.fillStyle="#578d68";this.ctx.beginPath();
+      this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
+    }else if(kind==="table"){
+      cuboid(this.ctx,camera,x,y,0.55,0.4,23,["#c49a76","#8d6754","#a07b60"]);
+    }
+  }
   private extraPosters(camera:Projection,s:GameState):void{
-    for(let i=0;i<Math.min(2,s.furniture?.poster??0);i++){
+    const positioned=(s.furniturePlacements??[]).filter(p=>p.kind==="poster");
+    for(let i=0;i<Math.min(2,Math.max(0,(s.furniture?.poster??0)-positioned.length));i++){
       const x=2.1+i*2.25;
       polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
         iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
     }
+    for(const placed of positioned){
+      const slot=FURNITURE_SLOTS.find(v=>v.id===placed.slotId&&v.surface==="wall");
+      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y);
+    }
   }
+    /* Saved placement coordinates are always resolved from vetted slots. */
   private extraFurniture(camera:Projection,s:GameState):void{
-    for(let i=0;i<Math.min(2,s.furniture?.plant??0);i++){
+    const positioned=s.furniturePlacements??[];
+    const legacyPlants=Math.max(0,(s.furniture?.plant??0)-positioned.filter(p=>p.kind==="plant").length);
+    for(let i=0;i<Math.min(2,legacyPlants);i++){
       const x=i===0?0.6:roomWidth(s)-0.8,y=i===0?5.3:3.6;
       cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
       const center=iso({x:x+0.16,y:y+0.16},camera,42);
       this.ctx.fillStyle="#578d68";this.ctx.beginPath();
       this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
     }
-    if((s.furniture?.table??0)>0){
+    if((s.furniture?.table??0)>positioned.filter(p=>p.kind==="table").length){
       cuboid(this.ctx,camera,0.75,4.12,0.55,0.4,23,["#c49a76","#8d6754","#a07b60"]);
+    }
+    for(const placed of positioned){
+      if(placed.kind==="poster")continue;
+      const slot=FURNITURE_SLOTS.find(v=>v.id===placed.slotId&&v.surface==="floor");
+      if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y);
     }
   }
   private floor(camera:Projection,w:number):void {
