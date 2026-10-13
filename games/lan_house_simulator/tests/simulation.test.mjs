@@ -459,7 +459,7 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/if\(isPlaying&&!placingKind\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(isPlaying&&!placingKind&&!relocating\)stepGame\(game,dt\*4\.0\)/);
  assert.match(source,/if\(!isPlaying\)return;/);
  assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
 });
@@ -522,4 +522,54 @@ test("móveis antigos reservam espaços para não haver duplicação",async()=>{
  assert.equal(placeFurniture(s,"plant","floor-3").ok,true);
  assert.equal(s.furniture?.plant,2);
  assert.equal(s.furniturePlacements?.length,1);
+});
+
+test("reorganizar móveis existentes preserva caixa, despesas, posse e save",async()=>{
+ const {placeFurniture,relocateFurniture,furnitureLocations,availablePlacementSlots,occupiedFurnitureSlots}=await import("../dist/js/sim/shop.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=2000;
+ assert.equal(placeFurniture(s,"plant","floor-1").ok,true);
+ assert.equal(placeFurniture(s,"table","floor-2").ok,true);
+ assert.equal(placeFurniture(s,"poster","wall-1").ok,true);
+ const before=JSON.stringify({cash:s.cash,expenses:s.expenses,furniture:s.furniture});
+ const old=JSON.stringify(s.furniturePlacements);
+ assert.equal(relocateFurniture(s,"floor-1","floor-2").ok,false);
+ assert.equal(relocateFurniture(s,"floor-1","wall-2").ok,false);
+ assert.equal(relocateFurniture(s,"unknown","floor-3").ok,false);
+ assert.equal(relocateFurniture(s,"floor-1","floor-1").ok,false);
+ assert.equal(JSON.stringify(s.furniturePlacements),old);
+ assert.equal(relocateFurniture(s,"floor-1","floor-3").ok,true);
+ assert.equal(JSON.stringify({cash:s.cash,expenses:s.expenses,furniture:s.furniture}),before);
+ assert.equal(s.furniturePlacements.find(p=>p.kind==="plant").slotId,"floor-3");
+ assert.equal(occupiedFurnitureSlots(s).has("floor-1"),false);
+ assert.equal(availablePlacementSlots(s,"plant").some(p=>p.id==="floor-1"),true);
+ assert.equal(furnitureLocations(s).length,3);
+ const recovered=parseImportedSave(serializeSave(s));
+ assert.deepEqual(recovered.furniturePlacements,s.furniturePlacements);
+ assert.equal(recovered.cash,s.cash);assert.equal(recovered.expenses,s.expenses);
+});
+test("reposicionamento de save antigo converte móveis com segurança sem recomprar",async()=>{
+ const {buyFurniture,relocateFurniture,furnitureLocations,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
+ const s=createGame();s.cash=2000;
+ assert.equal(buyFurniture(s,"plant").ok,true);
+ assert.equal(buyFurniture(s,"poster").ok,true);
+ assert.equal(s.furniturePlacements,undefined);
+ const snapshot={cash:s.cash,expenses:s.expenses,furniture:JSON.stringify(s.furniture)};
+ assert.equal(relocateFurniture(s,"floor-1","floor-4").ok,true);
+ assert.deepEqual(s.furniturePlacements,[{kind:"plant",slotId:"floor-4"},{kind:"poster",slotId:"wall-1"}]);
+ assert.equal(validFurniturePlacements(s),true);
+ assert.equal(furnitureLocations(s).length,2);
+ assert.deepEqual({cash:s.cash,expenses:s.expenses,furniture:JSON.stringify(s.furniture)},snapshot);
+ assert.equal(relocateFurniture(s,"floor-1","floor-3").ok,false);
+});
+test("modo de organizar fica disponível no catálogo sem afetar a compra",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const {resolve,dirname}=await import("node:path");
+ const {fileURLToPath}=await import("node:url");
+ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
+ const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ assert.match(html,/id="organize-furniture"/);
+ assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
+ assert.match(main,/if\(isPlaying&&!placingKind&&!relocating\)stepGame/);
 });
