@@ -340,7 +340,8 @@ test("compra de refrigerante na máquina correta emite dinheiro real sem duplica
  s.customers.push(c);
  stepGame(s,1);
  assert.equal(c.stage,"shopping");
- assert.ok(c.target.x>5 && c.target.x<6);
+ const finalStop=c.route?.at(-1)??c.target;
+ assert.ok(finalStop.x>5 && finalStop.x<6, "destino final deve ficar diante da máquina de refrigerante");
  const prior=s.cash,stock=s.inventory.soda;
  for(let i=0;i<70&&s.purchases===0;i++)stepGame(s,1);
  assert.equal(s.purchases,1);
