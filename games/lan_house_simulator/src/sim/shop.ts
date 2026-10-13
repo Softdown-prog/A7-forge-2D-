@@ -1,13 +1,20 @@
 import type {GameState,Result} from "./types.js";
+import {roomBounds,expansionPrice} from "./room.js";
 export type FurnitureKind="poster"|"plant"|"table";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
+ {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Adiciona uma faixa de 2 tiles a oeste."},
+ {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Adiciona uma faixa de 2 tiles a leste."},
+ {id:"extend-south",label:"Ampliar para frente",category:"Construção",description:"Adiciona uma faixa de 2 tiles ao sul. Norte permanece fixo."},
  {id:"poster",label:"Pôster",category:"Decoração",description:"Pôster geométrico de parede."},
  {id:"plant",label:"Planta",category:"Decoração",description:"Vaso com folhagens."},
  {id:"table",label:"Mesinha",category:"Móveis",description:"Mesa lateral decorativa."}
 ] as const;
 export function shopPrice(s:GameState,id:string):number{
+ if(id==="extend-west")return expansionPrice(s,"west");
+ if(id==="extend-east")return expansionPrice(s,"east");
+ if(id==="extend-south")return expansionPrice(s,"south");
  return id==="expand"?650+s.expansionLevel*450:id==="computer"?320:id==="poster"?45:id==="plant"?85:id==="table"?140:0;
 }
 export function buyComputer(s:GameState):Result{
@@ -39,6 +46,26 @@ export const FURNITURE_SLOTS:ReadonlyArray<PlacementSlot>=[
  {id:"floor-3",x:4.30,y:5.17,surface:"floor"},{id:"floor-4",x:6.15,y:5.17,surface:"floor"}
 ];
 const LEGACY_SLOTS:Record<FurnitureKind,string[]>={poster:["wall-1","wall-2"],plant:["floor-1","floor-4"],table:["floor-2"]};
+/** Pontos novos só surgem após pagar por cada ala; IDs originais não mudam. */
+export function furnitureSlots(s:GameState):PlacementSlot[]{
+ const result=[...FURNITURE_SLOTS];
+ const bounds=roomBounds(s);
+ const e=s.roomExtensions??{west:0,east:0,south:0};
+ for(let i=1;i<=e.west;i++){
+   result.push({id:"floor-west-"+i,x:-2*i+0.42,y:5.17,surface:"floor"});
+   result.push({id:"wall-west-"+i,x:-2*i+0.45,y:0.01,surface:"wall"});
+ }
+ for(let i=1;i<=e.east;i++){
+   result.push({id:"floor-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.48,y:5.17,surface:"floor"});
+   result.push({id:"wall-east-"+i,x:8+2*s.expansionLevel+2*(i-1)+0.52,y:0.01,surface:"wall"});
+ }
+ for(let i=1;i<=e.south;i++){
+   result.push({id:"floor-south-"+i+"-a",x:Math.max(bounds.minX+1.1,1.05),y:6+2*(i-1)+0.9,surface:"floor"});
+   result.push({id:"floor-south-"+i+"-b",x:Math.max(bounds.minX+2.9,3.05),y:6+2*(i-1)+0.9,surface:"floor"});
+ }
+ return result;
+}
+
 export function occupiedFurnitureSlots(s:GameState):Set<string>{
  const occupied=new Set((s.furniturePlacements??[]).map(p=>p.slotId));
  for(const kind of ["poster","plant","table"] as const){
@@ -51,7 +78,7 @@ export function occupiedFurnitureSlots(s:GameState):Set<string>{
 export function availablePlacementSlots(s:GameState,kind:FurnitureKind):PlacementSlot[]{
  if(kind!=="poster"&&kind!=="plant"&&kind!=="table")return [];
  const occupied=occupiedFurnitureSlots(s),surface=kind==="poster"?"wall":"floor";
- return FURNITURE_SLOTS.filter(slot=>slot.surface===surface&&!occupied.has(slot.id));
+ return furnitureSlots(s).filter(slot=>slot.surface===surface&&!occupied.has(slot.id));
 }
 /** Deduct money only when a selected slot is confirmed. */
 export function placeFurniture(s:GameState,kind:FurnitureKind,slotId:string):Result{
@@ -68,18 +95,19 @@ export function validFurniturePlacements(s:GameState):boolean{
  const used=new Set<string>(),counts:Record<FurnitureKind,number>={poster:0,plant:0,table:0};
  for(const p of s.furniturePlacements){
   if(!p||typeof p!=="object"||(p.kind!=="poster"&&p.kind!=="plant"&&p.kind!=="table"))return false;
-  const slot=FURNITURE_SLOTS.find(v=>v.id===p.slotId);
+  const slot=furnitureSlots(s).find(v=>v.id===p.slotId);
   if(!slot||((p.kind==="poster")!==(slot.surface==="wall"))||used.has(p.slotId))return false;
   used.add(p.slotId);counts[p.kind]++;
   if(counts[p.kind]>(s.furniture?.[p.kind]??0))return false;
  }
- return counts.poster<=2&&counts.plant<=2&&counts.table<=1;
+ return s.furniturePlacements.every(p=>p.rotation===undefined||([0,1,2,3] as number[]).includes(p.rotation))&&
+  counts.poster<=2&&counts.plant<=2&&counts.table<=1;
 }
 
 /** Lista os móveis instalados, inclusive os legados sem furniturePlacements.
  * Os mesmos encaixes são usados para detectar ocupação e para salvar mudanças. */
-export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId:string}>{
- const result:Array<{kind:FurnitureKind;slotId:string}>=[...(s.furniturePlacements??[])];
+export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId:string;rotation?:0|1|2|3}>{
+ const result:Array<{kind:FurnitureKind;slotId:string;rotation?:0|1|2|3}>=[...(s.furniturePlacements??[])];
  for(const kind of ["poster","plant","table"] as const){
   const explicit=result.filter(p=>p.kind===kind).length;
   const remaining=Math.max(0,(s.furniture?.[kind]??0)-explicit);
@@ -101,6 +129,17 @@ export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string)
    return {ok:false,message:"Destino ocupado ou incompatível com o móvel."};
  // Normaliza móveis antigos apenas após confirmação válida; cancelar não toca no save.
  s.furniturePlacements=furniture.map(item=>
-  item.slotId===fromSlotId?{kind:item.kind,slotId:toSlotId}:{kind:item.kind,slotId:item.slotId});
+  item.slotId===fromSlotId?{...item,slotId:toSlotId}:{...item});
  return {ok:true,message:"Móvel reposicionado sem custo adicional."};
+}
+
+/** Giro gratuito e persistente em 4 direções para itens soltos; pôster continua na parede norte. */
+export function rotateFurniture(s:GameState,slotId:string):Result{
+ if(!validFurniturePlacements(s))return {ok:false,message:"Dados de móveis inválidos."};
+ const furniture=furnitureLocations(s),item=furniture.find(p=>p.slotId===slotId);
+ if(!item)return {ok:false,message:"Selecione um móvel instalado."};
+ if(item.kind==="poster")return {ok:false,message:"Pôster de parede não gira; a rotação vale para móveis de piso."};
+ const value=(((item.rotation??0)+1)%4) as 0|1|2|3;
+ s.furniturePlacements=furniture.map(p=>p.slotId===slotId?{...p,rotation:value}:{...p});
+ return {ok:true,message:"Móvel girado para a direção "+["norte","leste","sul","oeste"][value]+", sem custo."};
 }
