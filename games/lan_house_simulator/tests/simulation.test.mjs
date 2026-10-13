@@ -254,9 +254,10 @@ test("pagamento confirmado gera efeito visual com valor real uma única vez",()=
  s.customers.push({id:12,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true});
  stepGame(s,1);
  assert.equal(s.paymentEffects?.length,1);
- assert.equal(s.paymentEffects?.[0]?.amount,9);
+ const paid=sessionRevenue(s.pricePerHour,s.customers[0]?.sessionMinutes);
+ assert.equal(s.paymentEffects?.[0]?.amount,paid);
  assert.equal(s.paymentEffects?.[0]?.x,1.55);
- assert.equal(s.cash,859);
+ assert.equal(s.cash,850+paid);
  const events=s.paymentEffects?.splice(0);
  assert.equal(events?.length,1);
  stepGame(s,1);
