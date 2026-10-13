@@ -1,5 +1,5 @@
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
-import {SHOP_CATALOG,shopPrice,buyComputer,buyFurniture,type FurnitureKind} from "./sim/shop.js";
+import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,availablePlacementSlots,FURNITURE_SLOTS,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
@@ -83,7 +83,7 @@ importFile.addEventListener("change",async()=>{
 });
 function showMenu():void{
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;
+ continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;placingKind=null;hoveredPlacement=null;
 }
 function beginPlay():void{
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
@@ -101,8 +101,11 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying)showMenu();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind)stopPlacement();else showMenu();}});
 let shopOpen=false;
+let placingKind:FurnitureKind|null=null;
+let hoveredPlacement:string|null=null;
+let placementNotice="";
 let adminOpen = false;
 let activeAdminTab="prices";
 let previousServed = game.served;
@@ -201,14 +204,21 @@ function button(id:string, handler:()=>void):void {
     }
   });
 }
-button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();});
-button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen)adminOpen=false;renderUI();});
+button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){shopOpen=false;placingKind=null;hoveredPlacement=null;}renderUI();});
+button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingKind=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
 shopCatalog?.addEventListener("click",event=>{
  const target=event.target;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
  const id=target.dataset.buy;
- const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):buyFurniture(game,id as FurnitureKind);
+ if(id==="poster"||id==="plant"||id==="table"){
+   if(!availablePlacementSlots(game,id).length)return;
+   placingKind=id;hoveredPlacement=null;placementNotice="";
+   shopOpen=false;adminOpen=false;playOriginalSound("click");renderUI();
+   canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   return;
+ }
+ const result=id==="expand"?expandShop(game):buyComputer(game);
  playOriginalSound("click");applyResult(game,result);renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
@@ -258,10 +268,48 @@ button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
   game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
 });
+const placementToolbar=document.getElementById("placement-toolbar");
+const placementHelp=document.getElementById("placement-help");
+const stage=canvas.closest<HTMLElement>(".stage");
+const placementNames:Record<FurnitureKind,string>={poster:"pôster",plant:"planta",table:"mesinha"};
+function stopPlacement():void{
+ placingKind=null;hoveredPlacement=null;placementNotice="";renderUI();
+}
+document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
+function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
+ const bounds=canvas.getBoundingClientRect();
+ return {x:(e.clientX-bounds.left)/bounds.width*canvas.width,
+         y:(e.clientY-bounds.top)/bounds.height*canvas.height};
+}
+function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
+ if(!placingKind)return null;
+ const camera=cameraForRoom(roomWidth(game));
+ let nearest:PlacementSlot|null=null,distance=Infinity;
+ for(const slot of FURNITURE_SLOTS){
+  if((slot.surface==="wall")!==(placingKind==="poster"))continue;
+  const at=slot.surface==="wall"?iso({x:slot.x+0.33,y:0.01},camera,137):
+      iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
+  const dist=Math.hypot(x-at.x,y-at.y);
+  if(dist<distance){distance=dist;nearest=slot;}
+ }
+ return distance<=Math.max(23,38*camera.zoom)?nearest:null;
+}
+canvas.addEventListener("pointermove",e=>{
+ if(!placingKind)return;
+ const at=getCanvasPoint(e);
+ hoveredPlacement=pickFurnitureSlot(at.x,at.y)?.id??null;
+});
+canvas.addEventListener("pointerleave",()=>{hoveredPlacement=null;});
 canvas.addEventListener("click",e=>{
-  const rect=canvas.getBoundingClientRect();
-  const x=(e.clientX-rect.left)/rect.width*canvas.width;
-  const y=(e.clientY-rect.top)/rect.height*canvas.height;
+  const {x,y}=getCanvasPoint(e);
+  if(placingKind){
+    const kind=placingKind,slot=pickFurnitureSlot(x,y);
+    if(!slot){placementNotice="Clique em uma das posições sinalizadas.";renderUI();return;}
+    const result=placeFurniture(game,kind,slot.id);
+    if(result.ok){playOriginalSound("click");applyResult(game,result);stopPlacement();save();}
+    else{placementNotice=result.message;renderUI();}
+    return;
+  }
   if(renderer.hitOwner(x,y)){playOriginalSound("click");adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
 function renderShop():void{
@@ -277,7 +325,7 @@ function renderShop():void{
   const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
   const max=item.id==="poster"?2:item.id==="plant"?2:item.id==="table"?1:0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
-  const full=item.id==="expand"?game.expansionLevel>=2:item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:max>0&&count>=max;
+  const full=item.id==="expand"?game.expansionLevel>=2:item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
   button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
@@ -293,6 +341,9 @@ function renderUI():void {
     "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
+  if(placementToolbar)placementToolbar.hidden=!placingKind;
+  if(stage)stage.classList.toggle("placing",Boolean(placingKind));
+  if(placementHelp)placementHelp.textContent=placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
   if(shop)shop.hidden=!shopOpen;
   const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
   if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));
@@ -381,7 +432,7 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  if(isPlaying)stepGame(game,dt*4.0);
+  if(isPlaying&&!placingKind)stepGame(game,dt*4.0);
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
@@ -408,6 +459,7 @@ function frame(timestamp:number):void {
   }
   if(isPlaying)renderer.draw(game,elapsed);
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
+  if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);
   if(isPlaying&&timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }

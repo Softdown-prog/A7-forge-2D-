@@ -204,6 +204,12 @@ try{
       await writeFile(resolve(output,"lhs_full_scene_lifecycle.png"),
         Buffer.from(lifecycle,"base64"));
     }
+    await page.locator("#open-shop").click();
+    await page.locator('[data-buy="plant"]').click();
+    await page.locator("#placement-toolbar").waitFor({state:"visible"});
+    await writeFile(resolve(output,"lhs_furniture_placement_"+config.name+".png"),
+      await page.locator(".stage").screenshot({type:"png"}));
+    await page.locator("#placement-cancel").click();
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
   }
