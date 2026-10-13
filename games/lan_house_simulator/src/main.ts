@@ -324,11 +324,14 @@ function pickWall(x:number,y:number):WallSegment|null{
  const camera=cameraForGame(game),available=wallMode==="remove"?[...(game.interiorWalls??[]),...(game.interiorDoors??[])]:wallMode==="door"?(game.interiorWalls??[]):wallCandidates(game);
  let nearest:WallSegment|null=null,best=Infinity;
  for(const segment of available){
-   const [a,b]=wallEndpoints(segment),pa=iso(a,camera),pb=iso(b,camera);
-   const dx=pb.x-pa.x,dy=pb.y-pa.y,scale=Math.max(1,dx*dx+dy*dy);
-   const t=Math.max(0,Math.min(1,((x-pa.x)*dx+(y-pa.y)*dy)/scale));
-   const d=Math.hypot(x-pa.x-t*dx,y-pa.y-t*dy);
-   if(d<best){best=d;nearest=segment;}
+   const [a,b]=wallEndpoints(segment);
+   for(const height of (wallMode==="build"?[0]:[0,38,76])){
+     const pa=iso(a,camera,height),pb=iso(b,camera,height);
+     const dx=pb.x-pa.x,dy=pb.y-pa.y,scale=Math.max(1,dx*dx+dy*dy);
+     const t=Math.max(0,Math.min(1,((x-pa.x)*dx+(y-pa.y)*dy)/scale));
+     const d=Math.hypot(x-pa.x-t*dx,y-pa.y-t*dy);
+     if(d<best){best=d;nearest=segment;}
+   }
  }
  return best<=Math.max(12,18*camera.zoom)?nearest:null;
 }

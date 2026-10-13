@@ -117,6 +117,8 @@ export class SceneRenderer {
   drawWallPreview(s:GameState,wall:WallSegment|null,demolish:boolean):void{
     if(!wall)return;
     const exists=(s.interiorWalls??[]).some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y);
+    const isDoor=(s.interiorDoors??[]).some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y);
+    if(demolish&&isDoor){this.drawInteriorDoor(cameraForGame(s),wall,true);return;}
     if(demolish&&!exists)return;
     this.drawInteriorWall(cameraForGame(s),wall,true,demolish?exists:canBuildWall(s,wall));
   }
