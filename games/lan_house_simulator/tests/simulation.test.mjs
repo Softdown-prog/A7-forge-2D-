@@ -450,3 +450,16 @@ test("arte dos três níveis de hardware permanece ligada ao estado real do PC",
  const {upgradeComputer}=await import("../dist/js/sim/economy.js");
  assert.equal(upgradeComputer(s,1).ok,true);assert.deepEqual(s.pcTiers,[1,2,1]);
 });
+
+test("menu inicial impede autoplay e oferece partida, continuar e opções",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const {resolve,dirname}=await import("node:path");
+ const {fileURLToPath}=await import("node:url");
+ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
+ const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
+ assert.match(source,/if\(isPlaying\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(!isPlaying\)return;/);
+ assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
+});

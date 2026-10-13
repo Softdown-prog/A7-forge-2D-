@@ -10,17 +10,35 @@
   <script type="module" src="./js/main.js"></script>
 </head>
 <body>
-  <div class="app">
+  <section id="start-screen" class="start-screen" aria-label="Menu principal">
+    <div class="menu-art" aria-hidden="true"><div class="menu-sun"></div><div class="menu-building"><div class="menu-sign">LAN HOUSE</div><div class="menu-windows"><span>PC</span><span>PC</span><span>PC</span></div><div class="menu-door"></div></div><div class="menu-street"></div></div>
+    <div class="menu-content">
+      <span class="menu-eyebrow">SOFTDOWN · TYCOON ISOMÉTRICO</span>
+      <h2>LAN HOUSE<br/><em>SIMULATOR</em></h2>
+      <p>Uma pequena lan house, grandes planos. Construa seu negócio, cuide dos computadores e conquiste clientes.</p>
+      <div class="menu-actions">
+        <button id="menu-new" type="button">▶ Nova partida</button>
+        <button id="menu-continue" type="button">↪ Continuar</button>
+        <button id="menu-options" type="button" aria-expanded="false" aria-controls="menu-settings">⚙ Opções</button>
+      </div>
+      <div id="menu-settings" class="menu-settings" hidden><h3>Opções</h3>
+        <label><input type="checkbox" id="option-sound" checked/> Efeitos sonoros</label>
+        <p>O progresso fica salvo neste navegador. As opções de som também.</p>
+      </div>
+      <small>HTML5 · Protótipo em desenvolvimento · Arte de interface procedural</small>
+    </div>
+  </section>
+  <div class="app" id="game-app" hidden>
     <header class="topbar">
       <div class="brand"><span class="logo">LH</span><div><h1>Lan House Simulator</h1><p>O sonho começou. Agora vem a administração.</p></div></div>
-      <button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button>
+      <div class="topbar-actions"><button id="open-menu" class="slice" type="button">☰ Menu / Pausar</button><button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button></div>
     </header>
     <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">📅 Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">☀ Tempo firme</div></div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
         <canvas id="game" width="1000" height="610" aria-label="Cenário da lan house com balcão, proprietário, clientes e computadores">Seu navegador precisa de Canvas 2D.</canvas>
-        <p class="note">Clique no dono atrás do balcão para abrir o painel. O jogo avança automaticamente. Imagens geométricas provisórias.</p>
+        <p class="note">Clique no dono atrás do balcão para abrir o painel. Use Menu / Pausar para voltar à tela inicial. Arte procedural em evolução.</p>
       </section>
       <aside class="sidebar">
         <div class="side-title"><h2>Acontecendo agora</h2><span class="live-dot"></span></div>

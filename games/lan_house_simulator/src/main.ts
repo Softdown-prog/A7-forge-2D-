@@ -29,6 +29,40 @@ function readSave(): GameState {
   return createGame();
 }
 let game = readSave();
+const startScreen=document.querySelector<HTMLElement>("#start-screen");
+const gameApp=document.querySelector<HTMLElement>("#game-app");
+const continueButton=document.querySelector<HTMLButtonElement>("#menu-continue");
+const settingsPanel=document.querySelector<HTMLElement>("#menu-settings");
+const soundToggle=document.querySelector<HTMLInputElement>("#option-sound");
+if(!startScreen||!gameApp||!continueButton||!settingsPanel||!soundToggle)throw new Error("Menu inicial incompleto");
+let isPlaying=false;
+let hasSavedGame=false;
+try{hasSavedGame=localStorage.getItem(GAME_SAVE_KEY)!==null;}catch{}
+let soundEnabled=true;
+try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
+soundToggle.checked=soundEnabled;
+continueButton.disabled=!hasSavedGame;
+function showMenu():void{
+ isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
+ continueButton!.disabled=!hasSavedGame;adminOpen=false;
+}
+function beginPlay():void{
+ isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
+ renderUI();
+}
+document.getElementById("menu-new")?.addEventListener("click",()=>{
+ if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
+ game=createGame();paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ previousServed=0;previousPurchases=0;save();beginPlay();
+});
+continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
+document.getElementById("menu-options")?.addEventListener("click",()=>{
+ settingsPanel!.hidden=!settingsPanel!.hidden;
+ document.getElementById("menu-options")?.setAttribute("aria-expanded",String(!settingsPanel!.hidden));
+});
+soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
+document.getElementById("open-menu")?.addEventListener("click",showMenu);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying)showMenu();});
 let adminOpen = false;
 let activeAdminTab="prices";
 let previousServed = game.served;
@@ -108,13 +142,14 @@ const soundFiles: Record<string, string> = {
 };
 function playOriginalSound(name: keyof typeof soundFiles): void {
   const file=soundFiles[name];
-  if (!file) return;
+  if (!file || !soundEnabled) return;
   const audio = new Audio(file);
   audio.volume=0.42;
   void audio.play().catch(() => { /* Os WAV autorais ainda não foram enviados. */ });
 }
 function save(): void {
-  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); }
+  if(!isPlaying)return;
+  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); hasSavedGame=true; }
   catch { /* Storage cheio/bloqueado: jogo continua em memória. */ }
 }
 function button(id:string, handler:()=>void):void {
@@ -271,39 +306,37 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  stepGame(game,dt*4.0);
-  const payments=game.paymentEffects?.splice(0)??[];
+  if(isPlaying)stepGame(game,dt*4.0);
+  const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
     if(paymentPopups.length>12)paymentPopups.shift();
     playOriginalSound("coin");
   }
   if(game.served>previousServed)previousServed=game.served;
-  const sales=game.saleEffects?.splice(0)??[];
+  const sales=isPlaying?(game.saleEffects?.splice(0)??[]):[];
   for(const sale of sales){
     if(Number.isFinite(sale.amount) && Number.isFinite(sale.x) && Number.isFinite(sale.y)){
       salePopups.push({amount:sale.amount!,x:sale.x!,y:sale.y!,age:0});
       if(salePopups.length>12)salePopups.shift();
     }
     const audio=audioContext();
-    if(audio?.state==="running"){
+    if(soundEnabled&&audio?.state==="running"){
       // Som de lata suspenso após reprovação auditiva; aguarda versão aprovada.
       if(sale.item!=="soda")playCandyDispense(audio);
     }
   }
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
-  for(const speech of game.speechEffects?.splice(0)??[]){
+  for(const speech of (isPlaying?(game.speechEffects?.splice(0)??[]):[])){
     speechPopups.push({...speech,age:0});
     if(speechPopups.length>8)speechPopups.shift();
   }
-  renderer.draw(game,elapsed);
-  paintPayments(dt);
-  paintSales(dt);
-  paintSpeech(dt);
-  if(timestamp-lastUI>450){lastUI=timestamp;renderUI();}
+  if(isPlaying)renderer.draw(game,elapsed);
+  if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
+  if(isPlaying&&timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }
 setInterval(save,8000);
 window.addEventListener("beforeunload",save);
-renderUI();
+showMenu();
 requestAnimationFrame(frame);
