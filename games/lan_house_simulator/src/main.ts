@@ -150,11 +150,12 @@ maintenancePanel.addEventListener("click",event=>{
  applyResult(game,target.dataset.pcRepair!==undefined?repairComputer(game,index):upgradeComputer(game,index));
  renderUI();save();
 });
-const tabs=admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]");
+const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]"));
+const adminSections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
 function activateAdminTab(tab:string):void{
  activeAdminTab=tab;
  for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));}
- for(const section of admin.querySelectorAll<HTMLElement>("[data-section]"))section.hidden=section.dataset.section!==tab;
+ for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");});
 const retailControls=document.getElementById("retail-price-controls");
