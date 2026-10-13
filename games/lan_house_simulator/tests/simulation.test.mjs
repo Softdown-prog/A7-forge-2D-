@@ -573,3 +573,38 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
  assert.match(main,/if\(isPlaying&&!placingKind&&!relocating\)stepGame/);
 });
+
+test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
+ const {AUDIO_LEVELS,KEYBOARD_DURATION,keyboardPattern}=await import("../dist/js/audio/soundscape.js");
+ assert.ok(AUDIO_LEVELS.keyboard<AUDIO_LEVELS.mouse);
+ assert.ok(AUDIO_LEVELS.mouse<AUDIO_LEVELS.smallSale);
+ assert.ok(AUDIO_LEVELS.smallSale<AUDIO_LEVELS.income);
+ assert.equal(KEYBOARD_DURATION,3.5);
+ const strokes=keyboardPattern();
+ assert.ok(strokes.length>=18&&strokes.length<=28);
+ assert.ok(strokes[0].at>=0&&strokes.at(-1).at<KEYBOARD_DURATION);
+ assert.ok(strokes.some((s,i)=>i>0&&Math.abs(s.at-strokes[i-1].at-0.156)>0.005));
+ assert.ok(strokes.every(x=>x.strength>0&&x.strength<=1));
+});
+test("session transition emits a single keyboard event, never per gameplay frame",()=>{
+ const s=createGame();
+ s.customers=[{id:601,x:2.55,y:1.92,target:{x:2.55,y:1.92},route:[],stage:"sitting",pcIndex:0,
+  costume:"regular",poseMinutes:2,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true}];
+ stepGame(s,1);
+ assert.equal(s.customers[0].stage,"using");
+ assert.deepEqual(s.keyboardEffects,[{customerId:601,pcIndex:0}]);
+ stepGame(s,5);
+ assert.equal(s.keyboardEffects.length,1,"no new keyboard sound for an ongoing session");
+});
+test("UI click audio uses one delegated handler and game money is event-driven",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const {resolve,dirname}=await import("node:path");
+ const {fileURLToPath}=await import("node:url");
+ const source=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/main.ts"),"utf8");
+ assert.match(source,/document.addEventListener\("click",event=>/);
+ assert.match(source,/soundscape.income\("payment"\)/);
+ assert.match(source,/soundscape.income\("sale"\)/);
+ assert.match(source,/soundscape.keyboard\(\)/);
+ assert.doesNotMatch(source,/new Audio\(/);
+ assert.doesNotMatch(source,/playOriginalSound/);
+});
