@@ -56,6 +56,10 @@ export interface GameState {
   roomExtensions?: { west:number; east:number; south:number; north?:number };
   /** Segmentos de parede construídos no grid. */
   interiorWalls?: Array<{axis:"x"|"y";x:number;y:number}>;
+  /** Portas internas em segmentos da grade, distintas de paredes sólidas. */
+  interiorDoors?: Array<{axis:"x"|"y";x:number;y:number}>;
+  /** Posições das estações adicionais nas alas ampliadas. */
+  annexPcs?: Array<{slotId:string}>;
   furniture?: {poster:number;plant:number;table:number};
   furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string;rotation?:0|1|2|3}>;
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
