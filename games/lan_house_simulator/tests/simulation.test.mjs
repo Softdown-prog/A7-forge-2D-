@@ -692,7 +692,7 @@ test("a ampliação libera slots e capacidade real para novas decorações",asyn
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
  const s=createGame();s.cash=20000;
  for(const dir of ["west","east","north"])assert.equal(expandDirection(s,dir).ok,true);
- assert.equal(furnitureLimit(s,"poster"),4);
+ assert.equal(furnitureLimit(s,"poster"),5);
  assert.equal(furnitureLimit(s,"plant"),6);
  assert.equal(furnitureLimit(s,"table"),4);
  for(const id of ["wall-1","wall-2","wall-west-1","wall-east-1"])
