@@ -57,6 +57,10 @@ function screenFace(ctx:CanvasRenderingContext2D,camera:Projection,
 export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection,
   p:Point,index:number,t:number,isOnline:boolean,s:GameState):void {
   const z=camera.zoom;
+  // Identidade de hardware por estação: conservada nos saves antigos.
+  const rawTier=s.pcTiers?.[index]??1;
+  const tier=Number.isInteger(rawTier)?Math.max(1,Math.min(3,rawTier)):1;
+  const accent=tier===3?"#5AA8B5":tier===2?"#B69C59":"#A69B88";
   const occupied=s.customers.some(c=>c.pcIndex===index &&
     (c.stage==="sitting"||c.stage==="using"||c.stage==="standing"));
 
@@ -74,7 +78,9 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
   ],"#DBAF7D","#895F4F");
   // CPU bege ao lado do monitor: típica bancada de final dos anos 1990.
   raisedBox(ctx,camera,p.x-0.12,p.y+0.06,0.22,0.34,35,20,
-    "#E7DAB8","#BFB297","#A79D8E");
+    tier===3?"#BBCBD0":tier===2?"#DED1AB":"#E7DAB8",
+    tier===3?"#779BA5":tier===2?"#B8A681":"#BFB297",
+    tier===3?"#668793":tier===2?"#9B8F75":"#A79D8E");
   const power=iso({x:p.x+0.015,y:p.y+0.405},camera,43);
   ctx.fillStyle="#8CC8AD";ctx.fillRect(power.x-1.6*z,power.y-1.5*z,3*z,3*z);
   // Duas ranhuras no gabinete beige (leitor de disco e botão), sem microtexturas.
@@ -83,13 +89,22 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
     ctx.fillStyle="#827C73";ctx.fillRect(slot.x-4*z,slot.y,8*z,1.5*z);
   }
 
+  // Disco/indicador de upgrade no gabinete, legível em escala pequena.
+  if(tier>1){
+    const badge=iso({x:p.x+0.055,y:p.y+0.408},camera,51);
+    ctx.fillStyle=accent;ctx.fillRect(badge.x-5*z,badge.y-3*z,10*z,6*z);
+    ctx.fillStyle="#192D3B";ctx.font="bold "+Math.max(7,8*z)+"px sans-serif";
+    ctx.textAlign="center";ctx.fillText(String(tier),badge.x,badge.y+2.5*z);
+  }
   // Monitor CRT volumoso: corpo trapezoidal simplificado e tela orientada para a cadeira.
   const mx=p.x+0.22,my=p.y-0.05,mw=0.46,md=0.36,mz=36,mh=39;
   raisedBox(ctx,camera,mx,my,mw,md,mz,mh,
-    "#E9DFCC","#CFC2AB","#AEACA0");
+    tier===3?"#CBDCE0":tier===2?"#E9DBBB":"#E9DFCC",
+    tier===3?"#A2BEC5":tier===2?"#D1BD93":"#CFC2AB",
+    tier===3?"#8BA8B2":tier===2?"#B2A184":"#AEACA0");
   screenFace(ctx,camera,mx,my+md+0.005,mw,mz,mh,isOnline,Math.floor(t*1.7+index)%2);
   const led=iso({x:mx+mw-0.07,y:my+md+0.01},camera,mz+5);
-  ctx.fillStyle=isOnline?"#75E7A8":"#7A6668";
+  ctx.fillStyle=isOnline?(tier===3?"#62DDF2":tier===2?"#F0C66A":"#75E7A8"):"#7A6668";
   ctx.fillRect(led.x-1*z,led.y-1*z,3*z,3*z);
 
   // Teclado em cima do tampo. Sem texturas nem logos de sistemas operacionais.

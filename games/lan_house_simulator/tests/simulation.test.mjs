@@ -437,3 +437,16 @@ test("hardware atualizado dá satisfação real sem cobrar novamente por sessão
  assert.equal(hardwareSatisfactionBonus(old,0),0);
  assert.ok(customerSatisfactionDelta(20,10,0)+hardwareSatisfactionBonus(s,0)>customerSatisfactionDelta(20,10,0));
 });
+
+test("arte dos três níveis de hardware permanece ligada ao estado real do PC",async()=>{
+ const {readFileSync}=await import("node:fs");
+ const {resolve,dirname}=await import("node:path");
+ const {fileURLToPath}=await import("node:url");
+ const source=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/render/retroComputer.ts"),"utf8");
+ assert.match(source,/s\.pcTiers\?\.\[index\]\?\?1/);
+ assert.match(source,/tier===3\?/);
+ assert.match(source,/if\(tier>1\)/);
+ const s=createGame();assert.deepEqual(s.pcTiers,[1,1,1]);
+ const {upgradeComputer}=await import("../dist/js/sim/economy.js");
+ assert.equal(upgradeComputer(s,1).ok,true);assert.deepEqual(s.pcTiers,[1,2,1]);
+});

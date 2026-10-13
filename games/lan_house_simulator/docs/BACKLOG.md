@@ -232,3 +232,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Upgrade de hardware passou a proporcionar bônus moderado de satisfação de 0,08 por nível adicional, limitado a 0,16 e à reputação máxima do jogo.
 - [x] Bônus aplicado somente ao fim da sessão no PC correspondente; não cria cobranças, não modifica câmera ou layout, e saves antigos ficam no nível básico.
 - [x] Teste de upgrade, compatibilidade, limite e benefício numérico.
+
+## Diferenciação visual de hardware no salão
+- [x] Computador básico mantém CRT e gabinete bege.
+- [x] Níveis 2 e 3 usam variações sutis de material e identificação junto ao gabinete (sem alterar footprint, cadeira ou câmera).
+- [x] Estado visual deriva do nível persistido no mesmo PC; saves antigos continuam como nível 1.
+- [ ] Aprovação visual em screenshot do jogo compilado.
