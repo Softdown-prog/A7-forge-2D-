@@ -5,6 +5,7 @@ import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
 import { roomWidth } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
+import { playVendingCan, playCandyDispense } from "./audio/vendingSfx.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -31,6 +32,12 @@ let game = readSave();
 let adminOpen = false;
 let previousServed = game.served;
 let previousPurchases = game.purchases;
+let sfxContext:AudioContext|null=null;
+function audioContext():AudioContext|null{
+  try{return sfxContext??=new AudioContext();}catch{return null;}
+}
+// Autoplay é bloqueado até o jogador tocar/clicar. Nenhum som é obrigatório para jogar.
+window.addEventListener("pointerdown",()=>{void audioContext()?.resume().catch(()=>{});},{once:true});
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 function paintPayments(dt:number):void {
   const camera=cameraForRoom(roomWidth(game));
@@ -137,7 +144,15 @@ function frame(timestamp:number):void {
     playOriginalSound("coin");
   }
   if(game.served>previousServed)previousServed=game.served;
-  if(game.purchases>previousPurchases){previousPurchases=game.purchases;playOriginalSound("vending");}
+  const sales=game.saleEffects?.splice(0)??[];
+  for(const sale of sales){
+    const audio=audioContext();
+    if(audio?.state==="running"){
+      if(sale.item==="soda")playVendingCan(audio);
+      else playCandyDispense(audio);
+    }
+  }
+  if(game.purchases>previousPurchases)previousPurchases=game.purchases;
   renderer.draw(game,elapsed);
   paintPayments(dt);
   if(timestamp-lastUI>450){lastUI=timestamp;renderUI();}

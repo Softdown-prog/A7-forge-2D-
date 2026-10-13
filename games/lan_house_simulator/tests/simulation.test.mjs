@@ -262,3 +262,24 @@ test("pagamento confirmado gera efeito visual com valor real uma única vez",()=
  stepGame(s,1);
  assert.equal(s.paymentEffects?.length,0);
 });
+
+test("evento sonoro distingue compra de bebida dos demais produtos",()=>{
+ const s=createGame(42);
+ s.customers.push({id:55,x:6.15,y:1.65,stage:"shopping",target:{x:6.15,y:1.65},route:[],costume:"regular",pcIndex:null,usedMinutes:45,waitingMinutes:0,offlineWait:0,happy:true});
+ const bought=s.purchases;
+ stepGame(s,1);
+ assert.equal(s.purchases,bought+1);
+ assert.equal(s.saleEffects?.length,1);
+ assert.ok(["soda","candy","snacks"].includes(s.saleEffects?.[0]?.item));
+ assert.equal(s.saleEffects?.splice(0).length,1);
+ stepGame(s,1);
+ assert.equal(s.saleEffects?.length,0);
+});
+test("estoque esgotado não dispara som de venda",()=>{
+ const s=createGame(51);
+ s.inventory={soda:0,candy:0,snacks:0};
+ s.customers.push({id:56,x:6.15,y:1.65,stage:"shopping",target:{x:6.15,y:1.65},route:[],costume:"regular",pcIndex:null,usedMinutes:45,waitingMinutes:0,offlineWait:0,happy:true});
+ stepGame(s,1);
+ assert.equal(s.purchases,0);
+ assert.equal(s.saleEffects?.length??0,0);
+});

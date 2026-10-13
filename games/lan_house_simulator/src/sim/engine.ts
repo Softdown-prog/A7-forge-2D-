@@ -111,7 +111,10 @@ function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
   const chosen = items[Math.floor(random(s) * items.length)] ?? "soda";
   const result = sellItem(s, chosen);
-  if (result.ok) addLog(s, result.message);
+  if (result.ok){
+    (s.saleEffects??=[]).push({item:chosen});
+    addLog(s,result.message);
+  }
   sendHome(s, c);
 }
 function advanceCustomer(s: GameState, c: Customer): void {

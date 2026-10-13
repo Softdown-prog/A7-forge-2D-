@@ -167,3 +167,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Gancho `coin.wav` continua conectado; pasta de áudio contém somente README, sem WAV aprovado.
 - [x] Teste impede efeito duplicado por pagamento.
 - [ ] Integrar o arquivo de som aprovado quando disponível; não substituir por terceiros sem validação.
+
+## Sons de vending com mercadoria real
+- [x] Criada receita sonora original procedural para lata: mecanismo, queda, batida, quique e rolamento.
+- [x] Compra de doce/salgado tem efeito mais curto e diferente.
+- [x] Eventos de áudio somente depois de venda confirmada, inclusive com estoque esgotado não há som.
+- [x] Preservado efeito aprovado do caixa `money_income_01.ogg`; desbloqueio de áudio respeita interação do navegador.
+- [ ] Revisar timbre audível em dispositivo real antes de considerar master final do CH Audio Lab.
