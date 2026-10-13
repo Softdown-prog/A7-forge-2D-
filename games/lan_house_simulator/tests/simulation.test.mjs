@@ -420,3 +420,20 @@ test("preços de venda individuais alteram receita e respeitam saves antigos",as
  const before=s.cash;assert.equal(upgradeComputer(s,0).ok,true);
  assert.equal(s.pcTiers?.[0],2);assert.equal(s.cash,before-240);
 });
+
+test("hardware atualizado dá satisfação real sem cobrar novamente por sessão",async()=>{
+ const {hardwareSatisfactionBonus,upgradeComputer,customerSatisfactionDelta}=await import("../dist/js/sim/economy.js");
+ const s=createGame();
+ assert.equal(hardwareSatisfactionBonus(s,0),0);
+ const before=s.cash;
+ assert.equal(upgradeComputer(s,0).ok,true);
+ assert.equal(s.cash,before-240);
+ assert.equal(hardwareSatisfactionBonus(s,0),0.08);
+ assert.equal(hardwareSatisfactionBonus(s,1),0);
+ assert.equal(upgradeComputer(s,0).ok,true);
+ assert.equal(hardwareSatisfactionBonus(s,0),0.16);
+ assert.equal(upgradeComputer(s,0).ok,false);
+ const old=createGame();delete old.pcTiers;
+ assert.equal(hardwareSatisfactionBonus(old,0),0);
+ assert.ok(customerSatisfactionDelta(20,10,0)+hardwareSatisfactionBonus(s,0)>customerSatisfactionDelta(20,10,0));
+});

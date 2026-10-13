@@ -1,6 +1,6 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
-import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
+import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { vendingApproach } from "./layout.js";
 import { productPrice } from "./economy.js";
@@ -163,7 +163,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       // Desgaste avança apenas durante uso; falha só bloqueia NOVAS reservas.
       (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
-        const rating=customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait);
+        const rating=Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+hardwareSatisfactionBonus(s,c.pcIndex??-1));
         const impact=c.happy?rating:Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));

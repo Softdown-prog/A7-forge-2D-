@@ -21,6 +21,11 @@ export function upgradeComputer(s:GameState,index:number):Result {
  s.cash-=cost;s.expenses+=cost;(s.pcTiers??=[])[index]=tier+1;
  return {ok:true,message:"PC "+(index+1)+" atualizado para hardware nível "+(tier+1)+": -R$ "+cost+"."};
 }
+/** Hardware de maior nível melhora a experiência, com bônus modesto e limitado. */
+export function hardwareSatisfactionBonus(state:GameState,index:number):number {
+ const tier=state.pcTiers?.[index]??1;
+ return Number.isInteger(tier)&&tier>=2?Math.min(2,tier-1)*0.08:0;
+}
 export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
 export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
 

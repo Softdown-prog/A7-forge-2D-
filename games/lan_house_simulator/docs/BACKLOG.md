@@ -228,3 +228,7 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Encostar a fileira inicial de PCs mais perto da parede traseira, ajustando cadeiras e destinos a partir do mesmo contrato.
 - [ ] Aprovar captura visual do runtime (piso, parede, porta e afastamentos).
 \n## Expositor de salgadinhos procedural\n- [x] Substituir antigo bloco marrom por estante vazada de metal, com quatro níveis e pacotes coloridos organizados.\n- [x] Adicionar pequena bandeja/prato ao proprietário no salão, sem trocar o ator nem as máquinas.\n- [ ] Revisar PNG do jogo compilado e ajustar oclusão conforme resultado visual.\n
+## Evolução de computadores — efeito na satisfação
+- [x] Upgrade de hardware passou a proporcionar bônus moderado de satisfação de 0,08 por nível adicional, limitado a 0,16 e à reputação máxima do jogo.
+- [x] Bônus aplicado somente ao fim da sessão no PC correspondente; não cria cobranças, não modifica câmera ou layout, e saves antigos ficam no nível básico.
+- [x] Teste de upgrade, compatibilidade, limite e benefício numérico.
