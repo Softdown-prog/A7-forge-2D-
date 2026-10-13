@@ -145,7 +145,10 @@ function advanceCustomer(s: GameState, c: Customer): void {
       return;
     case "sitting":
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
-      if (c.poseMinutes >= 3) { c.stage = "using"; c.poseMinutes = 0; }
+      if (c.poseMinutes >= 3) {
+        c.stage = "using"; c.poseMinutes = 0;
+        if(c.pcIndex!==null)(s.keyboardEffects??=[]).push({customerId:c.id,pcIndex:c.pcIndex});
+      }
       return;
     case "using":
       if (!online(s)) {
