@@ -7,7 +7,7 @@ import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
-import { playCandyDispense } from "./audio/vendingSfx.js";
+import { Soundscape } from "./audio/soundscape.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -45,6 +45,21 @@ try{hasSavedGame=localStorage.getItem(GAME_SAVE_KEY)!==null;}catch{}
 let soundEnabled=true;
 try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
 soundToggle.checked=soundEnabled;
+const soundscape=new Soundscape(soundEnabled);
+// Reuse a single mixer for dynamic controls and keyboard activation alike.
+document.addEventListener("pointerdown",()=>soundscape.unlock(),{capture:true});
+document.addEventListener("keydown",e=>{
+ if(e.key==="Enter"||e.key===" ")soundscape.unlock();
+},{capture:true});
+document.addEventListener("click",event=>{
+ const target=event.target;
+ if(!(target instanceof Element))return;
+ const control=target.closest("button");
+ if(control instanceof HTMLButtonElement&&!control.disabled)soundscape.click();
+},{capture:true});
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden)soundscape.stopKeyboard();
+});
 continueButton.disabled=!hasSavedGame;
 const importFile=document.querySelector<HTMLInputElement>("#save-import-file");
 const saveMessage=document.querySelector<HTMLElement>("#save-message");
@@ -74,7 +89,8 @@ importFile.addEventListener("change",async()=>{
   if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
   // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
   localStorage.setItem(GAME_SAVE_KEY,JSON.stringify(state));
-  game=state;hasSavedGame=true;
+  game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);
+  soundscape.stopKeyboard();
   previousServed=game.served;previousPurchases=game.purchases;
   paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
   continueButton!.disabled=false;exportButton!.disabled=false;
@@ -82,10 +98,12 @@ importFile.addEventListener("change",async()=>{
  }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
 });
 function showMenu():void{
+ soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
  continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
 }
 function beginPlay():void{
+ game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
  renderUI();
 }
@@ -99,7 +117,7 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
  settingsPanel!.hidden=!settingsPanel!.hidden;
  document.getElementById("menu-options")?.setAttribute("aria-expanded",String(!settingsPanel!.hidden));
 });
-soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
+soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind||relocating)stopPlacement();else showMenu();}});
 let shopOpen=false;
@@ -112,12 +130,7 @@ let adminOpen = false;
 let activeAdminTab="prices";
 let previousServed = game.served;
 let previousPurchases = game.purchases;
-let sfxContext:AudioContext|null=null;
-function audioContext():AudioContext|null{
-  try{return sfxContext??=new AudioContext();}catch{return null;}
-}
-// Autoplay é bloqueado até o jogador tocar/clicar. Nenhum som é obrigatório para jogar.
-window.addEventListener("pointerdown",()=>{void audioContext()?.resume().catch(()=>{});},{once:true});
+// Playback is handled by the shared Soundscape. No repeated HTMLAudioElements.
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
@@ -180,18 +193,6 @@ function paintSpeech(dt:number):void {
 }
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
-const soundFiles: Record<string, string> = {
-  click: "./assets/audio/mouse_click_002.ogg",
-  coin: "./assets/audio/money_income_01.ogg", liquid: "./assets/audio/liquid.wav",
-  vending: "./assets/audio/vending.wav"
-};
-function playOriginalSound(name: keyof typeof soundFiles): void {
-  const file=soundFiles[name];
-  if (!file || !soundEnabled) return;
-  const audio = new Audio(file);
-  audio.volume=0.42;
-  void audio.play().catch(() => { /* Os WAV autorais ainda não foram enviados. */ });
-}
 function save(): void {
   if(!isPlaying)return;
   try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); hasSavedGame=true; exportButton!.disabled=false; }
@@ -201,7 +202,7 @@ function button(id:string, handler:()=>void):void {
   const el=document.getElementById(id);
   if(el) el.addEventListener("click", () => {
     if(!(el instanceof HTMLButtonElement) || !el.disabled){
-      playOriginalSound("click");
+      
       handler();
     }
   });
@@ -211,7 +212,7 @@ button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingK
 button("close-shop",()=>{shopOpen=false;renderUI();});
 button("organize-furniture",()=>{
  if(!furnitureLocations(game).length)return;
- placingKind=null;relocating=true;relocationFrom=null;hoveredPlacement=null;placementNotice="";
+ placingKind=null;relocating=true;relocationFrom=null;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
  shopOpen=false;adminOpen=false;renderUI();canvas!.scrollIntoView({block:"center",behavior:"smooth"});
 });
 shopCatalog?.addEventListener("click",event=>{
@@ -220,13 +221,13 @@ shopCatalog?.addEventListener("click",event=>{
  const id=target.dataset.buy;
  if(id==="poster"||id==="plant"||id==="table"){
    if(!availablePlacementSlots(game,id).length)return;
-   placingKind=id;hoveredPlacement=null;placementNotice="";
-   shopOpen=false;adminOpen=false;playOriginalSound("click");renderUI();
+   placingKind=id;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
+   shopOpen=false;adminOpen=false;renderUI();
    canvas.scrollIntoView({block:"center",behavior:"smooth"});
    return;
  }
  const result=id==="expand"?expandShop(game):buyComputer(game);
- playOriginalSound("click");applyResult(game,result);renderUI();save();
+ applyResult(game,result);renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("price-down",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour-2));renderUI();save();});
@@ -247,7 +248,7 @@ maintenancePanel.addEventListener("click",event=>{
  if(!(target instanceof HTMLButtonElement)||target.disabled)return;
  const index=Number(target.dataset.pcRepair??target.dataset.pcUpgrade);
  if(!Number.isInteger(index))return;
- playOriginalSound("click");
+ 
  applyResult(game,target.dataset.pcRepair!==undefined?repairComputer(game,index):upgradeComputer(game,index));
  renderUI();save();
 });
@@ -266,7 +267,7 @@ retailControls?.addEventListener("click",event=>{
  const item=target.dataset.item as Item|undefined;
  const delta=Number(target.dataset.delta);
  if(!item||!["soda","candy","snacks"].includes(item)||![-1,1].includes(delta))return;
- playOriginalSound("click");
+ 
  applyResult(game,setProductPrice(game,item,productPrice(game,item)+delta));
  renderUI();save();
 });
@@ -328,7 +329,7 @@ canvas.addEventListener("click",e=>{
       renderUI();return;
     }
     const result=relocateFurniture(game,relocationFrom,slot.id);
-    if(result.ok){playOriginalSound("click");applyResult(game,result);stopPlacement();save();}
+    if(result.ok){soundscape.click();applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
   }
@@ -336,11 +337,11 @@ canvas.addEventListener("click",e=>{
     const kind=placingKind,slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Clique em uma das posições sinalizadas.";renderUI();return;}
     const result=placeFurniture(game,kind,slot.id);
-    if(result.ok){playOriginalSound("click");applyResult(game,result);stopPlacement();save();}
+    if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
   }
-  if(renderer.hitOwner(x,y)){playOriginalSound("click");adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
+  if(renderer.hitOwner(x,y)){soundscape.click();adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
 function renderShop():void{
  if(!shopCatalog)return;
@@ -471,7 +472,7 @@ function frame(timestamp:number):void {
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
     if(paymentPopups.length>12)paymentPopups.shift();
-    playOriginalSound("coin");
+    soundscape.income("payment");
   }
   if(game.served>previousServed)previousServed=game.served;
   const sales=isPlaying?(game.saleEffects?.splice(0)??[]):[];
@@ -480,11 +481,14 @@ function frame(timestamp:number):void {
       salePopups.push({amount:sale.amount!,x:sale.x!,y:sale.y!,age:0});
       if(salePopups.length>12)salePopups.shift();
     }
-    const audio=audioContext();
-    if(soundEnabled&&audio?.state==="running"){
-      // Som de lata suspenso após reprovação auditiva; aguarda versão aprovada.
-      if(sale.item!=="soda")playCandyDispense(audio);
-    }
+    // Payment sound is emitted by real confirmed sales, not UI clicks.
+    soundscape.income("sale");
+    // The rejected soda-can sound stays disabled.
+    if(sale.item!=="soda")soundscape.candy();
+  }
+  // A gentle 3.5-second phrase once a visitor starts a PC session.
+  for(const started of (isPlaying?(game.keyboardEffects?.splice(0)??[]):[])){
+    if(Number.isInteger(started.customerId)&&Number.isInteger(started.pcIndex))soundscape.keyboard();
   }
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
   for(const speech of (isPlaying?(game.speechEffects?.splice(0)??[]):[])){
