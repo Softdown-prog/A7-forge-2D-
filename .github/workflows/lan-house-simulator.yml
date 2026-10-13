@@ -90,26 +90,3 @@ jobs:
           name: lhs-forge-review
           path: out/lhs-forge/
           retention-days: 7
-
-  publish-site:
-    name: Trigger Cloudflare Pages after all workers pass
-    needs: [small-worker-pool]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - name: Request CH-site rebuild through Cloudflare deploy hook
-        env:
-          DEPLOY_HOOK: ${{ secrets.CH_SITE_CLOUDFLARE_DEPLOY_HOOK }}
-        run: |
-          if [ -z "$DEPLOY_HOOK" ]; then
-            echo "::warning::Configure CH_SITE_CLOUDFLARE_DEPLOY_HOOK in this repository to enable automatic deployment."
-            echo "No deploy was triggered; the game CI remains valid."
-            exit 0
-          fi
-          case "$DEPLOY_HOOK" in
-            https://api.cloudflare.com/client/v4/pages/webhooks/deploy_hooks/*) ;;
-            *) echo "::error::Unexpected Cloudflare Pages deploy hook URL."; exit 1 ;;
-          esac
-          curl --fail-with-body --show-error --silent --retry 3 --max-time 45 -X POST "$DEPLOY_HOOK"
-          echo "Cloudflare Pages build requested for CH-site. Check Cloudflare for deployment completion."
