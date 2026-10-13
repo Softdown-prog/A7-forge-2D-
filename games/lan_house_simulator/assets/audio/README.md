@@ -32,3 +32,11 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Reproduz uma vez por ativação dos botões da administração, inclusive teclado/tecnologia assistiva, e ao clicar no dono para abrir o painel.
 - Botões desativados não produzem o clique; pagamento mantém seu som distinto.
 - Original Git blob `66cedc5c95c375d880a9d55390a1e95459c36919`.
+
+## Mixagem de interface, caixa e teclado — V2
+
+- `src/audio/soundscape.ts` centraliza o `AudioContext`, pré-decodifica os dois arquivos OGG originais e usa um único listener para botões (inclusive controles gerados dinamicamente). Não recria `HTMLAudioElement` a cada clique; teclado e caixa usam o mesmo relógio de áudio.
+- Prioridade de volume: teclado baixo, clique discreto, dinheiro de venda moderado e pagamento um pouco mais audível. Não amplificar junto múltiplas entradas no mesmo instante.
+- `s.keyboardEffects` é um evento transitório emitido **uma vez** na transição `sitting → using`, e drenado pelo runtime. Teclas procedurais de ruído suavizado por aproximadamente 3,5 segundos, sem loop ou acesso ao ponteiro/mouse.
+- Modo de compra/organização e menu interrompem o teclado; o alternador de efeitos sonoros também o silencia. Respeita autoplay: somente habilita saída por gesto do usuário.
+- As gravações aprovadas `mouse_click_002.ogg` e `money_income_01.ogg` continuam intactas. O som de lata reprovado continua desligado. O som procedural de teclado é provisório e deve passar por aprovação auditiva do criador.

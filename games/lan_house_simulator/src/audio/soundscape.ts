@@ -39,6 +39,8 @@ export class Soundscape {
  private lastIncome=-100;
  constructor(private enabled=true){}
 
+ /** Pré-decodifica arquivos autorais sem tentar reproduzir áudio antes do gesto. */
+ preload():void{if(this.enabled)this.ensureContext();}
  /** Acionado por gesto de usuário: respeita o bloqueio de autoplay do navegador. */
  unlock():void{
    if(!this.enabled)return;

@@ -46,6 +46,7 @@ let soundEnabled=true;
 try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
 soundToggle.checked=soundEnabled;
 const soundscape=new Soundscape(soundEnabled);
+soundscape.preload();
 // Reuse a single mixer for dynamic controls and keyboard activation alike.
 document.addEventListener("pointerdown",()=>soundscape.unlock(),{capture:true});
 document.addEventListener("keydown",e=>{
@@ -314,6 +315,7 @@ canvas.addEventListener("pointermove",e=>{
 canvas.addEventListener("pointerleave",()=>{hoveredPlacement=null;});
 canvas.addEventListener("click",e=>{
   const {x,y}=getCanvasPoint(e);
+  if(relocating||placingKind)soundscape.click();
   if(relocating){
     const slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Escolha um móvel ou uma posição sinalizada.";renderUI();return;}
@@ -329,7 +331,7 @@ canvas.addEventListener("click",e=>{
       renderUI();return;
     }
     const result=relocateFurniture(game,relocationFrom,slot.id);
-    if(result.ok){soundscape.click();applyResult(game,result);stopPlacement();save();}
+    if(result.ok){applyResult(game,result);stopPlacement();save();
     else{placementNotice=result.message;renderUI();}
     return;
   }
