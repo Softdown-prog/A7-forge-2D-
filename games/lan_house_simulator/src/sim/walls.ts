@@ -100,7 +100,7 @@ export function wallZoneCount(s:GameState):number{
  for(let y=b.minY;y<b.maxY;y++)for(let x=b.minX;x<b.maxX;x++){
   if(visited.has(key(x,y)))continue;
   zones++;
-  const queue:[[number,number]]=[[x,y]];visited.add(key(x,y));
+  const queue:Array<[number,number]>=[[x,y]];visited.add(key(x,y));
   for(let index=0;index<queue.length;index++){
     const [cx,cy]=queue[index]!;
     for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){

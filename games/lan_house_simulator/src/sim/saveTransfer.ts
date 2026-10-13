@@ -2,6 +2,7 @@ import type { GameState } from "./types.js";
 import { isValidSave } from "./engine.js";
 import { validFurniturePlacements } from "./shop.js";
 import {validRoomExtensions} from "./room.js";
+import {validInteriorWalls} from "./walls.js";
 export const SAVE_EXPORT_FORMAT="softdown-lan-house-save";
 export interface SaveEnvelope { format:typeof SAVE_EXPORT_FORMAT; exportVersion:1; exportedAt:string; state:GameState }
 export function serializeSave(state:GameState):string {
@@ -31,5 +32,6 @@ export function parseImportedSave(input:string):GameState {
  )throw Error("A partida contém valores fora dos limites.");
  if(!validRoomExtensions(state))throw Error("Extensões de salão inválidas.");
  if(!validFurniturePlacements(state))throw Error("Posicionamento de móveis inválido.");
+ if(!validInteriorWalls(state))throw Error("Paredes internas inválidas.");
  return structuredClone(state);
 }

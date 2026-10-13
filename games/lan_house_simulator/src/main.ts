@@ -1,6 +1,7 @@
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
-import {expandDirection,roomBounds,type ExtensionDirection} from "./sim/room.js";
+import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
+import {buildWall,removeWall,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
@@ -102,7 +103,7 @@ importFile.addEventListener("change",async()=>{
 function showMenu():void{
  soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
+ continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;placingKind=null;wallMode=null;hoveredWall=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
 }
 function beginPlay():void{
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
@@ -121,9 +122,11 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind||relocating)stopPlacement();else showMenu();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind||relocating||wallMode)stopPlacement();else showMenu();}});
 let shopOpen=false;
 let placingKind:FurnitureKind|null=null;
+let wallMode:"build"|"remove"|null=null;
+let hoveredWall:WallSegment|null=null;
 let relocating=false;
 let relocationFrom:string|null=null;
 let hoveredPlacement:string|null=null;
@@ -209,9 +212,14 @@ function button(id:string, handler:()=>void):void {
     }
   });
 }
-button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){shopOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
-button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){shopOpen=false;placingKind=null;wallMode=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingKind=null;wallMode=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
+button("demolish-walls",()=>{
+ if(!(game.interiorWalls?.length))return;
+ wallMode="remove";placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
+ shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+});
 button("rotate-furniture",()=>{
  if(!relocating||!relocationFrom)return;
  const result=rotateFurniture(game,relocationFrom);
@@ -227,6 +235,11 @@ shopCatalog?.addEventListener("click",event=>{
  const target=event.target;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
  const id=target.dataset.buy;
+ if(id==="wall"){
+   wallMode="build";placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
+   shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   return;
+ }
  if(id==="poster"||id==="plant"||id==="table"){
    if(!availablePlacementSlots(game,id).length)return;
    placingKind=id;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
@@ -290,7 +303,7 @@ const placementHelp=document.getElementById("placement-help");
 const stage=canvas.closest<HTMLElement>(".stage");
 const placementNames:Record<FurnitureKind,string>={poster:"pôster",plant:"planta",table:"mesinha"};
 function stopPlacement():void{
- placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;placementNotice="";renderUI();
+ placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;wallMode=null;hoveredWall=null;placementNotice="";renderUI();
 }
 document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
 function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
@@ -298,6 +311,18 @@ function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
  const bounds=element.getBoundingClientRect();
  return {x:(e.clientX-bounds.left)/bounds.width*element.width,
          y:(e.clientY-bounds.top)/bounds.height*element.height};
+}
+function pickWall(x:number,y:number):WallSegment|null{
+ const camera=cameraForGame(game),available=wallMode==="remove"?(game.interiorWalls??[]):wallCandidates(game);
+ let nearest:WallSegment|null=null,best=Infinity;
+ for(const segment of available){
+   const [a,b]=wallEndpoints(segment),pa=iso(a,camera),pb=iso(b,camera);
+   const dx=pb.x-pa.x,dy=pb.y-pa.y,scale=Math.max(1,dx*dx+dy*dy);
+   const t=Math.max(0,Math.min(1,((x-pa.x)*dx+(y-pa.y)*dy)/scale));
+   const d=Math.hypot(x-pa.x-t*dx,y-pa.y-t*dy);
+   if(d<best){best=d;nearest=segment;}
+ }
+ return best<=Math.max(12,18*camera.zoom)?nearest:null;
 }
 function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  if(!placingKind&&!relocating)return null;
@@ -316,14 +341,23 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  return distance<=Math.max(23,38*camera.zoom)?nearest:null;
 }
 canvas.addEventListener("pointermove",e=>{
- if(!placingKind&&!relocating)return;
+ if(!placingKind&&!relocating&&!wallMode)return;
  const at=getCanvasPoint(e);
+ if(wallMode){hoveredWall=pickWall(at.x,at.y);return;}
  hoveredPlacement=pickFurnitureSlot(at.x,at.y)?.id??null;
 });
-canvas.addEventListener("pointerleave",()=>{hoveredPlacement=null;});
+canvas.addEventListener("pointerleave",()=>{hoveredPlacement=null;hoveredWall=null;});
 canvas.addEventListener("click",e=>{
   const {x,y}=getCanvasPoint(e);
-  if(relocating||placingKind)soundscape.click();
+  if(relocating||placingKind||wallMode)soundscape.click();
+  if(wallMode){
+    const wall=pickWall(x,y);
+    if(!wall){placementNotice="Toque na borda de um tile para selecionar o segmento.";renderUI();return;}
+    const result=wallMode==="build"?buildWall(game,wall):removeWall(game,wall);
+    placementNotice=result.message;
+    if(result.ok){applyResult(game,result);save();}
+    renderUI();return;
+  }
   if(relocating){
     const slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Escolha um móvel ou uma posição sinalizada.";renderUI();return;}
@@ -357,11 +391,13 @@ function renderShop():void{
  if(!shopCatalog)return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=furnitureLocations(game).length;organize.disabled=count===0;organize.textContent=count?"↔ Organizar móveis instalados ("+count+")":"↔ Organizar móveis (nenhum instalado)";}
+ const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
+ if(demolish){demolish.disabled=!(game.interiorWalls?.length);demolish.textContent="Remover divisórias ("+(game.interiorWalls?.length??0)+")";}
  const cash=document.getElementById("shop-cash");
  if(cash){
    const b=roomBounds(game),e=game.roomExtensions??{west:0,east:0,south:0};
    cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2)+
-     " · Piso "+(b.maxX-b.minX)+"×"+b.maxY+" tiles · Oeste "+e.west+"/2 · Leste "+e.east+"/2 · Sul "+e.south+"/2";
+     " · Piso "+(b.maxX-b.minX)+"×"+(b.maxY-b.minY)+" tiles · Oeste "+e.west+"/5 · Leste "+e.east+"/5 · Norte "+(e.north??0)+"/5 · Salas "+wallZoneCount(game);
  }
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
@@ -373,7 +409,7 @@ function renderShop():void{
   const max=(item.id==="poster"||item.id==="plant"||item.id==="table")?furnitureLimit(game,item.id):0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
   const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
-  const full=ext?(game.roomExtensions?.[ext]??0)>=2:
+  const full=ext?(game.roomExtensions?.[ext]??0)>=MAX_EXTENSION_LEVEL:
      item.id==="expand"?game.expansionLevel>=2:
      item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:
      max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
@@ -392,13 +428,15 @@ function renderUI():void {
     "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
-  if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating);
+  if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
   const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
   if(rotateButton){rotateButton.hidden=!relocating||!moving;rotateButton.disabled=!moving||moving.kind==="poster";}
 
-  if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating));
-  if(placementHelp)placementHelp.textContent=relocating?
+  if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode));
+  if(placementHelp)placementHelp.textContent=wallMode?
+    (placementNotice||(wallMode==="build"?"Toque na borda de um tile para construir uma parede por R$ "+WALL_COST+". Protegemos os caminhos dos clientes.":"Toque numa parede interna para remover sem reembolso.")):
+    relocating?
     (placementNotice||(relocationFrom?"Escolha o destino verde ou toque em Girar para mudar a orientação.":"Toque no móvel em dourado e escolha a nova posição. Sem custos.")):
     placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
   if(shop)shop.hidden=!shopOpen;
@@ -489,7 +527,7 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  if(isPlaying&&!placingKind&&!relocating)stepGame(game,dt*4.0);
+  if(isPlaying&&!placingKind&&!relocating&&!wallMode)stepGame(game,dt*4.0);
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
@@ -521,6 +559,7 @@ function frame(timestamp:number):void {
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
   if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);
   if(isPlaying&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
+  if(isPlaying&&wallMode)renderer.drawWallPreview(game,hoveredWall,wallMode==="remove");
   if(isPlaying&&timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }

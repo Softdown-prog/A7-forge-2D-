@@ -99,3 +99,7 @@ footer{text-align:center;color:#a9b9d0;font-size:12px;padding:14px}
  .placement-actions{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
  .placement-actions button{width:100%;min-width:0}
 }
+
+/* Construção de divisórias usa o mesmo cursor/snap do Canvas e é utilizável no toque. */
+#demolish-walls{margin-left:8px;background:#704e54;border-color:#c9ada4}
+@media(max-width:560px){#demolish-walls{margin-left:0;display:flex;width:100%}}

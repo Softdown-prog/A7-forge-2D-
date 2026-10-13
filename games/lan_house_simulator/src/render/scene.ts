@@ -7,6 +7,7 @@ import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorAr
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
+import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -41,6 +42,9 @@ export class SceneRenderer {
       const p=pcPosition(i);
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
     }
+    for(const wall of s.interiorWalls??[]){
+      entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
+    }
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
       const location=seated && c.pcIndex!==null ? pcPosition(c.pcIndex) : c;
@@ -50,6 +54,26 @@ export class SceneRenderer {
     for (const e of entries) e.paint();
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
+  }
+  /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
+  private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
+    const [a,b]=wallEndpoints(wall),height=78;
+    const footA=iso(a,camera),footB=iso(b,camera),topA=iso(a,camera,height),topB=iso(b,camera,height);
+    const ctx=this.ctx;ctx.save();
+    polygon(ctx,[topA,topB,footB,footA],preview?
+      (allowed?"rgba(91,183,147,0.68)":"rgba(204,78,69,0.72)"):"rgba(211,195,177,0.91)",
+      preview?(allowed?"#bdf5d4":"#ffd0ba"):"#735f61");
+    const capA=iso({x:a.x+0.03,y:a.y+0.03},camera,height+2),
+      capB=iso({x:b.x+0.03,y:b.y+0.03},camera,height+2);
+    ctx.strokeStyle=preview?"#f3f3d8":"#faf0dc";ctx.lineWidth=Math.max(1,4*camera.zoom);
+    ctx.beginPath();ctx.moveTo(capA.x,capA.y);ctx.lineTo(capB.x,capB.y);ctx.stroke();
+    ctx.restore();
+  }
+  drawWallPreview(s:GameState,wall:WallSegment|null,demolish:boolean):void{
+    if(!wall)return;
+    const exists=(s.interiorWalls??[]).some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y);
+    if(demolish&&!exists)return;
+    this.drawInteriorWall(cameraForGame(s),wall,true,demolish?exists:canBuildWall(s,wall));
   }
   /** The ghost shares the exact geometry with purchased furniture. */
   drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null):void{
@@ -99,13 +123,13 @@ export class SceneRenderer {
   }
   private slotAnchor(camera:Projection,slot:PlacementSlot):Point{
     return slot.surface==="wall"
-      ?iso({x:slot.x+0.33,y:0.01},camera,137)
+      ?iso({x:slot.x+0.33,y:slot.y},camera,137)
       :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   }
   private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0):void{
     if(kind==="poster"){
-      polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
-        iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
+      polygon(this.ctx,[iso({x,y},camera,156),iso({x:x+0.65,y},camera,156),
+        iso({x:x+0.65,y},camera,117),iso({x,y},camera,117)],"#557e88","#e7bf81");
     }else if(kind==="plant"){
       cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
       const center=iso({x:x+0.16,y:y+0.16},camera,42);
