@@ -5,7 +5,7 @@ import { cameraForGame, cuboid, iso, polygon, type Projection } from "./isometri
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
-import {FURNITURE_SLOTS,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
+import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 
 export class SceneRenderer {
@@ -27,7 +27,7 @@ export class SceneRenderer {
     this.extraPosters(camera,s);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
-      {depth:3.7,paint:()=>this.shelf(camera)},
+      {depth:3.7,paint:()=>this.shelf(camera,bounds.minX)},
       {depth:6,paint:()=>this.extraFurniture(camera,s)},
       ...VENDING_MACHINES.map(m=>({
         depth:m.x+m.y+0.25,
@@ -58,7 +58,7 @@ export class SceneRenderer {
     const surface=kind==="poster"?"wall":"floor";
     const ctx=this.ctx;
     ctx.save();
-    for(const slot of FURNITURE_SLOTS){
+    for(const slot of furnitureSlots(s)){
       if(slot.surface!==surface)continue;
       const at=this.slotAnchor(camera,slot),blocked=occupied.has(slot.id);
       const hover=slot.id===hoveredId;
@@ -75,7 +75,7 @@ export class SceneRenderer {
     const items=furnitureLocations(s),moving=items.find(p=>p.slotId===fromSlot);
     const occupied=occupiedFurnitureSlots(s);
     ctx.save();
-    for(const slot of FURNITURE_SLOTS){
+    for(const slot of furnitureSlots(s)){
       if(moving && ((moving.kind==="poster")!==(slot.surface==="wall")))continue;
       const owned=items.some(p=>p.slotId===slot.id);
       if(!moving&&!owned)continue;
@@ -91,7 +91,7 @@ export class SceneRenderer {
       ctx.lineWidth=hovered||selected?3:1.5;ctx.stroke();
       if(moving && hovered&&!occupied.has(slot.id)){
         ctx.save();ctx.globalAlpha=0.76;
-        this.renderPurchasedFurniture(camera,moving.kind,slot.x,slot.y);
+        this.renderPurchasedFurniture(camera,moving.kind,slot.x,slot.y,moving.rotation??0);
         ctx.restore();
       }
     }
@@ -102,7 +102,7 @@ export class SceneRenderer {
       ?iso({x:slot.x+0.33,y:0.01},camera,137)
       :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   }
-  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number):void{
+  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0):void{
     if(kind==="poster"){
       polygon(this.ctx,[iso({x,y:0.01},camera,156),iso({x:x+0.65,y:0.01},camera,156),
         iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
@@ -112,7 +112,16 @@ export class SceneRenderer {
       this.ctx.fillStyle="#578d68";this.ctx.beginPath();
       this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
     }else if(kind==="table"){
-      cuboid(this.ctx,camera,x,y,0.55,0.4,23,["#c49a76","#8d6754","#a07b60"]);
+      cuboid(this.ctx,camera,x,y,rotation%2===0?0.55:0.4,rotation%2===0?0.4:0.55,23,["#c49a76","#8d6754","#a07b60"]);
+    }
+    if(kind!=="poster"){
+      const width=kind==="table"?(rotation%2===0?0.55:0.4):0.32;
+      const depth=kind==="table"?(rotation%2===0?0.4:0.55):0.32;
+      const direction=[[0,1],[1,0],[0,-1],[-1,0]][rotation]!;
+      const marker=iso({x:x+width/2+direction[0]!*width*.43,
+                        y:y+depth/2+direction[1]!*depth*.43},camera,kind==="plant"?20:19);
+      this.ctx.fillStyle="#f5cd91";this.ctx.beginPath();
+      this.ctx.ellipse(marker.x,marker.y,3.5*camera.zoom,2.5*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
     }
   }
   private extraPosters(camera:Projection,s:GameState):void{
@@ -123,7 +132,7 @@ export class SceneRenderer {
         iso({x:x+0.65,y:0.01},camera,117),iso({x,y:0.01},camera,117)],"#557e88","#e7bf81");
     }
     for(const placed of positioned){
-      const slot=FURNITURE_SLOTS.find(v=>v.id===placed.slotId&&v.surface==="wall");
+      const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="wall");
       if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y);
     }
   }
@@ -143,8 +152,8 @@ export class SceneRenderer {
     }
     for(const placed of positioned){
       if(placed.kind==="poster")continue;
-      const slot=FURNITURE_SLOTS.find(v=>v.id===placed.slotId&&v.surface==="floor");
-      if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y);
+      const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="floor");
+      if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y,placed.rotation??0);
     }
   }
   private floor(camera:Projection,bounds:RoomBounds):void {
@@ -322,12 +331,12 @@ export class SceneRenderer {
     ctx.fillStyle="#26374E";ctx.fillRect(point.x-9,point.y-10,18,15);
     ctx.fillStyle="#83D4CE";ctx.fillRect(point.x-6,point.y-7,12,8);
   }
-  private shelf(camera:Projection):void {
+  private shelf(camera:Projection,minX=0):void {
     const ctx=this.ctx;
     // Expositor lateral aberto para salgadinhos, inspirado em displays de conveniência.
     // Estrutura fina de metal com quatro bandejas e embalagens reais em perspectiva,
     // sem logomarca comercial nem o antigo cubo maciço de madeira.
-    const x=0.23,y=2.92,w=0.46,d=1.22,z=camera.zoom;
+    const x=minX+0.23,y=2.92,w=0.46,d=1.22,z=camera.zoom;
     const palette=["#e7a92c","#c95048","#68a86a","#6e91c8","#ca77a0","#ecbf64"];
     const shelfLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width:number):void=>{
       ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
