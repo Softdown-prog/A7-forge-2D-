@@ -259,6 +259,25 @@ try{
     const moved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
     if(moved.cash!==beforeMoving.cash||moved.expenses!==beforeMoving.expenses)
       throw Error("Reposicionamento cobrou novamente: "+JSON.stringify({cash:moved.cash,expenses:moved.expenses}));
+    const directionalPreview=await page.evaluate(async()=>{
+      const [{createGame},{SceneRenderer},{placeFurniture,rotateFurniture}]=await Promise.all([
+        import("./js/sim/engine.js"),import("./js/render/scene.js"),import("./js/sim/shop.js")
+      ]);
+      const game=createGame(1998);
+      game.expansionLevel=2;game.installedPcs=7;
+      game.roomExtensions={west:2,east:2,south:2};game.cash=10000;
+      if(!placeFurniture(game,"table","floor-south-1-a").ok)throw Error("Mesa de validação não instalada");
+      if(!rotateFurniture(game,"floor-south-1-a").ok)throw Error("Rotação de mesa falhou");
+      if(!placeFurniture(game,"plant","floor-east-1").ok)throw Error("Planta de validação não instalada");
+      const surface=document.createElement("canvas");surface.width=1000;surface.height=610;
+      const context=surface.getContext("2d");if(!context)throw Error("Canvas 2D indisponível");
+      new SceneRenderer(context).draw(game,1.5);
+      const corner=context.getImageData(500,300,1,1).data;
+      if(corner[3]!==255)throw Error("Canvas com pixel central transparente");
+      return surface.toDataURL("image/png").split(",")[1];
+    });
+    await writeFile(resolve(output,"lhs_room_west_east_south_"+config.name+".png"),
+      Buffer.from(directionalPreview,"base64"));
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
   }
