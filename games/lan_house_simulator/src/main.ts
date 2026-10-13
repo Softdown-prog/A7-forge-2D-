@@ -1,5 +1,5 @@
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { cameraForRoom, iso } from "./render/isometric.js";
@@ -168,6 +168,16 @@ function renderUI():void {
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
+  const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
+  const monthlyRent=270+game.expansionLevel*170;
+  const monthlyInternet=110+(game.internetTier-1)*85;
+  const monthlyEnergy=85+game.expansionLevel*55;
+  const monthlyMaintenance=75+game.expansionLevel*35;
+  setText("admin-cash",money(game.cash));
+  setText("admin-profit",money(game.revenue-game.expenses));
+  setText("admin-bills",money(monthlyBills(game)));
+  setText("admin-served",String(game.served));
+  setText("monthly-breakdown","Custos mensais: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance));
   setText("price", "R$ "+game.pricePerHour+"/h");
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");

@@ -215,3 +215,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Alinhar três computadores iniciais mais próximos do fundo, mantendo os assentos e as rotas derivados das posições oficiais.
 - [x] Não mover máquinas de refrigerante e doces.
 - [ ] Conferir PNG real do novo layout antes de considerar a arte aprovada.
+
+## Painel de administração — indicadores
+- [x] Quatro indicadores no topo do painel: caixa, saldo acumulado, contas mensais e clientes atendidos.
+- [x] Discriminação de aluguel, internet, energia e manutenção usando os mesmos valores da economia.
+- [x] Estilo responsivo para desktop/celular e reparos integrados visualmente ao painel.
+- [ ] Inspeção visual do painel aberto em desktop e mobile após CI.
