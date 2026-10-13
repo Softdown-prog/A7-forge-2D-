@@ -103,3 +103,10 @@ footer{text-align:center;color:#a9b9d0;font-size:12px;padding:14px}
 /* Construção de divisórias usa o mesmo cursor/snap do Canvas e é utilizável no toque. */
 #demolish-walls{margin-left:8px;background:#704e54;border-color:#c9ada4}
 @media(max-width:560px){#demolish-walls{margin-left:0;display:flex;width:100%}}
+
+/* Marketing local: ação financeira visível e legível no mobile. */
+.promotion-panel{border:1px solid #789b90;border-radius:8px;background:#1c3b47;padding:14px;margin:12px 0 18px}
+.promotion-panel h4{color:#ffdda2;font-size:15px;margin:0 0 6px}
+.promotion-panel p{margin:7px 0;color:#dbece9}
+.promotion-panel button{margin-top:5px;max-width:100%;white-space:normal}
+.promotion-panel button:disabled{opacity:.6;cursor:not-allowed;filter:none}

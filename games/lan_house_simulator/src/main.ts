@@ -7,6 +7,7 @@ import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidS
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
+import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
@@ -266,6 +267,7 @@ button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();sav
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
 button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
 button("supplier-up",()=>{applyResult(game,contractSupplier(game));renderUI();save();});
+button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI();save();});
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
@@ -459,7 +461,8 @@ function renderUI():void {
   if (!status || !admin || !events || !controls) return;
   status.textContent="Dia "+dayNumber(game)+" · "+displayTime(game)+"  |  Caixa R$ "+game.cash.toLocaleString("pt-BR")+
     "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
-    "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
+    "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme")+
+    (isPromotionActive(game)?"  |  📣 Panfletagem ativa":"");
   admin.hidden=!adminOpen;
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
@@ -550,6 +553,15 @@ function renderUI():void {
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
+  const promoting=isPromotionActive(game);
+  setText("promotion-status",promoting
+    ?"Panfletagem ativa! +40% de chance de novos visitantes. Restam "+promotionMinutesRemaining(game)+" minutos de jogo, até 22h."
+    :"Sem panfletagem hoje. Divulgue sua lan house no bairro para aumentar a procura até 22h.");
+  const promotionButton=document.querySelector<HTMLButtonElement>("#launch-promotion");
+  if(promotionButton){
+    promotionButton.disabled=promoting||game.cash<PROMOTION_COST;
+    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · R$ "+PROMOTION_COST;
+  }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   events.replaceChildren();
   for(const record of game.eventLog.slice(0,6)){

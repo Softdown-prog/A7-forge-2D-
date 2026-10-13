@@ -8,6 +8,7 @@ import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 import {navigableRoute} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
+import { promotionVisitorMultiplier } from "./promotion.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -230,6 +231,11 @@ function nextDay(s: GameState): void {
   }
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
+export function visitorArrivalChance(s:GameState,occupied:number):number {
+  const factor=demandFactor(s.pricePerHour,s.reputation,online(s),s.weather==="rain");
+  const congestion=occupied>=pcCount(s)?0.38:1;
+  return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
+}
 function advanceMinute(s: GameState): void {
   s.totalMinutes++;
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
@@ -244,9 +250,7 @@ function advanceMinute(s: GameState): void {
   }
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
   if (s.customers.length < 14) {
-    const factor = demandFactor(s.pricePerHour, s.reputation, online(s), s.weather === "rain");
-    const congestion = occupied >= pcCount(s) ? 0.38 : 1;
-    if (random(s) < 0.052 * factor * congestion) spawn(s);
+    if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
   }
   for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
   const e = entrance(s);
@@ -264,5 +268,6 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
-    Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel);
+    Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
+    (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));
 }

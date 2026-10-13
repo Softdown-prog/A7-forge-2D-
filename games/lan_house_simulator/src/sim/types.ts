@@ -47,6 +47,8 @@ export interface GameState {
   pcTiers?: number[];
   /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
   supplierTier?: 1 | 2;
+  /** Dia da última panfletagem; campo opcional mantém saves antigos válidos. */
+  promotionDay?: number;
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
