@@ -53,6 +53,7 @@ export interface GameState {
   expansionLevel: number;
   installedPcs?: number;
   furniture?: {poster:number;plant:number;table:number};
+  furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string}>;
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
   inventory: Inventory;

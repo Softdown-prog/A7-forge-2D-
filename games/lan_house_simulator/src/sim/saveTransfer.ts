@@ -1,5 +1,6 @@
 import type { GameState } from "./types.js";
 import { isValidSave } from "./engine.js";
+import { validFurniturePlacements } from "./shop.js";
 export const SAVE_EXPORT_FORMAT="softdown-lan-house-save";
 export interface SaveEnvelope { format:typeof SAVE_EXPORT_FORMAT; exportVersion:1; exportedAt:string; state:GameState }
 export function serializeSave(state:GameState):string {
@@ -27,5 +28,6 @@ export function parseImportedSave(input:string):GameState {
     !state.eventLog.every(x=>typeof x==="string"&&x.length<1000)||
     !Object.values(state.inventory).every(x=>Number.isInteger(x)&&x>=0&&x<1e6)
  )throw Error("A partida contém valores fora dos limites.");
+ if(!validFurniturePlacements(state))throw Error("Posicionamento de móveis inválido.");
  return structuredClone(state);
 }

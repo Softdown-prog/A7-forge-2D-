@@ -493,3 +493,33 @@ test("compras de computadores e móveis cobram e persistem sem alterar saves leg
  const legacy=createGame();delete legacy.installedPcs;legacy.expansionLevel=1;
  assert.equal(pcCount(legacy),5);
 });
+
+test("colocação guiada só cobra na confirmação e impede colisão",async()=>{
+ const {placeFurniture,availablePlacementSlots,occupiedFurnitureSlots}=await import("../dist/js/sim/shop.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame(); const cash=s.cash;
+ assert.equal(availablePlacementSlots(s,"plant").length,4);
+ assert.equal(placeFurniture(s,"plant","wall-1").ok,false);
+ assert.equal(s.cash,cash);
+ assert.equal(placeFurniture(s,"plant","floor-1").ok,true);
+ assert.equal(s.cash,cash-85);
+ assert.equal(occupiedFurnitureSlots(s).has("floor-1"),true);
+ assert.equal(placeFurniture(s,"table","floor-1").ok,false);
+ assert.equal(placeFurniture(s,"table","floor-2").ok,true);
+ assert.equal(placeFurniture(s,"poster","floor-3").ok,false);
+ assert.equal(placeFurniture(s,"poster","wall-1").ok,true);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).furniturePlacements,s.furniturePlacements);
+ const tampered=JSON.parse(serializeSave(s));
+ tampered.state.furniturePlacements[0].slotId="wall-1";
+ assert.throws(()=>parseImportedSave(JSON.stringify(tampered)),/Posicionamento/);
+});
+test("móveis antigos reservam espaços para não haver duplicação",async()=>{
+ const {buyFurniture,placeFurniture,occupiedFurnitureSlots}=await import("../dist/js/sim/shop.js");
+ const s=createGame();s.cash=1000;
+ assert.equal(buyFurniture(s,"plant").ok,true);
+ assert.equal(occupiedFurnitureSlots(s).has("floor-1"),true);
+ assert.equal(placeFurniture(s,"plant","floor-1").ok,false);
+ assert.equal(placeFurniture(s,"plant","floor-3").ok,true);
+ assert.equal(s.furniture?.plant,2);
+ assert.equal(s.furniturePlacements?.length,1);
+});
