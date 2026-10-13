@@ -1,5 +1,5 @@
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
-import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
+import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,type ExtensionDirection} from "./sim/room.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
@@ -370,7 +370,7 @@ function renderShop():void{
   const category=document.createElement("small");category.textContent=item.category;
   const description=document.createElement("p");description.textContent=item.description;
   const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
-  const max=item.id==="poster"?2:item.id==="plant"?2:item.id==="table"?1:0;
+  const max=(item.id==="poster"||item.id==="plant"||item.id==="table")?furnitureLimit(game,item.id):0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
   const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
   const full=ext?(game.roomExtensions?.[ext]??0)>=2:

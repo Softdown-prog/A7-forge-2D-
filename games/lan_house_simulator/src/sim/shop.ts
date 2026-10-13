@@ -26,8 +26,14 @@ export function buyComputer(s:GameState):Result{
  (s.pcWear??=[])[count]=0;(s.pcTiers??=[])[count]=1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
+export function furnitureLimit(s:GameState,kind:FurnitureKind):number{
+ const e=s.roomExtensions??{west:0,east:0,south:0};
+ return kind==="poster"?2+e.west+e.east:
+   kind==="plant"?2+e.west+e.east+2*e.south:
+   kind==="table"?1+e.west+e.east+e.south:0;
+}
 export function buyFurniture(s:GameState,kind:FurnitureKind):Result{
- const limits={poster:2,plant:2,table:1};
+ const limits={poster:furnitureLimit(s,"poster"),plant:furnitureLimit(s,"plant"),table:furnitureLimit(s,"table")};
  if(!Object.prototype.hasOwnProperty.call(limits,kind))return {ok:false,message:"Móvel inválido."};
  const count=s.furniture?.[kind]??0;
  if(count>=limits[kind])return {ok:false,message:"Limite desse móvel atingido."};
@@ -91,7 +97,7 @@ export function placeFurniture(s:GameState,kind:FurnitureKind,slotId:string):Res
 }
 export function validFurniturePlacements(s:GameState):boolean{
  if(s.furniturePlacements===undefined)return true;
- if(!Array.isArray(s.furniturePlacements)||s.furniturePlacements.length>5)return false;
+ if(!Array.isArray(s.furniturePlacements)||s.furniturePlacements.length>furnitureSlots(s).length)return false;
  const used=new Set<string>(),counts:Record<FurnitureKind,number>={poster:0,plant:0,table:0};
  for(const p of s.furniturePlacements){
   if(!p||typeof p!=="object"||(p.kind!=="poster"&&p.kind!=="plant"&&p.kind!=="table"))return false;
@@ -101,7 +107,7 @@ export function validFurniturePlacements(s:GameState):boolean{
   if(counts[p.kind]>(s.furniture?.[p.kind]??0))return false;
  }
  return s.furniturePlacements.every(p=>p.rotation===undefined||([0,1,2,3] as number[]).includes(p.rotation))&&
-  counts.poster<=2&&counts.plant<=2&&counts.table<=1;
+  counts.poster<=furnitureLimit(s,"poster")&&counts.plant<=furnitureLimit(s,"plant")&&counts.table<=furnitureLimit(s,"table");
 }
 
 /** Lista os móveis instalados, inclusive os legados sem furniturePlacements.
