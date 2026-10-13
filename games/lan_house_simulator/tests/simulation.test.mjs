@@ -693,3 +693,22 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
  assert.match(source,/rotateFurniture\(game,relocationFrom\)/);
  assert.match(css,/\.admin-tabs\{display:grid;grid-template-columns:repeat\(3/);
 });
+
+test("a ampliação libera slots e capacidade real para novas decorações",async()=>{
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {furnitureLimit,placeFurniture,furnitureLocations,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const s=createGame();s.cash=20000;
+ for(const dir of ["west","east","south"])assert.equal(expandDirection(s,dir).ok,true);
+ assert.equal(furnitureLimit(s,"poster"),4);
+ assert.equal(furnitureLimit(s,"plant"),6);
+ assert.equal(furnitureLimit(s,"table"),4);
+ for(const id of ["wall-1","wall-2","wall-west-1","wall-east-1"])
+  assert.equal(placeFurniture(s,"poster",id).ok,true,id);
+ for(const id of ["floor-1","floor-2","floor-west-1","floor-east-1","floor-south-1-a","floor-south-1-b"])
+  assert.equal(placeFurniture(s,"plant",id).ok,true,id);
+ assert.equal(placeFurniture(s,"plant","floor-3").ok,false,"limite por tipo evita spam");
+ assert.equal(furnitureLocations(s).length,10);
+ assert.equal(validFurniturePlacements(s),true);
+ assert.equal(parseImportedSave(serializeSave(s)).furniturePlacements.length,10);
+});

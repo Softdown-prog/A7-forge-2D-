@@ -62,3 +62,12 @@ O jogo continua sendo desenvolvido e testado em `Softdown-prog/A7-forge-2D-`, pa
 Quando uma versão estiver aprovada para publicação, atualize a integração no repositório `Softdown-prog/CH-site` (branch `main`). O build Astro desse repositório compila o jogo pelo script `scripts/sync-games.mjs` e coloca o HTML5 em `/play/lan-house-simulator/`. Se o Cloudflare Pages estiver vinculado à `main` do CH-site, o commit/merge do site aciona seu deploy automático.
 
 Sem hook, segredo ou workflow entre os dois repositórios. Publicação é decisão explícita, não consequência de cada alteração do jogo.
+
+## Ampliação direcional do salão e rotação de móveis (versão HTML5)
+
+- **Compras → Ampliar salão** mantém a expansão tradicional para PCs, no máximo 2 níveis. Isso preserva os 3 a 7 computadores originais e os saves de quem já jogava antes da novidade.
+- **Compras → Ampliar à esquerda (oeste), à direita (leste) ou para frente (sul)** adiciona 2 tiles em cada direção, por compra, com até 2 etapas por direção. O norte fica fixo em `y=0`. Os novos trechos são piso utilizável para decoração, mas **não instalam novos computadores automaticamente**. A entrada muda para a borda sul/leste, mantendo as rotas de atendimento, inclusive dos clientes que já estavam indo embora.
+- **Organizar móveis → selecionar um móvel de piso → Girar 90°** percorre quatro orientações, sem cobrar e sem perder as informações de rotação quando o móvel muda de posição. Pôsteres continuam fixados na parede norte; computadores/mesas de PC dependem de uma futura etapa de orientação de assentos, monitores e NPCs e **não rodam** nesta versão.
+- As novas ampliações desbloqueiam mais encaixes e aumentam o limite de pôsteres, vasos e mesinhas. Tudo é salvo no mesmo JSON opcional de `roomExtensions` e `furniturePlacements[].rotation`, preservando partidas antigas.
+- `src/sim/room.ts` controla limites do piso, preços e transações; `src/sim/shop.ts` valida encaixes/rotações; `src/render/isometric.ts` enquadra o piso expandido sem cortar; `src/render/scene.ts` pinta a geometria. Testes de simulação e capturas reais em Chromium cobrem regressões.
+- Esta etapa é somente de desenvolvimento no repositório do **A7 Forge 2D**. Não implica commit ou deploy no CH-site.
