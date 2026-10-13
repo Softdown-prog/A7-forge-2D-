@@ -1,5 +1,6 @@
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
-import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,furnitureLocations,availablePlacementSlots,FURNITURE_SLOTS,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
+import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
+import {expandDirection,roomBounds,type ExtensionDirection} from "./sim/room.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
@@ -211,6 +212,12 @@ function button(id:string, handler:()=>void):void {
 button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){shopOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
+button("rotate-furniture",()=>{
+ if(!relocating||!relocationFrom)return;
+ const result=rotateFurniture(game,relocationFrom);
+ applyResult(game,result);renderUI();
+ if(result.ok)save();
+});
 button("organize-furniture",()=>{
  if(!furnitureLocations(game).length)return;
  placingKind=null;relocating=true;relocationFrom=null;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
@@ -227,7 +234,8 @@ shopCatalog?.addEventListener("click",event=>{
    canvas.scrollIntoView({block:"center",behavior:"smooth"});
    return;
  }
- const result=id==="expand"?expandShop(game):buyComputer(game);
+ const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
+   id.startsWith("extend-")?expandDirection(game,id.slice(7) as ExtensionDirection):{ok:false,message:"Compra desconhecida."};
  applyResult(game,result);renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
@@ -297,7 +305,7 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  const surface=placingKind?(placingKind==="poster"?"wall":"floor"):moving?(moving.kind==="poster"?"wall":"floor"):null;
  const camera=cameraForGame(game);
  let nearest:PlacementSlot|null=null,distance=Infinity;
- for(const slot of FURNITURE_SLOTS){
+ for(const slot of furnitureSlots(game)){
   if(surface&&slot.surface!==surface)continue;
   if(relocating&&!moving&&!furnitureLocations(game).some(p=>p.slotId===slot.id))continue;
   const at=slot.surface==="wall"?iso({x:slot.x+0.33,y:0.01},camera,137):
@@ -350,7 +358,11 @@ function renderShop():void{
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=furnitureLocations(game).length;organize.disabled=count===0;organize.textContent=count?"↔ Organizar móveis instalados ("+count+")":"↔ Organizar móveis (nenhum instalado)";}
  const cash=document.getElementById("shop-cash");
- if(cash)cash.textContent="Caixa R$ "+game.cash+" · Computadores "+pcCount(game)+"/"+(3+game.expansionLevel*2);
+ if(cash){
+   const b=roomBounds(game),e=game.roomExtensions??{west:0,east:0,south:0};
+   cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2)+
+     " · Piso "+(b.maxX-b.minX)+"×"+b.maxY+" tiles · Oeste "+e.west+"/2 · Leste "+e.east+"/2 · Sul "+e.south+"/2";
+ }
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
   const card=document.createElement("article");card.className="shop-card";
@@ -360,7 +372,11 @@ function renderShop():void{
   const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
   const max=item.id==="poster"?2:item.id==="plant"?2:item.id==="table"?1:0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
-  const full=item.id==="expand"?game.expansionLevel>=2:item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
+  const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
+  const full=ext?(game.roomExtensions?.[ext]??0)>=2:
+     item.id==="expand"?game.expansionLevel>=2:
+     item.id==="computer"?pcCount(game)>=3+game.expansionLevel*2:
+     max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
   button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
@@ -377,9 +393,13 @@ function renderUI():void {
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme");
   admin.hidden=!adminOpen;
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating);
+  const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
+  const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
+  if(rotateButton){rotateButton.hidden=!relocating||!moving;rotateButton.disabled=!moving||moving.kind==="poster";}
+
   if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating));
   if(placementHelp)placementHelp.textContent=relocating?
-    (placementNotice||(relocationFrom?"Escolha um destino verde para o móvel selecionado.":"Toque em um móvel marcado em dourado para selecionar; depois escolha a nova posição. Sem custos.")):
+    (placementNotice||(relocationFrom?"Escolha o destino verde ou toque em Girar para mudar a orientação.":"Toque no móvel em dourado e escolha a nova posição. Sem custos.")):
     placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
   if(shop)shop.hidden=!shopOpen;
   const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
