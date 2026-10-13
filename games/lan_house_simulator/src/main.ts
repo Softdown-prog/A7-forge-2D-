@@ -331,7 +331,7 @@ canvas.addEventListener("click",e=>{
       renderUI();return;
     }
     const result=relocateFurniture(game,relocationFrom,slot.id);
-    if(result.ok){applyResult(game,result);stopPlacement();save();
+    if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
   }
