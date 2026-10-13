@@ -159,3 +159,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Avaliações alteram reputação sem receita artificial; limites evitam oscilação descontrolada.
 - [x] Feedback positivo/negativo no histórico e testes para situações favoráveis/desfavoráveis.
 - [ ] Testar balanceamento em uma temporada extensa de simulação.
+
+## Feedback visual de pagamento no balcão
+- [x] Cada pagamento real gera evento transitório com valor e posição do cliente no balcão.
+- [x] Texto verde +R$ sobe, contorno para leitura e desaparece suavemente após 1,35s, com limite de partículas.
+- [x] O evento não acrescenta receita: é emitido somente depois de a simulação registrar o pagamento.
+- [x] Gancho `coin.wav` continua conectado; pasta de áudio contém somente README, sem WAV aprovado.
+- [x] Teste impede efeito duplicado por pagamento.
+- [ ] Integrar o arquivo de som aprovado quando disponível; não substituir por terceiros sem validação.

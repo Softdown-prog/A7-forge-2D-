@@ -45,6 +45,8 @@ export interface GameState {
   customers: Customer[];
   nextCustomerId: number;
   served: number;
+  /** Eventos visuais transitórios de pagamento, drenados a cada frame. */
+  paymentEffects?: Array<{amount:number;x:number;y:number}>;
   lostCustomers: number;
   purchases: number;
   weather: "sun" | "rain";

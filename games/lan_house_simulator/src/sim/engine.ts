@@ -104,6 +104,7 @@ function tryServe(s: GameState, c: Customer): void {
   setTravel(c, computerSeat(pcPosition(index)));
   const paid = sessionRevenue(s.pricePerHour);
   s.cash += paid; s.revenue += paid; s.served++;
+  (s.paymentEffects??=[]).push({amount:paid,x:c.x,y:c.y});
   addLog(s, "Cliente pagou R$ " + paid + " por 45 minutos.");
 }
 function resolvePurchase(s: GameState, c: Customer): void {

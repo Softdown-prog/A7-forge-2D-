@@ -248,3 +248,17 @@ test("encerramento de sessão muda reputação sem fabricar receita",()=>{
  bad.customers.push({id:21,x:2.5,y:2.5,stage:"using",target:{x:2.5,y:2.5},costume:"regular",pcIndex:0,usedMinutes:44,waitingMinutes:23,offlineWait:7,happy:true});
  stepGame(bad,1);assert.ok(bad.reputation<75);assert.equal(bad.customers[0]?.happy,false);
 });
+
+test("pagamento confirmado gera efeito visual com valor real uma única vez",()=>{
+ const s=createGame();
+ s.customers.push({id:12,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true});
+ stepGame(s,1);
+ assert.equal(s.paymentEffects?.length,1);
+ assert.equal(s.paymentEffects?.[0]?.amount,9);
+ assert.equal(s.paymentEffects?.[0]?.x,1.55);
+ assert.equal(s.cash,859);
+ const events=s.paymentEffects?.splice(0);
+ assert.equal(events?.length,1);
+ stepGame(s,1);
+ assert.equal(s.paymentEffects?.length,0);
+});

@@ -2,6 +2,8 @@ import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidS
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet } from "./sim/economy.js";
 import { GAME_SAVE_KEY, type GameState } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
+import { cameraForRoom, iso } from "./render/isometric.js";
+import { roomWidth } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
@@ -29,6 +31,27 @@ let game = readSave();
 let adminOpen = false;
 let previousServed = game.served;
 let previousPurchases = game.purchases;
+const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
+function paintPayments(dt:number):void {
+  const camera=cameraForRoom(roomWidth(game));
+  for(let i=paymentPopups.length-1;i>=0;i--){
+    const effect=paymentPopups[i]!;
+    effect.age+=dt;
+    if(effect.age>=1.35){paymentPopups.splice(i,1);continue;}
+    const at=iso({x:effect.x,y:effect.y},camera,94);
+    const alpha=Math.min(1,(1.35-effect.age)/0.4);
+    view!.save();view!.globalAlpha=alpha;
+    view!.textAlign="center";view!.lineWidth=3.2;
+    view!.font="bold 20px system-ui,sans-serif";
+    const label="+R$ "+effect.amount;
+    const height=effect.age*43;
+    view!.strokeStyle="#103622";view!.fillStyle="#70F0A6";
+    view!.strokeText(label,at.x,at.y-height);
+    view!.fillText(label,at.x,at.y-height);
+    view!.restore();
+  }
+}
+
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 const soundFiles: Record<string, string> = {
@@ -64,7 +87,7 @@ button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;save();renderUI();
+  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;save();renderUI();
 });
 canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
@@ -107,9 +130,16 @@ function frame(timestamp:number):void {
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
   stepGame(game,dt*4.0);
-  if(game.served>previousServed){previousServed=game.served;playOriginalSound("coin");}
+  const payments=game.paymentEffects?.splice(0)??[];
+  for(const payment of payments){
+    paymentPopups.push({...payment,age:0});
+    if(paymentPopups.length>12)paymentPopups.shift();
+    playOriginalSound("coin");
+  }
+  if(game.served>previousServed)previousServed=game.served;
   if(game.purchases>previousPurchases){previousPurchases=game.purchases;playOriginalSound("vending");}
   renderer.draw(game,elapsed);
+  paintPayments(dt);
   if(timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }
