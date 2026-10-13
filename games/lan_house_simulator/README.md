@@ -63,6 +63,16 @@ Quando uma versão estiver aprovada para publicação, atualize a integração n
 
 Sem hook, segredo ou workflow entre os dois repositórios. Publicação é decisão explícita, não consequência de cada alteração do jogo.
 
+## Portas e computadores nas alas ampliadas — V3
+
+- **Compras → Instalar porta interna:** depois de construir uma parede, clique em Instalar porta e toque nessa divisória. A parede é substituída por um batente vazado. O custo é R$ 80 por porta; a passagem é atravessável pela navegação dos clientes. Paredes continuam bloqueando a circulação. É possível demolir parede ou porta, sem devolução de dinheiro.
+- **Compras → PC no anexo:** após adquirir a ala norte/oeste/leste, selecione os encaixes verdes de PC no Canvas. Cada computador custa R$ 320, inclui bancada CRT, cadeira, cliente sentado, venda de sessões, manutenção e upgrade. Cinco faixas por direção geram até quinze novas posições (além das sete tradicionais).
+- **Roteador:** enquanto o trajeto antigo não atravessar paredes, o corredor original continua em uso. Se houver uma barreira, o jogo procura um caminho pelas células da grade, atravessando portas, mas nunca paredes fechadas. Uma instalação inacessível não pode ser comprada; o atendimento não cobra clientes para uma estação sem caminho.
+- **Saves e manutenção:** `interiorDoors` e `annexPcs` são opcionais para saves antigos. O jogo preserva índices de hardware e desgaste quando o jogador instala posteriormente um PC tradicional.
+- **Próximas melhorias:** refinamento artístico de batentes, controle de quatro orientações para monitores e cadeiras e edição livre de estações. Nesta fase, as estações dos anexos utilizam a orientação gráfica original para preservar o sprite do personagem sentado.
+- **Capturas:** `lhs_door_and_annex_pc_desktop.png` / `_mobile.png` são PNGs reais gerados pelo renderer no Chromium.
+- O jogo ainda é desenvolvido apenas no A7 Forge 2D, sem integração automática no CH-site.
+
 ## Salão ampliado e divisórias procedurais — contrato de construção V2
 
 - **Porta fixa:** entrada/saída permanece na posição original (x=7,5; y=5,35) ao sul. Nenhuma nova compra amplia o sul. Saves antigos com `roomExtensions.south` preservam o piso já comprado, mas a porta fica na referência fixa.

@@ -282,6 +282,32 @@ try{
     });
     await writeFile(resolve(output,"lhs_room_north_east_west_with_walls_"+config.name+".png"),
       Buffer.from(directionalPreview,"base64"));
+    // Validação da nova fase: porta em parede existente + PC com teclado, cadeira e visitante.
+    const annexPreview=await page.evaluate(async()=>{
+      const [{createGame,pcPosition,pcCount},{SceneRenderer},{expandDirection},
+        {buildWall,installInteriorDoor},{installAnnexComputer},{computerSeat}]=await Promise.all([
+         import("./js/sim/engine.js"),import("./js/render/scene.js"),
+         import("./js/sim/room.js"),import("./js/sim/walls.js"),
+         import("./js/sim/stations.js"),import("./js/sim/route.js")
+      ]);
+      const game=createGame(1998);game.cash=9000;
+      if(!expandDirection(game,"north").ok)throw Error("Expansão norte de teste falhou");
+      const wall={axis:"x",x:4,y:-1};
+      if(!buildWall(game,wall).ok||!installInteriorDoor(game,wall).ok)
+        throw Error("Porta interna não validada no navegador");
+      if(!installAnnexComputer(game,"pc-north-1").ok)throw Error("PC do anexo não instalado");
+      if(pcCount(game)!==4)throw Error("PC do anexo não entrou no runtime");
+      const position=pcPosition(3,game),seat=computerSeat(position);
+      game.customers=[{id:50,x:seat.x,y:seat.y,stage:"using",pcIndex:3,
+        costume:"regular",target:seat,route:[],poseMinutes:0,usedMinutes:2,
+        waitingMinutes:0,offlineWait:0,happy:true}];
+      const canvas=document.createElement("canvas");canvas.width=1000;canvas.height=610;
+      const ctx=canvas.getContext("2d");if(!ctx)throw Error("Canvas 2D indisponível");
+      new SceneRenderer(ctx).draw(game,2);
+      return canvas.toDataURL("image/png").split(",")[1];
+    });
+    await writeFile(resolve(output,"lhs_door_and_annex_pc_"+config.name+".png"),
+      Buffer.from(annexPreview,"base64"));
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
   }
