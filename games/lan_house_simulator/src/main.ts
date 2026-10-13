@@ -40,6 +40,7 @@ function audioContext():AudioContext|null{
 window.addEventListener("pointerdown",()=>{void audioContext()?.resume().catch(()=>{});},{once:true});
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
+const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
 function paintPayments(dt:number):void {
   const camera=cameraForRoom(roomWidth(game));
   for(let i=paymentPopups.length-1;i>=0;i--){
@@ -78,6 +79,25 @@ function paintSales(dt:number):void {
  }
 }
 
+function paintSpeech(dt:number):void {
+ const camera=cameraForRoom(roomWidth(game));
+ for(let i=speechPopups.length-1;i>=0;i--){
+  const b=speechPopups[i]!;
+  b.age+=dt;if(b.age>=2.6){speechPopups.splice(i,1);continue;}
+  const p=iso({x:b.x,y:b.y},camera,146);
+  const alpha=Math.min(1,(2.6-b.age)/0.4);
+  view!.save();view!.globalAlpha=alpha;view!.font="bold 13px system-ui,sans-serif";
+  const width=Math.min(190,view!.measureText(b.text).width+20);
+  const x=p.x-width/2,y=p.y-b.age*12-25;
+  view!.fillStyle=b.kind==="praise"?"#e3f9e9":"#fff2df";
+  view!.strokeStyle=b.kind==="praise"?"#227348":"#9c5238";
+  view!.lineWidth=2;
+  view!.beginPath();view!.roundRect(x,y,width,27,8);view!.fill();view!.stroke();
+  view!.fillStyle="#26302c";view!.textAlign="center";
+  view!.fillText(b.text,p.x,y+18,width-12);
+  view!.restore();
+ }
+}
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 const soundFiles: Record<string, string> = {
@@ -119,7 +139,7 @@ button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
 button("expand",()=>{applyResult(game,expandShop(game));renderUI();save();});
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;save();renderUI();
+  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
 });
 canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
@@ -182,9 +202,14 @@ function frame(timestamp:number):void {
     }
   }
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
+  for(const speech of game.speechEffects?.splice(0)??[]){
+    speechPopups.push({...speech,age:0});
+    if(speechPopups.length>8)speechPopups.shift();
+  }
   renderer.draw(game,elapsed);
   paintPayments(dt);
   paintSales(dt);
+  paintSpeech(dt);
   if(timestamp-lastUI>450){lastUI=timestamp;renderUI();}
   requestAnimationFrame(frame);
 }

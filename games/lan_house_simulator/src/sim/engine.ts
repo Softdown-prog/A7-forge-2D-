@@ -76,6 +76,9 @@ function startStanding(c: Customer, wantsSnack: boolean): void {
 function isReserved(s: GameState, index: number): boolean {
   return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "sitting" || c.stage === "using" || c.stage === "standing"));
 }
+function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"praise"="complaint"):void {
+  (s.speechEffects??=[]).push({text,x:c.x,y:c.y,kind});
+}
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null;
   setTravel(c, entrance(s));
@@ -99,6 +102,7 @@ function tryServe(s: GameState, c: Customer): void {
     c.waitingMinutes++;
     if (c.waitingMinutes > 25) {
       s.lostCustomers++; s.reputation = Math.max(10, s.reputation - 0.4);
+      customerSays(s,c,"Que fila enorme!");
       sendHome(s, c);
     }
     return;
@@ -116,7 +120,10 @@ function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
   const chosen = c.desiredItem ?? (items[Math.floor(random(s) * items.length)] ?? "soda");
   // Não comprar algo indisponível ou que excede o orçamento pessoal.
-  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<ITEM_PRICES[chosen])){sendHome(s,c);return;}
+  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<ITEM_PRICES[chosen])){
+    customerSays(s,c,s.inventory[chosen]<=0?"Produto esgotado!":"Está muito caro!");
+    sendHome(s,c);return;
+  }
   const result = sellItem(s, chosen);
   if (result.ok){
     if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-ITEM_PRICES[chosen]);
@@ -145,6 +152,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
           c.happy = false;
           s.reputation = Math.max(10, s.reputation - 1.1);
           addLog(s, "Cliente saiu insatisfeito com a internet.");
+          customerSays(s,c,"Internet caiu!");
           startStanding(c, false);
         }
         return;
@@ -155,8 +163,14 @@ function advanceCustomer(s: GameState, c: Customer): void {
         const impact=c.happy?rating:Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
-        if(impact < -0.12)addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
-        else if(impact >= 0.15)addLog(s,"Cliente elogiou a experiência na lan house.");
+        if(impact < -0.12){
+          addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
+          customerSays(s,c,c.offlineWait>0?"Internet lenta!":c.waitingMinutes>5?"Demorou demais!":"Está caro!");
+        }
+        else if(impact >= 0.15){
+          addLog(s,"Cliente elogiou a experiência na lan house.");
+          customerSays(s,c,"Curti demais!","praise");
+        }
         c.desiredItem=selectPurchase(c,s.inventory);
         startStanding(c,c.desiredItem!==null);
       }

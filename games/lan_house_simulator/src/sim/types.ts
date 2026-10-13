@@ -57,6 +57,8 @@ export interface GameState {
   purchases: number;
   /** Eventos de venda para que o áudio use a mercadoria correta, não um contador genérico. */
   saleEffects?: Array<{item:Item;amount?:number;x?:number;y?:number}>;
+  /** Falas temporárias; não afetam economia, descartadas pela UI. */
+  speechEffects?: Array<{text:string;x:number;y:number;kind:"complaint"|"praise"}>;
   weather: "sun" | "rain";
   eventLog: string[];
 }

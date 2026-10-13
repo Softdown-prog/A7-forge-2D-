@@ -196,3 +196,9 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Estoque e caixa continuam na mesma transação, com testes de compra e consumo.
 - [x] Som de lata rejeitado continua mudo; efeitos aprovados não foram alterados.
 - [ ] Inspecionar vídeo contínuo do cliente efetivamente comprando em navegador.
+
+## Feedback visível dos clientes
+- [x] Balões temporários de reclamação para fila longa, internet indisponível, preço/espera e produto esgotado.
+- [x] Elogios curtos em balões de outra cor, sem modificar a economia ou a câmera.
+- [x] Eventos transitórios limitados e drenados pela UI; teste de reclamação e conservação do caixa.
+- [ ] Aprovação visual no runtime em navegador; ajustar posição se encobrir máquinas.
