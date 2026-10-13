@@ -109,7 +109,8 @@ function spawn(s: GameState): void {
   s.customers.push(c);
 }
 function tryServe(s: GameState, c: Customer): void {
-  const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i => !isReserved(s, i) && !pcBroken(s,i));
+  const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i =>
+    !isReserved(s,i)&&!pcBroken(s,i)&&!!navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))));
   if (index === undefined) {
     c.waitingMinutes++;
     if (c.waitingMinutes > 25) {

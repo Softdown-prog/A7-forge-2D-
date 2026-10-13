@@ -3,6 +3,7 @@ import {entrance,pcCount,pcPosition} from "./engine.js";
 import {hallwayRoute,COUNTER_QUEUE,computerSeat} from "./route.js";
 import {vendingApproach} from "./layout.js";
 import {roomBounds} from "./room.js";
+import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 
 export type WallAxis="x"|"y";
 export type WallSegment={axis:WallAxis;x:number;y:number};
@@ -51,7 +52,7 @@ function crossesRoute(w:WallSegment,points:Point[]):boolean{
 /** Protects routes already in use; no new wall may cut the original movement logic. */
 export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
  const start=entrance(s),counter=COUNTER_QUEUE;
- const services:Point[]=[...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i))),
+ const services:Point[]=[...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
    vendingApproach("soda"),vendingApproach("candy")];
  const pairs:Array<[Point,Point]>=[[start,counter],[counter,start]];
  for(const service of services){
@@ -66,7 +67,14 @@ export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
  return false;
 }
 export function canBuildWall(s:GameState,w:WallSegment):boolean{
- return validWallPosition(s,w)&&!(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))&&!wallBlocksCustomers(s,w);
+ if(!validWallPosition(s,w)||(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))||
+    (s.interiorDoors??[]).some(p=>wallId(p)===wallId(w))||wallBlocksCustomers(s,w))return false;
+ // Preserva a alcançabilidade de todos os serviços e de clientes ativos.
+ const next={...s,interiorWalls:[...(s.interiorWalls??[]),w]};
+ const goals:Point[]=[COUNTER_QUEUE,...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
+ vendingApproach("soda"),vendingApproach("candy")];
+ for(const goal of goals)if(!navigableRoute(next,entrance(s),goal))return false;
+ return true;
 }
 export function buildWall(s:GameState,w:WallSegment):Result{
  if(!canBuildWall(s,w))return {ok:false,message:"Parede indisponível: limite, ocupação ou passagem de clientes."};
@@ -74,13 +82,43 @@ export function buildWall(s:GameState,w:WallSegment):Result{
  if(s.cash<WALL_COST)return {ok:false,message:"Caixa insuficiente para construir parede."};
  s.cash-=WALL_COST;s.expenses+=WALL_COST;
  (s.interiorWalls??=[]).push({...w});
+ routesForCurrentCustomers(s);
  return {ok:true,message:"Parede interna construída: -R$ "+WALL_COST+"."};
 }
 export function removeWall(s:GameState,w:WallSegment):Result{
  const index=(s.interiorWalls??[]).findIndex(p=>wallId(p)===wallId(w));
  if(index<0)return {ok:false,message:"Nenhuma parede nessa posição."};
  s.interiorWalls!.splice(index,1);
+ routesForCurrentCustomers(s);
  return {ok:true,message:"Divisória removida sem custo. Não há reembolso de materiais."};
+}
+export const DOOR_COST=80;
+export function installInteriorDoor(s:GameState,w:WallSegment):Result{
+ if(!validWallPosition(s,w))return {ok:false,message:"Segmento de porta inválido."};
+ const index=(s.interiorWalls??[]).findIndex(p=>wallId(p)===wallId(w));
+ if(index<0)return {ok:false,message:"Construa primeiro a divisória que receberá a porta."};
+ if(s.cash<DOOR_COST)return {ok:false,message:"Caixa insuficiente para instalar uma porta."};
+ s.interiorWalls!.splice(index,1);
+ (s.interiorDoors??=[]).push({...w});
+ s.cash-=DOOR_COST;s.expenses+=DOOR_COST;
+ routesForCurrentCustomers(s);
+ return {ok:true,message:"Porta interna instalada: -R$ "+DOOR_COST+"."};
+}
+export function removeInteriorDoor(s:GameState,w:WallSegment):Result{
+ const index=(s.interiorDoors??[]).findIndex(p=>wallId(p)===wallId(w));
+ if(index<0)return {ok:false,message:"Não há porta nesse local."};
+ s.interiorDoors!.splice(index,1);
+ return {ok:true,message:"Porta interna removida. Passagem livre."};
+}
+export function validInteriorDoors(s:GameState):boolean{
+ if(s.interiorDoors===undefined)return true;
+ if(!Array.isArray(s.interiorDoors)||s.interiorDoors.length>MAX_INTERIOR_WALLS)return false;
+ const existing=new Set((s.interiorWalls??[]).map(wallId)),seen=new Set<string>();
+ for(const door of s.interiorDoors){
+  if(!validWallPosition(s,door)||existing.has(wallId(door))||seen.has(wallId(door)))return false;
+  seen.add(wallId(door));
+ }
+ return true;
 }
 export function validInteriorWalls(s:GameState):boolean{
  if(s.interiorWalls===undefined)return true;
@@ -94,7 +132,7 @@ export function validInteriorWalls(s:GameState):boolean{
 }
 /** Component count of tile cells separated by internal partitions; useful for future rooms. */
 export function wallZoneCount(s:GameState):number{
- const b=roomBounds(s),blocked=new Set((s.interiorWalls??[]).map(wallId));
+ const b=roomBounds(s),blocked=new Set([...(s.interiorWalls??[]),...(s.interiorDoors??[])].map(wallId));
  const visited=new Set<string>(),key=(x:number,y:number)=>x+":"+y;
  let zones=0;
  for(let y=b.minY;y<b.maxY;y++)for(let x=b.minX;x<b.maxX;x++){
