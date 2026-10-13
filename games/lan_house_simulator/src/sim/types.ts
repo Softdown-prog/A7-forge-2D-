@@ -17,6 +17,10 @@ export interface Customer {
   /** Minutos de transição sentando/levantando. */
   poseMinutes?: number;
   wantsSnack?: boolean;
+  needs?: {thirst:number;hunger:number;energy:number};
+  /** Dinheiro pessoal fictício do visitante; não é o caixa do estabelecimento. */
+  wallet?: number;
+  desiredItem?: Item | null;
   costume: Costume;
   pcIndex: number | null;
   usedMinutes: number;

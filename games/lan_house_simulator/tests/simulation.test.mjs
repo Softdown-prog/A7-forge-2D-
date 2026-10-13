@@ -283,3 +283,32 @@ test("estoque esgotado não dispara som de venda",()=>{
  assert.equal(s.purchases,0);
  assert.equal(s.saleEffects?.length??0,0);
 });
+
+test("necessidades evoluem de forma independente e direcionam compras após sessão",async()=>{
+ const {initialNeeds,tickNeeds,selectPurchase}=await import("../dist/js/sim/needs.js");
+ const a=initialNeeds(1),b=initialNeeds(2);
+ assert.notDeepEqual(a,b);
+ const s=createGame();
+ const c={id:101,x:2,y:2,stage:"using",target:{x:2,y:2},costume:"regular",pcIndex:0,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,needs:{thirst:74,hunger:20,energy:90},wallet:10};
+ tickNeeds(c);
+ assert.ok(c.needs.thirst>74);
+ assert.equal(selectPurchase(c,s.inventory),"soda");
+ c.needs.thirst=5;c.needs.hunger=78;
+ assert.equal(selectPurchase(c,s.inventory),"snacks");
+ s.inventory.snacks=0;
+ assert.equal(selectPurchase(c,s.inventory),"candy");
+ c.wallet=0;
+ assert.equal(selectPurchase(c,s.inventory),null);
+});
+test("cliente preserva sessão mesmo sedento e só compra ao terminar",()=>{
+ const s=createGame();
+ s.customers.push({id:101,x:2.55,y:2.54,stage:"using",target:{x:2.55,y:2.54},costume:"regular",pcIndex:0,usedMinutes:20,waitingMinutes:0,offlineWait:0,happy:true,needs:{thirst:98,hunger:5,energy:90},wallet:20});
+ stepGame(s,1);
+ assert.equal(s.customers[0].stage,"using");
+ assert.equal(s.customers[0].pcIndex,0);
+ assert.equal(s.purchases,0);
+ s.customers[0].usedMinutes=44;
+ stepGame(s,1);
+ assert.equal(s.customers[0].stage,"standing");
+ assert.equal(s.customers[0].desiredItem,"soda");
+});

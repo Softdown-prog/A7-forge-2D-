@@ -174,3 +174,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Eventos de áudio somente depois de venda confirmada, inclusive com estoque esgotado não há som.
 - [x] Preservado efeito aprovado do caixa `money_income_01.ogg`; desbloqueio de áudio respeita interação do navegador.
 - [ ] Revisar timbre audível em dispositivo real antes de considerar master final do CH Audio Lab.
+
+## Decisões V1: necessidades pessoais
+- [x] Fome, sede e energia variam determinísticamente por cliente e por minuto, não por frame.
+- [x] Após terminar sessão de 45 minutos, cliente decide comprar refrigerante/lanche conforme necessidades, estoque e orçamento pessoal.
+- [x] Durante uso do computador, necessidades não interrompem a reserva ou a animação; compatibilidade com clientes antigos sem campos novos.
+- [x] Testes sobre evolução das necessidades, prioridades, estoque, orçamento e preservação da sessão.
+- [ ] Etapa seguinte: decidir duração de PC, descanso e perfil VIP; balancear frequência de compras em simulação longa.
+- [ ] Som da lata permanece desativado até aprovação do usuário.

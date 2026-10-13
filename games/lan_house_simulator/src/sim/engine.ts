@@ -3,6 +3,7 @@ import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue } from "./economy.js";
 import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { directionFromDelta } from "../render/direction.js";
+import { initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -84,7 +85,8 @@ function spawn(s: GameState): void {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: { ...COUNTER_QUEUE },
     costume, pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
-    offlineWait: 0, happy: true
+    offlineWait: 0, happy: true,
+    needs:initialNeeds(s.nextCustomerId-1),wallet:12+Math.floor(random(s)*18)
   };
   setTravel(c, COUNTER_QUEUE);
   s.customers.push(c);
@@ -109,9 +111,12 @@ function tryServe(s: GameState, c: Customer): void {
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
-  const chosen = items[Math.floor(random(s) * items.length)] ?? "soda";
+  const chosen = c.desiredItem ?? (items[Math.floor(random(s) * items.length)] ?? "soda");
+  // Não comprar algo indisponível ou que excede o orçamento pessoal.
+  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<({soda:8,candy:5,snacks:9}[chosen]))){sendHome(s,c);return;}
   const result = sellItem(s, chosen);
   if (result.ok){
+    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-({soda:8,candy:5,snacks:9}[chosen]));
     (s.saleEffects??=[]).push({item:chosen});
     addLog(s,result.message);
   }
@@ -149,7 +154,8 @@ function advanceCustomer(s: GameState, c: Customer): void {
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12)addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
         else if(impact >= 0.15)addLog(s,"Cliente elogiou a experiência na lan house.");
-        startStanding(c, random(s) < 0.47);
+        c.desiredItem=selectPurchase(c,s.inventory);
+        startStanding(c,c.desiredItem!==null);
       }
       return;
     case "standing":
@@ -203,7 +209,7 @@ function advanceMinute(s: GameState): void {
     const congestion = occupied >= pcCount(s) ? 0.38 : 1;
     if (random(s) < 0.052 * factor * congestion) spawn(s);
   }
-  for (const c of s.customers) advanceCustomer(s, c);
+  for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
   const e = entrance(s);
   s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > 0.001);
 }
