@@ -26,3 +26,9 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Som procedural de lata REPROVADO pelo criador na escuta; reprodução de `playVendingCan` desativada no runtime.
 - Não promover automaticamente outro som de refrigerante sem prévia audição e aprovação.
 - Efeito aprovado `money_income_01.ogg` de pagamento permanece ativo.
+
+## Clique de mouse da interface
+- `mouse_click_002.ogg`: som original CH Audio Lab aprovado pelo criador e copiado do City Horizon (`assets/audio/ui/mouse_click_002.ogg`).
+- Reproduz uma vez por ativação dos botões da administração, inclusive teclado/tecnologia assistiva, e ao clicar no dono para abrir o painel.
+- Botões desativados não produzem o clique; pagamento mantém seu som distinto.
+- Original Git blob `66cedc5c95c375d880a9d55390a1e95459c36919`.

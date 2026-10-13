@@ -62,6 +62,7 @@ function paintPayments(dt:number):void {
 const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 const soundFiles: Record<string, string> = {
+  click: "./assets/audio/mouse_click_002.ogg",
   coin: "./assets/audio/money_income_01.ogg", liquid: "./assets/audio/liquid.wav",
   vending: "./assets/audio/vending.wav"
 };
@@ -78,7 +79,12 @@ function save(): void {
 }
 function button(id:string, handler:()=>void):void {
   const el=document.getElementById(id);
-  if(el) el.addEventListener("click", handler);
+  if(el) el.addEventListener("click", () => {
+    if(!(el instanceof HTMLButtonElement) || !el.disabled){
+      playOriginalSound("click");
+      handler();
+    }
+  });
 }
 button("open-admin",()=>{adminOpen=!adminOpen; renderUI();});
 button("close-admin",()=>{adminOpen=false;renderUI();});
@@ -100,7 +106,7 @@ canvas.addEventListener("click",e=>{
   const rect=canvas.getBoundingClientRect();
   const x=(e.clientX-rect.left)/rect.width*canvas.width;
   const y=(e.clientY-rect.top)/rect.height*canvas.height;
-  if(renderer.hitOwner(x,y)){adminOpen=!adminOpen;renderUI();}
+  if(renderer.hitOwner(x,y)){playOriginalSound("click");adminOpen=!adminOpen;renderUI();}
 });
 function renderUI():void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
