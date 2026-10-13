@@ -54,3 +54,13 @@ O job `worker-scene` gera duas capturas reais do jogo em Chromium (desktop e mob
 ### Acabamento dos personagens
 
 A aparência procedural V1 dos personagens é desenhada por `src/render/actorArt.ts` e diferencia figurinos, cabelos, cores e poses sem novas dependências. É visual provisório com intenção estética definida; PNGs capturados pelo worker-scene continuam sendo a etapa de validação antes dos sprites definitivos do A7 Forge.
+
+## Publicação automática no CH-site / Cloudflare Pages
+
+O código-fonte do jogo fica neste repositório. O CH-site (`Softdown-prog/CH-site`) tem a rota `/games/lan-house-simulator/`; durante seu build, o script `scripts/sync-games.mjs` baixa a versão atual da branch `main` deste repositório e cria os arquivos HTML5 estáticos.
+
+A automação fica em `.github/workflows/lan-house-simulator.yml`: após **todos os três workers** passarem em um push à `main`, o job `publish-site` chama um Cloudflare Pages **Deploy Hook**, solicitando um novo build do CH-site. Mudanças em PRs, builds reprovados e commits fora da `main` não publicam o site.
+
+**Configuração única indispensável:** no Cloudflare Dashboard, entre no projeto Pages do CH-site e crie um Deploy Hook conectado à branch `main` do CH-site. Copie a URL privada. No GitHub deste repositório (A7-forge-2D-), vá em Settings → Secrets and variables → Actions → New repository secret, nome `CH_SITE_CLOUDFLARE_DEPLOY_HOOK`, valor a URL completa do hook. Nunca faça commit da URL.
+
+Sem o secret, o job emite aviso e não faz deploy. Uma requisição aceita pelo hook apenas **solicita** o build; confirme o deploy concluído em Cloudflare Pages. Esta abordagem não exige token de acesso cross-repo ou commits artificiais no CH-site. Se o Pages não estiver conectado ao CH-site, conecte-o primeiro para o Deploy Hook ter um projeto válido para reconstruir.
