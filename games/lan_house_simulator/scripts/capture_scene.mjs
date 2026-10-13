@@ -56,6 +56,12 @@ try{
     await page.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
       {key:GAME_SAVE_KEY,payload:state});
     await page.goto(url,{waitUntil:"networkidle"});
+    // A tela inicial é o primeiro frame oficial; a cena só inicia após Continue.
+    await page.locator("#start-screen").waitFor({state:"visible"});
+    await writeFile(resolve(output,"lhs_menu_"+config.name+".png"),
+      await page.locator("#start-screen").screenshot({type:"png"}));
+    await page.locator("#menu-continue").click();
+    await page.locator("#game-app").waitFor({state:"visible"});
     await page.waitForFunction(()=>{
       const canvas=document.querySelector("#game");
       if(!(canvas instanceof HTMLCanvasElement))return false;
