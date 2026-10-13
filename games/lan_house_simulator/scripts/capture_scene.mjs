@@ -234,6 +234,7 @@ try{
     await page.locator("#open-shop").click();
     await page.locator("#organize-furniture").click();
     await page.locator("#placement-toolbar").waitFor({state:"visible"});
+    const beforeMoving=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
     await clickFurnitureSlot("floor-1");
     // A captura mostra a prévia do móvel sendo levado à nova posição.
     await page.locator("#game").scrollIntoViewIfNeeded();
@@ -256,7 +257,7 @@ try{
       return saved?.furniturePlacements?.some(p=>p.kind==="plant"&&p.slotId==="floor-3");
     },GAME_SAVE_KEY);
     const moved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
-    if(moved.cash!==state.cash-85||moved.expenses!==state.expenses+85)
+    if(moved.cash!==beforeMoving.cash||moved.expenses!==beforeMoving.expenses)
       throw Error("Reposicionamento cobrou novamente: "+JSON.stringify({cash:moved.cash,expenses:moved.expenses}));
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     await page.close();
