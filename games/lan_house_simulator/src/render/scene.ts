@@ -8,6 +8,7 @@ import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
+import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -39,16 +40,17 @@ export class SceneRenderer {
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
     ];
     for (let i=0;i<pcCount(s);i++){
-      const p=pcPosition(i);
+      const p=pcPosition(i,s);
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
     }
-    for(const wall of s.interiorWalls??[]){
+    for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
-    }
+    for(const door of s.interiorDoors??[])
+      entries.push({depth:door.x+door.y+0.5,paint:()=>this.drawInteriorDoor(camera,door)});
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
-      const location=seated && c.pcIndex!==null ? pcPosition(c.pcIndex) : c;
-      entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated)});
+      const location=seated && c.pcIndex!==null ? pcPosition(c.pcIndex,s) : c;
+      entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s)});
     }
     entries.sort((a,b)=>a.depth-b.depth);
     for (const e of entries) e.paint();
@@ -68,6 +70,49 @@ export class SceneRenderer {
     ctx.strokeStyle=preview?"#f3f3d8":"#faf0dc";ctx.lineWidth=Math.max(1,4*camera.zoom);
     ctx.beginPath();ctx.moveTo(capA.x,capA.y);ctx.lineTo(capB.x,capB.y);ctx.stroke();
     ctx.restore();
+  }
+  private drawInteriorDoor(camera:Projection,door:WallSegment,preview=false):void{
+    const [a,b]=wallEndpoints(door),ctx=this.ctx;
+    const left=iso(a,camera),right=iso(b,camera),
+      leftTop=iso(a,camera,78),rightTop=iso(b,camera,78);
+    ctx.save();
+    ctx.strokeStyle=preview?"#8ee6b3":"#704c48";
+    ctx.lineWidth=Math.max(3,8*camera.zoom);
+    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(leftTop.x,leftTop.y);
+    ctx.lineTo(rightTop.x,rightTop.y);ctx.lineTo(right.x,right.y);ctx.stroke();
+    ctx.strokeStyle=preview?"#ddffe3":"#d4ad77";
+    ctx.lineWidth=Math.max(1.5,3*camera.zoom);
+    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(right.x,right.y);ctx.stroke();
+    ctx.restore();
+  }
+  /** Ícones e fantasma dos novos PCs, usando o mesmo centro de clique da UI. */
+  drawAnnexPcCandidates(s:GameState,hovered:string|null):void{
+    const cam=cameraForGame(s),available=new Set(availableAnnexComputers(s).map(x=>x.id));
+    this.ctx.save();
+    for(const slot of annexComputerSlots(s)){
+      const p=iso({x:slot.position.x+0.35,y:slot.position.y+0.55},cam,4);
+      const free=available.has(slot.id),selected=hovered===slot.id;
+      this.ctx.beginPath();this.ctx.ellipse(p.x,p.y,19*cam.zoom,11*cam.zoom,0,0,Math.PI*2);
+      this.ctx.fillStyle=!free?"rgba(183,75,70,.78)":selected?"rgba(114,233,162,.98)":"rgba(73,160,130,.80)";
+      this.ctx.fill();
+      this.ctx.strokeStyle="#f6efdc";this.ctx.lineWidth=selected?3:1.3;this.ctx.stroke();
+      if(selected&&free){this.ctx.globalAlpha=.66;
+        drawRetroComputer(this.ctx,cam,slot.position,pcCount(s),1,true,s);
+        this.ctx.globalAlpha=1;
+      }
+    }
+    this.ctx.restore();
+  }
+  drawDoorCandidates(s:GameState,hovered:WallSegment|null):void{
+    const cam=cameraForGame(s);
+    this.ctx.save();
+    for(const wall of s.interiorWalls??[]){
+      const [a,b]=wallEndpoints(wall),point=iso({x:(a.x+b.x)/2,y:(a.y+b.y)/2},cam,40);
+      this.ctx.fillStyle="#d2bc76";this.ctx.beginPath();
+      this.ctx.arc(point.x,point.y,Math.max(2,6*cam.zoom),0,Math.PI*2);this.ctx.fill();
+    }
+    if(hovered)this.drawInteriorDoor(cam,hovered,true);
+    this.ctx.restore();
   }
   drawWallPreview(s:GameState,wall:WallSegment|null,demolish:boolean):void{
     if(!wall)return;
@@ -473,14 +518,14 @@ export class SceneRenderer {
     this.ctx.stroke();this.ctx.restore();
     this.heroHitbox=actorHitbox(camera,1.45,1.05);
   }
-  private customer(camera:Projection,c:Customer,t:number,seated:boolean):void {
+  private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {
     let x=c.x,y=c.y;
     const moving=c.stage==="arriving" || c.stage==="to_pc" ||
       c.stage==="shopping" || c.stage==="leaving";
     let pose:ActorPose=moving?"walking":"idle";
     let transition=1;
     if(seated && c.pcIndex!==null){
-      const p=pcPosition(c.pcIndex);
+      const p=pcPosition(c.pcIndex,s);
       x=p.x+0.35;y=p.y+0.82;
       pose=c.stage==="standing"?"standing-up":"sitting";
       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
@@ -498,7 +543,7 @@ export class SceneRenderer {
       const weight=c.stage==="using"?1:
         c.stage==="sitting"?transition:
         c.stage==="standing"?1-transition:0;
-      drawSeatedKeyboardOverlay(this.ctx,camera,pcPosition(c.pcIndex),t,
+      drawSeatedKeyboardOverlay(this.ctx,camera,pcPosition(c.pcIndex,s),t,
         style.skin,style.shirt,weight);
     }
     if(c.stage==="waiting"){
