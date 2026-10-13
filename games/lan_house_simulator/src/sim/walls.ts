@@ -125,8 +125,14 @@ export function validInteriorWalls(s:GameState):boolean{
  if(!Array.isArray(s.interiorWalls)||s.interiorWalls.length>MAX_INTERIOR_WALLS)return false;
  const used=new Set<string>();
  for(const w of s.interiorWalls){
-   if(!validWallPosition(s,w)||used.has(wallId(w))||wallBlocksCustomers(s,w))return false;
+   if(!validWallPosition(s,w)||used.has(wallId(w)))return false;
    used.add(wallId(w));
+ }
+ // A parede pode exigir desvio pela porta. Valida alcançabilidade, não a rota reta.
+ const destinations:Point[]=[COUNTER_QUEUE,...Array.from({length:pcCount(s)},(_,i)=>
+   computerSeat(pcPosition(i,s))),vendingApproach("soda"),vendingApproach("candy")];
+ for(const destination of destinations){
+   if(!navigableRoute(s,entrance(s),destination))return false;
  }
  return true;
 }

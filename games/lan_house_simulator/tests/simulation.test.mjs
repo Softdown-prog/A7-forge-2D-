@@ -848,6 +848,11 @@ test("sala norte fechada obriga cliente a atravessar a porta até o PC adicional
  assert.equal(wallZoneCount(s),2,"duas salas mesmo com portal");
  assert.equal(installAnnexComputer(s,"pc-north-1").ok,true);
  assert.equal(pcCount(s),4);
+ const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(restored.interiorDoors.length,1);
+ assert.equal(restored.interiorWalls.length,7);
+ assert.equal(restored.annexPcs.length,1);
  const route=navigableRoute(s,COUNTER_QUEUE,computerSeat(pcPosition(3,s)));
  assert.ok(route&&route.some(p=>p.y< -1),"caminho passa para o lado norte da parede");
  const make=(id,stage,pcIndex,x,y)=>({id,stage,pcIndex,x,y,target:{x,y},route:[],
