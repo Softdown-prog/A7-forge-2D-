@@ -443,3 +443,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Passar 188 testes ativos, auditoria estática e 240 comparações Canvas; comprar e recarregar em 1440/414/360 e conferir bloqueios de 2005.
 - [x] Registrar catálogo, custos e limites em `docs/LCD_GENERATIONS.md`; adicionar verificação ao worker de cena.
 - [ ] Auditar retorno dos kits em campanhas longas e conferir os novos modelos em telefone físico antes de revisar o balanceamento inicial.
+
+## Retorno de hardware e GPUs em um salão completo — 14/10/2026
+- [x] Comparar 16 campanhas reais de 360 dias em 2013: sementes 23/137, salões de cinco/sete PCs com PixelForce 260 pré-adquirida, e quatro caminhos (manter, upgrade de hardware nível 3, GPU 2013, ambos), a R$ 18/h.
+- [x] Pagar integralmente as peças por API, fornecedores, licenças, internet, 24 promoções, estoques, técnicos, energia e 12 contas; comparar resultado líquido incremental contra manter os equipamentos originais e retomar save no dia 180.
+- [x] Medir ganho líquido com somente CPU nível 3: **+R$ 6.760 (cinco PCs)** e **+R$ 4.685 (sete PCs)**, já descontando R$ 3.600 / R$ 5.040 investidos.
+- [x] Verificar que trocar todas as GPUs 2009 por GPUs 2013 **não amortizou em 360 dias**: −R$ 9.277 (cinco PCs) e −R$ 15.853,50 (sete PCs) versus conservar.
+- [x] Registrar matriz completa, ocupação e limites em `docs/ANNUAL_HARDWARE_PAYBACK_2026.md`; disponibilizar `npm run audit:hardware` / workflow manual, sem encarecer cada `npm test`.
+- [ ] Estudar upgrade direcionado aos PCs de maior uso/VIPs, preços R$ 22/24, divisão física de salas e horizontes mais longos antes de balancear economia ou arte de hardware.

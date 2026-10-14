@@ -1,0 +1,23 @@
+name: Lan House - hardware payback audit
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hardware-payback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Audit 360 days with hardware and GPUs
+        working-directory: games/lan_house_simulator
+        run: npm run audit:hardware

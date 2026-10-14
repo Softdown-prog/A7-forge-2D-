@@ -8,7 +8,8 @@
     "test": "npm run build && node --test tests/*.test.mjs",
     "serve": "node scripts/serve.mjs",
     "audit": "node scripts/audit.mjs",
-    "audit:annual": "npm run build && node --test tests/annual-monthly-pricing-pressure.test.mjs"
+    "audit:annual": "npm run build && node --test tests/annual-monthly-pricing-pressure.test.mjs",
+    "audit:hardware": "npm run build && node --test tests/annual-hardware-payback.test.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3"
