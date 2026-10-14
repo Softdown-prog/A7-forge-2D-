@@ -103,6 +103,16 @@ test("campanhas pequena/media/grande 2009: 3 sementes, 45 dias, compras e manute
  assert.ok(rows.every(r=>r.served>0));
  assert.ok(rows.every(r=>r.occupancy>=0&&r.occupancy<=100));
  assert.ok(rows.every(r=>r.operatingExpenses>0));
+ const average=(size,field)=>rows.filter(r=>r.size===size).reduce((sum,r)=>sum+r[field],0)/SEEDS.length;
+ // Regression gates: a fila deve escoar e a expansão precisa atender mais gente.
+ assert.ok(average("pequena","avgArriving")<6.5,"fila inicial travada por clientes chegando");
+ assert.ok(average("media","avgArriving")<6.5,"circulação no salão médio travada");
+ assert.ok(average("grande","avgArriving")<6.5,"circulação no salão grande travada");
+ assert.ok(average("pequena","occupancy")>7,"computadores pequenos ociosos por falha de circulação");
+ assert.ok(average("media","occupancy")>5,"computadores médios ociosos por falha de circulação");
+ assert.ok(average("grande","occupancy")>4.5,"computadores grandes ociosos por falha de circulação");
+ assert.ok(average("media","served")>average("pequena","served"));
+ assert.ok(average("grande","served")>average("media","served")*.95);
  for(const size of ["pequena","media","grande"]){
   const group=rows.filter(r=>r.size===size);
   const mean=(field)=>+(group.reduce((sum,r)=>sum+r[field],0)/group.length).toFixed(2);
