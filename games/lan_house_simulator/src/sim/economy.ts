@@ -1,5 +1,6 @@
 import type { GameState, Inventory, Item, Result } from "./types.js";
 import { SESSION_MINUTES } from "./types.js";
+import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./era.js";
 
 export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
 export function productPrice(s:GameState,item:Item):number {
@@ -16,6 +17,8 @@ export function upgradeComputer(s:GameState,index:number):Result {
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
  const tier=s.pcTiers?.[index]??1;
  if(tier>=3)return {ok:false,message:"PC no nível máximo."};
+ const unlockYear=tier===1?2000:2003;
+ if(gameYear(s)<unlockYear)return {ok:false,message:"Hardware nível "+(tier+1)+" chega em "+unlockYear+"."};
  const cost=tier*240;
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para upgrade: R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;(s.pcTiers??=[])[index]=tier+1;
@@ -99,6 +102,9 @@ export function repairInternet(state: GameState): Result {
 }
 export function upgradeInternet(state: GameState): Result {
   if (state.internetTier >= 3) return { ok: false, message: "Internet já está no nível máximo." };
+  const nextTier=state.internetTier+1;
+  const year=internetUnlockYear(nextTier);
+  if(gameYear(state)<year)return {ok:false,message:"Internet "+INTERNET_ERAS[nextTier-1]!.name+" disponível a partir de "+year+"."};
   const cost = 250 * state.internetTier;
   if (state.cash < cost) return { ok: false, message: "Caixa insuficiente para internet: R$ " + cost + "." };
   state.cash -= cost; state.expenses += cost; state.internetTier++;
