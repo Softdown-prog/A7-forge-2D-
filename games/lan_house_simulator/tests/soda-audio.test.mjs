@@ -64,29 +64,17 @@ test("amostras OGG originais são diferentes e copiadas intactas no build",()=>{
  }
  assert.notEqual(samples[0],samples[1]);
 });
-test("prévia manual funciona sem sorteio e não altera cooldown da partida",async()=>{
- const starts=[],levels=[];
- const ctx={state:"running",currentTime:12,
-   createBufferSource(){return {buffer:null,connect(d){return d},start(t){starts.push(t)},stop(){}};},
-   createGain(){return {gain:{setValueAtTime(v){levels.push(v)},exponentialRampToValueAtTime(){}},connect(d){return d}};}
- };
- const sound=new Soundscape(true,()=>.99);
- sound.context=ctx;sound.master={gain:{value:0.82}};
- sound.approved.set("vending_soda_01",{duration:1.7});
- assert.equal(await sound.previewSoda(),true);
- assert.equal(starts.length,1);
- assert.ok(starts[0]>=12.28);
- assert.equal(levels[0],AUDIO_LEVELS.soda);
- assert.equal(sound.lastSoda,-100);
- assert.equal(sound.sodaTake,0);
- sound.setEnabled(false);
- assert.equal(await sound.previewSoda(),false);
- assert.equal(starts.length,1);
-});
-test("menu permite ouvir a amostra e vendas continuam ligadas ao runtime",()=>{
+test("som aprovado toca apenas no fluxo de venda e não cria botão de teste na produção",()=>{
  const root=resolve(import.meta.dirname,"..");
- assert.match(readFileSync(resolve(root,"index.html"),"utf8"),/id="preview-soda-sfx"/);
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
- assert.match(main,/soundscape\.previewSoda\(\)/);
+ const engine=readFileSync(resolve(root,"src/audio/soundscape.ts"),"utf8");
+ const css=readFileSync(resolve(root,"style.css"),"utf8");
+ assert.doesNotMatch(html,/preview-soda-sfx|preview-soda-status|sound-preview/);
+ assert.doesNotMatch(main,/preview-soda-sfx|previewSoda/);
+ assert.doesNotMatch(engine,/previewSoda/);
+ assert.doesNotMatch(css,/sound-preview/);
  assert.match(main,/if\(sale\.item==="soda"\)soundscape\.soda\(\)/);
+ assert.equal(AUDIO_LEVELS.soda,0.085);
+ assert.equal(SODA_AFTER_SALE_DELAY_SECONDS,0.90);
 });

@@ -183,21 +183,6 @@ export class Soundscape {
    this.sodaTake++;
    return true;
  }
- /** Escuta dos OGGs originais, sem sorteio, cooldown ou venda artificial. */
- async previewSoda():Promise<boolean>{
-   if(!this.enabled)return false;
-   this.unlock();
-   const ctx=this.context;
-   if(!ctx)return false;
-   if(ctx.state!=="running"){
-     try{await ctx.resume();}catch{return false;}
-   }
-   const first:SodaTake=this.sodaTake%2===0?"vending_soda_01":"vending_soda_02";
-   const second:SodaTake=first==="vending_soda_01"?"vending_soda_02":"vending_soda_01";
-   const selected=this.approved.has(first)?first:second;
-   if(!this.approved.has(selected))return false;
-   return this.playSample(selected,AUDIO_LEVELS.soda,2.0,0.28); // Após clique do botão.
- }
  /** Sons de produtos autorizados: nunca tocar o efeito de lata reprovado. */
  candy():void{
    const ctx=this.context;

@@ -55,5 +55,5 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Os takes tratados `vending_soda_01.ogg` e `vending_soda_02.ogg` são os originais aprovados, preservados **sem alteração dos bytes**. A síntese de lata rejeitada segue desligada.
 - Continua **28% de chance por venda real de refrigerante** e **12 s** mínimos entre reproduções. O som pode não tocar em uma compra específica; respeita a opção Efeitos sonoros.
 - O ganho passou de `0.032` para `0.085` e o líquido agora começa `0.90 s` após o caixa: menos mascaramento; ainda abaixo de mouse e pagamento.
-- **Menu → Opções → Ouvir refrigerante** reproduz um dos takes sem sorteio, sem alterar caixa, estoque, save ou cooldown. O clique de menu toca primeiro e a amostra começa após `0.28 s`.
-- Validação: `tests/soda-audio.test.mjs` verifica alternância, temporização, níveis, arquivos OGG originais e cópias do build, volume mutado e prévia.
+- Não há botão de prévia ou outras opções técnicas no site em produção: o efeito é reproduzido somente no fluxo normal das vendas reais.
+- Validação: `tests/soda-audio.test.mjs` verifica alternância, temporização, níveis, arquivos OGG originais e cópias do build, silenciamento e ausência de controles de teste na UI.

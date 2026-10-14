@@ -198,13 +198,6 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
  document.getElementById("menu-options")?.setAttribute("aria-expanded",String(!settingsPanel!.hidden));
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
-document.getElementById("preview-soda-sfx")?.addEventListener("click",()=>{
- const status=document.getElementById("preview-soda-status");
- void soundscape.previewSoda().then(ok=>{
-   if(status)status.textContent=ok?"Reproduzido: escute o líquido após o clique.":
-     soundEnabled?"Áudio carregando ou indisponível. Tente novamente.":"Ative os efeitos sonoros para ouvir.";
- });
-});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
