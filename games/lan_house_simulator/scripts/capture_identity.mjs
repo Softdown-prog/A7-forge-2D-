@@ -76,7 +76,12 @@ try{
   // Dispatch directly on the SVG child to cover event delegation too.
   await page.locator("#stock-soda .ui-icon").evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
-  assert.ok(after.inventory.soda>before.inventory.soda);assert.ok(after.expenses>before.expenses);
+  // A simulação continua atendendo clientes enquanto o painel fica aberto:
+  // uma venda simultânea pode reduzir o estoque entre os dois snapshots.
+  // Validar a transação registrada, não a quantidade líquida momentânea.
+  assert.ok(after.eventLog.some(line=>line.includes("Estoque de soda reposto:")),
+    "compra de refrigerante deve constar no diário real da partida");
+  assert.ok(after.expenses>before.expenses,"reposição deve debitar a despesa real");
   assert.equal(after.cash,before.cash+(after.revenue-before.revenue)-(after.expenses-before.expenses));
   await page.locator('[data-admin-tab="computers"]').click();
   await page.locator('[data-pc-repair="0"] .ui-icon').evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
