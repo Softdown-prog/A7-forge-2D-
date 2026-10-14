@@ -37,7 +37,7 @@ test("nunca toca se áudio desabilitado ou gravações faltantes",()=>{
  const context={state:"running",currentTime:20};
  const sound=new Soundscape(true,()=>0);
  sound.context=context;
- sound.master={};
+ sound.master={gain:{value:0.82}};
  assert.equal(sound.soda(),false);
  sound.setEnabled(false);
  assert.equal(sound.soda(),false);
