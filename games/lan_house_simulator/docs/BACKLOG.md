@@ -238,3 +238,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Níveis 2 e 3 usam variações sutis de material e identificação junto ao gabinete (sem alterar footprint, cadeira ou câmera).
 - [x] Estado visual deriva do nível persistido no mesmo PC; saves antigos continuam como nível 1.
 - [ ] Aprovação visual em screenshot do jogo compilado.
+
+## Fila física e colisões entre visitantes — 13/10/2026
+- [x] Atendimento sequencial do caixa por ordem de chegada e intervalo entre clientes, sem cobranças antecipadas.
+- [x] Até dez lugares físicos: o corredor comporta a fila sem empilhar os personagens.
+- [x] Passos subdivididos com bloqueio de espaço entre atores; saída lateral do balcão quando não há divisórias.
+- [x] "?" dos clientes em vermelho com contorno escuro; retirar os nomes brancos das máquinas.
+- [x] Preservar síntese sonora procedural HTML5 e os dois efeitos já aprovados, sem incluir gravações externas.
+- [ ] Conferir circulação sob lotação e salas separadas por paredes no runtime.
