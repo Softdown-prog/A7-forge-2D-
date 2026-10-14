@@ -24,12 +24,14 @@ import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
-export function createGame(seed = 72421): GameState {
+export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
-    pricePerHour: 2.5, pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
+    pricePerHour:economyMode==="historical"?2.5:12,
+    ...(economyMode==="historical"?{economyVersion:2 as const}:{retailPrices:{soda:8,candy:5,snacks:9}}),
+    pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
     expansionLevel: 0, roomExtensions:{west:0,east:0,south:0,north:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
@@ -257,7 +259,8 @@ function spawn(s: GameState): void {
     stage: "arriving", target: counterQueueSlot(queueIndex),queueIndex,
     costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
-    needs:initialNeeds(s.nextCustomerId-1),wallet:5+Math.floor(random(s)*14)
+    needs:initialNeeds(s.nextCustomerId-1),wallet:
+    (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
   };
   if(!setTravel(s,c,c.target))return;
   s.customers.push(c);
@@ -276,12 +279,13 @@ function tryServe(s: GameState, c: Customer): void {
     }
     return;
   }
-  const openLeft=DAY_MINUTES-(s.totalMinutes%DAY_MINUTES);
-  if(openLeft<30){sendHome(s,c);return;}
-  c.sessionMinutes??=chooseSessionMinutes(c);
-  // Contrato termina dentro do expediente; sem cobrar minutos não utilizáveis.
-  if(c.sessionMinutes>openLeft)c.sessionMinutes=
+  if(s.economyVersion===2){
+   const openLeft=DAY_MINUTES-(s.totalMinutes%DAY_MINUTES);
+   if(openLeft<30){sendHome(s,c);return;}
+   c.sessionMinutes??=chooseSessionMinutes(c,true);
+   if(c.sessionMinutes>openLeft)c.sessionMinutes=
     ([240,180,120,90,60,45,30] as number[]).find(n=>n<=openLeft)??30;
+  }else c.sessionMinutes??=chooseSessionMinutes(c);
   if(!leaveCounterForPc(s,c,computerSeat(pcPosition(index,s)))){
     c.waitingMinutes++;
     return; // Não cobrar se a sala não for acessível.
@@ -290,7 +294,7 @@ function tryServe(s: GameState, c: Customer): void {
   c.queueIndex=undefined;
   c.stage="to_pc";
   s.counterBusyUntil=s.totalMinutes+3;
-  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes);
+  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
