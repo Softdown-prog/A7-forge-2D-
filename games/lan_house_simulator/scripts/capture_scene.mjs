@@ -152,6 +152,42 @@ try{
       });
       await writeFile(resolve(output,"lhs_four_directions_and_pc_pose.png"),
         Buffer.from(poses,"base64"));
+      // Revisão de acabamento: todos os personagens EXISTENTES nas quatro vistas.
+      // Cada célula usa o drawActor do jogo, não sprites novos ou edição externa.
+      const castReview=await page.evaluate(async()=>{
+        const {drawActor}=await import("./js/render/actorArt.js");
+        const kinds=["regular","owner","clown","vampire","stitched-monster","rabbit","mouse-mascot"];
+        const dirs=["south","north","east","west"];
+        const canvas=document.createElement("canvas");
+        canvas.width=1130;canvas.height=1286;
+        const ctx=canvas.getContext("2d");
+        if(!ctx)throw Error("Canvas de revisão de personagens indisponível");
+        ctx.fillStyle="#172336";ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle="#EEDBB6";ctx.font="bold 21px system-ui";
+        ctx.fillText("LAN HOUSE · ACABAMENTO DOS PERSONAGENS EXISTENTES",18,27);
+        let snapshots=0;
+        for(let row=0;row<kinds.length;row++){
+          for(let col=0;col<dirs.length;col++){
+            const x=16+col*278,y=40+row*178;
+            ctx.fillStyle="#334255";ctx.fillRect(x,y,268,171);
+            ctx.fillStyle="#19283A";ctx.fillRect(x+2,y+2,264,167);
+            ctx.strokeStyle="#607789";ctx.strokeRect(x+.5,y+.5,267,170);
+            ctx.fillStyle="#E3D0B2";ctx.font="bold 12px system-ui";
+            ctx.fillText(kinds[row]+" · "+dirs[col],x+10,y+18);
+            const camera={originX:x+133,originY:y+156,zoom:1.16};
+            drawActor(ctx,camera,{
+              x:0,y:0,kind:kinds[row],id:7,time:1.2,
+              pose:kinds[row]==="owner"?"idle":"walking",direction:dirs[col]
+            });
+            snapshots++;
+          }
+        }
+        if(snapshots!==28)throw Error("Revisão de elenco incompleta");
+        return canvas.toDataURL("image/png").split(",")[1];
+      });
+      await writeFile(resolve(output,"lhs_actor_refinement_four_directions.png"),
+        Buffer.from(castReview,"base64"));
+
       // Sequência coerente da cena COMPLETA, com o mesmo renderer de runtime.
       // Enquadra aproximação, três fases de sentar/levantar e saída.
       const lifecycle=await page.evaluate(async()=>{
