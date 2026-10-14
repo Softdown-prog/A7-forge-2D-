@@ -26,7 +26,8 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {requestCleaning,pcUnderRepair} from "./sim/services.js";
+import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
+import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
 import {buyPart,buyPlatform,windowsHardwareIssues,hardwareFor,buildParts,requiredPsuWatts,type HardwareKind,HARDWARE_LABELS} from "./sim/hardware.js";
@@ -916,8 +917,12 @@ function renderUI(liveOnly=false):void {
       line.append(title,choices);licensePanel.appendChild(line);
     }
   }
-  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map(n=>Math.round(n)+"%").join(" · ")+" · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
-  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||!(game.binFill??[]).some(x=>x>=10)||game.cash<55;
+  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
+    const state=binStatus(n);
+    return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
+  }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
+  " · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
+  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||game.cash<serviceVisitCost(game,"cleaning");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);

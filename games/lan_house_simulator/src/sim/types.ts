@@ -115,6 +115,8 @@ export interface GameState {
   pcWear?: number[];
   repairJobs?: import("./services.js").RepairJob[];
   binFill?: number[];
+  /** Lixo derramado quando as duas lixeiras estão cheias; opcional nos saves anteriores. */
+  overflowWaste?: number;
   cleaningJob?: import("./services.js").CleaningJob;
   inventory: Inventory;
   customers: Customer[];

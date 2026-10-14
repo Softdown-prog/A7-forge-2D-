@@ -3,7 +3,7 @@ import { iso, type Projection } from "./isometric.js";
 import type { ActorDirection } from "./direction.js";
 
 export type ActorPose = "idle" | "walking" | "sitting" | "standing-up";
-type ActorKind = Costume | "owner";
+export type ActorKind = Costume | "owner" | "cleaner" | "technician";
 export interface ActorStyle {
   shirt: string; dark: string; highlight: string;
   pants: string; hair: string; skin: string; trim: string;
@@ -16,6 +16,8 @@ const casual: readonly ActorStyle[] = [
 ];
 export function actorStyleFor(kind: ActorKind, id: number): ActorStyle {
   const style = casual[(Math.abs(Math.trunc(id)) || 0)%casual.length]!;
+  if(kind==="cleaner")return {shirt:"#368DAD",dark:"#225E7A",highlight:"#8BCBDD",pants:"#345475",hair:"#3D3130",skin:"#DDA57F",trim:"#F0D680"};
+  if(kind==="technician")return {shirt:"#41876E",dark:"#245D57",highlight:"#92BE96",pants:"#344D60",hair:"#4B342D",skin:"#DFAC85",trim:"#E6C67D"};
   if(kind==="owner") return {shirt:"#328777",dark:"#185E5B",highlight:"#76C1A4",pants:"#394960",hair:"#4E3029",skin:"#E4AE86",trim:"#F0CE86"};
   if(kind==="clown") return {shirt:"#E2A541",dark:"#C96D58",highlight:"#F4D58B",pants:"#637AB0",hair:"#D34F60",skin:"#E8B08D",trim:"#89C6A1"};
   if(kind==="vampire") return {shirt:"#604A78",dark:"#352C51",highlight:"#B88DAF",pants:"#282E4D",hair:"#252535",skin:"#E9B9B7",trim:"#B64E64"};
@@ -321,6 +323,27 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   if(a.kind==="vampire"){
     shape(ctx,[[-1,-58+headShift],[1,-55.5+headShift],[2,-59+headShift]],"#FFF1E8","#AC7077");
   }
+  }
+  if(a.kind==="cleaner"||a.kind==="technician"){
+    // Capacete amarelo original: quatro direções, mesmo volume/câmera/contorno dos visitantes.
+    const shell=a.kind==="cleaner"?"#F5C84F":"#E8BF47";
+    const shade="#B17E32",rim="#FFF1A4";
+    ctx.save();ctx.translate(lean,headShift);
+    // Casco arredondado, sombreado e assentado sobre a cabeça; sem flutuar.
+    ctx.beginPath();
+    ctx.moveTo(-12,-76);ctx.bezierCurveTo(-14,-87,-8,-91,0,-91);
+    ctx.bezierCurveTo(10,-91,15,-86,12,-76);
+    ctx.closePath();ctx.fillStyle=shell;ctx.strokeStyle="#5B503B";
+    ctx.lineWidth=1.7;ctx.fill();ctx.stroke();
+    shape(ctx,[[6,-88],[11,-84],[13,-77],[5,-76]],shade,"#896A3F");
+    ctx.save();ctx.globalAlpha=.7;
+    ell(ctx,-5,-86,4.3,1.7,rim);ctx.restore();
+    // Aba segue a orientação; perfil destaca a pequena projeção frontal.
+    const brim=sideways?[[0,-77],[17,-77],[16,-72],[-2,-73]]:
+      [[-16,-77],[16,-77],[17,-73],[-17,-73]];
+    shape(ctx,brim as [number,number][],shell,"#6B5A38");
+    segment(ctx,-11,-74,11,-74,1.1,rim);
+    ctx.restore();
   }
   ctx.restore();
 }
