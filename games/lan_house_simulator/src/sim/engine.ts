@@ -16,6 +16,7 @@ import {scheduleDecisions} from "./decisions.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
+import {recordPaidSession,recordStationMinute,validStationLedger} from "./stationAccounting.js";
 import {crowdRoute} from "./crowdNavigation.js";
 import {validLcdModels} from "./computerModels.js";
 
@@ -283,6 +284,7 @@ function tryServe(s: GameState, c: Customer): void {
   s.counterBusyUntil=s.totalMinutes+3;
   const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
   s.cash += paid; s.revenue += paid; s.served++;
+  recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
 }
@@ -411,8 +413,10 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
 function advanceMinute(s: GameState): void {
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
-  s.energyAccrued=(s.energyAccrued??0)+energyCostPerMinute(s);
+  const energyExpense=energyCostPerMinute(s);
+  s.energyAccrued=(s.energyAccrued??0)+energyExpense;
   recordComputerUtilization(s);
+  recordStationMinute(s,pcCount(s),energyExpense);
   s.totalMinutes++;
   if(s.totalMinutes===1)reviewNotices(s);
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
@@ -446,7 +450,8 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validLcdModels(v.pcLcdModels) && metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
+  return validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+    (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) && metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
     v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&

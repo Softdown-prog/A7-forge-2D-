@@ -1,6 +1,7 @@
 import type {GameState,Point,Result} from "./types.js";
 import {COUNTER_QUEUE,computerSeat} from "./route.js";
 import {navigableRoute} from "./navigation.js";
+import {emptyStationAccount} from "./stationAccounting.js";
 
 export interface AnnexComputerSlot {id:string;position:Point;wing:"west"|"east"|"north"}
 export const ANNEX_PC_COST=320;
@@ -41,6 +42,10 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
  const index=legacy+(s.annexPcs?.length??0);
  s.cash-=ANNEX_PC_COST;s.expenses+=ANNEX_PC_COST;
  (s.annexPcs??=[]).push({slotId});
+ if(s.stationLedger){
+  while(s.stationLedger.length<index)s.stationLedger.push(emptyStationAccount());
+  s.stationLedger[index]=emptyStationAccount();
+ }
  (s.pcTiers??=[])[index]=1;
  (s.pcGpus??=[])[index]=null;
  if(s.pcLcdModels)s.pcLcdModels[index]=null;
