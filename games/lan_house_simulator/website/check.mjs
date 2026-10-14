@@ -7,13 +7,21 @@ const root=resolve(import.meta.dirname,"../out/site");
 const walk=p=>readdirSync(p).flatMap(n=>{const f=resolve(p,n);return statSync(f).isDirectory()?walk(f):[f];});
 const files=walk(root),html=files.filter(f=>extname(f)===".html"),titles=new Set();let references=0;
 const header=readFileSync(resolve(root,"_headers"),"utf8");
+// Não expor referências ao repositório de desenvolvimento em arquivos servidos aos jogadores.
+// Inclui jogo compilado, site, scripts, estilos, ícones e arquivos de configuração públicos.
+// Documentos internos fora do site não fazem parte do frontend e permanecem intactos.
+const publicExtensions=new Set([".html",".js",".mjs",".css",".svg",".json"]);
+const publicFiles=files.filter(file=>publicExtensions.has(extname(file)));
+for(const file of publicFiles){
+ const name=relative(root,file).split(sep).join("/");
+ assert.doesNotMatch(readFileSync(file,"utf8"),/github/i,"Frontend público não deve conter referência ao GitHub: "+name);
+}
 for(const file of html){
  const source=readFileSync(file,"utf8"),name=relative(root,file).split(sep).join("/"),site=!name.startsWith("game/");
  assert.match(source,/<html lang="pt-BR"/);assert.match(source,/name="viewport"/);
  if(site){
   assert.equal((source.match(/<h1\b/g)??[]).length,1,name+" deve ter um h1");
   assert.match(source,/id="conteudo"/);assert.match(source,/Pular para o conteúdo/);
-  assert.doesNotMatch(source,/\bgithub\b|github\.com/i,"Página pública não deve fazer referência ao GitHub: "+name);
   const title=source.match(/<title>(.*?)<\/title>/s)?.[1];assert.ok(title&&!titles.has(title),"Título único: "+name);titles.add(title);
   const ids=[...source.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length,"IDs duplicados: "+name);
   const structured=source.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)?.[1];assert.ok(structured);assert.equal(JSON.parse(structured).inLanguage,"pt-BR");
