@@ -14,6 +14,19 @@ function crossesClosedWall(w:{axis:"x"|"y";x:number;y:number},a:Point,b:Point):b
  const t=(w.x-a.x)/(b.x-a.x),y=a.y+(b.y-a.y)*t;
  return t>eps&&t<1-eps&&y>w.y+eps&&y<w.y+1-eps;
 }
+/** Validação de um único passo local. O agente não pode atravessar divisórias
+ * nem "cortar" paredes com o desvio usado para evitar outros clientes.
+ * Retorna verdadeiro para uma porta (segmento removido ou explicitamente aberto).
+ * Não altera coordenadas, RNG ou caminho de outras entidades. */
+export function canTraverseLocalStep(s:GameState,from:Point,to:Point):boolean{
+ if(!Number.isFinite(from.x)||!Number.isFinite(from.y)||
+    !Number.isFinite(to.x)||!Number.isFinite(to.y))return false;
+ const b=roomBounds(s),eps=0.001;
+ if(to.x<b.minX+eps||to.x>b.maxX-eps||to.y<b.minY+eps||to.y>b.maxY-eps)return false;
+ return !(s.interiorWalls??[]).some(w=>
+   !(s.interiorDoors??[]).some(d=>barrierId(w.axis,w.x,w.y)===barrierId(d.axis,d.x,d.y)) &&
+   crossesClosedWall(w,from,to));
+}
 /** Grade de navegação separada do desenho; portas permitem passagem, paredes bloqueiam. */
 function barrierId(axis:"x"|"y",x:number,y:number):string{return axis+":"+x+":"+y;}
 function tile(p:Point,b:{minX:number;maxX:number;minY:number;maxY:number}):[number,number]{
