@@ -8,8 +8,8 @@ test('API startup, auth boundary, CORS, body limits and disabled payments',async
  const child=spawn(process.execPath,['backend/server.mjs'],{cwd:new URL('../..',import.meta.url),env:{...process.env,PORT:String(port),GOOGLE_CLOUD_PROJECT:'lhs-test',SAVES_BUCKET:'lhs-test-private',FIRESTORE_DATABASE_ID:'lhs-game',PAYMENTS_ENABLED:'false',ALLOWED_ORIGINS:'https://lhs.example'},stdio:['ignore','pipe','pipe']});
  let output='';child.stdout.on('data',b=>output+=b);child.stderr.on('data',b=>output+=b);
  t.after(()=>child.kill());const base=`http://127.0.0.1:${port}`;
- let ready=false;for(let attempt=0;attempt<600;attempt++){if(child.exitCode!==null)throw Error(output);try{const r=await fetch(base+'/healthz');if(r.ok){ready=true;break;}}catch{}await delay(50);}assert.ok(ready,output);
- assert.deepEqual(await fetch(base+'/healthz').then(r=>r.json()),{ok:true,service:'lhs-backend',paymentsEnabled:false});
+ let ready=false;for(let attempt=0;attempt<600;attempt++){if(child.exitCode!==null)throw Error(output);try{const r=await fetch(base+'/health');if(r.ok){ready=true;break;}}catch{}await delay(50);}assert.ok(ready,output);
+ assert.deepEqual(await fetch(base+'/health').then(r=>r.json()),{ok:true,service:'lhs-backend',paymentsEnabled:false});
  assert.equal((await fetch(base+'/v1/account')).status,401);
  assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/config',{headers:{Origin:'https://evil.example'}})).status,403);

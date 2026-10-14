@@ -27,7 +27,7 @@ app.use((req,res,next)=>{
 });
 app.use(express.json({limit:MAX_SAVE_BYTES,strict:true}));
 app.use((req,res,next)=>{if(req.body===undefined)req.body={};next();});
-app.get('/healthz',(req,res)=>res.json({ok:true,service:'lhs-backend',paymentsEnabled}));
+app.get(['/health','/healthz'],(req,res)=>res.json({ok:true,service:'lhs-backend',paymentsEnabled}));
 app.get('/v1/config',(req,res)=>res.json({paymentsEnabled,paymentsMode:sandbox?'sandbox':'production',packages:paymentsEnabled?packages:{},items:catalogue}));
 
 // UID-wide quota survives multiple instances and cold starts. Public signup is handled by Firebase.

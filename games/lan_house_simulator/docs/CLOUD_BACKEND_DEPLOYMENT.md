@@ -1,10 +1,10 @@
-# LHS backend — preparação de implantação
+# LHS backend — implantação e operação
 
-Estado em 14/10/2026: código em revisão, **nenhum Cloud Run LHS implantado**. O CLI confirmou `billingEnabled: false`; as contas de faturamento disponíveis estão fechadas. Firestore `lhs-game` e bucket não foram criados. Foi criada somente `lhs-backend@loyal-road-395203.iam.gserviceaccount.com`, sem permissões concedidas nesta etapa.
+Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, após reativação do faturamento. Serviço `lhs-backend`, revisão `lhs-backend-00002-gg9`, Firestore `lhs-game`, bucket privado `loyal-road-395203-lhs-saves` e conta de serviço com IAM restrito estão ativos em `us-central1`. URL: https://lhs-backend-1010038095056.us-central1.run.app . GET `/health` retorna 200; `/v1/account` sem token retorna 401. Frontend online e pagamentos continuam desativados.
 
 O backend é separado da simulação. Cloudflare continua servindo o HTML5. O container inclui apenas API e módulos puros do validador de save; não serve assets nem executa o loop do jogo.
 
-## Implantar após regularizar faturamento
+## Implantar ou atualizar
 
 No PowerShell 7+, a partir de `games/lan_house_simulator`:
 
@@ -44,9 +44,9 @@ Antes de habilitar: aprovar provedor/pacotes/preços, configurar `COOKIE_PACKAGE
 
 Node 22+ no container e nos testes. `npm ci` na pasta do jogo; `npm ci` na pasta backend; `npm run build`; `node --test backend/tests/*.test.mjs`; suíte existente do jogo. Os testes locais cobrem inicialização HTTP, autenticação obrigatória, CORS, upload excessivo, JSON inválido, cobrança desativada, assinatura/tampering/expiração, conflitos, valores e reversões; **não substituem testes integrados contra Firestore/GCS/MP**.
 
-O daemon Docker local está indisponível; a imagem não foi construída localmente. Antes de ativar online: construir/testar o container, implantar, verificar `/healthz`, confirmar 401 sem token, testar duas contas isoladas, save principal+backup, importação inválida, conflito de dispositivos, falha de rede e limites. Testar o container real e IAM, mobile e restauração após fechar/reabrir. Criar procedimento de exclusão de conta/saves e retenção de ledger, reconciliação, monitoramento e orçamento. Login opcional não implica conclusão de antifraude; Firebase signup/Cloud Run requerem monitoramento de abuso antes do acesso amplo.
+O daemon Docker local está indisponível; a imagem não foi construída localmente. Verificação real concluída: `/health` 200, 401 sem token, email não verificado 403, contas isoladas, save/leitura/backup, importação inválida e revisão ausente 400, concorrência com um vencedor e um 409, Cookies inalterados por save adulterado, GCS privado e Firestore negando acesso direto ao jogador. Pagamentos retornam 503, conforme configuração. Origem de navegador não configurada recebe 403. Três contas temporárias e seus dados foram removidos; bucket de saves vazio ao final. Ainda testar falha de rede e abuso sustentado antes de abrir acesso amplo. Testar o container real e IAM, mobile e restauração após fechar/reabrir. Criar procedimento de exclusão de conta/saves e retenção de ledger, reconciliação, monitoramento e orçamento. Login opcional não implica conclusão de antifraude; Firebase signup/Cloud Run requerem monitoramento de abuso antes do acesso amplo.
 
 Referências oficiais: [Cloud Run deploy](https://docs.cloud.google.com/sdk/gcloud/reference/run/deploy), [Firestore/IAM por banco](https://cloud.google.com/firestore/docs/manage-databases), [Mercado Pago Checkout](https://www.mercadopago.com.br/developers/en/reference/online-payments/checkout-pro-preferences/overview).
 
 
-Verificação local concluída: build TypeScript; suíte de 236 testes (227 aprovados, 9 auditorias opt-in ignoradas, zero falhas); 5 testes backend aprovados; site com 10 páginas, 337 referências e 48 módulos verificados; auditoria npm sem vulnerabilidades conhecidas. Execução local com Node 24 do runtime disponível; o CI adicionado verifica Node 22 e container sem credenciais cloud. Nenhuma validação integrada em serviços reais foi concluída.
+Verificação local concluída: build TypeScript; suíte de 236 testes (227 aprovados, 9 auditorias opt-in ignoradas, zero falhas); 5 testes backend aprovados; site com 10 páginas, 337 referências e 48 módulos verificados; auditoria npm sem vulnerabilidades conhecidas. Execução local com Node 24 do runtime disponível; o CI adicionado verifica Node 22 e container sem credenciais cloud. O teste explícito `backend/scripts/live-smoke.mjs` validou os serviços reais com contas temporárias e limpeza em `finally`; exige token OAuth administrativo e chave pública Firebase somente em variáveis de ambiente. Não roda automaticamente na suíte local. Pix/cartão/estornos reais e uso pelo frontend Cloudflare ainda não foram ativados nem validados.

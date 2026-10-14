@@ -46,9 +46,9 @@ jobs:
             -e FIRESTORE_DATABASE_ID=lhs-game -e PAYMENTS_ENABLED=false lhs-backend:test
           trap 'docker logs lhs-backend-test; docker stop lhs-backend-test' EXIT
           for attempt in {1..30}; do
-            if curl -fsS http://127.0.0.1:8080/healthz; then break; fi
+            if curl -fsS http://127.0.0.1:8080/health; then break; fi
             sleep 1
           done
-          curl -fsS http://127.0.0.1:8080/healthz
+          curl -fsS http://127.0.0.1:8080/health
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/v1/account)" = 401
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/index.html)" = 404
