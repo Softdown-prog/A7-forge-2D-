@@ -71,6 +71,8 @@ try{
   // Fluxo real de compra em 1998: regularização, Windows e título individual.
   await page.locator('[data-admin-tab="services"]').click();
   await page.locator("#license").click();
+  await page.locator('[data-admin-tab="computers"]').click();
+  await page.locator('[data-pc-power="0"]').click(); // Desligar para licenciar o Windows.
   await page.locator('[data-admin-tab="licenses"]').click();
   assert.equal(await page.locator('[data-era-game-buy]').count(),10);
   assert.equal(await page.locator('[data-era-game-buy="asfalto-noturno"]').isDisabled(),true);

@@ -22,6 +22,7 @@ try{
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const open=async()=>{await page.locator("#menu-continue").click();await page.locator("#open-admin").click();await page.locator('[data-admin-tab="computers"]').click();};
   await open();
+  await page.locator('[data-pc-power="1"]').click(); // Desligar PC 02 antes dos upgrades.
   // Resolve the live node and dispatch in one browser task across UI refreshes.
   const click=selector=>page.evaluate(selector=>{const node=document.querySelector(selector);if(!node||node.closest("button")?.disabled)throw Error("Controle indisponível: "+selector);node.dispatchEvent(new MouseEvent("click",{bubbles:true}));},selector);
   const bounds=async()=>{

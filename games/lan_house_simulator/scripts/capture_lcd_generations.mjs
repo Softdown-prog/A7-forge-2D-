@@ -79,6 +79,7 @@ try{
   const ui=await context.newPage();ui.on("pageerror",e=>errors.push(String(e)));
   await ui.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});await ui.locator("#menu-continue").click();
   await ui.locator("#open-admin").click();await ui.locator('[data-admin-tab="computers"]').click();
+  await ui.locator('[data-pc-power="1"]').click();
   assert.equal(await ui.locator(".lcd-card").count(),5);
   await ui.locator('[data-lcd-select="1"]').focus();await ui.waitForTimeout(650);
   assert.equal(await ui.evaluate(()=>document.activeElement?.dataset.lcdSelect),"1","Atualização periódica conserva foco do teclado");
@@ -98,6 +99,7 @@ try{
  await lockedContext.addInitScript(({key,state})=>localStorage.setItem(key,JSON.stringify(state)),{key:GAME_SAVE_KEY,state:early});
  const earlyPage=await lockedContext.newPage();await earlyPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
  await earlyPage.locator("#menu-continue").click();await earlyPage.locator("#open-admin").click();await earlyPage.locator('[data-admin-tab="computers"]').click();
+ await earlyPage.locator('[data-pc-power="0"]').click();
  assert.equal(await earlyPage.locator('[data-lcd-buy="lcd05"]').isEnabled(),true);
  for(const id of ["lcd08","lcd12","lcd17","lcd24"])assert.equal(await earlyPage.locator('[data-lcd-buy="'+id+'"]').isDisabled(),true);
  await lockedContext.close();assert.deepEqual(errors,[]);
