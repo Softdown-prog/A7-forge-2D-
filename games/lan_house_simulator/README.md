@@ -1,5 +1,10 @@
 # Lan House Simulator (LHS)
 
+## Site próprio
+
+O diretório [`website/`](website/README.md) contém o site responsivo do jogo, com home, página para jogar, sobre, ajuda, contato, termos, privacidade e controles de dados locais. `npm run build:site` gera `out/site/` com o jogo atual integrado; `npm run check:site` verifica páginas, links e metadados. A configuração começa como prévia privada, com dados do responsável e domínio a preencher antes do lançamento público.
+
+
 Jogo independente de administração de lan house em **TypeScript + HTML5 Canvas 2D**, com câmera isométrica fixa e arte 2D autoral.
 
 > **Status:** vertical slice jogável / protótipo. Formas desenhadas pelo Canvas são placeholders. Nenhum desenho está aprovado para produção.

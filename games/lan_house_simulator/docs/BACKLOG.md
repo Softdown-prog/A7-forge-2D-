@@ -500,3 +500,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [ ] Publicar somente depois de aprovação explícita, seguindo o processo de CH-site/Cloudflare.
 
 Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CONTRACT.md). Nenhum serviço foi provisionado com esta anotação.
+
+## Site próprio do Lan House Simulator — 14/10/2026
+- [x] Criar home, jogar, sobre o jogo, sobre nós, ajuda, contato, termos, privacidade, dados locais e 404 com a identidade Terminal de Bairro.
+- [x] Reutilizar marca e ícones, incluir imagem real otimizada do salão, evolução por época, navegação móvel, hover, foco visível e movimento reduzido; carregar o jogo completo sob demanda.
+- [x] Pesquisar fontes oficiais de LGPD, ANPD, CDC e provedores; refletir saves locais e recursos existentes, sem cadastro, pagamentos ou analytics fictícios.
+- [x] Incluir exclusão seletiva com confirmação, validação de 337 referências locais e cinco testes de dados/configuração; automatizar build e verificação no worker de cena.
+- [ ] Preencher responsável, contato privado, domínio e detalhes reais de hospedagem antes de lançar publicamente; revisar visual e interação em aparelhos físicos e políticas quando adicionar novos serviços.

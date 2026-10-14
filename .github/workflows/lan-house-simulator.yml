@@ -48,6 +48,12 @@ jobs:
         run: |
           npm run build
           npm run audit
+      - name: Build standalone website and validate routes and metadata
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          npm run build:site
+          npm run check:site
       - name: Install Chromium for real Canvas validation
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
@@ -135,6 +141,14 @@ jobs:
         with:
           name: lhs-playable-build
           path: games/lan_house_simulator/dist/
+          retention-days: 7
+      - name: Upload standalone game website
+        if: matrix.worker == 'scene'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-standalone-website
+          path: games/lan_house_simulator/out/site/
+          if-no-files-found: error
           retention-days: 7
       - name: Setup Python
         if: matrix.worker == 'forge-art'
