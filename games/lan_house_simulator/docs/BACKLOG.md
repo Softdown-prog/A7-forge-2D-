@@ -561,6 +561,14 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Verificar toque em 360/414 e desktop 1440, giro, recarga, compra confirmada de divisória e 60 casos de cache nas quatro orientações; proteger importação de saves e registrar `docs/LAYOUT_EDITOR.md`.
 - [ ] Conferir gestos e ergonomia em telefone físico, principalmente salões grandes; estudar corredores mais amplos e edição assistida por cômodos antes de expandir o construtor.
 
+## Jogos GPU obrigatórios e licenças desde 2005 — 14/10/2026
+- [x] Preservar catálogo básico de jogos (R$ 450) e licenças Windows atuais; adicionar títulos fictícios desbloqueados em **2005, 2009 e 2013**, cada um com GPU mínima, Windows mínimo, preço único e indicação dos PCs elegíveis.
+- [x] Impedir licenciamento premium sem **ao menos uma estação com GPU e Windows licenciado compatíveis**, mesmo se houver dinheiro; impedir cobrança repetida, antecipação da data de lançamento e IDs adulterados em saves.
+- [x] Ao atender gamers desde 2005, preferir PCs que suportem os jogos e cobrar adicional **somente naquela estação e naquela sessão**, limitado ao teto anual, sem aumentar a chegada de clientes nem alterar o RNG das épocas anteriores.
+- [x] Exibir jogos, requisitos, motivos de bloqueio, preços e PCs elegíveis na aba Windows / Licenças; registrar contrato premium, receita e custo nos mesmos livros econômicos do motor.
+- [x] Preservar saves clássicos, históricos anteriores e ausência de `licensedGpuGames`; validar teste de autorização, compatibilidade, caixa, tarifa local e atendimento real.
+- [ ] Ampliar GPUs para 2005–2013, catálogo por gênero, demanda específica por título, instalação por máquina, preferência do cliente e preços locais configuráveis; somente então realizar uma **nova auditoria de ROI das GPUs**.
+
 
 ### Correção do editor e remoções — 14/10/2026
 
@@ -568,6 +576,18 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - Remoção com confirmação/cancelamento de plantas, mesas, pôsteres comprados e originais; libera encaixes e persiste, sem reembolso. Saves legados são normalizados sem recriar unidades retiradas.
 - Divisórias e portas aparecem na lista do editor com posição/orientação e destaque no mapa. Atalho da loja abre essa lista; retirada recalcula as rotas em curso.
 - Testes de motor cobrem retirada, recompra, saves antigos, ampliação e dados inválidos; teste de interface cobre remoção/cancelamento/reload com toque em 360/414 px e desktop.
+
+## Eventos com consequências encadeadas — 14/10/2026
+
+- [x] Criar doze histórias novas, esporádicas e únicas por save: goteira, vizinhos, teclado, malware, estoque, energia, fornecedor, documentos, rede, jornal, privacidade e ação comunitária.
+- [x] Cada história tem três escolhas iniciais, desdobramento contextual com duas escolhas e carta final; histórias não reaparecem mesmo após compactação do envelope.
+- [x] Efeitos reais em demanda temporária, desgaste de máquinas, estoque, internet, reputação e dinheiro; custo histórico proporcional e prevenção de duplo débito.
+- [x] Persistir estágio da cadeia, escolhas, prazos e modificadores no JSON, validando dados e preservando saves anteriores.
+- [x] Criar testes de cobertura para todos os ramos, consequências no atendimento, idempotência e importação.
+- [x] Integrar as quatro decisões legadas (fornecedor, escola, campeonato, manutenção) ao pipeline de retorno, mantendo os efeitos originais e criando cartas de desdobramento e conclusão.
+- [ ] Validar suíte do CI, jogar os cenários no navegador real e calibrar impactos de longo prazo antes do lançamento.
+
+Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Serviços externos e Cookies não são alterados.
 
 
 ### Fluidez de interface e atendimento de lanches — 14/10/2026

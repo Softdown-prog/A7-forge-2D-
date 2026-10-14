@@ -4,6 +4,7 @@
 
 - O jogo começa em **1998** e termina no último minuto jogável de **2030**, com 360 dias por ano (12 meses de 30 dias). Não há avanço para 2031. Ao encerrar, o cenário fica disponível para visualização, mas tempo, renda, despesas e RNG deixam de avançar.
 - As **oito cartas atualmente esporádicas** são: proteção de menores, licenças de Windows, direitos dos jogos, fornecedor, reserva escolar, campeonato, manutenção preventiva e inspeção elétrica dos Bombeiros.
+- As doze histórias do pipeline de consequências ocupam os maiores intervalos livres entre essas oito cartas. As vinte cartas iniciais ficam separadas por pelo menos 360 dias. Retornos e conclusões continuam próximos das escolhas que os provocaram; não são eventos novos. Migrações perto de 2030 omitem histórias que não cabem, sem concentrá-las no fim.
 - Cada nova partida sorteia **a ordem, o ano e o dia** de cada carta dentro de janelas distribuídas ao longo dos 33 anos. A distância planejada entre cartas é de pelo menos 360 dias; elas nunca são todas enviadas no começo da campanha.
 - O sorteio usa semente própria, guardada no save, e **nunca altera o RNG dos clientes**. Cartas são únicas, com IDs rastreados mesmo após excluir ou compactar mensagens.
 - Uma carta dependente do estado (manutenção, quantidade de computadores ou necessidade de licença) só aparece se ainda fizer sentido. Se perder sua janela por já estar resolvida ou por requisitos ausentes, não gera avalanche retroativa.

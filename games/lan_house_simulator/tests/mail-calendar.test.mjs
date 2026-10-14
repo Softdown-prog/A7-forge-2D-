@@ -8,8 +8,10 @@ import {reviewNotices} from "../dist/js/sim/notices.js";
 import {scheduleDecisions,chooseDecision,decisionOptions} from "../dist/js/sim/decisions.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {SPORADIC_MAIL_IDS,sporadicMailSchedule,sporadicMailDue,
- fixedYearMailDue,recordMailDelivery,GAME_END_DAY,GAME_LAST_MINUTE,GAME_LAST_YEAR
+ additionalMailSchedule,fixedYearMailDue,recordMailDelivery,GAME_END_DAY,GAME_LAST_MINUTE,GAME_LAST_YEAR
 } from "../dist/js/sim/mailCalendar.js";
+
+import {STORY_IDS} from "../dist/js/sim/storyEvents.js";
 
 const at=(s,day)=>{s.totalMinutes=(day-1)*DAY_MINUTES;};
 test("oito cartas únicas são sorteadas e distribuídas pelos anos de 1998 a 2030",()=>{
@@ -113,4 +115,32 @@ test("salvamento antigo após 2030 importa no limite sem apagar caixa e bens",()
  assert.equal(isValidSave(malformed),false);
  const missing=createGame();delete missing.mailSeenIds;delete missing.mailStartDay;delete missing.mailScheduleSeed;
  assert.equal(isValidSave(missing),true);
+});
+
+
+test("as doze histórias e oito cartas dividem 33 anos sem avalanche ou perda de consequências",()=>{
+ for(const seed of [1,23,72421,123456,987654,0xffffffff]){
+  const s=createGame(seed);s.cash=100000;s.pcWear=[45,45,45];
+  const rng=s.rng,stories=additionalMailSchedule(s,STORY_IDS);
+  assert.equal(Object.keys(stories).length,12);
+  const dates=[...Object.values(sporadicMailSchedule(s)),...Object.values(stories)].sort((a,b)=>a-b);
+  assert.equal(dates.length,20);
+  for(let i=1;i<dates.length;i++)assert.ok(dates[i]-dates[i-1]>=360);
+  const firstLetters=new Set();
+  for(let d=1;d<=GAME_END_DAY;d++){
+   at(s,d);reviewNotices(s);scheduleDecisions(s);
+   for(const n of [...s.notices??[]]){
+    if(STORY_IDS.includes(n.id)||SPORADIC_MAIL_IDS.includes(n.id))firstLetters.add(n.id);
+    if(n.resolved)continue;
+    const options=decisionOptions(n.id,s);
+    if(options.length)assert.equal(chooseDecision(s,n.id,options.at(-1).id).ok,true,n.id);
+   }
+  }
+  assert.equal(firstLetters.size,20);
+  assert.equal(s.storySeenIds.length,12);
+  assert.equal(s.storyRecords.length,16);
+  assert.ok(s.storyRecords.every(r=>r.stage==="done"));
+  assert.equal(s.rng,rng);
+  assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+ }
 });

@@ -16,6 +16,8 @@ import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
+import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
+
 import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
@@ -26,6 +28,7 @@ import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
+import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
@@ -178,6 +181,14 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
+ // Jogadores de títulos 2005+ buscam primeiro um PC capaz de rodá-los.
+ // A fila e a escolha antiga não mudam para os demais visitantes.
+ if(c.gpuGamer){
+  for(let i=0;i<pcCount(s);i++){
+   if(isReserved(s,i)||pcBroken(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
+   if(navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
+  }
+ }
  for(let i=0;i<pcCount(s);i++){
   if(isReserved(s,i)||pcBroken(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
@@ -268,7 +279,9 @@ function spawn(s: GameState): void {
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: counterQueueSlot(queueIndex,s),queueIndex,
-    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
+    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1),
+    gpuGamer:wantsGpuGame(s,s.nextCustomerId-1),
+    pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
     (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
@@ -305,11 +318,16 @@ function tryServe(s: GameState, c: Customer): void {
   c.queueIndex=undefined;
   c.stage="to_pc";
   s.counterBusyUntil=s.totalMinutes+3;
-  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const regular=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const paid=s.economyVersion===2
+   ?gpuGameSessionPrice(s,index,c.sessionMinutes,!!c.gpuGamer)
+   :regular;
+  c.gpuGameCharged=paid>regular;
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
-  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
+  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
+   (c.gpuGameCharged?" Sessão de jogo com GPU.":""));
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
@@ -430,7 +448,7 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
-  return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
+  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
@@ -479,7 +497,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -487,7 +505,7 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
@@ -499,6 +517,24 @@ export function isValidSave(value: unknown): value is GameState {
     (v.mailStartDay===undefined||(Number.isInteger(v.mailStartDay)&&v.mailStartDay>=1&&v.mailStartDay<=GAME_END_DAY)) &&
     (v.mailSeenIds===undefined||(Array.isArray(v.mailSeenIds)&&v.mailSeenIds.length<=8&&
       new Set(v.mailSeenIds).size===v.mailSeenIds.length&&v.mailSeenIds.every(id=>isSporadicMailId(id)))) &&
+    (v.storySeenIds===undefined||(Array.isArray(v.storySeenIds)&&v.storySeenIds.length<=12&&
+      new Set(v.storySeenIds).size===v.storySeenIds.length&&
+      v.storySeenIds.every(id=>STORY_IDS.some(key=>key===id)))) &&
+    (v.storyRecords===undefined||(Array.isArray(v.storyRecords)&&v.storyRecords.length<=16&&
+      new Set(v.storyRecords.map(r=>r.id)).size===v.storyRecords.length&&
+      v.storyRecords.every(r=>!!r&&CHAIN_IDS.some(id=>id===r.id)&&
+       typeof r.choice==="string"&&r.choice.length<=80&&
+       (r.choiceLabel===undefined||(typeof r.choiceLabel==="string"&&r.choiceLabel.length<=200))&&
+       ["good","mixed","bad"].includes(r.outcome)&&["pending","awaiting","ending","done"].includes(r.stage)&&
+       Number.isInteger(r.dueDay)&&r.dueDay>=1&&r.dueDay<=1e7&&
+       (r.followupChoice===undefined||(typeof r.followupChoice==="string"&&r.followupChoice.length<=80))&&
+       (r.followupLabel===undefined||(typeof r.followupLabel==="string"&&r.followupLabel.length<=200))&&
+       (r.finalOutcome===undefined||["good","mixed","bad"].includes(r.finalOutcome))))) &&
+    (v.storyVisitorEffects===undefined||(Array.isArray(v.storyVisitorEffects)&&v.storyVisitorEffects.length<=32&&
+      v.storyVisitorEffects.every(e=>!!e&&typeof e.id==="string"&&e.id.length<=100&&
+       Number.isFinite(e.factor)&&e.factor>=0.5&&e.factor<=1.5&&
+       Number.isInteger(e.untilDay)&&e.untilDay>=1&&e.untilDay<=1e7))) &&
+
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]
       .every(flag=>flag===undefined||typeof flag==="boolean") &&

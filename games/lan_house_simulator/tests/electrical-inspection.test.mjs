@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {decisionOptions,chooseDecision,scheduleDecisions,DECISIONS} from "../dist/js/sim/decisions.js";
+import {DECISIONS,decisionOptions,chooseDecision,scheduleDecisions} from "../dist/js/sim/decisions.js";
 import {reviewNotices} from "../dist/js/sim/notices.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {sporadicMailSchedule,GAME_END_DAY} from "../dist/js/sim/mailCalendar.js";

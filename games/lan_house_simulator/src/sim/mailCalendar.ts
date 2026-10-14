@@ -83,3 +83,25 @@ export function fixedYearMailDue(s:GameState,year:number,dayOfYear:number):boole
     !Number.isInteger(dayOfYear)||dayOfYear<1||dayOfYear>DAYS_PER_YEAR)return false;
  return mailDay(s)===(year-GAME_FIRST_YEAR)*DAYS_PER_YEAR+dayOfYear;
 }
+
+/** Extra stories occupy the largest remaining gaps between the eight original letters.
+ * All first letters stay at least one year apart; short legacy campaigns omit excess stories. */
+export function additionalMailSchedule(s:GameState,ids:readonly string[]):Partial<Record<string,number>>{
+ const original=sporadicMailSchedule(s);
+ const occupied=[s.mailStartDay!,...Object.values(original) as number[],GAME_END_DAY-30].sort((a,b)=>a-b);
+ const result:Partial<Record<string,number>>={};
+ const ordered=[...ids].sort((a,b)=>hash(s.mailScheduleSeed!,"story:"+a)-hash(s.mailScheduleSeed!,"story:"+b)||a.localeCompare(b));
+ for(const id of ordered){
+  let best=-1,width=0;
+  for(let i=1;i<occupied.length;i++){
+   const gap=occupied[i]!-occupied[i-1]!;
+   if(gap>=DAYS_PER_YEAR*2&&gap>width){best=i;width=gap;}
+  }
+  if(best<0)break;
+  const left=occupied[best-1]!,right=occupied[best]!;
+  const jitter=.35+hash(s.mailScheduleSeed!,"story-day:"+id)/0x1_0000_0000*.3;
+  const date=Math.max(left+DAYS_PER_YEAR,Math.min(right-DAYS_PER_YEAR,left+Math.floor(width*jitter)));
+  result[id]=date;occupied.splice(best,0,date);
+ }
+ return result;
+}

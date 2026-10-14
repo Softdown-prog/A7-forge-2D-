@@ -2,11 +2,12 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
-import {sporadicMailDue,recordMailDelivery,sporadicMailSchedule} from "./mailCalendar.js";
+import {sporadicMailDue,recordMailDelivery,sporadicMailSchedule,additionalMailSchedule} from "./mailCalendar.js";
+import {STORY_IDS,STORIES,isStoryId,isStoryNoticeId,storyOptions,chooseStory,processStoryFollowups,storySeen,registerLegacyStory,type StoryId} from "./storyEvents.js";
 
 export type DecisionId="supplier-offer"|"school-booking"|"gaming-tournament"|"equipment-fault"|"electrical-inspection";
 export type ChoiceId="supplier-accept"|"supplier-decline"|"school-accept"|"school-decline"|"tournament-host"|"tournament-small"|"tournament-decline"|"fault-express"|"fault-basic"|"fault-delay"|"electrical-complete"|"electrical-essential"|"electrical-defer";
-export interface DecisionOption {id:ChoiceId;label:string;cost:number;description:string}
+export interface DecisionOption {id:string;label:string;cost:number;description:string}
 export const DECISIONS:Record<DecisionId,{title:string;body:string;options:DecisionOption[]}>={
  "supplier-offer":{title:"Proposta do distribuidor",body:"Um distribuidor oferece um lote promocional de bebidas. Aceitar exige capital, mas aumenta o estoque.",options:[
   {id:"supplier-accept",label:"Comprar lote especial · R$ 140",cost:140,description:"+35 bebidas"},
@@ -32,6 +33,7 @@ export const DECISIONS:Record<DecisionId,{title:string;body:string;options:Decis
 };
 /** Serviços de design indexados à época no modo histórico. */
 export function decisionOptions(id:string,s?:GameState):DecisionOption[]{
+ if(isStoryNoticeId(id))return s?storyOptions(s,id):isStoryId(id)?STORIES[id].choices.map(c=>({...c})):[];
  const options=DECISIONS[id as DecisionId]?.options??[];
  if(id!=="electrical-inspection"||!s||!isHistorical(s))return options;
  const index=priceIndex(yearFromMinutes(s.totalMinutes));
@@ -42,6 +44,7 @@ export function decisionOptions(id:string,s?:GameState):DecisionOption[]{
  });
 }
 export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Result{
+ if(isStoryNoticeId(noticeId))return chooseStory(s,noticeId,choiceId);
  const notice=s.notices?.find(n=>n.id===noticeId);
  const options=decisionOptions(noticeId,s);
  const option=options.find(o=>o.id===choiceId);
@@ -50,7 +53,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  // Operação idempotente: scripts antigos de campanha repetem a última escolha.
  if(option.id==="electrical-defer"&&(s.electricalExtensionUsed||s.electricalInspectionFineApplied))
   return {ok:true,message:"Prazo já solicitado; nenhuma nova prorrogação foi concedida. Regularize a instalação."};
- if(s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
+ if(option.cost>0&&s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
  s.cash-=option.cost;s.expenses+=option.cost;
  switch(option.id){
   case "supplier-accept":s.inventory.soda+=35;break;
@@ -67,6 +70,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  notice.read=true;
  // Pedir prazo não resolve a irregularidade; a carta permanece aberta.
  if(option.id!=="electrical-defer")notice.resolved=option.id;
+ registerLegacyStory(s,noticeId,option.id,option.label);
  if(s.electricalWiringRegularized)notice.severity="info";
  const message=option.id==="electrical-defer"
   ?"Prazo solicitado até o dia "+s.electricalDeadlineDay+". A instalação continua irregular."
@@ -77,25 +81,31 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
 /** Propostas esporádicas com data distribuída pelos anos de 1998–2030.
  * São sorteadas uma vez por save e não usam o RNG que movimenta clientes. */
 export function scheduleDecisions(s:GameState):void{
+ processStoryFollowups(s);
  const today=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
- const ids:DecisionId[]=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection"];
+ const storyDates=additionalMailSchedule(s,STORY_IDS);
+ const ids:Array<DecisionId|StoryId>=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection",...STORY_IDS];
  const candidates=ids.filter(id=>
-  sporadicMailDue(s,id)&&
+  (isStoryId(id)
+   ?storyDates[id]!==undefined&&today>=storyDates[id]!&&today<storyDates[id]!+45&&!storySeen(s,id)
+   :sporadicMailDue(s,id))&&
+  !(s.storyRecords??[]).some(r=>r.id===id)&&
   (id!=="electrical-inspection"||!s.electricalInspectionSeen)&&
   !s.notices?.some(n=>n.id===id)&&
   (id!=="school-booking"||s.installedPcs===undefined||s.installedPcs>=3)&&
   (id!=="equipment-fault"||(s.pcWear??[]).some(x=>x>15))
  );
  if(!candidates.length)return;
- const dates=sporadicMailSchedule(s);
+ const dates:Partial<Record<string,number>>={...sporadicMailSchedule(s),...storyDates};
  // Nunca escolher uma mensagem aleatória extra em dias adjacentes.
  const id=candidates.sort((a,b)=>(dates[a]??0)-(dates[b]??0))[0]!;
- const spec=DECISIONS[id];
+ const spec=isStoryId(id)?STORIES[id]:DECISIONS[id];
  const notice:GameNotice={id,title:spec.title,body:spec.body,day:today,read:false,severity:id==="electrical-inspection"?"warning":"info"};
  if(id==="electrical-inspection"){s.electricalInspectionSeen=true;s.electricalDeadlineDay=today+8;}
+ if(isStoryId(id))(s.storySeenIds??=[]).push(id);
  (s.notices??=[]).unshift(notice);
  s.notices.splice(40);
- recordMailDelivery(s,id);
+ if(!isStoryId(id))recordMailDelivery(s,id);
  s.lastDecisionDay=today;
  s.eventLog.unshift("D"+today+" · Nova proposta: "+spec.title);
  s.eventLog.splice(14);

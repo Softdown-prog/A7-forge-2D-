@@ -1,9 +1,10 @@
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
+import type {StoryNoticeId} from "./storyEvents.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId|StoryNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }

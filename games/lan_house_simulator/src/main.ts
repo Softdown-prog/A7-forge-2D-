@@ -27,6 +27,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
@@ -376,6 +377,14 @@ gpuList?.addEventListener("click",event=>{
  applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
 });
 const licensePanel=document.getElementById("windows-license-list");
+const gpuGamePanel=document.getElementById("gpu-game-catalog");
+gpuGamePanel?.addEventListener("click",event=>{
+ const button=event.target instanceof Element?event.target.closest("button[data-gpu-game-buy]"):null;
+ if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const id=button.dataset.gpuGameBuy;
+ if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
+ applyResult(game,licenseGpuGame(game,id));renderUI();save();
+});
 licensePanel?.addEventListener("click",event=>{
  const node=event.target instanceof Element?event.target.closest("button"):null;
  if(!(node instanceof HTMLButtonElement)||node.disabled)return;
@@ -631,6 +640,15 @@ function renderUI(liveOnly=false):void {
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
       if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
+      const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
+      if(record&&(record.stage==="pending"||record.stage==="ending")){
+        const progress=document.createElement("small");
+        progress.className="notice-followup-hint";
+        progress.textContent=record.stage==="pending"
+          ?"Consequências em acompanhamento: nova carta a partir do dia "+record.dueDay+"."
+          :"O resultado será registrado na correspondência a partir do dia "+record.dueDay+".";
+        actions.append(progress);
+      }
       const options=decisionOptions(n.id,game);
       if(n.id==="electrical-inspection"&&game.electricalDeadlineDay!==undefined&&!n.resolved){
         const pending=document.createElement("strong");
@@ -643,7 +661,7 @@ function renderUI(liveOnly=false):void {
         if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
         else for(const option of options){
           if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
-          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
+          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=option.cost>0&&game.cash<option.cost;actions.append(choice);}
       }
       card.append(title,date,body,actions);noticesList.append(card);
     }
@@ -677,7 +695,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedGpuGames,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -929,6 +947,46 @@ function renderUI(liveOnly=false):void {
         choices.appendChild(btn);
       }
       line.append(title,choices);licensePanel.appendChild(line);
+    }
+  }
+  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
+    gpuGamePanel.replaceChildren();
+    if(game.economyVersion!==2||year<2005){
+      const note=document.createElement("p");
+      note.textContent=game.economyVersion!==2
+       ?"Os jogos com GPU são um recurso do modo histórico."
+       :"Novos jogos que exigem placa de vídeo chegam em 2005.";
+      gpuGamePanel.append(note);
+    }else for(const title of GPU_GAME_CATALOG){
+      const card=document.createElement("div");card.className="price-control";
+      const heading=document.createElement("strong");
+      heading.textContent=title.name+" · "+title.year;
+      const requirements=document.createElement("p");requirements.className="catalog-game-note";
+      const gpu=GPU_CATALOG.find(x=>x.id===title.minGpu);
+      const os=WINDOWS_ERAS.find(x=>x.id===title.minWindows);
+      requirements.textContent="Requer GPU "+(gpu?.name??title.minGpu)+
+       " ou superior e "+(os?.name??title.minWindows)+" licenciado.";
+      const quote=quoteGpuGame(game,title.id);
+      const status=document.createElement("p");status.className="catalog-game-note";
+      const bought=game.licensedGpuGames?.includes(title.id)===true;
+      status.textContent=(bought?"Licenciado. ":quote.message+" ")+
+       (quote.eligiblePcs.length
+        ?"Roda no(s) PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
+        :"Nenhuma máquina compatível ainda.")+
+       " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
+       "/h, somente para clientes de jogos avançados e dentro do teto anual.";
+      if(bought&&quote.eligiblePcs.length){
+        status.textContent+=" Valor atual por hora: "+
+         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i).toFixed(2)).join(" · ")+".";
+      }
+      const action=document.createElement("button");
+      action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
+      action.textContent=bought?"Licenciado":year<title.year
+       ?"🔒 Disponível em "+title.year:"Licenciar · R$ "+title.cost;
+      action.disabled=!quote.ok;
+      action.title=quote.ok?"Licença para todo o estabelecimento, uso restrito a máquinas compatíveis.":quote.message;
+      card.append(heading,requirements,status,action);
+      gpuGamePanel.append(card);
     }
   }
   setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
