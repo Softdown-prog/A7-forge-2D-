@@ -12,6 +12,7 @@ import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { Soundscape } from "./audio/soundscape.js";
+import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -200,7 +201,7 @@ function paintSpeech(dt:number):void {
   view!.restore();
  }
 }
-const internetNames = ["Discada", "Via rádio", "Fibra óptica"] as const;
+const internetNames = INTERNET_ERAS.map(x=>x.name);
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 function save(): void {
   if(!isPlaying)return;
@@ -271,6 +272,14 @@ button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI(
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
+const licensePanel=document.getElementById("windows-license-list");
+licensePanel?.addEventListener("click",event=>{
+ const node=event.target;
+ if(!(node instanceof HTMLButtonElement)||node.disabled)return;
+ const index=Number(node.dataset.winPc),edition=node.dataset.winEdition;
+ if(!Number.isInteger(index)||!WINDOWS_ERAS.some(e=>e.id===edition))return;
+ applyResult(game,licenseWindows(game,index,edition as typeof WINDOWS_ERAS[number]["id"]));renderUI();save();
+});
 
 // Controles unificados em abas, sem criar novos painéis sobre o jogo.
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
@@ -483,7 +492,7 @@ function renderUI():void {
   renderShop();
   activateAdminTab(activeAdminTab);
   const days=dayNumber(game)-1;
-  const year=1998+Math.floor(days/360);
+  const year=gameYear(game);
   const month=Math.floor((days%360)/30)+1;
   const monthDay=days%30+1;
   const calendar=document.getElementById("calendar-hud");
@@ -530,6 +539,12 @@ function renderUI():void {
   setText("stock-candy","+ Doces R$ "+wholesaleCost(game,"candy"));
   setText("stock-snacks","+ Salgados R$ "+wholesaleCost(game,"snacks"));
   setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Online":" · Sem conexão até "+(game.offlineUntil-game.totalMinutes)+" min de jogo"));
+  const internetUp=document.querySelector<HTMLButtonElement>("#internet-up");
+  if(internetUp){
+    const next=INTERNET_ERAS[game.internetTier];
+    internetUp.disabled=!next || year<next.year || game.cash<250*game.internetTier;
+    internetUp.textContent=!next?"Internet no nível máximo":next.name+" · "+(year<next.year?"🔒 Disponível em "+next.year:"R$ "+(250*game.internetTier));
+  }
   const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
   if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
   const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
@@ -545,13 +560,34 @@ function renderUI():void {
       repair.textContent="Reparar · R$ "+(20+Math.ceil(wear*0.7));repair.disabled=wear<1;
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
       const tier=game.pcTiers?.[i]??1;
-      upgrade.textContent=tier>=3?"Máximo nível":("Evoluir nível "+(tier+1)+" · R$ "+(tier*240));
-      upgrade.disabled=tier>=3||game.cash<tier*240;
+      const hardwareYear=tier===1?2000:2003;
+      upgrade.textContent=tier>=3?"Máximo nível":("Hardware "+(tier+1)+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
+      upgrade.disabled=tier>=3||year<hardwareYear||game.cash<tier*240;
       label.textContent+=" · hardware nível "+tier;
       line.append(label,repair,upgrade);maintenance.appendChild(line);
     }
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
+  if(licensePanel){
+    licensePanel.replaceChildren();
+    for(let i=0;i<pcCount(game);i++){
+      const line=document.createElement("div");line.className="price-control";
+      const title=document.createElement("strong");
+      const edition=WINDOWS_ERAS.find(w=>w.id===installedWindows(game,i))!;
+      const isLicensed=game.pcWindowsLicenses?.[i]===true;
+      title.textContent="PC "+(i+1)+" · "+edition.name+(isLicensed?" · licenciado":" · sem licença");
+      const choices=document.createElement("div");choices.className="action-row wrap";
+      for(const item of WINDOWS_ERAS){
+        const btn=document.createElement("button");btn.type="button";btn.className="slice";
+        btn.dataset.winPc=String(i);btn.dataset.winEdition=item.id;
+        const already=isLicensed&&edition.id===item.id;
+        btn.textContent=item.name+" · "+(year<item.year?"🔒 "+item.year:already?"Instalado":"R$ "+item.cost);
+        btn.disabled=year<item.year||already||game.cash<item.cost;
+        choices.appendChild(btn);
+      }
+      line.append(title,choices);licensePanel.appendChild(line);
+    }
+  }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   const promoting=isPromotionActive(game);
   setText("promotion-status",promoting
