@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {createGame} from "../dist/js/sim/engine.js";
@@ -26,24 +27,24 @@ test("internet discada até 2002 e fibra somente de 2007 em diante",()=>{
 });
 test("hardware tem época própria e não compra antes do ano",()=>{
  const s=at(1998);
- assert.equal(upgradeComputer(s,0).ok,false);
+ assert.equal(withStationOff(s,0,()=>upgradeComputer(s,0)).ok,false);
  s.totalMinutes=2*360*DAY_MINUTES;
- assert.equal(upgradeComputer(s,0).ok,true);
- assert.equal(upgradeComputer(s,0).ok,false);
+ assert.equal(withStationOff(s,0,()=>upgradeComputer(s,0)).ok,true);
+ assert.equal(withStationOff(s,0,()=>upgradeComputer(s,0)).ok,false);
  s.totalMinutes=5*360*DAY_MINUTES;
- assert.equal(upgradeComputer(s,0).ok,true);
+ assert.equal(withStationOff(s,0,()=>upgradeComputer(s,0)).ok,true);
 });
 test("Windows exige licença separada por estação e respeita lançamento",()=>{
  const s=at(1998);
- assert.equal(licenseWindows(s,0,"winxp").ok,false);
- const first=licenseWindows(s,0,"win98");
+ assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"winxp")).ok,false);
+ const first=withStationOff(s,0,()=>licenseWindows(s,0,"win98"));
  assert.equal(first.ok,true);
  assert.equal(s.pcWindowsLicenses[0],true);
  assert.equal(s.pcWindowsLicenses[1],false);
- assert.equal(licenseWindows(s,0,"win98").ok,false);
+ assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,false);
  s.totalMinutes=3*360*DAY_MINUTES;
  const cash=s.cash,hardware=s.pcTiers[0];
- assert.equal(licenseWindows(s,0,"winxp").ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"winxp")).ok,true);
  assert.equal(s.cash,cash-WINDOWS_ERAS[2].cost);
  assert.equal(s.pcTiers[0],hardware);
 });

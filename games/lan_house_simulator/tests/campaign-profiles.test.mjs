@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
@@ -22,18 +23,18 @@ function setup(size,seed){
  const extra={pequena:0,media:2,grande:4}[size];
  for(let i=0;i<extra/2;i++)action(expandShop(s));
  for(let i=0;i<extra;i++)action(buyComputer(s));
- for(let i=0;i<pcCount(s);i++)action(licenseWindows(s,i,"win98"));
+ for(let i=0;i<pcCount(s);i++)action(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
  if(size!=="pequena"){
   action(upgradeInternet(s));
-  for(let i=0;i<Math.min(2,pcCount(s));i++)action(upgradeComputer(s,i));
+  for(let i=0;i<Math.min(2,pcCount(s));i++)action(withStationOff(s,i,()=>upgradeComputer(s,i)));
  }
  if(size==="grande"){
   action(upgradeInternet(s));
   for(let i=0;i<pcCount(s);i++) {
-   if((s.pcTiers?.[i]??1)<2)action(upgradeComputer(s,i));
-   if(i<3)action(upgradeComputer(s,i));
+   if((s.pcTiers?.[i]??1)<2)action(withStationOff(s,i,()=>upgradeComputer(s,i)));
+   if(i<3)action(withStationOff(s,i,()=>upgradeComputer(s,i)));
   }
-  for(let i=0;i<3;i++)action(buyGpu(s,i,"gpu09"));
+  for(let i=0;i<3;i++)action(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }
  assert.equal(pcCount(s),3+extra);
  assert.equal(s.cash,START_CAPITAL-s.expenses);

@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -20,9 +21,9 @@ function setup(y=2005,pc=1){
  const s=createGame(9,"historical");
  s.cash=25000;year(s,y);
  accept(licenseGames(s),"basic titles");
- accept(buyPlatform(s,pc,"platform05"),"platform 2024");
- accept(buyGpu(s,pc,"gpu05"),"GPU");
- accept(licenseWindows(s,pc,"winxp"),"Windows");
+ accept(withStationOff(s,pc,()=>buyPlatform(s,pc,"platform05")),"platform 2024");
+ accept(withStationOff(s,pc,()=>buyGpu(s,pc,"gpu05")),"GPU");
+ accept(withStationOff(s,pc,()=>licenseWindows(s,pc,"winxp")),"Windows");
  return s;
 }
 test("catálogo GPU exige 2005, licenciamento básico e pelo menos uma máquina compatível",()=>{
@@ -37,10 +38,10 @@ test("catálogo GPU exige 2005, licenciamento básico e pelo menos uma máquina 
  year(prior,2005);
  assert.equal(quoteGpuGame(prior,"neon-rush").ok,false);
  assert.match(quoteGpuGame(prior,"neon-rush").message,/GPU/);
- accept(buyGpu(prior,1,"gpu05"),"GPU alone");
+ accept(withStationOff(prior,1,()=>buyGpu(prior,1,"gpu05")),"GPU alone");
  assert.equal(quoteGpuGame(prior,"neon-rush").ok,false,"Windows incompatível bloqueia o jogo");
  const classic=createGame(9);classic.cash=100000;year(classic,2005);
- classic.licensedGames=true;accept(buyGpu(classic,1,"gpu05"),"GPU classic");
+ classic.licensedGames=true;accept(withStationOff(classic,1,()=>buyGpu(classic,1,"gpu05")),"GPU classic");
  assert.equal(licenseGpuGame(classic,"neon-rush").ok,false);
  assert.equal(classic.licensedGpuGames,undefined);
 });
@@ -73,17 +74,17 @@ test("níveis adicionais exigem GPU/Windows; título bloqueado não gera licenç
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,false);
  year(s,2009);
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,false,"GPU e Windows precisam de atualização");
- accept(buyPlatform(s,0,"platform08"),"plataforma 2008");
- accept(buyGpu(s,0,"gpu09"),"GPU 2009");
- accept(licenseWindows(s,0,"win7"),"Windows 7");
+ accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"plataforma 2008");
+ accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU 2009");
+ accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows 7");
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,true);
  accept(licenseGpuGame(s,"circuito-competitivo"),"2009");
  const quote=quoteGpuGame(s,"arena-do-futuro");
  assert.equal(quote.ok,false);
  year(s,2013);
  assert.equal(quoteGpuGame(s,"arena-do-futuro").ok,false,"GPU 2009 não basta");
- accept(buyPlatform(s,0,"platform12"),"plataforma 2012");
- accept(buyGpu(s,0,"gpu13"),"GPU 2013");
+ accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform12")),"plataforma 2012");
+ accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu13")),"GPU 2013");
  assert.equal(quoteGpuGame(s,"arena-do-futuro").ok,true);
  accept(licenseGpuGame(s,"arena-do-futuro"),"2013");
  assert.ok(gpuGameHourlyRate(s,0)>=s.pricePerHour);

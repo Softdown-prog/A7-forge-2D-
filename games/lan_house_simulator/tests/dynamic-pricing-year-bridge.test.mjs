@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
@@ -30,7 +31,7 @@ function setup(seed,pcs,policy){
  accept(expandShop(s));
  if(pcs===7)accept(expandShop(s));
  while(pcCount(s)<pcs)accept(buyComputer(s));
- for(let i=0;i<pcs;i++)accept(licenseWindows(s,i,"win98"));
+ for(let i=0;i<pcs;i++)accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
  assert.equal(pcCount(s),pcs);
  assert.equal(gameYear(s),2011);
  assert.equal(s.cash,INITIAL-s.expenses);
