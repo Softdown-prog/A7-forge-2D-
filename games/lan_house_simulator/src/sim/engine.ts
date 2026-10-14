@@ -370,7 +370,7 @@ function resolvePurchase(s: GameState, c: Customer): void {
 function advanceCustomer(s: GameState, c: Customer): void {
   switch (c.stage) {
     case "arriving":
-      if (moveRoute(s,c)) c.stage = "waiting";
+      if(localMinute(s)<CLOSING_START_MINUTE&&moveRoute(s,c))c.stage="waiting";
       return;
     case "waiting": if(localMinute(s)<CLOSING_START_MINUTE)tryServe(s, c);return;
     case "to_pc":
@@ -418,6 +418,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "standing":
+      if(localMinute(s)>=CLOSING_START_MINUTE)return; // Aguarda sua vez na dispersão da saída.
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
         if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
@@ -474,12 +475,12 @@ function prepareClosing(s:GameState):void {
    if(active(a)!==active(b))return active(a)?1:-1;
    return Math.hypot(a.x-exit.x,a.y-exit.y)-Math.hypot(b.x-exit.x,b.y-exit.y)||a.id-b.id;
  });
- for(const [index,c] of candidates.entries()){
-   // Limitar a uma saída nova a cada dois minutos do relógio do jogo.
-   if(minute<CLOSING_START_MINUTE+index*2)continue;
-   if(active(c)&&minute<SESSION_FINISH_MINUTE&&c.usedMinutes<(c.sessionMinutes??SESSION_MINUTES))continue;
-   sendHome(s,c);
- }
+ // Poucos clientes por vez: um a cada dois minutos no começo, um por
+ // minuto depois das 21h20. Evita uma debandada quando muitos PCs desocupam.
+ if(minute<CLOSING_START_MINUTE+20&&(minute-CLOSING_START_MINUTE)%2!==0)return;
+ const next=candidates.find(c=>
+   !active(c)||minute>=SESSION_FINISH_MINUTE||c.usedMinutes>=(c.sessionMinutes??SESSION_MINUTES));
+ if(next)sendHome(s,next);
 }
 function advanceMinute(s: GameState): void {
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
@@ -507,8 +508,10 @@ function advanceMinute(s: GameState): void {
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
   const admission=visitorArrivalChance(s,occupied);
   if (s.customers.length < 14 && admission>0 && random(s)<admission)spawn(s);
-  refreshCounterQueue(s);
-  refreshRetailQueues(s);
+  if(localMinute(s)<CLOSING_START_MINUTE){
+    refreshCounterQueue(s);
+    refreshRetailQueues(s);
+  }
   // Remover cada cliente assim que atravessa a soleira, liberando a porta
   // antes do próximo. Dar prioridade a quem já está saindo e está mais perto.
   const exit=entrance(s);

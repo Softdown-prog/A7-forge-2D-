@@ -66,7 +66,7 @@ test('fechamento às 21h leva clientes por uma saída visível em vez de apagar 
    assert.ok(Math.hypot(group[a].x-group[b].x,group[a].y-group[b].y)>=CUSTOMER_COLLISION_RADIUS-1e-6,
      'visitantes atravessaram corpos ao sair');
  }
- assert.equal(s.totalMinutes,719);
+ assert.ok(s.totalMinutes<=719,'saída concluída antes do fechamento');
  assert.equal(s.customers.filter(c=>ids.includes(c.id)).length,0,'todos saem pela porta antes das 22h');
  assert.equal(s.served,served,'sem sessões cobradas durante fechamento');
  assert.equal(s.purchases,purchases,'sem vendas após fechamento');
