@@ -5,7 +5,8 @@ import {energyCostPerMinute,energyMonthlyEstimate,monthlyBills} from "../dist/js
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 
 test("mais computadores ligados aumentam energia em repouso",()=>{
- const s=createGame();const base=energyCostPerMinute(s,0);
+ const s=createGame();s.expansionLevel=1;
+ const base=energyCostPerMinute(s,0);
  s.installedPcs=5;s.pcTiers=[1,1,1,1,1];assert.ok(energyCostPerMinute(s,0)>base);
 });
 test("computador usado custa mais energia que ocioso",()=>{
