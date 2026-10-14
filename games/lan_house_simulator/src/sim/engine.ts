@@ -15,6 +15,8 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
+import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
+
 import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
@@ -449,7 +451,7 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
-  return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
+  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
@@ -507,6 +509,24 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&
+    (v.storySeenIds===undefined||(Array.isArray(v.storySeenIds)&&v.storySeenIds.length<=12&&
+      new Set(v.storySeenIds).size===v.storySeenIds.length&&
+      v.storySeenIds.every(id=>STORY_IDS.some(key=>key===id)))) &&
+    (v.storyRecords===undefined||(Array.isArray(v.storyRecords)&&v.storyRecords.length<=16&&
+      new Set(v.storyRecords.map(r=>r.id)).size===v.storyRecords.length&&
+      v.storyRecords.every(r=>!!r&&CHAIN_IDS.some(id=>id===r.id)&&
+       typeof r.choice==="string"&&r.choice.length<=80&&
+       (r.choiceLabel===undefined||(typeof r.choiceLabel==="string"&&r.choiceLabel.length<=200))&&
+       ["good","mixed","bad"].includes(r.outcome)&&["pending","awaiting","ending","done"].includes(r.stage)&&
+       Number.isInteger(r.dueDay)&&r.dueDay>=1&&r.dueDay<=1e7&&
+       (r.followupChoice===undefined||(typeof r.followupChoice==="string"&&r.followupChoice.length<=80))&&
+       (r.followupLabel===undefined||(typeof r.followupLabel==="string"&&r.followupLabel.length<=200))&&
+       (r.finalOutcome===undefined||["good","mixed","bad"].includes(r.finalOutcome))))) &&
+    (v.storyVisitorEffects===undefined||(Array.isArray(v.storyVisitorEffects)&&v.storyVisitorEffects.length<=32&&
+      v.storyVisitorEffects.every(e=>!!e&&typeof e.id==="string"&&e.id.length<=100&&
+       Number.isFinite(e.factor)&&e.factor>=0.5&&e.factor<=1.5&&
+       Number.isInteger(e.untilDay)&&e.untilDay>=1&&e.untilDay<=1e7))) &&
+
     (v.overflowWaste===undefined||(Number.isFinite(v.overflowWaste)&&v.overflowWaste>=0&&v.overflowWaste<=1000)) &&
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]

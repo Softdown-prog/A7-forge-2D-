@@ -626,6 +626,15 @@ function renderUI(liveOnly=false):void {
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
       if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
+      const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
+      if(record&&(record.stage==="pending"||record.stage==="ending")){
+        const progress=document.createElement("small");
+        progress.className="notice-followup-hint";
+        progress.textContent=record.stage==="pending"
+          ?"Consequências em acompanhamento: nova carta a partir do dia "+record.dueDay+"."
+          :"O resultado será registrado na correspondência a partir do dia "+record.dueDay+".";
+        actions.append(progress);
+      }
       const options=decisionOptions(n.id,game);
       if(n.id==="electrical-inspection"&&game.electricalDeadlineDay!==undefined&&!n.resolved){
         const pending=document.createElement("strong");
@@ -638,7 +647,7 @@ function renderUI(liveOnly=false):void {
         if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
         else for(const option of options){
           if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
-          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
+          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=option.cost>0&&game.cash<option.cost;actions.append(choice);}
       }
       card.append(title,date,body,actions);noticesList.append(card);
     }

@@ -2,10 +2,11 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {STORY_IDS,STORIES,isStoryId,isStoryNoticeId,storyOptions,chooseStory,processStoryFollowups,storySeen,registerLegacyStory,type StoryId} from "./storyEvents.js";
 
 export type DecisionId="supplier-offer"|"school-booking"|"gaming-tournament"|"equipment-fault"|"electrical-inspection";
 export type ChoiceId="supplier-accept"|"supplier-decline"|"school-accept"|"school-decline"|"tournament-host"|"tournament-small"|"tournament-decline"|"fault-express"|"fault-basic"|"fault-delay"|"electrical-complete"|"electrical-essential"|"electrical-defer";
-export interface DecisionOption {id:ChoiceId;label:string;cost:number;description:string}
+export interface DecisionOption {id:string;label:string;cost:number;description:string}
 export const DECISIONS:Record<DecisionId,{title:string;body:string;options:DecisionOption[]}>={
  "supplier-offer":{title:"Proposta do distribuidor",body:"Um distribuidor oferece um lote promocional de bebidas. Aceitar exige capital, mas aumenta o estoque.",options:[
   {id:"supplier-accept",label:"Comprar lote especial · R$ 140",cost:140,description:"+35 bebidas"},
@@ -31,6 +32,7 @@ export const DECISIONS:Record<DecisionId,{title:string;body:string;options:Decis
 };
 /** Serviços de design indexados à época no modo histórico. */
 export function decisionOptions(id:string,s?:GameState):DecisionOption[]{
+ if(isStoryNoticeId(id))return s?storyOptions(s,id):isStoryId(id)?STORIES[id].choices.map(c=>({...c})):[];
  const options=DECISIONS[id as DecisionId]?.options??[];
  if(id!=="electrical-inspection"||!s||!isHistorical(s))return options;
  const index=priceIndex(yearFromMinutes(s.totalMinutes));
@@ -41,6 +43,7 @@ export function decisionOptions(id:string,s?:GameState):DecisionOption[]{
  });
 }
 export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Result{
+ if(isStoryNoticeId(noticeId))return chooseStory(s,noticeId,choiceId);
  const notice=s.notices?.find(n=>n.id===noticeId);
  const options=decisionOptions(noticeId,s);
  const option=options.find(o=>o.id===choiceId);
@@ -49,7 +52,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  // Operação idempotente: scripts antigos de campanha repetem a última escolha.
  if(option.id==="electrical-defer"&&(s.electricalExtensionUsed||s.electricalInspectionFineApplied))
   return {ok:true,message:"Prazo já solicitado; nenhuma nova prorrogação foi concedida. Regularize a instalação."};
- if(s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
+ if(option.cost>0&&s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
  s.cash-=option.cost;s.expenses+=option.cost;
  switch(option.id){
   case "supplier-accept":s.inventory.soda+=35;break;
@@ -66,6 +69,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  notice.read=true;
  // Pedir prazo não resolve a irregularidade; a carta permanece aberta.
  if(option.id!=="electrical-defer")notice.resolved=option.id;
+ registerLegacyStory(s,noticeId,option.id,option.label);
  if(s.electricalWiringRegularized)notice.severity="info";
  const message=option.id==="electrical-defer"
   ?"Prazo solicitado até o dia "+s.electricalDeadlineDay+". A instalação continua irregular."
@@ -76,22 +80,24 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
 /** Deterministic event scheduling: 4-7 day cadence, conditioned on current store;
  * never consume the simulation RNG stream used for customer behavior. */
 export function scheduleDecisions(s:GameState):void{
+ processStoryFollowups(s);
  const today=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
- if(today<4||s.notices?.some(n=>decisionOptions(n.id).length&&!n.resolved&&
+ if(today<4||s.notices?.some(n=>decisionOptions(n.id,s).length&&!n.resolved&&
    !(n.id==="electrical-inspection"&&s.electricalDeadlineDay!==undefined)))return;
  const last=s.lastDecisionDay??0;
  const interval=4+(Math.imul(s.rng>>>0,31)>>>0)%4;
  if(today-last<interval)return;
- const ids:DecisionId[]=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection"];
- const candidates=ids.filter(id=>(id!=="electrical-inspection"||!s.electricalInspectionSeen) && !s.notices?.some(n=>n.id===id) &&
+ const ids:Array<DecisionId|StoryId>=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection",...STORY_IDS];
+ const candidates=ids.filter(id=>!(s.storyRecords??[]).some(r=>r.id===id) && (!isStoryId(id)||!storySeen(s,id)) && (id!=="electrical-inspection"||!s.electricalInspectionSeen) && !s.notices?.some(n=>n.id===id) &&
   (id!=="school-booking"||s.installedPcs===undefined||s.installedPcs>=3) &&
   (id!=="equipment-fault"||(s.pcWear??[]).some(x=>x>15)));
  if(!candidates.length)return;
  const seed=(Math.imul(today,1103515245)+(s.rng>>>0))>>>0;
  const id=candidates[seed%candidates.length]!;
- const spec=DECISIONS[id];
+ const spec=isStoryId(id)?STORIES[id]:DECISIONS[id];
  const notice:GameNotice={id,title:spec.title,body:spec.body,day:today,read:false,severity:id==="electrical-inspection"?"warning":"info"};
  if(id==="electrical-inspection"){s.electricalInspectionSeen=true;s.electricalDeadlineDay=today+8;}
+ if(isStoryId(id))(s.storySeenIds??=[]).push(id);
  (s.notices??=[]).unshift(notice);
  s.notices.splice(40);
  s.lastDecisionDay=today;

@@ -142,6 +142,12 @@ export interface GameState {
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
   lastDecisionDay?: number;
+  /** Histórias únicas: sorteadas uma única vez, mesmo após compactar o envelope. */
+  storySeenIds?: import("./storyEvents.js").StoryId[];
+  /** Cadeias persistentes: retorno e encerramento independentes do RNG. */
+  storyRecords?: import("./storyEvents.js").StoryRecord[];
+  /** Bônus/penalidades temporários que afetam clientes realmente chegando. */
+  storyVisitorEffects?: import("./storyEvents.js").StoryVisitorEffect[];
   /** Não permite sortear uma segunda vistoria elétrica na mesma partida. */
   electricalInspectionSeen?: boolean;
   /** Adequação da instalação concluída por profissional. */
