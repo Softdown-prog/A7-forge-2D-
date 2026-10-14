@@ -174,7 +174,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
   const quality=hardwareSatisfactionBonus(s,i);
   // VIP valoriza mais hardware; para os demais, a estação próxima
   // continua vantajosa quando os equipamentos são equivalentes.
-  const score=quality*(c.vip?145:100)-distance*.65-pcWear(s,i)*.012;
+  const score=quality*(c.vip?145:100)-distance*.65;
   if(score>highest+1e-6){highest=score;chosen=i;}
  }
  return chosen;
