@@ -348,7 +348,7 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Evitar prometer receitas ou visitantes; indicador puro, sem mutação de saves, RNG, ocupação ou contabilidade.
 - [x] Validar os botões de subir/descer preço e a atualização dos indicadores no navegador Chromium de desktop e dispositivos móveis emulados.
 - [x] Executar onze campanhas controladas de 180 dias em 1998 e 2009, comparando preços intermediários, reputação, margem, VIPs, ocupação, investimentos e upgrades.
-- [ ] Repetir os cenários com várias sementes e os anos 2011–2013 antes de chamar o preço ideal de definitivo.
+- [x] Auditar 2011 e 2013 com três sementes e três preços, comparando PCs básicos e GPUs modernas durante 120 dias; medir também retorno após 360 dias em 2013 com R$ 24/h. Resultados em `docs/MODERN_HARDWARE_AUDIT_2026.md`. A tarifa ideal não está definida para toda campanha.
 - [ ] Aprovar visualmente o painel em aparelho móvel físico; capturas e testes de emulação não substituem essa revisão.
 
 ## Fluidez e custo de apresentação — 14/10/2026
@@ -358,3 +358,13 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Guardar fundo estático em cache invalidado por câmera, tamanho, expansão e pôsteres; comparar seis cenários com o desenho original no Chromium e no CI.
 - [x] Cobrir apresentação, soleira, assentos, reset, remoção, paredes, funcionários e determinismo com sete testes; executar os 160 testes da versão conjunta.
 - [ ] Medir em aparelho móvel físico e salões máximos antes de prometer 60 FPS em todos os casos.
+
+## Retorno do hardware moderno em campanhas de longo prazo — 14/10/2026
+- [x] Executar 36 campanhas de 120 dias em 2011 e 2013, com três sementes, R$ 18/22/24 por hora, cinco PCs e os mesmos contratos/rede em cada par.
+- [x] Adquirir por APIs do jogo o hardware nível 3 e placas PixelForce 560/770 nos PCs 4 e 5; medir desgaste, serviços, estoque, energia, ocupação, receita, atendimentos, VIPs e reputação sem fabricar valores.
+- [x] Confirmar que VIPs realmente priorizam PCs modernos na traseira; validar escolha determinística e importação de save.
+- [x] Detectar que o investimento em GPUs recentes **não se paga em 120 dias** nas seis comparações médias de preço/ano testadas; preservar custos e procura enquanto os dados ainda são parciais.
+- [x] Executar mais seis campanhas de 360 dias em 2013, R$ 24/h, e proteger por regressão o ganho real de atendimentos e resultado líquido nas três sementes.
+- [x] Registrar diferença de horizonte: em 360 dias, resultado líquido médio **R$ 41.829 com** PCs modernos e **R$ 22.793 sem**, inclusive investimento inicial.
+- [ ] Avaliar upgrade gradual de GPU 2009→2011→2013 (em vez do comparativo PC antigo vs moderno), inflação de custos, tarifas dinâmicas e preço após mudança de ano.
+- [ ] Validar salões físicos cheios, rotas com divisórias, rede lenta e experiência móvel real antes de declarar balanceamento definitivo.
