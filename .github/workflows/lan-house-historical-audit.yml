@@ -1,0 +1,30 @@
+name: Lan House historical campaign audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - test/lhs-historical-economy-180day-audit-20261014
+    paths:
+      - 'games/lan_house_simulator/tests/historical-campaign-audit.test.mjs'
+      - 'games/lan_house_simulator/package.json'
+      - '.github/workflows/lan-house-historical-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  historical-campaigns:
+    name: audit-historical-1998-2024
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install compiler
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Run actual 120-day campaigns and output monthly summaries
+        working-directory: games/lan_house_simulator
+        run: npm run audit:historical
