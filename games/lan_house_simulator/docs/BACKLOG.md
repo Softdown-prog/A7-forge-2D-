@@ -524,3 +524,12 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Validar também uma campanha de **750 dias** com três PCs, salvamento até 2000 e inflação em duas viradas de ano; final líquido **+R$ 19.003,75** na semente 23.
 - [x] Automatizar a auditoria pesada fora do teste cotidiano com `npm run audit:growth` e workflow manual; relatar hipóteses, custos e limitações em `docs/HISTORICAL_GROWTH_AUDIT_2026.md`.
 - [ ] Testar decisões mensais de preço, anúncios pagos, perfis de demanda maiores, divisão física do salão e atualização individual das peças antes de aplicar sugestão automática de expansão.
+
+## Preço horário, panfletagem e expansão no modelo histórico — 14/10/2026
+- [x] Identificar valor fixo de **R$ 120** da divulgação clássica sendo aplicado indevidamente em 1998, quando a hora custa apenas R$ 2,50.
+- [x] Criar cotação histórica de panfletagem com base de **R$ 24 em 1998**, indexada pelo IPCA (hipótese de balanceamento, não cotação histórica), preservando R$ 120 nas partidas clássicas; a UI exibe preço e bloqueio de caixa corretos.
+- [x] Testar 18 campanhas de 180 dias com **R$ 850 iniciais**, duas sementes, três/cinco PCs, tarifa fixa 2,50/3, reajuste mensal baseado no mês anterior e panfletagem paga; medir ROI real, clientes e caixa sem aumentar o multiplicador de chegada.
+- [x] Verificar que 3 PCs a **R$ 3/h** superaram 3 PCs a R$ 2,50/h em **R$ 1.560,25** líquidos, em média, e que quatro panfletagens custaram R$ 96 e não melhoraram os resultados médios pareados.
+- [x] Validar modo clássico, save e preço corrigido por ano, manter `npm test` leve e auditoria grande opt-in por `npm run audit:promotions`; documentar em `docs/HISTORICAL_PROMOTION_PRICING_AUDIT_2026.md`.
+- [ ] Testar panfletagem em salões de alta ocupação, datas de maior movimento, preços por alcance e mídias alternativas; não aumentar visitas ou dar ROI garantido sem experimento.
+- [ ] Comparar preços e publicidade após 2000 e com atualizações reais de CPU, RAM, placa-mãe, fonte, HD/SSD, GPU e Windows, mantendo as épocas historicamente coerentes.
