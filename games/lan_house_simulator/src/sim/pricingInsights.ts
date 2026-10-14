@@ -2,6 +2,8 @@ import type {GameState} from "./types.js";
 import {customerSatisfactionDelta,demandFactor,energyCostPerMinute,sessionRevenue} from "./economy.js";
 import {gameYear} from "./era.js";
 import {DAY_MINUTES} from "./types.js";
+import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,
+ normalizedHourlyPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";
 /** Informação do motor para a UI: não altera renda, clientes, RNG ou estado. */
 export function hourlyPriceInsight(s:Pick<GameState,"pricePerHour"|"reputation"|"weather"|"totalMinutes"|"offlineUntil">):{
  relativeDemandPercent:number;
@@ -9,13 +11,16 @@ export function hourlyPriceInsight(s:Pick<GameState,"pricePerHour"|"reputation"|
  caution:string;
 }{
  const online=s.totalMinutes>=s.offlineUntil, rainy=s.weather==="rain";
- const reference=demandFactor(12,s.reputation,online,rainy);
- const atPrice=demandFactor(s.pricePerHour,s.reputation,online,rainy);
- const delta=customerSatisfactionDelta(s.pricePerHour,0,0);
+ const reference=demandFactor(10,s.reputation,online,rainy);
+ const normalized=normalizedHourlyPrice(s,s.pricePerHour);
+ const atPrice=demandFactor(normalized,s.reputation,online,rainy);
+ const delta=customerSatisfactionDelta(normalized,0,0);
  return {
   relativeDemandPercent:Math.round(100*atPrice/reference),
   assessment:delta<0?"desfavorável":delta<.10?"sensível":"positiva",
-  caution:s.pricePerHour>18?"Acima de R$ 18/h, o sobrepreço reduz progressivamente a procura.":"O preço não sofre a penalidade adicional de sobrepreço."
+  caution:normalized>18?
+   "Tarifa elevada para o poder de compra desta época: a procura cai progressivamente.":
+   "A tarifa é avaliada contra o poder de compra da época, não como um preço nominal eterno."
  };
 }
 
@@ -23,19 +28,20 @@ export function hourlyPriceInsight(s:Pick<GameState,"pricePerHour"|"reputation"|
  * Índice bruto: procura relativa × cobrança arredondada de uma sessão-padrão.
  * Não prevê caixa, filas, satisfação futura ou lucro de uma campanha. */
 export function hourlyPriceScenarios(s:Pick<GameState,"pricePerHour"|"reputation"|"weather"|"totalMinutes"|"offlineUntil">):Array<{
-  delta:-2|0|2;
+  delta:-0.5|0|0.5;
   price:number;
   demandIndex:number;
   grossIntakeIndex:number;
 }>{
   const online=s.totalMinutes>=s.offlineUntil,rainy=s.weather==="rain";
-  const referenceDemand=demandFactor(s.pricePerHour,s.reputation,online,rainy);
+  const referenceDemand=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online,rainy);
   const referenceGross=referenceDemand*sessionRevenue(s.pricePerHour);
-  return ([-2,0,2] as const)
-    .filter(delta=>s.pricePerHour+delta>=4&&s.pricePerHour+delta<=40)
+  const ceiling=allowableHourlyPrice(s as GameState);
+  return ([-0.5,0,0.5] as const)
+    .filter(delta=>s.pricePerHour+delta>=MIN_HOURLY_PRICE&&s.pricePerHour+delta<=ceiling)
     .map(delta=>{
-      const price=s.pricePerHour+delta;
-      const demand=demandFactor(price,s.reputation,online,rainy);
+      const price=Math.round((s.pricePerHour+delta)*100)/100;
+      const demand=demandFactor(normalizedHourlyPrice(s,price),s.reputation,online,rainy);
       return {delta,price,
         demandIndex:Math.round(100*demand/referenceDemand),
         grossIntakeIndex:Math.round(100*demand*sessionRevenue(price)/referenceGross)};
