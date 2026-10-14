@@ -60,6 +60,17 @@ try{
    assert.equal(await page.locator('[data-section="'+tab+'"]').isVisible(),true);
    await shot("admin-"+tab,"#admin");
   }
+  // O indicador de procura acompanha o preço no Chromium real em todas
+  // as resoluções, sem salvar receita fictícia nem perder o foco da aba.
+  await page.locator('[data-admin-tab="prices"]').click();
+  const priceText=page.locator("#price-demand-insight");
+  assert.match(await priceText.textContent(),/100%/);
+  await page.locator("#price-up").click();
+  const raised=await priceText.textContent();
+  assert.match(raised,/Procura relativa/);
+  assert.ok(!raised.includes("100%"));
+  await page.locator("#price-down").click();
+  assert.match(await priceText.textContent(),/100%/);
   await page.locator('[data-admin-tab="stock"]').click();
   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   // Dispatch directly on the SVG child to cover event delegation too.
