@@ -33,6 +33,11 @@ import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame}
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
+/** Encerrar de forma gradual: últimos visitantes até 20h30, início da saída às 21h. */
+export const LAST_ADMISSION_MINUTE = DAY_MINUTES-90;
+export const CLOSING_START_MINUTE = DAY_MINUTES-60;
+const SESSION_FINISH_MINUTE = DAY_MINUTES-30; // Últimas sessões terminam até 21h30.
+const localMinute = (s:GameState):number => s.totalMinutes%DAY_MINUTES;
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
@@ -305,13 +310,12 @@ function tryServe(s: GameState, c: Customer): void {
     }
     return;
   }
-  if(s.economyVersion===2){
-   const openLeft=DAY_MINUTES-(s.totalMinutes%DAY_MINUTES);
-   if(openLeft<30){sendHome(s,c);return;}
-   c.sessionMinutes??=chooseSessionMinutes(c,true);
-   if(c.sessionMinutes>openLeft)c.sessionMinutes=
-    ([240,180,120,90,60,45,30] as number[]).find(n=>n<=openLeft)??30;
-  }else c.sessionMinutes??=chooseSessionMinutes(c);
+  // Uma sessão nova só é cobrada se tiver duração para terminar antes da saída final.
+  const available=SESSION_FINISH_MINUTE-localMinute(s);
+  if(available<30 || localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+  c.sessionMinutes??=chooseSessionMinutes(c,s.economyVersion===2);
+  if(c.sessionMinutes>available)c.sessionMinutes=
+    ([240,180,120,90,60,45,30] as number[]).find(n=>n<=available)??30;
   if(!leaveCounterForPc(s,c,computerSeat(pcPosition(index,s)))){
     c.waitingMinutes++;
     return; // Não cobrar se a sala não for acessível.
@@ -368,7 +372,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
     case "arriving":
       if (moveRoute(s,c)) c.stage = "waiting";
       return;
-    case "waiting": tryServe(s, c); return;
+    case "waiting": if(localMinute(s)<CLOSING_START_MINUTE)tryServe(s, c);return;
     case "to_pc":
       if (moveRoute(s,c)) { c.stage = "sitting"; c.poseMinutes = 0; }
       return;
@@ -425,13 +429,15 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "shopping":
+      if(localMinute(s)>=CLOSING_START_MINUTE)return; // Balcão encerrou as vendas; aguarda liberação para sair.
       if (moveRoute(s,c)&&firstRetailCustomer(s,c.desiredItem??"soda")===c.id&&Math.hypot(c.x-purchaseApproach(c.desiredItem??"soda",s).x,c.y-purchaseApproach(c.desiredItem??"soda",s).y)<.05) resolvePurchase(s, c);
       return;
     case "leaving": moveRoute(s,c); return;
   }
 }
+/** Não apagar clientes remanescentes ao virar o dia: concluem a saída fisicamente. */
 function nextDay(s: GameState): void {
-  s.customers = [];
+  for(const c of s.customers)if(c.stage!=="leaving")sendHome(s,c);
   // Na virada, máquina que envelheceu pode perder competitividade.
   if(clampPriceToEra(s))addLog(s,"Tarifa ajustada ao teto da época e aos computadores disponíveis.");
   s.weather = random(s) < 0.27 ? "rain" : "sun";
@@ -452,9 +458,28 @@ function nextDay(s: GameState): void {
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
 export function visitorArrivalChance(s:GameState,occupied:number):number {
+  if(localMinute(s)>=LAST_ADMISSION_MINUTE||
+    (localMinute(s)<10&&s.customers.some(c=>c.stage==="leaving")))return 0;
   const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
   return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*congestion;
+}
+/** Dispensa em pequenos grupos: fila e compras primeiro, sessões até 21h30. */
+function prepareClosing(s:GameState):void {
+ const minute=localMinute(s);
+ if(minute<CLOSING_START_MINUTE)return;
+ const exit=entrance(s);
+ const active=(c:Customer)=>c.stage==="using"||c.stage==="sitting"||c.stage==="to_pc";
+ const candidates=s.customers.filter(c=>c.stage!=="leaving").sort((a,b)=>{
+   if(active(a)!==active(b))return active(a)?1:-1;
+   return Math.hypot(a.x-exit.x,a.y-exit.y)-Math.hypot(b.x-exit.x,b.y-exit.y)||a.id-b.id;
+ });
+ for(const [index,c] of candidates.entries()){
+   // Limitar a uma saída nova a cada dois minutos do relógio do jogo.
+   if(minute<CLOSING_START_MINUTE+index*2)continue;
+   if(active(c)&&minute<SESSION_FINISH_MINUTE&&c.usedMinutes<(c.sessionMinutes??SESSION_MINUTES))continue;
+   sendHome(s,c);
+ }
 }
 function advanceMinute(s: GameState): void {
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
@@ -478,16 +503,27 @@ function advanceMinute(s: GameState): void {
     }
   }
   tickServices(s);
+  prepareClosing(s);
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
-  if (s.customers.length < 14) {
-    if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
-  }
+  const admission=visitorArrivalChance(s,occupied);
+  if (s.customers.length < 14 && admission>0 && random(s)<admission)spawn(s);
   refreshCounterQueue(s);
   refreshRetailQueues(s);
-  for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
+  // Remover cada cliente assim que atravessa a soleira, liberando a porta
+  // antes do próximo. Dar prioridade a quem já está saindo e está mais perto.
+  const exit=entrance(s);
+  const order=[...s.customers].sort((a,b)=>
+    a.stage==="leaving"&&b.stage!=="leaving"?-1:
+    a.stage!=="leaving"&&b.stage==="leaving"?1:
+    a.stage==="leaving"&&b.stage==="leaving"?
+      Math.hypot(a.x-exit.x,a.y-exit.y)-Math.hypot(b.x-exit.x,b.y-exit.y):a.id-b.id);
+  for(const c of order){
+    tickNeeds(c);advanceCustomer(s,c);
+    if(c.stage==="leaving"&&Math.hypot(c.x-exit.x,c.y-exit.y)<=EXIT_REACH_DISTANCE){
+      const index=s.customers.indexOf(c);if(index>=0)s.customers.splice(index,1);
+    }
+  }
   if(s.totalMinutes%70===0)addWaste(s,2);
-  const e = entrance(s);
-  s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > EXIT_REACH_DISTANCE);
 }
 export function stepGame(s: GameState, deltaMinutes: number): void {
   if (!Number.isFinite(deltaMinutes) || deltaMinutes <= 0) return;
