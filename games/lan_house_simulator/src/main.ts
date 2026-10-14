@@ -661,6 +661,9 @@ function renderUI():void {
       gpuPcChoice.append(control);
     }
     const current=gpuSpec(installedGpu(game,selectedGpuPc));
+    setText("gpu-replacement-note",current
+      ?"PC "+(selectedGpuPc+1)+": "+current.name+" instalada. Trocar custa o valor integral da nova placa e substitui a antiga sem desconto. Compare o ganho adicional indicado em cada cartão."
+      :"PC "+(selectedGpuPc+1)+" sem GPU dedicada. Cada compra acrescenta satisfação e consumo ao computador selecionado.");
     for(const model of GPU_CATALOG){
       const locked=year<model.year,owned=current?.id===model.id;
       const obsolete=!!current&&current.year>=model.year&&!owned;
@@ -669,7 +672,11 @@ function renderUI():void {
       art.alt="Placa de vídeo "+model.name+" com circuito, dissipador e ventilador";art.loading="lazy";
       const info=document.createElement("div");info.className="gpu-info";
       const title=document.createElement("strong");title.textContent=model.name+" · "+model.year;
-      const details=document.createElement("small");details.textContent="R$ "+model.cost+" · desempenho +"+Math.round(model.bonus*100)+"% · consumo +"+Math.round(model.power*100)+"%";
+      const gain=Math.max(0,model.bonus-(current?.bonus??0));
+      const num=(value:number)=>value.toFixed(3).replace(".",",");
+      const details=document.createElement("small");
+      details.textContent="R$ "+model.cost+" · bônus de satisfação "+num(model.bonus)+
+        " · ganho adicional "+num(gain)+" · consumo relativo "+num(model.power);
       const button=document.createElement("button");button.type="button";button.className="slice";
       button.dataset.gpuBuy=model.id;
       button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":"Comprar · R$ "+model.cost;
