@@ -119,6 +119,8 @@ test("2013: GPUs modernas recuperam o investimento após doze meses?",()=>{
   assert.equal(base.year,2013);assert.equal(improved.year,2013);
   assert.ok(improved.installation>base.installation);
   assert.ok(Number.isFinite(base.netResult)&&Number.isFinite(improved.netResult));
+  assert.ok(improved.served>base.served,"PC moderno deve preservar ganho de atendimentos após 360 dias");
+  assert.ok(improved.netResult>base.netResult,"receita adicional deve pagar os GPUs após um ano no cenário R$ 24/h");
  }
  console.log("MODERN_ANNUAL "+JSON.stringify(trials));
  const average=modern=>{
