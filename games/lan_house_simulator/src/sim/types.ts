@@ -87,6 +87,8 @@ export interface GameState {
   discCopier?: import("./discCopy.js").DiscCopier;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
+  /** Desligamento por estação, ausente em saves antigos = ligado. */
+  pcPoweredOff?: boolean[];
   /** Peças por estação; null/ausente usa a configuração CRT legada do nível. */
   pcComponents?: Array<import("./hardwareCatalog.js").PcComponents|null>;
   /** GPU por computador; ausente em saves anteriores. */

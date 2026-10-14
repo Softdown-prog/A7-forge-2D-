@@ -27,6 +27,7 @@ import {recordPaidSession,recordStationMinute,validStationLedger} from "./statio
 import {crowdRoute} from "./crowdNavigation.js";
 import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
+import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
@@ -192,12 +193,12 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  // A fila e a escolha antiga não mudam para os demais visitantes.
  if(c.gpuGamer){
   for(let i=0;i<pcCount(s);i++){
-   if(isReserved(s,i)||pcBroken(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
+   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
    if(navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
   }
  }
  for(let i=0;i<pcCount(s);i++){
-  if(isReserved(s,i)||pcBroken(s,i))continue;
+  if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
   const route=navigableRoute(s,origin,destination);
   if(!route)continue;
@@ -542,7 +543,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
