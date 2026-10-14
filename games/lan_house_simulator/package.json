@@ -13,7 +13,8 @@
     "audit:targeted": "npm run build && node --test tests/targeted-vip-lcd-roi.test.mjs",
     "build:site": "node website/build.mjs",
     "check:site": "node website/check.mjs",
-    "audit:historical": "npm run build && LHS_HISTORICAL_AUDIT=1 node --test tests/historical-campaign-audit.test.mjs"
+    "audit:historical": "npm run build && LHS_HISTORICAL_AUDIT=1 node --test tests/historical-campaign-audit.test.mjs",
+    "audit:growth": "npm run build && LHS_GROWTH_AUDIT=1 node --test tests/historical-growth-390day.test.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3"

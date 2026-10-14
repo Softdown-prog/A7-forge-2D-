@@ -1,0 +1,21 @@
+name: Lan House historical growth audit
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  growth-campaigns:
+    name: audit-growth-1998-2000
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install compiler
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Run 3/5/7-PC campaigns and two annual rollovers
+        working-directory: games/lan_house_simulator
+        run: npm run audit:growth

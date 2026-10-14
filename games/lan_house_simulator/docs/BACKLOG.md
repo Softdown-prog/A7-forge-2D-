@@ -516,3 +516,11 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Simular também duas partidas reais desde R$ 850, pagando três Windows, jogos, programador, fornecedor, energia, estoque e manutenção; caixa final de **R$ 2.916,96/R$ 2.980,97** em quatro meses, sem aporte.
 - [x] Corrigir alteração manual de varejo histórico para não aplicar preços clássicos aos outros produtos; introduzir `npm run audit:historical`, workflow manual e `docs/HISTORICAL_AUDIT_2026.md`.
 - [ ] Auditar 360–720 dias, mudança de ano, expansão com 5/7 PCs, financiamento e compras de peças individuais; as plataformas 2012/2024 ainda não se pagam em apenas 120 dias.
+
+## Teste de expansão paga em 1998–2000 — 14/10/2026
+- [x] Rodar seis campanhas determinísticas de 390 dias iniciadas com **R$ 850**, duas sementes e planos de manter três computadores, chegar a cinco ou chegar a sete, comprando expansões e computadores apenas com o dinheiro do jogo.
+- [x] Preservar serviços, licenças Windows, fornecedor, estoque, contas, saves e índices dos PCs, com conferência contábil a cada 30 dias, save aos 180/365 dias e virada de 1998 para 1999.
+- [x] Medir incremento líquido médio contra três PCs: **−R$ 560,80 para cinco** e **−R$ 3.514,57 para sete** em 390 dias, apesar do aumento de visitantes; nenhuma dessas expansões venceu a base sob a tarifa fixa e as duas sementes usadas.
+- [x] Validar também uma campanha de **750 dias** com três PCs, salvamento até 2000 e inflação em duas viradas de ano; final líquido **+R$ 19.003,75** na semente 23.
+- [x] Automatizar a auditoria pesada fora do teste cotidiano com `npm run audit:growth` e workflow manual; relatar hipóteses, custos e limitações em `docs/HISTORICAL_GROWTH_AUDIT_2026.md`.
+- [ ] Testar decisões mensais de preço, anúncios pagos, perfis de demanda maiores, divisão física do salão e atualização individual das peças antes de aplicar sugestão automática de expansão.
