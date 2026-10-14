@@ -13,6 +13,7 @@ import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
+import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 
@@ -226,7 +227,8 @@ const noticesList=document.querySelector<HTMLElement>("#notices-list");
 noticesList?.addEventListener("click",event=>{
  const target=event.target;
  if(!(target instanceof HTMLButtonElement))return;
- if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
+ if(target.dataset.decision&&target.dataset.choice){applyResult(game,chooseDecision(game,target.dataset.decision,target.dataset.choice));renderUI();save();}
+ else if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
  else if(target.dataset.noticeAction==="programmer"){applyResult(game,hireContentProgrammer(game));renderUI();save();}
  else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");renderUI();}
  else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");renderUI();}
@@ -518,6 +520,11 @@ function renderUI():void {
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
       if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
+      const options=decisionOptions(n.id);
+      if(options.length){
+        if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
+        else for(const option of options){const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
+      }
       card.append(title,date,body,actions);noticesList.append(card);
     }
   }
