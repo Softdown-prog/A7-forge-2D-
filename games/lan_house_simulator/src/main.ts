@@ -24,7 +24,8 @@ import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRema
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
-import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
+import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
+import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
@@ -891,10 +892,13 @@ function renderUI(liveOnly=false):void {
     }
     stationLedgerRows.replaceChildren(...rows);
   }
-  const maintenance=document.getElementById("pc-maintenance");
-  if(maintenance&&adminOpen&&activeAdminTab==="computers"){
+  const liveMaintenance=document.getElementById("pc-maintenance");
+  if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"){
+    // Build offscreen; update the existing controls without collapsing the panel
+    // or disconnecting the focused category on every sale/wear refresh.
+    const maintenance=document.createElement("div");
     const focused=document.activeElement;
-    const lcdFocus=focused instanceof HTMLButtonElement&&maintenance.contains(focused)
+    const lcdFocus=focused instanceof HTMLButtonElement&&liveMaintenance.contains(focused)
       ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
       :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
     const header=document.createElement("strong");header.textContent="Operação e manutenção por computador";maintenance.replaceChildren(header);
@@ -905,6 +909,7 @@ function renderUI(liveOnly=false):void {
       const wear=pcWear(game,i);
       const line=document.createElement("div");
       const isOn=stationPoweredOn(game,i),busy=stationHasCustomer(game,i);
+      line.dataset.panelKey="operation-"+i;
       line.className="pc-operation"+(isOn?"":" is-powered-off");
       const label=document.createElement("span");
       label.textContent="PC "+(i+1)+" · "+(isOn?"LIGADO":"DESLIGADO")+" · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · MANUTENÇÃO":"");
@@ -961,9 +966,12 @@ function renderUI(liveOnly=false):void {
       info.append(name,description,benefit,buy);card.append(art,info);catalog.append(card);
     }
     kits.append(title,hint,choices,installed,catalog);maintenance.append(kits);
-    if(lcdFocus){
-      const restored=maintenance.querySelector<HTMLButtonElement>(lcdFocus);
-      const fallback=lcdFocus.startsWith("#hardware-")?maintenance.querySelector<HTMLButtonElement>("#hardware-select-"+selectedLcdPc):choices.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+    presentComputerOperations(game,maintenance);
+    decorateControls(maintenance);
+    syncPanelChildren(liveMaintenance,maintenance);
+    if(lcdFocus&&(!(focused instanceof HTMLButtonElement)||!focused.isConnected||focused.disabled)){
+      const restored=liveMaintenance.querySelector<HTMLButtonElement>(lcdFocus);
+      const fallback=lcdFocus.startsWith("#hardware-")?liveMaintenance.querySelector<HTMLButtonElement>("#hardware-select-"+selectedLcdPc):liveMaintenance.querySelector<HTMLButtonElement>('.lcd-upgrades [aria-pressed="true"]');
       (restored&&!restored.disabled?restored:fallback)?.focus({preventScroll:true});
     }
   }

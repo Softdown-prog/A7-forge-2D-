@@ -66,7 +66,11 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
   const pct=computerOccupancyPercent(s.monthPcUsedMinutes??0,capacity);
   meter.setAttribute("aria-valuenow",String(pct));meter.innerHTML='<span style="width:'+pct+'%"></span>';
  }
- for(const line of section==="computers"?Array.from(document.querySelectorAll<HTMLElement>("#pc-maintenance>div")):[]){
+ const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel)decorateControls(panel);syncWindowChrome();
+}
+
+export function presentComputerOperations(s:GameState,root:ParentNode):void{
+ for(const line of Array.from(root.querySelectorAll<HTMLElement>(":scope>div"))){
   const repair=line.querySelector<HTMLButtonElement>("[data-pc-repair]"),label=line.querySelector<HTMLElement>(":scope>span");
   if(!repair||!label)continue;
   const i=Number(repair.dataset.pcRepair),wear=pcWear(s,i),broken=pcBroken(s,i);
@@ -74,7 +78,6 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
   const windows=WINDOWS_ERAS.find(w=>w.id===installedWindows(s,i))!.name,parts=buildParts(hardwareFor(s,i));
   label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+windows+' · '+stationModelName(s,i)+'</small><small>'+parts.cpu.name+' · RAM '+formatMemory(parts.ram.ramMb!)+' · '+describePart(parts.storage)+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
  }
- const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel)decorateControls(panel);syncWindowChrome();
 }
 
 let currentPanel:HTMLElement|null=null,previousFocus:HTMLElement|null=null;

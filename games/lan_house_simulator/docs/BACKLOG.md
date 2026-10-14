@@ -624,3 +624,9 @@ Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Servi�
 - [x] Versionar todos os imports do jogo, CSS e imagem da vitrine, impedindo mistura entre main novo e módulos antigos em cache.
 - [x] Exercitar menu → nova partida com desenho real em desktop/celular, recusando módulos sem versão no teste.
 - [x] Executar a abertura real antes de sincronizar uma publicação para o Pages; corrigir as premissas dos testes de energia e circulação sem relaxar colisões ou requisitos de compra.
+
+## Estabilidade da evolução geracional (14/10/2026)
+- [x] Atualizar o painel de computadores sem remover os controles em uso, perder o foco ou colapsar sua altura.
+- [x] Impedir que a ancoragem automática da administração puxe a leitura de volta à categoria selecionada.
+- [x] Verificar as seis categorias em 1998 e 2024, teclado, toque e rolagem nativa em computador e celulares de 360/414 px, incluindo atualizações reais de desgaste.
+- [x] Executar essa regressão no navegador antes da sincronização automática com o site público.
