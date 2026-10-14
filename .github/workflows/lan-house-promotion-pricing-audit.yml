@@ -1,0 +1,28 @@
+name: Lan House historical promotion and pricing audit
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/lhs-historical-promotion-pricing-roi-20261014
+    paths:
+      - 'games/lan_house_simulator/tests/historical-promotion-pricing-roi.test.mjs'
+      - 'games/lan_house_simulator/src/sim/promotion.ts'
+      - '.github/workflows/lan-house-promotion-pricing-audit.yml'
+permissions:
+  contents: read
+jobs:
+  promotion-pricing-audit:
+    name: audit-promotions-pricing-1998
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install build dependencies
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Compare 18 180-day real-engine campaigns
+        working-directory: games/lan_house_simulator
+        run: npm run audit:promotions
