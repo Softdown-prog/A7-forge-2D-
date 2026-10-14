@@ -45,12 +45,36 @@ export function customerSatisfactionDelta(price:number,wait:number,offline:numbe
 export function sessionRevenue(hourly: number, minutes = SESSION_MINUTES): number {
   return Math.round(Math.max(0, hourly) * Math.max(0, minutes) / 60);
 }
-export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionLevel">): number {
-  const rent = 270 + state.expansionLevel * 170;
-  const internet = 110 + (state.internetTier - 1) * 85;
-  const energy = 85 + state.expansionLevel * 55;
-  const maintenance = 75 + state.expansionLevel * 35;
-  return rent + internet + energy + maintenance;
+/** Consumo fictício por minuto aberto: instalações ociosas usam standby e clientes aumentam carga.
+ * Tarifa sobe gradualmente com os anos; hardware mais avançado gasta mais por estação.
+ * Em saves antigos, energyAccrued não existe: conta projetada mantém compatibilidade.
+ */
+export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansionLevel"> & Partial<GameState>,active?:number):number {
+ const original=Math.max(3,Math.min(3+state.expansionLevel*2,state.installedPcs??(3+state.expansionLevel*2)));
+ const count=original+(state.annexPcs?.length??0);
+ const busy=active??(state.customers??[]).filter(c=>c.stage==="using").length;
+ const year=Math.floor(Math.max(0,state.totalMinutes)/(720*360));
+ const tariff=Math.pow(1.03,Math.min(25,year));
+ const base=(65+state.expansionLevel*15)/(30*720);
+ let hardware=0;
+ for(let i=0;i<count;i++){
+   const tier=Math.max(1,Math.min(3,state.pcTiers?.[i]??1));
+   hardware+=0.0007*(1+(tier-1)*0.42);
+ }
+ const averageTier=count?Array.from({length:count},(_,i)=>Math.max(1,Math.min(3,state.pcTiers?.[i]??1)))
+   .reduce((sum,tier)=>sum+(1+(tier-1)*0.42),0)/count:1;
+ return tariff*(base+hardware+Math.min(count,Math.max(0,busy))*0.0030*averageTier);
+}
+export function energyMonthlyEstimate(state:Pick<GameState,"internetTier"|"expansionLevel"> & Partial<GameState>):number {
+ return Math.round(energyCostPerMinute({...state,totalMinutes:state.totalMinutes??0},state.customers?.filter(c=>c.stage==="using").length??0)*30*720);
+}
+export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionLevel"> & Partial<GameState>): number {
+ const rent = 270 + state.expansionLevel * 170;
+ const internet = 110 + (state.internetTier - 1) * 85;
+ // Ao fechar o mês, usar o consumo acumulado; para saves antigos, projetar.
+ const energy = state.energyAccrued!==undefined?Math.round(state.energyAccrued):energyMonthlyEstimate(state);
+ const maintenance = 75 + state.expansionLevel * 35;
+ return rent + internet + energy + maintenance;
 }
 export function setHourlyPrice(state: GameState, amount: number): Result {
   if (!Number.isInteger(amount) || amount < 4 || amount > 40) return { ok: false, message: "Preço permitido: R$ 4 a R$ 40." };
