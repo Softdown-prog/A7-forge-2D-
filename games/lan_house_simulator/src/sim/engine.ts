@@ -226,6 +226,7 @@ function resolvePurchase(s: GameState, c: Customer): void {
   if (result.ok){
     if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
     (s.saleEffects??=[]).push({item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
+    addWaste(s,chosen==="soda"?5:3);
     addLog(s,result.message);
   }
   sendHome(s, c);
