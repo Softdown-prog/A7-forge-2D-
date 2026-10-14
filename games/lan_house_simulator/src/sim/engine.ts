@@ -93,8 +93,9 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
     if(canCustomerOccupy(s,c,desired)){
       c.x=desired.x;c.y=desired.y;continue;
     }
-    // Pequeno desvio só para passantes; quem está na fila mantém sua posição.
-    if(c.stage!=="arriving"&&!(s.interiorWalls?.length)){
+    // Desvio local para passantes e visitantes a caminho da fila; quem espera mantém sua posição.
+    // Só aplicar sem divisórias, para nunca atravessar uma parede por um desvio lateral.
+    if(!(s.interiorWalls?.length)){
       const bounds=roomBounds(s);
       for(const sign of [c.id%2===0?1:-1,c.id%2===0?-1:1]){
         const alternative={x:c.x+nx*step*0.65-ny*0.17*sign,
