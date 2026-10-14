@@ -5,14 +5,19 @@ import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
 import {startRepair} from "./services.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";
 import {buyPlatform,componentSatisfactionBonus,hardwareFor,hardwareLoadWatts} from "./hardware.js";
+import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,yearFromMinutes,
+  sessionPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";
 
-export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
+/** Valores iniciais de 1998 no universo do jogo; inflação vem do IPCA. */
+export const ITEM_PRICES: Record<Item, number> = { soda: 1.5, candy: 1, snacks: 2 };
 export function productPrice(s:GameState,item:Item):number {
  const value=s.retailPrices?.[item];
- return Number.isInteger(value)&&value!>=1&&value!<=40?value!:ITEM_PRICES[item];
+ return Number.isFinite(value)&&value!>=.25&&value!<=100?value!:
+  Math.round(ITEM_PRICES[item]*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100;
 }
 export function setProductPrice(s:GameState,item:Item,value:number):Result {
- if(!Number.isInteger(value)||value<1||value>40)return {ok:false,message:"Preço permitido: R$ 1 a R$ 40."};
+ if(!Number.isFinite(value)||value<.25||value>100||Math.round(value*100)!==value*100)
+ return {ok:false,message:"Preço permitido: R$ 0,25 a R$ 100,00, em centavos."};
  (s.retailPrices??={...ITEM_PRICES})[item]=value;
  return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
 }
@@ -35,7 +40,7 @@ export function hardwareSatisfactionBonus(state:GameState,index:number):number {
  return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+gpuBonus(state,index)+
    (lcdSpec(installedLcd(state,index))?.bonus??0);
 }
-export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
+export const ITEM_WHOLESALE: Record<Item, number> = { soda: 7, candy: 7, snacks: 12 };
 export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
 
 export function demandFactor(price: number, reputation: number, internetOnline: boolean, rainy: boolean): number {
@@ -59,7 +64,7 @@ export function customerSatisfactionDelta(price:number,wait:number,offline:numbe
   return Math.max(-0.9,Math.min(0.22,0.22-penalty));
 }
 export function sessionRevenue(hourly: number, minutes = SESSION_MINUTES): number {
-  return Math.round(Math.max(0, hourly) * Math.max(0, minutes) / 60);
+  return sessionPrice(hourly,minutes);
 }
 /** Consumo fictício por minuto aberto: instalações ociosas usam standby e clientes aumentam carga.
  * Tarifa sobe gradualmente com os anos; hardware mais avançado gasta mais por estação.
@@ -70,7 +75,7 @@ export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansi
  const count=original+(state.annexPcs?.length??0);
  const busy=active??(state.customers??[]).filter(c=>c.stage==="using").length;
  const year=Math.floor(Math.max(0,state.totalMinutes)/(720*360));
- const tariff=Math.pow(1.03,Math.min(25,year));
+ const tariff=priceIndex(1998+year);
  const base=(65+state.expansionLevel*15)/(30*720);
  let hardware=0;
  for(let i=0;i<count;i++){
@@ -87,24 +92,32 @@ export function energyMonthlyEstimate(state:Pick<GameState,"internetTier"|"expan
  return Math.round(energyCostPerMinute({...state,totalMinutes:state.totalMinutes??0},state.customers?.filter(c=>c.stage==="using").length??0)*30*720);
 }
 export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionLevel"> & Partial<GameState>): number {
- const rent = 270 + state.expansionLevel * 170;
- const internet = 110 + (state.internetTier - 1) * 85;
+ const factor=priceIndex(yearFromMinutes(state.totalMinutes??0));
+ const rent = Math.round((270 + state.expansionLevel * 170)*factor);
+ const internet = Math.round((110 + (state.internetTier - 1) * 85)*factor);
  // Ao fechar o mês, usar o consumo acumulado; para saves antigos, projetar.
  const energy = state.energyAccrued!==undefined?Math.round(state.energyAccrued):energyMonthlyEstimate(state);
- const maintenance = 75 + state.expansionLevel * 35;
+ const maintenance = Math.round((75 + state.expansionLevel * 35)*factor);
  return rent + internet + energy + maintenance;
 }
 export function setHourlyPrice(state: GameState, amount: number): Result {
-  if (!Number.isInteger(amount) || amount < 4 || amount > 40) return { ok: false, message: "Preço permitido: R$ 4 a R$ 40." };
+  const ceiling=allowableHourlyPrice(state);
+  if(!Number.isFinite(amount)||amount<MIN_HOURLY_PRICE||amount>ceiling||
+     Math.abs(amount*4-Math.round(amount*4))>1e-8)
+   return {ok:false,message:"Tarifa permitida: R$ "+MIN_HOURLY_PRICE.toFixed(2)+
+    " a R$ "+ceiling.toFixed(2)+"/h. Teto do ano: R$ "+
+    annualHourlyCeiling(yearFromMinutes(state.totalMinutes)).toFixed(2)+
+    "/h; limitado também pela idade das máquinas e do Windows."};
   state.pricePerHour = amount;
-  return { ok: true, message: "Preço alterado para R$ " + amount + "/h." };
+  return {ok:true,message:"Tarifa alterada para R$ "+amount.toFixed(2)+"/h."};
 }
 export function supplierLevel(state: GameState):1|2 {
   return state.supplierTier===2?2:1;
 }
 export function wholesaleCost(state:GameState,item:Item):number {
   // O parceiro cobra taxa de adesão e reduz o valor de novos pedidos.
-  return supplierLevel(state)===2?Math.round(ITEM_WHOLESALE[item]*0.8):ITEM_WHOLESALE[item];
+  const normal=ITEM_WHOLESALE[item]*priceIndex(yearFromMinutes(state.totalMinutes));
+ return Math.round(100*normal*(supplierLevel(state)===2?.8:1))/100;
 }
 export function contractSupplier(state:GameState):Result {
   if(supplierLevel(state)===2)return {ok:false,message:"Fornecedor parceiro já contratado."};
