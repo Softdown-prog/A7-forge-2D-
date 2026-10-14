@@ -29,6 +29,10 @@ export interface Customer {
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;
+  /** Prefere títulos 2025+; derivado do ID, sem sorteio adicional. */
+  gpuGamer?: boolean;
+  /** Sessão cobrada com adicional de jogo GPU; preservado em saves. */
+  gpuGameCharged?: boolean;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
@@ -91,6 +95,8 @@ export interface GameState {
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
+  /** Licenças avançadas por estabelecimento (opcional em saves antigos). */
+  licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
   expansionLevel: number;
   installedPcs?: number;
   /** Extensões de terreno independentes; ausentes em saves anteriores. */

@@ -1,5 +1,4 @@
 import type {GameState,Result} from "./types.js";
-import {DAY_MINUTES} from "./types.js";
 import {GPU_CATALOG,installedGpu,type GpuId} from "./gpu.js";
 import {WINDOWS_ERAS,installedWindows} from "./era.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
