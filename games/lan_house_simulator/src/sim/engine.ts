@@ -312,7 +312,8 @@ function nextDay(s: GameState): void {
   }
   reviewNotices(s);
   scheduleDecisions(s);
-  if (!s.licensedGames && random(s) < 0.06) {
+  // Fiscalização aleatória apenas antes da autuação formal; impedir multa recorrente pelo mesmo fato.
+  if (!s.licensedGames && !s.copyrightNoticeFine && random(s) < 0.06) {
     const fine = 180;
     s.cash -= fine; s.expenses += fine; s.reputation = Math.max(10, s.reputation - 4);
     addLog(s, "Fiscalização encontrou jogos sem licença: multa de R$ 180.");
