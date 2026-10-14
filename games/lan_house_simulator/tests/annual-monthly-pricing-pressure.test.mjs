@@ -144,7 +144,11 @@ function simulate(seed,size,policy){
   peakBusy:maxBusy,fullyOccupiedSamples,occupancySamples:samples,
   promotions:totalPromos,months};
 }
-test("360 dias: tarifa fixa ou mensal, 5/7 PCs, demanda promocional e save aos 180 dias",()=>{
+// Tests that simulate >4 million minutes run on demand, not on every PR.
+const fullAnnualAudit=process.env.npm_lifecycle_event==="audit:annual" ||
+  process.env.LHS_ANNUAL_AUDIT==="1";
+test("360 dias: tarifa fixa ou mensal, 5/7 PCs, demanda promocional e save aos 180 dias",
+ {skip:!fullAnnualAudit},()=>{
  const rows=[];
  for(const seed of SEEDS)for(const size of SIZES)for(const policy of POLICIES)
   rows.push(simulate(seed,size,policy));

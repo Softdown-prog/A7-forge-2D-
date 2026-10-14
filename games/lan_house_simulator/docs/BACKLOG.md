@@ -418,3 +418,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Observar resultado líquido médio maior com R$ 18 fixos nas configurações testadas: R$ 43.814,50 com cinco PCs e R$ 42.860,50 com sete; não tratar esses preços como equilíbrio universal.
 - [x] Eliminar um falso negativo intermitente do worker de cena recalculando as coordenadas de clique depois da captura que pode rolar a viewport; preservar inspeção com mouse real no Chromium.
 - [ ] Validar 360+ dias, rede/lotação elevadas e decisões mensais de tarifa; estudar inflação de custos além da eletricidade antes de alterar preços de equilíbrio.
+
+## Auditoria anual de tarifas mensais e promoções pagas — 14/10/2026
+- [x] Executar 16 campanhas completas de 360 dias, duas sementes, salões de cinco ou sete PCs e preços fixos R$ 8/12/18 versus reajuste mensal por ocupação passada, sem alterar o motor de jogo.
+- [x] Incluir 24 campanhas publicitárias pagas por partida, gastos reais, reparo, reposição, 12 cobranças mensais, contagem de lotação e retomada de save no dia 180; os 180 testes do primeiro run passaram.
+- [x] Confirmar R$ 18/h como líder **apenas nesse conjunto** de cenários: resultado líquido médio R$ 144.533,50 com cinco PCs e R$ 150.872,00 com sete PCs.
+- [x] Identificar erro de política no controlador ingênuo por ocupação: reduziu preço de R$ 12 para R$ 8 a partir do terceiro mês, com queda do resultado líquido; não promover para gameplay.
+- [x] Separar teste anual pesado de `npm test` para não atrasar toda compilação: `npm run audit:annual` ou `workflow_dispatch` manual.
+- [ ] Validar mais sementes e condições de procura, e estimar amortização/desgaste de GPUs e salões com divisórias antes de retocar preços do jogo; revisar arte e indicadores em telefone físico.
