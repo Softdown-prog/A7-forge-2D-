@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {setHourlyPrice,monthlyBills,sessionRevenue,energyCostPerMinute,wholesaleCost,productPrice} from "../dist/js/sim/economy.js";
+import {setHourlyPrice,setProductPrice,monthlyBills,sessionRevenue,energyCostPerMinute,wholesaleCost,productPrice} from "../dist/js/sim/economy.js";
 import {serviceVisitCost,allowableHourlyPrice,annualHourlyCeiling,priceIndex,qualityMultiplier,
  SESSION_PACKAGES,sessionPrice,normalizedHourlyPrice,clampPriceToEra} from "../dist/js/sim/historicalEconomy.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
@@ -114,4 +114,21 @@ test("preço histórico de técnicos e limpeza é consistente com a época e nã
  serviceVisitCost(old,"repair",80);
  assert.deepEqual([old.cash,old.revenue,old.expenses],[cash,revenue,expenses],
    "cotação não pode alterar dinheiro nem RNG");
+});
+
+test("alterar um preço de produto em 1998 não converte os outros para a tabela clássica",()=>{
+ const s=historical(1998);
+ assert.equal(s.retailPrices,undefined);
+ assert.deepEqual(["soda","candy","snacks"].map(item=>productPrice(s,item)),[1.5,1,2]);
+ assert.equal(setProductPrice(s,"soda",1.75).ok,true);
+ assert.deepEqual(s.retailPrices,{soda:1.75,candy:1,snacks:2});
+ assert.deepEqual(parseImportedSave(serializeSave(s)).retailPrices,s.retailPrices);
+ const in2012=historical(2012);
+ const original=["soda","candy","snacks"].map(item=>productPrice(in2012,item));
+ assert.equal(setProductPrice(in2012,"snacks",5.25).ok,true);
+ assert.equal(productPrice(in2012,"soda"),original[0]);
+ assert.equal(productPrice(in2012,"candy"),original[1]);
+ const classic=createGame();
+ assert.equal(setProductPrice(classic,"soda",9).ok,true);
+ assert.deepEqual(classic.retailPrices,{soda:9,candy:5,snacks:9});
 });

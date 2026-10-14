@@ -22,7 +22,12 @@ export function setProductPrice(s:GameState,item:Item,value:number):Result {
    return {ok:false,message:"Preço permitido: R$ 0,25 a R$ 100,00, em centavos."};
  }else if(!Number.isInteger(value)||value<1||value>40)
   return {ok:false,message:"Preço permitido: R$ 1 a R$ 40."};
- (s.retailPrices??={...ITEM_PRICES})[item]=value;
+ // Criar o registro a partir dos preços da própria época, jamais copiar
+ // R$ 8/5/9 da economia clássica ao editar apenas um produto em 1998.
+ (s.retailPrices??={
+  soda:productPrice(s,"soda"),candy:productPrice(s,"candy"),
+  snacks:productPrice(s,"snacks")
+ })[item]=value;
  return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
 }
 export function upgradeComputer(s:GameState,index:number):Result {
