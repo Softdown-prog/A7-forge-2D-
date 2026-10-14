@@ -94,6 +94,10 @@ export interface GameState {
   speechEffects?: Array<{text:string;x:number;y:number;kind:"complaint"|"praise"}>;
   weather: "sun" | "rain";
   eventLog: string[];
+  notices?: import("./notices.js").GameNotice[];
+  contentFilterInstalled?: boolean;
+  windowsNoticeFine?: boolean;
+  copyrightNoticeFine?: boolean;
 }
 export interface Result { ok: boolean; message: string }
 export const SESSION_MINUTES = 45;

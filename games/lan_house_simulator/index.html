@@ -37,7 +37,7 @@
   <div class="app" id="game-app" hidden>
     <header class="topbar">
       <div class="brand"><span class="logo">LH</span><div><h1>Lan House Simulator</h1><p>O sonho começou. Agora vem a administração.</p></div></div>
-      <div class="topbar-actions"><button id="open-menu" class="slice" type="button">☰ Menu / Pausar</button><button id="open-shop" class="slice" type="button" aria-controls="shop" aria-expanded="false">🛒 Compras</button><button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button></div>
+      <div class="topbar-actions"><button id="open-menu" class="slice" type="button">☰ Menu / Pausar</button><button id="open-shop" class="slice" type="button" aria-controls="shop" aria-expanded="false">🛒 Compras</button><button id="open-notices" class="slice notices-trigger" type="button" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><svg viewBox="0 0 32 28" width="24" height="22" aria-hidden="true" focusable="false"><path d="M3 5h26v18H3z" fill="#e9ddb5" stroke="#293c55" stroke-width="2.3"/><path d="m4 6 12 10L28 6" fill="none" stroke="#a57d50" stroke-width="2.4"/><path d="m4 22 9-8m15 8-9-8" fill="none" stroke="#a57d50" stroke-width="1.7"/></svg><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button></div>
     </header>
     <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">📅 Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">☀ Tempo firme</div></div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
@@ -61,6 +61,11 @@
       <p class="shop-organize-help">Reposicione itens já comprados sem gastar novamente. Primeiro selecione o móvel e depois a posição livre.</p>
       <button id="demolish-walls" class="slice organize-furniture" type="button">Remover divisórias (0)</button>
       <div id="shop-catalog" class="shop-grid"></div>
+    </section>
+    <section id="notices" class="admin slice notice-inbox" aria-label="Caixa de mensagens" hidden>
+      <div class="admin-title"><h2>✉ Correspondência da lan house</h2><button id="close-notices" type="button" class="slice">✕</button></div>
+      <p>Cartas, avisos, cobranças e oportunidades. Leia as mensagens e resolva os problemas do estabelecimento.</p>
+      <div id="notices-list" class="notices-list" aria-live="polite"></div>
     </section>
     <section id="admin" class="admin slice" aria-label="Painel administrativo" hidden>
       <div class="admin-title"><h2>Administração da Lan House</h2><button id="close-admin" class="slice" aria-label="Fechar painel">✕</button></div>

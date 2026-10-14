@@ -10,6 +10,7 @@ import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from ".
 import {navigableRoute} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
+import {reviewNotices} from "./notices.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
@@ -304,6 +305,7 @@ function nextDay(s: GameState): void {
     s.energyAccrued=0;
     addLog(s, "Contas do mês pagas: -R$ " + bill + " (incluindo energia R$ "+energy+"; aluguel, internet e manutenção).");
   }
+  reviewNotices(s);
   if (!s.licensedGames && random(s) < 0.06) {
     const fine = 180;
     s.cash -= fine; s.expenses += fine; s.reputation = Math.max(10, s.reputation - 4);
@@ -321,6 +323,7 @@ function advanceMinute(s: GameState): void {
   // Acumular inclusive o último minuto antes da virada mensal.
   s.energyAccrued=(s.energyAccrued??0)+energyCostPerMinute(s);
   s.totalMinutes++;
+  if(s.totalMinutes===1)reviewNotices(s);
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
   if (s.offlineUntil === s.totalMinutes) addLog(s, "A internet voltou!");
   if (online(s)) {
@@ -354,5 +357,6 @@ export function isValidSave(value: unknown): value is GameState {
     Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
+    (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));
 }

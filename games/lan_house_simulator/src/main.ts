@@ -12,6 +12,7 @@ import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { Soundscape } from "./audio/soundscape.js";
+import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 
@@ -138,6 +139,7 @@ let relocationFrom:string|null=null;
 let hoveredPlacement:string|null=null;
 let placementNotice="";
 let adminOpen = false;
+let noticesOpen=false;
 let activeAdminTab="prices";
 let previousServed = game.served;
 let previousPurchases = game.purchases;
@@ -218,8 +220,19 @@ function button(id:string, handler:()=>void):void {
     }
   });
 }
-button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
-button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-notices",()=>{noticesOpen=!noticesOpen;if(noticesOpen){adminOpen=false;shopOpen=false;reviewNotices(game);}renderUI();save();});
+button("close-notices",()=>{noticesOpen=false;renderUI();});
+const noticesList=document.querySelector<HTMLElement>("#notices-list");
+noticesList?.addEventListener("click",event=>{
+ const target=event.target;
+ if(!(target instanceof HTMLButtonElement))return;
+ if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
+ else if(target.dataset.noticeAction==="programmer"){applyResult(game,hireContentProgrammer(game));renderUI();save();}
+ else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");renderUI();}
+ else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");renderUI();}
+});
+button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
 button("demolish-walls",()=>{
  if(!((game.interiorWalls?.length??0)+(game.interiorDoors?.length??0)))return;
@@ -487,6 +500,27 @@ function renderUI():void {
     "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme")+
     (isPromotionActive(game)?"  |  📣 Panfletagem ativa":"");
   admin.hidden=!adminOpen;
+  const mailbox=document.getElementById("notices");if(mailbox)mailbox.hidden=!noticesOpen;
+  const unread=unreadNotices(game),badge=document.getElementById("notices-count");
+  if(badge){badge.hidden=unread===0;badge.textContent=String(unread);}
+  document.getElementById("open-notices")?.setAttribute("aria-expanded",String(noticesOpen));
+  if(noticesList){
+    noticesList.replaceChildren();
+    if(!(game.notices?.length)){const empty=document.createElement("p");empty.textContent="Nenhuma mensagem recebida por enquanto.";noticesList.append(empty);}
+    for(const n of game.notices??[]){
+      const card=document.createElement("article");card.className="notice-letter notice-"+n.severity+(n.read?" read":"");
+      const title=document.createElement("h3");title.textContent=(n.read?"✉ ":"● ")+n.title;
+      const date=document.createElement("small");date.textContent="Dia "+n.day;
+      const body=document.createElement("p");body.textContent=n.body;
+      const actions=document.createElement("div");actions.className="action-row wrap";
+      if(!n.read){const mark=document.createElement("button");mark.className="slice";mark.dataset.noticeRead=n.id;mark.textContent="Marcar como lida";actions.append(mark);}
+      const action=document.createElement("button");action.className="slice";
+      if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
+      if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
+      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
+      card.append(title,date,body,actions);noticesList.append(card);
+    }
+  }
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
   const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
