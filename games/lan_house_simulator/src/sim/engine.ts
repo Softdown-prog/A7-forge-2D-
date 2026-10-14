@@ -151,6 +151,34 @@ function startStanding(c: Customer, wantsSnack: boolean): void {
 function isReserved(s: GameState, index: number): boolean {
   return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "sitting" || c.stage === "using" || c.stage === "standing"));
 }
+/**
+ * Distribui clientes entre PCs disponíveis usando QUALIDADE e distância navegável,
+ * não simplesmente o primeiro índice. A melhoria não aumenta o fluxo de chegada,
+ * nem muda preços, reservas, desgaste ou o caixa.
+ * A distância efetiva é calculada pelos waypoints, respeitando salas/portas.
+ * Empate favorece o menor índice para preservar o comportamento dos PCs básicos.
+ */
+export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
+ let chosen:number|undefined,highest=-Infinity;
+ const origin={x:c.x,y:c.y};
+ for(let i=0;i<pcCount(s);i++){
+  if(isReserved(s,i)||pcBroken(s,i))continue;
+  const destination=computerSeat(pcPosition(i,s));
+  const route=navigableRoute(s,origin,destination);
+  if(!route)continue;
+  let distance=0,previous=origin;
+  for(const point of route){
+   distance+=Math.hypot(point.x-previous.x,point.y-previous.y);
+   previous=point;
+  }
+  const quality=hardwareSatisfactionBonus(s,i);
+  // VIP valoriza mais hardware; para os demais, a estação próxima
+  // continua vantajosa quando os equipamentos são equivalentes.
+  const score=quality*(c.vip?145:100)-distance*.65-pcWear(s,i)*.012;
+  if(score>highest+1e-6){highest=score;chosen=i;}
+ }
+ return chosen;
+}
 function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"praise"="complaint"):void {
   (s.speechEffects??=[]).push({text,x:c.x,y:c.y,kind});
 }
@@ -215,8 +243,7 @@ function tryServe(s: GameState, c: Customer): void {
   if(counterQueueCustomers(s)[0]?.id!==c.id||s.totalMinutes<(s.counterBusyUntil??0)){
     c.waitingMinutes++;return;
   }
-  const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i =>
-    !isReserved(s,i)&&!pcBroken(s,i)&&!!navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))));
+  const index=chooseAvailablePc(s,c);
   if (index === undefined) {
     c.waitingMinutes++;
     if (c.waitingMinutes > (c.vip?19:25)) {
