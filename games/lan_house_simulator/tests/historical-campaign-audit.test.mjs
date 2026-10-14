@@ -176,3 +176,48 @@ test("1998/2005/2012/2024: matriz real por equipamento e preço, pares de sement
    avgOccupancy:average("occupancy"),avgInitialSpend:average("initialSpend")}));
  }
 });
+
+/** Opening-game stress check: no research funding, no injected visitors,
+ * no pre-granted equipment or imported cash. The player has only R$ 850. */
+function openingBusiness(seed){
+ let s=createGame(seed,"historical"),minCash=s.cash;
+ const capital=s.cash,months=[];
+ accept(licenseGames(s),"startup games");
+ accept(hireContentProgrammer(s),"startup programmer");
+ let licensed=0,supplierBought=false;
+ for(let day=1;day<=120;day++){
+  for(let i=0;i<3;i++){
+   if(!(s.pcWindowsLicenses?.[i])&&s.cash>=250)
+    accept(licenseWindows(s,i,"win98"),"startup Windows "+i);
+  }
+  if(s.pcWindowsLicenses?.every(Boolean)&&s.supplierTier!==2&&s.cash>=350){
+   accept(contractSupplier(s),"startup supplier");supplierBought=true;
+  }
+  upkeep(s);
+  for(let part=0;part<6;part++)stepGame(s,120);
+  minCash=Math.min(minCash,s.cash);
+  if(day%30===0){
+   assert.ok(Math.abs(s.cash-(capital+s.revenue-s.expenses))<.001);
+   months.push({month:day/30,cash:ROUND(s.cash),served:s.served,sold:s.purchases,
+    revenue:ROUND(s.revenue),expenses:ROUND(s.expenses),
+    reputation:ROUND(s.reputation),licensed:s.pcWindowsLicenses?.filter(Boolean).length??0});
+  }
+  if(day===60)s=parseImportedSave(serializeSave(s));
+ }
+ licensed=s.pcWindowsLicenses?.filter(Boolean).length??0;
+ return {seed,capital,days:120,net:ROUND(s.cash-capital),minCash:ROUND(minCash),
+  licensedWindows:licensed,supplierBought,clients:s.served,purchases:s.purchases,
+  revenue:ROUND(s.revenue),expenses:ROUND(s.expenses),months};
+}
+test("1998: sobrevivência real com R$ 850, licenças pagas e nenhum subsídio",
+ {skip:!full},()=>{
+ const rows=SEEDS.map(openingBusiness);
+ assert.equal(rows.length,2);
+ for(const row of rows){
+  assert.equal(row.capital,850);
+  assert.ok(row.clients>100);
+  assert.ok(row.months.length===4);
+  assert.ok(Math.abs(row.revenue-row.expenses-row.net)<.01);
+  console.log("LHS_HISTORICAL_STARTUP "+JSON.stringify(row));
+ }
+});
