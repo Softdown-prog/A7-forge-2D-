@@ -31,12 +31,23 @@ export function buildSite(){
  const revisionHash=createHash("sha256");
  for(const file of moduleFiles(resolve(output,"game/js")).sort())revisionHash.update(readFileSync(file));
  for(const file of ["website/site.mjs","website/site.css","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
+ revisionHash.update(readFileSync(resolve(root,"website/assets/sala.webp")));
  const revision=revisionHash.digest("hex").slice(0,12);
+ // Versionar o grafo inteiro: main novo com renderizadores antigos em cache
+ // pode quebrar imports ou exibir a arte anterior, mesmo após atualizar a página.
+ for(const file of moduleFiles(resolve(output,"game/js")).filter(file=>file.endsWith(".js"))){
+  const source=readFileSync(file,"utf8");
+  writeFileSync(file,source.replace(/(\b(?:from\s*|import\s*\(\s*|import\s*)["'])(\.\.?\/[^"']+\.js)(["'])/g,
+   (_,prefix,path,quote)=>prefix+path+"?v="+revision+quote));
+ }
+ const gameStyle=resolve(output,"game/style.css");
+ writeFileSync(gameStyle,readFileSync(gameStyle,"utf8").replace("./assets/ui/salon-preview.webp","./assets/ui/salon-preview.webp?v="+revision));
  const gameFile=resolve(output,"game/index.html");let game=readFileSync(gameFile,"utf8");
  game=game.replace('<span class="edition-label">','<a class="edition-label" href="/jogar/" target="_top">← Voltar ao site</a><span class="edition-label">');
  game=game.replace('<script type="module" src="./js/main.js"></script>',
   '<script type="module" src="./js/main.js?v='+revision+'"></script>');
- game=game.replace("<title>",'<meta name="robots" content="noindex"/><title>');writeFileSync(gameFile,game);
+ game=game.replace("<title>",'<meta name="robots" content="noindex"/><title>');
+ game=game.replace('href="./style.css"','href="./style.css?v='+revision+'"');writeFileSync(gameFile,game);
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const c=Object.fromEntries(Object.entries(siteConfig).map(([k,v])=>[k,typeof v==="string"?escape(v):v]));
  if(c.hosting)c.hosting=Object.fromEntries(Object.entries(c.hosting).map(([k,v])=>[k,escape(v)]));
@@ -52,10 +63,10 @@ export function buildSite(){
 <html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="theme-color" content="#192e2a"/>
 <title>${escape(p.title)} · ${c.name}</title><meta name="description" content="${escape(p.description)}"/><meta name="robots" content="${siteConfig.mode==="public"&&p.path!=="404"?"index,follow":"noindex,nofollow"}"/>
 <meta property="og:type" content="website"/><meta property="og:locale" content="pt_BR"/><meta property="og:site_name" content="${c.name}"/><meta property="og:title" content="${escape(p.title)} · ${c.name}"/><meta property="og:description" content="${escape(p.description)}"/><meta name="twitter:card" content="summary_large_image"/>${canonical}
-<link rel="icon" type="image/svg+xml" href="/assets/brand.svg"/><link rel="stylesheet" href="/assets/site.css"/><link rel="stylesheet" href="/assets/account.css"/><script type="application/ld+json">${structured}</script><script type="module" src="/assets/site.mjs?v=${revision}"></script></head><body>
+<link rel="icon" type="image/svg+xml" href="/assets/brand.svg"/><link rel="stylesheet" href="/assets/site.css?v=${revision}"/><link rel="stylesheet" href="/assets/account.css"/><script type="application/ld+json">${structured}</script><script type="module" src="/assets/site.mjs?v=${revision}"></script></head><body>
 <a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="site-header"><div class="header-inner wrap">${brand}<button type="button" id="menu-toggle" class="menu-toggle" aria-controls="site-nav" aria-expanded="false">Menu ${icon("settings")}</button><nav class="site-nav" id="site-nav" aria-label="Navegação principal">${nav}<a class="button" href="/jogar/" ${p.path==="jogar"?'aria-current="page"':""}>${icon("play")} Jogar agora</a></nav></div></header>
 <main id="conteudo">${p.path==="jogar"?p.body.replace('data-src="/game/"','data-src="/game/?v='+revision+'"'):p.body}</main><footer class="site-footer"><div class="footer-top wrap"><div class="footer-brand">${brand}<p>Seu bairro. Seu negócio. Sua história.<br/>Da primeira conexão ao seu próprio salão.</p></div><div class="footer-links"><h2>EXPLORE O SALÃO</h2><a href="/jogar/">Jogar agora</a><a href="/sobre-o-jogo/">Sobre o jogo</a><a href="/sobre-nos/">Sobre nós</a><a href="/ajuda/">Ajuda e perguntas</a><a href="/contato/">Contato</a></div><div class="footer-links"><h2>INFORMAÇÕES</h2><a href="/termos/">Termos de uso</a><a href="/privacidade/">Política de privacidade</a><a href="/dados/">Gerenciar dados locais</a></div></div><div class="footer-bottom wrap"><span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span><button type="button" class="motion-toggle" id="motion-toggle" aria-pressed="false">Pausar animações</button><span>TERMINAL DE BAIRRO / ${siteConfig.mode==="preview"?"PRÉVIA PRIVADA":"EDIÇÃO WEB"}</span></div></footer></body></html>`;
-  const file=p.path==="404"?resolve(output,"404.html"):resolve(output,p.path,"index.html");mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html);
+  const file=p.path==="404"?resolve(output,"404.html"):resolve(output,p.path,"index.html");mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html.replaceAll('src="/assets/sala.webp"','src="/assets/sala.webp?v='+revision+'"'));
  }
  writeFileSync(resolve(output,"robots.txt"),siteConfig.mode==="public"?`User-agent: *\nAllow: /\nDisallow: /game/\nSitemap: ${new URL("/sitemap.xml",siteConfig.origin).href}\n`:"User-agent: *\nDisallow: /\n");
  if(siteConfig.mode==="public")writeFileSync(resolve(output,"sitemap.xml"),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${content.filter(p=>!["404","dados"].includes(p.path)).map(p=>`<url><loc>${escape(new URL(p.path?"/"+p.path+"/":"/",siteConfig.origin).href)}</loc></url>`).join("")}</urlset>`);

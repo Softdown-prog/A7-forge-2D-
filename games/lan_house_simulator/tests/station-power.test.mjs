@@ -65,7 +65,9 @@ test("estado desligado acompanha PC do anexo quando PCs originais são adicionad
  const {expandDirection}=await import("../dist/js/sim/room.js");
  const {installAnnexComputer}=await import("../dist/js/sim/stations.js");
  const {buyComputer}=await import("../dist/js/sim/shop.js");
+ const {expandShop}=await import("../dist/js/sim/economy.js");
  const s=createGame();s.cash=10000;
+ assert.equal(expandShop(s).ok,true); // Libera vagas originais antes de inserir um PC.
  assert.equal(expandDirection(s,"east").ok,true);
  assert.equal(installAnnexComputer(s,"pc-east-1").ok,true);
  assert.equal(pcCount(s),4);

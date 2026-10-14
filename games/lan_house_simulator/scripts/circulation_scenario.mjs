@@ -27,7 +27,7 @@ export function circulationScenario(seed=1998){
   const at=counterQueueSlot(index);
   return {id:index+1,stage:"waiting",queueIndex:index,x:at.x,y:at.y,
    target:{...at},route:[],costume:index%3===0?"vampire":"regular",
-   facing:"north",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,
+   facing:"north",pcIndex:null,usedMinutes:0,sessionMinutes:45,waitingMinutes:0,offlineWait:0,happy:true,
    needs:{hunger:35,thirst:60,energy:75},wallet:30};
  });
  s.nextCustomerId=9;

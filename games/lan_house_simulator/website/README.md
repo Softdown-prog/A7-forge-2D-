@@ -45,3 +45,12 @@ São textos iniciais pesquisados, não certificação jurídica. Contas, nuvem, 
 ## Limites da verificação
 
 O verificador confere todas as páginas, referências locais, âncoras, IDs, módulos, metadados, hashes de CSP e carregamento sob demanda. Os testes verificam exclusão seletiva de dados e validação de configuração. A revisão visual no navegador depende da disponibilidade do controle de navegador autorizado por Sites; não substituir esse caminho por um navegador improvisado. Conferência em aparelho físico e validação da hospedagem pública ficam para o lançamento.
+
+
+## Atualização da arte e prevenção de versões misturadas
+
+Depois de alterar a arte de balcão, administrador ou salão: `npm run build`, instalar Chromium de Playwright e executar `node scripts/capture_site_salon.mjs`. O quadro WebP gerado usa o mesmo renderizador do jogo e continua abaixo de 100 KB; depois executar `npm run build:site` e `npm run check:site`.
+
+O build do site atribui a mesma revisão a main.js e a todos os imports estáticos/dinâmicos de módulos do jogo, ao CSS e à imagem do salão. Isso impede misturar arquivos antigos em cache com código novo. A imagem de reserva do menu é copiada também para o build isolado, em `assets/ui/salon-preview.webp`.
+
+`verify_live_site_preview.mjs` simula módulos antigos sem revisão recusando essas URLs, verifica carregamento e desenho da partida em desktop/celular, e deve passar antes da sincronização para o repositório ligado ao Pages.

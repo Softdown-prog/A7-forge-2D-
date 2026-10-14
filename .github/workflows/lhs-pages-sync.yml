@@ -40,6 +40,13 @@ jobs:
           npm run check:site
           node --test tests/website.test.mjs tests/account-client.test.mjs
 
+      - name: Conferir abertura real antes de publicar
+        working-directory: source/games/lan_house_simulator
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/verify_live_site_preview.mjs
+
       - name: Conferir credencial dedicada do espelho
         env:
           MIRROR_KEY: ${{ secrets.LHS_PAGES_MIRROR_SSH_KEY }}

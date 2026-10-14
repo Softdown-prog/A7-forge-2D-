@@ -37,9 +37,22 @@ for(const file of html){
   if(u.hash){const text=readFileSync(target,"utf8"),id=decodeURIComponent(u.hash.slice(1));assert.ok(new RegExp('\\bid="'+id.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+'"').test(text),"Âncora inválida: "+raw);}
  }
 }
+// Referências em CSS também precisam existir; a imagem de reserva do menu
+// antes passava na validação HTML, mas retornava 404 no jogo isolado.
+for(const file of files.filter(f=>extname(f)===".css")){
+ for(const match of readFileSync(file,"utf8").matchAll(/url\(\s*["']?([^"')]+)["']?\s*\)/g)){
+  if(/^(data:|https?:|#)/.test(match[1]))continue;
+  const base="https://local.test/"+relative(root,file).split(sep).join("/");
+  const path=new URL(match[1],base).pathname;
+  assert.ok(existsSync(resolve(root,"."+path)),relative(root,file)+" → recurso CSS inexistente "+match[1]);
+ }
+}
 for(const file of files.filter(f=>[".js",".mjs"].includes(extname(f)))){
  execFileSync(process.execPath,["--check",file],{stdio:"pipe"});
- for(const m of readFileSync(file,"utf8").matchAll(/(?:from\s*|import\s*\()\s*["'](\.[^"']+)["']/g))assert.ok(existsSync(resolve(dirname(file),m[1])),"Import inexistente: "+m[1]);
+ for(const m of readFileSync(file,"utf8").matchAll(/(?:from\s*|import\s*\()\s*["'](\.[^"']+)["']/g)){
+  assert.ok(existsSync(resolve(dirname(file),m[1].split("?")[0])),"Import inexistente: "+m[1]);
+  if(file.startsWith(resolve(root,"game/js")+sep))assert.match(m[1],/\?v=[a-f0-9]{12}$/, "Módulo do jogo sem versão: "+m[1]);
+ }
 }
 const play=readFileSync(resolve(root,"jogar/index.html"),"utf8");
 assert.match(play,/<iframe[^>]*data-src="\/game\/\?v=[a-f0-9]{12}"[^>]*hidden/);assert.ok(!/<iframe[^>]*\ssrc=/.test(play),"Jogo deve aguardar clique");

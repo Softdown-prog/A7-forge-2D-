@@ -10,7 +10,10 @@ const mime={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=u
  ".svg":"image/svg+xml",".webp":"image/webp",".json":"application/json"};
 const server=createServer(async(req,res)=>{
  try{
-  const path=decodeURIComponent(new URL(req.url??"/","http://localhost").pathname);
+  const url=new URL(req.url??"/","http://localhost"),path=decodeURIComponent(url.pathname);
+  // Simular um cache antigo incompatível: nenhum módulo da partida pode
+  // depender da URL sem versão, nem os imports transitivos de main.js.
+  if(path.startsWith("/game/js/")&&path.endsWith(".js")&&!/^[a-f0-9]{12}$/.test(url.searchParams.get("v")??""))throw Error("módulo antigo sem versão");
   const target=resolve(root,"."+path,path.endsWith("/")?"index.html":"");
   if(!target.startsWith(root+sep))throw Error("fora do diretório");
   if(!(await stat(target)).isFile())throw Error("arquivo inexistente");
@@ -27,9 +30,10 @@ try{
    viewport:{width,height:840},isMobile:mobile,hasTouch:mobile,
    deviceScaleFactor:1
   }),page=await context.newPage(),errors=[];
+  page.on("response",response=>{if(response.status()>=400)errors.push("HTTP "+response.status()+" "+response.url());});
   page.on("pageerror",error=>errors.push(String(error)));
   await page.goto("http://127.0.0.1:"+port+"/",{waitUntil:"networkidle"});
-  const img=page.locator(".screen img[src='/assets/sala.webp']");
+  const img=page.locator(".screen img[src^='/assets/sala.webp']");
   await img.waitFor({state:"visible",timeout:10000});
   assert.equal(await img.evaluate(x=>x.complete&&x.naturalWidth>0),true,
    "A vitrine do site deve mostrar uma imagem válida.");
@@ -53,6 +57,13 @@ try{
   await frame.locator("#menu-new").click();
   await frame.locator("#game-app").waitFor({state:"visible",timeout:15000});
   await frame.locator("#game").waitFor({state:"visible"});
+  await frame.locator("#game").scrollIntoViewIfNeeded();
+  await page.waitForFunction(()=>{
+   const c=document.querySelector("#game-frame")?.contentDocument?.querySelector("#game");
+   if(!c)return false;
+   const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
+   return data.some((value,i)=>i%4===3&&value>0);
+  });
   assert.deepEqual(errors,[],"O jogo deve iniciar sem erros de JavaScript");
   await context.close();
  }

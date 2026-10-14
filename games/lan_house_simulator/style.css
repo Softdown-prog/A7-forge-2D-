@@ -599,4 +599,4 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 @media(max-width:700px){#pc-maintenance .pc-operation{grid-template-columns:repeat(2,minmax(0,1fr))}#pc-maintenance .pc-operation>span{grid-column:1/-1}#pc-maintenance .pc-power-toggle{min-width:0}}
 
 /* Backup visual leve: se o Canvas do menu falhar, não mostrar um CRT vazio. */
-#menu-scene{background-image:url("../assets/sala.webp");background-size:cover;background-position:center}
+#menu-scene{background-image:url("./assets/ui/salon-preview.webp");background-size:cover;background-position:center}

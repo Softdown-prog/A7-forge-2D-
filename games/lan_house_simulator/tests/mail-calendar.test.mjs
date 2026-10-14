@@ -174,9 +174,9 @@ test("evento histórico permite receber a carta ao retomar no meio de dezembro",
  reviewNotices(delayed);
  assert.equal(delayed.notices.filter(n=>n.id==="y2k-warning").length,1);
  const late=createGame(24);at(late,(1999-1998)*360+351);
- reviewNotices(late);assert.ok(!late.notices.some(n=>n.id==="y2k-warning"));
+ reviewNotices(late);assert.ok(!(late.notices??[]).some(n=>n.id==="y2k-warning"));
  const after=createGame(25);at(after,(2000-1998)*360+1);
- reviewNotices(after);assert.ok(!after.notices.some(n=>n.id==="y2k-warning"));
+ reviewNotices(after);assert.ok(!(after.notices??[]).some(n=>n.id==="y2k-warning"));
  for(const wrong of [1998,2000,2031])assert.equal(fixedYearMailWindowDue(delayed,wrong,331,350),false);
  assert.equal(fixedYearMailWindowDue(delayed,1999,350,331),false);
  assert.equal(fixedYearMailWindowDue(delayed,1999,0,331),false);
