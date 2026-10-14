@@ -278,7 +278,7 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Adicionar limites de regressão para fila, ocupação e quantidade de atendimentos; registrar números antes/depois no relatório.
 - [x] Validar trajetos com várias salas/divisórias e circulação em alta lotação por vídeo real: `scripts/capture_circulation.mjs`, incluído no worker de cena (14/10/2026).
 - [x] Avaliar retorno de investimento do salão grande: auditoria 3/5/7 PCs mostrou custo elevado, retorno inicial limitado e capacidade ociosa; não alterar demanda artificialmente sem resolver circulação.
-- [ ] Revisar progressão de reputação VIP e preços em campanhas de vários anos antes de declarar a economia balanceada.
+- [x] Comparar reputação VIP e preços durante dois anos completos de operação (1998–1999) e corrigir as curvas de procura/avaliação: ver `docs/VIP_PRICING_BALANCE_2026.md`. Ainda não declarar toda a economia balanceada.
 
 ## Fechamento do diagnóstico financeiro — 13/10/2026
 - [x] Rejeitar ajuste de aumento artificial da procura após regressão na ocupação do salão grande; preservar balanceamento anterior.
@@ -330,3 +330,14 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Inspecionar 11 telas em desktop e dois tamanhos móveis emulados (1440, 414 e 360 px), com filmagem contínua da interface integrada.
 - [x] Preservar as melhorias recentes de personagens e alocação VIP; executar 146 testes da versão conjunta, além da auditoria e das verificações do navegador.
 - [ ] Avaliar a identidade com o criador e conferir toque/legibilidade em aparelho móvel físico; esta integração não promove sprites finais de personagens.
+
+## Auditoria de reputação VIP e política de preços — 14/10/2026
+- [x] Reputação positiva desacelera acima de 80 pontos, com teto de serviço sustentável de 98 para preço justo; avaliações negativas não são amortecidas.
+- [x] Cliente VIP avalia se o preço/hora é compatível com a qualidade do PC, além de fila, rede e desgaste; nenhum bônus de receita ou visita é fabricado.
+- [x] Preservar curva de demanda existente até R$ 18/h e introduzir resistência progressiva para preços maiores (sem criar preços negativos nem demanda artificial).
+- [x] Penalizar avaliações por tarifas muito acima do razoável, independentemente da redução de visitantes; hardware ainda fornece o benefício previsto.
+- [x] Simular 720 dias por cenário, sem alterar receita à mão, com licenças, filtros, reposição, manutenção e faxina comprados pelas APIs do jogo.
+- [x] Validar, em cada fechamento mensal, caixa = capital inicial + receitas − despesas; registrar trimestralmente reputação, atendimentos, perdas e caixa.
+- [x] Comparar R$ 12/h e R$ 26/h com mesma semente, registrando números finais e observações em `docs/VIP_PRICING_BALANCE_2026.md`.
+- [ ] Ampliar auditoria de preços intermediários (R$ 18, 20, 22, 24/h), custo-benefício do hardware e períodos históricos posteriores a 2000; um único confronto de extremos não encerra todo o balanceamento.
+- [ ] Conferir visualmente VIP em uma estação premium e revisar legibilidade na tela de aparelho móvel físico.
