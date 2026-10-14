@@ -64,7 +64,7 @@ try{
   // as resoluções, sem salvar receita fictícia nem perder o foco da aba.
   await page.locator('[data-admin-tab="prices"]').click();
   const priceText=page.locator("#price-demand-insight");
-  const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\\d+)%/)?.[1]);
+  const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\d+)%/)?.[1]);
   assert.equal(await pricePercent(),100);
   await page.locator("#price-up").click();
   const raised=await pricePercent();
