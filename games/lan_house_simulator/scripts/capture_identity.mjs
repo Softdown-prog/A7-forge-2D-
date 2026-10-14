@@ -64,13 +64,13 @@ try{
   // as resoluções, sem salvar receita fictícia nem perder o foco da aba.
   await page.locator('[data-admin-tab="prices"]').click();
   const priceText=page.locator("#price-demand-insight");
-  assert.match(await priceText.textContent(),/100%/);
+  const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\\d+)%/)?.[1]);
+  assert.equal(await pricePercent(),100);
   await page.locator("#price-up").click();
-  const raised=await priceText.textContent();
-  assert.match(raised,/Procura relativa/);
-  assert.ok(!raised.includes("100%"));
+  const raised=await pricePercent();
+  assert.ok(Number.isFinite(raised)&&raised<100&&raised>0,"preço maior reduz o primeiro percentual, não a legenda fixa");
   await page.locator("#price-down").click();
-  assert.match(await priceText.textContent(),/100%/);
+  assert.equal(await pricePercent(),100);
   await page.locator('[data-admin-tab="stock"]').click();
   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   // Dispatch directly on the SVG child to cover event delegation too.
