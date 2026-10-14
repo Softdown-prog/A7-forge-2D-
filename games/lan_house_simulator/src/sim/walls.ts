@@ -1,9 +1,11 @@
 import type {GameState,Point,Result} from "./types.js";
 import {entrance,pcCount,pcPosition} from "./engine.js";
 import {hallwayRoute,COUNTER_QUEUE,computerSeat} from "./route.js";
-import {vendingApproach} from "./layout.js";
+import {vendingApproach,purchaseApproach} from "./layout.js";
 import {roomBounds} from "./room.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
+import {editableObjects,wallCutsObject} from "./editableObjects.js";
+import {counterQueue} from "./route.js";
 
 export type WallAxis="x"|"y";
 export type WallSegment={axis:WallAxis;x:number;y:number};
@@ -51,9 +53,9 @@ function crossesRoute(w:WallSegment,points:Point[]):boolean{
 }
 /** Protects routes already in use; no new wall may cut the original movement logic. */
 export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
- const start=entrance(s),counter=COUNTER_QUEUE;
+ const start=entrance(s),counter=counterQueue(s);
  const services:Point[]=[...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
-   vendingApproach("soda"),vendingApproach("candy")];
+   vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
  const pairs:Array<[Point,Point]>=[[start,counter],[counter,start]];
  for(const service of services){
    pairs.push([counter,service],[service,start]);
@@ -68,12 +70,14 @@ export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
 }
 export function canBuildWall(s:GameState,w:WallSegment):boolean{
  if(!validWallPosition(s,w)||(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))||
-    (s.interiorDoors??[]).some(p=>wallId(p)===wallId(w))||wallBlocksCustomers(s,w))return false;
+    (s.interiorDoors??[]).some(p=>wallId(p)===wallId(w)))return false;
+ if(editableObjects(s).some(o=>o.surface==="floor"&&wallCutsObject(w,o)))return false;
  // Preserva a alcançabilidade de todos os serviços e de clientes ativos.
  const next={...s,interiorWalls:[...(s.interiorWalls??[]),w]};
- const goals:Point[]=[COUNTER_QUEUE,...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
- vendingApproach("soda"),vendingApproach("candy")];
+ const goals:Point[]=[counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
+ vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
  for(const goal of goals)if(!navigableRoute(next,entrance(s),goal))return false;
+ for(const c of s.customers)if(!navigableRoute(next,c,c.route?.at(-1)??c.target))return false;
  return true;
 }
 export function buildWall(s:GameState,w:WallSegment):Result{
@@ -108,7 +112,16 @@ export function removeInteriorDoor(s:GameState,w:WallSegment):Result{
  const index=(s.interiorDoors??[]).findIndex(p=>wallId(p)===wallId(w));
  if(index<0)return {ok:false,message:"Não há porta nesse local."};
  s.interiorDoors!.splice(index,1);
+ routesForCurrentCustomers(s);
  return {ok:true,message:"Porta interna removida. Passagem livre."};
+}
+export function removablePartitions(s:GameState):Array<WallSegment&{id:string;label:string;kind:"wall"|"door"}>{
+ return (["wall","door"] as const).flatMap(kind=>((kind==="wall"?s.interiorWalls:s.interiorDoors)??[]).map((w,i)=>({...w,kind,id:kind+":"+wallId(w),label:(kind==="wall"?"Divisória ":"Porta interna ")+(i+1)+" · "+w.x+", "+w.y+" · "+(w.axis==="x"?"horizontal":"vertical")})));
+}
+export function removePartition(s:GameState,id:string):Result{
+ const partition=removablePartitions(s).find(p=>p.id===id);
+ if(!partition)return {ok:false,message:"Selecione uma divisória ou porta existente."};
+ return partition.kind==="door"?removeInteriorDoor(s,partition):removeWall(s,partition);
 }
 export function validInteriorDoors(s:GameState):boolean{
  if(s.interiorDoors===undefined)return true;
@@ -129,8 +142,8 @@ export function validInteriorWalls(s:GameState):boolean{
    used.add(wallId(w));
  }
  // A parede pode exigir desvio pela porta. Valida alcançabilidade, não a rota reta.
- const destinations:Point[]=[COUNTER_QUEUE,...Array.from({length:pcCount(s)},(_,i)=>
-   computerSeat(pcPosition(i,s))),vendingApproach("soda"),vendingApproach("candy")];
+ const destinations:Point[]=[counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>
+   computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
  for(const destination of destinations){
    if(!navigableRoute(s,entrance(s),destination))return false;
  }

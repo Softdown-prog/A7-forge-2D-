@@ -51,8 +51,8 @@ function manage(s){
  }
  if((s.binFill??[]).some(x=>x>=75)&&!s.cleaningJob&&s.cash>=55)requestCleaning(s);
  for(const n of s.notices??[]){
-  if(n.resolved||!decisionOptions(n.id).length)continue;
-  const options=decisionOptions(n.id);
+  if(n.resolved||!decisionOptions(n.id,s).length)continue;
+  const options=decisionOptions(n.id,s);
   // Financeiramente prudente: nao fabricar receitas, usa as acoes do jogo.
   const choice=n.id==="school-booking"?"school-accept":
     n.id==="gaming-tournament"?"tournament-small":

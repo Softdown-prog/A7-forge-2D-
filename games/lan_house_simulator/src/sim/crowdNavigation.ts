@@ -1,15 +1,17 @@
+import {editableObjects,objectRect} from "./editableObjects.js";
 import type {Customer,GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {canTraverseLocalStep} from "./navigation.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {pcCount,pcPosition} from "./engine.js";
-import {VENDING_MACHINES,VENDING_WIDTH,VENDING_DEPTH} from "./layout.js";
+import {vendingMachines,VENDING_WIDTH,VENDING_DEPTH} from "./layout.js";
 import {furnitureLocations,furnitureSlots} from "./shop.js";
 
 /** Desvio temporário quando o corredor fica congestionado. Os corpos atuais
  * entram como obstáculos; os passos continuam sendo executados pelo motor. */
 export function crowdRoute(s:GameState,c:Customer,destination:Point):Point[]|null{
  const b=roomBounds(s),step=.5;
+ const custom=s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:")),objects=custom?editableObjects(s).filter(o=>o.surface==="floor").map(objectRect):[];
  const bodies=s.customers.filter(other=>other.id!==c.id);
  const desks=Array.from({length:pcCount(s)},(_,i)=>pcPosition(i,s));
  const slots=new Map(furnitureSlots(s).map(p=>[p.id,p]));
@@ -18,8 +20,9 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point):Point[]|nul
  }).filter((p):p is NonNullable<typeof p>=>!!p&&p.surface==="floor");
  const clear=(p:Point)=>p.x>b.minX+.1&&p.x<b.maxX-.1&&p.y>b.minY+.1&&p.y<b.maxY-.1&&
   bodies.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>=CUSTOMER_COLLISION_RADIUS+.00001)&&
-  desks.every(d=>!(p.x>d.x-.08&&p.x<d.x+1.05&&p.y>d.y-.08&&p.y<d.y+.60))&&
-  VENDING_MACHINES.every(d=>!(p.x>d.x-.08&&p.x<d.x+VENDING_WIDTH+.08&&p.y>d.y-.08&&p.y<d.y+VENDING_DEPTH+.08))&&
+  (!custom||Math.hypot(p.x-destination.x,p.y-destination.y)<.22||objects.every(r=>!(p.x>r.minX-.03&&p.x<r.maxX+.03&&p.y>r.minY-.03&&p.y<r.maxY+.03)))&&
+  (custom||desks.every(d=>!(p.x>d.x-.08&&p.x<d.x+1.05&&p.y>d.y-.08&&p.y<d.y+.60)))&&
+  (custom||vendingMachines(s).every(d=>!(p.x>d.x-.08&&p.x<d.x+VENDING_WIDTH+.08&&p.y>d.y-.08&&p.y<d.y+VENDING_DEPTH+.08)))&&
   furniture.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>o.r);
  if(!clear(destination))return null; // Não disputar um assento/atendimento ocupado.
  const segmentClear=(a:Point,d:Point)=>{

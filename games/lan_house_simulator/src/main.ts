@@ -1,8 +1,11 @@
 import {mountCloudControls} from "./ui/cloudControls.js";
+import {installGameViewport} from "./ui/gameViewport.js";
+import {createLayoutEditor} from "./ui/layoutEditor.js";
+import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave, snapshotGameState } from "./sim/saveTransfer.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
-import {buildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
+import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
@@ -12,6 +15,7 @@ import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/p
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
+import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
 import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
@@ -24,7 +28,9 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {requestCleaning,pcUnderRepair} from "./sim/services.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
+import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
+import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
 import {buyPart,buyPlatform,windowsHardwareIssues,hardwareFor,buildParts,requiredPsuWatts,type HardwareKind,HARDWARE_LABELS} from "./sim/hardware.js";
@@ -66,15 +72,28 @@ menuPreview.customers=[0,1].map(i=>{
 });
 menuRenderer?.draw(menuPreview,0);
 
+/** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
+function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):GameState{
+ const fresh=createGame(seed,mode);
+ if(typeof crypto!=="undefined"&&typeof crypto.getRandomValues==="function"){
+  fresh.mailScheduleSeed=crypto.getRandomValues(new Uint32Array(1))[0]??(seed>>>0);
+ }else{
+  fresh.mailScheduleSeed=(Date.now()^Math.floor(Math.random()*0x100000000))>>>0;
+ }
+ return fresh;
+}
 function readSave(): GameState {
   try {
     const data = localStorage.getItem(GAME_SAVE_KEY);
     if (data) {
       const decoded: unknown = JSON.parse(data);
-      if(isValidSave(decoded)){clampPriceToEra(decoded);return decoded;}
+      if(isValidSave(decoded)){
+        if(decoded.totalMinutes>GAME_LAST_MINUTE){decoded.totalMinutes=GAME_LAST_MINUTE;decoded.leftoverMinutes=0;}
+        clampPriceToEra(decoded);return decoded;
+      }
     }
   } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
-  return createGame(72421,"historical");
+  return newGameForPlayer(72421,"historical");
 }
 let game = readSave();
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
@@ -151,6 +170,7 @@ mountCloudControls(saveMessage,()=>game,(state)=>{
  announceSave("Partida da nuvem restaurada. Clique em Continuar.");
 });
 function showMenu():void{
+ if(layoutEditor.active)layoutEditor.close();
  sceneMotion.reset();
  soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
@@ -166,7 +186,7 @@ function beginPlay():void{
 }
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- game=createGame(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ game=newGameForPlayer(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;save();beginPlay();
 });
 continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
@@ -176,7 +196,7 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
 let placingKind:FurnitureKind|null=null;
 let wallMode:"build"|"remove"|"door"|null=null;
@@ -187,6 +207,11 @@ let relocating=false;
 let relocationFrom:string|null=null;
 let hoveredPlacement:string|null=null;
 let placementNotice="";
+let purchaseRotation:0|1|2|3=0;
+let pendingWall:WallSegment|null=null;
+const layoutEditor=createLayoutEditor(canvas,()=>game,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
+installGameViewport(canvas);
+
 let adminOpen = false;
 let noticesOpen=false;
 let activeAdminTab="prices";
@@ -197,12 +222,13 @@ let lastEventSignature="";
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
-function paintPayments(dt:number):void {
+function paintPayments(dt:number,visible=true):void {
   const camera=cameraForGame(game);
   for(let i=paymentPopups.length-1;i>=0;i--){
     const effect=paymentPopups[i]!;
     effect.age+=dt;
     if(effect.age>=1.35){paymentPopups.splice(i,1);continue;}
+    if(!visible)continue;
     const at=iso({x:effect.x,y:effect.y},camera,94);
     const alpha=Math.min(1,(1.35-effect.age)/0.4);
     view!.save();view!.globalAlpha=alpha;
@@ -217,12 +243,13 @@ function paintPayments(dt:number):void {
   }
 }
 
-function paintSales(dt:number):void {
+function paintSales(dt:number,visible=true):void {
  const camera=cameraForGame(game);
  for(let i=salePopups.length-1;i>=0;i--){
   const effect=salePopups[i]!;
   effect.age+=dt;
   if(effect.age>=1.35){salePopups.splice(i,1);continue;}
+  if(!visible)continue;
   const at=iso({x:effect.x,y:effect.y},camera,110);
   view!.save();
   view!.globalAlpha=Math.min(1,(1.35-effect.age)/0.4);
@@ -235,11 +262,12 @@ function paintSales(dt:number):void {
  }
 }
 
-function paintSpeech(dt:number):void {
+function paintSpeech(dt:number,visible=true):void {
  const camera=cameraForGame(game);
  for(let i=speechPopups.length-1;i>=0;i--){
   const b=speechPopups[i]!;
   b.age+=dt;if(b.age>=2.6){speechPopups.splice(i,1);continue;}
+  if(!visible)continue;
   const p=iso({x:b.x,y:b.y},camera,146);
   const alpha=Math.min(1,(2.6-b.age)/0.4);
   view!.save();view!.globalAlpha=alpha;view!.font="bold 13px system-ui,sans-serif";
@@ -282,44 +310,41 @@ noticesList?.addEventListener("click",event=>{
  else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");renderUI();}
  else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");renderUI();}
 });
-button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
-button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-admin",()=>{if(layoutEditor.active)layoutEditor.close();adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-shop",()=>{if(layoutEditor.active)layoutEditor.close();shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
 button("demolish-walls",()=>{
  if(!((game.interiorWalls?.length??0)+(game.interiorDoors?.length??0)))return;
- wallMode="remove";placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
- shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+ layoutEditor.open(true);
 });
 button("rotate-furniture",()=>{
+ if(placingKind&&placingKind!=="poster"){purchaseRotation=((purchaseRotation+1)%4) as 0|1|2|3;renderUI();return;}
  if(!relocating||!relocationFrom)return;
  const result=rotateFurniture(game,relocationFrom);
  applyResult(game,result);renderUI();
  if(result.ok)save();
 });
-button("organize-furniture",()=>{
- if(!furnitureLocations(game).length)return;
- placingKind=null;relocating=true;relocationFrom=null;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
- shopOpen=false;adminOpen=false;renderUI();canvas!.scrollIntoView({block:"center",behavior:"smooth"});
-});
+button("organize-furniture",()=>layoutEditor.open());
+
 shopCatalog?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
  const id=target.dataset.buy;
  if(id==="computer-annex"){
    installingAnnexPc=true;wallMode=null;placingKind=null;relocating=false;hoveredAnnexPc=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  if(id==="wall"||id==="door"){
-   wallMode=id==="door"?"door":"build";installingAnnexPc=false;placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   wallMode=id==="door"?"door":"build";installingAnnexPc=false;placingKind=null;relocating=false;hoveredWall=null;pendingWall=null;placementNotice="";
+   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  if(id==="poster"||id==="plant"||id==="table"){
    if(!availablePlacementSlots(game,id).length)return;
-   placingKind=id;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
+   placingKind=id;purchaseRotation=0;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
    shopOpen=false;adminOpen=false;renderUI();
-   canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
@@ -361,6 +386,14 @@ gpuList?.addEventListener("click",event=>{
  applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
 });
 const licensePanel=document.getElementById("windows-license-list");
+const gpuGamePanel=document.getElementById("gpu-game-catalog");
+gpuGamePanel?.addEventListener("click",event=>{
+ const button=event.target instanceof Element?event.target.closest("button[data-gpu-game-buy]"):null;
+ if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const id=button.dataset.gpuGameBuy;
+ if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
+ applyResult(game,licenseGpuGame(game,id));renderUI();save();
+});
 licensePanel?.addEventListener("click",event=>{
  const node=event.target instanceof Element?event.target.closest("button"):null;
  if(!(node instanceof HTMLButtonElement)||node.disabled)return;
@@ -431,16 +464,24 @@ retailControls?.addEventListener("click",event=>{
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
+  game=newGameForPlayer(72421,"classic");previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
 const placementHelp=document.getElementById("placement-help");
 const stage=canvas.closest<HTMLElement>(".stage");
 const placementNames:Record<FurnitureKind,string>={poster:"pôster",plant:"planta",table:"mesinha"};
 function stopPlacement():void{
- placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;placementNotice="";renderUI();
+ placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;wallMode=null;hoveredWall=null;pendingWall=null;installingAnnexPc=false;hoveredAnnexPc=null;placementNotice="";renderUI();
 }
 document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
+document.getElementById("confirm-wall")?.addEventListener("click",()=>{
+ if(!pendingWall||!wallMode)return;const wall=pendingWall;
+ const result=wallMode==="build"?buildWall(game,wall):wallMode==="door"?installInteriorDoor(game,wall):
+  (game.interiorDoors??[]).some(p=>p.axis===wall.axis&&p.x===wall.x&&p.y===wall.y)?removeInteriorDoor(game,wall):removeWall(game,wall);
+ placementNotice=result.message;if(result.ok){applyResult(game,result);save();pendingWall=null;}renderUI();
+});
+document.getElementById("turn-wall")?.addEventListener("click",()=>{if(pendingWall){pendingWall={...pendingWall,axis:pendingWall.axis==="x"?"y":"x"};hoveredWall=pendingWall;renderUI();}});
+
 function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
  const element=canvas!;
  const bounds=element.getBoundingClientRect();
@@ -460,7 +501,7 @@ function pickWall(x:number,y:number):WallSegment|null{
      if(d<best){best=d;nearest=segment;}
    }
  }
- return best<=Math.max(12,18*camera.zoom)?nearest:null;
+ return best<=Math.max(12,22*canvas!.width/canvas!.getBoundingClientRect().width)?nearest:null;
 }
 function pickAnnexPc(x:number,y:number):AnnexComputerSlot|null{
  const camera=cameraForGame(game);let nearest:AnnexComputerSlot|null=null,best=Infinity;
@@ -480,7 +521,7 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  for(const slot of furnitureSlots(game)){
   if(surface&&slot.surface!==surface)continue;
   if(relocating&&!moving&&!furnitureLocations(game).some(p=>p.slotId===slot.id))continue;
-  const at=slot.surface==="wall"?iso({x:slot.x+0.33,y:0.01},camera,137):
+  const at=slot.surface==="wall"?iso({x:slot.x+(slot.axis==="y"?0:.33),y:slot.y+(slot.axis==="y"?.33:0)},camera,137):
       iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   const dist=Math.hypot(x-at.x,y-at.y);
   if(dist<distance){distance=dist;nearest=slot;}
@@ -508,11 +549,8 @@ canvas.addEventListener("click",e=>{
   }
   if(wallMode){
     const wall=pickWall(x,y);
-    if(!wall){placementNotice="Toque na borda de um tile para selecionar o segmento.";renderUI();return;}
-    const result=wallMode==="build"?buildWall(game,wall):wallMode==="door"?installInteriorDoor(game,wall):
-      (game.interiorDoors??[]).some(p=>p.axis===wall.axis&&p.x===wall.x&&p.y===wall.y)?removeInteriorDoor(game,wall):removeWall(game,wall);
-    placementNotice=result.message;
-    if(result.ok){applyResult(game,result);save();}
+    if(!wall){placementNotice="Toque em uma das linhas do chão para escolher o trecho da divisória.";renderUI();return;}
+    pendingWall=wall;hoveredWall=wall;placementNotice="Segmento selecionado. Confira a prévia e toque em Confirmar segmento.";
     renderUI();return;
   }
   if(relocating){
@@ -537,18 +575,24 @@ canvas.addEventListener("click",e=>{
   if(placingKind){
     const kind=placingKind,slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Clique em uma das posições sinalizadas.";renderUI();return;}
-    const result=placeFurniture(game,kind,slot.id);
+    const result=placeFurniture(game,kind,slot.id,purchaseRotation);
     if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
   }
   if(renderer.hitOwner(x,y)){soundscape.click();adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
-function renderShop():void{
+const panelRevisions=new Map<string,string>();
+function panelChanged(name:string,revision:unknown,force:boolean):boolean{
+ const key=JSON.stringify(revision);if(!force&&panelRevisions.get(name)===key)return false;
+ panelRevisions.set(name,key);return true;
+}
+function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
+ if(!panelChanged("shop",[game.cash,game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
- if(organize){const count=furnitureLocations(game).length;organize.disabled=count===0;organize.textContent=count?"↔ Organizar móveis instalados ("+count+")":"↔ Organizar móveis (nenhum instalado)";}
+ if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
  if(demolish){const count=(game.interiorWalls?.length??0)+(game.interiorDoors?.length??0);
   demolish.disabled=!count;demolish.textContent="Remover paredes e portas ("+count+")";}
@@ -556,7 +600,7 @@ function renderShop():void{
  if(cash){
    const b=roomBounds(game),e=game.roomExtensions??{west:0,east:0,south:0};
    cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2+annexComputerSlots(game).length)+
-     " · Piso "+(b.maxX-b.minX)+"×"+(b.maxY-b.minY)+" tiles · Oeste "+e.west+"/5 · Leste "+e.east+"/5 · Norte "+(e.north??0)+"/5 · Salas "+wallZoneCount(game);
+     " · Tamanho do salão "+(b.maxX-b.minX)+"×"+(b.maxY-b.minY)+" · Ampliações: esquerda "+e.west+"/5 · direita "+e.east+"/5 · fundos "+(e.north??0)+"/5 · Salas "+wallZoneCount(game);
  }
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
@@ -577,13 +621,13 @@ function renderShop():void{
      max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
-  button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
+  button.textContent=full?(max>0?"Sem espaço livre":"Limite atingido"):game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
   card.append(art,category,title,description,button);
-  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+"/"+max;card.append(owned);}
+  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
  }
 }
-function renderUI():void {
+function renderUI(liveOnly=false):void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
   admin.hidden=!adminOpen;
@@ -591,7 +635,7 @@ function renderUI():void {
   const unread=unreadNotices(game),badge=document.getElementById("notices-count");
   if(badge){badge.hidden=unread===0;badge.textContent=String(unread);}
   document.getElementById("open-notices")?.setAttribute("aria-expanded",String(noticesOpen));
-  if(noticesList&&noticesOpen){
+  if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
     noticesList.replaceChildren();
     if(!(game.notices?.length)){const empty=document.createElement("p");empty.textContent="Nenhuma mensagem recebida por enquanto.";noticesList.append(empty);}
     for(const n of game.notices??[]){
@@ -605,10 +649,28 @@ function renderUI():void {
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
       if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
-      const options=decisionOptions(n.id);
+      const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
+      if(record&&(record.stage==="pending"||record.stage==="ending")){
+        const progress=document.createElement("small");
+        progress.className="notice-followup-hint";
+        progress.textContent=record.stage==="pending"
+          ?"Consequências em acompanhamento: nova carta a partir do dia "+record.dueDay+"."
+          :"O resultado será registrado na correspondência a partir do dia "+record.dueDay+".";
+        actions.append(progress);
+      }
+      const options=decisionOptions(n.id,game);
+      if(n.id==="electrical-inspection"&&game.electricalDeadlineDay!==undefined&&!n.resolved){
+        const pending=document.createElement("strong");
+        pending.textContent=game.electricalInspectionFineApplied
+          ?"Prazo vencido: multa já aplicada. Ainda é necessário regularizar."
+          :(game.electricalExtensionUsed?"Prazo prorrogado até o dia ":"Prazo para regularizar até o dia ")+game.electricalDeadlineDay+".";
+        actions.append(pending);
+      }
       if(options.length){
         if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
-        else for(const option of options){const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
+        else for(const option of options){
+          if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
+          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=option.cost>0&&game.cash<option.cost;actions.append(choice);}
       }
       card.append(title,date,body,actions);noticesList.append(card);
     }
@@ -616,30 +678,33 @@ function renderUI():void {
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
   const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
-  if(rotateButton){rotateButton.hidden=!relocating||!moving;rotateButton.disabled=!moving||moving.kind==="poster";}
+  if(rotateButton){rotateButton.hidden=!(placingKind&&placingKind!=="poster")&&(!relocating||!moving);rotateButton.disabled=placingKind?placingKind==="poster":!moving||moving.kind==="poster";}
+ const confirmWall=document.querySelector<HTMLButtonElement>("#confirm-wall"),turnWall=document.querySelector<HTMLButtonElement>("#turn-wall");
+ if(confirmWall){confirmWall.hidden=!wallMode;confirmWall.disabled=!pendingWall||(wallMode==="build"&&!canBuildWall(game,pendingWall));}if(turnWall){turnWall.hidden=wallMode!=="build";turnWall.disabled=!pendingWall;}
 
   if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode||installingAnnexPc));
   if(placementHelp)placementHelp.textContent=installingAnnexPc?
     (placementNotice||"Selecione um círculo verde para instalar um computador completo por R$ "+ANNEX_PC_COST+"."):
     wallMode?
-    (placementNotice||(wallMode==="build"?"Toque na borda de um tile para construir uma parede por R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
+    (placementNotice||(wallMode==="build"?"Selecione a borda, confira a prévia e confirme. Cada segmento custa R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
     relocating?
     (placementNotice||(relocationFrom?"Escolha o destino verde ou toque em Girar para mudar a orientação.":"Toque no móvel em dourado e escolha a nova posição. Sem custos.")):
     placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
   if(shop)shop.hidden=!shopOpen;
   const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
   if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));
-  renderShop();
+  renderShop(!liveOnly);
   activateAdminTab(activeAdminTab);
   const days=dayNumber(game)-1;
   const year=gameYear(game);
   const month=Math.floor((days%360)/30)+1;
   const monthDay=days%30+1;
   const calendar=document.getElementById("calendar-hud");
-  if(calendar)calendar.textContent="Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);
+  if(calendar){const html=iconMarkup("calendar")+(game.totalMinutes>=GAME_LAST_MINUTE?"Fim do calendário · ":"")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
   const weather=document.getElementById("weather-hud");
-  if(weather)weather.textContent=game.weather==="rain"?"Chuva":"Tempo firme";
-  const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
+  if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
+  const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedGpuGames,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -893,8 +958,52 @@ function renderUI():void {
       line.append(title,choices);licensePanel.appendChild(line);
     }
   }
-  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map(n=>Math.round(n)+"%").join(" · ")+" · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
-  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||!(game.binFill??[]).some(x=>x>=10)||game.cash<55;
+  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
+    gpuGamePanel.replaceChildren();
+    if(game.economyVersion!==2||year<2005){
+      const note=document.createElement("p");
+      note.textContent=game.economyVersion!==2
+       ?"Os jogos com GPU são um recurso do modo histórico."
+       :"Novos jogos que exigem placa de vídeo chegam em 2005.";
+      gpuGamePanel.append(note);
+    }else for(const title of GPU_GAME_CATALOG){
+      const card=document.createElement("div");card.className="price-control";
+      const heading=document.createElement("strong");
+      heading.textContent=title.name+" · "+title.year;
+      const requirements=document.createElement("p");requirements.className="catalog-game-note";
+      const gpu=GPU_CATALOG.find(x=>x.id===title.minGpu);
+      const os=WINDOWS_ERAS.find(x=>x.id===title.minWindows);
+      requirements.textContent="Requer GPU "+(gpu?.name??title.minGpu)+
+       " ou superior e "+(os?.name??title.minWindows)+" licenciado.";
+      const quote=quoteGpuGame(game,title.id);
+      const status=document.createElement("p");status.className="catalog-game-note";
+      const bought=game.licensedGpuGames?.includes(title.id)===true;
+      status.textContent=(bought?"Licenciado. ":quote.message+" ")+
+       (quote.eligiblePcs.length
+        ?"Roda no(s) PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
+        :"Nenhuma máquina compatível ainda.")+
+       " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
+       "/h, somente para clientes de jogos avançados e dentro do teto anual.";
+      if(bought&&quote.eligiblePcs.length){
+        status.textContent+=" Valor atual por hora: "+
+         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i).toFixed(2)).join(" · ")+".";
+      }
+      const action=document.createElement("button");
+      action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
+      action.textContent=bought?"Licenciado":year<title.year
+       ?"🔒 Disponível em "+title.year:"Licenciar · R$ "+title.cost;
+      action.disabled=!quote.ok;
+      action.title=quote.ok?"Licença para todo o estabelecimento, uso restrito a máquinas compatíveis.":quote.message;
+      card.append(heading,requirements,status,action);
+      gpuGamePanel.append(card);
+    }
+  }
+  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
+    const state=binStatus(n);
+    return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
+  }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
+  " · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
+  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||game.cash<serviceVisitCost(game,"cleaning");
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
@@ -920,6 +1029,7 @@ function renderUI():void {
     promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · "+label;
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
+  }
   const recentEvents=game.eventLog.slice(0,6),eventSignature=JSON.stringify(recentEvents);
   if(eventSignature!==lastEventSignature){
   events.replaceChildren();
@@ -936,17 +1046,22 @@ function renderUI():void {
   controls.setAttribute("aria-expanded",String(adminOpen));
   presentLiveState(game,internetName(),adminOpen?activeAdminTab:null);
 }
-let lastFrame=0,lastUI=0,lastMenuFrame=0,elapsed=0;
+let lastFrame=0,lastUI=0,lastMenuFrame=0,elapsed=0,lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
+new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
+document.addEventListener("scroll",()=>{lastScroll=performance.now();},{capture:true,passive:true});
+document.addEventListener("pointerdown",()=>{uiPointerHeld=true;lastInput=performance.now();},{capture:true,passive:true});
+for(const type of ["pointerup","pointercancel"])document.addEventListener(type,()=>{uiPointerHeld=false;lastInput=performance.now();},{capture:true,passive:true});
+window.addEventListener("blur",()=>{uiPointerHeld=false;});
 let wasSimulating=false;
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  const simulating=isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const simulating=isPlaying&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
-  if(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
+  if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
@@ -974,17 +1089,20 @@ function frame(timestamp:number):void {
     speechPopups.push({...speech,age:0});
     if(speechPopups.length>8)speechPopups.shift();
   }
-  if(isPlaying)renderer.draw(sceneMotion.sample(game),elapsed);
-  else if(menuRenderer&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
-  if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
-  if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);
-  if(isPlaying&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
-  if(isPlaying&&wallMode){
-    if(wallMode==="door")renderer.drawDoorCandidates(game,hoveredWall);
-    else renderer.drawWallPreview(game,hoveredWall,wallMode==="remove");
+  const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastScroll>120;
+  if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
+  if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
+  if(!isPlaying&&menuRenderer&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
+  if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}
+  if(paintScene&&layoutEditor.active&&layoutEditor.wall)renderer.drawWallPreview(game,layoutEditor.wall,true);
+  if(paintScene&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);
+  if(paintScene&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
+  if(paintScene&&wallMode){
+    if(wallMode==="door")renderer.drawDoorCandidates(game,pendingWall??hoveredWall);
+    else renderer.drawWallPreview(game,pendingWall??hoveredWall,wallMode==="remove");
   }
-  if(isPlaying&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
-  if(isPlaying&&timestamp-lastUI>450){lastUI=timestamp;renderUI();}
+  if(paintScene&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
+  if(isPlaying&&timestamp-lastUI>450&&timestamp-lastScroll>160&&!uiPointerHeld&&timestamp-lastInput>120){lastUI=timestamp;renderUI(true);}
   requestAnimationFrame(frame);
 }
 setInterval(save,8000);

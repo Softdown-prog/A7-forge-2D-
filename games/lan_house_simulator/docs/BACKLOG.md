@@ -541,3 +541,68 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Verificar que, em 2012, três plataformas modernas com Windows 7 resultaram em **+R$ 11.205,47** versus legado em oito meses, enquanto GPU adicional nos 3 PCs **reduziu R$ 6.097,37** versus três plataformas sem GPU.
 - [x] Garantir compatibilidade socket/DDR/IDE/Windows e saves, introduzir `npm run audit:staged-hardware` e workflow manual; documentar `docs/STAGED_HARDWARE_ROI_2026.md`. Não modificar o balanceamento de hardware só para forçar ROI.
 - [ ] Testar compras mensais com caixa realmente acumulado, uma GPU no PC de maior atendimento, 5/7 estações e diferentes valores de tarifa em 2005–2024 antes de oferecer dicas automáticas de investimento.
+
+## Evento esporádico — Bombeiros e rede elétrica (14/10/2026)
+
+- [x] Adicionar à carta de eventos uma vistoria única dos Bombeiros sobre cabos de rede e energia, extensões e adaptadores sobrecarregados, sem data fixa no calendário da campanha.
+- [x] Oferecer regularização completa por profissional, adequação essencial segura ou prorrogação única de oito dias sobre o prazo inicial de oito dias, com custos reais ajustados aos modos clássico/histórico.
+- [x] Se o prazo vencer sem regularização, aplicar autuação única e perda de reputação; a mesma carta continua aberta para regularizar e não reaparece como novo evento.
+- [x] Persistir vistoria, regularização, prazo e multa nos saves opcionais, preservando saves anteriores; apresentar botões e prazo no envelope do runtime.
+- [x] Adicionar regressões de duplicação, valores, prazo, serialização, modo histórico e não alteração do RNG de clientes.
+- [ ] Inspecionar interface da carta em navegador real (desktop/mobile) e validar testes no CI antes de promover a main.
+
+**Observação:** valores e consequências são fictícios para game design e não representam leis específicas de prevenção de incêndio de qualquer cidade ou estado.
+
+## Salão editável e ampliação da tela móvel — 14/10/2026
+- [x] Adicionar zoom, deslocamento do mapa e tela cheia; celular inicia em 160%, com controles acessíveis por toque e proteção contra compra após deslizar.
+- [x] Organizar PCs com mesa/cadeira, balcão/dono, máquinas, prateleira, lixeiras, pôsteres iniciais e decoração comprada por lista/toque, prévia, giro e confirmação gratuita; preservar peças, licenças, estoque e receita por estação.
+- [x] Substituir limites fixos de decoração por encaixes reais, manter IDs após ampliações e validar espaço, clientes e passagens antes de cobrar.
+- [x] Selecionar e confirmar divisórias/portas/remoção; permitir desvios alcançáveis e impedir cortes de equipamentos, com recálculo das rotas.
+- [x] Verificar toque em 360/414 e desktop 1440, giro, recarga, compra confirmada de divisória e 60 casos de cache nas quatro orientações; proteger importação de saves e registrar `docs/LAYOUT_EDITOR.md`.
+- [ ] Conferir gestos e ergonomia em telefone físico, principalmente salões grandes; estudar corredores mais amplos e edição assistida por cômodos antes de expandir o construtor.
+
+## Jogos GPU obrigatórios e licenças desde 2005 — 14/10/2026
+- [x] Preservar catálogo básico de jogos (R$ 450) e licenças Windows atuais; adicionar títulos fictícios desbloqueados em **2005, 2009 e 2013**, cada um com GPU mínima, Windows mínimo, preço único e indicação dos PCs elegíveis.
+- [x] Impedir licenciamento premium sem **ao menos uma estação com GPU e Windows licenciado compatíveis**, mesmo se houver dinheiro; impedir cobrança repetida, antecipação da data de lançamento e IDs adulterados em saves.
+- [x] Ao atender gamers desde 2005, preferir PCs que suportem os jogos e cobrar adicional **somente naquela estação e naquela sessão**, limitado ao teto anual, sem aumentar a chegada de clientes nem alterar o RNG das épocas anteriores.
+- [x] Exibir jogos, requisitos, motivos de bloqueio, preços e PCs elegíveis na aba Windows / Licenças; registrar contrato premium, receita e custo nos mesmos livros econômicos do motor.
+- [x] Preservar saves clássicos, históricos anteriores e ausência de `licensedGpuGames`; validar teste de autorização, compatibilidade, caixa, tarifa local e atendimento real.
+- [ ] Ampliar GPUs para 2005–2013, catálogo por gênero, demanda específica por título, instalação por máquina, preferência do cliente e preços locais configuráveis; somente então realizar uma **nova auditoria de ROI das GPUs**.
+
+
+### Correção do editor e remoções — 14/10/2026
+
+- Acesso a Organizar salão fica em Compras, fora da faixa de visualização do mapa.
+- Remoção com confirmação/cancelamento de plantas, mesas, pôsteres comprados e originais; libera encaixes e persiste, sem reembolso. Saves legados são normalizados sem recriar unidades retiradas.
+- Divisórias e portas aparecem na lista do editor com posição/orientação e destaque no mapa. Atalho da loja abre essa lista; retirada recalcula as rotas em curso.
+- Testes de motor cobrem retirada, recompra, saves antigos, ampliação e dados inválidos; teste de interface cobre remoção/cancelamento/reload com toque em 360/414 px e desktop.
+
+## Eventos com consequências encadeadas — 14/10/2026
+
+- [x] Criar doze histórias novas, esporádicas e únicas por save: goteira, vizinhos, teclado, malware, estoque, energia, fornecedor, documentos, rede, jornal, privacidade e ação comunitária.
+- [x] Cada história tem três escolhas iniciais, desdobramento contextual com duas escolhas e carta final; histórias não reaparecem mesmo após compactação do envelope.
+- [x] Efeitos reais em demanda temporária, desgaste de máquinas, estoque, internet, reputação e dinheiro; custo histórico proporcional e prevenção de duplo débito.
+- [x] Persistir estágio da cadeia, escolhas, prazos e modificadores no JSON, validando dados e preservando saves anteriores.
+- [x] Criar testes de cobertura para todos os ramos, consequências no atendimento, idempotência e importação.
+- [x] Integrar as quatro decisões legadas (fornecedor, escola, campeonato, manutenção) ao pipeline de retorno, mantendo os efeitos originais e criando cartas de desdobramento e conclusão.
+- [ ] Validar suíte do CI, jogar os cenários no navegador real e calibrar impactos de longo prazo antes do lançamento.
+
+Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Serviços externos e Cookies não são alterados.
+
+
+### Fluidez de interface e atendimento de lanches — 14/10/2026
+
+- Encerrar desenho do menu oculto durante a partida; suspender apenas pintura de cena coberta/fora da tela/durante rolagem, mantendo a simulação ativa.
+- Preservar controles e listas sem mudanças; adiar atualização periódica durante toque/rolagem e retirar desfoque do fundo modal.
+- Separar fila de compras por produto e afastar atendimento de salgadinhos da fila do caixa. Travessia da soleira libera a saída sem convergir todos para um ponto exato.
+- Reduzir frequência e custo das buscas de desvio; persistir intervalo de recuperação. Cobertura de congestionamento, saves e máquina movida.
+- Verificar no navegador áudio OGG existente de refrigerante em venda confirmada, mantendo mixagem ocasional anterior.
+- Remover tiles/grid das descrições ao jogador, explicar expansão + instalação de PCs e reescrever Sobre o jogo em tom acolhedor.
+
+
+### Arte do balcão e administrador — 14/10/2026
+
+- Balcão com base, tampo elevado e bisel, painéis verdes, madeira, identificação Caixa, gavetas e terminal CRT com faces coerentes nas quatro rotações. Teclado, caixa e caderno acompanham a superfície.
+- Administrador mantém âncoras e quatro direções, com uniforme/apron refinado, crachá de terminal, óculos, detalhes de cabelo e mãos em atendimento. Removida bandeja de restaurante para adaptar a postura à administração da lan house.
+- Cache estático do balcão por escala, orientação e fase de pixel; limite de 24 imagens por contexto. Não altera tamanho de ocupação, filas, salvamento ou economia.
+- Verificação Canvas: 32 comparações de cache/desenho direto, 72 combinações dos outros clientes sem pixels alterados e quatro hitboxes de administrador reposicionado/girado. Galeria antes/depois, quatro vistas, cena real e detalhes do figurino. CI executa a revisão do balcão.

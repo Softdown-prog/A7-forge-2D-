@@ -1,5 +1,5 @@
 import type {Point} from "../sim/types.js";
-import {iso,polygon,type Projection} from "./isometric.js";
+import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 import {VENDING_WIDTH,VENDING_DEPTH} from "../sim/layout.js";
 
 type MachineKind="soda"|"candy";
@@ -15,12 +15,15 @@ function rounded(c:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,
  if(stroke){c.strokeStyle=stroke;c.lineWidth=1;c.stroke();}
 }
 function box(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,w:number,d:number,z:number,h:number,top:string,front:string,side:string):void{
+ if(cam.rotation){raisedCuboid(c,cam,x,y,w,d,z,h,[top,front,side]);return;}
  const at=(x:number,y:number,z:number)=>iso({x,y},cam,z);
  polygon(c,[at(x+w,y,z),at(x+w,y+d,z),at(x+w,y+d,z+h),at(x+w,y,z+h)],side,"#41574f");
  polygon(c,[at(x,y+d,z),at(x+w,y+d,z),at(x+w,y+d,z+h),at(x,y+d,z+h)],front,"#41574f");
  polygon(c,[at(x,y,z+h),at(x+w,y,z+h),at(x+w,y+d,z+h),at(x,y+d,z+h)],top,"#6d7e6c");
 }
 function face(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,span:number,z:number,h:number,axis:"x"|"y",paint:()=>void):void{
+ // A face turned away from the fixed camera is hidden by the cabinet.
+ if(cam.rotation){const a=iso({x,y},cam),b=iso(axis==="x"?{x:x+.1,y}:{x,y:y+.1},cam);if(b.y<=a.y)return;}
  // u always moves right on screen, so lettering is never mirrored on the rack.
  const a=iso(axis==="x"?{x,y:y+span}:{x,y},cam,z+h);
  const b=iso(axis==="x"?{x,y}:{x:x+span,y},cam,z+h);
@@ -165,11 +168,11 @@ function drawCached(c:CanvasRenderingContext2D,cam:Projection,p:Point,keyParts:u
  if(!useCache||typeof document==="undefined"||c.globalAlpha!==1||c.globalCompositeOperation!=="source-over"||(c.filter&&c.filter!=="none")||
   transform.a!==1||transform.b!==0||transform.c!==0||transform.d!==1||transform.e!==0||transform.f!==0){paint(c);return;}
  const anchor=iso(p,cam),ix=Math.floor(anchor.x),iy=Math.floor(anchor.y),z=cam.zoom;
- const key=JSON.stringify([z,anchor.x-ix,anchor.y-iy,...keyParts]);
+ const key=JSON.stringify([z,anchor.x-ix,anchor.y-iy,cam.rotation??0,...keyParts]);
  let cache=sprites.get(c);if(!cache){cache=new Map();sprites.set(c,cache);}
- let sprite=cache.get(key);const padX=Math.ceil(90*z)+4,padY=Math.ceil(116*z)+4;
+ let sprite=cache.get(key);const padX=Math.ceil((cam.rotation?150:90)*z)+4,padY=Math.ceil((cam.rotation?180:116)*z)+4;
  if(!sprite){
-  sprite=document.createElement("canvas");sprite.width=Math.ceil(184*z)+8;sprite.height=Math.ceil(181*z)+8;
+  sprite=document.createElement("canvas");sprite.width=Math.ceil((cam.rotation?300:184)*z)+8;sprite.height=Math.ceil((cam.rotation?300:181)*z)+8;
   const target=sprite.getContext("2d");if(!target){paint(c);return;}
   target.translate(padX-ix,padY-iy);paint(target);
   cache.set(key,sprite);if(cache.size>96)cache.delete(cache.keys().next().value!);
@@ -180,7 +183,7 @@ export function drawVendingMachine(c:CanvasRenderingContext2D,cam:Projection,p:P
  const quantity=visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY[kind]),pulse=quantity?Math.floor(time*1.2)%2:0;
  drawCached(c,cam,p,[kind,quantity,pulse],target=>paintMachine(target,cam,p,kind,quantity,pulse),useCache);
 }
-export function drawSnackShelf(c:CanvasRenderingContext2D,cam:Projection,minX=0,stock:number=RETAIL_DISPLAY_CAPACITY.snacks,useCache=true):void{
- const p={x:minX+.23,y:2.92},quantity=visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY.snacks);
+export function drawSnackShelf(c:CanvasRenderingContext2D,cam:Projection,minX=0,stock:number=RETAIL_DISPLAY_CAPACITY.snacks,useCache=true,position?:Point):void{
+ const p=position??{x:minX+.23,y:2.92},quantity=visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY.snacks);
  drawCached(c,cam,p,["snacks",quantity],target=>paintShelf(target,cam,p,quantity),useCache);
 }

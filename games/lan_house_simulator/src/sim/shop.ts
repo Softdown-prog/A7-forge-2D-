@@ -1,3 +1,8 @@
+import type {EditableObject} from "./editableObjects.js";
+import {layoutGoals} from "./editableObjects.js";
+import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
+import {entrance} from "./engine.js";
+import {fixedLayoutObjects,pointInsideObject,builtPosters,layoutPlacementIssue} from "./editableObjects.js";
 import type {GameState,Result} from "./types.js";
 import {roomBounds,expansionPrice} from "./room.js";
 import {WALL_COST} from "./walls.js";
@@ -9,10 +14,10 @@ export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
  {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
- {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Adiciona uma faixa de 2 tiles a oeste."},
- {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Adiciona uma faixa de 2 tiles a leste."},
- {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Adiciona 2 tiles para o norte, atrás do balcão. Porta sul fixa."},
- {id:"wall",label:"Construir divisórias",category:"Construção",description:"Parede interna de 1 tile, encaixe no grid e proteção de rotas."},
+ {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Aumenta o espaço à esquerda e libera uma posição para PC no anexo."},
+ {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Aumenta o espaço à direita e libera uma posição para PC no anexo."},
+ {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Aumenta o espaço atrás do balcão e libera uma posição para PC no anexo. A entrada fica no mesmo lugar."},
+ {id:"wall",label:"Construir divisórias",category:"Construção",description:"Escolha a posição de cada trecho. Mantém livres as passagens para clientes."},
  {id:"door",label:"Instalar porta interna",category:"Construção",description:"Converte uma divisória em passagem para clientes."},
  {id:"poster",label:"Pôster",category:"Decoração",description:"Pôster geométrico de parede."},
  {id:"plant",label:"Planta",category:"Decoração",description:"Vaso com folhagens."},
@@ -32,6 +37,11 @@ export function buyComputer(s:GameState):Result{
  if(count>=capacity)return {ok:false,message:"Amplie o salão antes de instalar outro PC."};
  const cost=shopPrice(s,"computer");
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para o PC."};
+ const shifted=s.objectPlacements?.map(p=>p.id.startsWith("pc:")&&Number(p.id.slice(3))>=count?{...p,id:"pc:"+(Number(p.id.slice(3))+1)}:p);
+ const candidate={...s,installedPcs:count+1,objectPlacements:shifted};
+ const nextPc=fixedLayoutObjects(candidate).find(o=>o.id==="pc:"+count)!;
+ if(layoutPlacementIssue(candidate,nextPc)||layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p)))return {ok:false,message:"O encaixe do novo PC está bloqueado. Reorganize o salão antes de instalar."};
+ if(shifted)s.objectPlacements=shifted;
  // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
  for(const job of s.repairJobs??[])if(job.pc>=count)job.pc++;
@@ -52,26 +62,37 @@ export function buyComputer(s:GameState):Result{
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
 export function furnitureLimit(s:GameState,kind:FurnitureKind):number{
- const e=s.roomExtensions??{west:0,east:0,south:0,north:0};
- const north=e.north??0;
- return kind==="poster"?2+e.west+e.east+north:
-   kind==="plant"?2+e.west+e.east+2*e.south+2*north:
-   kind==="table"?1+e.west+e.east+e.south+north:0;
+ return furnitureSlots(s).filter(p=>p.surface===(kind==="poster"?"wall":"floor")).length;
+}
+function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0):string|null{
+ if(kind!=="poster"){
+  const object:EditableObject={id:"new-decoration",label:"Decoração",kind,x:slot.x,y:slot.y,rotation,w:kind==="table"?.55:.32,d:kind==="table"?.4:.32,surface:"floor"};
+  if(s.customers.some(c=>pointInsideObject(object,c,.15)))return "Aguarde o cliente sair dessa posição.";
+  const issue=layoutPlacementIssue(s,object);if(issue)return issue;
+ }
+ for(const c of s.customers)if(!navigableRoute(candidate,c,c.route?.at(-1)??c.target))return "Esta posição prende um cliente. Escolha outro encaixe.";
+ return layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p))?"Esta posição bloqueia uma passagem.":null;
 }
 export function buyFurniture(s:GameState,kind:FurnitureKind):Result{
  const limits={poster:furnitureLimit(s,"poster"),plant:furnitureLimit(s,"plant"),table:furnitureLimit(s,"table")};
  if(!Object.prototype.hasOwnProperty.call(limits,kind))return {ok:false,message:"Móvel inválido."};
  const count=s.furniture?.[kind]??0;
+ const slot=availablePlacementSlots(s,kind)[0];if(!slot)return {ok:false,message:"Sem espaço livre para esse móvel. Mova objetos ou amplie o salão."};
  if(count>=limits[kind])return {ok:false,message:"Limite desse móvel atingido."};
  const cost=shopPrice(s,kind);
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente."};
+ const existing=furnitureLocations(s);
+ const candidate={...s,furniture:{...(s.furniture??{poster:0,plant:0,table:0}),[kind]:count+1},furniturePlacements:[...existing,{kind,slotId:slot.id}]};
+ const issue=decorationIssue(s,candidate,kind,slot);if(issue)return {ok:false,message:issue};
  s.cash-=cost;s.expenses+=cost;
+ s.furniturePlacements=[...existing,{kind,slotId:slot.id}];
  (s.furniture??={poster:0,plant:0,table:0})[kind]=count+1;
+ routesForCurrentCustomers(s);
  return {ok:true,message:"Móvel instalado: -R$ "+cost+"."};
 }
 
 /** Discrete build slots avoid the fixed NPC aisle (y=4.48), PCs and entrance. */
-export interface PlacementSlot {id:string;x:number;y:number;surface:"wall"|"floor"}
+export interface PlacementSlot {id:string;x:number;y:number;surface:"wall"|"floor";axis?:"x"|"y"}
 export const FURNITURE_SLOTS:ReadonlyArray<PlacementSlot>=[
  {id:"wall-1",x:2.1,y:0.01,surface:"wall"},{id:"wall-2",x:4.35,y:0.01,surface:"wall"},
  {id:"floor-1",x:0.65,y:5.17,surface:"floor"},{id:"floor-2",x:2.45,y:5.17,surface:"floor"},
@@ -100,6 +121,15 @@ export function furnitureSlots(s:GameState):PlacementSlot[]{
    result.push({id:"floor-south-"+i+"-a",x:Math.max(bounds.minX+1.1,1.05),y:6+2*(i-1)+0.9,surface:"floor"});
    result.push({id:"floor-south-"+i+"-b",x:Math.max(bounds.minX+2.9,3.05),y:6+2*(i-1)+0.9,surface:"floor"});
  }
+ const floorReserved=result.filter(p=>p.surface==="floor");
+ // Half-tile floor positions provide physical capacity instead of one item per type.
+ for(let iy=Math.ceil((bounds.minY-.15)/.75);.25+iy*.75<bounds.maxY-.65;iy++)for(let ix=Math.ceil((bounds.minX-.15)/.75);.25+ix*.75<bounds.maxX-.65;ix++){
+  const x=.25+ix*.75,y=.25+iy*.75;
+  if(floorReserved.some(p=>Math.hypot(p.x-x,p.y-y)<.65))continue;
+  result.push({id:"floor-grid-"+x+":"+y,x,y,surface:"floor"});
+ }
+ for(let i=Math.ceil((bounds.minX-.15)/.85);.15+i*.85<bounds.maxX-.8;i++){const x=Number((.15+i*.85).toFixed(2));if(!result.some(p=>p.surface==="wall"&&Math.abs(p.x-x)<.65))result.push({id:"wall-grid-"+x,x,y:bounds.minY+.01,surface:"wall"});}
+ for(let i=Math.ceil((bounds.minY-.15)/.85);.15+i*.85<bounds.maxY-.8;i++){const y=Number((.15+i*.85).toFixed(2));result.push({id:"wall-side-"+y,x:bounds.minX+.012,y,surface:"wall",axis:"y"});}
  return result;
 }
 
@@ -115,15 +145,18 @@ export function occupiedFurnitureSlots(s:GameState):Set<string>{
 export function availablePlacementSlots(s:GameState,kind:FurnitureKind):PlacementSlot[]{
  if(kind!=="poster"&&kind!=="plant"&&kind!=="table")return [];
  const occupied=occupiedFurnitureSlots(s),surface=kind==="poster"?"wall":"floor";
- return furnitureSlots(s).filter(slot=>slot.surface===surface&&!occupied.has(slot.id));
+ return furnitureSlots(s).filter(slot=>slot.surface===surface&&!occupied.has(slot.id)&&
+  (surface==="wall"?builtPosters(s).every(o=>o.axis!==(slot.axis??"x")||(slot.axis==="y"?(slot.y+.65<=o.y||slot.y>=o.y+o.w):(Math.abs(o.y-slot.y)>.06||slot.x+.65<=o.x||slot.x>=o.x+o.w))):fixedLayoutObjects(s).every(o=>!pointInsideObject(o,{x:slot.x+.25,y:slot.y+.2},.38))&&layoutGoals(s).every(p=>Math.hypot(p.x-slot.x-.25,p.y-slot.y-.2)>.55)));
 }
 /** Deduct money only when a selected slot is confirmed. */
-export function placeFurniture(s:GameState,kind:FurnitureKind,slotId:string):Result{
+export function placeFurniture(s:GameState,kind:FurnitureKind,slotId:string,rotation:0|1|2|3=0):Result{
+ if(![0,1,2,3].includes(rotation))return {ok:false,message:"Giro inválido."};
  if(!availablePlacementSlots(s,kind).some(slot=>slot.id===slotId))
   return {ok:false,message:"Posição ocupada ou incompatível com o móvel."};
- const bought=buyFurniture(s,kind);
- if(!bought.ok)return bought;
- (s.furniturePlacements??=[]).push({kind,slotId});
+ const count=s.furniture?.[kind]??0,cost=shopPrice(s,kind);if(s.cash<cost)return {ok:false,message:"Caixa insuficiente."};
+ const existing=furnitureLocations(s),candidate={...s,furniture:{...(s.furniture??{poster:0,plant:0,table:0}),[kind]:count+1},furniturePlacements:[...existing,{kind,slotId,rotation}]};
+ const issue=decorationIssue(s,candidate,kind,furnitureSlots(s).find(p=>p.id===slotId)!,rotation);if(issue)return {ok:false,message:issue};
+ s.cash-=cost;s.expenses+=cost;s.furniture=candidate.furniture;s.furniturePlacements=candidate.furniturePlacements;routesForCurrentCustomers(s);
  return {ok:true,message:"Móvel instalado: -R$ "+shopPrice(s,kind)+"."};
 }
 export function validFurniturePlacements(s:GameState):boolean{
@@ -155,6 +188,15 @@ export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId
  }
  return result;
 }
+/** Retira uma unidade e libera seu encaixe. Materiais já comprados não geram reembolso. */
+export function removeFurniture(s:GameState,slotId:string):Result{
+ const furniture=furnitureLocations(s),item=furniture.find(p=>p.slotId===slotId);
+ if(!item||(s.furniture?.[item.kind]??0)<1)return {ok:false,message:"Não há um móvel instalado nessa posição."};
+ s.furniturePlacements=furniture.filter(p=>p.slotId!==slotId);
+ s.furniture={...(s.furniture??{poster:0,plant:0,table:0}),[item.kind]:s.furniture![item.kind]-1};
+ routesForCurrentCustomers(s);
+ return {ok:true,message:"Item removido. Espaço liberado, sem custo nem reembolso."};
+}
 /** Uma transação de mudança de lugar nunca cobra novamente nem altera a posse. */
 export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string):Result{
  if(fromSlotId===toSlotId)return {ok:false,message:"Escolha um destino diferente da posição atual."};
@@ -170,7 +212,7 @@ export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string)
  return {ok:true,message:"Móvel reposicionado sem custo adicional."};
 }
 
-/** Giro gratuito e persistente em 4 direções para itens soltos; pôster continua na parede norte. */
+/** Giro gratuito e persistente em 4 direções para itens soltos; pôster acompanha a parede do encaixe. */
 export function rotateFurniture(s:GameState,slotId:string):Result{
  if(!validFurniturePlacements(s))return {ok:false,message:"Dados de móveis inválidos."};
  const furniture=furnitureLocations(s),item=furniture.find(p=>p.slotId===slotId);
