@@ -14,6 +14,7 @@ import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/p
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
+import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
 import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
@@ -74,7 +75,10 @@ function readSave(): GameState {
     const data = localStorage.getItem(GAME_SAVE_KEY);
     if (data) {
       const decoded: unknown = JSON.parse(data);
-      if(isValidSave(decoded)){clampPriceToEra(decoded);return decoded;}
+      if(isValidSave(decoded)){
+        if(decoded.totalMinutes>GAME_LAST_MINUTE){decoded.totalMinutes=GAME_LAST_MINUTE;decoded.leftoverMinutes=0;}
+        clampPriceToEra(decoded);return decoded;
+      }
     }
   } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
   return createGame(72421,"historical");
@@ -659,7 +663,7 @@ function renderUI(liveOnly=false):void {
   const month=Math.floor((days%360)/30)+1;
   const monthDay=days%30+1;
   const calendar=document.getElementById("calendar-hud");
-  if(calendar){const html=iconMarkup("calendar")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
+  if(calendar){const html=iconMarkup("calendar")+(game.totalMinutes>=GAME_LAST_MINUTE?"Fim do calendário · ":"")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
@@ -977,7 +981,7 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  const simulating=isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const simulating=isPlaying&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);

@@ -2,6 +2,7 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {sporadicMailDue,recordMailDelivery,sporadicMailSchedule} from "./mailCalendar.js";
 
 export type DecisionId="supplier-offer"|"school-booking"|"gaming-tournament"|"equipment-fault"|"electrical-inspection";
 export type ChoiceId="supplier-accept"|"supplier-decline"|"school-accept"|"school-decline"|"tournament-host"|"tournament-small"|"tournament-decline"|"fault-express"|"fault-basic"|"fault-delay"|"electrical-complete"|"electrical-essential"|"electrical-defer";
@@ -73,27 +74,28 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  s.eventLog.unshift(message);s.eventLog.splice(14);
  return {ok:true,message};
 }
-/** Deterministic event scheduling: 4-7 day cadence, conditioned on current store;
- * never consume the simulation RNG stream used for customer behavior. */
+/** Propostas esporádicas com data distribuída pelos anos de 1998–2030.
+ * São sorteadas uma vez por save e não usam o RNG que movimenta clientes. */
 export function scheduleDecisions(s:GameState):void{
  const today=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
- if(today<4||s.notices?.some(n=>decisionOptions(n.id).length&&!n.resolved&&
-   !(n.id==="electrical-inspection"&&s.electricalDeadlineDay!==undefined)))return;
- const last=s.lastDecisionDay??0;
- const interval=4+(Math.imul(s.rng>>>0,31)>>>0)%4;
- if(today-last<interval)return;
  const ids:DecisionId[]=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection"];
- const candidates=ids.filter(id=>(id!=="electrical-inspection"||!s.electricalInspectionSeen) && !s.notices?.some(n=>n.id===id) &&
-  (id!=="school-booking"||s.installedPcs===undefined||s.installedPcs>=3) &&
-  (id!=="equipment-fault"||(s.pcWear??[]).some(x=>x>15)));
+ const candidates=ids.filter(id=>
+  sporadicMailDue(s,id)&&
+  (id!=="electrical-inspection"||!s.electricalInspectionSeen)&&
+  !s.notices?.some(n=>n.id===id)&&
+  (id!=="school-booking"||s.installedPcs===undefined||s.installedPcs>=3)&&
+  (id!=="equipment-fault"||(s.pcWear??[]).some(x=>x>15))
+ );
  if(!candidates.length)return;
- const seed=(Math.imul(today,1103515245)+(s.rng>>>0))>>>0;
- const id=candidates[seed%candidates.length]!;
+ const dates=sporadicMailSchedule(s);
+ // Nunca escolher uma mensagem aleatória extra em dias adjacentes.
+ const id=candidates.sort((a,b)=>(dates[a]??0)-(dates[b]??0))[0]!;
  const spec=DECISIONS[id];
  const notice:GameNotice={id,title:spec.title,body:spec.body,day:today,read:false,severity:id==="electrical-inspection"?"warning":"info"};
  if(id==="electrical-inspection"){s.electricalInspectionSeen=true;s.electricalDeadlineDay=today+8;}
  (s.notices??=[]).unshift(notice);
  s.notices.splice(40);
+ recordMailDelivery(s,id);
  s.lastDecisionDay=today;
  s.eventLog.unshift("D"+today+" · Nova proposta: "+spec.title);
  s.eventLog.splice(14);

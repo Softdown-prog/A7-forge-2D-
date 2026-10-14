@@ -15,6 +15,7 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
+import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
 import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
@@ -30,6 +31,7 @@ const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown"
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
+    mailScheduleSeed:seed>>>0,mailStartDay:1,mailSeenIds:[],
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
     pricePerHour:economyMode==="historical"?2.5:12,
@@ -422,12 +424,7 @@ function nextDay(s: GameState): void {
   }
   reviewNotices(s);
   scheduleDecisions(s);
-  // Fiscalização aleatória apenas antes da autuação formal; impedir multa recorrente pelo mesmo fato.
-  if (!s.licensedGames && !s.copyrightNoticeFine && random(s) < 0.06) {
-    const fine = 180;
-    s.cash -= fine; s.expenses += fine; s.reputation = Math.max(10, s.reputation - 4);
-    addLog(s, "Fiscalização encontrou jogos sem licença: multa de R$ 180.");
-  }
+  // Infrações dependem de cartas e prazos relativos, nunca de multas aleatórias diárias.
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
 export function visitorArrivalChance(s:GameState,occupied:number):number {
@@ -436,6 +433,7 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
   return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
+  if(s.totalMinutes>=GAME_LAST_MINUTE)return;
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
   const energyExpense=energyCostPerMinute(s);
@@ -443,6 +441,7 @@ function advanceMinute(s: GameState): void {
   recordComputerUtilization(s);
   recordStationMinute(s,pcCount(s),energyExpense);
   s.totalMinutes++;
+  if(s.totalMinutes===GAME_LAST_MINUTE)addLog(s,"Fim de 2030: calendário da campanha concluído.");
   if(s.totalMinutes===1)reviewNotices(s);
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
   if (s.offlineUntil === s.totalMinutes) addLog(s, "A internet voltou!");
@@ -468,8 +467,12 @@ function advanceMinute(s: GameState): void {
 }
 export function stepGame(s: GameState, deltaMinutes: number): void {
   if (!Number.isFinite(deltaMinutes) || deltaMinutes <= 0) return;
+  if(s.totalMinutes>=GAME_LAST_MINUTE){s.totalMinutes=GAME_LAST_MINUTE;s.leftoverMinutes=0;return;}
   s.leftoverMinutes += Math.min(deltaMinutes, 120);
-  while (s.leftoverMinutes >= 1) { s.leftoverMinutes--; advanceMinute(s); }
+  while (s.leftoverMinutes >= 1 && s.totalMinutes<GAME_LAST_MINUTE) {
+    s.leftoverMinutes--;advanceMinute(s);
+  }
+  if(s.totalMinutes>=GAME_LAST_MINUTE)s.leftoverMinutes=0;
 }
 export function isValidSave(value: unknown): value is GameState {
   if (!value || typeof value !== "object") return false;
@@ -492,6 +495,10 @@ export function isValidSave(value: unknown): value is GameState {
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&
     (v.overflowWaste===undefined||(Number.isFinite(v.overflowWaste)&&v.overflowWaste>=0&&v.overflowWaste<=1000)) &&
+    (v.mailScheduleSeed===undefined||(Number.isInteger(v.mailScheduleSeed)&&v.mailScheduleSeed>=0&&v.mailScheduleSeed<=0xffffffff)) &&
+    (v.mailStartDay===undefined||(Number.isInteger(v.mailStartDay)&&v.mailStartDay>=1&&v.mailStartDay<=GAME_END_DAY)) &&
+    (v.mailSeenIds===undefined||(Array.isArray(v.mailSeenIds)&&v.mailSeenIds.length<=8&&
+      new Set(v.mailSeenIds).size===v.mailSeenIds.length&&v.mailSeenIds.every(id=>isSporadicMailId(id)))) &&
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]
       .every(flag=>flag===undefined||typeof flag==="boolean") &&

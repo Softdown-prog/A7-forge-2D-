@@ -136,6 +136,12 @@ export interface GameState {
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
   lastDecisionDay?: number;
+  /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
+  mailScheduleSeed?: number;
+  /** Ponto de partida da distribuição, preservado ao migrar partidas anteriores. */
+  mailStartDay?: number;
+  /** Cartas já entregues; permanecem únicas mesmo após compactar o correio. */
+  mailSeenIds?: import("./mailCalendar.js").SporadicMailId[];
   /** Não permite sortear uma segunda vistoria elétrica na mesma partida. */
   electricalInspectionSeen?: boolean;
   /** Adequação da instalação concluída por profissional. */
