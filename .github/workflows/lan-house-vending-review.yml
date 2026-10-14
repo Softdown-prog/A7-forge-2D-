@@ -26,6 +26,17 @@ jobs:
         run: python -m py_compile tools/a7_audio_lab/review_vending_recordings.py
       - name: Clean and compare both owner recordings
         run: python tools/a7_audio_lab/review_vending_recordings.py
+      - name: Install offline percussion-cleanup dependencies
+        run: python -m pip install --disable-pip-version-check numpy scipy soundfile
+      - name: Rebuild short impact-only review samples
+        run: |
+          python tools/a7_audio_lab/vending_impacts.py
+          ffmpeg -hide_banner -loglevel error -y \
+            -i out/lhs-vending-review/refrigerante_01_isolado_forte.ogg \
+            -i out/lhs-vending-review/refrigerante_02_isolado_forte.ogg \
+            -filter_complex '[0:a]apad=pad_dur=0.35[a];[a][1:a]concat=n=2:v=0:a=1[out]' \
+            -map '[out]' -c:a libvorbis -q:a 5 \
+            out/lhs-vending-review/refrigerante_isolamento_forte_comparacao.ogg
       - name: Validate review-only outputs
         run: |
           python - <<'PY'
@@ -38,6 +49,8 @@ jobs:
           assert all((p/t['full']).stat().st_size>1000 and
                      (p/t['focused']).stat().st_size>1000 for t in report['takes'])
           assert (p/report['montage']).stat().st_size>1000
+          assert all((p/('refrigerante_0%d_isolado_forte.ogg'%i)).stat().st_size>1000 for i in (1,2))
+          assert (p/'refrigerante_isolamento_forte_comparacao.ogg').stat().st_size>1000
           PY
       - uses: actions/upload-artifact@v4
         with:
@@ -47,5 +60,8 @@ jobs:
             out/lhs-vending-review/vending_??_foco.ogg
             out/lhs-vending-review/refrigerante_comparacao.ogg
             out/lhs-vending-review/report.json
+            out/lhs-vending-review/refrigerante_*isolado_forte.ogg
+            out/lhs-vending-review/refrigerante_isolamento_forte_comparacao.ogg
+            out/lhs-vending-review/isolamento_forte_report.json
           if-no-files-found: error
           retention-days: 30
