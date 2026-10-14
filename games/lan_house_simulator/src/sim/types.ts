@@ -41,6 +41,8 @@ export interface GameState {
   cash: number;
   revenue: number;
   expenses: number;
+  /** Energia acumulada desde a última cobrança mensal (R$ fracionários). */
+  energyAccrued?: number;
   reputation: number;
   pricePerHour: number;
   /** Próximo atendimento disponível no balcão, em minutos de jogo. */
