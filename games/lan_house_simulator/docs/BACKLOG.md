@@ -339,5 +339,14 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Simular 720 dias por cenário, sem alterar receita à mão, com licenças, filtros, reposição, manutenção e faxina comprados pelas APIs do jogo.
 - [x] Validar, em cada fechamento mensal, caixa = capital inicial + receitas − despesas; registrar trimestralmente reputação, atendimentos, perdas e caixa.
 - [x] Comparar R$ 12/h e R$ 26/h com mesma semente, registrando números finais e observações em `docs/VIP_PRICING_BALANCE_2026.md`.
-- [ ] Ampliar auditoria de preços intermediários (R$ 18, 20, 22, 24/h), custo-benefício do hardware e períodos históricos posteriores a 2000; um único confronto de extremos não encerra todo o balanceamento.
+- [x] Auditar R$ 18, 20, 22 e 24/h em 1998 e em 2009 com cinco PCs básicos e atualizados; 11 campanhas de 180 dias e resultados em `docs/PRICING_MIDRANGE_AUDIT_2026.md`. Isto não encerra o balanceamento multi-semente.
 - [ ] Conferir visualmente VIP em uma estação premium e revisar legibilidade na tela de aparelho móvel físico.
+
+## Precificação transparente — painel Terminal de Bairro (14/10/2026)
+- [x] Exibir na aba Preços a procura relativa real da curva do motor em comparação com R$ 12/h, sob as mesmas condições de reputação, clima e conexão.
+- [x] Informar a avaliação aproximada da sessão em PC básico sem espera/falha e destacar a resistência a sobrepreços acima de R$ 18/h.
+- [x] Evitar prometer receitas ou visitantes; indicador puro, sem mutação de saves, RNG, ocupação ou contabilidade.
+- [x] Validar os botões de subir/descer preço e a atualização dos indicadores no navegador Chromium de desktop e dispositivos móveis emulados.
+- [x] Executar onze campanhas controladas de 180 dias em 1998 e 2009, comparando preços intermediários, reputação, margem, VIPs, ocupação, investimentos e upgrades.
+- [ ] Repetir os cenários com várias sementes e os anos 2011–2013 antes de chamar o preço ideal de definitivo.
+- [ ] Aprovar visualmente o painel em aparelho móvel físico; capturas e testes de emulação não substituem essa revisão.
