@@ -50,3 +50,55 @@ test("painel de preços e render principal integram os três indicadores",()=>{
  }
  assert.ok(html.includes("Não é previsão de faturamento"));
 });
+
+
+test("comparador respeita limites e deriva procura e valor de sessão das regras reais",()=>{
+ const s=createGame(789),original=JSON.stringify(s);
+ for(const price of [4,12,18,22,26,40]){
+  s.pricePerHour=price;
+  const before=JSON.stringify(s),options=hourlyPriceScenarios(s);
+  const ref=demandFactor(price,s.reputation,true,false);
+  const ticket=sessionRevenue(price);
+  assert.equal(options.find(x=>x.delta===0).demandIndex,100);
+  assert.equal(options.find(x=>x.delta===0).grossIntakeIndex,100);
+  assert.equal(options.length,price===4||price===40?2:3);
+  for(const item of options){
+   const factor=demandFactor(item.price,s.reputation,true,false);
+   assert.equal(item.demandIndex,Math.round(100*factor/ref));
+   assert.equal(item.grossIntakeIndex,Math.round(100*factor*sessionRevenue(item.price)/(ref*ticket)));
+  }
+  assert.equal(JSON.stringify(s),before,"comparação não deve escrever na partida");
+ }
+ assert.equal(original.includes('"pricePerHour":12'),true);
+ s.weather="rain";s.offlineUntil=10000;
+ const rainy=hourlyPriceScenarios(s);
+ assert.equal(rainy.find(x=>x.delta===0).grossIntakeIndex,100);
+});
+
+test("virada anual: +3% de tarifa energética até teto, sem modificar economia ou save",()=>{
+ const s=createGame(92),original=JSON.stringify(s);
+ const initial=energyYearOutlook(s);
+ assert.deepEqual(initial,{currentYear:1998,nextYear:1999,changePercent:3});
+ s.totalMinutes=13*360*DAY_MINUTES;
+ const year2011=energyYearOutlook(s);
+ assert.deepEqual(year2011,{currentYear:2011,nextYear:2012,changePercent:3});
+ s.totalMinutes=25*360*DAY_MINUTES;
+ const capped=energyYearOutlook(s);
+ assert.deepEqual(capped,{currentYear:2023,nextYear:2024,changePercent:0});
+ assert.equal(original.includes('"pricePerHour":12'),true);
+ assert.equal(s.pricePerHour,12);
+ assert.equal(s.retailPrices.soda,8);
+});
+
+test("painel mostra cenários legíveis e o custo da virada sem ações econômicas automáticas",()=>{
+ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
+ const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ for(const id of ["price-scenario-lower","price-scenario-current","price-scenario-higher","energy-year-outlook"]){
+  assert.ok(html.includes('id="'+id+'"'),"id visual: "+id);
+  assert.ok(main.includes('setText("'+id+'"'),"integração: "+id);
+ }
+ assert.match(html,/não prevê lucro, clientes atendidos ou faturamento real/);
+ assert.ok(main.includes("hourlyPriceScenarios(game)"));
+ assert.ok(main.includes("energyYearOutlook(game)"));
+});
