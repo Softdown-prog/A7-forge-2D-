@@ -10,6 +10,7 @@ import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from ".
 import {navigableRoute} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
+import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
@@ -36,7 +37,7 @@ export function legacyPcCount(s:GameState):number{
 }
 export function pcCount(s:GameState):number{return legacyPcCount(s)+(s.annexPcs?.length??0);}
 export function pcWear(s:GameState,index:number):number { return Math.min(100,Math.max(0,s.pcWear?.[index]??0)); }
-export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100; }
+export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100||pcUnderRepair(s,index); }
 export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
 export function entrance(_s: GameState): Point {return {x:7.5,y:5.35};}
 export function pcPosition(i: number,s?:GameState): Point {
@@ -336,12 +337,14 @@ function advanceMinute(s: GameState): void {
       addLog(s, "Internet caiu! Previsão de reparo: " + duration + " minutos do jogo.");
     }
   }
+  tickServices(s);
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
   if (s.customers.length < 14) {
     if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
   }
   refreshCounterQueue(s);
   for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
+  if(s.totalMinutes%70===0)addWaste(s,2);
   const e = entrance(s);
   s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > 0.001);
 }
@@ -359,6 +362,7 @@ export function isValidSave(value: unknown): value is GameState {
     Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
+    (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));
 }
