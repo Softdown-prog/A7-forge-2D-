@@ -67,12 +67,12 @@ try{
   const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\d+)%/)?.[1]);
   assert.equal(await pricePercent(),100);
   // O novo comparador deve responder no Chromium real, inclusive em viewport móvel.
-  assert.match(await page.locator("#price-scenario-lower").textContent(),/R\\$ 10\\/h/);
-  assert.match(await page.locator("#price-scenario-current").textContent(),/R\\$ 12\\/h/);
-  assert.match(await page.locator("#price-scenario-higher").textContent(),/R\\$ 14\\/h/);
-  assert.match(await page.locator("#energy-year-outlook").textContent(),/1998 → 1999/);
+  assert.ok((await page.locator("#price-scenario-lower").textContent())?.includes("R$ 10/h"));
+  assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 12/h"));
+  assert.ok((await page.locator("#price-scenario-higher").textContent())?.includes("R$ 14/h"));
+  assert.ok((await page.locator("#energy-year-outlook").textContent())?.includes("1998 → 1999"));
   await page.locator("#price-up").click();
-  assert.match(await page.locator("#price-scenario-current").textContent(),/R\\$ 14\\/h/);
+  assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 14/h"));
   const raised=await pricePercent();
   assert.ok(Number.isFinite(raised)&&raised<100&&raised>0,"preço maior reduz o primeiro percentual, não a legenda fixa");
   await page.locator("#price-down").click();
