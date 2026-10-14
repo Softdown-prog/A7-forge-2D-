@@ -92,4 +92,18 @@ export function suggestedHourlyPrice(s:GameState):number{
  if(!isHistorical(s))return 12;
  return Math.min(allowableHourlyPrice(s),Math.floor(2.5*priceIndex(yearFromMinutes(s.totalMinutes))*4)/4);
 }
+/** Custos de visitas técnicas são serviços locais, não peças do catálogo.
+ * Padrões monetários de 1998: limpeza R$ 12; técnico R$ 4 mais
+ * R$ 0,16 por ponto de desgaste. Esses são valores de DESIGN, não
+ * registros históricos de salários de técnicos ou faxineiros.
+ * O IPCA os transforma para o ano do cenário, sem afetar saves clássicos. */
+export function serviceVisitCost(
+ s:Pick<GameState,"economyVersion"|"totalMinutes">,kind:"cleaning"|"repair",wear=0
+):number{
+ const normalizedWear=Math.max(0,Math.min(100,Number.isFinite(wear)?wear:0));
+ if(!isHistorical(s))
+  return kind==="cleaning"?55:20+Math.ceil(normalizedWear*.7);
+ const initial=kind==="cleaning"?12:4+normalizedWear*.16;
+ return Math.round(initial*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100;
+}
 export function referenceWage1998():number{return 130;}
