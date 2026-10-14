@@ -45,6 +45,16 @@ export interface GameState {
   expenses: number;
   /** Energia acumulada desde a última cobrança mensal (R$ fracionários). */
   energyAccrued?: number;
+  /** Minutos-PC utilizados e disponíveis no mês atual: acumuladores de uso real. */
+  monthPcUsedMinutes?: number;
+  monthPcCapacityMinutes?: number;
+  lastMonthPcUsedMinutes?: number;
+  lastMonthPcCapacityMinutes?: number;
+  /** Base de receita/despesa no início do mês para não contar dinheiro duas vezes. */
+  monthRevenueBase?: number;
+  monthExpensesBase?: number;
+  lastMonthRevenue?: number;
+  lastMonthExpenses?: number;
   reputation: number;
   pricePerHour: number;
   /** Próximo atendimento disponível no balcão, em minutos de jogo. */
