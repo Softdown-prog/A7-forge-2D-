@@ -118,7 +118,7 @@ test("2013: GPUs modernas recuperam o investimento após doze meses?",()=>{
   const improved=trials.find(x=>x.seed===seed&&x.modern);
   assert.equal(base.year,2013);assert.equal(improved.year,2013);
   assert.ok(improved.installation>base.installation);
-  assert.ok(base.cash===undefined,"valores de receita reais estão em netResult");
+  assert.ok(Number.isFinite(base.netResult)&&Number.isFinite(improved.netResult));
  }
  console.log("MODERN_ANNUAL "+JSON.stringify(trials));
  const average=modern=>{
