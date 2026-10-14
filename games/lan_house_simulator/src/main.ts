@@ -320,6 +320,15 @@ shopCatalog?.addEventListener("click",event=>{
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("price-down",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour-step)*100)/100));renderUI();save();});
 button("price-up",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour+step)*100)/100));renderUI();save();});
+button("migrate-historical-pricing",()=>{
+ if(game.economyVersion===2)return;
+ if(!window.confirm("Ativar o modelo histórico nesta partida? O preço da hora será limitado pelo ano e pelas máquinas, mas saldo, compras e resultados antigos não serão reescritos. Esta mudança não pode ser desfeita neste save."))return;
+ game.economyVersion=2;
+ if(game.retailPrices?.soda===8&&game.retailPrices.candy===5&&game.retailPrices.snacks===9)
+  delete game.retailPrices;
+ clampPriceToEra(game);
+ renderUI();save();
+});
 button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();save();});
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
 button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
@@ -641,6 +650,8 @@ function renderUI():void {
   const inReais=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   const perHour=inReais(game.pricePerHour);
   setText("price",perHour+"/h");
+  const migration=document.getElementById("migrate-historical-pricing");
+  if(migration instanceof HTMLButtonElement)migration.hidden=historical;
   setText("year-price-ceiling",historical?
     year+" · teto nominal da época "+inReais(marketMax)+"/h":
     "Modo clássico: tarifa histórica disponível apenas em novas partidas.");
