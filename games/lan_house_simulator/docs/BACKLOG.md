@@ -289,3 +289,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Manter dados novos opcionais em saves antigos e validar entradas inválidas.
 - [ ] Avaliar políticas alternativas de retorno para sete PCs em sessões de vários anos, sem comprometer fila, satisfação nem velocidade de chegada.
 - [ ] Revisar leitura dos novos indicadores no tamanho real do navegador antes da aprovação visual final.
+
+## Circulação em salas divididas — 13/10/2026
+- [x] Permitir desvio local entre clientes mesmo com paredes internas presentes, sem desligar a prevenção de colisões.
+- [x] Validar cada subpasso (reto ou lateral) contra segmentos sólidos e limites da sala; atravessar apenas portas ou áreas livres.
+- [x] Cobrir por testes: paredes horizontais/verticais, porta aberta, parede adjacente ainda fechada, NPC contornando outro longe da divisória e waypoint obsoleto tentando atravessar parede.
+- [x] Confirmar regressão zero nos testes existentes de sala norte, porta, compra de PC no anexo, fila e campanhas econômicas.
+- [ ] Validar visualmente deslocamentos sob alta lotação com múltiplas divisórias/portas em capturas reais do jogo; testes automatizados não substituem essa inspeção.
