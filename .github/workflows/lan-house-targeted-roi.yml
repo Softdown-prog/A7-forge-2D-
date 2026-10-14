@@ -1,11 +1,6 @@
 name: Lan House - targeted GPU and LCD ROI
 on:
   workflow_dispatch:
-  push:
-    branches: [test/lhs-targeted-vip-lcd-roi-20261014]
-    paths:
-      - 'games/lan_house_simulator/**'
-      - '.github/workflows/lan-house-targeted-roi.yml'
 permissions:
   contents: read
 jobs:

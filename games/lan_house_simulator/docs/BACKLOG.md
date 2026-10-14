@@ -451,3 +451,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Verificar que trocar todas as GPUs 2009 por GPUs 2013 **não amortizou em 360 dias**: −R$ 9.277 (cinco PCs) e −R$ 15.853,50 (sete PCs) versus conservar.
 - [x] Registrar matriz completa, ocupação e limites em `docs/ANNUAL_HARDWARE_PAYBACK_2026.md`; disponibilizar `npm run audit:hardware` / workflow manual, sem encarecer cada `npm test`.
 - [ ] Estudar upgrade direcionado aos PCs de maior uso/VIPs, preços R$ 22/24, divisão física de salas e horizontes mais longos antes de balancear economia ou arte de hardware.
+
+## Estratégias direcionadas para VIP e LCD — 14/10/2026
+- [x] Executar 28 campanhas de 360 dias com duas sementes, cinco/sete PCs, tarifa R$ 22/h e sete estratégias: preservar GPU 2009, uma ou duas GPUs 2013 atrás, duas na frente, dois kits LCD 2012 atrás, LCD no salão completo ou GPU+LCD em dois PCs.
+- [x] Usar CPUs nível 3 e GPUs 2009 integralmente pagas como controle; comprar upgrades com API real, salvar/importar no dia 180, pagar 24 promoções, estoque, equipe de serviço e 12 fechamentos mensais.
+- [x] Observar que **nenhum cenário moderno supera o controle em resultado líquido médio** dessas sementes e período; uma GPU no fundo perde R$ 2.086/R$ 2.139,50 com 5/7 PCs, e dois LCDs no fundo perdem R$ 1.894,50/R$ 1.982,50.
+- [x] Medir preferência VIP por estação: nos salões de cinco PCs, amostras de uso VIP nas posições 4/5 sobem de 39,5 para 364 quando se instalam duas GPUs modernas atrás, sem garantir amortização.
+- [x] Documentar custos, ocupação e limitações em `docs/TARGETED_VIP_LCD_ROI_2026.md`; `npm run audit:targeted` e workflow manual. Preservar preços e lógica do jogo.
+- [ ] Investigar pagamento por VIP/serviço premium, exposição de retorno por estação e campanhas com preços R$ 18/24 antes de implementar incentivos novos ou alterar a economia.

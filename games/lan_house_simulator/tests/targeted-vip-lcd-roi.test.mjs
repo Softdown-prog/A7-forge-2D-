@@ -182,6 +182,13 @@ test("2013-2014: 28 campanhas pagas de GPUs direcionadas e LCDs no salão",
   const baseline=cohort.find(r=>r.strategy==="base");
   assert.equal(cohort.length,STRATEGIES.length);
   assert.equal(new Set(cohort.map(r=>r.baseExpenses)).size,1);
+  // A modernização da traseira deve alterar a preferência VIP em uso real;
+  // são amostras de ocupação, não contagem de visitantes individuais.
+  for(const name of ["twoRearGpu","twoRearLcd","twoRearBoth"]){
+   const targeted=cohort.find(r=>r.strategy===name);
+   assert.ok(targeted.vipOnTargetSamples>baseline.vipOnTargetSamples*3,
+    "VIP deve priorizar estações 4/5 modernizadas: "+name);
+  }
   for(const r of cohort){
    const delta=r.net-baseline.net;
    assert.equal(r.net,r.revenue-r.expenses);
