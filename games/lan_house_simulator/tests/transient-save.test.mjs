@@ -12,7 +12,7 @@ test("save longo descarta efeitos de frame sem perder GPUs, dinheiro ou históri
  s.paymentEffects=Array.from({length:5000},(_,i)=>({amount:20,x:i,y:i}));
  s.saleEffects=Array.from({length:5000},()=>({item:"soda",amount:8,x:2,y:3}));
  s.keyboardEffects=Array.from({length:5000},()=>({customerId:11,pcIndex:1}));
- s.speechEffects=Array.from({length:5000},()=>({text:"Mensagem temporária da cena".repeat(5),x:2,y:3,kind:"praise"}));
+ s.speechEffects=Array.from({length:5000},()=>({text:"Mensagem temporária da cena".repeat(13),x:2,y:3,kind:"praise"}));
  assert.ok(JSON.stringify(s).length>2_000_000,"cenário reproduz arquivo excessivo");
  const snapshot=snapshotGameState(s);
  for(const name of ["paymentEffects","saleEffects","keyboardEffects","speechEffects"]){
