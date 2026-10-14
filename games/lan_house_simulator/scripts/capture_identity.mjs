@@ -5,6 +5,7 @@ import {mkdir,writeFile,rm,readFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
+import {SHOP_CATALOG} from "../dist/js/sim/shop.js";
 import {GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 
 const output=resolve(process.argv[2]??"out/identity"),record=process.argv.includes("--video");
@@ -102,7 +103,7 @@ try{
   assert.equal(repaired.repairJobs?.some(j=>j.pc===0),true);
   await page.keyboard.press("Escape");
   await page.locator("#open-shop").click();await shot("shop","#shop");
-  assert.equal(await page.locator("#shop-catalog .shop-art").count(),11);
+  assert.equal(await page.locator("#shop-catalog .shop-art").count(),SHOP_CATALOG.length);
   await clickSvg('[data-buy="plant"] .ui-icon');
   assert.equal(await page.locator("#placement-toolbar").isVisible(),true);
   assert.equal(await page.locator("#panel-backdrop").isVisible(),false);
