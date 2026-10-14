@@ -36,7 +36,7 @@ export function ensureMailCalendar(s:GameState):void{
  if(s.mailScheduleSeed===undefined)s.mailScheduleSeed=(s.rng>>>0);
  if(s.mailStartDay===undefined)s.mailStartDay=Math.min(GAME_END_DAY,mailDay(s));
  if(!s.mailSeenIds){
-  const seen=new Set<string>();
+  const seen=new Set<SporadicMailId>();
   for(const notice of s.notices??[])if(isSporadicMailId(notice.id))seen.add(notice.id);
   if(s.electricalInspectionSeen)seen.add("electrical-inspection");
   if(s.contentFilterInstalled)seen.add("safety");
