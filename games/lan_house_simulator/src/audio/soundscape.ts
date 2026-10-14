@@ -11,7 +11,8 @@ export const AUDIO_LEVELS=Object.freeze({
   income:0.24,
   smallSale:0.15,
   keyboard:0.040, // fundo discreto; continua abaixo de mouse (0.105) e caixa (0.24).
-  vending:0.45
+  vending:0.45,
+  soda:0.032 // Raro efeito ambiente, abaixo do teclado, do mouse e do dinheiro
 });
 export const KEYBOARD_DURATION=3.5;
 
@@ -29,13 +30,21 @@ export function keyboardTakeAt(index:number):KeyboardTake {
  const length=KEYBOARD_TAKES.length;
  return KEYBOARD_TAKES[((Math.trunc(index)%length)+length)%length]!;
 }
-type ApprovedSample="mouse"|"income"|KeyboardTake;
+export const SODA_CHANCE=0.28;
+export const SODA_COOLDOWN_SECONDS=12;
+export function shouldPlaySodaSound(roll:number,elapsed:number):boolean {
+ return roll<SODA_CHANCE && elapsed>=SODA_COOLDOWN_SECONDS;
+}
+type SodaTake="vending_soda_01"|"vending_soda_02";
+type ApprovedSample="mouse"|"income"|KeyboardTake|SodaTake;
 const SAMPLES:Record<ApprovedSample,string>={
  mouse:"./assets/audio/mouse_click_002.ogg",
  income:"./assets/audio/money_income_01.ogg",
  keyboard_te1:"./assets/audio/keyboard_te1.ogg",
  keyboard_t2:"./assets/audio/keyboard_t2.ogg",
- keyboard_t3:"./assets/audio/keyboard_t3.ogg"
+ keyboard_t3:"./assets/audio/keyboard_t3.ogg",
+ vending_soda_01:"./assets/audio/vending_soda_01.ogg",
+ vending_soda_02:"./assets/audio/vending_soda_02.ogg"
 };
 
 export class Soundscape {
@@ -50,7 +59,11 @@ export class Soundscape {
  private nextKeyboard=0;
  private nextKeyboardTake=0;
  private lastIncome=-100;
- constructor(private enabled=true){}
+ private lastSoda=-100;
+ private sodaTake=0;
+ private readonly sodaRandom:()=>number;
+
+ constructor(private enabled=true,random:()=>number=Math.random){this.sodaRandom=random;}
 
  /** Pré-decodifica arquivos autorais sem tentar reproduzir áudio antes do gesto. */
  preload():void{if(this.enabled)this.ensureContext();}
@@ -153,6 +166,20 @@ export class Soundscape {
      this.tone(t,740,0.12,volume*0.21);
      this.tone(t+0.083,980,0.17,volume*0.17);
    }
+ }
+ /** Chance pequena por venda confirmada, com intervalo mínimo para não dominar a mixagem. */
+ soda():boolean{
+   const ctx=this.context,master=this.master;
+   if(!this.enabled||!ctx||!master||ctx.state!=="running")return false;
+   if(!shouldPlaySodaSound(this.sodaRandom(),ctx.currentTime-this.lastSoda))return false;
+   const kind:SodaTake=this.sodaTake%2===0?"vending_soda_01":"vending_soda_02";
+   const alternative:SodaTake=kind==="vending_soda_01"?"vending_soda_02":"vending_soda_01";
+   const selected=this.approved.has(kind)?kind:alternative;
+   if(!this.approved.has(selected))return false;
+   if(!this.playSample(selected,AUDIO_LEVELS.soda,2.0))return false;
+   this.lastSoda=ctx.currentTime;
+   this.sodaTake++;
+   return true;
  }
  /** Sons de produtos autorizados: nunca tocar o efeito de lata reprovado. */
  candy():void{
