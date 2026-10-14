@@ -14,6 +14,7 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
+import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
@@ -277,7 +278,7 @@ function tryServe(s: GameState, c: Customer): void {
     c.waitingMinutes++;
     if (c.waitingMinutes > (c.vip?19:25)) {
       s.lostCustomers++; s.reputation = Math.max(10, s.reputation - 0.4);
-      customerSays(s,c,"Que fila enorme!");
+      customerSays(s,c,complaintLine("queue",c.id));
       sendHome(s, c);
     }
     return;
@@ -354,7 +355,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
           c.happy = false;
           s.reputation = Math.max(10, s.reputation - 1.1);
           addLog(s, "Cliente saiu insatisfeito com a internet.");
-          customerSays(s,c,"Internet caiu!");
+          customerSays(s,c,complaintLine("outage",c.id));
           startStanding(c, false);
         }
         return;
@@ -371,11 +372,11 @@ function advanceCustomer(s: GameState, c: Customer): void {
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
           addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
-          customerSays(s,c,c.offlineWait>0?"Internet lenta!":c.waitingMinutes>5?"Demorou demais!":"Está caro!");
+          customerSays(s,c,complaintLine(c.offlineWait>0?"slow-internet":c.waitingMinutes>5?"wait":"price",c.id));
         }
         else if(impact >= 0.15){
           addLog(s,"Cliente elogiou a experiência na lan house.");
-          customerSays(s,c,"Curti demais!","praise");
+          customerSays(s,c,praiseLine(c.id),"praise");
         }
         c.desiredItem=selectPurchase(c,s.inventory,s);
         startStanding(c,c.desiredItem!==null);
