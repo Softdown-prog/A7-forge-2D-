@@ -1,7 +1,10 @@
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId;
+import type {StoryNoticeId} from "./storyEvents.js";
+import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {isSporadicMailId,sporadicMailDue,recordMailDelivery} from "./mailCalendar.js";
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId|StoryNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -15,22 +18,40 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
  const notices=s.notices??(s.notices=[]);
  if(notices.some(n=>n.id===id))return;
  notices.unshift({id,title,body,day:day(s),read:false,severity});
+ if(isSporadicMailId(id))recordMailDelivery(s,id);
  notices.splice(40);
  s.eventLog.unshift("D"+day(s)+" · Nova mensagem: "+title);
  s.eventLog.splice(14);
 }
 export function reviewNotices(s:GameState):void{
  const d=day(s);
- if(d>=2&&!s.contentFilterInstalled)deliver(s,"safety","Proteção para menores","Menores foram vistos entrando na lan house. Contrate um técnico para instalar o filtro de conteúdo. Sem proteção, poderá haver fiscalização.");
- if(d>=3&&missingWindowsLicenses(s)>0)deliver(s,"windows","Licenças de Windows pendentes","Computadores estão funcionando sem licenças individuais. Regularize na aba Windows / Licenças. Fiscalização a partir do dia 10.");
- if(d>=5&&!s.licensedGames)deliver(s,"games","Direitos autorais dos jogos","A lan house oferece jogos comerciais sem regularizar o catálogo. Licencie os jogos no painel Serviços. Prazo: dia 12.");
- if(d>=10&&missingWindowsLicenses(s)>0&&!s.windowsNoticeFine){
+ // Notificação única: a multa por prazo vencido não substitui regularização.
+ if(s.electricalDeadlineDay!==undefined&&d>s.electricalDeadlineDay&&
+    !s.electricalWiringRegularized&&!s.electricalInspectionFineApplied){
+   s.electricalInspectionFineApplied=true;
+   const fine=isHistorical(s)?Math.round(22*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100:220;
+   s.cash-=fine;s.expenses+=fine;s.reputation=Math.max(10,s.reputation-3);
+   const n=s.notices?.find(n=>n.id==="electrical-inspection");
+   if(n){
+     n.severity="urgent";
+     n.body+=" O prazo expirou; foi aplicada uma autuação de R$ "+fine.toFixed(2).replace(".",",")+". A multa não substitui a adequação elétrica.";
+     n.read=false;
+   }
+   s.eventLog.unshift("D"+d+" · Bombeiros: prazo vencido, autuação elétrica de R$ "+fine.toFixed(2)+".");
+   s.eventLog.splice(14);
+ }
+ if(sporadicMailDue(s,"safety")&&!s.contentFilterInstalled)deliver(s,"safety","Proteção para menores","Menores foram vistos entrando na lan house. Contrate um técnico para instalar o filtro de conteúdo. Sem proteção, poderá haver fiscalização.");
+ if(sporadicMailDue(s,"windows")&&missingWindowsLicenses(s)>0)deliver(s,"windows","Licenças de Windows pendentes","Computadores estão funcionando sem licenças individuais. Regularize na aba Windows / Licenças. Prazo: 7 dias após receber esta carta.");
+ if(sporadicMailDue(s,"games")&&!s.licensedGames)deliver(s,"games","Direitos autorais dos jogos","A lan house oferece jogos comerciais sem regularizar o catálogo. Licencie os jogos no painel Serviços. Prazo: 7 dias após receber esta carta.");
+ const windowsWarning=s.notices?.find(n=>n.id==="windows");
+ if(windowsWarning&&d>=windowsWarning.day+7&&missingWindowsLicenses(s)>0&&!s.windowsNoticeFine){
    s.windowsNoticeFine=true;const amount=210+60*missingWindowsLicenses(s);
    s.cash-=amount;s.expenses+=amount;s.reputation=Math.max(10,s.reputation-3);
    deliver(s,"windows-fine","Auto de fiscalização: Windows","Foi aplicada multa de R$ "+amount+" por computadores sem licença. O pagamento não substitui a compra das licenças.","urgent");
    s.eventLog.unshift("Fiscalização Windows: -R$ "+amount+".");
  }
- if(d>=12&&!s.licensedGames&&!s.copyrightNoticeFine){
+ const gamesWarning=s.notices?.find(n=>n.id==="games");
+ if(gamesWarning&&d>=gamesWarning.day+7&&!s.licensedGames&&!s.copyrightNoticeFine){
    s.copyrightNoticeFine=true;const amount=540;
    s.cash-=amount;s.expenses+=amount;s.reputation=Math.max(10,s.reputation-5);
    deliver(s,"copyright","Notificação de direitos autorais","Foi aplicada multa de R$ 540 por catálogo de jogos não licenciado. A dívida foi debitada mesmo se o caixa ficar negativo. Ainda é preciso licenciar os jogos.","urgent");

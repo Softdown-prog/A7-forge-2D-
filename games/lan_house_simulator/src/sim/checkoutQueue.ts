@@ -1,3 +1,4 @@
+import {counterPoint} from "./layout.js";
 import type { Customer, GameState, Point } from "./types.js";
 import { COUNTER_QUEUE } from "./route.js";
 
@@ -6,8 +7,12 @@ export const COUNTER_QUEUE_GAP = 0.66;
 export const MAX_COUNTER_QUEUE = 10;
 export const CUSTOMER_COLLISION_RADIUS = 0.43;
 
-export function counterQueueSlot(index:number):Point {
+export function counterQueueSlot(index:number,s?:GameState):Point {
   const n=Math.max(0,Math.floor(index));
+  if(s?.objectPlacements?.some(p=>p.id==="counter")){
+    const q=n<=4?{x:COUNTER_QUEUE.x,y:COUNTER_QUEUE.y+n*COUNTER_QUEUE_GAP}:{x:COUNTER_QUEUE.x+(n-4)*COUNTER_QUEUE_GAP,y:COUNTER_QUEUE.y+4*COUNTER_QUEUE_GAP};
+    return counterPoint(s,q);
+  }
   if(n<=4)return {x:COUNTER_QUEUE.x,y:COUNTER_QUEUE.y+n*COUNTER_QUEUE_GAP};
   return {x:COUNTER_QUEUE.x+(n-4)*COUNTER_QUEUE_GAP,
     y:COUNTER_QUEUE.y+4*COUNTER_QUEUE_GAP};

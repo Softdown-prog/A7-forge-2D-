@@ -1,4 +1,26 @@
-import type { Point } from "./types.js";
+import type { Point,GameState } from "./types.js";
+export type Rotation=0|1|2|3;
+export type PlacedPoint=Point&{rotation?:Rotation};
+export function placedObject(s:GameState|undefined,id:string,fallback:Point):PlacedPoint{
+ const saved=s?.objectPlacements?.find(p=>p.id===id);
+ return saved?{x:saved.x,y:saved.y,rotation:saved.rotation}:{...fallback};
+}
+export function turnPoint(point:Point,pivot:Point,rotation:Rotation=0):Point{
+ if(!rotation)return {...point};
+ const dx=point.x-pivot.x,dy=point.y-pivot.y;
+ const offsets=[[dx,dy],[-dy,dx],[-dx,-dy],[dy,-dx]][rotation]!;
+ return {x:pivot.x+offsets[0]!,y:pivot.y+offsets[1]!};
+}
+export function stationPoint(p:PlacedPoint,dx:number,dy:number):Point{
+ return turnPoint({x:p.x+dx,y:p.y+dy},{x:p.x+.55,y:p.y+.35},p.rotation??0);
+}
+export function counterPoint(s:GameState|undefined,point:Point):Point{
+ const p=placedObject(s,"counter",{x:.9,y:1.42});
+ return turnPoint({x:point.x+p.x-.9,y:point.y+p.y-1.42},{x:p.x+.875,y:p.y+.36},p.rotation??0);
+}
+export function vendingMachines(s?:GameState):Array<VendingMachinePlacement&{rotation?:Rotation}>{
+ return VENDING_MACHINES.map(p=>({...p,...placedObject(s,p.kind,p)}));
+}
 
 /** Uma fonte única para posições físicas e atendimento das máquinas. */
 export interface VendingMachinePlacement extends Point {
@@ -17,7 +39,18 @@ export const VENDING_APPROACH:Point={
 };
 
 /** Ponto de atendimento de cada máquina, sem atravessar sua colisão. */
-export function vendingApproach(kind:"soda"|"candy"):Point {
- const machine=VENDING_MACHINES.find(m=>m.kind===kind)!;
- return {x:machine.x+VENDING_WIDTH/2,y:machine.y+VENDING_DEPTH+0.88};
+export function vendingApproach(kind:"soda"|"candy",s?:GameState):Point {
+ const machine=vendingMachines(s).find(m=>m.kind===kind)!;
+ return turnPoint({x:machine.x+VENDING_WIDTH/2,y:machine.y+VENDING_DEPTH+0.88},
+  {x:machine.x+VENDING_WIDTH/2,y:machine.y+VENDING_DEPTH/2},machine.rotation??0);
+}
+export function purchaseApproach(item:"soda"|"candy"|"snacks",s?:GameState):Point{
+ if(item!=="snacks")return vendingApproach(item,s);
+ const minX=-2*(s?.roomExtensions?.west??0),p=placedObject(s,"shelf",{x:minX+.23,y:2.92});
+ // Fora da coluna do caixa: o ponto antigo fazia quem comprava lanche bloquear a fila.
+ const center={x:p.x+.23,y:p.y+.61},goal=turnPoint({x:p.x+1.77,y:p.y+.61},center,p.rotation??0);
+ // Uma ampliação pode deixar a antiga borda exatamente sob uma divisória.
+ // Manter o atendimento do lado da prateleira, fora do plano da parede.
+ if(s?.interiorWalls?.some(w=>w.axis==="y"?Math.abs(goal.x-w.x)<.01&&goal.y>=w.y&&goal.y<=w.y+1:Math.abs(goal.y-w.y)<.01&&goal.x>=w.x&&goal.x<=w.x+1))return turnPoint({x:p.x+1.57,y:p.y+.61},center,p.rotation??0);
+ return goal;
 }

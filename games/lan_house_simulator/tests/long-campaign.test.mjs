@@ -22,11 +22,12 @@ test("campanha de 45 dias mantém contabilidade e indicadores estáveis",()=>{
   if((d+1)%15===0)monthly.push({day:d+1,cash:s.cash,revenue:s.revenue,expenses:s.expenses,served:s.served,lost:s.lostCustomers,reputation:s.reputation});
  }
  assert.ok(s.served>0,"deve existir atividade econômica");
- assert.equal(s.copyrightNoticeFine,true);
- assert.equal(s.windowsNoticeFine,true);
- assert.ok(s.notices.some(n=>n.id==="copyright"));
- assert.equal(s.eventLog.filter(msg=>msg.includes("Autuação de direitos autorais")).length<=1,true);
- // After formal notice no further random R$180 piracy penalties.
+ // O correio esporádico não dispara três alertas e duas multas nos primeiros dias.
+ assert.equal(s.copyrightNoticeFine,undefined);
+ assert.equal(s.windowsNoticeFine,undefined);
+ assert.equal(s.notices?.length??0,0);
+ assert.ok(!s.eventLog.some(msg=>msg.includes("Fiscalização encontrou jogos sem licença")));
+ // Não cobrar multas arbitrárias antes de enviar carta com prazo.
  const balance=s.cash;
  for(let d=0;d<5;d++)for(let m=0;m<DAY_MINUTES;m++)stepGame(s,1);
  assert.ok(!s.eventLog.some(x=>x.includes("Fiscalização encontrou jogos sem licença")));

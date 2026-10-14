@@ -2,7 +2,7 @@ import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {pcCount,pcPosition} from "./engine.js";
 import {furnitureLocations,furnitureSlots} from "./shop.js";
-import {VENDING_MACHINES} from "./layout.js";
+import {vendingMachines,counterPoint} from "./layout.js";
 import {canTraverseLocalStep} from "./navigation.js";
 /** Grade para funcionários: desvios em torno de bancadas, PCs, máquinas, móveis e divisórias.
  * Pontos de partida e chegada podem estar junto aos móveis; nunca atravessa parede fechada. */
@@ -10,8 +10,8 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const b=roomBounds(s),step=.5;
  const obstacles:Array<{x:number;y:number;r:number}>=[
   ...Array.from({length:pcCount(s)},(_,i)=>({...pcPosition(i,s),r:.38})),
-  ...VENDING_MACHINES.map(m=>({x:m.x,y:m.y,r:.34})),
-  {x:1.45,y:1.05,r:.42}
+  ...vendingMachines(s).map(m=>({x:m.x,y:m.y,r:.34})),
+  {...counterPoint(s,{x:1.45,y:1.05}),r:.42}
  ];
  const slots=new Map(furnitureSlots(s).map(slot=>[slot.id,slot]));
  for(const item of furnitureLocations(s)){

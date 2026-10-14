@@ -269,9 +269,10 @@ try{
     await clickFurnitureSlot("floor-1");
     await page.locator("#open-shop").click();
     await page.locator("#organize-furniture").click();
-    await page.locator("#placement-toolbar").waitFor({state:"visible"});
+    // O editor novo substituiu o antigo toolbar de reposicionamento.
+    await page.locator("#layout-editor").waitFor({state:"visible"});
+    await page.locator("#layout-object").selectOption("decor:floor-1");
     const beforeMoving=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
-    await clickFurnitureSlot("floor-1");
     // A captura mostra a prévia do móvel sendo levado à nova posição.
     await page.locator("#game").scrollIntoViewIfNeeded();
     const destination=await page.evaluate(async()=>{
@@ -284,17 +285,18 @@ try{
       return {x:bounds.left+at.x*bounds.width/canvas.width,y:bounds.top+at.y*bounds.height/canvas.height};
     });
     await page.mouse.move(destination.x,destination.y);
+    await clickFurnitureSlot("floor-3");
     await page.waitForTimeout(120);
     await writeFile(resolve(output,"lhs_furniture_relocation_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
-    // Playwright may scroll the stage for the screenshot. Recompute the canvas
-    // bounds afterwards instead of clicking a stale viewport coordinate.
-    await clickFurnitureSlot("floor-3");
+    // Somente Confirmar salva a mudança no editor novo.
+    await page.locator("#layout-confirm").click();
     await page.waitForFunction(key=>{
       const saved=JSON.parse(localStorage.getItem(key)??"null");
       return saved?.furniturePlacements?.some(p=>p.kind==="plant"&&p.slotId==="floor-3");
     },GAME_SAVE_KEY);
     const moved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+    await page.locator("#layout-close").click();
     if(moved.cash!==beforeMoving.cash||moved.expenses!==beforeMoving.expenses)
       throw Error("Reposicionamento cobrou novamente: "+JSON.stringify({cash:moved.cash,expenses:moved.expenses}));
     const directionalPreview=await page.evaluate(async()=>{
