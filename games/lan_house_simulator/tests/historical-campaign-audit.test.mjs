@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -38,11 +39,11 @@ function prepare(year,seed,variant){
  if(year>=2007)accept(upgradeInternet(s),"internet fiber");
  for(let i=0;i<3;i++){
   if(variant==="modern"){
-   accept(buyPlatform(s,i,kit[year]),"platform "+year+" #"+i);
-   accept(buyGpu(s,i,gpu[year]),"gpu "+year+" #"+i);
-   accept(buyLcdKit(s,i,lcd[year]),"lcd "+year+" #"+i);
-   accept(licenseWindows(s,i,windows[year]),"windows "+year+" #"+i);
-  }else accept(licenseWindows(s,i,"win98"),"legacy windows #"+i);
+   accept(withStationOff(s,i,()=>buyPlatform(s,i,kit[year])),"platform "+year+" #"+i);
+   accept(withStationOff(s,i,()=>buyGpu(s,i,gpu[year])),"gpu "+year+" #"+i);
+   accept(withStationOff(s,i,()=>buyLcdKit(s,i,lcd[year])),"lcd "+year+" #"+i);
+   accept(withStationOff(s,i,()=>licenseWindows(s,i,windows[year])),"windows "+year+" #"+i);
+  }else accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"legacy windows #"+i);
  }
  const quality=qualityMultiplier(s);
  const permitted=allowableHourlyPrice(s);
@@ -188,7 +189,7 @@ function openingBusiness(seed){
  for(let day=1;day<=120;day++){
   for(let i=0;i<3;i++){
    if(!(s.pcWindowsLicenses?.[i])&&s.cash>=250)
-    accept(licenseWindows(s,i,"win98"),"startup Windows "+i);
+    accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"startup Windows "+i);
   }
   if(s.pcWindowsLicenses?.every(Boolean)&&s.supplierTier!==2&&s.cash>=350){
    accept(contractSupplier(s),"startup supplier");supplierBought=true;

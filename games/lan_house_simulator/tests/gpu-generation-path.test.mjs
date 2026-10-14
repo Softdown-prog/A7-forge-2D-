@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
@@ -17,9 +18,9 @@ function setup(seed,price){
  act(setHourlyPrice(s,price));act(licenseGames(s));act(hireContentProgrammer(s));act(contractSupplier(s));
  act(expandShop(s));act(buyComputer(s));act(buyComputer(s));
  act(upgradeInternet(s));act(upgradeInternet(s));
- for(let i=0;i<pcCount(s);i++)act(licenseWindows(s,i,"win98"));
+ for(let i=0;i<pcCount(s);i++)act(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
  for(const i of [3,4]){
-  act(upgradeComputer(s,i));act(upgradeComputer(s,i));act(buyGpu(s,i,"gpu09"));
+  act(withStationOff(s,i,()=>upgradeComputer(s,i)));act(withStationOff(s,i,()=>upgradeComputer(s,i)));act(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }
  assert.equal(gameYear(s),2011);
  assert.equal(s.cash,INITIAL-s.expenses);
@@ -42,12 +43,12 @@ function campaign(seed,price,plan){
  // From 2011 through mid-2013 continuously, including month/year rollovers.
  for(let day=0;day<TOTAL_DAYS;day++){
   if(day===0&&plan==="staged"){
-   const before=s.expenses;for(const i of [3,4])act(buyGpu(s,i,"gpu11"));
+   const before=s.expenses;for(const i of [3,4])act(withStationOff(s,i,()=>buyGpu(s,i,"gpu11")));
    upgradeCost+=s.expenses-before;
   }
   if(day===720&&plan!=="hold"){
    assert.equal(gameYear(s),2013);
-   const before=s.expenses;for(const i of [3,4])act(buyGpu(s,i,"gpu13"));
+   const before=s.expenses;for(const i of [3,4])act(withStationOff(s,i,()=>buyGpu(s,i,"gpu13")));
    upgradeCost+=s.expenses-before;
   }
   upkeep(s);
@@ -83,18 +84,18 @@ function campaign(seed,price,plan){
 test("substituição 2009 → 2011 → 2013 contabiliza o valor integral das duas gerações",()=>{
  const s=setup(23,22),before=s.cash,expense=s.expenses;
  assert.equal(installedGpu(s,3),"gpu09");
- act(buyGpu(s,3,"gpu11"));
+ act(withStationOff(s,3,()=>buyGpu(s,3,"gpu11")));
  assert.equal(s.cash,before-1590);
  assert.equal(s.expenses,expense+1590);
- assert.equal(buyGpu(s,3,"gpu09").ok,false);
- assert.equal(buyGpu(s,3,"gpu13").ok,false,"a GPU 2013 ainda não foi lançada");
+ assert.equal(withStationOff(s,3,()=>buyGpu(s,3,"gpu09")).ok,false);
+ assert.equal(withStationOff(s,3,()=>buyGpu(s,3,"gpu13")).ok,false,"a GPU 2013 ainda não foi lançada");
  s.totalMinutes+=720*DAY_MINUTES;
  assert.equal(gameYear(s),2013);
- act(buyGpu(s,3,"gpu13"));
+ act(withStationOff(s,3,()=>buyGpu(s,3,"gpu13")));
  assert.equal(s.cash,before-1590-2250);
  assert.equal(s.expenses,expense+1590+2250);
  assert.equal(installedGpu(s,3),"gpu13");
- assert.equal(buyGpu(s,3,"gpu13").ok,false);
+ assert.equal(withStationOff(s,3,()=>buyGpu(s,3,"gpu13")).ok,false);
  const saved=parseImportedSave(serializeSave(s));
  assert.equal(installedGpu(saved,3),"gpu13");
 });
