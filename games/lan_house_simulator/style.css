@@ -138,7 +138,7 @@ canvas{display:block;width:100%;height:auto;touch-action:manipulation;cursor:poi
 .game-footer>span{display:inline-flex;align-items:center;gap:10px}
 
 /* Original window system: ivory workspaces, terminal headers, tactile controls. */
-.panel-backdrop{position:fixed;inset:0;z-index:30;background:#071b17ac;backdrop-filter:blur(5px)}
+.panel-backdrop{position:fixed;inset:0;z-index:30;background:#071b17ac}
 body.panel-open{overflow:hidden}
 .admin{color-scheme:light;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1060px,calc(100% - 48px));max-height:calc(100dvh - 60px);overflow:auto;overscroll-behavior:contain;z-index:40;color:var(--ink);background:var(--paper);border:1px solid #94a080;border-radius:14px;padding:0 24px 24px;box-shadow:0 36px 100px #041c17aa,0 0 0 5px #b6c79514;scrollbar-width:thin;scrollbar-color:#a6b294 var(--paper)}
 .admin-title{position:sticky;top:0;z-index:3;background:var(--ink);color:var(--paper);margin:0 -24px 22px;padding:19px 24px;display:flex;justify-content:space-between;gap:18px;align-items:center;border-bottom:3px solid var(--mint)}

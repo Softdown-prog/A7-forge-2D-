@@ -9,6 +9,7 @@ import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
+import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
@@ -91,6 +92,7 @@ export function canCustomerOccupy(s:GameState,c:Customer,at:Point):boolean {
   });
 }
 function move(s:GameState,c:Customer,speed=0.38):boolean {
+  const origin={x:c.x,y:c.y};
   const dx=c.target.x-c.x,dy=c.target.y-c.y;
   const distance=Math.hypot(dx,dy);
   if(distance<=0.005){
@@ -106,7 +108,7 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
     if(remaining<=0.005)break;
     const nx=vx/remaining,ny=vy/remaining,step=Math.min(length,remaining);
     const desired={x:c.x+nx*step,y:c.y+ny*step};
-    if(canTraverseLocalStep(s,{x:c.x,y:c.y},desired)&&canCustomerOccupy(s,c,desired)){
+    if(canTraverseLocalStep(s,{x:c.x,y:c.y},desired)&&canTraverseLocalStep(s,origin,desired)&&canCustomerOccupy(s,c,desired)){
       c.x=desired.x;c.y=desired.y;continue;
     }
     // Desvio local seguro inclusive em salas divididas: testar cada movimento
@@ -118,7 +120,7 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
           y:c.y+ny*step*0.65+nx*0.17*sign};
         if(alternative.x<=bounds.minX+0.12||alternative.x>=bounds.maxX-0.12||
           alternative.y<=bounds.minY+0.12||alternative.y>=bounds.maxY-0.12)continue;
-        if(canTraverseLocalStep(s,{x:c.x,y:c.y},alternative)&&canCustomerOccupy(s,c,alternative)){
+        if(canTraverseLocalStep(s,{x:c.x,y:c.y},alternative)&&canTraverseLocalStep(s,origin,alternative)&&canCustomerOccupy(s,c,alternative)){
           c.x=alternative.x;c.y=alternative.y;break;
         }
       }
@@ -137,13 +139,15 @@ function setTravel(s:GameState,c:Customer,destination:Point):boolean{
  c.target=points[0]!;c.route=points.slice(1);
  return true;
 }
+export const EXIT_REACH_DISTANCE=.32;
 function moveRoute(s:GameState,c: Customer): boolean {
   const before=Math.hypot(c.x-c.target.x,c.y-c.target.y);
   if (!move(s,c)) {
     const after=Math.hypot(c.x-c.target.x,c.y-c.target.y);
     // Um desvio local pode ficar oscilando diante de uma fila compacta.
     // Replanejar até o destino final permite contornar também o waypoint ocupado.
-    if(after>=before-.005){
+    if(after>=before-.005&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
+      c.nextCrowdRetryMinute=s.totalMinutes+4;
       const path=crowdRoute(s,c,c.route?.at(-1)??c.target);
       if(path?.length){c.target=path[0]!;c.route=path.slice(1);}
     }
@@ -212,6 +216,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 }
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.queueIndex=undefined;
+  c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
 /** Avança cada cliente uma casa quando a primeira posição é liberada. */
@@ -394,7 +399,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "shopping":
-      if (moveRoute(s,c)) resolvePurchase(s, c);
+      if (moveRoute(s,c)&&firstRetailCustomer(s,c.desiredItem??"soda")===c.id&&Math.hypot(c.x-purchaseApproach(c.desiredItem??"soda",s).x,c.y-purchaseApproach(c.desiredItem??"soda",s).y)<.05) resolvePurchase(s, c);
       return;
     case "leaving": moveRoute(s,c); return;
   }
@@ -455,10 +460,11 @@ function advanceMinute(s: GameState): void {
     if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
   }
   refreshCounterQueue(s);
+  refreshRetailQueues(s);
   for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
   if(s.totalMinutes%70===0)addWaste(s,2);
   const e = entrance(s);
-  s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > 0.001);
+  s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > EXIT_REACH_DISTANCE);
 }
 export function stepGame(s: GameState, deltaMinutes: number): void {
   if (!Number.isFinite(deltaMinutes) || deltaMinutes <= 0) return;
@@ -478,7 +484,10 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")) && Array.isArray(v.eventLog) &&
+      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
+      (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
+      (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&

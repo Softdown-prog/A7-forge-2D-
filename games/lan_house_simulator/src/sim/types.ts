@@ -14,6 +14,10 @@ export interface Customer {
   target: Point;
   /** Lugar atual na fila física; opcional para partidas anteriores. */
   queueIndex?: number;
+  retailQueueItem?: Item;
+  retailQueueIndex?: number;
+  /** Limita buscas de desvio; salvo para conservar retomadas de partidas. */
+  nextCrowdRetryMinute?: number;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];
   /** Minutos de transição sentando/levantando. */

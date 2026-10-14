@@ -40,3 +40,20 @@ O perfil registra frames, desenho, posições apresentadas, DOM e tarefas longas
 A comparação entre desenho com cache e original inclui repetição, expansão paga, compra/realocação real de pôster e compra de planta. Os seis casos tiveram **zero pixels alterados e delta máximo de canal zero**. A verificação roda no worker de cena do CI.
 
 Sete testes novos cobrem posições intermediárias, ausência de mutação, assentos, soleira, reset/remoção, paredes/saltos, funcionários e campanha determinística com 60 apresentações por minuto. Os **160 testes** da versão conjunta passaram. A inspeção Chromium cobre abas, compras, cartas, saves, teclado e três tamanhos de tela; a gravação de circulação usa o RAF da aplicação real, sem reposicionar personagens durante o vídeo.
+
+
+## Revisão de rolagem e circulação — 14/10/2026
+
+- Corrigido o ramo de desenho que mantinha a prévia do menu ativa com a partida em execução. Não desenhar cena coberta pelos painéis, fora da tela ou enquanto se desloca a página; relógio e serviços continuam funcionando. Efeitos visuais expiram mesmo quando não são pintados.
+- Painéis usam revisões do estado relevante: não reconstruir botões e catálogos em atualizações sem mudança. Durante toque/rolagem, aguardar o término do gesto para a atualização periódica; compras e escolhas explícitas continuam atualizando imediatamente. Não criar ícones repetidos no relógio/tempo. Retirado filtro de desfoque do fundo modal.
+- Compras têm atendimento por ordem e lugares de espera separados por produto. O acesso à prateleira fica fora da coluna do caixa. A busca de lugares é guardada por layout; expansões, móveis e divisórias invalidam esse resultado. Filas retomadas recalculam destinos após mover equipamentos.
+- Saída aceita a travessia da área da soleira (raio 0,32; menor que a separação dos corpos de 0,43), sem exigir convergência de todos ao mesmo ponto exato. Não altera pagamentos nem teletransporta clientes pelo salão.
+- Desvios de multidão respeitam intervalo de quatro minutos de jogo por pessoa, preservado no save. Retângulos de equipamentos são calculados uma vez por busca, sem recriar cantos em cada ponto examinado.
+
+Na medição de administração com Chromium e CPU limitada a 4×, em dois segundos, nós adicionados passaram de **380 para 24**, desenhos do menu oculto de **26 para zero**, e tarefas longas de **5 para zero**. O botão observado foi substituído na base e preservado após a correção. Este caso não garante desempenho em telefone físico.
+
+O perfil de 12 segundos da cena com divisórias registrou desktop 60 FPS nas duas versões e emulação móvel 27 → 29,6 FPS, com nós adicionados por segundo 99,2 → 10,4. Ainda houve tarefas longas nesse cenário pesado; não declarar eliminação de todo travamento nem usar estes FPS como requisito rígido do CI. Tempos de desenho do relatório antigo misturavam cena e menu oculto e não são comparáveis diretamente.
+
+`tests/customer-congestion.test.mjs` reproduz oito pessoas na saída/prateleira/máquinas: concluem o fluxo antes da virada diária, mantendo separação física e contabilidade. Cobre também save/reload seguido de mudança da máquina.
+
+`node scripts/verify_mobile_interface.mjs out/mobile-interface` verifica controle preservado, rolagem nativa do painel, troca de peças por toque e ausência de desenho do menu oculto em 1280/414/360. O teste de áudio usa uma venda real, desbloqueio por toque, decodificação dos dois OGG e reprodução via Web Audio. Som de refrigerante continua ocasional: 28% por venda, intervalo de 12 segundos e gravações existentes, sem reativar a lata reprovada. O sorteio só é fixado dentro do teste.

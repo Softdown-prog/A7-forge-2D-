@@ -568,3 +568,13 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - Remoção com confirmação/cancelamento de plantas, mesas, pôsteres comprados e originais; libera encaixes e persiste, sem reembolso. Saves legados são normalizados sem recriar unidades retiradas.
 - Divisórias e portas aparecem na lista do editor com posição/orientação e destaque no mapa. Atalho da loja abre essa lista; retirada recalcula as rotas em curso.
 - Testes de motor cobrem retirada, recompra, saves antigos, ampliação e dados inválidos; teste de interface cobre remoção/cancelamento/reload com toque em 360/414 px e desktop.
+
+
+### Fluidez de interface e atendimento de lanches — 14/10/2026
+
+- Encerrar desenho do menu oculto durante a partida; suspender apenas pintura de cena coberta/fora da tela/durante rolagem, mantendo a simulação ativa.
+- Preservar controles e listas sem mudanças; adiar atualização periódica durante toque/rolagem e retirar desfoque do fundo modal.
+- Separar fila de compras por produto e afastar atendimento de salgadinhos da fila do caixa. Travessia da soleira libera a saída sem convergir todos para um ponto exato.
+- Reduzir frequência e custo das buscas de desvio; persistir intervalo de recuperação. Cobertura de congestionamento, saves e máquina movida.
+- Verificar no navegador áudio OGG existente de refrigerante em venda confirmada, mantendo mixagem ocasional anterior.
+- Remover tiles/grid das descrições ao jogador, explicar expansão + instalação de PCs e reescrever Sobre o jogo em tom acolhedor.

@@ -23,8 +23,8 @@ const controlIcons:Record<string,string>={
  "launch-promotion":"megaphone","reset-game":"continue"
 };
 const tabIcons:Record<string,string>={prices:"tag",computers:"computer",gpus:"chip",licenses:"shield",stock:"stock",services:"tools",finance:"chart"};
-export function decorateControls():void{
- for(const button of Array.from(document.querySelectorAll<HTMLButtonElement>("button"))){
+export function decorateControls(root:ParentNode=document):void{
+ for(const button of Array.from(root.querySelectorAll<HTMLButtonElement>("button"))){
   let name=button.dataset.icon??controlIcons[button.id]??tabIcons[button.dataset.adminTab??""]??
    (button.dataset.buy?"cart":button.dataset.hardwareSelect!==undefined?"computer":button.dataset.hardwarePart||button.dataset.hardwareKit||button.dataset.hardwareTab?"chip":button.dataset.lcdBuy?"computer":button.dataset.lcdSelect!==undefined?"computer":button.dataset.pcRepair!==undefined?"tools":button.dataset.pcUpgrade!==undefined?"chip":
     button.dataset.winPc!==undefined?"shield":button.dataset.gpuBuy?"chip":button.dataset.gpuSelect!==undefined?"computer":
@@ -37,10 +37,10 @@ export function decorateControls():void{
    child.textContent=child.textContent?.replace(/^[\s▶↪⚙↓↑☰🛒✕✉↔↻📣✓🔒]+/u,"").replaceAll("🔒","")??"";
   button.insertAdjacentHTML("afterbegin",iconMarkup(name));
  }
- for(const node of Array.from(document.querySelectorAll<HTMLElement>("[data-icon]:not(button)")))
+ for(const node of Array.from(root.querySelectorAll<HTMLElement>("[data-icon]:not(button)")))
   if(!node.querySelector(":scope > .ui-icon"))node.insertAdjacentHTML("afterbegin",iconMarkup(node.dataset.icon!));
  const summaryIcons=["coins","chart","calendar","users"];
- document.querySelectorAll<HTMLElement>(".admin-summary>div").forEach((node,i)=>{
+ root.querySelectorAll<HTMLElement>(".admin-summary>div").forEach((node,i)=>{
   if(!node.querySelector(".ui-icon"))node.insertAdjacentHTML("beforeend",iconMarkup(summaryIcons[i]??"chart"));
  });
 }
@@ -56,8 +56,6 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
  const status=document.getElementById("status");
  const html=cards.map(c=>'<div class="hud-card '+c.className+'"><span>'+iconMarkup(c.icon)+'</span><div><small>'+c.label+'</small><strong>'+c.value+'</strong></div></div>').join("");
  if(status&&status.innerHTML!==html)status.innerHTML=html;
- const calendar=document.getElementById("calendar-hud");if(calendar)calendar.insertAdjacentHTML("afterbegin",iconMarkup("calendar"));
- const weather=document.getElementById("weather-hud");if(weather)weather.insertAdjacentHTML("afterbegin",iconMarkup(s.weather==="rain"?"rain":"sun"));
  const stock=document.getElementById("stock");
  if(stock&&section==="stock"){stock.className="stock-metrics";stock.innerHTML=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");}
  const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!isPromotionActive(s);
@@ -76,7 +74,7 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
   const windows=WINDOWS_ERAS.find(w=>w.id===installedWindows(s,i))!.name,parts=buildParts(hardwareFor(s,i));
   label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+windows+' · '+stationModelName(s,i)+'</small><small>'+parts.cpu.name+' · RAM '+formatMemory(parts.ram.ramMb!)+' · '+describePart(parts.storage)+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
  }
- decorateControls();syncWindowChrome();
+ const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel)decorateControls(panel);syncWindowChrome();
 }
 
 let currentPanel:HTMLElement|null=null,previousFocus:HTMLElement|null=null;
