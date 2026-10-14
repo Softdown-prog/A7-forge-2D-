@@ -47,5 +47,10 @@ export function vendingApproach(kind:"soda"|"candy",s?:GameState):Point {
 export function purchaseApproach(item:"soda"|"candy"|"snacks",s?:GameState):Point{
  if(item!=="snacks")return vendingApproach(item,s);
  const minX=-2*(s?.roomExtensions?.west??0),p=placedObject(s,"shelf",{x:minX+.23,y:2.92});
- return turnPoint({x:p.x+1.11,y:p.y+.61},{x:p.x+.23,y:p.y+.61},p.rotation??0);
+ // Fora da coluna do caixa: o ponto antigo fazia quem comprava lanche bloquear a fila.
+ const center={x:p.x+.23,y:p.y+.61},goal=turnPoint({x:p.x+1.77,y:p.y+.61},center,p.rotation??0);
+ // Uma ampliação pode deixar a antiga borda exatamente sob uma divisória.
+ // Manter o atendimento do lado da prateleira, fora do plano da parede.
+ if(s?.interiorWalls?.some(w=>w.axis==="y"?Math.abs(goal.x-w.x)<.01&&goal.y>=w.y&&goal.y<=w.y+1:Math.abs(goal.y-w.y)<.01&&goal.x>=w.x&&goal.x<=w.x+1))return turnPoint({x:p.x+1.57,y:p.y+.61},center,p.rotation??0);
+ return goal;
 }

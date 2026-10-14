@@ -9,12 +9,15 @@ import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
+import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
+
+import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
@@ -24,6 +27,7 @@ import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
+import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
@@ -91,6 +95,7 @@ export function canCustomerOccupy(s:GameState,c:Customer,at:Point):boolean {
   });
 }
 function move(s:GameState,c:Customer,speed=0.38):boolean {
+  const origin={x:c.x,y:c.y};
   const dx=c.target.x-c.x,dy=c.target.y-c.y;
   const distance=Math.hypot(dx,dy);
   if(distance<=0.005){
@@ -106,7 +111,7 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
     if(remaining<=0.005)break;
     const nx=vx/remaining,ny=vy/remaining,step=Math.min(length,remaining);
     const desired={x:c.x+nx*step,y:c.y+ny*step};
-    if(canTraverseLocalStep(s,{x:c.x,y:c.y},desired)&&canCustomerOccupy(s,c,desired)){
+    if(canTraverseLocalStep(s,{x:c.x,y:c.y},desired)&&canTraverseLocalStep(s,origin,desired)&&canCustomerOccupy(s,c,desired)){
       c.x=desired.x;c.y=desired.y;continue;
     }
     // Desvio local seguro inclusive em salas divididas: testar cada movimento
@@ -118,7 +123,7 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
           y:c.y+ny*step*0.65+nx*0.17*sign};
         if(alternative.x<=bounds.minX+0.12||alternative.x>=bounds.maxX-0.12||
           alternative.y<=bounds.minY+0.12||alternative.y>=bounds.maxY-0.12)continue;
-        if(canTraverseLocalStep(s,{x:c.x,y:c.y},alternative)&&canCustomerOccupy(s,c,alternative)){
+        if(canTraverseLocalStep(s,{x:c.x,y:c.y},alternative)&&canTraverseLocalStep(s,origin,alternative)&&canCustomerOccupy(s,c,alternative)){
           c.x=alternative.x;c.y=alternative.y;break;
         }
       }
@@ -137,13 +142,15 @@ function setTravel(s:GameState,c:Customer,destination:Point):boolean{
  c.target=points[0]!;c.route=points.slice(1);
  return true;
 }
+export const EXIT_REACH_DISTANCE=.32;
 function moveRoute(s:GameState,c: Customer): boolean {
   const before=Math.hypot(c.x-c.target.x,c.y-c.target.y);
   if (!move(s,c)) {
     const after=Math.hypot(c.x-c.target.x,c.y-c.target.y);
     // Um desvio local pode ficar oscilando diante de uma fila compacta.
     // Replanejar até o destino final permite contornar também o waypoint ocupado.
-    if(after>=before-.005){
+    if(after>=before-.005&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
+      c.nextCrowdRetryMinute=s.totalMinutes+4;
       const path=crowdRoute(s,c,c.route?.at(-1)??c.target);
       if(path?.length){c.target=path[0]!;c.route=path.slice(1);}
     }
@@ -172,6 +179,14 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
+ // Jogadores de títulos 2005+ buscam primeiro um PC capaz de rodá-los.
+ // A fila e a escolha antiga não mudam para os demais visitantes.
+ if(c.gpuGamer){
+  for(let i=0;i<pcCount(s);i++){
+   if(isReserved(s,i)||pcBroken(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
+   if(navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
+  }
+ }
  for(let i=0;i<pcCount(s);i++){
   if(isReserved(s,i)||pcBroken(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
@@ -212,6 +227,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 }
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.queueIndex=undefined;
+  c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
 /** Avança cada cliente uma casa quando a primeira posição é liberada. */
@@ -261,7 +277,9 @@ function spawn(s: GameState): void {
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: counterQueueSlot(queueIndex,s),queueIndex,
-    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
+    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1),
+    gpuGamer:wantsGpuGame(s,s.nextCustomerId-1),
+    pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
     (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
@@ -278,7 +296,7 @@ function tryServe(s: GameState, c: Customer): void {
     c.waitingMinutes++;
     if (c.waitingMinutes > (c.vip?19:25)) {
       s.lostCustomers++; s.reputation = Math.max(10, s.reputation - 0.4);
-      customerSays(s,c,"Que fila enorme!");
+      customerSays(s,c,complaintLine("queue",c.id));
       sendHome(s, c);
     }
     return;
@@ -298,11 +316,16 @@ function tryServe(s: GameState, c: Customer): void {
   c.queueIndex=undefined;
   c.stage="to_pc";
   s.counterBusyUntil=s.totalMinutes+3;
-  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const regular=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const paid=s.economyVersion===2
+   ?gpuGameSessionPrice(s,index,c.sessionMinutes,!!c.gpuGamer)
+   :regular;
+  c.gpuGameCharged=paid>regular;
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
-  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
+  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
+   (c.gpuGameCharged?" Sessão de jogo com GPU.":""));
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
@@ -355,7 +378,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
           c.happy = false;
           s.reputation = Math.max(10, s.reputation - 1.1);
           addLog(s, "Cliente saiu insatisfeito com a internet.");
-          customerSays(s,c,"Internet caiu!");
+          customerSays(s,c,complaintLine("outage",c.id));
           startStanding(c, false);
         }
         return;
@@ -372,11 +395,11 @@ function advanceCustomer(s: GameState, c: Customer): void {
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
           addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
-          customerSays(s,c,c.offlineWait>0?"Internet lenta!":c.waitingMinutes>5?"Demorou demais!":"Está caro!");
+          customerSays(s,c,complaintLine(c.offlineWait>0?"slow-internet":c.waitingMinutes>5?"wait":"price",c.id));
         }
         else if(impact >= 0.15){
           addLog(s,"Cliente elogiou a experiência na lan house.");
-          customerSays(s,c,"Curti demais!","praise");
+          customerSays(s,c,praiseLine(c.id),"praise");
         }
         c.desiredItem=selectPurchase(c,s.inventory,s);
         startStanding(c,c.desiredItem!==null);
@@ -394,7 +417,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "shopping":
-      if (moveRoute(s,c)) resolvePurchase(s, c);
+      if (moveRoute(s,c)&&firstRetailCustomer(s,c.desiredItem??"soda")===c.id&&Math.hypot(c.x-purchaseApproach(c.desiredItem??"soda",s).x,c.y-purchaseApproach(c.desiredItem??"soda",s).y)<.05) resolvePurchase(s, c);
       return;
     case "leaving": moveRoute(s,c); return;
   }
@@ -455,10 +478,11 @@ function advanceMinute(s: GameState): void {
     if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
   }
   refreshCounterQueue(s);
+  refreshRetailQueues(s);
   for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
   if(s.totalMinutes%70===0)addWaste(s,2);
   const e = entrance(s);
-  s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > 0.001);
+  s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > EXIT_REACH_DISTANCE);
 }
 export function stepGame(s: GameState, deltaMinutes: number): void {
   if (!Number.isFinite(deltaMinutes) || deltaMinutes <= 0) return;
@@ -470,7 +494,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -478,7 +502,10 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")) && Array.isArray(v.eventLog) &&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
+      (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
+      (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&
@@ -499,6 +526,8 @@ export function isValidSave(value: unknown): value is GameState {
       v.storyVisitorEffects.every(e=>!!e&&typeof e.id==="string"&&e.id.length<=100&&
        Number.isFinite(e.factor)&&e.factor>=0.5&&e.factor<=1.5&&
        Number.isInteger(e.untilDay)&&e.untilDay>=1&&e.untilDay<=1e7))) &&
+
+    (v.overflowWaste===undefined||(Number.isFinite(v.overflowWaste)&&v.overflowWaste>=0&&v.overflowWaste<=1000)) &&
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
     [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]
       .every(flag=>flag===undefined||typeof flag==="boolean") &&

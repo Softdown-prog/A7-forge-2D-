@@ -561,6 +561,14 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Verificar toque em 360/414 e desktop 1440, giro, recarga, compra confirmada de divisória e 60 casos de cache nas quatro orientações; proteger importação de saves e registrar `docs/LAYOUT_EDITOR.md`.
 - [ ] Conferir gestos e ergonomia em telefone físico, principalmente salões grandes; estudar corredores mais amplos e edição assistida por cômodos antes de expandir o construtor.
 
+## Jogos GPU obrigatórios e licenças desde 2005 — 14/10/2026
+- [x] Preservar catálogo básico de jogos (R$ 450) e licenças Windows atuais; adicionar títulos fictícios desbloqueados em **2005, 2009 e 2013**, cada um com GPU mínima, Windows mínimo, preço único e indicação dos PCs elegíveis.
+- [x] Impedir licenciamento premium sem **ao menos uma estação com GPU e Windows licenciado compatíveis**, mesmo se houver dinheiro; impedir cobrança repetida, antecipação da data de lançamento e IDs adulterados em saves.
+- [x] Ao atender gamers desde 2005, preferir PCs que suportem os jogos e cobrar adicional **somente naquela estação e naquela sessão**, limitado ao teto anual, sem aumentar a chegada de clientes nem alterar o RNG das épocas anteriores.
+- [x] Exibir jogos, requisitos, motivos de bloqueio, preços e PCs elegíveis na aba Windows / Licenças; registrar contrato premium, receita e custo nos mesmos livros econômicos do motor.
+- [x] Preservar saves clássicos, históricos anteriores e ausência de `licensedGpuGames`; validar teste de autorização, compatibilidade, caixa, tarifa local e atendimento real.
+- [ ] Ampliar GPUs para 2005–2013, catálogo por gênero, demanda específica por título, instalação por máquina, preferência do cliente e preços locais configuráveis; somente então realizar uma **nova auditoria de ROI das GPUs**.
+
 
 ### Correção do editor e remoções — 14/10/2026
 
@@ -580,3 +588,21 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [ ] Validar suíte do CI, jogar os cenários no navegador real e calibrar impactos de longo prazo antes do lançamento.
 
 Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Serviços externos e Cookies não são alterados.
+
+
+### Fluidez de interface e atendimento de lanches — 14/10/2026
+
+- Encerrar desenho do menu oculto durante a partida; suspender apenas pintura de cena coberta/fora da tela/durante rolagem, mantendo a simulação ativa.
+- Preservar controles e listas sem mudanças; adiar atualização periódica durante toque/rolagem e retirar desfoque do fundo modal.
+- Separar fila de compras por produto e afastar atendimento de salgadinhos da fila do caixa. Travessia da soleira libera a saída sem convergir todos para um ponto exato.
+- Reduzir frequência e custo das buscas de desvio; persistir intervalo de recuperação. Cobertura de congestionamento, saves e máquina movida.
+- Verificar no navegador áudio OGG existente de refrigerante em venda confirmada, mantendo mixagem ocasional anterior.
+- Remover tiles/grid das descrições ao jogador, explicar expansão + instalação de PCs e reescrever Sobre o jogo em tom acolhedor.
+
+
+### Arte do balcão e administrador — 14/10/2026
+
+- Balcão com base, tampo elevado e bisel, painéis verdes, madeira, identificação Caixa, gavetas e terminal CRT com faces coerentes nas quatro rotações. Teclado, caixa e caderno acompanham a superfície.
+- Administrador mantém âncoras e quatro direções, com uniforme/apron refinado, crachá de terminal, óculos, detalhes de cabelo e mãos em atendimento. Removida bandeja de restaurante para adaptar a postura à administração da lan house.
+- Cache estático do balcão por escala, orientação e fase de pixel; limite de 24 imagens por contexto. Não altera tamanho de ocupação, filas, salvamento ou economia.
+- Verificação Canvas: 32 comparações de cache/desenho direto, 72 combinações dos outros clientes sem pixels alterados e quatro hitboxes de administrador reposicionado/girado. Galeria antes/depois, quatro vistas, cena real e detalhes do figurino. CI executa a revisão do balcão.

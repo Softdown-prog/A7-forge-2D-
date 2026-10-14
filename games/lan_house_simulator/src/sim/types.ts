@@ -14,6 +14,10 @@ export interface Customer {
   target: Point;
   /** Lugar atual na fila física; opcional para partidas anteriores. */
   queueIndex?: number;
+  retailQueueItem?: Item;
+  retailQueueIndex?: number;
+  /** Limita buscas de desvio; salvo para conservar retomadas de partidas. */
+  nextCrowdRetryMinute?: number;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];
   /** Minutos de transição sentando/levantando. */
@@ -29,6 +33,10 @@ export interface Customer {
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;
+  /** Prefere títulos 2005+; derivado do ID, sem sorteio adicional. */
+  gpuGamer?: boolean;
+  /** Sessão cobrada com adicional de jogo GPU; preservado em saves. */
+  gpuGameCharged?: boolean;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
@@ -91,6 +99,8 @@ export interface GameState {
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
+  /** Licenças avançadas por estabelecimento (opcional em saves antigos). */
+  licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
   expansionLevel: number;
   installedPcs?: number;
   /** Extensões de terreno independentes; ausentes em saves anteriores. */
@@ -111,6 +121,8 @@ export interface GameState {
   pcWear?: number[];
   repairJobs?: import("./services.js").RepairJob[];
   binFill?: number[];
+  /** Lixo derramado quando as lixeiras atingem a capacidade total. */
+  overflowWaste?: number;
   cleaningJob?: import("./services.js").CleaningJob;
   inventory: Inventory;
   customers: Customer[];

@@ -12,9 +12,10 @@ import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../s
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
-import {BIN_SPOTS,binSpots} from "../sim/services.js";
+import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../sim/services.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
+import {drawCounter} from "./counterArt.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -74,8 +75,8 @@ export class SceneRenderer {
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
     }
-    for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job.x,job.y,elapsedSeconds,"technician",job.phase==="working",job.progress/job.duration)});
-    if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j.x,j.y,elapsedSeconds,"cleaner",j.phase==="working",j.progress/9)});}
+    for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job,elapsedSeconds,"technician",job.progress/job.duration)});
+    if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j,elapsedSeconds,"cleaner",j.progress/9)});}
     for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
@@ -372,13 +373,7 @@ export class SceneRenderer {
     }
   }
   private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
-    camera=objectCamera(camera,p,1.75,.72,p.rotation);
-    const ctx=this.ctx;
-    cuboid(ctx,camera,p.x,p.y,1.75,0.68,49,["#EDCB8E","#7E5047","#986353"]);
-    cuboid(ctx,camera,p.x+.05,p.y+.03,1.65,0.7,12,["#F3D5A1","#9E6A4C","#A57958"]);
-    const point=iso({x:p.x+.65,y:p.y+.28},camera,62);
-    ctx.fillStyle="#26374E";ctx.fillRect(point.x-9,point.y-10,18,15);
-    ctx.fillStyle="#83D4CE";ctx.fillRect(point.x-6,point.y-7,12,8);
+    drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
   }
   private shelf(camera:Projection,minX=0,stock=20,p:PlacedPoint={x:minX+.23,y:2.92}):void {
     drawSnackShelf(this.ctx,objectCamera(camera,p,.46,1.22,p.rotation),minX,stock,true,p);
@@ -388,34 +383,68 @@ export class SceneRenderer {
   }
   private trashBin(camera:Projection,p:Point,fill:number):void{
     const ctx=this.ctx,loc=iso(p,camera),z=camera.zoom;
-    ctx.save();ctx.translate(loc.x,loc.y);
-    ctx.fillStyle="#1d2930";ctx.beginPath();ctx.ellipse(0,2*z,12*z,5*z,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#426f68";ctx.strokeStyle="#182e37";ctx.lineWidth=2*z;
-    ctx.beginPath();ctx.moveTo(-10*z,-21*z);ctx.lineTo(10*z,-21*z);ctx.lineTo(8*z,0);ctx.lineTo(-8*z,0);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle="#87b9aa";ctx.fillRect(-11*z,-23*z,22*z,5*z);
-    ctx.fillStyle="#32483b";ctx.fillRect(-7*z,-18*z,14*z*Math.min(1,fill/100),4*z);
-    if(fill>65){ctx.fillStyle="#8e8262";ctx.fillRect(-5*z,-26*z,10*z,4*z);}
+    const status=binStatus(fill);
+    ctx.save();ctx.translate(loc.x,loc.y);ctx.lineJoin="round";
+    // Sombra no chão, corpo estável (mesma âncora da projeção usada nos móveis).
+    ctx.fillStyle="rgba(19,30,36,.32)";
+    ctx.beginPath();ctx.ellipse(0,3*z,12*z,5*z,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#426F68";ctx.strokeStyle="#1A3D3F";ctx.lineWidth=1.8*z;
+    ctx.beginPath();ctx.moveTo(-10*z,-21*z);ctx.lineTo(10*z,-21*z);
+    ctx.lineTo(8*z,0);ctx.lineTo(-8*z,0);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle="#90BBAA";ctx.beginPath();ctx.ellipse(0,-21*z,10*z,3.5*z,0,0,Math.PI*2);ctx.fill();
+    if(status==="empty"){
+      // Boca aberta, fundo escuro visível: lixeira efetivamente vazia.
+      ctx.fillStyle="#1B3437";ctx.beginPath();ctx.ellipse(0,-21*z,7.5*z,2.2*z,0,0,Math.PI*2);ctx.fill();
+    }else{
+      // Nível cresce dentro do recipiente, com indicador frontal legível.
+      const amount=Math.min(1,Math.max(0,fill/100));
+      ctx.fillStyle="#A58E69";
+      ctx.beginPath();ctx.ellipse(0,-20*z,7.4*z,2.4*z,0,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=status==="full"?"#D28C4B":"#B0C28B";
+      ctx.fillRect(-7*z,-15*z,14*z*amount,4*z);
+      if(status==="full"){
+        // Lixeira cheia: sacos visíveis acima da tampa, marca clara de lotação.
+        ctx.fillStyle="#645F52";
+        ctx.beginPath();ctx.ellipse(-4*z,-26*z,5*z,5*z,-.24,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle="#97866C";
+        ctx.beginPath();ctx.ellipse(4*z,-27*z,5*z,5.5*z,.28,0,Math.PI*2);ctx.fill();
+        ctx.strokeStyle="#CBB77D";ctx.lineWidth=1.1*z;
+        ctx.beginPath();ctx.moveTo(0,-31*z);ctx.lineTo(2*z,-33*z);ctx.stroke();
+        ctx.fillStyle="#E6B45A";ctx.fillRect(-9*z,-23*z,18*z,3*z);
+      }
+    }
     ctx.restore();
   }
-  private worker(camera:Projection,x:number,y:number,time:number,kind:"technician"|"cleaner",working:boolean,progress:number):void{
-    const ctx=this.ctx,z=camera.zoom,p=iso({x,y},camera);
-    const bob=working?Math.sin(time*9)*2*z:Math.sin(time*6)*1.2*z;
-    ctx.save();ctx.translate(p.x,p.y+bob);ctx.lineJoin="round";ctx.lineWidth=2*z;ctx.strokeStyle="#1d3140";
-    const rect=(x:number,y:number,w:number,h:number,color:string)=>{ctx.fillStyle=color;ctx.fillRect(x*z,y*z,w*z,h*z);ctx.strokeRect(x*z,y*z,w*z,h*z);};
-    const trousers=kind==="technician"?"#204b4a":"#344b74";
-    rect(-7,-15,6,15,trousers);rect(1,-15,6,15,trousers);
-    rect(-9,-34,18,21,kind==="technician"?"#438461":"#779cbd");
-    rect(-15,-32,5,15,kind==="technician"?"#529a71":"#7aa3bf");
-    rect(10,-32,5,15,kind==="technician"?"#529a71":"#7aa3bf");
-    rect(-7,-47,14,14,"#d8a486");
-    rect(-9,-51,18,7,kind==="technician"?"#e2b632":"#f3e9d5");
-    rect(-12,-46,24,3,kind==="technician"?"#f8d658":"#d7e8ed");
-    if(kind==="technician"){ctx.fillStyle="#e5c675";ctx.fillRect(-2*z,-32*z,4*z,11*z);}
-    if(working){rect(14,-24,6,5,kind==="technician"?"#9aa9b0":"#ded5ab");}
-    ctx.restore();
-    if(working){ctx.save();ctx.fillStyle="#142934";ctx.fillRect(p.x-22*z,p.y-64*z,44*z,7*z);
-      ctx.fillStyle=kind==="technician"?"#e5bd59":"#8cc6b8";
-      ctx.fillRect(p.x-21*z,p.y-63*z,42*z*Math.max(0,Math.min(1,progress)),5*z);ctx.restore();}
+  /** Trabalhadores agora usam EXATAMENTE a geometria, câmera e caminhada dos clientes. */
+  private worker(camera:Projection,job:RepairJob|CleaningJob,time:number,
+    kind:"technician"|"cleaner",progress:number):void{
+    const ctx=this.ctx,z=camera.zoom,working=job.phase==="working";
+    drawActor(ctx,camera,{
+      x:job.x,y:job.y,kind,id:kind==="cleaner"?-17:-19,
+      time,pose:!working&&job.moving?"walking":"idle",
+      direction:job.facing??"north"
+    });
+    const p=iso({x:job.x,y:job.y},camera);
+    if(working){
+      // Ferramenta simples, ancorada no chão; sem substituir corpo ou pernas.
+      ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+      if(kind==="cleaner"){
+        ctx.strokeStyle="#7A5B3E";ctx.lineWidth=2.8*z;
+        ctx.beginPath();ctx.moveTo(p.x+16*z,p.y-30*z);ctx.lineTo(p.x+25*z,p.y-3*z);ctx.stroke();
+        ctx.fillStyle="#D6B26E";ctx.fillRect(p.x+18*z,p.y-5*z,19*z,5*z);
+        ctx.strokeStyle="#364A53";ctx.lineWidth=1*z;ctx.strokeRect(p.x+18*z,p.y-5*z,19*z,5*z);
+      }else{
+        ctx.fillStyle="#D6B568";ctx.strokeStyle="#405760";ctx.lineWidth=1.5*z;
+        ctx.fillRect(p.x+16*z,p.y-12*z,13*z,10*z);
+        ctx.strokeRect(p.x+16*z,p.y-12*z,13*z,10*z);
+      }
+      ctx.restore();
+      ctx.save();ctx.fillStyle="#142934";
+      ctx.fillRect(p.x-22*z,p.y-107*z,44*z,7*z);
+      ctx.fillStyle=kind==="technician"?"#E5BD59":"#8CC6B8";
+      ctx.fillRect(p.x-21*z,p.y-106*z,42*z*Math.max(0,Math.min(1,progress)),5*z);
+      ctx.restore();
+    }
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,objectCamera(camera,p,1.1,.7,(p as PlacedPoint).rotation),p,i,t,isOnline,s);
@@ -424,17 +453,6 @@ export class SceneRenderer {
     const position=counterPoint(s,{x:1.45,y:1.05}),r=placedObject(s,"counter",{x:.9,y:1.42}).rotation??0;
     // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
     drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose:"idle",direction:(["south","west","north","east"] as const)[r]});
-    // Bandeja oval na mão do proprietário, preservando rosto e hitbox do ator.
-    const plate=iso(counterPoint(s,{x:1.63,y:1.27}),camera,45),scale=camera.zoom;
-    this.ctx.save();
-    this.ctx.lineWidth=3*scale;
-    this.ctx.strokeStyle="#314859";
-    this.ctx.fillStyle="#edf1e6";
-    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,16*scale,6*scale,-0.10,0,Math.PI*2);
-    this.ctx.fill();this.ctx.stroke();
-    this.ctx.strokeStyle="#bdc9c5";this.ctx.lineWidth=1.2*scale;
-    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,11*scale,3.5*scale,-0.10,0,Math.PI*2);
-    this.ctx.stroke();this.ctx.restore();
     this.heroHitbox=actorHitbox(camera,position.x,position.y);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {
