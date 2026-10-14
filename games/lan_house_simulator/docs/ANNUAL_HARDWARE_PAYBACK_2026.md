@@ -135,3 +135,13 @@ Validação inicial integral:
 [GitHub Actions 38553077330](https://github.com/Softdown-prog/A7-forge-2D-/actions/runs/38553077330),
 180 testes aprovados, nenhum reprovado; os três workers concluíram
 com sucesso. Nenhuma regra econômica do runtime foi alterada.
+
+
+Validação sobre a versão com cinco kits LCD: [GitHub Actions
+38554478363](https://github.com/Softdown-prog/A7-forge-2D-/actions/runs/38554478363).
+Foram **189 testes aprovados e nenhum reprovado** (a auditoria anual anterior
+estava pulada); a auditoria de hardware executou e reproduziu exatamente
+todas as oito médias acima. O worker de arte e o de Chromium, incluindo
+as verificações específicas das cinco gerações LCD, também passaram.
+Nenhum modelo LCD foi comprado nas campanhas, portanto os resultados
+avaliam o parque CRT/GPU anterior e não antecipam o retorno de LCDs.

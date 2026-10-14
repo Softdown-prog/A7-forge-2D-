@@ -136,7 +136,11 @@ function run(seed,size,strategy){
   months};
 }
 
-test("2013-2014: retorno anual de CPU Tier 3 e GPUs de 2013 com 5/7 PCs",()=>{
+// Full 4,147,200-minute study is opt-in; routine tests remain fast.
+const runFullAudit=process.env.npm_lifecycle_event==="audit:hardware" ||
+ process.env.LHS_HARDWARE_AUDIT==="1";
+test("2013-2014: retorno anual de CPU Tier 3 e GPUs de 2013 com 5/7 PCs",
+ {skip:!runFullAudit},()=>{
  const rows=[];
  for(const seed of SEEDS)for(const size of SIZES)for(const strategy of STRATEGIES)
   rows.push(run(seed,size,strategy));
