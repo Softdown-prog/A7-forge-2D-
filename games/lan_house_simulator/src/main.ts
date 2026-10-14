@@ -13,6 +13,7 @@ import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
 import { makeNineSlice } from "./ui/nineSlice.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
+import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -272,6 +273,19 @@ button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI(
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
+let selectedGpuPc=0;
+const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
+gpuPcChoice?.addEventListener("click",event=>{
+ const button=event.target;if(!(button instanceof HTMLButtonElement))return;
+ const index=Number(button.dataset.gpuSelect);
+ if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedGpuPc=index;renderUI();}
+});
+gpuList?.addEventListener("click",event=>{
+ const button=event.target;if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const id=button.dataset.gpuBuy;
+ if(!GPU_CATALOG.some(model=>model.id===id))return;
+ applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
+});
 const licensePanel=document.getElementById("windows-license-list");
 licensePanel?.addEventListener("click",event=>{
  const node=event.target;
@@ -565,6 +579,34 @@ function renderUI():void {
       upgrade.disabled=tier>=3||year<hardwareYear||game.cash<tier*240;
       label.textContent+=" · hardware nível "+tier;
       line.append(label,repair,upgrade);maintenance.appendChild(line);
+    }
+  }
+  if(gpuPcChoice&&gpuList){
+    selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
+    gpuPcChoice.replaceChildren();gpuList.replaceChildren();
+    for(let i=0;i<pcCount(game);i++){
+      const control=document.createElement("button");control.type="button";
+      control.dataset.gpuSelect=String(i);
+      control.className="gpu-station"+(selectedGpuPc===i?" selected":"");
+      control.textContent="PC "+(i+1)+(installedGpu(game,i)?" · GPU":" · sem GPU");
+      control.setAttribute("aria-pressed",String(selectedGpuPc===i}));
+      gpuPcChoice.append(control);
+    }
+    const current=gpuSpec(installedGpu(game,selectedGpuPc));
+    for(const model of GPU_CATALOG){
+      const locked=year<model.year,owned=current?.id===model.id;
+      const obsolete=!!current&&current.year>=model.year&&!owned;
+      const card=document.createElement("article");card.className="gpu-card"+(locked?" gpu-locked":"");
+      const art=document.createElement("img");art.src="./assets/gpu/"+model.id+".svg";
+      art.alt="Placa de vídeo "+model.name+" com circuito, dissipador e ventilador";art.loading="lazy";
+      const info=document.createElement("div");info.className="gpu-info";
+      const title=document.createElement("strong");title.textContent=model.name+" · "+model.year;
+      const details=document.createElement("small");details.textContent="R$ "+model.cost+" · desempenho +"+Math.round(model.bonus*100)+"% · consumo +"+Math.round(model.power*100)+"%";
+      const button=document.createElement("button");button.type="button";button.className="slice";
+      button.dataset.gpuBuy=model.id;
+      button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":"Comprar · R$ "+model.cost;
+      button.disabled=locked||owned||obsolete||game.cash<model.cost;
+      info.append(title,details,button);card.append(art,info);gpuList.append(card);
     }
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
