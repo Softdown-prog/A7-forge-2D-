@@ -1,8 +1,9 @@
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine";
+import type {DecisionId} from "./decisions.js";
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId;
 export interface GameNotice {
- id:NoticeId; title:string; body:string; day:number; read:boolean; severity:"info"|"warning"|"urgent";
+ id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
 const day=(s:GameState)=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 const computerCount=(s:GameState)=>Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
