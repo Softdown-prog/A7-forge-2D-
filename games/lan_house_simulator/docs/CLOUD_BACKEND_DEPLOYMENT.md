@@ -1,6 +1,6 @@
 # LHS backend — implantação e operação
 
-Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, após reativação do faturamento. Serviço `lhs-backend`, revisão `lhs-backend-00002-gg9`, Firestore `lhs-game`, bucket privado `loyal-road-395203-lhs-saves` e conta de serviço com IAM restrito estão ativos em `us-central1`. URL: https://lhs-backend-1010038095056.us-central1.run.app . GET `/health` retorna 200; `/v1/account` sem token retorna 401. Frontend online e pagamentos continuam desativados.
+Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, após reativação do faturamento. Serviço `lhs-backend`, revisão `lhs-backend-00004-fkm`, Firestore `lhs-game`, bucket privado `loyal-road-395203-lhs-saves` e conta de serviço com IAM restrito estão ativos em `us-central1`. URL: https://lhs-backend-1010038095056.us-central1.run.app . GET `/health` retorna 200; `/v1/account` sem token retorna 401. CORS permite `https://lhs.analysepro.com` e `https://lhs-lan-house-simulator.pages.dev`. Frontend online e pagamentos continuam desativados; o usuário decidiu adiar a definição dos pagamentos.
 
 O backend é separado da simulação. Cloudflare continua servindo o HTML5. O container inclui apenas API e módulos puros do validador de save; não serve assets nem executa o loop do jogo.
 
@@ -22,7 +22,7 @@ Firebase Authentication existente já permite email/senha. Tokens verificados no
 
 `online-config.json` vem com `enabled: false`. Após implantar e testar: preencher a chave **pública** do Firebase para essa aplicação e URL real retornada pelo Cloud Run; restringir essa chave às APIs Authentication/Secure Token e às origens necessárias, adicionar domínio autorizado no Firebase e configurar CORS com a origem exata do Cloudflare. Habilitar a integração apenas após revisar os textos de privacidade/termos da operação online. O build do site ajusta `connect-src` apenas quando online estiver habilitado.
 
-A publicação no CH-site continua manual. Este trabalho não publica nem altera o Cloudflare.
+O site está publicado no Cloudflare Pages em https://lhs.analysepro.com (também disponível em https://lhs-lan-house-simulator.pages.dev). A versão pública ainda não inclui a interface online deste branch. As duas origens devem constar em `ALLOWED_ORIGINS`; isso permite chamadas à API, mas não ativa login no frontend nem pagamentos.
 
 ## Saves e concorrência
 
@@ -30,7 +30,20 @@ GET `/v1/saves/main`, GET `/v1/saves/main?backup=true`, POST `/v1/saves/main` co
 
 Implementação inicial usa **proxy limitado pela API**, em vez de URL assinada, para validar antes de aceitar. GCS guarda objetos imutáveis; Firestore guarda somente ponteiros principal/backup e revisão. A gravação GCS exige `ifGenerationMatch: 0`; transação Firestore compara a revisão e troca os ponteiros atomicamente. Concorrência gera HTTP 409 e não destrói a versão mais nova. Backup é o principal anterior. Snapshot não concede Cookies nem direitos. Saves inválidos não são promovidos.
 
-Após sucesso, o backup descartado é apagado. Queda do processo entre upload e transação, ou falha de limpeza, pode deixar objeto órfão. Antes da operação pública, adicionar rotina de reconciliação que remova apenas objetos com mais de 24h que não estejam referenciados em nenhum slot. Não aplicar TTL indiscriminado aos saves vivos. URL assinada com staging/validação continua uma otimização posterior.
+Após sucesso, o backup descartado é apagado. Queda do processo entre upload e transação, ou falha de limpeza, pode deixar objeto órfão. A rotina `backend/reconcile-saves.mjs` reconcilia somente objetos UUID em `users/<uid>/slots/main/` com criação **e última alteração há mais de 24h**. Antes de cada exclusão relê o slot principal e backup do titular, sem cache. Metadados malformados são ignorados, falha de leitura interrompe a execução e exclusão exige a geração exata do objeto. O algoritmo depende da regra atual da API: todo upload usa um novo UUID imutável, timeout de 30s e nunca promove objetos antigos novamente. Se essa regra ou o modelo de slots mudar, revisar o coletor antes de usá-lo. Não aplicar TTL indiscriminado aos saves vivos. URL assinada com staging/validação continua uma otimização posterior.
+
+### Reconciliação operacional
+
+Após implantar a nova imagem da API, criar/atualizar o job com `./backend/infra/deploy-reconciliation.ps1`. O job usa a mesma imagem e conta de serviço restrita, 1 vCPU, 512 MiB, uma tarefa, timeout de 300s e zero tentativas automáticas. Não há instância permanente, agendamento automático ou credenciais novas. Por padrão **não apaga arquivos**.
+
+```powershell
+# Inspecionar primeiro: não apaga arquivos.
+gcloud run jobs execute lhs-save-reconciliation --project=loyal-road-395203 --region=us-central1 --wait
+# Aplicar a mesma verificação, com exclusão de órfãos antigos.
+gcloud run jobs execute lhs-save-reconciliation --project=loyal-road-395203 --region=us-central1 --args=reconcile-saves.mjs,--apply --wait
+```
+
+Cada execução inspeciona no máximo 500 objetos, paginados em lotes de até 100. O log `save_reconciliation` informa contadores e `nextPageToken`; quando houver continuação, executar novamente passando esse token em `--update-env-vars=RECONCILE_PAGE_TOKEN=...` (override da execução, sem mudar o job). Guardar o cursor entre execuções para avançar além dos primeiros 500 objetos. O log não contém conteúdo de saves, emails, tokens de usuário ou nomes individuais de arquivos. `save_reconciliation_failed` e código de saída não zero exigem investigar as permissões/serviços antes de repetir. Execuções `dry-run` comprovam acesso de leitura, não a permissão de exclusão; exclusão e falhas são verificadas em testes isolados. Ainda definir a frequência de manutenção e acompanhar custos/volume antes da abertura ampla.
 
 ## Cookies e pagamentos
 
@@ -50,3 +63,5 @@ Referências oficiais: [Cloud Run deploy](https://docs.cloud.google.com/sdk/gclo
 
 
 Verificação local concluída: build TypeScript; suíte de 236 testes (227 aprovados, 9 auditorias opt-in ignoradas, zero falhas); 5 testes backend aprovados; site com 10 páginas, 337 referências e 48 módulos verificados; auditoria npm sem vulnerabilidades conhecidas. Execução local com Node 24 do runtime disponível; o CI adicionado verifica Node 22 e container sem credenciais cloud. O teste explícito `backend/scripts/live-smoke.mjs` validou os serviços reais com contas temporárias e limpeza em `finally`; exige token OAuth administrativo e chave pública Firebase somente em variáveis de ambiente. Não roda automaticamente na suíte local. Pix/cartão/estornos reais e uso pelo frontend Cloudflare ainda não foram ativados nem validados.
+
+Continuação de 14/10/2026: **12 testes backend aprovados** (os 5 anteriores e 7 de reconciliação), incluindo principal/backup preservados, janela de 24h, alteração concorrente, metadados indisponíveis/malformados, paginação limitada e requisição HTTP real do SDK GCS com `ifGenerationMatch` sem perda de precisão. Nova imagem publicada na revisão `lhs-backend-00004-fkm`; o teste integrado voltou a passar nos 13 grupos de verificação, agora incluindo ambas as origens Cloudflare e bloqueio de origem desconhecida. As três contas temporárias e os dados de teste foram removidos com sucesso. O frontend público permanece no commit solicitado anteriormente; esta continuação não substitui o jogo publicado.

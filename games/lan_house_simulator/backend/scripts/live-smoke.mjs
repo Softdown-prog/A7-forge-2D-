@@ -19,6 +19,10 @@ async function api(user,path,body){const response=await request(base+path,{metho
 function track(uid,result){if(result.revision)objects.add(`users/${uid}/slots/main/${result.revision}.json`);}
 try {
  assert.equal((await request(base+'/v1/config')).status,200);assert.equal((await request(base+'/v1/account')).status,401);
+ for(const origin of ['https://lhs.analysepro.com','https://lhs-lan-house-simulator.pages.dev']){
+  const response=await request(base+'/v1/config',{headers:{Origin:origin}});assert.equal(response.status,200,'published origin permitted');assert.equal(response.headers.get('access-control-allow-origin'),origin);
+ }
+ assert.equal((await request(base+'/v1/config',{headers:{Origin:'https://untrusted.example.invalid'}})).status,403,'unknown origin rejected');
  const owner=await createUser(),other=await createUser(),unverified=await createUser(false);
  assert.equal((await api(unverified,'/v1/account')).status,403,'unverified emails rejected');
  assert.equal((await api(owner,'/v1/account')).cookiesBalance,0);assert.equal((await api(other,'/v1/account')).cookiesBalance,0);
@@ -46,7 +50,7 @@ try {
  assert.ok(object.startsWith(`users/${owner.uid}/slots/main/`));
  assert.equal((await request(`https://storage.googleapis.com/${bucket}/${object}`)).status,403,'GCS object private');
  assert.equal((await request(`${documents}/accounts/${owner.uid}`,{headers:{Authorization:`Bearer ${owner.token}`}})).status,403,'direct Firestore client access denied');
- console.log(JSON.stringify({result:'PASS',checks:['auth','verified-email','uid-isolation','manual-save','load','backup','concurrent-conflict','schema','no-premium-from-save','private-gcs','firestore-client-denied','payments-disabled']}));
+ console.log(JSON.stringify({result:'PASS',checks:['published-origins','auth','verified-email','uid-isolation','manual-save','load','backup','concurrent-conflict','schema','no-premium-from-save','private-gcs','firestore-client-denied','payments-disabled']}));
 } finally {
  for(const uid of users){
   if(!/^lhs-smoke-[a-f0-9-]+$/.test(uid))throw Error('Unsafe cleanup UID');
