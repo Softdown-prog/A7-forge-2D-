@@ -366,5 +366,17 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Detectar que o investimento em GPUs recentes **não se paga em 120 dias** nas seis comparações médias de preço/ano testadas; preservar custos e procura enquanto os dados ainda são parciais.
 - [x] Executar mais seis campanhas de 360 dias em 2013, R$ 24/h, e proteger por regressão o ganho real de atendimentos e resultado líquido nas três sementes.
 - [x] Registrar diferença de horizonte: em 360 dias, resultado líquido médio **R$ 41.829 com** PCs modernos e **R$ 22.793 sem**, inclusive investimento inicial.
-- [ ] Avaliar upgrade gradual de GPU 2009→2011→2013 (em vez do comparativo PC antigo vs moderno), inflação de custos, tarifas dinâmicas e preço após mudança de ano.
+- [x] Auditar upgrade gradual de GPUs 2009→2011→2013 contra manter a placa antiga ou trocar diretamente em 2013, em 12 campanhas contínuas de 900 dias, com duas sementes e tarifas R$ 22/24; registrar em `docs/GPU_GENERATION_UPGRADES_2026.md`.
+- [ ] Auditar separadamente inflação de custos, reajuste dinâmico de tarifas e alterações na virada de ano; não presumir que o cenário com preço fixo encerra esses itens.
 - [ ] Validar salões físicos cheios, rotas com divisórias, rede lenta e experiência móvel real antes de declarar balanceamento definitivo.
+
+## Renovação gradual de placas e partidas longas — 14/10/2026
+- [x] Comparar com o motor real três estratégias de GPUs de 2009 em PCs 4 e 5: conservar até meados de 2013; comprar GPUs 2013 diretamente; ou trocar em 2011 e novamente em 2013.
+- [x] Simular 900 dias contínuos por campanha, tarifas R$ 22 e R$ 24/h e sementes 23/137, usando as APIs normais de compras, desgaste, atendimento, estoque, mensalidades e limpeza.
+- [x] Confirmar que a troca integral custa R$ 4.500 para duas GPUs 2013 e R$ 7.680 para a sequência 2011+2013; saves mantêm a placa atual e contabilização.
+- [x] Registrar que, com GPUs 2009 já instaladas, os upgrades incrementais aumentam pouco a satisfação e não recuperam o investimento nas campanhas testadas; **não modificar custos, procura ou reputação artificialmente**.
+- [x] Atualizar a aba Placas de vídeo com o valor integral, o bônus incremental de satisfação e a informação de que não há crédito pela placa substituída.
+- [x] Corrigir crescimento não limitado dos efeitos visuais transitórios em execução headless/segundo plano e omitir essas filas de saves e exportações; preservar economia, GPUs e saves antigos.
+- [x] Testar arquivo acima de 2 MB de efeitos temporários e importação compatível, bem como regressão do fluxo de compra de GPUs.
+- [ ] Testar renovação em salões com sete ou mais PCs, campanhas com financiamento/valor de revenda (não existentes) e preços dinâmicos antes de definir política final de amortização.
+- [ ] Fazer revisão visual humana do aviso de renovação em aparelhos móveis físicos.
