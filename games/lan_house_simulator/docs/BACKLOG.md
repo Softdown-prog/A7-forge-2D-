@@ -253,3 +253,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] "?" dos clientes em vermelho com contorno escuro; retirar os nomes brancos das máquinas.
 - [x] Preservar síntese sonora procedural HTML5 e os dois efeitos já aprovados, sem incluir gravações externas.
 - [ ] Conferir circulação sob lotação e salas separadas por paredes no runtime.
+
+## Fechamento incremental — perfil VIP (13/10/2026)
+- [x] Cliente VIP aparece deterministicamente conforme reputação, sem interferir na aleatoriedade da simulação.
+- [x] Identificação visual discreta "★ VIP" no próprio Canvas do salão.
+- [x] VIP mais exigente quanto à fila, espera e instabilidade, com bônus moderado para hardware melhor.
+- [x] Perfil opcional persistido no save, sem invalidar clientes das partidas anteriores.
+- [x] Testes de taxa de aparecimento, reação à experiência e persistência.
+- [ ] Balancear frequência, humor, atendimento e economia dos VIPs em uma campanha longa com capturas reais.
