@@ -51,6 +51,8 @@ export interface GameState {
   retailPrices?: Record<Item,number>;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
+  /** GPU por computador; ausente em saves anteriores. */
+  pcGpus?: Array<"gpu05"|"gpu07"|"gpu09"|"gpu11"|"gpu13"|null>;
   /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
   supplierTier?: 1 | 2;
   /** Dia da última campanha; compatível com saves antigos. */
