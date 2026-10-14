@@ -1,6 +1,6 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
-import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus } from "./economy.js";
+import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach } from "./layout.js";
@@ -299,8 +299,10 @@ function nextDay(s: GameState): void {
   addLog(s, s.weather === "rain" ? "Dia chuvoso: demanda menor e rede instável." : "Novo dia: portas abertas.");
   if (dayNumber(s) > 1 && (dayNumber(s) - 1) % 30 === 0) {
     const bill = monthlyBills(s);
+    const energy=Math.round(s.energyAccrued??0);
     s.cash -= bill; s.expenses += bill;
-    addLog(s, "Contas do mês pagas: -R$ " + bill + " (aluguel, internet, energia, manutenção).");
+    s.energyAccrued=0;
+    addLog(s, "Contas do mês pagas: -R$ " + bill + " (incluindo energia R$ "+energy+"; aluguel, internet e manutenção).");
   }
   if (!s.licensedGames && random(s) < 0.06) {
     const fine = 180;
@@ -315,6 +317,9 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
   return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
+  // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
+  // Acumular inclusive o último minuto antes da virada mensal.
+  s.energyAccrued=(s.energyAccrued??0)+energyCostPerMinute(s);
   s.totalMinutes++;
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
   if (s.offlineUntil === s.totalMinutes) addLog(s, "A internet voltou!");
@@ -348,5 +353,6 @@ export function isValidSave(value: unknown): value is GameState {
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
+    (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));
 }
