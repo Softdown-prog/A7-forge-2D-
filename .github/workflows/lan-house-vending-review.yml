@@ -1,0 +1,51 @@
+name: Lan House - Vending Audio Cleanup Review
+on:
+  push:
+    paths:
+      - 'tools/a7_audio_lab/review_vending_recordings.py'
+      - '.github/workflows/lan-house-vending-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-recordings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Prepare FFmpeg audio tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Verify Python processing source
+        run: python -m py_compile tools/a7_audio_lab/review_vending_recordings.py
+      - name: Clean and compare both owner recordings
+        run: python tools/a7_audio_lab/review_vending_recordings.py
+      - name: Validate review-only outputs
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          p=Path('out/lhs-vending-review')
+          report=json.loads((p/'report.json').read_text())
+          assert report['registered'] is False
+          assert len(report['takes']) == 2
+          assert all((p/t['full']).stat().st_size>1000 and
+                     (p/t['focused']).stat().st_size>1000 for t in report['takes'])
+          assert (p/report['montage']).stat().st_size>1000
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-refrigerante-audios-tratados
+          path: |
+            out/lhs-vending-review/vending_??_completo.ogg
+            out/lhs-vending-review/vending_??_foco.ogg
+            out/lhs-vending-review/refrigerante_comparacao.ogg
+            out/lhs-vending-review/report.json
+          if-no-files-found: error
+          retention-days: 30
