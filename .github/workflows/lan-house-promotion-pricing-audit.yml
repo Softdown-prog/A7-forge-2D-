@@ -1,13 +1,6 @@
 name: Lan House historical promotion and pricing audit
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - feat/lhs-historical-promotion-pricing-roi-20261014
-    paths:
-      - 'games/lan_house_simulator/tests/historical-promotion-pricing-roi.test.mjs'
-      - 'games/lan_house_simulator/src/sim/promotion.ts'
-      - '.github/workflows/lan-house-promotion-pricing-audit.yml'
 permissions:
   contents: read
 jobs:
