@@ -158,7 +158,7 @@ body.panel-open{overflow:hidden}
 .admin-tab .ui-icon{width:21px;height:21px}
 .admin-tab:hover:not(:disabled){background:#f5f4e8;color:var(--ink);border-color:transparent;box-shadow:none}
 .admin-tab.active{background:var(--ink);color:var(--mint);border-color:var(--ink);box-shadow:0 3px 7px #1a302020}
-.admin-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.admin-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
 .stat{border:1px solid #d2d6c2;background:var(--paper-light);border-radius:10px;padding:20px}
 .stat h3{font-size:19px;letter-spacing:-.035em;margin:0 0 10px;color:var(--ink)}
 .stat p{font-size:12px;color:#6b7767;margin:9px 0;line-height:1.6}
@@ -489,11 +489,14 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .stat .price-scenarios .price-insight-note{margin-top:5px;font-size:11px}
 .stat .energy-year-outlook{border-left:3px solid #8caa72;padding:7px 12px;font-size:12px;background:#e4ecd4;color:#314a3c}
 
-.station-ledger-panel{margin:1rem 0;padding:.8rem;border:1px solid #7b846266;border-radius:8px}
+.station-ledger-panel{min-width:0;width:100%;box-sizing:border-box;margin:1rem 0;padding:.8rem;border:1px solid #7b846266;border-radius:8px}
 .station-ledger-panel h4{margin:0 0 .35rem}
 .station-ledger-panel p{font-size:.83rem;line-height:1.5;margin:.35rem 0 .7rem}
-.station-ledger-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.station-ledger-scroll{display:block;max-width:100%;width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch}
 .station-ledger-table{width:100%;min-width:610px;border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums}
 .station-ledger-table th,.station-ledger-table td{padding:.4rem .5rem;border-bottom:1px solid #7b84624d;white-space:nowrap;text-align:right}
 .station-ledger-table th:first-child,.station-ledger-table td:first-child{text-align:left}
 .station-ledger-table thead th{font-weight:700}
+
+/* Grid items must not inherit the table's minimum intrinsic width on 360–414px phones. */
+.admin-grid>.stat{min-width:0}
