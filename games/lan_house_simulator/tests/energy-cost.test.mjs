@@ -28,6 +28,7 @@ test("medidor acumula ao passar os minutos e não cobra antes do vencimento",()=
 });
 test("mensalidade cobra consumo acumulado uma única vez e zera o medidor",()=>{
  const s=createGame();s.cash=10000;
+ s.licensedGames=true;s.pcWindowsLicenses=[true,true,true];
  s.totalMinutes=30*DAY_MINUTES-1;
  s.energyAccrued=153.45;
  const expected=monthlyBills(s);
