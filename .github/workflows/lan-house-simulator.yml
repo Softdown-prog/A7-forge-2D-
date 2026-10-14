@@ -58,6 +58,8 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
           node scripts/record_gameplay.mjs out/live-video
           ffmpeg -hide_banner -loglevel error -y -i out/live-video/lan_house_gameplay_live.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
