@@ -53,29 +53,41 @@ function prepare(year,seed,variant){
  assert.equal(s.cash,initial-s.expenses);
  return {s,initial,initialSpend:s.expenses,quality,permitted};
 }
-function upkeep(s){
+function upkeep(s,charges={stock:0,repairs:0,cleaning:0,engine:0}){
  for(const item of ["soda","candy","snacks"]){
-  if(s.inventory[item]<5&&s.cash>=wholesaleCost(s,item))
+  if(s.inventory[item]<5&&s.cash>=wholesaleCost(s,item)){
+   const before=s.expenses;
    accept(stockItem(s,item),"stock "+item);
+   charges.stock+=s.expenses-before;
+  }
  }
  for(let i=0;i<pcCount(s);i++){
   const occupied=s.customers.some(c=>c.pcIndex===i&&["to_pc","sitting","using","standing"].includes(c.stage));
-  if(pcWear(s,i)>=75&&!occupied&&!s.repairJobs?.some(job=>job.pc===i)&&s.cash>=100)
+  if(pcWear(s,i)>=75&&!occupied&&!s.repairJobs?.some(job=>job.pc===i)&&s.cash>=100){
+   const before=s.expenses;
    accept(startRepair(s,i),"repair "+i);
+   charges.repairs+=s.expenses-before;
+  }
  }
- if((s.binFill??[]).some(n=>n>=75)&&!s.cleaningJob&&s.cash>=55)
+ if((s.binFill??[]).some(n=>n>=75)&&!s.cleaningJob&&s.cash>=55){
+  const before=s.expenses;
   accept(requestCleaning(s),"clean");
+  charges.cleaning+=s.expenses-before;
+ }
 }
 function campaign(year,seed,variant){
  const setup=prepare(year,seed,variant);
  let s=setup.s;
  let previousRevenue=0,previousExpenses=0,previousServed=0,previousSold=0;
  const months=[];
- let busy=0,capacity=0,promos=0,maxNegative=0;
+ let busy=0,capacity=0,maxNegative=0;
+ const charges={stock:0,repairs:0,cleaning:0,engine:0};
  for(let day=1;day<=DAYS;day++){
-  upkeep(s);
+  upkeep(s,charges);
   for(let part=0;part<6;part++){
+   const before=s.expenses;
    stepGame(s,120);
+   charges.engine+=s.expenses-before;
    if(part===3){
     busy+=s.customers.filter(c=>c.stage==="using").length;
     capacity+=pcCount(s);
@@ -110,6 +122,8 @@ function campaign(year,seed,variant){
   }
  }
  assert.equal(months.length,DAYS/30);
+ assert.ok(Math.abs(Object.values(charges).reduce((sum,value)=>sum+value,0)+setup.initialSpend-s.expenses)<.001,
+   "all outgoing funds attributed");
  return {year,seed,variant,days:DAYS,initialCapital:setup.initial,
   initialSpend:setup.initialSpend,quality:ROUND(setup.quality),
   hourlyPrice:s.pricePerHour,maxAllowed:setup.permitted,
@@ -118,7 +132,9 @@ function campaign(year,seed,variant){
   operatingNet:ROUND(s.revenue-(s.expenses-setup.initialSpend)),
   netAfterInvestment:ROUND(s.cash-setup.initial),
   reputation:ROUND(s.reputation),occupancy:ROUND(100*busy/capacity),
-  minCash:ROUND(maxNegative),months};
+  minCash:ROUND(maxNegative),
+  charges:Object.fromEntries(Object.entries(charges).map(([k,v])=>[k,ROUND(v)])),
+  months};
 }
 const full=process.env.LHS_HISTORICAL_AUDIT==="1";
 // Lightweight real-engine gate; comprehensive matrix is opt-in.
