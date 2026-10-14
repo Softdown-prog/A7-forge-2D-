@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {existsSync,readFileSync,readdirSync,statSync} from "node:fs";
-import {resolve,dirname,extname,relative} from "node:path";
+import {resolve,dirname,extname,relative,sep} from "node:path";
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 const root=resolve(import.meta.dirname,"../out/site");
@@ -8,7 +8,7 @@ const walk=p=>readdirSync(p).flatMap(n=>{const f=resolve(p,n);return statSync(f)
 const files=walk(root),html=files.filter(f=>extname(f)===".html"),titles=new Set();let references=0;
 const header=readFileSync(resolve(root,"_headers"),"utf8");
 for(const file of html){
- const source=readFileSync(file,"utf8"),name=relative(root,file),site=!name.startsWith("game/");
+ const source=readFileSync(file,"utf8"),name=relative(root,file).split(sep).join("/"),site=!name.startsWith("game/");
  assert.match(source,/<html lang="pt-BR"/);assert.match(source,/name="viewport"/);
  if(site){
   assert.equal((source.match(/<h1\b/g)??[]).length,1,name+" deve ter um h1");
@@ -23,7 +23,7 @@ for(const file of html){
  for(const match of source.matchAll(/\b(?:href|src|data-src)="([^"]+)"/g)){
   const raw=match[1];if(/^(https?:|mailto:|data:|blob:)/.test(raw))continue;
   const u=new URL(raw,"https://local.test/"+name),path=resolve(root,"."+decodeURIComponent(u.pathname));
-  assert.ok(path===root||path.startsWith(root+"/"));const target=existsSync(path)&&statSync(path).isDirectory()?resolve(path,"index.html"):path;
+  assert.ok(path===root||path.startsWith(root+sep));const target=existsSync(path)&&statSync(path).isDirectory()?resolve(path,"index.html"):path;
   assert.ok(existsSync(target),name+" → recurso inexistente "+raw);references++;
   if(u.hash){const text=readFileSync(target,"utf8"),id=decodeURIComponent(u.hash.slice(1));assert.ok(new RegExp('\\bid="'+id.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+'"').test(text),"Âncora inválida: "+raw);}
  }

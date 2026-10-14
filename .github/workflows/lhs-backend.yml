@@ -1,0 +1,54 @@
+name: LHS backend validation
+on:
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/backend/**'
+      - 'games/lan_house_simulator/Dockerfile'
+      - 'games/lan_house_simulator/.dockerignore'
+      - 'games/lan_house_simulator/package*.json'
+      - 'games/lan_house_simulator/tsconfig.json'
+      - 'games/lan_house_simulator/src/**'
+      - '.github/workflows/lhs-backend.yml'
+  push:
+    paths:
+      - 'games/lan_house_simulator/backend/**'
+      - 'games/lan_house_simulator/Dockerfile'
+      - 'games/lan_house_simulator/src/**'
+      - '.github/workflows/lhs-backend.yml'
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci && npm run build
+      - run: npm ci
+        working-directory: games/lan_house_simulator/backend
+      - run: node --test backend/tests/*.test.mjs
+      - run: npm audit --omit=dev
+        working-directory: games/lan_house_simulator/backend
+      - name: Build API-only container
+        run: docker build -t lhs-backend:test .
+      - name: Smoke-test container without cloud credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name lhs-backend-test -p 127.0.0.1:8080:8080 \
+            -e GOOGLE_CLOUD_PROJECT=lhs-test -e SAVES_BUCKET=lhs-test-private \
+            -e FIRESTORE_DATABASE_ID=lhs-game -e PAYMENTS_ENABLED=false lhs-backend:test
+          trap 'docker logs lhs-backend-test; docker stop lhs-backend-test' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8080/health; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8080/health
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/v1/account)" = 401
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8080/index.html)" = 404

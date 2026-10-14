@@ -104,3 +104,7 @@ Sem hook, segredo ou workflow entre os dois repositórios. Publicação é decis
 ## Visão futura aprovada — LHS gratuito, Cookies e saves na nuvem
 
 O **LHS — Lan House Simulator** permanecerá integralmente gratuito e jogável sem conta. O modelo de monetização planejado usa **Cookies (biscoitos)** opcionais para personalizações; dinheiro em R$ da simulação permanece independente. O frontend seguirá na Cloudflare, o backend será Node.js no Cloud Run (alvo 1 vCPU, 512 MiB, escala a zero), o Firestore guardará contas/carteira/direitos e o GCS guardará saves JSON **manuais**. **Contrato de produto e segurança, não funcionalidade já implementada:** [docs/ONLINE_COOKIES_CLOUD_CONTRACT.md](docs/ONLINE_COOKIES_CLOUD_CONTRACT.md).
+
+## Backend online em revisão
+
+A implementação inicial está em `backend/`: API Node, autenticação Firebase, saves privados no GCS, metadados/carteira no Firestore e checkout/webhook preparados. A integração do frontend vem desativada em `online-config.json`. Consulte [implantação e pendências](docs/CLOUD_BACKEND_DEPLOYMENT.md). Após reativar o faturamento, o backend foi implantado e validado em Cloud Run/Firestore/GCS. A rota `/health` responde em https://lhs-backend-1010038095056.us-central1.run.app . Falta configurar a origem Cloudflare; cobrança permanece desativada.
