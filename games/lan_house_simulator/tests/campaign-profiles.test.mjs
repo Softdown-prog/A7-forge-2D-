@@ -30,7 +30,7 @@ function setup(size,seed){
  if(size==="grande"){
   action(upgradeInternet(s));
   for(let i=0;i<pcCount(s);i++) {
-   action(upgradeComputer(s,i));
+   if((s.pcTiers?.[i]??1)<2)action(upgradeComputer(s,i));
    if(i<3)action(upgradeComputer(s,i));
   }
   for(let i=0;i<3;i++)action(buyGpu(s,i,"gpu09"));
