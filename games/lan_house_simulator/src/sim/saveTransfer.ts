@@ -1,3 +1,4 @@
+import {validateObjectPlacements} from "./editableObjects.js";
 import type { GameState } from "./types.js";
 import { DAY_MINUTES } from "./types.js";
 import { isValidSave } from "./engine.js";
@@ -46,6 +47,7 @@ export function parseImportedSave(input:string):GameState {
     (state.promotionDay!==undefined&&(!Number.isInteger(state.promotionDay)||state.promotionDay<1||state.promotionDay>Math.floor(state.totalMinutes/DAY_MINUTES)+1))
  )throw Error("A partida contém valores fora dos limites.");
  if(!validRoomExtensions(state))throw Error("Extensões de salão inválidas.");
+ if(!validateObjectPlacements(state))throw Error("Layout do salão inválido.");
  if(!validFurniturePlacements(state))throw Error("Posicionamento de móveis inválido.");
  if(!validInteriorWalls(state))throw Error("Paredes internas inválidas.");
  if(!validInteriorDoors(state))throw Error("Portas internas inválidas.");

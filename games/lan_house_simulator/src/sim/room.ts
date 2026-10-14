@@ -22,6 +22,9 @@ export function expandDirection(s:GameState,direction:ExtensionDirection):Result
  if(s.cash<price)return {ok:false,message:"Caixa insuficiente para ampliar o terreno: R$ "+price+"."};
  s.cash-=price;s.expenses+=price;
  s.roomExtensions={...extensions,[direction]:level+1};
+ // Wall art follows the wall that moved outward; the free coordinate stays put.
+ if(s.objectPlacements){const b=roomBounds(s);s.objectPlacements=s.objectPlacements.map(p=>
+  !p.id.startsWith("built-poster:")?p:p.rotation===0?{...p,y:b.minY}:p.rotation===3?{...p,x:b.minX+.012}:p);}
  const label={west:"oeste (esquerda)",east:"leste (direita)",north:"norte (fundos do balcão)"}[direction];
  return {ok:true,message:"Salão expandido para "+label+": duas faixas novas. -R$ "+price+"."};
 }

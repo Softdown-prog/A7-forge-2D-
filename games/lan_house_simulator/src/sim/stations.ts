@@ -1,5 +1,6 @@
+import {fixedLayoutObjects,layoutPlacementIssue} from "./editableObjects.js";
 import type {GameState,Point,Result} from "./types.js";
-import {COUNTER_QUEUE,computerSeat} from "./route.js";
+import {computerSeat,counterQueue} from "./route.js";
 import {navigableRoute} from "./navigation.js";
 import {emptyStationAccount} from "./stationAccounting.js";
 
@@ -36,10 +37,13 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
    return {ok:false,message:"Posição de PC indisponível nesta ampliação."};
  if(s.cash<ANNEX_PC_COST)return {ok:false,message:"Caixa insuficiente para instalar computador."};
  const slot=annexComputerSlots(s).find(p=>p.id===slotId)!;
- if(!navigableRoute(s,COUNTER_QUEUE,computerSeat(slot.position)))
+ if(!navigableRoute(s,counterQueue(s),computerSeat(slot.position)))
   return {ok:false,message:"Esta sala precisa de uma passagem acessível antes de instalar o PC."};
  const legacy=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??3+s.expansionLevel*2));
  const index=legacy+(s.annexPcs?.length??0);
+ const candidate={...s,annexPcs:[...(s.annexPcs??[]),{slotId}]};
+ const object=fixedLayoutObjects(candidate).find(o=>o.id==="pc:"+index)!;
+ if(layoutPlacementIssue(candidate,object))return {ok:false,message:"O espaço desse PC está ocupado por um objeto ou divisória. Reorganize o salão."};
  s.cash-=ANNEX_PC_COST;s.expenses+=ANNEX_PC_COST;
  (s.annexPcs??=[]).push({slotId});
  if(s.stationLedger){

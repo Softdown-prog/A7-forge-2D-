@@ -1,3 +1,4 @@
+import {placedObject,stationPoint} from "./layout.js";
 import type {GameState,Result,Point} from "./types.js";
 import {pcCount,pcPosition,entrance} from "./engine.js";
 import {workerRoute} from "./workerNavigation.js";
@@ -5,6 +6,7 @@ import {serviceVisitCost} from "./historicalEconomy.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number}
 export const BIN_SPOTS:Point[]=[{x:1.1,y:3.1},{x:5.65,y:4.65}];
+export function binSpots(s:GameState):Point[]{return BIN_SPOTS.map((p,i)=>placedObject(s,"bin:"+i,p));}
 export const REPAIR_DURATION=24;
 function approach(a:{x:number;y:number},b:Point,speed:number):boolean{
  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
@@ -59,7 +61,7 @@ function navigate(s:GameState,job:{x:number;y:number;route?:Point[];target?:Poin
 export function tickServices(s:GameState):void{
  const exit=entrance(s);
  for(const job of s.repairJobs??[]){
-  const pc=pcPosition(job.pc,s),target={x:pc.x+.55,y:pc.y+.60};
+  const pc=pcPosition(job.pc,s),target=stationPoint(pc,.55,.60);
   if(job.phase==="arriving"&&navigate(s,job,target,.35))job.phase="working";
   else if(job.phase==="working"){
    job.progress=Math.min(job.duration,job.progress+1);
@@ -73,7 +75,7 @@ export function tickServices(s:GameState):void{
  const job=s.cleaningJob;
  if(job){
   const target=BIN_SPOTS.reduce((best,p,i)=>(s.binFill?.[i]??0)>(s.binFill?.[best]??0)?i:best,0);
-  if(job.phase==="arriving"&&navigate(s,job,BIN_SPOTS[target]!, .32))job.phase="working";
+  if(job.phase==="arriving"&&navigate(s,job,binSpots(s)[target]!, .32))job.phase="working";
   else if(job.phase==="working"){
    job.progress++;
    if(job.progress>=9){

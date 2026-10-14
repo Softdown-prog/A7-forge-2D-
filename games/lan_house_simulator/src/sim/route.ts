@@ -1,12 +1,13 @@
-import type { Point } from "./types.js";
-import { VENDING_APPROACH } from "./layout.js";
+import type { Point,GameState } from "./types.js";
+import { VENDING_APPROACH,counterPoint,stationPoint,type PlacedPoint } from "./layout.js";
 
 /** Circulação simples e determinística pelo corredor frontal. */
 export const AISLE_Y = 4.48;
 export const COUNTER_QUEUE: Point = { x: 1.55, y: 2.56 };
 export const VENDING_QUEUE: Point = VENDING_APPROACH;
-export function computerSeat(computer: Point): Point {
-  return { x: computer.x + 0.35, y: computer.y + 0.82 };
+export function counterQueue(s?:GameState):Point{return counterPoint(s,COUNTER_QUEUE);}
+export function computerSeat(computer: PlacedPoint): Point {
+  return stationPoint(computer,.35,.82);
 }
 /**
  * Não deslocar os visitantes diretamente através de mesas e computadores:

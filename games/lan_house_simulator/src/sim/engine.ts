@@ -1,9 +1,10 @@
+import {validateObjectPlacements} from "./editableObjects.js";
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
-import { vendingApproach } from "./layout.js";
+import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
@@ -51,7 +52,8 @@ export function pcWear(s:GameState,index:number):number { return Math.min(100,Ma
 export function pcBroken(s:GameState,index:number):boolean { return pcWear(s,index)>=100||pcUnderRepair(s,index); }
 export function roomWidth(s: GameState): number { return 8 + s.expansionLevel * 2; }
 export function entrance(_s: GameState): Point {return {x:7.5,y:5.35};}
-export function pcPosition(i: number,s?:GameState): Point {
+export function pcPosition(i: number,s?:GameState): PlacedPoint {
+ const custom=s?.objectPlacements?.find(p=>p.id==="pc:"+i);if(custom)return {...custom};
  if(s&&i>=legacyPcCount(s)){
    const installed=s.annexPcs?.[i-legacyPcCount(s)];
    if(installed){const pos=annexComputerPosition(s,installed.slotId);if(pos)return pos;}
@@ -217,14 +219,14 @@ function refreshCounterQueue(s:GameState):void {
   for(let index=0;index<line.length;index++){
     const c=line[index]!,previousIndex=c.queueIndex;
     if(previousIndex===index)continue;
-    const dest=counterQueueSlot(index);
+    const dest=counterQueueSlot(index,s);
     c.queueIndex=index;
     // Saves antigos: a pessoa já estava parada no ponto de atendimento.
     if(c.stage==="waiting"&&previousIndex===undefined&&index===0)continue;
     if(Math.hypot(c.x-dest.x,c.y-dest.y)<0.05){
       c.stage="waiting";c.target=dest;c.route=[];continue;
     }
-    const previous=previousIndex===undefined?null:counterQueueSlot(previousIndex);
+    const previous=previousIndex===undefined?null:counterQueueSlot(previousIndex,s);
     if(previous&&previousIndex===index+1&&Math.hypot(c.x-previous.x,c.y-previous.y)<0.10){
       c.target=dest;c.route=[];c.stage="arriving";
     }else if(setTravel(s,c,dest)){
@@ -237,6 +239,7 @@ function refreshCounterQueue(s:GameState):void {
 
 /** A saída lateral do caixa não cruza a coluna de pessoas aguardando. */
 function leaveCounterForPc(s:GameState,c:Customer,destination:Point):boolean {
+  if(s.objectPlacements?.some(p=>p.id==="counter"))return setTravel(s,c,destination);
   const outside={x:2.46,y:COUNTER_QUEUE.y},aisle={x:2.46,y:AISLE_Y};
   // Uma divisória em outro cômodo não deve fazer o cliente pago retornar pela
   // coluna da fila. Usar a saída lateral se os dois segmentos forem livres.
@@ -256,7 +259,7 @@ function spawn(s: GameState): void {
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
-    stage: "arriving", target: counterQueueSlot(queueIndex),queueIndex,
+    stage: "arriving", target: counterQueueSlot(queueIndex,s),queueIndex,
     costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
@@ -321,7 +324,7 @@ function resolvePurchase(s: GameState, c: Customer): void {
     // com dinheiro restante, estoque e rota reais; nunca repetir um grupo.
     if(c.desiredItem){
       const next=selectPurchase(c,s.inventory,s);
-      if(next&&setTravel(s,c,next==="soda"?vendingApproach("soda"):vendingApproach("candy"))){
+      if(next&&setTravel(s,c,purchaseApproach(next,s))){
         c.desiredItem=next;return;
       }
     }
@@ -385,7 +388,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
         c.pcIndex = null;
         if (c.wantsSnack) {
           c.stage = "shopping";
-          setTravel(s,c,c.desiredItem==="soda"?vendingApproach("soda"):c.desiredItem?vendingApproach("candy"):VENDING_QUEUE);
+          setTravel(s,c,c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s));
         } else sendHome(s, c);
       }
       return;
@@ -482,5 +485,5 @@ export function isValidSave(value: unknown): value is GameState {
     [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]
       .every(flag=>flag===undefined||typeof flag==="boolean") &&
     (v.electricalDeadlineDay===undefined || (Number.isInteger(v.electricalDeadlineDay)&&v.electricalDeadlineDay>=1&&v.electricalDeadlineDay<=1e7)) &&
-    (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));
+    (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1)) && validateObjectPlacements(v as GameState);
 }
