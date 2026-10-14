@@ -20,7 +20,3 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.will-reveal{opacity:1;transform:none}}
 
 html:not(.js-enabled) .motion-toggle,html:not(.js-enabled) .data-options,html:not(.js-enabled) #launch-game{display:none}
-
-/* A prévia procedural usa o mesmo enquadramento da cena do jogo. */
-.screen>canvas{width:100%;height:100%;display:block}
-canvas.salon-figure{display:block;max-width:100%;height:auto;aspect-ratio:1000/610}

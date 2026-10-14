@@ -74,7 +74,10 @@ menuPreview.customers=[0,1].map(i=>{
  return {id:i+1,x:seat.x,y:seat.y,target:seat,route:[],stage:"using",costume:"regular",pcIndex:i,
   facing:"north",usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
 });
-menuRenderer?.draw(menuPreview,0);
+// A arte do menu é ornamental: um erro no Canvas nunca pode bloquear
+// os botões de continuar, abrir partida, exportar ou acessar as configurações.
+let menuPreviewAvailable=true;
+try{menuRenderer?.draw(menuPreview,0);}catch{menuPreviewAvailable=false;}
 
 /** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
 function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):GameState{
@@ -1193,7 +1196,10 @@ function frame(timestamp:number):void {
   const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastScroll>120;
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
   if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
-  if(!isPlaying&&menuRenderer&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
+  if(!isPlaying&&menuRenderer&&menuPreviewAvailable&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>90){
+     try{menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
+     catch{menuPreviewAvailable=false;}
+   }
   if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}
   if(paintScene&&layoutEditor.active&&layoutEditor.wall)renderer.drawWallPreview(game,layoutEditor.wall,true);
   if(paintScene&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);

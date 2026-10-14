@@ -39,14 +39,17 @@ test("política de privacidade informa dados e direitos sem divulgar detalhes in
  assert.doesNotMatch(privacy.description,/infraestrutura de hospedagem/i);
 });
 
-test("prévia visual do salão usa o desenho atual do jogo, não apenas fotografia antiga",async()=>{
+test("a vitrine mantém a imagem de salão sem instanciar outro renderizador pesado",async()=>{
  const {pages}=await import("../website/content.mjs");
- const list=pages({studio:"Softdown",email:null}).filter(page=>page.path===""||page.path==="sobre-o-jogo");
- assert.equal(list.length,2);
- for(const page of list)assert.match(page.body,/data-scene-preview/);
+ const pagesWithSalon=pages({studio:"Softdown",email:null}).filter(page=>page.path===""||page.path==="sobre-o-jogo");
+ assert.equal(pagesWithSalon.length,2);
+ for(const page of pagesWithSalon){
+  assert.match(page.body,/\/assets\/sala\.webp/);
+  assert.doesNotMatch(page.body,/data-scene-preview/);
+ }
  const {readFileSync}=await import("node:fs");
  const site=readFileSync(new URL("../website/site.mjs",import.meta.url),"utf8");
- assert.match(site,/import\("\/game\/js\/render\/scene\.js"\)/);
- assert.match(site,/new SceneRenderer\(ctx\)\.draw\(preview,0\)/);
- assert.match(site,/img\.replaceWith\(canvas\)/);
+ assert.doesNotMatch(site,/\/game\/js\/render\/scene\.js/);
+ const menu=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
+ assert.match(menu,/menuPreviewAvailable/);
 });

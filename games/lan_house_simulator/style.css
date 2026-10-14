@@ -597,3 +597,6 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 #pc-maintenance .pc-power-toggle{background:#315c4f;color:#f6f1df;border-color:#315c4f;min-width:118px}
 #pc-maintenance .pc-power-toggle:hover:not(:disabled){background:#254b3f;color:#fff}
 @media(max-width:700px){#pc-maintenance .pc-operation{grid-template-columns:repeat(2,minmax(0,1fr))}#pc-maintenance .pc-operation>span{grid-column:1/-1}#pc-maintenance .pc-power-toggle{min-width:0}}
+
+/* Backup visual leve: se o Canvas do menu falhar, não mostrar um CRT vazio. */
+#menu-scene{background-image:url("../assets/sala.webp");background-size:cover;background-position:center}

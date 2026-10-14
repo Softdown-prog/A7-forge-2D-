@@ -10,12 +10,12 @@ const mime={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=u
  ".svg":"image/svg+xml",".webp":"image/webp",".json":"application/json"};
 const server=createServer(async(req,res)=>{
  try{
-  const pathname=decodeURIComponent(new URL(req.url??"/","http://localhost").pathname);
-  const dest=resolve(root,"."+pathname,pathname.endsWith("/")?"index.html":"");
-  if(!dest.startsWith(root+sep)){res.writeHead(403);res.end();return;}
-  const info=await stat(dest);if(!info.isFile())throw Error("not a file");
-  res.writeHead(200,{"Content-Type":mime[extname(dest)]??"application/octet-stream"});
-  res.end(await readFile(dest));
+  const path=decodeURIComponent(new URL(req.url??"/","http://localhost").pathname);
+  const target=resolve(root,"."+path,path.endsWith("/")?"index.html":"");
+  if(!target.startsWith(root+sep))throw Error("fora do diretório");
+  if(!(await stat(target)).isFile())throw Error("arquivo inexistente");
+  res.writeHead(200,{"Content-Type":mime[extname(target)]??"application/octet-stream"});
+  res.end(await readFile(target));
  }catch{res.writeHead(404);res.end("Arquivo não encontrado");}
 });
 await new Promise((ok,reject)=>server.listen(port,"127.0.0.1",err=>err?reject(err):ok()));
@@ -23,22 +23,38 @@ let browser;
 try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
  for(const width of [1280,390]){
-  const page=await browser.newPage({viewport:{width,height:850}}),errors=[];
-  page.on("pageerror",err=>errors.push(String(err)));
-  for(const [path,selector] of [["/",".screen"],["/sobre-o-jogo/",".salon-figure"]]){
-   await page.goto("http://127.0.0.1:"+port+path,{waitUntil:"networkidle"});
-   const img=page.locator("img[data-scene-preview]");
-   if(await img.count())await img.scrollIntoViewIfNeeded();
-   await page.locator(selector+" canvas[role=img],canvas"+selector+"[role=img]").waitFor({state:"visible",timeout:12000});
-   const result=await page.locator("canvas[role=img]").first().evaluate(canvas=>{
-    const {width,height}=canvas,pixels=canvas.getContext("2d").getImageData(0,0,width,height).data;
-    let covered=0;for(let i=3;i<pixels.length;i+=32)if(pixels[i]>0)covered++;
-    return {width,height,covered};
-   });
-   assert.equal(result.width,1000);assert.equal(result.height,610);
-   assert.ok(result.covered>10000,"Renderização não pintou o salão real");
-  }
-  assert.deepEqual(errors,[]);await page.close();
+  const mobile=width<700,context=await browser.newContext({
+   viewport:{width,height:840},isMobile:mobile,hasTouch:mobile,
+   deviceScaleFactor:1
+  }),page=await context.newPage(),errors=[];
+  page.on("pageerror",error=>errors.push(String(error)));
+  await page.goto("http://127.0.0.1:"+port+"/",{waitUntil:"networkidle"});
+  const img=page.locator(".screen img[src='/assets/sala.webp']");
+  await img.waitFor({state:"visible",timeout:10000});
+  assert.equal(await img.evaluate(x=>x.complete&&x.naturalWidth>0),true,
+   "A vitrine do site deve mostrar uma imagem válida.");
+  await page.goto("http://127.0.0.1:"+port+"/jogar/",{waitUntil:"networkidle"});
+  await page.locator("#launch-game").click();
+  const frame=page.frameLocator("#game-frame");
+  await frame.locator("#menu-new").waitFor({state:"visible",timeout:15000});
+  // Checar que a apresentação do jogo tem imagem desenhada, não só cor de fundo.
+  const pixels=await frame.locator("#menu-scene").evaluate(c=>{
+   const ctx=c.getContext("2d");
+   if(!ctx)return 0;
+   const image=ctx.getImageData(0,0,c.width,c.height).data;
+   const colors=new Set();
+   for(let y=30;y<c.height;y+=28)for(let x=30;x<c.width;x+=28){
+    const i=(y*c.width+x)*4;
+    if(image[i+3]>200)colors.add([image[i]>>4,image[i+1]>>4,image[i+2]>>4].join(","));
+   }
+   return colors.size;
+  });
+  assert.ok(pixels>12,"Canvas do menu ficou vazio: apenas "+pixels+" cores");
+  await frame.locator("#menu-new").click();
+  await frame.locator("#game-app").waitFor({state:"visible",timeout:15000});
+  await frame.locator("#game").waitFor({state:"visible"});
+  assert.deepEqual(errors,[],"O jogo deve iniciar sem erros de JavaScript");
+  await context.close();
  }
- console.log("Prévia do balcão pelo SceneRenderer: site e sobre-o-jogo aprovados em desktop e celular");
+ console.log("Site, monitor e botão de jogar validados em desktop e celular");
 }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
