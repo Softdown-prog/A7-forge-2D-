@@ -287,7 +287,9 @@ try{
     await page.waitForTimeout(120);
     await writeFile(resolve(output,"lhs_furniture_relocation_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
-    await page.mouse.click(destination.x,destination.y);
+    // Playwright may scroll the stage for the screenshot. Recompute the canvas
+    // bounds afterwards instead of clicking a stale viewport coordinate.
+    await clickFurnitureSlot("floor-3");
     await page.waitForFunction(key=>{
       const saved=JSON.parse(localStorage.getItem(key)??"null");
       return saved?.furniturePlacements?.some(p=>p.kind==="plant"&&p.slotId==="floor-3");
