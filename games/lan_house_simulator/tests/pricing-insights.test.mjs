@@ -4,8 +4,9 @@ import {readFileSync} from "node:fs";
 import {dirname,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 import {createGame} from "../dist/js/sim/engine.js";
-import {setHourlyPrice,demandFactor} from "../dist/js/sim/economy.js";
-import {hourlyPriceInsight} from "../dist/js/sim/pricingInsights.js";
+import {setHourlyPrice,demandFactor,sessionRevenue} from "../dist/js/sim/economy.js";
+import {DAY_MINUTES} from "../dist/js/sim/types.js";
+import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "../dist/js/sim/pricingInsights.js";
 
 test("indicador deriva exatamente da curva econômica real em preços intermediários",()=>{
  const s=createGame(112233);
