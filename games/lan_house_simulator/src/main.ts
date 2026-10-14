@@ -16,6 +16,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
+import {requestCleaning,pcUnderRepair} from "./sim/services.js";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");
@@ -288,6 +289,7 @@ button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI(
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
+button("clean-bins",()=>{applyResult(game,requestCleaning(game));renderUI();save();});
 let selectedGpuPc=0;
 const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
 gpuPcChoice?.addEventListener("click",event=>{
@@ -612,7 +614,10 @@ function renderUI():void {
       const line=document.createElement("div");
       const label=document.createElement("span");label.textContent="PC "+(i+1)+" · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · PARADO":"")+" ";
       const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
-      repair.textContent="Reparar · R$ "+(20+Math.ceil(wear*0.7));repair.disabled=wear<1;
+      const job=game.repairJobs?.find(j=>j.pc===i);
+      repair.textContent=job?"Técnico · "+Math.round(job.progress/job.duration*100)+"%":"Chamar técnico · R$ "+(20+Math.ceil(wear*0.7));
+      repair.disabled=wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage));
+      if(job){const meter=document.createElement("progress");meter.max=job.duration;meter.value=job.progress;meter.setAttribute("aria-label","Reparo do PC "+(i+1));line.append(meter);}
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
       const tier=game.pcTiers?.[i]??1;
       const hardwareYear=tier===1?2000:2003;
@@ -671,6 +676,8 @@ function renderUI():void {
       line.append(title,choices);licensePanel.appendChild(line);
     }
   }
+  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map(n=>Math.round(n)+"%").join(" · ")+" · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
+  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||!(game.binFill??[]).some(x=>x>=10)||game.cash<55;
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   const promoting=isPromotionActive(game);
   setText("promotion-status",promoting
