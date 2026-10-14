@@ -563,6 +563,7 @@ export function isValidSave(value: unknown): value is GameState {
     (v.overflowWaste===undefined||(Number.isFinite(v.overflowWaste)&&v.overflowWaste>=0&&v.overflowWaste<=1000)) &&
     (v.mailScheduleSeed===undefined||(Number.isInteger(v.mailScheduleSeed)&&v.mailScheduleSeed>=0&&v.mailScheduleSeed<=0xffffffff)) &&
     (v.mailStartDay===undefined||(Number.isInteger(v.mailStartDay)&&v.mailStartDay>=1&&v.mailStartDay<=GAME_END_DAY)) &&
+    (v.y2kNoticeDelivered===undefined||typeof v.y2kNoticeDelivered==="boolean") &&
     (v.mailSeenIds===undefined||(Array.isArray(v.mailSeenIds)&&v.mailSeenIds.length<=8&&
       new Set(v.mailSeenIds).size===v.mailSeenIds.length&&v.mailSeenIds.every(id=>isSporadicMailId(id)))) &&
     (v.storySeenIds===undefined||(Array.isArray(v.storySeenIds)&&v.storySeenIds.length<=12&&

@@ -84,6 +84,16 @@ export function fixedYearMailDue(s:GameState,year:number,dayOfYear:number):boole
  return mailDay(s)===(year-GAME_FIRST_YEAR)*DAYS_PER_YEAR+dayOfYear;
 }
 
+/** Eventos históricos podem chegar durante uma janela curta do ano correto,
+ * sem disparar cartas retroativas em outros anos. */
+export function fixedYearMailWindowDue(s:GameState,year:number,firstDay:number,lastDay:number):boolean{
+ if(!Number.isInteger(year)||year<GAME_FIRST_YEAR||year>GAME_LAST_YEAR||
+    !Number.isInteger(firstDay)||!Number.isInteger(lastDay)||
+    firstDay<1||lastDay>DAYS_PER_YEAR||firstDay>lastDay)return false;
+ const today=mailDay(s),base=(year-GAME_FIRST_YEAR)*DAYS_PER_YEAR;
+ return today>=base+firstDay&&today<=base+lastDay;
+}
+
 /** Extra stories occupy the largest remaining gaps between the eight original letters.
  * All first letters stay at least one year apart; short legacy campaigns omit excess stories. */
 export function additionalMailSchedule(s:GameState,ids:readonly string[]):Partial<Record<string,number>>{

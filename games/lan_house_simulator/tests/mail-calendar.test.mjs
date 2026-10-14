@@ -8,7 +8,7 @@ import {reviewNotices} from "../dist/js/sim/notices.js";
 import {scheduleDecisions,chooseDecision,decisionOptions} from "../dist/js/sim/decisions.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {SPORADIC_MAIL_IDS,sporadicMailSchedule,sporadicMailDue,
- additionalMailSchedule,fixedYearMailDue,recordMailDelivery,GAME_END_DAY,GAME_LAST_MINUTE,GAME_LAST_YEAR
+ additionalMailSchedule,fixedYearMailDue,fixedYearMailWindowDue,recordMailDelivery,GAME_END_DAY,GAME_LAST_MINUTE,GAME_LAST_YEAR
 } from "../dist/js/sim/mailCalendar.js";
 
 import {STORY_IDS} from "../dist/js/sim/storyEvents.js";
@@ -143,4 +143,56 @@ test("as doze histórias e oito cartas dividem 33 anos sem avalanche ou perda de
   assert.equal(s.rng,rng);
   assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
  }
+});
+
+test("alerta do Bug do Milênio aparece em dezembro de 1999 e não volta em 2000",()=>{
+ const s=createGame(72421),cash=s.cash,rng=s.rng;
+ const first=(1999-1998)*360+331;
+ at(s,first-1);reviewNotices(s);
+ assert.ok(!(s.notices??[]).some(n=>n.id==="y2k-warning"),"não aparecer em novembro");
+ at(s,first);reviewNotices(s);reviewNotices(s);
+ const letters=s.notices.filter(n=>n.id==="y2k-warning");
+ assert.equal(letters.length,1);
+ assert.equal(letters[0].read,false);
+ assert.equal(letters[0].severity,"info");
+ assert.match(letters[0].title,/Bug do Milênio/);
+ assert.match(letters[0].body,/2000|1900/);
+ assert.match(letters[0].body,/formata/i);
+ assert.match(letters[0].body,/desocupada e desligada/);
+ assert.equal(s.y2kNoticeDelivered,true);
+ assert.equal(s.cash,cash,"o lembrete não cobra nada");
+ assert.equal(s.rng,rng,"o lembrete não consome RNG dos clientes");
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(isValidSave(restored),true);
+ assert.equal(restored.y2kNoticeDelivered,true);
+ restored.notices=[];at(restored,(2000-1998)*360+1);reviewNotices(restored);
+ assert.ok(!restored.notices.some(n=>n.id==="y2k-warning"),"não reaparecer em 2000");
+});
+test("evento histórico permite receber a carta ao retomar no meio de dezembro",()=>{
+ const delayed=createGame(23);at(delayed,(1999-1998)*360+337);
+ assert.equal(fixedYearMailWindowDue(delayed,1999,331,350),true);
+ reviewNotices(delayed);
+ assert.equal(delayed.notices.filter(n=>n.id==="y2k-warning").length,1);
+ const late=createGame(24);at(late,(1999-1998)*360+351);
+ reviewNotices(late);assert.ok(!late.notices.some(n=>n.id==="y2k-warning"));
+ const after=createGame(25);at(after,(2000-1998)*360+1);
+ reviewNotices(after);assert.ok(!after.notices.some(n=>n.id==="y2k-warning"));
+ for(const wrong of [1998,2000,2031])assert.equal(fixedYearMailWindowDue(delayed,wrong,331,350),false);
+ assert.equal(fixedYearMailWindowDue(delayed,1999,350,331),false);
+ assert.equal(fixedYearMailWindowDue(delayed,1999,0,331),false);
+ assert.equal(fixedYearMailWindowDue(delayed,1999,331,361),false);
+});
+test("aviso é único, mesmo após limpeza da caixa ou importação de save antigo",()=>{
+ const s=createGame(77);at(s,(1999-1998)*360+334);
+ reviewNotices(s);assert.equal(s.y2kNoticeDelivered,true);
+ s.notices=[];reviewNotices(s);
+ assert.ok(!s.notices.some(n=>n.id==="y2k-warning"));
+ assert.equal(isValidSave(s),true);
+ const old=createGame(78);at(old,(1999-1998)*360+332);
+ old.notices=[{id:"y2k-warning",title:"Aviso antigo",body:"Bug do Milênio",day:(1999-1998)*360+331,read:true,severity:"info"}];
+ reviewNotices(old);
+ assert.equal(old.notices.filter(n=>n.id==="y2k-warning").length,1);
+ assert.equal(old.y2kNoticeDelivered,true);
+ const corrupt=createGame(79);corrupt.y2kNoticeDelivered="sim";
+ assert.equal(isValidSave(corrupt),false);
 });

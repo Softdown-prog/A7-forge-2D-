@@ -3,8 +3,8 @@ import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
 import type {StoryNoticeId} from "./storyEvents.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
-import {isSporadicMailId,sporadicMailDue,recordMailDelivery} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId|StoryNoticeId;
+import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|DecisionId|StoryNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -25,6 +25,13 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
 }
 export function reviewNotices(s:GameState):void{
  const d=day(s);
+ // Evento histórico: aviso antes da virada de 1999 para 2000, sem retroatividade.
+ if(!s.y2kNoticeDelivered&&s.notices?.some(n=>n.id==="y2k-warning"))s.y2kNoticeDelivered=true;
+ if(!s.y2kNoticeDelivered&&fixedYearMailWindowDue(s,1999,331,350)){
+   deliver(s,"y2k-warning","Especial de 1999: o Bug do Milênio",
+     "Dezembro de 1999. O ano 2000 está chegando e o bairro inteiro comenta sobre o Bug do Milênio! Alguns computadores e programas antigos podem confundir 2000 com 1900. Antes da virada, faça cópias de segurança, confira o relógio e a data das máquinas e verifique os programas. Se algum PC precisar de reinstalação, programe sua formatação depois do expediente, com a estação desocupada e desligada. Não é preciso formatar todos: o importante é verificar a compatibilidade. Que venha o ano 2000!","info");
+   s.y2kNoticeDelivered=true;
+ }
  // Notificação única: a multa por prazo vencido não substitui regularização.
  if(s.electricalDeadlineDay!==undefined&&d>s.electricalDeadlineDay&&
     !s.electricalWiringRegularized&&!s.electricalInspectionFineApplied){

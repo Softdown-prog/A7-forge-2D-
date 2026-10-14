@@ -156,6 +156,8 @@ export interface GameState {
   mailStartDay?: number;
   /** Cartas já entregues; permanecem únicas mesmo após compactar o correio. */
   mailSeenIds?: import("./mailCalendar.js").SporadicMailId[];
+  /** Carta histórica única do Bug do Milênio, também após compactar o correio. */
+  y2kNoticeDelivered?: boolean;
   /** Histórias únicas: sorteadas uma única vez, mesmo após compactar o envelope. */
   storySeenIds?: import("./storyEvents.js").StoryId[];
   /** Cadeias persistentes: retorno e encerramento independentes do RNG. */
