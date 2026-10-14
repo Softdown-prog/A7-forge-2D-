@@ -102,6 +102,16 @@
         <div class="stat admin-section" data-section="gpus" id="section-gpus" role="tabpanel"><h3>Placas de vídeo · 2005–2013</h3><p>Placas independentes do hardware. Escolha um PC e desbloqueie modelos conforme o ano.</p><div id="gpu-pc-choice" class="gpu-stations" aria-label="Computador selecionado"></div><div class="price-insight"><p id="gpu-replacement-note">Selecione um computador para comparar a placa instalada com o catálogo.</p></div><div id="gpu-catalog" class="gpu-catalog" aria-label="Catálogo ilustrado de GPUs"></div></div>
         <div class="stat admin-section" data-section="computers" id="section-computers" role="tabpanel">
           <h3>Computadores e evolução</h3><p id="pc">3 computadores</p>
+          <section class="station-ledger-panel" aria-label="Receita e operação por computador">
+            <h4>Receita e uso de cada estação</h4>
+            <p>Histórico desde a ativação da medição. Receita apenas de sessões; produtos vendidos não são atribuídos à estação. Energia rateada igualmente, não medida por peça. O saldo parcial exclui aluguel, internet, peças e reparos.</p>
+            <div class="station-ledger-scroll">
+              <table class="station-ledger-table" aria-label="Movimentação financeira por computador">
+                <thead><tr><th scope="col">Estação</th><th scope="col">Sessões</th><th scope="col">VIP</th><th scope="col">Min. em uso</th><th scope="col">Receita</th><th scope="col">Energia*</th><th scope="col">Saldo parcial*</th></tr></thead>
+                <tbody id="station-ledger-rows"></tbody>
+              </table>
+            </div>
+          </section>
           <div id="pc-maintenance" aria-label="Manutenção e evolução dos computadores"></div>
         </div>
       </div>

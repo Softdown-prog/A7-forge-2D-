@@ -488,3 +488,12 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .stat .price-scenarios p[id="price-scenario-current"]{font-weight:700;color:#29482e}
 .stat .price-scenarios .price-insight-note{margin-top:5px;font-size:11px}
 .stat .energy-year-outlook{border-left:3px solid #8caa72;padding:7px 12px;font-size:12px;background:#e4ecd4;color:#314a3c}
+
+.station-ledger-panel{margin:1rem 0;padding:.8rem;border:1px solid #7b846266;border-radius:8px}
+.station-ledger-panel h4{margin:0 0 .35rem}
+.station-ledger-panel p{font-size:.83rem;line-height:1.5;margin:.35rem 0 .7rem}
+.station-ledger-scroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.station-ledger-table{width:100%;min-width:610px;border-collapse:collapse;font-size:.82rem;font-variant-numeric:tabular-nums}
+.station-ledger-table th,.station-ledger-table td{padding:.4rem .5rem;border-bottom:1px solid #7b84624d;white-space:nowrap;text-align:right}
+.station-ledger-table th:first-child,.station-ledger-table td:first-child{text-align:left}
+.station-ledger-table thead th{font-weight:700}

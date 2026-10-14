@@ -6,6 +6,7 @@ import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
+import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
@@ -669,6 +670,29 @@ function renderUI():void {
   if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
   const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+broken+" em manutenção · início: era Windows 98");
+  const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
+  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"){
+    const rows:HTMLTableRowElement[]=[];
+    const currency=(value:number):string=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+    for(let i=0;i<pcCount(game);i++){
+      const account=stationAccountingSummary(game,i);
+      const row=document.createElement("tr");
+      const cells=[
+        "PC "+(i+1),String(account.sessions),String(account.vipSessions),
+        Math.floor(account.occupiedMinutes).toLocaleString("pt-BR"),
+        currency(account.sessionRevenue),currency(account.energyShare),
+        currency(account.sessionRevenue-account.energyShare)
+      ];
+      for(let j=0;j<cells.length;j++){
+        const cell=j===0?document.createElement("th"):document.createElement("td");
+        if(j===0)(cell as HTMLTableCellElement).scope="row";
+        cell.textContent=cells[j]!;
+        row.append(cell);
+      }
+      rows.push(row);
+    }
+    stationLedgerRows.replaceChildren(...rows);
+  }
   const maintenance=document.getElementById("pc-maintenance");
   if(maintenance&&adminOpen&&activeAdminTab==="computers"){
     const focused=document.activeElement;
