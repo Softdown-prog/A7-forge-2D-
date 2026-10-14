@@ -34,6 +34,8 @@ export function buyComputer(s:GameState):Result{
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
  (s.pcWear??=[]).splice(count,0,0);
  (s.pcTiers??=[]).splice(count,0,1);
+ (s.pcWindows??=[]).splice(count,0,"win98");
+ (s.pcWindowsLicenses??=[]).splice(count,0,false);
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
