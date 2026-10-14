@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {setHourlyPrice,monthlyBills,sessionRevenue,energyCostPerMinute,wholesaleCost,productPrice} from "../dist/js/sim/economy.js";
-import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,qualityMultiplier,
+import {serviceVisitCost,allowableHourlyPrice,annualHourlyCeiling,priceIndex,qualityMultiplier,
  SESSION_PACKAGES,sessionPrice,normalizedHourlyPrice,clampPriceToEra} from "../dist/js/sim/historicalEconomy.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "../dist/js/sim/pricingInsights.js";
@@ -98,4 +98,20 @@ test("a interface da nova partida oferece períodos e teto histórico, sem apaga
  assert.match(main,/createGame\(72421,"historical"\)/);
  assert.ok(main.includes("allowableHourlyPrice(game)"));
  assert.ok(main.includes("clampPriceToEra(decoded)"));
+});
+
+test("preço histórico de técnicos e limpeza é consistente com a época e não altera o clássico",()=>{
+ const old=historical(1998),today=historical(2024),classic=createGame(19);
+ assert.equal(serviceVisitCost(old,"cleaning"),12);
+ assert.equal(serviceVisitCost(classic,"cleaning"),55);
+ assert.equal(serviceVisitCost(classic,"repair",75),73);
+ assert.equal(serviceVisitCost(old,"repair",75),16);
+ assert.ok(serviceVisitCost(today,"cleaning")>50&&serviceVisitCost(today,"cleaning")<65);
+ assert.ok(serviceVisitCost(today,"repair",75)>70&&serviceVisitCost(today,"repair",75)<90);
+ const expected=Math.round(12*priceIndex(2024)*100)/100;
+ assert.equal(serviceVisitCost(today,"cleaning"),expected);
+ const cash=old.cash,revenue=old.revenue,expenses=old.expenses;
+ serviceVisitCost(old,"repair",80);
+ assert.deepEqual([old.cash,old.revenue,old.expenses],[cash,revenue,expenses],
+   "cotação não pode alterar dinheiro nem RNG");
 });

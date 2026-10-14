@@ -1,6 +1,7 @@
 import type {GameState,Result,Point} from "./types.js";
 import {pcCount,pcPosition,entrance} from "./engine.js";
 import {workerRoute} from "./workerNavigation.js";
+import {serviceVisitCost} from "./historicalEconomy.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number}
 export const BIN_SPOTS:Point[]=[{x:1.1,y:3.1},{x:5.65,y:4.65}];
@@ -17,7 +18,7 @@ export function startRepair(s:GameState,pc:number):Result{
  if(wear<1)return {ok:false,message:"Esse PC não precisa de manutenção."};
  if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))
   return {ok:false,message:"Aguarde o cliente terminar antes de chamar o técnico."};
- const cost=20+Math.ceil(wear*.7);
+ const cost=serviceVisitCost(s,"repair",wear);
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
@@ -34,12 +35,12 @@ export function addWaste(s:GameState,amount=1):void{
 export function requestCleaning(s:GameState):Result{
  if(s.cleaningJob)return {ok:false,message:"Faxineiro já está a caminho."};
  if(!(s.binFill??[]).some(x=>x>=10))return {ok:false,message:"As lixeiras ainda estão quase vazias."};
- const cost=55;
+ const cost=serviceVisitCost(s,"cleaning");
  if(s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
  s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0};
- return {ok:true,message:"Faxineiro contratado por R$ 55 para recolher o lixo."};
+ return {ok:true,message:"Faxineiro contratado por R$ "+cost.toFixed(2)+" para recolher o lixo."};
 }
 function navigate(s:GameState,job:{x:number;y:number;route?:Point[];target?:Point;stuck?:number},to:Point,speed:number):boolean{
  const close=(a:Point,b:Point)=>Math.hypot(a.x-b.x,a.y-b.y)<.12;
