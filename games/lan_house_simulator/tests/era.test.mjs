@@ -39,7 +39,7 @@ test("Windows exige licença separada por estação e respeita lançamento",()=>
  const first=licenseWindows(s,0,"win98");
  assert.equal(first.ok,true);
  assert.equal(s.pcWindowsLicenses[0],true);
- assert.equal(s.pcWindowsLicenses[1],undefined);
+ assert.equal(s.pcWindowsLicenses[1],false);
  assert.equal(licenseWindows(s,0,"win98").ok,false);
  s.totalMinutes=3*360*DAY_MINUTES;
  const cash=s.cash,hardware=s.pcTiers[0];

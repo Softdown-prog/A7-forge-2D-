@@ -4,6 +4,7 @@ import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./era.js";
 import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
 import {startRepair} from "./services.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";
+import {buyPlatform,componentSatisfactionBonus,hardwareFor,hardwareLoadWatts} from "./hardware.js";
 
 export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
 export function productPrice(s:GameState,item:Item):number {
@@ -20,6 +21,7 @@ export function upgradeComputer(s:GameState,index:number):Result {
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
  const tier=s.pcTiers?.[index]??1;
  if(tier>=3)return {ok:false,message:"PC no nível máximo."};
+ if(s.pcComponents?.[index])return buyPlatform(s,index,tier===1?"platform00":"platform03");
  const unlockYear=tier===1?2000:2003;
  if(gameYear(s)<unlockYear)return {ok:false,message:"Hardware nível "+(tier+1)+" chega em "+unlockYear+"."};
  const cost=tier*240;
@@ -30,7 +32,7 @@ export function upgradeComputer(s:GameState,index:number):Result {
 /** Hardware de maior nível melhora a experiência, com bônus modesto e limitado. */
 export function hardwareSatisfactionBonus(state:GameState,index:number):number {
  const tier=state.pcTiers?.[index]??1;
- return (Number.isInteger(tier)&&tier>=2?Math.min(2,tier-1)*0.08:0)+gpuBonus(state,index)+
+ return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+gpuBonus(state,index)+
    (lcdSpec(installedLcd(state,index))?.bonus??0);
 }
 export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
@@ -73,7 +75,8 @@ export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansi
  let hardware=0;
  for(let i=0;i<count;i++){
    const tier=Math.max(1,Math.min(3,state.pcTiers?.[i]??1));
-   hardware+=0.0007*(1+(tier-1)*0.42)+0.0014*(gpuSpec(installedGpu(state as GameState,i))?.power??0)-
+   const load=state.pcComponents?.[i]?hardwareLoadWatts(hardwareFor(state,i))/68:1+(tier-1)*.42;
+   hardware+=0.0007*load+0.0014*(gpuSpec(installedGpu(state as GameState,i))?.power??0)-
      (lcdSpec(installedLcd(state,i))?.powerSaving??0);
  }
  const averageTier=count?Array.from({length:count},(_,i)=>Math.max(1,Math.min(3,state.pcTiers?.[i]??1)))

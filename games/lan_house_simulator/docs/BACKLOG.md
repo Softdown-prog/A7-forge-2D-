@@ -466,3 +466,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Proteger saves legados, compra de PC antes de anexos e separação de receita real versus saldo parcial; vendas de estoque e custos fixos não são indevidamente atribuídos aos PCs.
 - [ ] Reavaliar catálogos completos e compatibilidade CPU/placa-mãe/RAM/fonte/HD/SSD/GPU quando o Codex publicar os commits, antes de um estudo de ROI por configuração.
 - [ ] Evoluir para consumo por peça somente com modelo de potência real e custos verificados, sem tratar rateio como aferição elétrica.
+
+## Configurações e peças geracionais por PC — 14/10/2026
+- [x] Mostrar Windows/licença, CPU, RAM, armazenamento, placa-mãe, fonte, GPU e monitor de cada estação; início concreto com 350 MHz, 64 MB, HD 4 GB, Slot 1 e 350 W.
+- [x] Adicionar 52 peças e oito kits entre 1998 e 2024, com compras individuais, migrações compatíveis de plataforma e bloqueio por ano, reserva, reparo, caixa e potência.
+- [x] Preservar peças superiores compatíveis, GPU, Windows, monitor e desgaste; fonte representa capacidade e não gasto constante. Salões mistos continuam possíveis.
+- [x] Adicionar Windows 7/8/10/11, requisitos visíveis, licença e instalação por PC; manter saves V1 e reindexação de anexos compatíveis.
+- [x] Passar 207 testes ativos após integrar receita por estação da main, seis cenários Chromium desktop/mobile de compra/recarga e regressão dos cinco LCDs; documentar em `docs/HARDWARE_GENERATIONS.md`.
+- [ ] Auditar amortização das peças nas campanhas longas e verificar ergonomia em telefone físico; estudar bibliotecas de jogos/requisitos por época antes de expandir a simulação.

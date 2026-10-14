@@ -47,6 +47,7 @@ export function buyComputer(s:GameState):Result{
  }
  s.pcLcdModels=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>installedLcd(s,i));
  s.pcLcdModels.splice(count,0,null);
+ if(s.pcComponents){s.pcComponents=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>s.pcComponents?.[i]??null);s.pcComponents.splice(count,0,null);}
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }

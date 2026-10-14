@@ -19,6 +19,8 @@ import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.j
 import {recordPaidSession,recordStationMinute,validStationLedger} from "./stationAccounting.js";
 import {crowdRoute} from "./crowdNavigation.js";
 import {validLcdModels} from "./computerModels.js";
+import {validHardwareState} from "./hardware.js";
+import {WINDOWS_ERAS} from "./era.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -450,8 +452,10 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
-    (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) && metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
+  return validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+    (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
+    (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
+    metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
     v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&

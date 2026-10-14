@@ -233,6 +233,35 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .gpu-card.gpu-locked img{filter:grayscale(.65);opacity:.6}
 .gpu-card.gpu-locked:after{content:"EM BREVE";position:absolute;top:10px;right:10px;background:#183326;color:#c8dbac;border-radius:4px;padding:4px 7px;font:8px "Courier New",monospace;letter-spacing:.1em}
 .lcd-upgrades{margin-top:24px;border-top:1px solid #c7cfb6;padding-top:18px}
+.hardware-workbench{margin-top:24px;border-top:1px solid #c7cfb6;padding-top:18px}
+.hardware-workbench h3{font-size:19px;letter-spacing:-.03em;margin:0 0 9px}
+.hardware-workbench h4{font-size:14px;margin:20px 0 10px}
+.hardware-note{font-size:11px;line-height:1.6;color:#627456}
+.machine-sheet{background:#e7ecda;border:1px solid #bfcaaa;border-radius:10px;overflow:hidden;margin:14px 0}
+.machine-heading{display:flex;gap:14px;align-items:center;background:#294738;padding:16px;color:#f0edce}
+.machine-heading>.ui-icon{width:38px;height:38px;color:#b5cc9d;flex:none}
+.machine-heading strong{display:block;font-size:18px}
+.machine-heading small{display:block;font-size:10px;line-height:1.6;margin-top:5px;color:#c8d5b2}
+.machine-specs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0}
+.machine-spec{padding:14px;border-bottom:1px solid #cbd4b9;min-width:0}
+.machine-spec dt{font:10px "Courier New",monospace;text-transform:uppercase;color:#708160;letter-spacing:.05em}
+.machine-spec dd{margin:6px 0;color:#2b4c33;font-size:15px;font-weight:700;overflow-wrap:anywhere}
+.machine-spec small{font-size:10px;line-height:1.6;color:#617552;display:block}
+.machine-power{padding:13px 16px;margin:0;font-size:10px;line-height:1.7;color:#5f7454}
+.machine-os-choices,.hardware-tabs{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}
+.machine-os-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.os-option{min-width:0;background:#eeeedc;border:1px solid #d8ddc7;border-radius:6px;padding:9px}
+.os-option>button{width:100%;white-space:normal}
+.os-option>small{display:block;margin-top:8px;font-size:10px;line-height:1.6;color:#748363;overflow-wrap:anywhere}
+.hardware-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.hardware-card{display:flex;flex-direction:column;gap:10px;min-width:0;border:1px solid #cbd4b9;border-radius:9px;background:#f5f3e6;padding:16px;overflow-wrap:anywhere}
+.hardware-card>.part-year{font:10px "Courier New",monospace;color:#728963;letter-spacing:.08em}
+.hardware-card>strong{font-size:15px;color:#345735}
+.hardware-card>p,.hardware-card>small{font-size:11px;line-height:1.6;color:#6b7d5d;margin:0}
+.hardware-card>.part-status{font-size:10px;color:#827556}
+.hardware-card>button{margin-top:auto;white-space:normal}
+.hardware-locked{background:#ebeddf}
+@media(max-width:520px){.hardware-catalog,.machine-os-choices{grid-template-columns:1fr}.machine-specs{grid-template-columns:1fr}.machine-heading strong{font-size:16px}.hardware-tabs .gpu-station{flex:1 1 40%;justify-content:center}}
 .lcd-upgrades h3{font-size:19px;letter-spacing:-.03em;margin:0 0 9px}
 .lcd-note{font-size:12px;line-height:1.6;color:#627456}
 .lcd-catalog{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}

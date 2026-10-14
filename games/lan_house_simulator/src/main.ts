@@ -24,6 +24,8 @@ import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {requestCleaning,pcUnderRepair} from "./sim/services.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
+import {buyPart,buyPlatform,windowsHardwareIssues,hardwareFor,buildParts,requiredPsuWatts,type HardwareKind,HARDWARE_LABELS} from "./sim/hardware.js";
+import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
 
 // Catalog illustrations use the same station renderer as the playable scene.
 // Generate once per model; live admin refreshes reuse these images.
@@ -330,7 +332,7 @@ const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getEle
 gpuPcChoice?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement))return;
  const index=Number(button.dataset.gpuSelect);
- if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedGpuPc=index;renderUI();}
+ if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedGpuPc=index;selectedLcdPc=index;renderUI();}
 });
 gpuList?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement)||button.disabled)return;
@@ -350,14 +352,30 @@ licensePanel?.addEventListener("click",event=>{
 // Controles unificados em abas, sem criar novos painéis sobre o jogo.
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
 let selectedLcdPc=0;
+let selectedHardwareTab:HardwareTab="platform";
 if(!maintenancePanel)throw new Error("Manutenção ausente no painel");
 maintenancePanel.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled)return;
- if(target.dataset.lcdSelect!==undefined){
-  const index=Number(target.dataset.lcdSelect);
-  if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedLcdPc=index;renderUI();}
+ if(target.dataset.lcdSelect!==undefined||target.dataset.hardwareSelect!==undefined){
+  const index=Number(target.dataset.lcdSelect??target.dataset.hardwareSelect);
+  if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedLcdPc=index;selectedGpuPc=index;renderUI();}
   return;
+ }
+ if(target.dataset.hardwareTab!==undefined){
+  const tab=target.dataset.hardwareTab;
+  if(tab==="platform"||Object.hasOwn(HARDWARE_LABELS,tab)){selectedHardwareTab=tab as HardwareTab;renderUI();}return;
+ }
+ if(target.dataset.hardwareKit!==undefined){applyResult(game,buyPlatform(game,selectedLcdPc,target.dataset.hardwareKit));renderUI();save();return;}
+ if(target.dataset.hardwarePart!==undefined){
+  const kind=target.dataset.hardwareKind;
+  if(!kind||!Object.hasOwn(HARDWARE_LABELS,kind))return;
+  applyResult(game,buyPart(game,selectedLcdPc,kind as HardwareKind,target.dataset.hardwarePart));renderUI();save();return;
+ }
+ if(target.dataset.winPc!==undefined){
+  const index=Number(target.dataset.winPc),id=target.dataset.winEdition;
+  if(Number.isInteger(index)&&WINDOWS_ERAS.some(w=>w.id===id))applyResult(game,licenseWindows(game,index,id as typeof WINDOWS_ERAS[number]["id"]));
+  renderUI();save();return;
  }
  if(target.dataset.lcdBuy!==undefined){
   const id=target.dataset.lcdBuy;
@@ -669,7 +687,7 @@ function renderUI():void {
   const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
   if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
   const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
-  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+broken+" em manutenção · início: era Windows 98");
+  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+broken+" em manutenção · configuração individual por estação");
   const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
   if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"){
     const rows:HTMLTableRowElement[]=[];
@@ -697,7 +715,7 @@ function renderUI():void {
   if(maintenance&&adminOpen&&activeAdminTab==="computers"){
     const focused=document.activeElement;
     const lcdFocus=focused instanceof HTMLButtonElement&&maintenance.contains(focused)
-      ?focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
+      ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
       :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
     const header=document.createElement("strong");header.textContent="Manutenção por computador";maintenance.replaceChildren(header);
     for(let i=0;i<pcCount(game);i++){
@@ -712,12 +730,13 @@ function renderUI():void {
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
       const tier=game.pcTiers?.[i]??1;
       const hardwareYear=tier===1?2000:2003;
-      upgrade.textContent=tier>=3?"Hardware nível 3":("Hardware "+(tier+1)+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
+      upgrade.textContent=tier>=3?"Peças no catálogo abaixo":("Kit CRT "+hardwareYear+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
       upgrade.disabled=tier>=3||year<hardwareYear||game.cash<tier*240;
       label.textContent+=" · hardware nível "+tier;
       line.append(label,repair,upgrade);maintenance.appendChild(line);
     }
     selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
+    maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab));
     const kits=document.createElement("section");kits.className="lcd-upgrades";
     const title=document.createElement("h3");title.textContent="Da era CRT aos LCDs";
     const hint=document.createElement("p");hint.className="lcd-note";
@@ -753,7 +772,8 @@ function renderUI():void {
     kits.append(title,hint,choices,installed,catalog);maintenance.append(kits);
     if(lcdFocus){
       const restored=maintenance.querySelector<HTMLButtonElement>(lcdFocus);
-      (restored&&!restored.disabled?restored:choices.querySelector<HTMLButtonElement>('[aria-pressed="true"]'))?.focus({preventScroll:true});
+      const fallback=lcdFocus.startsWith("#hardware-")?maintenance.querySelector<HTMLButtonElement>("#hardware-select-"+selectedLcdPc):choices.querySelector<HTMLButtonElement>('[aria-pressed="true"]');
+      (restored&&!restored.disabled?restored:fallback)?.focus({preventScroll:true});
     }
   }
   if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"){
@@ -782,12 +802,14 @@ function renderUI():void {
       const gain=Math.max(0,model.bonus-(current?.bonus??0));
       const num=(value:number)=>value.toFixed(3).replace(".",",");
       const details=document.createElement("small");
+      const neededPsu=requiredPsuWatts(hardwareFor(game,selectedGpuPc),model.id);
+      const powerOk=buildParts(hardwareFor(game,selectedGpuPc)).psu.watts!>=neededPsu;
       details.textContent="R$ "+model.cost+" · bônus de satisfação "+num(model.bonus)+
-        " · ganho adicional "+num(gain)+" · consumo relativo "+num(model.power);
+        " · ganho adicional "+num(gain)+" · consumo relativo "+num(model.power)+" · fonte necessária "+neededPsu+" W";
       const button=document.createElement("button");button.type="button";button.className="slice";
       button.dataset.gpuBuy=model.id;
-      button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":"Comprar · R$ "+model.cost;
-      button.disabled=locked||owned||obsolete||game.cash<model.cost;
+      button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":!powerOk?"Requer fonte de "+neededPsu+" W":"Comprar · R$ "+model.cost;
+      button.disabled=locked||owned||obsolete||!powerOk||game.cash<model.cost;
       info.append(title,details,button);card.append(art,info);gpuList.append(card);
     }
   }
@@ -805,8 +827,10 @@ function renderUI():void {
         const btn=document.createElement("button");btn.type="button";btn.className="slice";
         btn.dataset.winPc=String(i);btn.dataset.winEdition=item.id;
         const already=isLicensed&&edition.id===item.id;
+        const reasons=windowsHardwareIssues(game,i,item.id);
         btn.textContent=item.name+" · "+(year<item.year?"🔒 "+item.year:already?"Instalado":"R$ "+item.cost);
-        btn.disabled=year<item.year||already||game.cash<item.cost;
+        btn.disabled=year<item.year||already||game.cash<item.cost||reasons.length>0||stationOccupied(game,i)||!!game.repairJobs?.some(j=>j.pc===i);
+        btn.title=reasons.join(" ");
         choices.appendChild(btn);
       }
       line.append(title,choices);licensePanel.appendChild(line);

@@ -1,5 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {gameYear} from "./era.js";
+import {hardwareFor,buildParts,requiredPsuWatts} from "./hardware.js";
 
 export const GPU_CATALOG=[
  {id:"gpu05",name:"PixelForce 6600",year:2005,cost:440,power:0.18,bonus:0.035,theme:"emerald"},
@@ -27,6 +28,8 @@ export function buyGpu(s:GameState,index:number,id:GpuId):Result{
  if(gameYear(s)<spec.year)return {ok:false,message:spec.name+" desbloqueia em "+spec.year+"."};
  const old=gpuSpec(installedGpu(s,index));
  if(old && old.year>=spec.year)return {ok:false,message:"Esta máquina já possui placa igual ou superior."};
+ const build=hardwareFor(s,index),needed=requiredPsuWatts(build,id);
+ if(buildParts(build).psu.watts!<needed)return {ok:false,message:"Esta GPU exige fonte de pelo menos "+needed+" W nesta estação."};
  if(s.cash<spec.cost)return {ok:false,message:"Caixa insuficiente: R$ "+spec.cost+"."};
  s.cash-=spec.cost;s.expenses+=spec.cost;
  (s.pcGpus??=[])[index]=id;

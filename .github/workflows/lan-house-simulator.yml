@@ -78,6 +78,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_lcd_generations.mjs out/validation
+      - name: Verify per-PC components, Windows requirements and legacy stations
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_hardware_ui.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

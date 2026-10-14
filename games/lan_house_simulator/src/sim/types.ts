@@ -73,6 +73,8 @@ export interface GameState {
   retailPrices?: Record<Item,number>;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
+  /** Peças por estação; null/ausente usa a configuração CRT legada do nível. */
+  pcComponents?: Array<import("./hardwareCatalog.js").PcComponents|null>;
   /** GPU por computador; ausente em saves anteriores. */
   pcGpus?: Array<"gpu05"|"gpu07"|"gpu09"|"gpu11"|"gpu13"|null>;
   pcLcdModels?: Array<"lcd05"|"lcd08"|"lcd12"|"lcd17"|"lcd24"|null>;
@@ -81,7 +83,7 @@ export interface GameState {
   /** Dia da última campanha; compatível com saves antigos. */
   promotionDay?: number;
   /** Versão do Windows por estação, independente do upgrade de hardware. */
-  pcWindows?: Array<"win98"|"win2000"|"winxp"|"winvista">;
+  pcWindows?: Array<"win98"|"win2000"|"winxp"|"winvista"|"win7"|"win8"|"win10"|"win11">;
   /** Licenças pagas por PC; saves anteriores mantêm o Windows 98 preinstalado. */
   pcWindowsLicenses?: boolean[];
   internetTier: number;

@@ -69,3 +69,7 @@ A placa de marca agora ocupa apenas o fundo vazio do Canvas, sem ocluir a decora
 ## Equipamentos do fim dos anos 1990: render de estudo V3
 
 Monitores CRT continuam desenhados em `retroComputer.ts`. O desktop ilustrativo utiliza um pequeno sistema de coordenadas relativas à face do monitor, preservando a projeção isométrica; não reproduz marcas ou UI de sistemas operacionais. Máquinas de venda são um estudo de geometria 2D procedural com produtos visíveis, gaveta e painel. As janelas exibem vidro abstrato, caixilho e peitoril, não existe paisagem externa. O trabalhador de cena entrega `lhs_equipment_closeup_desktop.png`, corte ampliado do framebuffer real para revisão 1x e zoom, além dos PNGs existentes. O contrato de simulação e a câmera permanecem inalterados.
+
+## Peças e Windows por estação
+
+`sim/hardwareCatalog.ts` define 52 peças e oito kits; `sim/hardware.ts` resolve fichas legadas, cota instalação, verifica compatibilidade e executa transações individuais. `pcComponents` é opcional no save V1, com uma entrada por índice de PC, e acompanha as mesmas inserções de originais/anexos que GPU/Windows. `sim/era.ts` mantém Windows independente das peças e valida a instalação; `ui/hardwarePanel.ts` apresenta configuração e catálogos, reutilizando a seleção de estação das GPUs/LCDs. Renderização e posições da cena permanecem separadas dos números de configuração. Regras, parâmetros e limites estão em `docs/HARDWARE_GENERATIONS.md`.
