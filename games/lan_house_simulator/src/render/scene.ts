@@ -9,6 +9,7 @@ import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations
 import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
+import {BIN_SPOTS} from "../sim/services.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -43,6 +44,12 @@ export class SceneRenderer {
       const p=pcPosition(i,s);
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
     }
+    for(let i=0;i<BIN_SPOTS.length;i++){
+      const p=BIN_SPOTS[i]!;
+      entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
+    }
+    for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job.x,job.y,elapsedSeconds,"technician",job.phase==="working",job.progress/job.duration)});
+    if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j.x,j.y,elapsedSeconds,"cleaner",j.phase==="working",j.progress/9)});}
     for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
@@ -496,6 +503,37 @@ export class SceneRenderer {
     const foot=front(.33,2);
     ctx.fillStyle="rgba(32,34,45,0.24)";
     ctx.beginPath();ctx.ellipse(foot.x,foot.y+3*z,20*z,5*z,0,0,Math.PI*2);ctx.fill();
+  }
+  private trashBin(camera:Projection,p:Point,fill:number):void{
+    const ctx=this.ctx,loc=iso(p,camera),z=camera.zoom;
+    ctx.save();ctx.translate(loc.x,loc.y);
+    ctx.fillStyle="#1d2930";ctx.beginPath();ctx.ellipse(0,2*z,12*z,5*z,0,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#426f68";ctx.strokeStyle="#182e37";ctx.lineWidth=2*z;
+    ctx.beginPath();ctx.moveTo(-10*z,-21*z);ctx.lineTo(10*z,-21*z);ctx.lineTo(8*z,0);ctx.lineTo(-8*z,0);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle="#87b9aa";ctx.fillRect(-11*z,-23*z,22*z,5*z);
+    ctx.fillStyle="#32483b";ctx.fillRect(-7*z,-18*z,14*z*Math.min(1,fill/100),4*z);
+    if(fill>65){ctx.fillStyle="#8e8262";ctx.fillRect(-5*z,-26*z,10*z,4*z);}
+    ctx.restore();
+  }
+  private worker(camera:Projection,x:number,y:number,time:number,kind:"technician"|"cleaner",working:boolean,progress:number):void{
+    const ctx=this.ctx,z=camera.zoom,p=iso({x,y},camera);
+    const bob=working?Math.sin(time*9)*2*z:Math.sin(time*6)*1.2*z;
+    ctx.save();ctx.translate(p.x,p.y+bob);ctx.lineJoin="round";ctx.lineWidth=2*z;ctx.strokeStyle="#1d3140";
+    const rect=(x:number,y:number,w:number,h:number,color:string)=>{ctx.fillStyle=color;ctx.fillRect(x*z,y*z,w*z,h*z);ctx.strokeRect(x*z,y*z,w*z,h*z);};
+    const trousers=kind==="technician"?"#204b4a":"#344b74";
+    rect(-7,-15,6,15,trousers);rect(1,-15,6,15,trousers);
+    rect(-9,-34,18,21,kind==="technician"?"#438461":"#779cbd");
+    rect(-15,-32,5,15,kind==="technician"?"#529a71":"#7aa3bf");
+    rect(10,-32,5,15,kind==="technician"?"#529a71":"#7aa3bf");
+    rect(-7,-47,14,14,"#d8a486");
+    rect(-9,-51,18,7,kind==="technician"?"#e2b632":"#f3e9d5");
+    rect(-12,-46,24,3,kind==="technician"?"#f8d658":"#d7e8ed");
+    if(kind==="technician"){ctx.fillStyle="#e5c675";ctx.fillRect(-2*z,-32*z,4*z,11*z);}
+    if(working){rect(14,-24,6,5,kind==="technician"?"#9aa9b0":"#ded5ab");}
+    ctx.restore();
+    if(working){ctx.save();ctx.fillStyle="#142934";ctx.fillRect(p.x-22*z,p.y-64*z,44*z,7*z);
+      ctx.fillStyle=kind==="technician"?"#e5bd59":"#8cc6b8";
+      ctx.fillRect(p.x-21*z,p.y-63*z,42*z*Math.max(0,Math.min(1,progress)),5*z);ctx.restore();}
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,camera,p,i,t,isOnline,s);
