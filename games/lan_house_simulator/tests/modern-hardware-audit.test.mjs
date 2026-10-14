@@ -34,10 +34,10 @@ function setup(year,price,seed,modern){
  assert.equal(s.cash,INITIAL-s.expenses);
  return {s,installation:s.expenses};
 }
-function sample(year,price,seed,modern){
+function sample(year,price,seed,modern,days=DAYS){
  const {s,installation}=setup(year,price,seed,modern);
  let vipAtNew=0,vipUsing=0,using=0,capacity=0,vipSeen=0,allSeen=0;
- for(let day=1;day<=DAYS;day++){
+ for(let day=1;day<=days;day++){
   for(const item of ["soda","candy","snacks"]){
    if(s.inventory[item]<5&&s.cash>=wholesaleCost(s,item))stockItem(s,item);
   }
@@ -107,6 +107,27 @@ test("2011 e 2013: três sementes, três preços e investimento real em GPUs",()
    minNet:Math.min(...selection.map(x=>x.netResult)),maxNet:Math.max(...selection.map(x=>x.netResult))});
  }
  console.log("MODERN_PRICE_SUMMARY "+JSON.stringify(groups));
+});
+test("2013: GPUs modernas recuperam o investimento após doze meses?",()=>{
+ const trials=[];
+ for(const seed of SEEDS)for(const modern of [false,true])
+  trials.push(sample(2013,24,seed,modern,360));
+ assert.equal(trials.length,6);
+ for(const seed of SEEDS){
+  const base=trials.find(x=>x.seed===seed&&!x.modern);
+  const improved=trials.find(x=>x.seed===seed&&x.modern);
+  assert.equal(base.year,2013);assert.equal(improved.year,2013);
+  assert.ok(improved.installation>base.installation);
+  assert.ok(base.cash===undefined,"valores de receita reais estão em netResult");
+ }
+ console.log("MODERN_ANNUAL "+JSON.stringify(trials));
+ const average=modern=>{
+  const subset=trials.filter(x=>x.modern===modern);
+  const calc=field=>+(subset.reduce((sum,x)=>sum+x[field],0)/subset.length).toFixed(2);
+  return {modern,net:calc("netResult"),served:calc("served"),
+   reputation:calc("reputation"),vipOnRearPcs:calc("vipOnRearPcsPercent")};
+ };
+ console.log("MODERN_ANNUAL_SUMMARY "+JSON.stringify([average(false),average(true)]));
 });
 test("cliente VIP encontra hardware 2013 na estação distante e escolha não altera estado",()=>{
  const {s}=setup(2013,24,1933,true);
