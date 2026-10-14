@@ -12,7 +12,7 @@ export const AUDIO_LEVELS=Object.freeze({
   smallSale:0.15,
   keyboard:0.040, // fundo discreto; continua abaixo de mouse (0.105) e caixa (0.24).
   vending:0.45,
-  soda:0.032 // Raro efeito ambiente, abaixo do teclado, do mouse e do dinheiro
+  soda:0.085 // Mais audível (+8,5 dB), mas ainda abaixo de mouse e caixa.
 });
 export const KEYBOARD_DURATION=3.5;
 
@@ -32,6 +32,8 @@ export function keyboardTakeAt(index:number):KeyboardTake {
 }
 export const SODA_CHANCE=0.28;
 export const SODA_COOLDOWN_SECONDS=12;
+/** O caixa dura até 0,85 segundo; começar o líquido depois reduz mascaramento. */
+export const SODA_AFTER_SALE_DELAY_SECONDS=0.90;
 export function shouldPlaySodaSound(roll:number,elapsed:number):boolean {
  return roll<SODA_CHANCE && elapsed>=SODA_COOLDOWN_SECONDS;
 }
@@ -105,10 +107,10 @@ export class Soundscape {
        .catch(()=>{/* Mesmo offline há fallback procedural curto. */});
    }
  }
- private playSample(kind:ApprovedSample,gainValue:number,shorten?:number):boolean{
+ private playSample(kind:ApprovedSample,gainValue:number,shorten?:number,delaySeconds=0):boolean{
    const ctx=this.context,master=this.master,buffer=this.approved.get(kind);
    if(!ctx||!master||!buffer)return false;
-   const now=ctx.currentTime+0.006;
+   const now=ctx.currentTime+0.006+Math.max(0,delaySeconds);
    const node=ctx.createBufferSource(),gain=ctx.createGain();
    node.buffer=buffer;
    const seconds=Math.min(buffer.duration,shorten??buffer.duration);
@@ -176,10 +178,26 @@ export class Soundscape {
    const alternative:SodaTake=kind==="vending_soda_01"?"vending_soda_02":"vending_soda_01";
    const selected=this.approved.has(kind)?kind:alternative;
    if(!this.approved.has(selected))return false;
-   if(!this.playSample(selected,AUDIO_LEVELS.soda,2.0))return false;
+   if(!this.playSample(selected,AUDIO_LEVELS.soda,2.0,SODA_AFTER_SALE_DELAY_SECONDS))return false;
    this.lastSoda=ctx.currentTime;
    this.sodaTake++;
    return true;
+ }
+ /** Escuta dos OGGs originais, sem sorteio, cooldown ou venda artificial. */
+ async previewSoda():Promise<boolean>{
+   if(!this.enabled)return false;
+   this.unlock();
+   const ctx=this.context;
+   if(!ctx)return false;
+   if(ctx.state!=="running"){
+     try{await ctx.resume();}catch{return false;}
+     if(ctx.state!=="running")return false;
+   }
+   const first:SodaTake=this.sodaTake%2===0?"vending_soda_01":"vending_soda_02";
+   const second:SodaTake=first==="vending_soda_01"?"vending_soda_02":"vending_soda_01";
+   const selected=this.approved.has(first)?first:second;
+   if(!this.approved.has(selected))return false;
+   return this.playSample(selected,AUDIO_LEVELS.soda,2.0,0.28); // Após clique do botão.
  }
  /** Sons de produtos autorizados: nunca tocar o efeito de lata reprovado. */
  candy():void{
