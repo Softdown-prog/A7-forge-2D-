@@ -191,7 +191,6 @@ export class Soundscape {
    if(!ctx)return false;
    if(ctx.state!=="running"){
      try{await ctx.resume();}catch{return false;}
-     if(ctx.state!=="running")return false;
    }
    const first:SodaTake=this.sodaTake%2===0?"vending_soda_01":"vending_soda_02";
    const second:SodaTake=first==="vending_soda_01"?"vending_soda_02":"vending_soda_01";
