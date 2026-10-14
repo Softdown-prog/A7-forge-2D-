@@ -26,3 +26,15 @@ test("configuração rejeita protocolo, caminho e contato inadequados",()=>{
  for(const origin of ["javascript:alert(1)","https://dominio.test/path","http://dominio.test","https://user:senha@dominio.test","https://dominio.test/?param=1"])assert.throws(()=>validateConfig({mode:"preview",origin}));
  assert.throws(()=>validateConfig({mode:"preview",email:"foo?subject=x@dominio.test"}));
 });
+
+test("política de privacidade informa dados e direitos sem divulgar detalhes internos de infraestrutura",async()=>{
+ const {pages}=await import("../website/content.mjs");
+ const privacy=pages({studio:"Softdown",email:"pessoal@example.test"}).find(page=>page.path==="privacidade");
+ assert.ok(privacy);
+ const html=privacy.body;
+ for(const term of [/partida/i,/conta opcional/i,/dados técnicos/i,/prestadores de serviços/i,/transferências internacionais/i,/direitos/i,/\/contato\//,/\/dados\//])
+  assert.match(html,term);
+ for(const internal of [/Cloudflare/i,/Firebase/i,/Google Cloud/i,/Firestore/i,/Cloud Run/i,/us-central1/i,/bucket privado/i,/token/i,/lhs-save-v1/i,/softloady@/i,/pessoal@example\.test/i])
+  assert.doesNotMatch(html,internal);
+ assert.doesNotMatch(privacy.description,/infraestrutura de hospedagem/i);
+});
