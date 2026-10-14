@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {stationUpgradeIssue} from "./stationPower.js";
 import {gameYear,type WindowsEdition} from "./era.js";
 import {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,type HardwareKind,type HardwarePart,type PcComponents} from "./hardwareCatalog.js";
 export {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,describePart,formatMemory} from "./hardwareCatalog.js";
@@ -56,9 +57,7 @@ export function componentSatisfactionBonus(s:GameState,index:number):number{
 function pcActionIssue(s:GameState,index:number):string|null{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return "PC inexistente.";
- if(s.customers.some(c=>c.pcIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage)))return "Aguarde o cliente liberar esta estação.";
- if(s.repairJobs?.some(j=>j.pc===index))return "Aguarde o técnico concluir o reparo.";
- return null;
+ return stationUpgradeIssue(s,index);
 }
 export interface HardwareQuote extends Result {cost:number;components?:PcComponents}
 function deny(message:string,cost=0):HardwareQuote{return {ok:false,message,cost};}

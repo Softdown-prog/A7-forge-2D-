@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {stationUpgradeIssue} from "./stationPower.js";
 import {gameYear} from "./era.js";
 import {hardwareFor,buildParts,requiredPsuWatts} from "./hardware.js";
 
@@ -23,6 +24,7 @@ export function gpuBonus(s:GameState,index:number):number{
 export function buyGpu(s:GameState,index:number,id:GpuId):Result{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
+ const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};
  const spec=GPU_CATALOG.find(x=>x.id===id);
  if(!spec)return {ok:false,message:"Placa de vídeo desconhecida."};
  if(gameYear(s)<spec.year)return {ok:false,message:spec.name+" desbloqueia em "+spec.year+"."};

@@ -1,4 +1,5 @@
 import type {GameState,StationAccount} from "./types.js";
+import {stationPoweredOn} from "./stationPower.js";
 
 /** A contabilidade segue a estação, independente das peças instaladas. */
 export function emptyStationAccount():StationAccount{
@@ -19,8 +20,10 @@ export function recordPaidSession(s:GameState,index:number,count:number,amount:n
 /** Rateio contábil da energia real do motor, não medição de watts das peças. */
 export function recordStationMinute(s:GameState,count:number,energy:number):void{
  if(!Number.isInteger(count)||count<=0||!Number.isFinite(energy)||energy<0)return;
- const rows=ensureAccounts(s,count),share=energy/count;
- for(let i=0;i<count;i++)rows[i]!.energyShare+=share;
+ const rows=ensureAccounts(s,count);
+ const powered=Array.from({length:count},(_,i)=>i).filter(i=>stationPoweredOn(s,i));
+ const share=powered.length?energy/powered.length:0;
+ for(const i of powered)rows[i]!.energyShare+=share;
  for(const c of s.customers)
   if(c.stage==="using"&&c.pcIndex!==null&&Number.isInteger(c.pcIndex)&&
      c.pcIndex>=0&&c.pcIndex<count)rows[c.pcIndex]!.occupiedMinutes++;

@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {stationUpgradeIssue} from "./stationPower.js";
 import {DAY_MINUTES} from "./types.js";
 import {GAME_LAST_YEAR,GAME_FIRST_YEAR,DAYS_PER_YEAR} from "./mailCalendar.js";
 import {windowsHardwareIssues} from "./hardware.js";
@@ -33,6 +34,7 @@ export function windowsLicenseCost(edition:WindowsEdition):number{
 export function licenseWindows(s:GameState,index:number,edition:WindowsEdition):Result{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
+ const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};
  const release=WINDOWS_ERAS.find(x=>x.id===edition);
  if(!release)return {ok:false,message:"Versão de Windows inválida."};
  if(gameYear(s)<release.year)return {ok:false,message:release.name+" estará disponível em "+release.year+"."};

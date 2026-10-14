@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {stationUpgradeIssue} from "./stationPower.js";
 import {gameYear} from "./era.js";
 
 /** Fictional station kits: release years belong to the game's progression. */
@@ -28,6 +29,7 @@ export function stationOccupied(s:GameState,index:number):boolean{
 export function buyLcdKit(s:GameState,index:number,id:LcdId):Result{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
+ const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};
  const model=lcdSpec(id);
  if(!model)return {ok:false,message:"Modelo LCD desconhecido."};
  if(gameYear(s)<model.year)return {ok:false,message:model.name+" chega em "+model.year+"."};
