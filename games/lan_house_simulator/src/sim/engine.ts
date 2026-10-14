@@ -15,12 +15,14 @@ import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import {vipArrivalEligible,vipReputationAdjustment} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
+import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
+    monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
     pricePerHour: 12, retailPrices:{soda:8,candy:5,snacks:9}, pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
     expansionLevel: 0, roomExtensions:{west:0,east:0,south:0,north:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
@@ -309,6 +311,7 @@ function nextDay(s: GameState): void {
     const energy=Math.round(s.energyAccrued??0);
     s.cash -= bill; s.expenses += bill;
     s.energyAccrued=0;
+    closeFinancialMonth(s);
     addLog(s, "Contas do mês pagas: -R$ " + bill + " (incluindo energia R$ "+energy+"; aluguel, internet e manutenção).");
   }
   reviewNotices(s);
@@ -330,6 +333,7 @@ function advanceMinute(s: GameState): void {
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
   s.energyAccrued=(s.energyAccrued??0)+energyCostPerMinute(s);
+  recordComputerUtilization(s);
   s.totalMinutes++;
   if(s.totalMinutes===1)reviewNotices(s);
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
@@ -361,7 +365,10 @@ export function stepGame(s: GameState, deltaMinutes: number): void {
 export function isValidSave(value: unknown): value is GameState {
   if (!value || typeof value !== "object") return false;
   const v = value as Partial<GameState>;
-  return v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
+  const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
+    v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
+  return metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
+    v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
