@@ -5,6 +5,7 @@ import {buildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidat
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
+import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
@@ -679,6 +680,18 @@ function renderUI():void {
   setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map(n=>Math.round(n)+"%").join(" · ")+" · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
   const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||!(game.binFill??[]).some(x=>x>=10)||game.cash<55;
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
+  const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
+  const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
+  setText("pc-utilization","Ocupação neste mês: "+monthPct.toLocaleString("pt-BR")+"% dos minutos-PC disponíveis ("+monthUsed.toLocaleString("pt-BR")+"/"+monthCapacity.toLocaleString("pt-BR")+").");
+  const prevCap=game.lastMonthPcCapacityMinutes??0;
+  const previous=prevCap>0?computerOccupancyPercent(game.lastMonthPcUsedMinutes??0,prevCap).toLocaleString("pt-BR")+"%":"sem histórico";
+  setText("previous-occupancy","Ocupação do último mês: "+previous+".");
+  const hasStatement=game.lastMonthRevenue!==undefined&&game.lastMonthExpenses!==undefined;
+  const lastNet=(game.lastMonthRevenue??0)-(game.lastMonthExpenses??0);
+  setText("monthly-statement",hasStatement
+    ?"Fechamento anterior: entradas "+money(game.lastMonthRevenue??0)+" · saídas "+money(game.lastMonthExpenses??0)+" · resultado "+money(lastNet)+". Inclui investimentos e multas pagos no período."
+    :"Fechamento mensal: disponível após o primeiro mês completo desta partida.");
+  setText("capacity-advice",expansionAdvice(game));
   const promoting=isPromotionActive(game);
   setText("promotion-status",promoting
     ?"Panfletagem ativa! +40% de chance de novos visitantes. Restam "+promotionMinutesRemaining(game)+" minutos de jogo, até 22h."
