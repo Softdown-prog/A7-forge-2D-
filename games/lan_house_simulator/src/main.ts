@@ -895,11 +895,11 @@ function renderUI():void {
   }
   if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
     gpuGamePanel.replaceChildren();
-    if(game.economyVersion!==2||year<2025){
+    if(game.economyVersion!==2||year<2005){
       const note=document.createElement("p");
       note.textContent=game.economyVersion!==2
        ?"Os jogos com GPU são um recurso do modo histórico."
-       :"Novos jogos que exigem placa de vídeo chegam em 2025.";
+       :"Novos jogos que exigem placa de vídeo chegam em 2005.";
       gpuGamePanel.append(note);
     }else for(const title of GPU_GAME_CATALOG){
       const card=document.createElement("div");card.className="price-control";

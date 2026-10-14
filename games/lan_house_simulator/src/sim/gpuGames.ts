@@ -8,9 +8,9 @@ import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./h
  * Custos e adicionais são hipóteses de design, não preços históricos.
  */
 export const GPU_GAME_CATALOG=[
- {id:"neon-rush",name:"Neon Rush Online",year:2025,cost:780,minGpu:"gpu05",minWindows:"win10",hourlyBonus:.75},
- {id:"circuito-competitivo",name:"Circuito Competitivo",year:2027,cost:1250,minGpu:"gpu11",minWindows:"win10",hourlyBonus:1.25},
- {id:"arena-do-futuro",name:"Arena do Futuro",year:2030,cost:1800,minGpu:"gpu13",minWindows:"win11",hourlyBonus:1.75}
+ {id:"neon-rush",name:"Neon Rush Online",year:2005,cost:580,minGpu:"gpu05",minWindows:"winxp",hourlyBonus:.75},
+ {id:"circuito-competitivo",name:"Circuito Competitivo",year:2009,cost:950,minGpu:"gpu09",minWindows:"win7",hourlyBonus:1.25},
+ {id:"arena-do-futuro",name:"Arena do Futuro",year:2013,cost:1550,minGpu:"gpu13",minWindows:"win7",hourlyBonus:1.75}
 ] as const;
 export type GpuGameId=(typeof GPU_GAME_CATALOG)[number]["id"];
 export type GpuGameSpec=(typeof GPU_GAME_CATALOG)[number];
@@ -74,7 +74,7 @@ export function licenseGpuGame(s:GameState,id:string):Result{
  * Entre títulos compatíveis vale o maior adicional (não são cumulativos).
  */
 export function gpuGameHourlyRate(s:GameState,index:number):number{
- if(!isHistorical(s)||yearFromMinutes(s.totalMinutes)<2025||!s.licensedGames)return s.pricePerHour;
+ if(!isHistorical(s)||yearFromMinutes(s.totalMinutes)<2005||!s.licensedGames)return s.pricePerHour;
  let maxBonus=0;
  for(const id of s.licensedGpuGames??[]){
   const spec=gpuGameSpec(id);
@@ -92,5 +92,5 @@ export function gpuGameSessionPrice(s:GameState,index:number,minutes:number,want
 }
 /** Perfil determinístico sem sortear mais números nem afetar RNG do jogo clássico. */
 export function wantsGpuGame(s:Pick<GameState,"economyVersion"|"totalMinutes">,visitorId:number):boolean{
- return isHistorical(s as GameState)&&yearFromMinutes(s.totalMinutes)>=2025&&visitorId%4===0;
+ return isHistorical(s as GameState)&&yearFromMinutes(s.totalMinutes)>=2005&&visitorId%4===0;
 }

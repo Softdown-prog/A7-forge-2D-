@@ -16,30 +16,30 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 function year(s,y){s.totalMinutes=(y-1998)*360*DAY_MINUTES;}
 function accept(result,what){assert.equal(result.ok,true,what+": "+result.message);}
-function setup(y=2025,pc=1){
+function setup(y=2005,pc=1){
  const s=createGame(9,"historical");
  s.cash=25000;year(s,y);
  accept(licenseGames(s),"basic titles");
- accept(buyPlatform(s,pc,"platform24"),"platform 2024");
- accept(buyGpu(s,pc,"gpu13"),"GPU");
- accept(licenseWindows(s,pc,"win11"),"Windows");
+ accept(buyPlatform(s,pc,"platform05"),"platform 2024");
+ accept(buyGpu(s,pc,"gpu05"),"GPU");
+ accept(licenseWindows(s,pc,"winxp"),"Windows");
  return s;
 }
-test("catálogo GPU exige 2025, licenciamento básico e pelo menos uma máquina compatível",()=>{
+test("catálogo GPU exige 2005, licenciamento básico e pelo menos uma máquina compatível",()=>{
  const prior=createGame(9,"historical");prior.cash=30000;
- year(prior,2024);
+ year(prior,2004);
  accept(licenseGames(prior),"basic");
  const old=prior.cash;
  assert.equal(quoteGpuGame(prior,"neon-rush").ok,false);
- assert.match(quoteGpuGame(prior,"neon-rush").message,/2025/);
+ assert.match(quoteGpuGame(prior,"neon-rush").message,/2005/);
  assert.equal(licenseGpuGame(prior,"neon-rush").ok,false);
  assert.equal(prior.cash,old);
- year(prior,2025);
+ year(prior,2005);
  assert.equal(quoteGpuGame(prior,"neon-rush").ok,false);
  assert.match(quoteGpuGame(prior,"neon-rush").message,/GPU/);
  accept(buyGpu(prior,1,"gpu05"),"GPU alone");
  assert.equal(quoteGpuGame(prior,"neon-rush").ok,false,"Windows incompatível bloqueia o jogo");
- const classic=createGame(9);classic.cash=100000;year(classic,2025);
+ const classic=createGame(9);classic.cash=100000;year(classic,2005);
  classic.licensedGames=true;accept(buyGpu(classic,1,"gpu05"),"GPU classic");
  assert.equal(licenseGpuGame(classic,"neon-rush").ok,false);
  assert.equal(classic.licensedGpuGames,undefined);
@@ -60,7 +60,7 @@ test("licença consome dinheiro uma vez e só atende PCs com GPU e Windows adequ
  assert.equal(licenseGpuGame(s,"neon-rush").ok,false,"não cobra duas vezes");
  assert.equal(gpuGameHourlyRate(s,0),s.pricePerHour,"PC 1 não tem GPU");
  assert.ok(gpuGameHourlyRate(s,1)>s.pricePerHour);
- assert.ok(gpuGameHourlyRate(s,1)<=annualHourlyCeiling(2025));
+ assert.ok(gpuGameHourlyRate(s,1)<=annualHourlyCeiling(2005));
  const base=sessionRevenue(s.pricePerHour,90,true);
  assert.equal(gpuGameSessionPrice(s,0,90,true),base);
  assert.ok(gpuGameSessionPrice(s,1,90,true)>base);
@@ -69,18 +69,25 @@ test("licença consome dinheiro uma vez e só atende PCs com GPU e Windows adequ
  assert.deepEqual(parseImportedSave(serializeSave(s)).licensedGpuGames,["neon-rush"]);
 });
 test("níveis adicionais exigem GPU/Windows; título bloqueado não gera licença",()=>{
- const s=setup(2025,0);
+ const s=setup(2005,0);
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,false);
- year(s,2027);
+ year(s,2009);
+ assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,false,"GPU e Windows precisam de atualização");
+ accept(buyPlatform(s,0,"platform08"),"plataforma 2008");
+ accept(buyGpu(s,0,"gpu09"),"GPU 2009");
+ accept(licenseWindows(s,0,"win7"),"Windows 7");
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,true);
- accept(licenseGpuGame(s,"circuito-competitivo"),"2027");
+ accept(licenseGpuGame(s,"circuito-competitivo"),"2009");
  const quote=quoteGpuGame(s,"arena-do-futuro");
  assert.equal(quote.ok,false);
- year(s,2030);
+ year(s,2013);
+ assert.equal(quoteGpuGame(s,"arena-do-futuro").ok,false,"GPU 2009 não basta");
+ accept(buyPlatform(s,0,"platform12"),"plataforma 2012");
+ accept(buyGpu(s,0,"gpu13"),"GPU 2013");
  assert.equal(quoteGpuGame(s,"arena-do-futuro").ok,true);
- accept(licenseGpuGame(s,"arena-do-futuro"),"2030");
+ accept(licenseGpuGame(s,"arena-do-futuro"),"2013");
  assert.ok(gpuGameHourlyRate(s,0)>=s.pricePerHour);
- assert.ok(gpuGameHourlyRate(s,0)<=annualHourlyCeiling(2030));
+ assert.ok(gpuGameHourlyRate(s,0)<=annualHourlyCeiling(2013));
  assert.equal(s.licensedGpuGames.length,2);
  const noGpu={...s,pcGpus:[null,null,null]};
  assert.equal(gpuGameHourlyRate(noGpu,0),s.pricePerHour,"licença salva não torna GPU opcional");
@@ -100,16 +107,16 @@ test("saves antigos continuam válidos; IDs duplicados, falsos e de anos futuros
  s.customers=[{id:1,x:0,y:0,stage:"arriving",target:{x:0,y:0},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,gpuGamer:"yes"}];
  assert.equal(isValidSave(s),false,"rejeitar flags inválidas no save");
 });
-test("perfil de cliente é determinístico e só começa em 2025",()=>{
+test("perfil de cliente é determinístico e só começa em 2005",()=>{
  const s=createGame(7,"historical");
  assert.equal(wantsGpuGame(s,4),false);
- year(s,2025);
+ year(s,2005);
  assert.equal(wantsGpuGame(s,4),true);
  assert.equal(wantsGpuGame(s,5),false);
- const classic=createGame(7);year(classic,2030);
+ const classic=createGame(7);year(classic,2013);
  assert.equal(wantsGpuGame(classic,4),false);
 });
-test("interface mostra jogos 2025+ na aba de licenças com motivos e bloqueios",()=>{
+test("interface mostra jogos 2005+ na aba de licenças com motivos e bloqueios",()=>{
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
  const ts=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.ok(html.includes('id="gpu-game-catalog"'));
