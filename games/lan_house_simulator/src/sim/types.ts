@@ -53,6 +53,10 @@ export interface GameState {
   supplierTier?: 1 | 2;
   /** Dia da última campanha; compatível com saves antigos. */
   promotionDay?: number;
+  /** Versão do Windows por estação, independente do upgrade de hardware. */
+  pcWindows?: Array<"win98"|"win2000"|"winxp"|"winvista">;
+  /** Licenças pagas por PC; saves anteriores mantêm o Windows 98 preinstalado. */
+  pcWindowsLicenses?: boolean[];
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
