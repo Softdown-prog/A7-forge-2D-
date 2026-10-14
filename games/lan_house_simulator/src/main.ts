@@ -580,7 +580,8 @@ function renderUI():void {
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". A energia aumenta com PCs instalados, hardware e uso.");
   setText("price", "R$ "+game.pricePerHour+"/h");
   const priceInsight=hourlyPriceInsight(game);
-  setText("price-demand-insight","Procura relativa pelo modelo: "+priceInsight.relativeDemandPercent+"% (R$ 12/h = 100%).");
+  const priceDemandLabel=priceInsight.relativeDemandPercent===0?"menos de 1%":priceInsight.relativeDemandPercent+"%";
+  setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
   setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
   setText("price-caution",priceInsight.caution);
   if(retailControls){
