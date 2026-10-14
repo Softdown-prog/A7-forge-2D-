@@ -33,10 +33,19 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Botões desativados não produzem o clique; pagamento mantém seu som distinto.
 - Original Git blob `66cedc5c95c375d880a9d55390a1e95459c36919`.
 
+## Teclado autoral aprovado — V3 (14/10/2026)
+
+- As gravações autorais `te1.m4a`, `t2.m4a`, `t3.m4a` continuam preservadas em `assets/Convert/`.
+- Trechos de 3,3 segundos aprovados pelo criador estão agora em `assets/audio/keyboard_te1.ogg`, `keyboard_t2.ogg`, `keyboard_t3.ogg` (OGG Vorbis mono, 48 kHz); promoção reproduzível pelo workflow `lan-house-promote-keyboard.yml` a partir das gravações originais e do A7 Audio Lab.
+- `src/audio/soundscape.ts` alterna deterministicamente te1 → t2 → t3 entre inícios de sessão, sem loop nem superposição do mesmo efeito.
+- Ganhos em um único mixer Web Audio: teclado `0.040`, mouse `0.105`, venda `0.15`, pagamento `0.24`. Durante cliques e pagamentos, o teclado é temporariamente atenuado para preservar a hierarquia da mistura sonora de Tycoon.
+- Se algum arquivo falhar, usa os restantes; sem nenhum OGG disponível, retorna à síntese procedural anterior.
+- Desligar sons, sair para o menu e entrar em modo de construção interrompem a digitação. Mouse e dinheiro permanecem inalterados.
+
 ## Mixagem de interface, caixa e teclado — V2
 
 - `src/audio/soundscape.ts` centraliza o `AudioContext`, pré-decodifica os dois arquivos OGG originais e usa um único listener para botões (inclusive controles gerados dinamicamente). Não recria `HTMLAudioElement` a cada clique; teclado e caixa usam o mesmo relógio de áudio.
 - Prioridade de volume: teclado baixo, clique discreto, dinheiro de venda moderado e pagamento um pouco mais audível. Não amplificar junto múltiplas entradas no mesmo instante.
 - `s.keyboardEffects` é um evento transitório emitido **uma vez** na transição `sitting → using`, e drenado pelo runtime. Teclas procedurais de ruído suavizado por aproximadamente 3,5 segundos, sem loop ou acesso ao ponteiro/mouse.
 - Modo de compra/organização e menu interrompem o teclado; o alternador de efeitos sonoros também o silencia. Respeita autoplay: somente habilita saída por gesto do usuário.
-- As gravações aprovadas `mouse_click_002.ogg` e `money_income_01.ogg` continuam intactas. O som de lata reprovado continua desligado. O som procedural de teclado é provisório e deve passar por aprovação auditiva do criador.
+- As gravações aprovadas `mouse_click_002.ogg` e `money_income_01.ogg` continuam intactas. O som de lata reprovado continua desligado. As gravações autorais tratadas substituem o efeito padrão; a receita procedural continua como fallback offline.
