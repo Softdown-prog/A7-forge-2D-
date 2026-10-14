@@ -359,6 +359,14 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Cobrir apresentação, soleira, assentos, reset, remoção, paredes, funcionários e determinismo com sete testes; executar os 160 testes da versão conjunta.
 - [ ] Medir em aparelho móvel físico e salões máximos antes de prometer 60 FPS em todos os casos.
 
+## Volume dos personagens no Canvas 2D — 14/10/2026
+- [x] Arredondar tronco, ombros e quadril; engrossar braços, pernas e mãos com iluminação de superfície.
+- [x] Substituir a compressão horizontal dos perfis por silhueta própria e sobreposição do braço próximo.
+- [x] Arredondar nuca e sombrear cabeça/queixo, preservando rostos, figurinos, altura e âncoras de chão/assento.
+- [x] Integrar ao desenho real de clientes e dono; ajustar área de clique do dono e manter simulação/saves intactos.
+- [x] Inspecionar 336 combinações de figurino, direção, pose e transição no Chromium; adicionar pranchas e verificação ao worker de cena.
+- [ ] Aprovação artística com o criador e inspeção em aparelho móvel físico.
+
 ## Retorno do hardware moderno em campanhas de longo prazo — 14/10/2026
 - [x] Executar 36 campanhas de 120 dias em 2011 e 2013, com três sementes, R$ 18/22/24 por hora, cinco PCs e os mesmos contratos/rede em cada par.
 - [x] Adquirir por APIs do jogo o hardware nível 3 e placas PixelForce 560/770 nos PCs 4 e 5; medir desgaste, serviços, estoque, energia, ocupação, receita, atendimentos, VIPs e reputação sem fabricar valores.

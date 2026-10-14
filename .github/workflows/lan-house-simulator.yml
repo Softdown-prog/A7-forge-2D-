@@ -58,6 +58,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_rendering.mjs out/validation
+      - name: Inspect actor directions, costumes and pose transitions
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_actor_volume.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
