@@ -77,8 +77,12 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   ctx.lineJoin="round";
   ctx.lineCap="round";
 
-  // A sombra fica presa aos pés (ground anchor), sem saltos na transição de pose.
-  ell(ctx,0,0,14,5.1,"rgba(25,31,46,0.26)");
+  // Ground anchor: o corpo oscila na caminhada, a sombra permanece no piso.
+  // A escala de câmera é aplicada depois; bob é em unidades locais do ator.
+  ctx.save();ctx.translate(0,bob);
+  ell(ctx,0,0,14,5.1,"rgba(25,31,46,0.25)");
+  ell(ctx,0,1.2,9.4,2.5,"rgba(24,31,45,0.12)");
+  ctx.restore();
 
   // Silhuetas de costas, perfil e frente são distintas: não apenas um flip.
   // Capa e acessórios que ficam atrás do corpo.
@@ -101,7 +105,15 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const toeX=side*7+swing+side*seated*12;
     segment(ctx,side*5,legY,kneeX,kneeY,8,style.pants);
     segment(ctx,kneeX,kneeY,toeX,footY-seated*4,7,style.pants);
-    ell(ctx,toeX+2,footY-seated*4,6.3,3.3,a.kind==="rabbit"?"#E5D5D5":"#283647","#1D2736");
+    // Costura de joelho e volume de tecido: visíveis sem aumentar a silhueta.
+    ctx.save();ctx.globalAlpha=.38;
+    segment(ctx,kneeX-1.5,kneeY+1,kneeX+2.1,kneeY+2,1.1,style.highlight);
+    ctx.restore();
+    const shoe=a.kind==="rabbit"?"#E5D5D5":"#283647";
+    ell(ctx,toeX+2,footY-seated*4,6.3,3.3,shoe,"#1D2736");
+    // Sola clara de baixo contraste, pequena o bastante para não parecer tênis brilhante.
+    segment(ctx,toeX-1,footY-seated*4+1.8,toeX+6,footY-seated*4+1.9,1.0,
+      a.kind==="rabbit"?"#B5A7AC":"#788597");
   }
 
   // Braços de duas seções: na cadeira, as mãos se aproximam do teclado.
@@ -114,6 +126,10 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const handY=-24+headShift-seated*6+typing*side;
     segment(ctx,ax,ay,elbowX,elbowY,8,style.dark);
     segment(ctx,elbowX,elbowY,handX,handY,7,style.shirt);
+    // Borda da manga e luz discreta: o braço continua legível de costas.
+    ctx.save();ctx.globalAlpha=.46;
+    segment(ctx,elbowX,elbowY+1,elbowX+(handX-elbowX)*.32,elbowY+(handY-elbowY)*.32,1.3,style.highlight);
+    ctx.restore();
     ell(ctx,handX,handY,4.1,4.4,style.skin,"#785C59");
   }
 
@@ -123,6 +139,14 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     style.dark);
   shape(ctx,[[-10,-49+headShift],[-3,-52+headShift],[11,-49+headShift],
     [10,-30+headShift],[7,-24+headShift],[-9,-26+headShift]],style.shirt);
+  // Dois volumes de tecido, sem novas texturas que se percam no tamanho do jogo.
+  ctx.save();ctx.globalAlpha=.45;
+  shape(ctx,[[-9,-46+headShift],[-5,-47+headShift],[-4,-31+headShift],
+    [-8,-28+headShift]],style.dark,style.dark);
+  segment(ctx,6,-47+headShift,8,-34+headShift,2,style.highlight);
+  ctx.restore();
+  // Barra da roupa amarra a cintura e separa visualmente torso e calça.
+  segment(ctx,-8,-25+headShift,8,-25+headShift,2,style.dark);
   if(!back)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
     [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
   // Gola e botões têm leitura em resolução baixa.
@@ -152,10 +176,14 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     ell(ctx,0,-41+headShift,3,3,"#BA5971");
   }
 
-  // Pescoço e cabeça com contorno e sombra lateral.
+  // Pescoço e cabeça: sombra do queixo, luz lateral e volume em vez de disco plano.
   segment(ctx,-1,-53+headShift,0,-57+headShift,6,style.skin);
   ell(ctx,lean,-67+headShift,12.0,12.3,back?style.hair:style.skin,"#6F5962");
-  ell(ctx,lean+6.0,-68+headShift,3.7,8.3,"rgba(109,64,56,0.13)");
+  if(!back){
+    ell(ctx,lean+7,-67+headShift,3.2,8.4,"rgba(103,55,52,0.16)");
+    ell(ctx,lean-6.6,-70+headShift,2.4,5.2,"rgba(255,244,216,0.19)");
+    ell(ctx,lean,-57.4+headShift,5.0,1.45,"rgba(98,55,57,0.10)");
+  }
 
   // Penteado/silhueta específica. Formas grandes, sem texturas micro-pixel.
   if(a.kind==="rabbit"){
@@ -188,6 +216,9 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
       [4,-75+headShift],[9,-78+headShift],[12,-74+headShift],
       [10,-70+headShift],[5,-74+headShift],[-5,-72+headShift],[-12,-70+headShift]],
       style.hair,style.hair);
+    ctx.save();ctx.globalAlpha=.18;
+    segment(ctx,-8,-78+headShift,-2,-79+headShift,1.5,style.highlight);
+    ctx.restore();
     if(a.kind==="owner"){
       segment(ctx,-11,-73+headShift,-8,-63+headShift,2,style.hair);
     }
@@ -201,12 +232,17 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
       ell(ctx,0,-61+headShift,5,3,style.highlight);
     }
-    // Costura central visível na jaqueta vista de trás.
-    segment(ctx,0,-48+headShift,0,-30+headShift,1.8,style.highlight);
+    // Costura e dobra nas costas: sem rosto aparecendo na vista do monitor.
+    ctx.save();ctx.globalAlpha=.68;
+    segment(ctx,0,-48+headShift,0,-30+headShift,1.5,style.highlight);
+    segment(ctx,-6,-32+headShift,-3,-27+headShift,1.1,style.dark);
+    ctx.restore();
   } else if(sideways){
     // Perfil de verdade: uma orelha, apenas um olho e nariz projetado.
     ell(ctx,7+lean,-65+headShift,4.2,6,style.skin,"#785C59");
     ell(ctx,4+lean,-68+headShift,1.7,2.1,"#263348");
+    ell(ctx,4.4+lean,-68.8+headShift,.65,.7,"#F6E4C7");
+    segment(ctx,2+lean,-72+headShift,7+lean,-72.8+headShift,1,style.hair);
     shape(ctx,[[10+lean,-65+headShift],[15+lean,-62+headShift],
       [10+lean,-60+headShift]],style.skin,"#785C59");
     segment(ctx,4+lean,-57+headShift,9+lean,-57+headShift,1.1,"#784F51");
@@ -214,6 +250,13 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   // Expressão legível; olhos não mudam entre quadros.
   ell(ctx,-4.3+lean,-66.8+headShift,1.65,2.0,"#263348");
   ell(ctx,5.2+lean,-66.8+headShift,1.65,2.0,"#263348");
+  // Olhos com pequeno brilho fixo e sobrancelhas sutis (sem piscar aleatório).
+  ell(ctx,-4.8+lean,-67.7+headShift,.56,.64,"#F6E7D0");
+  ell(ctx,4.7+lean,-67.7+headShift,.56,.64,"#F6E7D0");
+  ctx.save();ctx.globalAlpha=.72;
+  segment(ctx,-7+lean,-71.1+headShift,-2+lean,-71.8+headShift,1,style.hair);
+  segment(ctx,3+lean,-71.8+headShift,8+lean,-71.1+headShift,1,style.hair);
+  ctx.restore();
   if(a.kind==="clown")ell(ctx,lean+.5,-63.8+headShift,4.2,3.1,"#D64C5B");
   else if(a.kind==="mouse-mascot")ell(ctx,lean+.5,-63.3+headShift,3.0,2.7,"#B47B83");
   else ell(ctx,lean+.4,-63.4+headShift,1.8,1.9,"#A66A64");
