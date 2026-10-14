@@ -5,6 +5,7 @@ import { validFurniturePlacements } from "./shop.js";
 import {validRoomExtensions} from "./room.js";
 import {validInteriorWalls,validInteriorDoors} from "./walls.js";
 import {validAnnexComputers} from "./stations.js";
+import {MIN_HOURLY_PRICE} from "./historicalEconomy.js";
 export const SAVE_EXPORT_FORMAT="softdown-lan-house-save";
 export interface SaveEnvelope { format:typeof SAVE_EXPORT_FORMAT; exportVersion:1; exportedAt:string; state:GameState }
 /** Exclui filas visuais efêmeras. O estado econômico e das estações
@@ -27,10 +28,15 @@ export function parseImportedSave(input:string):GameState {
  if(e.format!==SAVE_EXPORT_FORMAT||e.exportVersion!==1)throw Error("Arquivo incompatível com Lan House Simulator.");
  if(!isValidSave(e.state))throw Error("A partida contém dados inválidos.");
  const state=e.state;
+ const historical=state.economyVersion===2;
+ const validCents=(value:number)=>Number.isFinite(value)&&
+  Math.abs(value*100-Math.round(value*100))<1e-6;
  if(!Number.isInteger(state.totalMinutes)||state.totalMinutes<0||state.totalMinutes>1e9 ||
-    !Number.isInteger(state.cash)||Math.abs(state.cash)>1e9||
+    Math.abs(state.cash)>1e9||(historical?!validCents(state.cash):!Number.isInteger(state.cash))||
     !Number.isInteger(state.rng)||state.rng<0||
-    !Number.isInteger(state.pricePerHour)||state.pricePerHour<4||state.pricePerHour>40||
+    (historical?(!validCents(state.pricePerHour)||state.pricePerHour<MIN_HOURLY_PRICE||
+      state.pricePerHour>40):(!Number.isInteger(state.pricePerHour)||
+      state.pricePerHour<4||state.pricePerHour>40))||
     !Number.isInteger(state.internetTier)||state.internetTier<1||state.internetTier>3||
     !Number.isInteger(state.expansionLevel)||state.expansionLevel<0||state.expansionLevel>2||
     !Array.isArray(state.customers)||state.customers.length>200||

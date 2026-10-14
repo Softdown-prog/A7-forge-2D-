@@ -683,7 +683,7 @@ function renderUI():void {
   const scenarios=hourlyPriceScenarios(game);
   const scenarioLine=(delta:-2|-0.5|0|0.5|2,title:string):string=>{
     const candidate=scenarios.find(p=>p.delta===delta);
-    return candidate?title+" · R$ "+candidate.price.toFixed(2)+"/h · procura "+candidate.demandIndex+
+    return candidate?title+" · R$ "+(historical?candidate.price.toFixed(2):String(candidate.price))+"/h · procura "+candidate.demandIndex+
       "% · receita bruta potencial "+candidate.grossIntakeIndex+"%":
       title+" · fora do teto de "+inReais(max)+"/h.";
   };
