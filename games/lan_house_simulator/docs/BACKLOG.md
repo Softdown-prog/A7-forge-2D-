@@ -383,6 +383,15 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Executar 173 testes e auditoria; gerar pranchas e validar compra, mudança de posição e expansão no Chromium/CI.
 - [ ] Aprovação artística do criador e inspeção dos textos em telefone físico; detalhes em `docs/POSTER_ART.md`.
 
+## Refinamento dos computadores e estações — 14/10/2026
+- [x] Refinar CRT, gabinete, teclado, mouse, cabos, mesa e cadeira no Canvas, harmonizados com a identidade do salão.
+- [x] Conservar níveis reais de hardware/GPU e representar rede, uso e manutenção conforme o estado do jogo.
+- [x] Preservar âncoras de mesa, assento, teclado e mãos; manter reservas, rotas e saves intactos.
+- [x] Reaproveitar sprites de equipamentos com limite de memória e atualização por estado, sem congelar personagens ou overlay das mãos.
+- [x] Validar 144 combinações de zoom/hardware/estado/animação/opacidade e adicionar a inspeção ao worker de cena.
+- [x] Executar 179 testes e auditoria; gerar comparação, pose sentada e capturas desktop/mobile emulado; detalhes em `docs/COMPUTER_ART.md`.
+- [ ] Aprovação artística do criador e inspeção de toque/legibilidade em aparelho móvel físico.
+
 ## Retorno do hardware moderno em campanhas de longo prazo — 14/10/2026
 - [x] Executar 36 campanhas de 120 dias em 2011 e 2013, com três sementes, R$ 18/22/24 por hora, cinco PCs e os mesmos contratos/rede em cada par.
 - [x] Adquirir por APIs do jogo o hardware nível 3 e placas PixelForce 560/770 nos PCs 4 e 5; medir desgaste, serviços, estoque, energia, ocupação, receita, atendimentos, VIPs e reputação sem fabricar valores.
