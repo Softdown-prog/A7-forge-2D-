@@ -126,6 +126,16 @@ export interface GameState {
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
   lastDecisionDay?: number;
+  /** Não permite sortear uma segunda vistoria elétrica na mesma partida. */
+  electricalInspectionSeen?: boolean;
+  /** Adequação da instalação concluída por profissional. */
+  electricalWiringRegularized?: boolean;
+  /** Dia limite contado a partir do pedido de prazo, não é data fixa de evento. */
+  electricalDeadlineDay?: number;
+  /** A prorrogação é única e opcional. */
+  electricalExtensionUsed?: boolean;
+  /** Autuação única, sem multas diárias repetidas. */
+  electricalInspectionFineApplied?: boolean;
   contentFilterInstalled?: boolean;
   windowsNoticeFine?: boolean;
   copyrightNoticeFine?: boolean;

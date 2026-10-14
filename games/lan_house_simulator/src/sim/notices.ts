@@ -1,6 +1,7 @@
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
+import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|DecisionId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
@@ -21,6 +22,21 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
 }
 export function reviewNotices(s:GameState):void{
  const d=day(s);
+ // Notificação única: a multa por prazo vencido não substitui regularização.
+ if(s.electricalDeadlineDay!==undefined&&d>s.electricalDeadlineDay&&
+    !s.electricalWiringRegularized&&!s.electricalInspectionFineApplied){
+   s.electricalInspectionFineApplied=true;
+   const fine=isHistorical(s)?Math.round(22*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100:220;
+   s.cash-=fine;s.expenses+=fine;s.reputation=Math.max(10,s.reputation-3);
+   const n=s.notices?.find(n=>n.id==="electrical-inspection");
+   if(n){
+     n.severity="urgent";
+     n.body+=" O prazo expirou; foi aplicada uma autuação de R$ "+fine.toFixed(2).replace(".",",")+". A multa não substitui a adequação elétrica.";
+     n.read=false;
+   }
+   s.eventLog.unshift("D"+d+" · Bombeiros: prazo vencido, autuação elétrica de R$ "+fine.toFixed(2)+".");
+   s.eventLog.splice(14);
+ }
  if(d>=2&&!s.contentFilterInstalled)deliver(s,"safety","Proteção para menores","Menores foram vistos entrando na lan house. Contrate um técnico para instalar o filtro de conteúdo. Sem proteção, poderá haver fiscalização.");
  if(d>=3&&missingWindowsLicenses(s)>0)deliver(s,"windows","Licenças de Windows pendentes","Computadores estão funcionando sem licenças individuais. Regularize na aba Windows / Licenças. Fiscalização a partir do dia 10.");
  if(d>=5&&!s.licensedGames)deliver(s,"games","Direitos autorais dos jogos","A lan house oferece jogos comerciais sem regularizar o catálogo. Licencie os jogos no painel Serviços. Prazo: dia 12.");

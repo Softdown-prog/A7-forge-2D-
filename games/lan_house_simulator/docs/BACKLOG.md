@@ -541,3 +541,14 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Verificar que, em 2012, três plataformas modernas com Windows 7 resultaram em **+R$ 11.205,47** versus legado em oito meses, enquanto GPU adicional nos 3 PCs **reduziu R$ 6.097,37** versus três plataformas sem GPU.
 - [x] Garantir compatibilidade socket/DDR/IDE/Windows e saves, introduzir `npm run audit:staged-hardware` e workflow manual; documentar `docs/STAGED_HARDWARE_ROI_2026.md`. Não modificar o balanceamento de hardware só para forçar ROI.
 - [ ] Testar compras mensais com caixa realmente acumulado, uma GPU no PC de maior atendimento, 5/7 estações e diferentes valores de tarifa em 2005–2024 antes de oferecer dicas automáticas de investimento.
+
+## Evento esporádico — Bombeiros e rede elétrica (14/10/2026)
+
+- [x] Adicionar à carta de eventos uma vistoria única dos Bombeiros sobre cabos de rede e energia, extensões e adaptadores sobrecarregados, sem data fixa no calendário da campanha.
+- [x] Oferecer regularização completa por profissional, adequação essencial segura ou prorrogação única de oito dias sobre o prazo inicial de oito dias, com custos reais ajustados aos modos clássico/histórico.
+- [x] Se o prazo vencer sem regularização, aplicar autuação única e perda de reputação; a mesma carta continua aberta para regularizar e não reaparece como novo evento.
+- [x] Persistir vistoria, regularização, prazo e multa nos saves opcionais, preservando saves anteriores; apresentar botões e prazo no envelope do runtime.
+- [x] Adicionar regressões de duplicação, valores, prazo, serialização, modo histórico e não alteração do RNG de clientes.
+- [ ] Inspecionar interface da carta em navegador real (desktop/mobile) e validar testes no CI antes de promover a main.
+
+**Observação:** valores e consequências são fictícios para game design e não representam leis específicas de prevenção de incêndio de qualquer cidade ou estado.
