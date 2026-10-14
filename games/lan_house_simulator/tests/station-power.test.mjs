@@ -60,3 +60,20 @@ test("todos PCs desligados continuam com gastos fixos do salão, mas não consom
  s.pcPoweredOff=[false,true,"inválido"];
  assert.equal(isValidSave(s),false);
 });
+
+test("estado desligado acompanha PC do anexo quando PCs originais são adicionados",async()=>{
+ const {expandDirection}=await import("../dist/js/sim/room.js");
+ const {installAnnexComputer}=await import("../dist/js/sim/stations.js");
+ const {buyComputer}=await import("../dist/js/sim/shop.js");
+ const s=createGame();s.cash=10000;
+ assert.equal(expandDirection(s,"east").ok,true);
+ assert.equal(installAnnexComputer(s,"pc-east-1").ok,true);
+ assert.equal(pcCount(s),4);
+ assert.equal(toggleStationPower(s,3).ok,true);
+ assert.equal(stationPoweredOn(s,3),false);
+ assert.equal(buyComputer(s).ok,true);
+ assert.equal(pcCount(s),5);
+ assert.equal(stationPoweredOn(s,3),true,"novo PC fica ligado");
+ assert.equal(stationPoweredOn(s,4),false,"estado do anexo preservado");
+ assert.equal(stationPoweredOn(parseImportedSave(serializeSave(s)),4),false);
+});

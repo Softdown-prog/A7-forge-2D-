@@ -1,4 +1,5 @@
 import type {EditableObject} from "./editableObjects.js";
+import {stationPoweredOn} from "./stationPower.js";
 import {layoutGoals} from "./editableObjects.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 import {entrance} from "./engine.js";
@@ -53,6 +54,11 @@ export function buyComputer(s:GameState):Result{
  (s.pcWindows??=[]).splice(count,0,"win98");
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
  (s.pcGpus??=[]).splice(count,0,null);
+ // Um PC original inserido antes dos anexos também desloca seus estados de energia.
+ if(s.pcPoweredOff){
+  const power=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>!stationPoweredOn(s,i));
+  power.splice(count,0,false);s.pcPoweredOff=power;
+ }
  if(s.stationLedger){
   while(s.stationLedger.length<count+(s.annexPcs?.length??0))
    s.stationLedger.push(emptyStationAccount());
