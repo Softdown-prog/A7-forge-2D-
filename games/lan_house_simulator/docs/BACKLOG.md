@@ -411,3 +411,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Proteger limites de preço, cobrança no minuto da virada, controle manual e importação/exportação de saves com testes de regressão.
 - [ ] Executar campanhas longas de reajuste dinâmico e cenários alternativos de inflação, cinco versus sete ou mais PCs, antes de ajustar o balanceamento definitivo.
 - [ ] Conferir a legibilidade dos indicadores em telefone físico e inspeção humana.
+
+## Auditoria de tarifas na virada de 2011 para 2012 — 14/10/2026
+- [x] Executar 16 campanhas contínuas de 120 dias, duas sementes, cinco e sete PCs, mantendo R$ 18/22 fixos ou alternando entre eles na virada; usar somente APIs reais do motor.
+- [x] Medir caixa, vendas combinadas de bebidas/alimentos, atendimento, ocupação, custos, reputação, despesas e validação de save; registrar em `docs/DYNAMIC_PRICING_YEAR_BRIDGE_2026.md`.
+- [x] Observar resultado líquido médio maior com R$ 18 fixos nas configurações testadas: R$ 43.814,50 com cinco PCs e R$ 42.860,50 com sete; não tratar esses preços como equilíbrio universal.
+- [x] Eliminar um falso negativo intermitente do worker de cena recalculando as coordenadas de clique depois da captura que pode rolar a viewport; preservar inspeção com mouse real no Chromium.
+- [ ] Validar 360+ dias, rede/lotação elevadas e decisões mensais de tarifa; estudar inflação de custos além da eletricidade antes de alterar preços de equilíbrio.
