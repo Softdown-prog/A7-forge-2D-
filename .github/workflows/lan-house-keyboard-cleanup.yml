@@ -13,6 +13,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Install FFmpeg and FFprobe
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
       - name: Clean three recorded keyboard takes with A7 Audio Lab
         shell: bash
         run: |
