@@ -16,7 +16,7 @@ try{
  page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
  const result=await page.evaluate(async before=>{
-  const [{drawPosterPlate,POSTER_KINDS},{SceneRenderer},{createGame},{placeFurniture,relocateFurniture},{expandDirection}]=await Promise.all([
+  const [{drawPosterPlate,POSTER_KINDS},{SceneRenderer},{createGame},{placeFurniture,relocateFurniture,availablePlacementSlots},{expandDirection}]=await Promise.all([
    import("./js/render/posterArt.js"),import("./js/render/scene.js"),import("./js/sim/engine.js"),
    import("./js/sim/shop.js"),import("./js/sim/room.js")]);
   let OldRenderer;
@@ -49,7 +49,15 @@ try{
   c.drawImage(now,530,30,300,180,660,510,600,360);
   if(JSON.stringify(s)!==stateBefore)throw Error("Desenho alterou o save");
   // Preserve paid placements through expansion/relocation and save-compatible data.
-  if(!expandDirection(s,"north").ok||!relocateFurniture(s,"wall-1","wall-north-1").ok)throw Error("Expansão/realocação não concluída");
+  const expandedRoom=expandDirection(s,"north");
+  if(!expandedRoom.ok)throw Error("Expansão norte não concluída: "+expandedRoom.message);
+  // A nova planta tem pôsteres originais e paredes bloqueadas; usar uma
+  // posição REALMENTE disponível no salão expandido, não um ID antigo fixo.
+  const slots=availablePlacementSlots(s,"poster");
+  const freeSlot=slots.find(slot=>slot.id.startsWith("wall-north-"))??slots[0];
+  if(!freeSlot)throw Error("Nenhuma parede livre para realocar o pôster");
+  const move=relocateFurniture(s,"wall-1",freeSlot.id);
+  if(!move.ok)throw Error("Realocação não concluída: "+move.message);
   const expanded=surface(1000,610);new SceneRenderer(expanded.getContext("2d")).draw(s,2);
   return {gallery:gallery.toDataURL(),comparison:comparison.toDataURL(),scene:now.toDataURL(),expanded:expanded.toDataURL(),
    checks:{designs:POSTER_KINDS.length,paidPosters:s.furniture.poster,placement:s.furniturePlacements[0].slotId,unchangedState:true}};
