@@ -25,6 +25,15 @@ test("desgaste parcial não manda clientes para máquinas distantes sem upgrade"
  s.pcWear[0]=100;
  assert.equal(chooseAvailablePc(s,c),1);
 });
+test("VIP mantém primeira estação livre se todas possuem qualidade equivalente",()=>{
+ const s=createGame();
+ const customer=waiting(12,true);
+ customer.x=7.4;customer.y=3.5; // Perto do PC 3, mas sem upgrade real.
+ assert.equal(chooseAvailablePc(s,customer),0);
+ const before=s.rng;
+ assert.equal(chooseAvailablePc(s,customer),0);
+ assert.equal(s.rng,before);
+});
 test("VIP prefere PC 3 atualizado, mesmo que esteja mais distante",()=>{
  const s=createGame();s.cash=10000;s.totalMinutes=5*360*DAY_MINUTES;
  const c=waiting(7,true);
