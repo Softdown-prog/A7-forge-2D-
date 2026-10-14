@@ -78,6 +78,9 @@ export interface GameState {
   furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string;rotation?:0|1|2|3}>;
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
+  repairJobs?: import("./services.js").RepairJob[];
+  binFill?: number[];
+  cleaningJob?: import("./services.js").CleaningJob;
   inventory: Inventory;
   customers: Customer[];
   nextCustomerId: number;
