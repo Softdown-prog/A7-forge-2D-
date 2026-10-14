@@ -110,3 +110,17 @@ footer{text-align:center;color:#a9b9d0;font-size:12px;padding:14px}
 .promotion-panel p{margin:7px 0;color:#dbece9}
 .promotion-panel button{margin-top:5px;max-width:100%;white-space:normal}
 .promotion-panel button:disabled{opacity:.6;cursor:not-allowed;filter:none}
+
+/* GPU gallery: detailed authored SVG boards instead of heavy 3D textures. */
+.gpu-stations{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 15px}
+.gpu-station{background:#22394b;color:#dfeadf;border:1px solid #77929b;border-radius:5px;padding:7px 10px;font-weight:700;cursor:pointer}
+.gpu-station.selected{background:#4e715c;border-color:#efd29c;box-shadow:0 0 0 2px #b9bd8a55 inset}
+.gpu-catalog{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:12px}
+.gpu-card{overflow:hidden;border:1px solid #637987;border-radius:8px;background:linear-gradient(150deg,#283d4b,#182938);box-shadow:inset 0 1px #ffffff19,0 4px 12px #0004;position:relative}
+.gpu-card img{display:block;width:100%;height:130px;object-fit:contain;background:radial-gradient(ellipse at 40% 40%,#344b52,#10202a);padding:7px;box-sizing:border-box}
+.gpu-info{display:flex;flex-direction:column;gap:7px;padding:11px}
+.gpu-info strong{font-size:13px;color:#fae6c0}
+.gpu-info small{font-size:11px;color:#bed1d3;line-height:1.5}
+.gpu-info button{font-size:12px;align-self:flex-start}
+.gpu-card.gpu-locked img{filter:grayscale(.75) brightness(.72)}
+.gpu-card.gpu-locked:after{content:"🔒";position:absolute;top:9px;right:10px;font-size:18px;background:#1a2e41cc;border:1px solid #86919f;border-radius:7px;padding:5px}
