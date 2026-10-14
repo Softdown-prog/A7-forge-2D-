@@ -25,6 +25,7 @@ import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
+import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
@@ -176,6 +177,14 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
+ // Jogadores de títulos 2005+ buscam primeiro um PC capaz de rodá-los.
+ // A fila e a escolha antiga não mudam para os demais visitantes.
+ if(c.gpuGamer){
+  for(let i=0;i<pcCount(s);i++){
+   if(isReserved(s,i)||pcBroken(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
+   if(navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
+  }
+ }
  for(let i=0;i<pcCount(s);i++){
   if(isReserved(s,i)||pcBroken(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
@@ -266,7 +275,9 @@ function spawn(s: GameState): void {
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: counterQueueSlot(queueIndex,s),queueIndex,
-    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
+    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1),
+    gpuGamer:wantsGpuGame(s,s.nextCustomerId-1),
+    pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
     (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
@@ -303,11 +314,16 @@ function tryServe(s: GameState, c: Customer): void {
   c.queueIndex=undefined;
   c.stage="to_pc";
   s.counterBusyUntil=s.totalMinutes+3;
-  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const regular=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
+  const paid=s.economyVersion===2
+   ?gpuGameSessionPrice(s,index,c.sessionMinutes,!!c.gpuGamer)
+   :regular;
+  c.gpuGameCharged=paid>regular;
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
-  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
+  addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
+   (c.gpuGameCharged?" Sessão de jogo com GPU.":""));
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
@@ -476,7 +492,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -484,7 +500,7 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
