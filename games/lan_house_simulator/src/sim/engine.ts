@@ -16,6 +16,7 @@ import {scheduleDecisions} from "./decisions.js";
 import {vipArrivalEligible,vipReputationAdjustment} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
+import {crowdRoute} from "./crowdNavigation.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -82,7 +83,10 @@ export function canCustomerOccupy(s:GameState,c:Customer,at:Point):boolean {
 function move(s:GameState,c:Customer,speed=0.38):boolean {
   const dx=c.target.x-c.x,dy=c.target.y-c.y;
   const distance=Math.hypot(dx,dy);
-  if(distance<=0.005){c.x=c.target.x;c.y=c.target.y;return true;}
+  if(distance<=0.005){
+    if(!canTraverseLocalStep(s,c,c.target)||!canCustomerOccupy(s,c,c.target))return false;
+    c.x=c.target.x;c.y=c.target.y;return true;
+  }
   c.facing=directionFromDelta(dx,dy,c.facing);
   // Subpassos impedem troca de lado atravessando o corpo do outro.
   const count=Math.ceil(Math.min(speed,distance)/0.10);
@@ -112,6 +116,7 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
     return false; // Caso contrário, aguardar o outro passar.
   }
   if(Math.hypot(c.target.x-c.x,c.target.y-c.y)<=0.005){
+    if(!canTraverseLocalStep(s,c,c.target)||!canCustomerOccupy(s,c,c.target))return false;
     c.x=c.target.x;c.y=c.target.y;return true;
   }
   return false;
@@ -123,7 +128,17 @@ function setTravel(s:GameState,c:Customer,destination:Point):boolean{
  return true;
 }
 function moveRoute(s:GameState,c: Customer): boolean {
-  if (!move(s,c)) return false;
+  const before=Math.hypot(c.x-c.target.x,c.y-c.target.y);
+  if (!move(s,c)) {
+    const after=Math.hypot(c.x-c.target.x,c.y-c.target.y);
+    // Um desvio local pode ficar oscilando diante de uma fila compacta.
+    // Replanejar até o destino final permite contornar também o waypoint ocupado.
+    if(after>=before-.005){
+      const path=crowdRoute(s,c,c.route?.at(-1)??c.target);
+      if(path?.length){c.target=path[0]!;c.route=path.slice(1);}
+    }
+    return false;
+  }
   const next = c.route?.shift();
   if (next) { c.target = next; return false; }
   return true;
@@ -169,15 +184,22 @@ function refreshCounterQueue(s:GameState):void {
 
 /** A saída lateral do caixa não cruza a coluna de pessoas aguardando. */
 function leaveCounterForPc(s:GameState,c:Customer,destination:Point):boolean {
-  if(s.interiorWalls?.length)return setTravel(s,c,destination);
   const outside={x:2.46,y:COUNTER_QUEUE.y},aisle={x:2.46,y:AISLE_Y};
-  c.target=outside;c.route=[aisle,...hallwayRoute(aisle,destination)];
+  // Uma divisória em outro cômodo não deve fazer o cliente pago retornar pela
+  // coluna da fila. Usar a saída lateral se os dois segmentos forem livres.
+  const onward=navigableRoute(s,aisle,destination);
+  if(!onward?.length||!canTraverseLocalStep(s,c,outside)||
+     !canTraverseLocalStep(s,outside,aisle))return setTravel(s,c,destination);
+  c.target=outside;c.route=[aisle,...onward];
   return true;
 }
 function spawn(s: GameState): void {
   const queueIndex=counterQueueCustomers(s).length;
   if(queueIndex>=MAX_COUNTER_QUEUE)return;
   const e = entrance(s);
+  // Entrada e saída compartilham a soleira: não materializar um novo corpo
+  // em cima de quem está atravessando a porta.
+  if(s.customers.some(c=>Math.hypot(c.x-e.x,c.y-e.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",

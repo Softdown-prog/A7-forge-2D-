@@ -46,5 +46,62 @@ test("cliente não atravessa parede ao caminhar rumo a um waypoint obsoleto",()=
  s.customers=[incoming];
  stepGame(s,4);
  assert.ok(incoming.x<3,"subpassos devem parar na divisória fechada");
- assert.ok(incoming.x>2.78);
+ assert.ok(Math.hypot(incoming.x-2.78,incoming.y-2.5)>0.01,"pode recuar para contornar a divisória");
+});
+test("salas com três portas, fila cheia e quatro anexos mantêm circulação por seis horas",async()=>{
+ const {circulationScenario}=await import("../scripts/circulation_scenario.mjs");
+ for(const seed of [20,1998,72421]){
+  const s=circulationScenario(seed),used=new Set(),exited=new Set();
+  const initialCash=s.cash,initialRevenue=s.revenue,initialExpenses=s.expenses;
+  let peak=0;
+  for(let minute=0;minute<360;minute++){
+   const before=new Map(s.customers.map(c=>[c.id,{x:c.x,y:c.y}]));
+   stepGame(s,1);peak=Math.max(peak,s.customers.length);
+   for(const id of before.keys())if(!s.customers.some(c=>c.id===id))exited.add(id);
+   for(const c of s.customers){
+    if(c.stage==="using")used.add(c.pcIndex);
+    const p=before.get(c.id);
+    if(p)assert.equal(canTraverseLocalStep(s,p,c),true,"deslocamento não atravessa parede fechada");
+   }
+   for(let i=0;i<s.customers.length;i++)for(let j=i+1;j<s.customers.length;j++){
+    const a=s.customers[i],b=s.customers[j];
+    assert.ok(Math.hypot(a.x-b.x,a.y-b.y)>=.43-1e-6,"corpos não se sobrepõem, inclusive na entrada");
+   }
+   assert.equal(s.cash,initialCash+s.revenue-initialRevenue-(s.expenses-initialExpenses));
+  }
+  assert.deepEqual([...used].sort(),[3,4,5,6]);
+  assert.ok(peak>=12,"exercitar alta lotação");
+  assert.ok(s.served>=12,"fila deve continuar avançando após as primeiras reservas");
+  assert.ok(exited.size>=15,"clientes precisam concluir compras e sair pela porta");
+  assert.ok(s.purchases>=5);
+ }
+});
+test("emendas, quinas e fim de subpasso não abrem brechas na divisória",()=>{
+ for(const axis of ["x","y"]){
+  const s=createGame();
+  s.interiorWalls=axis==="y"?[{axis,x:3,y:2},{axis,x:3,y:3}]:
+    [{axis,x:2,y:3},{axis,x:3,y:3}];
+  const point=(normal,tangent)=>axis==="y"?{x:normal,y:tangent}:{x:tangent,y:normal};
+  for(const tangent of [2,2.5,3,3.5,4]){
+   assert.equal(canTraverseLocalStep(s,point(2.9,tangent),point(3.1,tangent)),false);
+   assert.equal(canTraverseLocalStep(s,point(2.9,tangent),point(3,tangent)),false);
+   assert.equal(canTraverseLocalStep(s,point(3.1,tangent),point(3,tangent)),false);
+  }
+  assert.equal(canTraverseLocalStep(s,point(3,2.5),point(3,3.5)),false);
+  // Instalar a porta não abre a emenda com a parede vizinha.
+  s.interiorDoors=[s.interiorWalls[0]];
+  assert.equal(canTraverseLocalStep(s,point(2.9,2.5),point(3.1,2.5)),true);
+  assert.equal(canTraverseLocalStep(s,point(2.9,3),point(3.1,3)),false);
+ }
+});
+test("ajuste final de menos de 0,005 tile também respeita paredes e outros corpos",()=>{
+ const s=createGame();s.interiorWalls=[{axis:"y",x:3,y:2}];
+ const c=fake(7,"to_pc",2.999,2.5,{x:3.001,y:2.5});c.pcIndex=2;
+ s.customers=[c];stepGame(s,1);
+ assert.ok(c.x<3);assert.equal(c.stage,"to_pc");
+ const clear=createGame();
+ const a=fake(7,"to_pc",2,2.5,{x:2.004,y:2.5});a.pcIndex=2;
+ const b=fake(8,"using",2.432,2.5);clear.customers=[a,b];
+ stepGame(clear,1);
+ assert.ok(a.x<=2);assert.equal(a.stage,"to_pc");
 });

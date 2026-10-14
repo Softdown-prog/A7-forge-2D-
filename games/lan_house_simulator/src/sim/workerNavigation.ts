@@ -3,7 +3,7 @@ import {roomBounds} from "./room.js";
 import {pcCount,pcPosition} from "./engine.js";
 import {furnitureLocations,furnitureSlots} from "./shop.js";
 import {VENDING_MACHINES} from "./layout.js";
-import {navigableRoute} from "./navigation.js";
+import {canTraverseLocalStep} from "./navigation.js";
 /** Grade para funcionários: desvios em torno de bancadas, PCs, máquinas, móveis e divisórias.
  * Pontos de partida e chegada podem estar junto aos móveis; nunca atravessa parede fechada. */
 export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
@@ -29,8 +29,7 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
   }return best;};
  const start=closest(from),finish=closest(to);if(!start||!finish)return null;
  const akey=key(...start),bkey=key(...finish),queue:[number,number][]=[start],prev=new Map<string,string>(),seen=new Set([akey]);
- const canCross=(a:Point,c:Point)=>!!navigableRoute(s,a,c)?.length &&
-  !(s.interiorWalls??[]).some(w=>!(s.interiorDoors??[]).some(d=>d.axis===w.axis&&d.x===w.x&&d.y===w.y)&&crosses(w,a,c));
+ const canCross=(a:Point,c:Point)=>canTraverseLocalStep(s,a,c);
  for(let i=0;i<queue.length&&!seen.has(bkey);i++){
   const [x,y]=queue[i]!;
   for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
@@ -45,9 +44,4 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  result.reverse();const endpoint=result.at(-1)??point(...start);
  if(clear(to)&&canCross(endpoint,to))result.push({...to});
  return result.length?result:[point(...finish)];
-}
-function crosses(w:{axis:"x"|"y";x:number;y:number},a:Point,b:Point):boolean{
- const eps=1e-6;
- if(w.axis==="x"){const d=b.y-a.y;if(Math.abs(d)<eps)return false;const t=(w.y-a.y)/d,x=a.x+(b.x-a.x)*t;return t>eps&&t<1-eps&&x>w.x+eps&&x<w.x+1-eps;}
- const d=b.x-a.x;if(Math.abs(d)<eps)return false;const t=(w.x-a.x)/d,y=a.y+(b.y-a.y)*t;return t>eps&&t<1-eps&&y>w.y+eps&&y<w.y+1-eps;
 }

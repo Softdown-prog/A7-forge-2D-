@@ -252,7 +252,7 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Passos subdivididos com bloqueio de espaço entre atores; saída lateral do balcão quando não há divisórias.
 - [x] "?" dos clientes em vermelho com contorno escuro; retirar os nomes brancos das máquinas.
 - [x] Preservar síntese sonora procedural HTML5 e os dois efeitos já aprovados, sem incluir gravações externas.
-- [ ] Conferir circulação sob lotação e salas separadas por paredes no runtime.
+- [x] Conferir circulação sob lotação e salas separadas por paredes no runtime: cenário de estresse de 14 clientes, três portas e quatro PCs nos anexos; vídeo contínuo em Chromium (14/10/2026).
 
 ## Fechamento incremental — perfil VIP (13/10/2026)
 - [x] Cliente VIP aparece deterministicamente conforme reputação, sem interferir na aleatoriedade da simulação.
@@ -276,7 +276,7 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Permitir desvio lateral com checagem de colisões também aos visitantes chegando, sem atravessar divisórias.
 - [x] Reexecutar as mesmas 9 campanhas e comprovar mais atendimentos, maior ocupação e evolução do resultado operacional.
 - [x] Adicionar limites de regressão para fila, ocupação e quantidade de atendimentos; registrar números antes/depois no relatório.
-- [ ] Validar trajetos com várias salas/divisórias e circulação em alta lotação por vídeo real.
+- [x] Validar trajetos com várias salas/divisórias e circulação em alta lotação por vídeo real: `scripts/capture_circulation.mjs`, incluído no worker de cena (14/10/2026).
 - [x] Avaliar retorno de investimento do salão grande: auditoria 3/5/7 PCs mostrou custo elevado, retorno inicial limitado e capacidade ociosa; não alterar demanda artificialmente sem resolver circulação.
 - [ ] Revisar progressão de reputação VIP e preços em campanhas de vários anos antes de declarar a economia balanceada.
 
@@ -295,4 +295,15 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Validar cada subpasso (reto ou lateral) contra segmentos sólidos e limites da sala; atravessar apenas portas ou áreas livres.
 - [x] Cobrir por testes: paredes horizontais/verticais, porta aberta, parede adjacente ainda fechada, NPC contornando outro longe da divisória e waypoint obsoleto tentando atravessar parede.
 - [x] Confirmar regressão zero nos testes existentes de sala norte, porta, compra de PC no anexo, fila e campanhas econômicas.
-- [ ] Validar visualmente deslocamentos sob alta lotação com múltiplas divisórias/portas em capturas reais do jogo; testes automatizados não substituem essa inspeção.
+- [x] Validar visualmente deslocamentos sob alta lotação com múltiplas divisórias/portas em capturas reais do jogo: inspeção desktop/mobile emulado e gravação contínua da aplicação real; detalhes em `docs/CIRCULATION_STRESS_VALIDATION.md`.
+
+## Fechamento de circulação sob lotação — 14/10/2026
+- [x] Bloquear travessia nas emendas/quinas, chegada sobre a parede e ajuste final de posição menor que 0,005 tile.
+- [x] Compartilhar a checagem de segmentos sólidos com as rotas dos funcionários.
+- [x] Preservar saída lateral do caixa quando suas duas pernas estão livres, mesmo com divisórias em outras salas.
+- [x] Replanejar o caminho quando o desvio local deixa de avançar, contornando corpos e respeitando paredes/portas sem teletransportar visitantes.
+- [x] Impedir novos clientes de nascerem sobre outro corpo na soleira compartilhada por entrada e saída.
+- [x] Comparar a mesma fixture por seis horas em três sementes: antes, quatro pagamentos e nenhum uso de PC; depois, 15–17 atendimentos, quatro anexos usados e 20–25 saídas.
+- [x] Executar 135 testes, auditoria estática e captura da aplicação real em Chromium sem erros de página ou overflow horizontal.
+- [x] Gerar vídeo de gameplay via `requestAnimationFrame` da aplicação; gravação silenciosa, sem animar PNGs nem reposicionar atores durante a filmagem.
+- [ ] Aprovação artística dos sprites e revisão de legibilidade em aparelho móvel físico continuam pendentes.

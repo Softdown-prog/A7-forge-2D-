@@ -51,6 +51,8 @@ O jogo é uma obra original: figurinos cômicos são arquétipos próprios, sem 
 
 O job `worker-scene` gera duas capturas reais do jogo em Chromium (desktop e mobile), com três visitantes posicionados por seed de revisão. Veja o artifact `lhs-visual-validation` na execução do workflow. A câmera permanece fixa, sem telhado e sem exterior. As capturas são de *placeholders*, não de arte aprovada.
 
+Além das pranchas, o worker grava `lhs_circulation_runtime.mp4`: gameplay contínuo da aplicação real com três portas internas, quatro PCs nos anexos e alta lotação. O vídeo usa o loop normal do jogo, sem reposicionar clientes durante a filmagem, e é silencioso. A fixture e a comparação antes/depois estão em [Validação de circulação](docs/CIRCULATION_STRESS_VALIDATION.md). O teste mobile usa emulação touch no Chromium; aprovação artística e teste em aparelho físico continuam pendentes.
+
 ### Acabamento dos personagens
 
 A aparência procedural V1 dos personagens é desenhada por `src/render/actorArt.ts` e diferencia figurinos, cabelos, cores e poses sem novas dependências. É visual provisório com intenção estética definida; PNGs capturados pelo worker-scene continuam sendo a etapa de validação antes dos sprites definitivos do A7 Forge.

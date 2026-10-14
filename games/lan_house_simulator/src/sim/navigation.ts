@@ -6,13 +6,15 @@ import {hallwayRoute} from "./route.js";
 function crossesClosedWall(w:{axis:"x"|"y";x:number;y:number},a:Point,b:Point):boolean{
  const eps=1e-6;
  if(w.axis==="x"){
-  if(Math.abs(b.y-a.y)<eps)return false;
+  if(Math.abs(b.y-a.y)<eps)return Math.abs(a.y-w.y)<eps&&
+    Math.max(a.x,b.x)>=w.x-eps&&Math.min(a.x,b.x)<=w.x+1+eps;
   const t=(w.y-a.y)/(b.y-a.y),x=a.x+(b.x-a.x)*t;
-  return t>eps&&t<1-eps&&x>w.x+eps&&x<w.x+1-eps;
+  return t>=-eps&&t<=1+eps&&x>=w.x-eps&&x<=w.x+1+eps;
  }
- if(Math.abs(b.x-a.x)<eps)return false;
+ if(Math.abs(b.x-a.x)<eps)return Math.abs(a.x-w.x)<eps&&
+   Math.max(a.y,b.y)>=w.y-eps&&Math.min(a.y,b.y)<=w.y+1+eps;
  const t=(w.x-a.x)/(b.x-a.x),y=a.y+(b.y-a.y)*t;
- return t>eps&&t<1-eps&&y>w.y+eps&&y<w.y+1-eps;
+ return t>=-eps&&t<=1+eps&&y>=w.y-eps&&y<=w.y+1+eps;
 }
 /** Validação de um único passo local. O agente não pode atravessar divisórias
  * nem "cortar" paredes com o desvio usado para evitar outros clientes.

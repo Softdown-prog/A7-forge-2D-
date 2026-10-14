@@ -65,6 +65,10 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
             -movflags +faststart out/live-video/lan_house_gameplay_live.mp4
           test -s out/live-video/lan_house_gameplay_live.mp4
+      - name: Record continuous circulation through divided rooms
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_circulation.mjs out/validation
       - name: Upload actual gameplay MP4
         if: matrix.worker == 'scene'
         uses: actions/upload-artifact@v4
