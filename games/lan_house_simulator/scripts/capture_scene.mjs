@@ -309,6 +309,28 @@ try{
     await writeFile(resolve(output,"lhs_door_and_annex_pc_"+config.name+".png"),
       Buffer.from(annexPreview,"base64"));
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
+    // Nova funcionalidade: conferir o painel real e o débito após a campanha.
+    await page.locator("#open-admin").click();
+    await page.locator('[data-admin-tab="finance"]').click();
+    const cashBefore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+    await page.locator("#launch-promotion").click();
+    await page.locator("#launch-promotion").waitFor({state:"visible"});
+    const cashAfter=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+    // Clientes continuam pagando em paralelo à interação do usuário: descontar
+    // receitas confirmadas da variação do caixa para isolar o custo da campanha.
+    const earned=cashAfter.revenue-cashBefore.revenue;
+    const spent=cashAfter.expenses-cashBefore.expenses;
+    if(spent!==120||cashAfter.cash!==cashBefore.cash+earned-spent)
+      throw Error("Panfletagem cobrou valor incorreto: "+JSON.stringify({
+        before:cashBefore.cash,after:cashAfter.cash,earned,spent
+      }));
+    if(!(await page.locator("#launch-promotion").isDisabled()))
+      throw Error("A panfletagem deve ser contratada apenas uma vez no dia");
+    if(!(await page.locator("#promotion-status").textContent())?.includes("Panfletagem ativa"))
+      throw Error("Status da campanha ausente na aba Finanças");
+    await writeFile(resolve(output,"lhs_promotion_finance_"+config.name+".png"),
+      await page.locator("#admin").screenshot({type:"png"}));
+    await page.locator("#close-admin").click();
     await page.close();
   }
   if(errors.length)throw Error("Browser page errors: "+errors.join("; "));
