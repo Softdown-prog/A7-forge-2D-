@@ -9,6 +9,14 @@ import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
+test("preços até 18 mantêm a demanda original; excesso acima de 18 tem penalidade progressiva",async()=>{
+ const {demandFactor}=await import("../dist/js/sim/economy.js");
+ const former=(price)=>Math.max(.22,Math.min(1.65,1.2-(price-12)*.045));
+ for(const price of [4,12,16,18])assert.ok(Math.abs(demandFactor(price,75,true,false)-former(price))<1e-10);
+ assert.ok(demandFactor(26,75,true,false)<former(26)*.7);
+ assert.ok(demandFactor(26,75,true,false)>demandFactor(40,75,true,false));
+ assert.ok(demandFactor(26,75,true,false)>0);
+});
 test("reputação ganha menos perto do teto, mas avaliações negativas não são diluídas",()=>{
  const normal=serviceReputationImpact(75,12,0,.22);
  const high=serviceReputationImpact(94,12,0,.22);
@@ -76,6 +84,7 @@ test("dois anos de campanhas reais: preço justo conserva procura e reputação 
  const fair=campaign(12,1933),premium=campaign(26,1933);
  assert.ok(fair.served>premium.served,"preço alto deve reduzir atendimentos");
  assert.ok(fair.rep>premium.rep,"tarifa premium sem máquinas melhores não deve produzir prestígio maior");
+ assert.ok(fair.cash>premium.cash,"preço excessivo não deve ser a estratégia mais rentável no teste de 2 anos");
  assert.ok(fair.vipShare>=premium.vipShare);
  assert.ok(fair.served>0&&premium.served>0);
  console.log("VIP_TWO_YEARS "+JSON.stringify({fair,premium}));
