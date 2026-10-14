@@ -40,6 +40,26 @@ export function demandFactor(price: number, reputation: number, internetOnline: 
   const weatherEffect = rainy ? 0.8 : 1;
   return priceEffect * repEffect * weatherEffect * (internetOnline ? 1 : 0.12);
 }
+/** Atratividade orgânica dos equipamentos — não cria receitas nem visitas automaticamente.
+ * Capacidade adicional divulga a lan house; hardware e rede melhores também geram
+ * recomendação boca a boca. O preço, a reputação e a lotação ainda limitam demanda.
+ * Usa médias (não somas brutas) para não premiar instalações excessivas de GPUs. */
+export function establishmentAppealMultiplier(s:GameState):number{
+ const original=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)));
+ const count=original+(s.annexPcs?.length??0);
+ const capacity=Math.min(0.22,Math.max(0,count-3)*0.055);
+ let tierImprovement=0,gpuImprovement=0;
+ for(let i=0;i<count;i++){
+  const tier=Math.max(1,Math.min(3,s.pcTiers?.[i]??1));
+  tierImprovement+=tier-1;
+  gpuImprovement+=gpuBonus(s,i);
+ }
+ const hardware=count?Math.min(0.18,(tierImprovement/count)*0.11):0;
+ const graphics=count?Math.min(0.12,(gpuImprovement/count)*1.5):0;
+ const connectivity=(Math.max(1,Math.min(3,s.internetTier))-1)*0.06;
+ return Math.min(1.60,1+capacity+hardware+graphics+connectivity);
+}
+
 export function customerSatisfactionDelta(price:number,wait:number,offline:number):number {
   const penalty=Math.max(0,price-12)*0.012+Math.max(0,wait-5)*0.014+Math.min(0.55,Math.max(0,offline)*0.025);
   return Math.max(-0.9,Math.min(0.22,0.22-penalty));
