@@ -73,6 +73,7 @@
       <nav class="admin-tabs" aria-label="Seções da administração">
         <button type="button" class="admin-tab active" data-admin-tab="prices" aria-selected="true">Preços</button>
         <button type="button" class="admin-tab" data-admin-tab="computers" aria-selected="false">Computadores</button>
+        <button type="button" class="admin-tab" data-admin-tab="gpus" aria-selected="false">Placas de vídeo</button>
         <button type="button" class="admin-tab" data-admin-tab="licenses" aria-selected="false">Windows / Licenças</button>
         <button type="button" class="admin-tab" data-admin-tab="stock" aria-selected="false">Estoque</button>
         <button type="button" class="admin-tab" data-admin-tab="services" aria-selected="false">Serviços</button>
@@ -84,6 +85,7 @@
         <div class="stat admin-section" data-section="services"><h3>Serviços</h3><p id="internet"></p><p id="license-status"></p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="internet-repair" class="slice" disabled>Chamar técnico · R$ 75</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
         <div class="stat admin-section" data-section="finance"><h3>Investimento e finanças</h3><p id="finance"></p><p id="monthly-breakdown"></p><p id="expansion"></p><div class="promotion-panel"><h4>📣 Divulgação no bairro</h4><p id="promotion-status" role="status" aria-live="polite">Sem panfletagem hoje.</p><p>Uma campanha custa R$ 120 e aumenta em 40% a chance de novos visitantes até o fechamento. Não garante clientes nem vendas.</p><button id="launch-promotion" type="button" class="slice">📣 Fazer panfletagem · R$ 120</button></div><div class="action-row wrap"><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
         <div class="stat admin-section" data-section="licenses"><h3>Licenciamento de Windows</h3><p>Cada computador precisa de uma licença própria. O Windows é independente do hardware.</p><div id="windows-license-list" aria-label="Licenças por computador"></div></div>
+        <div class="stat admin-section" data-section="gpus"><h3>Placas de vídeo · 2005–2013</h3><p>Placas independentes do hardware. Escolha um PC e desbloqueie modelos conforme o ano.</p><div id="gpu-pc-choice" class="gpu-stations" aria-label="Computador selecionado"></div><div id="gpu-catalog" class="gpu-catalog" aria-label="Catálogo ilustrado de GPUs"></div></div>
         <div class="stat admin-section" data-section="computers">
           <h3>Computadores e evolução</h3><p id="pc">3 computadores</p>
           <div id="pc-maintenance" aria-label="Manutenção e evolução dos computadores"></div>
