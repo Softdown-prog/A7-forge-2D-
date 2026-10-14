@@ -324,7 +324,11 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   const factor=demandFactor(s.pricePerHour,s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
-  return 0.052*factor*establishmentAppealMultiplier(s)*promotionVisitorMultiplier(s)*congestion;
+  // A fama atrai visitantes, mas o balcão precisa de espaço físico para recebê-los.
+  // Reduzir novas entradas quando a fila estiver cheia evita bloqueios em cascata.
+  const queueSize=counterQueueCustomers(s).length;
+  const entrySpace=Math.max(0.08,1-Math.max(0,queueSize-3)*0.18);
+  return 0.052*factor*establishmentAppealMultiplier(s)*promotionVisitorMultiplier(s)*congestion*entrySpace;
 }
 function advanceMinute(s: GameState): void {
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
