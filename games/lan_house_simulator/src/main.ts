@@ -13,7 +13,7 @@ import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
-import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
+import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
@@ -905,8 +905,10 @@ function renderUI():void {
     :"Sem panfletagem hoje. Divulgue sua lan house no bairro para aumentar a procura até 22h.");
   const promotionButton=document.querySelector<HTMLButtonElement>("#launch-promotion");
   if(promotionButton){
-    promotionButton.disabled=promoting||game.cash<PROMOTION_COST;
-    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · R$ "+PROMOTION_COST;
+    const cost=promotionCost(game);
+    const label=cost.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+    promotionButton.disabled=promoting||game.cash<cost;
+    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · "+label;
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   const recentEvents=game.eventLog.slice(0,6),eventSignature=JSON.stringify(recentEvents);
