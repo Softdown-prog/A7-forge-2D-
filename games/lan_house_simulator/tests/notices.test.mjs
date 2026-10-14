@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -51,13 +52,13 @@ test("multa de Windows depende da carta, e a licença adquirida impede penaliza�
  const due=sporadicMailSchedule(s).windows;
  setDay(s,due);reviewNotices(s);
  assert.ok(s.notices.some(n=>n.id==="windows"));
- for(let i=0;i<3;i++)assert.equal(licenseWindows(s,i,"win98").ok,true);
+ for(let i=0;i<3;i++)assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
  setDay(s,due+100);reviewNotices(s);
  assert.equal(s.windowsNoticeFine,undefined);
 });
 test("Windows licenciado antes do prazo não recebe autuação",()=>{
  const s=createGame();s.cash=2000;
- for(let i=0;i<3;i++)assert.equal(licenseWindows(s,i,"win98").ok,true);
+ for(let i=0;i<3;i++)assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
  assert.equal(missingWindowsLicenses(s),0);
  assert.equal(licenseGames(s).ok,true);
  setDay(s,20);reviewNotices(s);

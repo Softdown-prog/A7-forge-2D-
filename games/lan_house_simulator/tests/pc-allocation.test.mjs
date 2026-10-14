@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,chooseAvailablePc,stepGame,pcWear} from "../dist/js/sim/engine.js";
@@ -38,7 +39,7 @@ test("VIP prefere PC 3 atualizado, mesmo que esteja mais distante",()=>{
  const s=createGame();s.cash=10000;s.totalMinutes=5*360*DAY_MINUTES;
  const c=waiting(7,true);
  assert.equal(chooseAvailablePc(s,c),0);
- assert.equal(upgradeComputer(s,2).ok,true);
+ assert.equal(withStationOff(s,2,()=>upgradeComputer(s,2)).ok,true);
  assert.equal(chooseAvailablePc(s,c),2);
  assert.ok(hardwareSatisfactionBonus(s,2)>hardwareSatisfactionBonus(s,0));
  const afterPurchase=s.cash,expenses=s.expenses,revenue=s.revenue;
@@ -52,7 +53,7 @@ test("VIP prefere PC 3 atualizado, mesmo que esteja mais distante",()=>{
 });
 test("GPU melhor em outro PC participa da escolha; preferências VIP permanecem determinísticas",()=>{
  const s=createGame();s.cash=10000;s.totalMinutes=11*360*DAY_MINUTES;
- assert.equal(buyGpu(s,2,"gpu09").ok,true);
+ assert.equal(withStationOff(s,2,()=>buyGpu(s,2,"gpu09")).ok,true);
  const normal=waiting(8),vip=waiting(9,true);
  assert.equal(chooseAvailablePc(s,normal),0,"cliente comum escolhe a estação próxima");
  assert.equal(chooseAvailablePc(s,vip),2,"VIP escolhe a melhor placa");
