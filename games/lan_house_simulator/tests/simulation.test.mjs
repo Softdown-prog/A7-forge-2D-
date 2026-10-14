@@ -378,9 +378,10 @@ test("desgaste individual bloqueia novas reservas e reparo cobra uma única vez"
  const before=s.cash;
  assert.equal(repairComputer(s,0).ok,true);
  assert.equal(s.cash,before-90);assert.equal(pcBroken(s,0),true);
+ const afterHire=s.cash;assert.equal(repairComputer(s,0).ok,false);assert.equal(s.cash,afterHire);
  for(let i=0;i<100&&s.repairJobs?.length;i++)stepGame(s,1);
- assert.equal(pcWear(s,0),0);
- const afterService=s.cash;assert.equal(repairComputer(s,0).ok,false);assert.equal(s.cash,afterService);
+ assert.ok(pcWear(s,0)<3,"PC reparado pode voltar a acumular desgaste ao receber clientes");
+ assert.equal(pcBroken(s,0),false);
  const old=createGame();delete old.pcWear;assert.equal(pcWear(old,0),0);
 });
 
