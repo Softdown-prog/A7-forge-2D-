@@ -1,0 +1,17 @@
+{
+  "name": "lhs-backend",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^8.4.0",
+    "express": "^5.1.0",
+    "firebase-admin": "^14.5.0"
+  }
+}

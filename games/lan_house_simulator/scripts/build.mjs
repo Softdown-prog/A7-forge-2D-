@@ -5,6 +5,6 @@ const root=resolve(import.meta.dirname,"..");
 rmSync(resolve(root,"dist"),{recursive:true,force:true});
 mkdirSync(resolve(root,"dist"),{recursive:true});
 execFileSync(process.execPath,[resolve(root,"node_modules/typescript/bin/tsc"),"-p",resolve(root,"tsconfig.json")],{cwd:root,stdio:"inherit"});
-for(const file of ["index.html","style.css"])cpSync(resolve(root,file),resolve(root,"dist",file));
+for(const file of ["index.html","style.css","online-config.json"])cpSync(resolve(root,file),resolve(root,"dist",file));
 cpSync(resolve(root,"assets"),resolve(root,"dist/assets"),{recursive:true});
 console.log("LHS build estático em dist/");

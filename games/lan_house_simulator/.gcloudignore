@@ -1,0 +1,12 @@
+.git
+node_modules
+dist
+out
+assets
+authoring
+tests
+website
+docs
+backend/node_modules
+backend/tests
+*.log

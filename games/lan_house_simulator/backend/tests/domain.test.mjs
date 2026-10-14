@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHmac} from 'node:crypto';
+import {requireRevision,verifyWebhook,paymentCredit,id} from '../domain.mjs';
+test('stale devices cannot overwrite main',()=>{requireRevision(null,null);requireRevision('a','a');assert.throws(()=>requireRevision('b','a'),e=>e.status===409);assert.throws(()=>requireRevision('b',null));});
+test('webhook signature, expiry and tampering',()=>{const ts=String(Math.floor(Date.now()/1000)),secret='test-only';const v1=createHmac('sha256',secret).update(`id:123;request-id:req;ts:${ts};`).digest('hex');assert.equal(verifyWebhook('123','req',`ts=${ts},v1=${v1}`,secret),true);assert.equal(verifyWebhook('124','req',`ts=${ts},v1=${v1}`,secret),false);assert.equal(verifyWebhook('123','req',`ts=${ts},v1=${v1}`,secret,Date.now()+600_000),false);assert.equal(verifyWebhook('123','req',`ts=${ts},v1=oops`,secret),false);});
+test('credits use verified amount and refund proportion',()=>{const order={id:'order',priceCents:1000,cookies:100};const payment={external_reference:'order',currency_id:'BRL',transaction_amount:10,status:'approved'};assert.equal(paymentCredit(payment,order),100);assert.equal(paymentCredit({...payment,transaction_amount_refunded:4},order),60);assert.equal(paymentCredit({...payment,status:'charged_back'},order),0);assert.equal(paymentCredit({...payment,status:'pending'},order),null);assert.throws(()=>paymentCredit({...payment,transaction_amount:1},order));assert.throws(()=>paymentCredit({...payment,external_reference:'other'},order));});
+test('rejects paths and malformed identifiers',()=>{assert.equal(id('order_123'),'order_123');for(const v of ['../uid','x/y','',undefined])assert.throws(()=>id(v));});

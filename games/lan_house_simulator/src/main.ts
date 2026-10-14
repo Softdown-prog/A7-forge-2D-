@@ -1,3 +1,4 @@
+import {mountCloudControls} from "./ui/cloudControls.js";
 import { serializeSave, parseImportedSave, snapshotGameState } from "./sim/saveTransfer.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
@@ -140,6 +141,14 @@ importFile.addEventListener("change",async()=>{
   continueButton!.disabled=false;exportButton!.disabled=false;
   announceSave("Partida importada com sucesso. Clique em Continuar.");
  }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
+});
+mountCloudControls(saveMessage,()=>game,(state)=>{
+ localStorage.setItem(GAME_SAVE_KEY,JSON.stringify(state));
+ game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
+ previousServed=game.served;previousPurchases=game.purchases;
+ paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ continueButton!.disabled=false;exportButton!.disabled=false;
+ announceSave("Partida da nuvem restaurada. Clique em Continuar.");
 });
 function showMenu():void{
  sceneMotion.reset();

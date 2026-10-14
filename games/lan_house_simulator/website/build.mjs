@@ -46,7 +46,10 @@ export function buildSite(){
  }
  writeFileSync(resolve(output,"robots.txt"),siteConfig.mode==="public"?`User-agent: *\nAllow: /\nDisallow: /game/\nSitemap: ${new URL("/sitemap.xml",siteConfig.origin).href}\n`:"User-agent: *\nDisallow: /\n");
  if(siteConfig.mode==="public")writeFileSync(resolve(output,"sitemap.xml"),`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${content.filter(p=>!["404","dados"].includes(p.path)).map(p=>`<url><loc>${escape(new URL(p.path?"/"+p.path+"/":"/",siteConfig.origin).href)}</loc></url>`).join("")}</urlset>`);
- const csp=`default-src 'self'; script-src 'self' ${hashes.join(" ")}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'`;
+ const online=JSON.parse(readFileSync(resolve(root,"online-config.json"),"utf8"));
+ let connections="'self'";
+ if(online.enabled){const api=new URL(online.apiUrl);if(api.protocol!=="https:"||api.pathname!=="/"||api.search||api.hash||api.username||api.password)throw Error("URL da API online inválida");connections+=" "+api.origin+" https://identitytoolkit.googleapis.com https://securetoken.googleapis.com";}
+ const csp=`default-src 'self'; script-src 'self' ${hashes.join(" ")}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; connect-src ${connections}; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'`;
  writeFileSync(resolve(output,"_headers"),`/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), fullscreen=(self)\n  Content-Security-Policy: ${csp}\n  Cache-Control: no-cache\n/assets/*\n  Cache-Control: public, max-age=3600\n/game/js/*\n  Cache-Control: no-cache\n`);
  console.log(`Site: ${content.length} páginas + jogo completo em ${output}`);return output;
 }

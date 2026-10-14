@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {setTimeout as delay} from 'node:timers/promises';
+import net from 'node:net';
+test('API startup, auth boundary, CORS, body limits and disabled payments',async t=>{
+ const probe=net.createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));
+ const child=spawn(process.execPath,['backend/server.mjs'],{cwd:new URL('../..',import.meta.url),env:{...process.env,PORT:String(port),GOOGLE_CLOUD_PROJECT:'lhs-test',SAVES_BUCKET:'lhs-test-private',FIRESTORE_DATABASE_ID:'lhs-game',PAYMENTS_ENABLED:'false',ALLOWED_ORIGINS:'https://lhs.example'},stdio:['ignore','pipe','pipe']});
+ let output='';child.stdout.on('data',b=>output+=b);child.stderr.on('data',b=>output+=b);
+ t.after(()=>child.kill());const base=`http://127.0.0.1:${port}`;
+ let ready=false;for(let attempt=0;attempt<600;attempt++){if(child.exitCode!==null)throw Error(output);try{const r=await fetch(base+'/healthz');if(r.ok){ready=true;break;}}catch{}await delay(50);}assert.ok(ready,output);
+ assert.deepEqual(await fetch(base+'/healthz').then(r=>r.json()),{ok:true,service:'lhs-backend',paymentsEnabled:false});
+ assert.equal((await fetch(base+'/v1/account')).status,401);
+ assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
+ assert.equal((await fetch(base+'/v1/config',{headers:{Origin:'https://evil.example'}})).status,403);
+ const allowed=await fetch(base+'/v1/config',{headers:{Origin:'https://lhs.example'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'https://lhs.example');assert.deepEqual((await allowed.json()).packages,{});
+ assert.equal((await fetch(base+'/v1/account',{headers:{Authorization:'Bearer forged-token'}})).status,401);
+ assert.equal((await fetch(base+'/v1/config',{method:'OPTIONS',headers:{Origin:'https://lhs.example'}})).status,204);
+ assert.equal((await fetch(base+'/webhooks/mercadopago',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,503);
+ assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({save:'x'.repeat(2_000_001)})})).status,413);
+ assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{broken'})).status,400);
+});
