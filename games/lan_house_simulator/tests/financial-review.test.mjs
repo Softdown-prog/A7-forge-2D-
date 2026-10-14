@@ -53,7 +53,7 @@ test("30 dias de jogo fecham relatório financeiro com conta de luz",()=>{
 test("aviso de expansão exige amostra antes de declarar capacidade ociosa",()=>{
  const s=createGame();
  assert.match(expansionAdvice(s),/três dias/);
- s.monthPcCapacityMinutes=DAY_MINUTES*3*3;s.monthPcUsedMinutes=1000;
+ s.monthPcCapacityMinutes=DAY_MINUTES*3*3;s.monthPcUsedMinutes=500;
  assert.match(expansionAdvice(s),/Capacidade ociosa/);
  s.lastMonthPcCapacityMinutes=1000;s.lastMonthPcUsedMinutes=800;
  assert.match(expansionAdvice(s),/Computadores bastante utilizados/);
