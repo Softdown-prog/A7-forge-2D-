@@ -159,28 +159,34 @@ function isReserved(s: GameState, index: number): boolean {
  * Empates favorecem o menor índice para não mudar os PCs básicos.
  */
 export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
- let chosen:number|undefined,highest=-Infinity;
+ let fallback:number|undefined,baseQuality=0,baseDistance=0;
+ let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
  for(let i=0;i<pcCount(s);i++){
   if(isReserved(s,i)||pcBroken(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
   const route=navigableRoute(s,origin,destination);
   if(!route)continue;
-  // Para o público geral preservar exatamente a ordem de alocação legada
-  // evita regressões de tráfego: o primeiro PC disponível continua valendo.
-  if(!c.vip)return i;
+  // A escolha inicial é sempre o primeiro PC acessível, para manter a
+  // fila e a circulação aprovadas antes desta melhoria.
+  if(fallback===undefined && !c.vip)return i;
+  const quality=hardwareSatisfactionBonus(s,i);
+  // Computar o trajeto real apenas se o visitante tem preferência VIP.
   let distance=0,previous=origin;
   for(const point of route){
    distance+=Math.hypot(point.x-previous.x,point.y-previous.y);
    previous=point;
   }
-  const quality=hardwareSatisfactionBonus(s,i);
-  // VIPs preferem hardware mais potente, desde que a estação seja alcançável.
-  // Entre PCs equivalentes, o trajeto mais curto vence.
-  const score=quality*110-distance;
-  if(score>highest+1e-6){highest=score;chosen=i;}
+  if(fallback===undefined){
+   fallback=i;baseQuality=quality;baseDistance=distance;continue;
+  }
+  // Nunca alterar o PC por empate de qualidade: evita desvio sem vantagem.
+  if(quality<=baseQuality+0.00001)continue;
+  const detour=Math.max(0,distance-baseDistance);
+  const benefit=(quality-baseQuality)*110-detour;
+  if(benefit>bestGain+1e-6){preferred=i;bestGain=benefit;}
  }
- return chosen;
+ return preferred??fallback;
 }
 function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"praise"="complaint"):void {
   (s.speechEffects??=[]).push({text,x:c.x,y:c.y,kind});
