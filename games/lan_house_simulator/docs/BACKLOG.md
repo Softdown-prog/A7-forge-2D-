@@ -459,3 +459,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Medir preferência VIP por estação: nos salões de cinco PCs, amostras de uso VIP nas posições 4/5 sobem de 39,5 para 364 quando se instalam duas GPUs modernas atrás, sem garantir amortização.
 - [x] Documentar custos, ocupação e limitações em `docs/TARGETED_VIP_LCD_ROI_2026.md`; `npm run audit:targeted` e workflow manual. Preservar preços e lógica do jogo.
 - [ ] Investigar pagamento por VIP/serviço premium, exposição de retorno por estação e campanhas com preços R$ 18/24 antes de implementar incentivos novos ou alterar a economia.
+
+## Receita por estação preparada para configurações completas — 14/10/2026
+- [x] Verificar o repositório principal: havia hardware genérico por nível, GPU e LCD, mas ainda não estavam publicados na main CPU, placa-mãe, RAM, fonte, HD e SSD individuais solicitados ao Codex; não duplicar esse trabalho.
+- [x] Contabilizar sessões pagas, VIPs, minutos ocupados, receita por estação e a energia global rateada; mostrar na aba Computadores sem mudar os preços.
+- [x] Proteger saves legados, compra de PC antes de anexos e separação de receita real versus saldo parcial; vendas de estoque e custos fixos não são indevidamente atribuídos aos PCs.
+- [ ] Reavaliar catálogos completos e compatibilidade CPU/placa-mãe/RAM/fonte/HD/SSD/GPU quando o Codex publicar os commits, antes de um estudo de ROI por configuração.
+- [ ] Evoluir para consumo por peça somente com modelo de potência real e custos verificados, sem tratar rateio como aferição elétrica.

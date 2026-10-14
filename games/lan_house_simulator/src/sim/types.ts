@@ -37,6 +37,11 @@ export interface Customer {
   offlineWait: number;
   happy: boolean;
 }
+export interface StationAccount {
+ sessions:number;vipSessions:number;sessionRevenue:number;vipRevenue:number;
+ occupiedMinutes:number;energyShare:number;
+}
+/** Histórico acumulado, sem custos de peças, aluguel e compras de estoque. */
 export interface Inventory { soda: number; candy: number; snacks: number }
 export interface GameState {
   version: 1;
@@ -58,6 +63,8 @@ export interface GameState {
   monthExpensesBase?: number;
   lastMonthRevenue?: number;
   lastMonthExpenses?: number;
+  /** Métricas opcionais; saves antigos começam a coletar após carregar. */
+  stationLedger?: StationAccount[];
   reputation: number;
   pricePerHour: number;
   /** Próximo atendimento disponível no balcão, em minutos de jogo. */
