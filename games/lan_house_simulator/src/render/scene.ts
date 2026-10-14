@@ -6,7 +6,8 @@ import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { COMPUTER_DIRECTION, movementDirection } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
-import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js";
+import { VENDING_MACHINES } from "../sim/layout.js";
+import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 import {BIN_SPOTS} from "../sim/services.js";
@@ -27,11 +28,11 @@ export class SceneRenderer {
     this.drawBackground(s,camera,bounds,w,h);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
-      {depth:3.7,paint:()=>this.shelf(camera,bounds.minX)},
+      {depth:bounds.minX+3.7,paint:()=>this.shelf(camera,bounds.minX,s.inventory.snacks)},
       {depth:6,paint:()=>this.extraFurniture(camera,s)},
       ...VENDING_MACHINES.map(m=>({
         depth:m.x+m.y+0.25,
-        paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds)
+        paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds,s.inventory[m.kind])
       })),
       {depth:2.0,paint:()=>this.owner(camera,elapsedSeconds)},
       {depth:3.15,paint:()=>this.counter(camera)},
@@ -354,99 +355,11 @@ export class SceneRenderer {
     ctx.fillStyle="#26374E";ctx.fillRect(point.x-9,point.y-10,18,15);
     ctx.fillStyle="#83D4CE";ctx.fillRect(point.x-6,point.y-7,12,8);
   }
-  private shelf(camera:Projection,minX=0):void {
-    const ctx=this.ctx;
-    // Expositor lateral aberto para salgadinhos, inspirado em displays de conveniência.
-    // Estrutura fina de metal com quatro bandejas e embalagens reais em perspectiva,
-    // sem logomarca comercial nem o antigo cubo maciço de madeira.
-    const x=minX+0.23,y=2.92,w=0.46,d=1.22,z=camera.zoom;
-    const palette=["#e7a92c","#c95048","#68a86a","#6e91c8","#ca77a0","#ecbf64"];
-    const shelfLine=(a:{x:number;y:number},b:{x:number;y:number},color:string,width:number):void=>{
-      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
-      ctx.lineWidth=width*z;ctx.strokeStyle=color;ctx.stroke();
-    };
-    // Pernas metálicas visíveis; desenho vazado permite ver a parede por trás.
-    for(const [px,py] of [[x,y],[x+w,y],[x,y+d],[x+w,y+d]]){
-      shelfLine(iso({x:px,y:py},camera,1),iso({x:px,y:py},camera,92),"#475969",4);
-      const base=iso({x:px,y:py},camera,2);
-      ctx.fillStyle="#293b4b";ctx.fillRect(base.x-3*z,base.y-2*z,6*z,4*z);
-    }
-    // Prateleiras discretas e pacotinhos empilhados por fileira.
-    for(let row=0;row<4;row++){
-      const height=17+row*20;
-      const corners=[
-        iso({x,y},camera,height),iso({x:x+w,y},camera,height),
-        iso({x:x+w,y:y+d},camera,height),iso({x,y:y+d},camera,height)
-      ];
-      polygon(ctx,corners,"#c6c8ba","#52616a");
-      shelfLine(corners[2]!,corners[3]!,"#576976",3);
-      for(let i=0;i<5;i++){
-        // A frente do pacote é um pequeno quadrilátero no plano da prateleira.
-        const by=y+0.11+i*0.215;
-        const p=iso({x:x+0.24,y:by},camera,height+1);
-        const top=iso({x:x+0.24,y:by},camera,height+15);
-        const wide=iso({x:x+0.24,y:by+0.12},camera,height+1);
-        const wideTop=iso({x:x+0.24,y:by+0.12},camera,height+15);
-        const tint=palette[(i+row*2)%palette.length]!;
-        polygon(ctx,[top,wideTop,wide,p],tint,"#5e5360");
-        // Selagem da embalagem e selo circular de sabor.
-        shelfLine(top,wideTop,"#f4dfb6",1.8);
-        const middle=iso({x:x+0.246,y:by+0.06},camera,height+8);
-        ctx.fillStyle="#fff1c5";ctx.beginPath();
-        ctx.ellipse(middle.x,middle.y,2.6*z,2.9*z,0,0,Math.PI*2);ctx.fill();
-        ctx.strokeStyle="#806850";ctx.lineWidth=.7*z;ctx.stroke();
-      }
-    }
-    // Faixa de comunicação original, sem copiar a identidade de Elma Chips.
-    const a=iso({x:x-.015,y:y+.08},camera,101);
-    const b=iso({x:x-.015,y:y+d-.08},camera,101);
-    shelfLine(a,b,"#e4ad45",8);
-    const label=iso({x:x-.015,y:y+d/2},camera,106);
-    ctx.save();ctx.fillStyle="#fff4db";ctx.textAlign="center";
-    ctx.font="bold "+Math.max(7,9*z)+"px system-ui,sans-serif";
-    ctx.fillText("SALGADINHOS",label.x,label.y);ctx.restore();
+  private shelf(camera:Projection,minX=0,stock=20):void {
+    drawSnackShelf(this.ctx,camera,minX,stock);
   }
-  private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number):void {
-    const ctx=this.ctx, soda=kind==="soda",h=soda?106:94,z=camera.zoom;
-    const w=VENDING_WIDTH,d=VENDING_DEPTH;
-    cuboid(ctx,camera,x,y,w,d,h,soda?
-      ["#DB6265","#953447","#B94D59"]:["#E7B65B","#A87840","#C78E50"]);
-    // A frente agora olha para o salão (Y+), como os monitores dos clientes.
-    // O painel inteiro segue o plano isométrico da face: nenhum círculo colado no lado.
-    const front=(u:number,height:number)=>iso({x:x+u,y:y+d+0.003},camera,height);
-    polygon(ctx,[front(.055,h-12),front(.49,h-12),
-      front(.49,h-66),front(.055,h-66)],"#253A4A","#E7D4B1");
-    // Fileiras de garrafas/latas e doces; prateleiras pertencem ao vidro.
-    for(let row=0;row<3;row++){
-      const top=h-24-row*15;
-      const a=front(.075,top-8),b=front(.47,top-8);
-      ctx.strokeStyle="#B8B4A0";ctx.lineWidth=Math.max(1,1.4*z);
-      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-      for(let col=0;col<3;col++){
-        const p=front(.12+col*.142,top);
-        const tint=soda?
-          ["#C95C67","#78ADB8","#DFB770"][(col+row)%3]!:
-          ["#E5C78B","#BC8F9C","#99BD91"][(col+row)%3]!;
-        ctx.fillStyle=tint;ctx.fillRect(p.x-2.5*z,p.y-6*z,5*z,8*z);
-        ctx.fillStyle="#EFE6D1";ctx.fillRect(p.x-2*z,p.y-3*z,4*z,2*z);
-      }
-    }
-    polygon(ctx,[front(.39,h-14),front(.46,h-14),
-      front(.23,h-64),front(.15,h-64)],"rgba(182,220,234,0.16)");
-    // Sem textos brancos: cores e produtos diferenciam as máquinas.
-    // Moedeiro, seleção e porta de entrega na mesma face frontal.
-    polygon(ctx,[front(.535,h-31),front(.62,h-31),
-      front(.62,h-55),front(.535,h-55)],"#D8C2A1","#815E54");
-    const button=front(.58,h-42);
-    ctx.fillStyle=Math.floor(t*1.2)%2===0?"#A7D6AF":"#8EB5A7";
-    ctx.fillRect(button.x-2*z,button.y-3*z,4*z,5*z);
-    const hatch=front(.33,17);
-    ctx.fillStyle="#263346";ctx.fillRect(hatch.x-10*z,hatch.y-5*z,20*z,9*z);
-    ctx.fillStyle="#CFBFA3";ctx.fillRect(hatch.x-7*z,hatch.y-3*z,14*z,2*z);
-    // Rodapé sólido e sombra de contato reforçam a escala física.
-    const foot=front(.33,2);
-    ctx.fillStyle="rgba(32,34,45,0.24)";
-    ctx.beginPath();ctx.ellipse(foot.x,foot.y+3*z,20*z,5*z,0,0,Math.PI*2);ctx.fill();
+  private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number,stock?:number):void {
+    drawVendingMachine(this.ctx,camera,{x,y},kind,t,stock);
   }
   private trashBin(camera:Projection,p:Point,fill:number):void{
     const ctx=this.ctx,loc=iso(p,camera),z=camera.zoom;

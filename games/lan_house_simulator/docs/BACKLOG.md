@@ -482,3 +482,8 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Oferecer tabela para sessões 30/45/60/90/120/180/240 min, preservar valores proporcionais e impedir contratação além do expediente no modo histórico.
 - [x] Preservar saves clássicos e oferecer migração explícita, sem alterar patrimônio já ganho; virada cobra custos do último ano no fechamento.
 - [ ] Rodar campanhas históricas de longo prazo (1998–2024), revisar liquidez e demanda, custos de aquisição de hardware completo, modelagem do varejo e reajustes após 2025 antes de declarar o balanceamento final.
+
+## Máquinas e prateleira de salgadinhos — 14/10/2026
+- [x] Refinar gabinetes, portas, vidro, latas, doces, controles e bandejas de retirada com perspectiva e profundidade; redesenhar o expositor metálico com pacotes CROC e letreiro integrado.
+- [x] Refletir vendas, estoque vazio e reposição nas vitrines; reutilizar sprites em cache sem modificar estado, RNG, rotas ou economia.
+- [x] Verificar 147 casos Canvas, compras dos três produtos em dois dias simulados e encaixe desktop/mobile; registrar `docs/RETAIL_ART.md` e automatizar no worker de cena.

@@ -82,6 +82,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_hardware_ui.mjs out/validation
+      - name: Verify retail sprites, live stock and customer purchases
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_retail_art.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
