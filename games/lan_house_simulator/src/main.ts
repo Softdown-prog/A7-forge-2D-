@@ -895,9 +895,9 @@ function renderUI(liveOnly=false):void {
       ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
       :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
     const header=document.createElement("strong");header.textContent="Operação e manutenção por computador";maintenance.replaceChildren(header);
-    const hint=document.createElement("p");hint.className="station-power-hint";
-    hint.textContent="Desligue uma estação livre para economizar energia e instalar melhorias. Religue para receber clientes.";
-    maintenance.append(hint);
+    const powerHint=document.createElement("p");powerHint.className="station-power-hint";
+    powerHint.textContent="Desligue uma estação livre para economizar energia e instalar melhorias. Religue para receber clientes.";
+    maintenance.append(powerHint);
     for(let i=0;i<pcCount(game);i++){
       const wear=pcWear(game,i);
       const line=document.createElement("div");
