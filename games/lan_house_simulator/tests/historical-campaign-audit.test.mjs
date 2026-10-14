@@ -80,7 +80,7 @@ function campaign(year,seed,variant){
  let s=setup.s;
  let previousRevenue=0,previousExpenses=0,previousServed=0,previousSold=0;
  const months=[];
- let busy=0,capacity=0,maxNegative=0;
+ let busy=0,capacity=0,minCash=s.cash;
  const charges={stock:0,repairs:0,cleaning:0,engine:0};
  for(let day=1;day<=DAYS;day++){
   upkeep(s,charges);
@@ -93,7 +93,7 @@ function campaign(year,seed,variant){
     capacity+=pcCount(s);
    }
   }
-  maxNegative=Math.min(maxNegative,s.cash);
+  minCash=Math.min(minCash,s.cash);
   if(day%MONTH===0){
    const diff=Math.abs(s.cash-(setup.initial+s.revenue-s.expenses));
    assert.ok(diff<.001,"money invariant "+JSON.stringify({year,seed,variant,day,diff}));
@@ -132,7 +132,7 @@ function campaign(year,seed,variant){
   operatingNet:ROUND(s.revenue-(s.expenses-setup.initialSpend)),
   netAfterInvestment:ROUND(s.cash-setup.initial),
   reputation:ROUND(s.reputation),occupancy:ROUND(100*busy/capacity),
-  minCash:ROUND(maxNegative),
+  minCash:ROUND(minCash),
   charges:Object.fromEntries(Object.entries(charges).map(([k,v])=>[k,ROUND(v)])),
   months};
 }

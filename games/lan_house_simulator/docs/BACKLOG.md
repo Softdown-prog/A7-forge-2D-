@@ -487,3 +487,13 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Refinar gabinetes, portas, vidro, latas, doces, controles e bandejas de retirada com perspectiva e profundidade; redesenhar o expositor metálico com pacotes CROC e letreiro integrado.
 - [x] Refletir vendas, estoque vazio e reposição nas vitrines; reutilizar sprites em cache sem modificar estado, RNG, rotas ou economia.
 - [x] Verificar 147 casos Canvas, compras dos três produtos em dois dias simulados e encaixe desktop/mobile; registrar `docs/RETAIL_ART.md` e automatizar no worker de cena.
+
+
+## Diagnóstico real de rentabilidade histórica — 14/10/2026
+- [x] Executar 16 campanhas de 120 dias em 1998, 2005, 2012 e 2024 com duas sementes, três PCs, kits reais CPU/RAM/placa-mãe/armazenamento/fonte/GPU/LCD/Windows e preços máximos permitidos; medir investimento, margem operacional, despesas, ocupação e save no dia 60.
+- [x] Isolar causa do prejuízo de 1998: serviços clássicos de R$ 55 por faxina e ~R$ 73 por técnico eram excessivos para a hora histórica R$ 2,50–3,00; categorizar despesas por fontes no teste sem inventar clientes.
+- [x] Reajustar serviços *somente no modo histórico* com referências de game design em 1998 (faxina R$ 12; reparo R$ 4 + R$ 0,16 por desgaste) e inflação anual pelo IPCA; preservar integralmente a economia clássica.
+- [x] Reexecutar mesmo conjunto de campanhas: resultado médio de 1998 passa de −R$ 4.199,64 para **+R$ 2.141,47** com hora R$ 2,50; com teto R$ 3 passa de −R$ 3.180,23 para **+R$ 3.036,44**; sem alterar chegada de clientes ou receitas.
+- [x] Simular também duas partidas reais desde R$ 850, pagando três Windows, jogos, programador, fornecedor, energia, estoque e manutenção; caixa final de **R$ 2.916,96/R$ 2.980,97** em quatro meses, sem aporte.
+- [x] Corrigir alteração manual de varejo histórico para não aplicar preços clássicos aos outros produtos; introduzir `npm run audit:historical`, workflow manual e `docs/HISTORICAL_AUDIT_2026.md`.
+- [ ] Auditar 360–720 dias, mudança de ano, expansão com 5/7 PCs, financiamento e compras de peças individuais; as plataformas 2012/2024 ainda não se pagam em apenas 120 dias.

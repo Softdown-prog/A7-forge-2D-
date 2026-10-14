@@ -112,3 +112,30 @@ amortização de computador completo, impacto do varejo e do
 custo inicial do equipamento, desemprego/poder de compra,
 balanceamento da rentabilidade sem criar receitas artificiais
 e teste visual em aparelho móvel real.
+
+## Auditoria pós-implementação
+
+A auditoria econômica com **16 campanhas de 120 dias** de 1998,
+2005, 2012 e 2024 identificou que limpeza e técnicos mantinham
+custos fixos elevados da economia clássica, enquanto a receita de
+1998 havia sido indexada à escala histórica.
+
+Somente no modo histórico, limpeza passou a partir de **R$ 12/visita
+em 1998** e reparo a partir de **R$ 4 + R$ 0,16 por ponto de desgaste
+em 1998**, ambos corrigidos anualmente por IPCA. São valores de
+**balanceamento**, não cotações históricas oficiais de serviços.
+Os preços originais continuam no modo clássico.
+
+A conta de uma campanha de 1998 com 2.319 clientes em quatro meses
+caiu de R$ 4.854 para R$ 1.067,54 em técnicos e de R$ 3.245
+para R$ 708 em faxina, com **os mesmos clientes e receitas**.
+
+Testes adicionais mostram que duas partidas com o capital inicial real
+de **R$ 850** puderam pagar as três licenças do Windows 98, o
+fornecedor, contas e manutenção, encerrando 120 dias com
+R$ 2.916,96 e R$ 2.980,97 de caixa. A primeira alteração manual do
+preço de uma mercadoria já não inicializa as demais com preços do
+modo clássico.
+
+Leia os métodos, matriz completa, limitações e reprodução em
+[`HISTORICAL_AUDIT_2026.md`](HISTORICAL_AUDIT_2026.md).

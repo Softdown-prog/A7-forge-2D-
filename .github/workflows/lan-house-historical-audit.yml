@@ -1,16 +1,6 @@
 name: Lan House historical campaign audit
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - test/lhs-historical-economy-180day-audit-20261014
-    paths:
-      - 'games/lan_house_simulator/tests/historical-campaign-audit.test.mjs'
-      - 'games/lan_house_simulator/src/sim/historicalEconomy.ts'
-      - 'games/lan_house_simulator/src/sim/services.ts'
-      - 'games/lan_house_simulator/package.json'
-      - '.github/workflows/lan-house-historical-audit.yml'
-
 permissions:
   contents: read
 
