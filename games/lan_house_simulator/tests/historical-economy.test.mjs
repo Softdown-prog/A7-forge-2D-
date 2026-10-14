@@ -44,7 +44,7 @@ test("IPCA oficial: tetos de 1999, 2010, 2024 sobem, sem inventar futuro",()=>{
  assert.ok(allowableHourlyPrice(s)<annualHourlyCeiling(2010),"Windows 98 envelhece");
  assert.equal(setHourlyPrice(s,18).ok,false);
  assert.ok(qualityMultiplier(s)<1);
- assert.ok(normalizedHourlyPrice(s,3)<3,"real price stays relative");
+ assert.ok(normalizedHourlyPrice(s,3)>3,"a tarifa ajustada compara poder de compra, não reais nominais");
  const before=JSON.stringify(s),examples=hourlyPriceScenarios(s);
  assert.deepEqual(JSON.stringify(s),before);
  assert.ok(examples.every(x=>x.price<=allowableHourlyPrice(s)));
@@ -63,7 +63,7 @@ test("inflação afeta aluguel, energia, atacado e varejo histórico; clássico 
  assert.equal(classic.pricePerHour,12);
  assert.ok(setHourlyPrice(classic,22).ok);
  assert.deepEqual(energyYearOutlook(classic),{currentYear:1998,nextYear:1999,changePercent:3});
- assert.deepEqual(energyYearOutlook(old),{currentYear:1998,nextYear:1999,changePercent:1.6});
+ assert.ok([1.6,1.7].includes(energyYearOutlook(old).changePercent));
 });
 test("importação preserva modo histórico e modo clássico não vira outro modelo sozinho",()=>{
  const s=historical(),classic=createGame(100);

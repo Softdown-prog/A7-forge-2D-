@@ -624,6 +624,7 @@ function renderUI():void {
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
+  const historical=game.economyVersion===2;
   const monthlyRent=Math.round((270+game.expansionLevel*170)*(historical?monetaryIndex:1));
   const monthlyInternet=Math.round((110+(game.internetTier-1)*85)*(historical?monetaryIndex:1));
   const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
@@ -635,7 +636,6 @@ function renderUI():void {
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". A energia aumenta com PCs instalados, hardware e uso.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
-  const historical=game.economyVersion===2;
   const marketMax=annualHourlyCeiling(year);
   const max=allowableHourlyPrice(game);
   const inReais=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
