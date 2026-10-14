@@ -1,0 +1,61 @@
+name: Lan House - Keyboard Cleanup Review
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/lan-house-keyboard-cleanup.yml'
+      - 'games/lan_house_simulator/assets/Convert/*.m4a'
+permissions:
+  contents: read
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Clean three recorded keyboard takes with A7 Audio Lab
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/lhs-keyboard
+          for name in te1 t2 t3; do
+            cat > out/lhs-keyboard/job.json <<EOF
+          {
+            "source": "games/lan_house_simulator/assets/Convert/$name.m4a",
+            "output": "out/lhs-keyboard/$name-lab.ogg",
+            "kind": "effect",
+            "register": false,
+            "report": "out/lhs-keyboard/$name-report.json",
+            "cleanup": {
+              "enabled": true,
+              "profile": "recorded_sfx_cleanup",
+              "noiseReductionDb": 13,
+              "noiseFloorDb": -55,
+              "trackNoise": true,
+              "highpassHz": 145,
+              "lowpassHz": 8000,
+              "trimSilence": false
+            },
+            "mastering": {"channels": 1, "quality": 6, "normalize": false}
+          }
+          EOF
+            python tools/a7_audio_lab/audio_asset_worker.py out/lhs-keyboard/job.json
+            ffmpeg -hide_banner -loglevel error -y -i "out/lhs-keyboard/$name-lab.ogg" \
+              -af 'agate=threshold=0.002:ratio=4:attack=2:release=85' \
+              -c:a libvorbis -q:a 5 "out/lhs-keyboard/keyboard_$name.ogg"
+          done
+      - name: Compare the three takes without replacing game audio
+        run: |
+          ffmpeg -hide_banner -loglevel error -y \
+            -i out/lhs-keyboard/keyboard_te1.ogg \
+            -i out/lhs-keyboard/keyboard_t2.ogg \
+            -i out/lhs-keyboard/keyboard_t3.ogg \
+            -filter_complex '[0:a]atrim=0:3.5,asetpts=PTS-STARTPTS,apad=pad_dur=0.3,atrim=duration=3.8[a];[1:a]atrim=0:3.5,asetpts=PTS-STARTPTS,apad=pad_dur=0.3,atrim=duration=3.8[b];[2:a]atrim=0:3.5,asetpts=PTS-STARTPTS,apad=pad_dur=0.3,atrim=duration=3.8[c];[a][b][c]concat=n=3:v=0:a=1[out]' \
+            -map '[out]' -c:a libvorbis -q:a 5 out/lhs-keyboard/keyboard_comparison.ogg
+          test -s out/lhs-keyboard/keyboard_comparison.ogg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-keyboard-cleaned-review
+          path: out/lhs-keyboard/keyboard_*.ogg
+          if-no-files-found: error
+          retention-days: 30
