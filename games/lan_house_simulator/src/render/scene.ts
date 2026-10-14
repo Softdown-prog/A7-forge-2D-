@@ -11,6 +11,7 @@ import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 import {BIN_SPOTS} from "../sim/services.js";
 import {SCENE_THEME as theme} from "./theme.js";
+import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -202,10 +203,9 @@ export class SceneRenderer {
       ?iso({x:slot.x+0.33,y:slot.y},camera,137)
       :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   }
-  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0):void{
+  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0,posterKind:PosterKind="city"):void{
     if(kind==="poster"){
-      polygon(this.ctx,[iso({x,y},camera,156),iso({x:x+0.65,y},camera,156),
-        iso({x:x+0.65,y},camera,117),iso({x,y},camera,117)],"#557e88","#e7bf81");
+      drawWallPoster(this.ctx,camera,{x,y,axis:"x",span:.65,top:156,height:39},posterKind);
     }else if(kind==="plant"){
       cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
       const center=iso({x:x+0.16,y:y+0.16},camera,42);
@@ -229,12 +229,11 @@ export class SceneRenderer {
     for(let i=0;i<Math.min(2,Math.max(0,(s.furniture?.poster??0)-positioned.length));i++){
       const x=2.1+i*2.25;
       const y=roomBounds(s).minY+0.01;
-      polygon(this.ctx,[iso({x,y},camera,156),iso({x:x+0.65,y},camera,156),
-        iso({x:x+0.65,y},camera,117),iso({x,y},camera,117)],"#557e88","#e7bf81");
+      this.renderPurchasedFurniture(camera,"poster",x,y,0,purchasedPosterKind(i));
     }
-    for(const placed of positioned){
+    for(const [index,placed] of positioned.entries()){
       const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="wall");
-      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y);
+      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y,0,purchasedPosterKind(index));
     }
   }
     /* Saved placement coordinates are always resolved from vetted slots. */
@@ -334,89 +333,12 @@ export class SceneRenderer {
       iso({x:minX+0.02,y:north},camera,9),iso({x:minX+0.02,y:south},camera,9),
       iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:north},camera,2)
     ],"#817A84");
-    // Quadros montados sobre a parede do fundo, altura consistente em world pixels.
-    for(const [x,label,accent] of [
-      [minX+0.82,"LAN","#52766C"],[Math.max(minX+3.25,w-2.2),"JOGOS","#927053"]
-    ] as const){
-      const corners=[
-        iso({x,y:north},camera,128),iso({x:x+0.92,y:north},camera,128),
-        iso({x:x+0.92,y:north},camera,79),iso({x,y:north},camera,79)
-      ];
-      polygon(ctx,corners,"#E4D3B6","#856957");
-      const inner=[
-        iso({x:x+0.09,y:north},camera,118),iso({x:x+0.83,y:north},camera,118),
-        iso({x:x+0.83,y:north},camera,86),iso({x:x+0.09,y:north},camera,86)
-      ];
-      polygon(ctx,inner,accent);
-      const middle=iso({x:x+0.46,y:north},camera,97);
-      ctx.save();ctx.font="bold 9px system-ui,sans-serif";
-      ctx.textAlign="center";ctx.fillStyle="#F7E4C9";
-      ctx.fillText(label,middle.x,middle.y+2);
-      ctx.restore();
-    }
-    // Cinco cartazes de jogos no plano da parede esquerda (x=0).
-    // Lettering e ilustrações procedurais de homenagem, sem copiar capas/logotipos.
-    // Todos acima dos móveis, com o próprio City Horizon em destaque.
-    const posters=[
-      {y:0.27,lines:["ROLLERCOASTER","TYCOON"],base:"#416F66",accent:"#F2D28C",symbol:"wheel"},
-      {y:1.40,lines:["COUNTER","STRIKE"],base:"#3B5265",accent:"#E3C38B",symbol:"cross"},
-      {y:2.53,lines:["PANGYA"],base:"#457C86",accent:"#E7EBCC",symbol:"ball"},
-      {y:3.66,lines:["GUNBOUND"],base:"#594C85",accent:"#E8BD89",symbol:"star"},
-      {y:4.79,lines:["CITY","HORIZON"],base:"#2D746F",accent:"#F1D39B",symbol:"city"}
-    ] as const;
-    for(const poster of posters){
-      const a=poster.y,b=poster.y+0.96;
-      const at=(y:number,z:number)=>iso({x:minX+0.012,y},camera,z);
-      polygon(ctx,[at(a,133),at(b,133),at(b,74),at(a,74)],
-        "#DFCAA6","#695969");
-      polygon(ctx,[at(a+0.06,128),at(b-0.06,128),
-        at(b-0.06,79),at(a+0.06,79)],poster.base);
-      // Geometria abstrata pequena no terço superior, exclusiva a cada jogo.
-      const center=at((a+b)/2,117),z=camera.zoom;
-      ctx.save();
-      ctx.strokeStyle=poster.accent;ctx.fillStyle=poster.accent;
-      ctx.lineWidth=Math.max(1,1.8*z);
-      if(poster.symbol==="wheel"){
-        ctx.beginPath();ctx.arc(center.x,center.y,8*z,0,Math.PI*2);ctx.stroke();
-        for(let n=0;n<5;n++){
-          const ang=n*Math.PI*2/5;
-          ctx.beginPath();ctx.moveTo(center.x,center.y);
-          ctx.lineTo(center.x+Math.cos(ang)*7*z,center.y+Math.sin(ang)*7*z);ctx.stroke();
-        }
-      } else if(poster.symbol==="cross"){
-        ctx.beginPath();ctx.moveTo(center.x-7*z,center.y);ctx.lineTo(center.x+7*z,center.y);
-        ctx.moveTo(center.x,center.y-7*z);ctx.lineTo(center.x,center.y+7*z);ctx.stroke();
-        ctx.strokeRect(center.x-5*z,center.y-5*z,10*z,10*z);
-      } else if(poster.symbol==="ball"){
-        ctx.beginPath();ctx.arc(center.x,center.y,7*z,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle=poster.base;ctx.beginPath();ctx.arc(center.x+2*z,center.y-2*z,2*z,0,Math.PI*2);ctx.fill();
-      } else if(poster.symbol==="star"){
-        ctx.beginPath();
-        for(let n=0;n<10;n++){
-          const ang=n*Math.PI/5-Math.PI/2,r=(n%2?3.3:8)*z;
-          const px=center.x+Math.cos(ang)*r,py=center.y+Math.sin(ang)*r;
-          if(n===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
-        }
-        ctx.closePath();ctx.fill();
-      } else {
-        for(const [offset,height] of [[-8,9],[-1,14],[6,11]] as const){
-          ctx.fillRect(center.x+offset*z,center.y-height*z/2,6*z,height*z);
-        }
-      }
-      // Legibilidade 1x: duas linhas somente onde necessário; o nome é textual.
-      const fontSize=Math.max(5,7.6*z);
-      ctx.font="bold "+fontSize+"px system-ui,sans-serif";
-      ctx.textAlign="center";ctx.fillStyle="#F8EAD5";
-      const label=at((a+b)/2,91);
-      poster.lines.forEach((line,i)=>{
-        ctx.fillText(line,label.x,label.y+(i-(poster.lines.length-1)/2)*8*z,69*z);
-      });
-      if(poster.symbol==="city"){
-        const underline=at((a+b)/2,82);
-        ctx.fillStyle="#F1D39B";ctx.fillRect(underline.x-13*z,underline.y,26*z,2*z);
-      }
-      ctx.restore();
-    }
+    // Original illustrations share the wall plane, including typography.
+    for(const [x,kind] of [[minX+0.82,"terminal"],[Math.max(minX+3.25,w-2.2),"arcade"]] as const)
+      drawWallPoster(ctx,camera,{x,y:north,axis:"x",span:.92,top:128,height:49},kind);
+    for(const [y,kind] of [[.27,"coaster"],[1.40,"tactical"],[2.53,"golf"],
+      [3.66,"artillery"],[4.79,"city"]] as const)
+      drawWallPoster(ctx,camera,{x:minX+.012,y,axis:"y",span:.96,top:133,height:59},kind);
     // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
     for(const x of [1.7,3.9,Math.max(5.4,w-1.2)]){
       const p=iso({x,y:north},camera,146),z=camera.zoom;

@@ -375,6 +375,14 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Executar 173 testes, incluindo cinco regressões novas de consumo, limite financeiro, substituição de alimentos, save e pacotes.
 - [ ] Ampliar campanhas multissemente e rever margens de longo prazo após o consumo combinado; detalhes em `docs/CUSTOMER_SPENDING_AUDIT.md`.
 
+## Ilustrações dos pôsteres de parede — 14/10/2026
+- [x] Criar sete composições vetoriais originais com cenas, títulos, molduras e acabamento, incluindo os cinco temas de jogos anteriores.
+- [x] Projetar a arte completa no plano da parede, com tipografia e sombra coerentes com a câmera isométrica.
+- [x] Dar ilustrações aos pôsteres comprados e legados, preservando preços, slots, limites e composição durante a realocação.
+- [x] Manter o cache do cenário e comparar seis casos com o desenho direto; delta de pixels zero.
+- [x] Executar 173 testes e auditoria; gerar pranchas e validar compra, mudança de posição e expansão no Chromium/CI.
+- [ ] Aprovação artística do criador e inspeção dos textos em telefone físico; detalhes em `docs/POSTER_ART.md`.
+
 ## Retorno do hardware moderno em campanhas de longo prazo — 14/10/2026
 - [x] Executar 36 campanhas de 120 dias em 2011 e 2013, com três sementes, R$ 18/22/24 por hora, cinco PCs e os mesmos contratos/rede em cada par.
 - [x] Adquirir por APIs do jogo o hardware nível 3 e placas PixelForce 560/770 nos PCs 4 e 5; medir desgaste, serviços, estoque, energia, ocupação, receita, atendimentos, VIPs e reputação sem fabricar valores.

@@ -28,6 +28,13 @@ try{
   page.on("response",r=>{if(r.status()>=400)errors.push(config.name+": HTTP "+r.status()+" "+r.url());});
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const hold=async()=>{if(filming)await page.waitForTimeout(1200);};
+  // Resolve and dispatch in one browser task: a live UI refresh can replace an
+  // SVG between a locator resolution and its separate evaluate() execution.
+  const clickSvg=async selector=>page.evaluate(selector=>{
+   const svg=document.querySelector(selector);
+   if(!svg?.isConnected)throw Error("SVG ausente/desconectado: "+selector);
+   svg.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+  },selector);
   const checkBounds=async(label)=>{
    const result=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
     panel:Array.from(document.querySelectorAll('.admin:not([hidden])')).map(p=>({scroll:p.scrollWidth,width:p.clientWidth}))}));
@@ -80,7 +87,7 @@ try{
   await page.locator('[data-admin-tab="stock"]').click();
   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   // Dispatch directly on the SVG child to cover event delegation too.
-  await page.locator("#stock-soda .ui-icon").evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
+  await clickSvg("#stock-soda .ui-icon");
   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   // A simulação continua atendendo clientes enquanto o painel fica aberto:
   // uma venda simultânea pode reduzir o estoque entre os dois snapshots.
@@ -90,19 +97,19 @@ try{
   assert.ok(after.expenses>before.expenses,"reposição deve debitar a despesa real");
   assert.equal(after.cash,before.cash+(after.revenue-before.revenue)-(after.expenses-before.expenses));
   await page.locator('[data-admin-tab="computers"]').click();
-  await page.locator('[data-pc-repair="0"] .ui-icon').evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
+  await clickSvg('[data-pc-repair="0"] .ui-icon');
   const repaired=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   assert.equal(repaired.repairJobs?.some(j=>j.pc===0),true);
   await page.keyboard.press("Escape");
   await page.locator("#open-shop").click();await shot("shop","#shop");
   assert.equal(await page.locator("#shop-catalog .shop-art").count(),11);
-  await page.locator('[data-buy="plant"] .ui-icon').evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
+  await clickSvg('[data-buy="plant"] .ui-icon');
   assert.equal(await page.locator("#placement-toolbar").isVisible(),true);
   assert.equal(await page.locator("#panel-backdrop").isVisible(),false);
   await page.locator("#placement-cancel").click();
   await page.locator("#open-notices").click();await shot("mail","#notices");
   const mark=page.locator("[data-notice-read]").first();
-  if(await mark.count()){await mark.locator(".ui-icon").evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));}
+  if(await mark.count()){await clickSvg("[data-notice-read] .ui-icon");}
   await page.keyboard.press("Escape");
   await page.locator("#open-menu").click();assert.equal(await page.locator("#panel-backdrop").isVisible(),false);
   assert.equal(await page.locator("#start-screen").isVisible(),true);
