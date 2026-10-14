@@ -377,7 +377,9 @@ test("desgaste individual bloqueia novas reservas e reparo cobra uma única vez"
  s.customers.push(c);stepGame(s,1);assert.equal(c.pcIndex,1);
  const before=s.cash;
  assert.equal(repairComputer(s,0).ok,true);
- assert.equal(s.cash,before-90);assert.equal(pcWear(s,0),0);
+ assert.equal(s.cash,before-90);assert.equal(pcBroken(s,0),true);
+ for(let i=0;i<100&&s.repairJobs?.length;i++)stepGame(s,1);
+ assert.equal(pcWear(s,0),0);
  assert.equal(repairComputer(s,0).ok,false);assert.equal(s.cash,before-90);
  const old=createGame();delete old.pcWear;assert.equal(pcWear(old,0),0);
 });
@@ -819,6 +821,8 @@ test("manutenção e upgrades reconhecem os PCs nas expansões",async()=>{
  assert.equal(s.pcTiers[3],2);
  s.pcWear[3]=90;
  assert.equal(repairComputer(s,3).ok,true);
+ assert.ok(s.repairJobs?.some(j=>j.pc===3));
+ for(let i=0;i<120&&s.repairJobs?.length;i++)stepGame(s,1);
  assert.equal(s.pcWear[3],0);
 });
 test("índices dos anexos são preservados quando o jogador instala mais PCs tradicionais",async()=>{
