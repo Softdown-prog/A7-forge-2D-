@@ -1,6 +1,6 @@
 # LHS backend — implantação e operação
 
-Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, após reativação do faturamento. Serviço `lhs-backend`, revisão `lhs-backend-00004-fkm`, Firestore `lhs-game`, bucket privado `loyal-road-395203-lhs-saves` e conta de serviço com IAM restrito estão ativos em `us-central1`. URL: https://lhs-backend-1010038095056.us-central1.run.app . GET `/health` retorna 200; `/v1/account` sem token retorna 401. CORS permite `https://lhs.analysepro.com` e `https://lhs-lan-house-simulator.pages.dev`. Frontend online e pagamentos continuam desativados; o usuário decidiu adiar a definição dos pagamentos.
+Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, após reativação do faturamento. Serviço `lhs-backend`, revisão `lhs-backend-00004-fkm`, Firestore `lhs-game`, bucket privado `loyal-road-395203-lhs-saves` e conta de serviço com IAM restrito estão ativos em `us-central1`. URL: https://lhs-backend-1010038095056.us-central1.run.app . GET `/health` retorna 200; `/v1/account` sem token retorna 401. CORS permite `https://lhs.analysepro.com` e `https://lhs-lan-house-simulator.pages.dev`. O painel opcional de conta foi publicado em /conta/ (veja ACCOUNT_PANEL.md); pagamentos continuam desativados e sua definição foi adiada pelo usuário.
 
 O backend é separado da simulação. Cloudflare continua servindo o HTML5. O container inclui apenas API e módulos puros do validador de save; não serve assets nem executa o loop do jogo.
 
@@ -22,7 +22,7 @@ Firebase Authentication existente já permite email/senha. Tokens verificados no
 
 `online-config.json` vem com `enabled: false`. Após implantar e testar: preencher a chave **pública** do Firebase para essa aplicação e URL real retornada pelo Cloud Run; restringir essa chave às APIs Authentication/Secure Token e às origens necessárias, adicionar domínio autorizado no Firebase e configurar CORS com a origem exata do Cloudflare. Habilitar a integração apenas após revisar os textos de privacidade/termos da operação online. O build do site ajusta `connect-src` apenas quando online estiver habilitado.
 
-O site está publicado no Cloudflare Pages em https://lhs.analysepro.com (também disponível em https://lhs-lan-house-simulator.pages.dev). A versão pública ainda não inclui a interface online deste branch. As duas origens devem constar em `ALLOWED_ORIGINS`; isso permite chamadas à API, mas não ativa login no frontend nem pagamentos.
+O site está publicado no Cloudflare Pages em https://lhs.analysepro.com (também disponível em https://lhs-lan-house-simulator.pages.dev). O painel público /conta/ permite login e envio/download manual de arquivos de save. O controle dentro do jogo continua desativado. As duas origens devem constar em `ALLOWED_ORIGINS`; isso permite chamadas à API, mas não ativa login no frontend nem pagamentos.
 
 ## Saves e concorrência
 

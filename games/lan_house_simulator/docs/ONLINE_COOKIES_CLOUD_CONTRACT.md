@@ -1,6 +1,6 @@
 # LHS — Contrato de infraestrutura online, saves e Cookies
 
-**Decisão de produto: 14/10/2026.** **Estado: backend inicial implantado e validado; frontend online e cobrança ainda desativados.** Veja [preparação do backend e pendências](CLOUD_BACKEND_DEPLOYMENT.md).
+**Decisão de produto: 14/10/2026.** **Estado: backend e painel opcional de conta implantados; cobrança ainda desativada.** O painel usa envio/download manual de arquivos; restauração direta da partida e loja permanecem para outra etapa. Veja [painel da conta](ACCOUNT_PANEL.md) e [backend e pendências](CLOUD_BACKEND_DEPLOYMENT.md).
 
 ## 0. Nomes oficiais e identidade
 
