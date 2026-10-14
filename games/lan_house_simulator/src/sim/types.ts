@@ -95,6 +95,7 @@ export interface GameState {
   weather: "sun" | "rain";
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
+  lastDecisionDay?: number;
   contentFilterInstalled?: boolean;
   windowsNoticeFine?: boolean;
   copyrightNoticeFine?: boolean;
