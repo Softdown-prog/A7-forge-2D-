@@ -35,11 +35,12 @@ export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snack
 export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
 
 export function demandFactor(price: number, reputation: number, internetOnline: boolean, rainy: boolean): number {
-  // Até R$ 18/h, manter a curva existente. Acima disso, o sobrepreço
-  // reduz a procura de forma adicional: evita que preços abusivos dominem
-  // toda a estratégia, mesmo quando reputação e infraestrutura são boas.
+  // Até R$ 18/h, manter a curva aprovada. Acima disso a resistência ao
+  // sobrepreço é progressiva: cobrar R$ 26 ou mais não deve virar uma
+  // estratégia dominante só porque cada sessão paga mais.
+  const usualPriceEffect=Math.max(0.22,Math.min(1.65,1.2-(price-12)*0.045));
   const excessivePremium=Math.max(0,price-18);
-  const priceEffect = Math.max(0.16, Math.min(1.65, 1.2 - (price - 12) * 0.045 - excessivePremium * 0.03));
+  const priceEffect=usualPriceEffect*Math.pow(0.84,excessivePremium);
   const repEffect = Math.max(0.5, Math.min(1.25, reputation / 75));
   const weatherEffect = rainy ? 0.8 : 1;
   return priceEffect * repEffect * weatherEffect * (internetOnline ? 1 : 0.12);
