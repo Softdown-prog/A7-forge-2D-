@@ -8,6 +8,4 @@ export const siteConfig = {
   mode: "preview", // "public" exige os três campos acima.
   hosting: null, // Público: {provider, retention, countries, legalBasis}, ver README.
   updated: "14 de outubro de 2026",
-  repository: "https://github.com/Softdown-prog/A7-forge-2D-/tree/main/games/lan_house_simulator",
-  issues: "https://github.com/Softdown-prog/A7-forge-2D-/issues",
 };
