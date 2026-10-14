@@ -590,8 +590,8 @@ function frame(timestamp:number):void {
     }
     // Payment sound is emitted by real confirmed sales, not UI clicks.
     soundscape.income("sale");
-    // The rejected soda-can sound stays disabled.
-    if(sale.item!=="soda")soundscape.candy();
+    if(sale.item==="soda")soundscape.soda();
+    else soundscape.candy();
   }
   // A gentle 3.5-second phrase once a visitor starts a PC session.
   for(const started of (isPlaying?(game.keyboardEffects?.splice(0)??[]):[])){
