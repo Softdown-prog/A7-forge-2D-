@@ -1,0 +1,25 @@
+name: Lan House - targeted GPU and LCD ROI
+on:
+  workflow_dispatch:
+  push:
+    branches: [test/lhs-targeted-vip-lcd-roi-20261014]
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lan-house-targeted-roi.yml'
+permissions:
+  contents: read
+jobs:
+  targeted-roi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install TypeScript
+        working-directory: games/lan_house_simulator
+        run: npm install --no-audit --no-fund
+      - name: Run full 28-campaign targeted ROI audit
+        working-directory: games/lan_house_simulator
+        run: npm run audit:targeted
