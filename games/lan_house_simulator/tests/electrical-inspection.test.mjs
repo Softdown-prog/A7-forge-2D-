@@ -2,16 +2,16 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {decisionOptions,chooseDecision,scheduleDecisions,DECISIONS} from "../dist/js/sim/decisions.js";
+import {decisionOptions,chooseDecision,scheduleDecisions} from "../dist/js/sim/decisions.js";
 import {reviewNotices} from "../dist/js/sim/notices.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 
 const gotoDay=(s,day)=>{s.totalMinutes=(day-1)*DAY_MINUTES;};
 function discover(seed=72421,mode="classic"){
  const s=createGame(seed,mode);s.cash=10000;
- for(let d=4;d<=110&&!s.electricalInspectionSeen;d++){
+ for(let d=4;d<=180&&!s.electricalInspectionSeen;d++){
   gotoDay(s,d);scheduleDecisions(s);
-  const open=s.notices?.find(n=>n.id in DECISIONS&&!n.resolved);
+  const open=s.notices?.find(n=>decisionOptions(n.id,s).length>0&&!n.resolved);
   if(open&&open.id!=="electrical-inspection")
    assert.equal(chooseDecision(s,open.id,decisionOptions(open.id,s).at(-1).id).ok,true);
  }
@@ -108,7 +108,7 @@ test("mesmo após compactar cartas, a vistoria já realizada não é sorteada ou
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-essential").ok,true);
  s.notices=s.notices.filter(n=>n.id!=="electrical-inspection");
  for(let day=100;day<200;day++){gotoDay(s,day);scheduleDecisions(s);
-  const open=s.notices.find(n=>n.id in DECISIONS&&!n.resolved);
+  const open=s.notices.find(n=>decisionOptions(n.id,s).length>0&&!n.resolved);
   if(open)chooseDecision(s,open.id,decisionOptions(open.id,s).at(-1).id);
  }
  assert.equal(s.notices.some(n=>n.id==="electrical-inspection"),false);

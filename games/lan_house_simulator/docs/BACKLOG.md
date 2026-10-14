@@ -568,3 +568,15 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - Remoção com confirmação/cancelamento de plantas, mesas, pôsteres comprados e originais; libera encaixes e persiste, sem reembolso. Saves legados são normalizados sem recriar unidades retiradas.
 - Divisórias e portas aparecem na lista do editor com posição/orientação e destaque no mapa. Atalho da loja abre essa lista; retirada recalcula as rotas em curso.
 - Testes de motor cobrem retirada, recompra, saves antigos, ampliação e dados inválidos; teste de interface cobre remoção/cancelamento/reload com toque em 360/414 px e desktop.
+
+## Eventos com consequências encadeadas — 14/10/2026
+
+- [x] Criar doze histórias novas, esporádicas e únicas por save: goteira, vizinhos, teclado, malware, estoque, energia, fornecedor, documentos, rede, jornal, privacidade e ação comunitária.
+- [x] Cada história tem três escolhas iniciais, desdobramento contextual com duas escolhas e carta final; histórias não reaparecem mesmo após compactação do envelope.
+- [x] Efeitos reais em demanda temporária, desgaste de máquinas, estoque, internet, reputação e dinheiro; custo histórico proporcional e prevenção de duplo débito.
+- [x] Persistir estágio da cadeia, escolhas, prazos e modificadores no JSON, validando dados e preservando saves anteriores.
+- [x] Criar testes de cobertura para todos os ramos, consequências no atendimento, idempotência e importação.
+- [x] Integrar as quatro decisões legadas (fornecedor, escola, campeonato, manutenção) ao pipeline de retorno, mantendo os efeitos originais e criando cartas de desdobramento e conclusão.
+- [ ] Validar suíte do CI, jogar os cenários no navegador real e calibrar impactos de longo prazo antes do lançamento.
+
+Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Serviços externos e Cookies não são alterados.
