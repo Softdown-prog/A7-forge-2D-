@@ -533,3 +533,11 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Validar modo clássico, save e preço corrigido por ano, manter `npm test` leve e auditoria grande opt-in por `npm run audit:promotions`; documentar em `docs/HISTORICAL_PROMOTION_PRICING_AUDIT_2026.md`.
 - [ ] Testar panfletagem em salões de alta ocupação, datas de maior movimento, preços por alcance e mídias alternativas; não aumentar visitas ou dar ROI garantido sem experimento.
 - [ ] Comparar preços e publicidade após 2000 e com atualizações reais de CPU, RAM, placa-mãe, fonte, HD/SSD, GPU e Windows, mantendo as épocas historicamente coerentes.
+
+## ROI histórico por peças individuais e kits completos — 14/10/2026
+- [x] Auditar **20 campanhas reais de 240 dias**, começando em 2005/2012 com duas sementes, três computadores e capital experimental pareado por IPCA; cobrar licenças, fornecedor, internet, estoque, técnicos, limpeza, plataformas e GPUs, salvar/importar no dia 120.
+- [x] Comparar cinco estratégias: conservar 1998, atualizar individualmente **CPU Slot 1 + SDRAM + HD IDE + Windows XP**, modernizar um PC, modernizar os três PCs, ou adicionar GPUs às três plataformas modernas.
+- [x] Verificar que upgrades baratos avulsos em 2005 ganharam **+R$ 2.873,86** líquidos sobre o legado; modernização completa de 3 PCs ganhou **+R$ 3.557,94**.
+- [x] Verificar que, em 2012, três plataformas modernas com Windows 7 resultaram em **+R$ 11.205,47** versus legado em oito meses, enquanto GPU adicional nos 3 PCs **reduziu R$ 6.097,37** versus três plataformas sem GPU.
+- [x] Garantir compatibilidade socket/DDR/IDE/Windows e saves, introduzir `npm run audit:staged-hardware` e workflow manual; documentar `docs/STAGED_HARDWARE_ROI_2026.md`. Não modificar o balanceamento de hardware só para forçar ROI.
+- [ ] Testar compras mensais com caixa realmente acumulado, uma GPU no PC de maior atendimento, 5/7 estações e diferentes valores de tarifa em 2005–2024 antes de oferecer dicas automáticas de investimento.

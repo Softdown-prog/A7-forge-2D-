@@ -1,13 +1,6 @@
 name: Lan House staged hardware ROI audit
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - test/lhs-staged-hardware-2005-2012-20261014
-    paths:
-      - 'games/lan_house_simulator/tests/staged-hardware-roi.test.mjs'
-      - 'games/lan_house_simulator/package.json'
-      - '.github/workflows/lan-house-staged-hardware-audit.yml'
 permissions:
   contents: read
 jobs:
