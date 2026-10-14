@@ -44,3 +44,41 @@ for(const button of document.querySelectorAll("[data-delete]"))button.addEventLi
  dialog.returnValue="cancel";dialog.showModal();
 });
 dialog?.addEventListener("close",()=>{if(dialog.returnValue!=="confirm"||!deleting)return;try{deleteLocalData(localStorage,deleting);dataStatus.textContent=deleting==="save"?"Partida local apagada. Seus arquivos baixados continuam preservados.":"Preferência de som redefinida.";}catch{dataStatus.textContent="O navegador não permitiu alterar o armazenamento. Use as configurações de dados deste site.";}deleting=null;});
+
+// Manter a imagem antiga só como fallback: o desenho exibido vem da mesma
+// função de renderização procedural utilizada pelo jogo.
+const salonPreviews=[...document.querySelectorAll("img[data-scene-preview]")];
+if(salonPreviews.length){
+ const drawCurrentSalon=async img=>{
+  try{
+   const [{SceneRenderer},{createGame,pcPosition},{computerSeat}]=await Promise.all([
+    import("/game/js/render/scene.js"),import("/game/js/sim/engine.js"),import("/game/js/sim/route.js")
+   ]);
+   if(!img.isConnected)return;
+   const preview=createGame(98);
+   preview.customers=[0,1].map(i=>{
+    const seat=computerSeat(pcPosition(i,preview));
+    return {id:i+1,x:seat.x,y:seat.y,target:seat,route:[],stage:"using",
+     costume:"regular",pcIndex:i,facing:"north",usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
+   });
+   const canvas=document.createElement("canvas");
+   canvas.width=1000;canvas.height=610;canvas.className=img.className;
+   canvas.setAttribute("role","img");
+   canvas.setAttribute("aria-label",img.alt||"Salão do Lan House Simulator");
+   const ctx=canvas.getContext("2d");
+   if(!ctx)return;
+   new SceneRenderer(ctx).draw(preview,0);
+   if(img.isConnected)img.replaceWith(canvas);
+  }catch{
+   // Se o Canvas não estiver disponível, preservar a imagem de apresentação.
+  }
+ };
+ if("IntersectionObserver" in window){
+  const observer=new IntersectionObserver(entries=>{
+   for(const entry of entries)if(entry.isIntersecting){
+    observer.unobserve(entry.target);void drawCurrentSalon(entry.target);
+   }
+  },{rootMargin:"120px"});
+  salonPreviews.forEach(img=>observer.observe(img));
+ }else salonPreviews.forEach(img=>{void drawCurrentSalon(img);});
+}

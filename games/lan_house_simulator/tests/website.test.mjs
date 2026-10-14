@@ -38,3 +38,15 @@ test("política de privacidade informa dados e direitos sem divulgar detalhes in
   assert.doesNotMatch(html,internal);
  assert.doesNotMatch(privacy.description,/infraestrutura de hospedagem/i);
 });
+
+test("prévia visual do salão usa o desenho atual do jogo, não apenas fotografia antiga",async()=>{
+ const {pages}=await import("../website/content.mjs");
+ const list=pages({studio:"Softdown",email:null}).filter(page=>page.path===""||page.path==="sobre-o-jogo");
+ assert.equal(list.length,2);
+ for(const page of list)assert.match(page.body,/data-scene-preview/);
+ const {readFileSync}=await import("node:fs");
+ const site=readFileSync(new URL("../website/site.mjs",import.meta.url),"utf8");
+ assert.match(site,/import\("\/game\/js\/render\/scene\.js"\)/);
+ assert.match(site,/new SceneRenderer\(ctx\)\.draw\(preview,0\)/);
+ assert.match(site,/img\.replaceWith\(canvas\)/);
+});

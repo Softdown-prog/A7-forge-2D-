@@ -42,7 +42,7 @@ for(const file of files.filter(f=>[".js",".mjs"].includes(extname(f)))){
  for(const m of readFileSync(file,"utf8").matchAll(/(?:from\s*|import\s*\()\s*["'](\.[^"']+)["']/g))assert.ok(existsSync(resolve(dirname(file),m[1])),"Import inexistente: "+m[1]);
 }
 const play=readFileSync(resolve(root,"jogar/index.html"),"utf8");
-assert.match(play,/<iframe[^>]*data-src="\/game\/"[^>]*hidden/);assert.ok(!/<iframe[^>]*\ssrc=/.test(play),"Jogo deve aguardar clique");
+assert.match(play,/<iframe[^>]*data-src="\/game\/\?v=[a-f0-9]{12}"[^>]*hidden/);assert.ok(!/<iframe[^>]*\ssrc=/.test(play),"Jogo deve aguardar clique");
 assert.ok(statSync(resolve(root,"assets/sala.webp")).size<100_000,"Imagem da home deve ter menos de 100 KB");
 assert.ok(!readFileSync(resolve(root,"assets/site.mjs"),"utf8").includes("localStorage.clear"));
 console.log(JSON.stringify({pages:titles.size,htmlFiles:html.length,localReferences:references,modules:files.filter(f=>[".js",".mjs"].includes(extname(f))).length,heroBytes:statSync(resolve(root,"assets/sala.webp")).size}));
