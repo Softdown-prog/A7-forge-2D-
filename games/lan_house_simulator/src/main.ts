@@ -23,6 +23,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
 import {requestCleaning,pcUnderRepair} from "./sim/services.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
@@ -352,6 +353,14 @@ gpuList?.addEventListener("click",event=>{
  applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
 });
 const licensePanel=document.getElementById("windows-license-list");
+const gpuGamePanel=document.getElementById("gpu-game-catalog");
+gpuGamePanel?.addEventListener("click",event=>{
+ const button=event.target instanceof Element?event.target.closest("button[data-gpu-game-buy]"):null;
+ if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const id=button.dataset.gpuGameBuy;
+ if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
+ applyResult(game,licenseGpuGame(game,id));renderUI();save();
+});
 licensePanel?.addEventListener("click",event=>{
  const node=event.target instanceof Element?event.target.closest("button"):null;
  if(!(node instanceof HTMLButtonElement)||node.disabled)return;
@@ -882,6 +891,46 @@ function renderUI():void {
         choices.appendChild(btn);
       }
       line.append(title,choices);licensePanel.appendChild(line);
+    }
+  }
+  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
+    gpuGamePanel.replaceChildren();
+    if(game.economyVersion!==2||year<2025){
+      const note=document.createElement("p");
+      note.textContent=game.economyVersion!==2
+       ?"Os jogos com GPU são um recurso do modo histórico."
+       :"Novos jogos que exigem placa de vídeo chegam em 2025.";
+      gpuGamePanel.append(note);
+    }else for(const title of GPU_GAME_CATALOG){
+      const card=document.createElement("div");card.className="price-control";
+      const heading=document.createElement("strong");
+      heading.textContent=title.name+" · "+title.year;
+      const requirements=document.createElement("p");requirements.className="catalog-game-note";
+      const gpu=GPU_CATALOG.find(x=>x.id===title.minGpu);
+      const os=WINDOWS_ERAS.find(x=>x.id===title.minWindows);
+      requirements.textContent="Requer GPU "+(gpu?.name??title.minGpu)+
+       " ou superior e "+(os?.name??title.minWindows)+" licenciado.";
+      const quote=quoteGpuGame(game,title.id);
+      const status=document.createElement("p");status.className="catalog-game-note";
+      const bought=game.licensedGpuGames?.includes(title.id)===true;
+      status.textContent=(bought?"Licenciado. ":quote.message+" ")+
+       (quote.eligiblePcs.length
+        ?"Roda no(s) PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
+        :"Nenhuma máquina compatível ainda.")+
+       " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
+       "/h, somente para clientes de jogos avançados e dentro do teto anual.";
+      if(bought&&quote.eligiblePcs.length){
+        status.textContent+=" Valor atual por hora: "+
+         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i).toFixed(2)).join(" · ")+".";
+      }
+      const action=document.createElement("button");
+      action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
+      action.textContent=bought?"Licenciado":year<title.year
+       ?"🔒 Disponível em "+title.year:"Licenciar · R$ "+title.cost;
+      action.disabled=!quote.ok;
+      action.title=quote.ok?"Licença para todo o estabelecimento, uso restrito a máquinas compatíveis.":quote.message;
+      card.append(heading,requirements,status,action);
+      gpuGamePanel.append(card);
     }
   }
   setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map(n=>Math.round(n)+"%").join(" · ")+" · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
