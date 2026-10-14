@@ -70,6 +70,16 @@ menuPreview.customers=[0,1].map(i=>{
 });
 menuRenderer?.draw(menuPreview,0);
 
+/** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
+function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):GameState{
+ const fresh=createGame(seed,mode);
+ if(typeof crypto!=="undefined"&&typeof crypto.getRandomValues==="function"){
+  fresh.mailScheduleSeed=crypto.getRandomValues(new Uint32Array(1))[0]??(seed>>>0);
+ }else{
+  fresh.mailScheduleSeed=(Date.now()^Math.floor(Math.random()*0x100000000))>>>0;
+ }
+ return fresh;
+}
 function readSave(): GameState {
   try {
     const data = localStorage.getItem(GAME_SAVE_KEY);
@@ -81,7 +91,7 @@ function readSave(): GameState {
       }
     }
   } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
-  return createGame(72421,"historical");
+  return newGameForPlayer(72421,"historical");
 }
 let game = readSave();
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
@@ -166,7 +176,7 @@ function beginPlay():void{
 }
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- game=createGame(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ game=newGameForPlayer(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;save();beginPlay();
 });
 continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
@@ -436,7 +446,7 @@ retailControls?.addEventListener("click",event=>{
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
+  game=newGameForPlayer(72421,"classic");previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
 const placementHelp=document.getElementById("placement-help");
