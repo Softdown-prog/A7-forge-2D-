@@ -54,6 +54,23 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_scene.mjs out/validation
+      - name: Record continuous Chromium gameplay and encode MP4
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          node scripts/record_gameplay.mjs out/live-video
+          ffmpeg -hide_banner -loglevel error -y -i out/live-video/lan_house_gameplay_live.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
+            -movflags +faststart out/live-video/lan_house_gameplay_live.mp4
+          test -s out/live-video/lan_house_gameplay_live.mp4
+      - name: Upload actual gameplay MP4
+        if: matrix.worker == 'scene'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-real-gameplay-video
+          path: games/lan_house_simulator/out/live-video/lan_house_gameplay_live.mp4
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload Canvas visual validation
         if: matrix.worker == 'scene'
         uses: actions/upload-artifact@v4
