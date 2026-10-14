@@ -403,7 +403,8 @@ function nextDay(s: GameState): void {
   s.offlineUntil = Math.min(s.offlineUntil, s.totalMinutes);
   addLog(s, s.weather === "rain" ? "Dia chuvoso: demanda menor e rede instável." : "Novo dia: portas abertas.");
   if (dayNumber(s) > 1 && (dayNumber(s) - 1) % 30 === 0) {
-    const bill = monthlyBills(s);
+    // A conta encerra o mês que acabou, não antecipa o índice do mês seguinte.
+    const bill=monthlyBills({...s,totalMinutes:Math.max(0,s.totalMinutes-1)});
     const energy=Math.round(s.energyAccrued??0);
     s.cash -= bill; s.expenses += bill;
     s.energyAccrued=0;
@@ -465,7 +466,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
