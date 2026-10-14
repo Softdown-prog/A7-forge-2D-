@@ -1,4 +1,5 @@
 import type { GameState } from "./types.js";
+import { DAY_MINUTES } from "./types.js";
 import { isValidSave } from "./engine.js";
 import { validFurniturePlacements } from "./shop.js";
 import {validRoomExtensions} from "./room.js";
@@ -29,7 +30,8 @@ export function parseImportedSave(input:string):GameState {
     !Array.isArray(state.customers)||state.customers.length>200||
     !Array.isArray(state.eventLog)||state.eventLog.length>500||
     !state.eventLog.every(x=>typeof x==="string"&&x.length<1000)||
-    !Object.values(state.inventory).every(x=>Number.isInteger(x)&&x>=0&&x<1e6)
+    !Object.values(state.inventory).every(x=>Number.isInteger(x)&&x>=0&&x<1e6)||
+    (state.promotionDay!==undefined&&(!Number.isInteger(state.promotionDay)||state.promotionDay<1||state.promotionDay>Math.floor(state.totalMinutes/DAY_MINUTES)+1))
  )throw Error("A partida contém valores fora dos limites.");
  if(!validRoomExtensions(state))throw Error("Extensões de salão inválidas.");
  if(!validFurniturePlacements(state))throw Error("Posicionamento de móveis inválido.");

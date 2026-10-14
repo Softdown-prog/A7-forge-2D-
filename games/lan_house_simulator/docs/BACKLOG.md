@@ -238,3 +238,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Níveis 2 e 3 usam variações sutis de material e identificação junto ao gabinete (sem alterar footprint, cadeira ou câmera).
 - [x] Estado visual deriva do nível persistido no mesmo PC; saves antigos continuam como nível 1.
 - [ ] Aprovação visual em screenshot do jogo compilado.
+
+## Divulgação local — panfletagem paga (13/10/2026)
+- [x] Campanha diária no painel Finanças: custo real R$ 120 no caixa e despesas, compra única por dia de jogo.
+- [x] +40% na chance de chegada durante o dia da contratação; fila, capacidade, satisfação e cobrança continuam com a simulação original.
+- [x] Expiração automática no fechamento (22h), sem timers reais; dia de compra opcional em saves antigos, com validação de importação.
+- [x] Indicador de campanha no HUD, duração restante e botão bloqueado quando não há caixa ou a campanha está ativa.
+- [ ] Avaliar efeito sobre a demanda em sessões longas e conferir o painel de Finanças no PNG real de desktop/mobile do CI.
