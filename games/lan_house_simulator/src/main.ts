@@ -31,6 +31,7 @@ import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
+import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
@@ -390,6 +391,14 @@ gpuList?.addEventListener("click",event=>{
 });
 const licensePanel=document.getElementById("windows-license-list");
 const gpuGamePanel=document.getElementById("gpu-game-catalog");
+const eraGamePanel=document.getElementById("era-game-catalog");
+eraGamePanel?.addEventListener("click",event=>{
+ const action=event.target instanceof Element?event.target.closest("button[data-era-game-buy]"):null;
+ if(!(action instanceof HTMLButtonElement)||action.disabled)return;
+ const id=action.dataset.eraGameBuy;
+ if(!id||!ERA_GAME_CATALOG.some(title=>title.id===id))return;
+ applyResult(game,licenseEraGame(game,id));renderUI();save();
+});
 gpuGamePanel?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button[data-gpu-game-buy]"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
@@ -723,7 +732,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -997,6 +1006,41 @@ function renderUI(liveOnly=false):void {
         choices.appendChild(btn);
       }
       line.append(title,choices);licensePanel.appendChild(line);
+    }
+  }
+  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"){
+    eraGamePanel.replaceChildren();
+    const owned=game.licensedEraGames??[];
+    const summary=document.createElement("p");summary.className="era-game-summary";
+    summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · variedade amplia a procura em "+Math.round((eraGameVisitorMultiplier(game)-1)*1000)/10+"%, até 15%.";
+    eraGamePanel.append(summary);
+    for(const releaseYear of [1998,1999]){
+      const section=document.createElement("section");section.className="era-game-section";
+      const groupTitle=document.createElement("h4");
+      const titles=ERA_GAME_CATALOG.filter(title=>title.year===releaseYear);
+      groupTitle.textContent=releaseYear+" · "+titles.filter(title=>owned.some(id=>id===title.id)).length+" de 5 jogos";
+      const grid=document.createElement("div");grid.className="era-game-grid";
+      for(const title of titles){
+        const quote=quoteEraGame(game,title.id),bought=owned.some(id=>id===title.id),locked=year<title.year;
+        const card=document.createElement("article");card.className="era-game-card"+(locked?" era-game-locked":"")+(bought?" era-game-owned":"");
+        const cover=document.createElement("div");cover.className="era-game-cover";cover.dataset.theme=title.theme;
+        const release=document.createElement("small");release.className="era-cover-release";release.textContent="SOFTDOWN · "+title.year;
+        const symbol=document.createElement("span");symbol.className="era-cover-symbol";symbol.setAttribute("aria-hidden","true");symbol.textContent=title.symbol;
+        const coverName=document.createElement("strong");coverName.className="era-cover-title";coverName.textContent=title.name;
+        const genre=document.createElement("small");genre.className="era-cover-genre";genre.textContent=title.genre+" · EDIÇÃO PC";
+        cover.append(release,symbol,coverName,genre);
+        const details=document.createElement("div");details.className="era-game-details";
+        const name=document.createElement("strong");name.textContent=title.name;
+        const info=document.createElement("p");info.textContent=title.description;
+        const meta=document.createElement("small");meta.textContent=title.genre+" · "+title.year+" · licença da lan house · R$ "+title.cost;
+        const status=document.createElement("small");status.className="era-game-status";
+        status.textContent=bought?"✓ Licença ativa no estabelecimento":quote.ok?"Pronto para licenciar":quote.message;
+        const button=document.createElement("button");button.type="button";button.className="slice";button.dataset.eraGameBuy=title.id;
+        button.textContent=bought?"✓ Licenciado":locked?"🔒 Chega em "+title.year:quote.ok?"Licenciar · R$ "+title.cost:"Indisponível";
+        button.disabled=!quote.ok;button.title=quote.message;
+        details.append(name,info,meta,status,button);card.append(cover,details);grid.append(card);
+      }
+      section.append(groupTitle,grid);eraGamePanel.append(section);
     }
   }
   if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
