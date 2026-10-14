@@ -487,7 +487,18 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Refinar gabinetes, portas, vidro, latas, doces, controles e bandejas de retirada com perspectiva e profundidade; redesenhar o expositor metálico com pacotes CROC e letreiro integrado.
 - [x] Refletir vendas, estoque vazio e reposição nas vitrines; reutilizar sprites em cache sem modificar estado, RNG, rotas ou economia.
 - [x] Verificar 147 casos Canvas, compras dos três produtos em dois dias simulados e encaixe desktop/mobile; registrar `docs/RETAIL_ART.md` e automatizar no worker de cena.
+\n## Contrato de infraestrutura online e Cookies — 14/10/2026
 
+- [x] Registrar a decisão de produto: **LHS — Lan House Simulator**, moeda premium **Cookies (biscoitos)**, jogo integralmente gratuito, sem assinatura obrigatória ou venda da campanha.
+- [x] Contratar em documentação as fronteiras Cloudflare (frontend e jogo local), Cloud Run Node.js (API e pagamentos), Firebase Authentication (login), Firestore (contas, carteira, ledger e compras) e GCS (JSON de saves manuais).
+- [ ] Implementar identidade opcional e guardar saves locais/importação existentes, sem perder partidas antigas.
+- [ ] Criar carregamento de JSON por UID, salvamento em nuvem **somente por clique**, backup limitado, validação de versão e controle de sobrescritas concorrentes.
+- [ ] Implementar carteira de Cookies no Firestore, permissões premium, compras atômicas, idempotência e conciliação de estorno.
+- [ ] Integrar provedor de checkout em sandbox com webhook verificado; nunca confiar em retorno do navegador ou em saldo contido no save.
+- [ ] Criar catálogo de itens premium opcionais sem bloquear jogabilidade gratuita e validar UI desktop/mobile, custos, segurança e LGPD antes de produzir.
+- [ ] Publicar somente depois de aprovação explícita, seguindo o processo de CH-site/Cloudflare.
+
+Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CONTRACT.md). Nenhum serviço foi provisionado com esta anotação.
 
 ## Diagnóstico real de rentabilidade histórica — 14/10/2026
 - [x] Executar 16 campanhas de 120 dias em 1998, 2005, 2012 e 2024 com duas sementes, três PCs, kits reais CPU/RAM/placa-mãe/armazenamento/fonte/GPU/LCD/Windows e preços máximos permitidos; medir investimento, margem operacional, despesas, ocupação e save no dia 60.
