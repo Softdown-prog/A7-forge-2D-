@@ -465,3 +465,9 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .hud-card:nth-child(3)>span{display:none}
  .hud-card:nth-child(3) strong{font-size:12px}
 }
+
+/* Indicadores econômicos no sistema visual Terminal de Bairro. */
+.price-insight{background:#e4ecd4;border:1px solid #c4cfae;border-radius:9px;padding:13px 16px;margin:14px 0}
+.price-insight h4{color:#3f5b36;font-size:14px;margin:0 0 8px}
+.stat .price-insight p{margin:5px 0;color:#314a3c;font-variant-numeric:tabular-nums}
+.stat .price-insight .price-insight-note{margin-top:9px;font-size:11px;color:#58684e}

@@ -6,6 +6,7 @@ import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
+import {hourlyPriceInsight} from "./sim/pricingInsights.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
@@ -578,6 +579,10 @@ function renderUI():void {
   setText("admin-served",String(game.served));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". A energia aumenta com PCs instalados, hardware e uso.");
   setText("price", "R$ "+game.pricePerHour+"/h");
+  const priceInsight=hourlyPriceInsight(game);
+  setText("price-demand-insight","Procura relativa pelo modelo: "+priceInsight.relativeDemandPercent+"% (R$ 12/h = 100%).");
+  setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
+  setText("price-caution",priceInsight.caution);
   if(retailControls){
    retailControls.replaceChildren();
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
