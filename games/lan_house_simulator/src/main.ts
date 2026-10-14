@@ -1,7 +1,10 @@
+import {installGameViewport} from "./ui/gameViewport.js";
+import {createLayoutEditor} from "./ui/layoutEditor.js";
+import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave, snapshotGameState } from "./sim/saveTransfer.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
-import {buildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
+import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
@@ -143,6 +146,7 @@ importFile.addEventListener("change",async()=>{
  }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
 });
 function showMenu():void{
+ if(layoutEditor.active)layoutEditor.close();
  sceneMotion.reset();
  soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
@@ -168,7 +172,7 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
 let placingKind:FurnitureKind|null=null;
 let wallMode:"build"|"remove"|"door"|null=null;
@@ -179,6 +183,12 @@ let relocating=false;
 let relocationFrom:string|null=null;
 let hoveredPlacement:string|null=null;
 let placementNotice="";
+let purchaseRotation:0|1|2|3=0;
+let pendingWall:WallSegment|null=null;
+const layoutEditor=createLayoutEditor(canvas,()=>game,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
+installGameViewport(canvas);
+document.getElementById("organize-layout")?.addEventListener("click",()=>layoutEditor.open());
+
 let adminOpen = false;
 let noticesOpen=false;
 let activeAdminTab="prices";
@@ -274,44 +284,42 @@ noticesList?.addEventListener("click",event=>{
  else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");renderUI();}
  else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");renderUI();}
 });
-button("open-admin",()=>{adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
-button("open-shop",()=>{shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-admin",()=>{if(layoutEditor.active)layoutEditor.close();adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
+button("open-shop",()=>{if(layoutEditor.active)layoutEditor.close();shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("close-shop",()=>{shopOpen=false;renderUI();});
 button("demolish-walls",()=>{
  if(!((game.interiorWalls?.length??0)+(game.interiorDoors?.length??0)))return;
- wallMode="remove";placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
- shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+ wallMode="remove";placingKind=null;relocating=false;hoveredWall=null;pendingWall=null;placementNotice="";
+ shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
 });
 button("rotate-furniture",()=>{
+ if(placingKind&&placingKind!=="poster"){purchaseRotation=((purchaseRotation+1)%4) as 0|1|2|3;renderUI();return;}
  if(!relocating||!relocationFrom)return;
  const result=rotateFurniture(game,relocationFrom);
  applyResult(game,result);renderUI();
  if(result.ok)save();
 });
-button("organize-furniture",()=>{
- if(!furnitureLocations(game).length)return;
- placingKind=null;relocating=true;relocationFrom=null;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
- shopOpen=false;adminOpen=false;renderUI();canvas!.scrollIntoView({block:"center",behavior:"smooth"});
-});
+button("organize-furniture",()=>layoutEditor.open());
+
 shopCatalog?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
  const id=target.dataset.buy;
  if(id==="computer-annex"){
    installingAnnexPc=true;wallMode=null;placingKind=null;relocating=false;hoveredAnnexPc=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  if(id==="wall"||id==="door"){
-   wallMode=id==="door"?"door":"build";installingAnnexPc=false;placingKind=null;relocating=false;hoveredWall=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   wallMode=id==="door"?"door":"build";installingAnnexPc=false;placingKind=null;relocating=false;hoveredWall=null;pendingWall=null;placementNotice="";
+   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  if(id==="poster"||id==="plant"||id==="table"){
    if(!availablePlacementSlots(game,id).length)return;
-   placingKind=id;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
+   placingKind=id;purchaseRotation=0;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
    shopOpen=false;adminOpen=false;renderUI();
-   canvas.scrollIntoView({block:"center",behavior:"smooth"});
+   canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
    return;
  }
  const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
@@ -438,9 +446,17 @@ const placementHelp=document.getElementById("placement-help");
 const stage=canvas.closest<HTMLElement>(".stage");
 const placementNames:Record<FurnitureKind,string>={poster:"pôster",plant:"planta",table:"mesinha"};
 function stopPlacement():void{
- placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;placementNotice="";renderUI();
+ placingKind=null;relocating=false;relocationFrom=null;hoveredPlacement=null;wallMode=null;hoveredWall=null;pendingWall=null;installingAnnexPc=false;hoveredAnnexPc=null;placementNotice="";renderUI();
 }
 document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
+document.getElementById("confirm-wall")?.addEventListener("click",()=>{
+ if(!pendingWall||!wallMode)return;const wall=pendingWall;
+ const result=wallMode==="build"?buildWall(game,wall):wallMode==="door"?installInteriorDoor(game,wall):
+  (game.interiorDoors??[]).some(p=>p.axis===wall.axis&&p.x===wall.x&&p.y===wall.y)?removeInteriorDoor(game,wall):removeWall(game,wall);
+ placementNotice=result.message;if(result.ok){applyResult(game,result);save();pendingWall=null;}renderUI();
+});
+document.getElementById("turn-wall")?.addEventListener("click",()=>{if(pendingWall){pendingWall={...pendingWall,axis:pendingWall.axis==="x"?"y":"x"};hoveredWall=pendingWall;renderUI();}});
+
 function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
  const element=canvas!;
  const bounds=element.getBoundingClientRect();
@@ -460,7 +476,7 @@ function pickWall(x:number,y:number):WallSegment|null{
      if(d<best){best=d;nearest=segment;}
    }
  }
- return best<=Math.max(12,18*camera.zoom)?nearest:null;
+ return best<=Math.max(12,22*canvas!.width/canvas!.getBoundingClientRect().width)?nearest:null;
 }
 function pickAnnexPc(x:number,y:number):AnnexComputerSlot|null{
  const camera=cameraForGame(game);let nearest:AnnexComputerSlot|null=null,best=Infinity;
@@ -480,7 +496,7 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  for(const slot of furnitureSlots(game)){
   if(surface&&slot.surface!==surface)continue;
   if(relocating&&!moving&&!furnitureLocations(game).some(p=>p.slotId===slot.id))continue;
-  const at=slot.surface==="wall"?iso({x:slot.x+0.33,y:0.01},camera,137):
+  const at=slot.surface==="wall"?iso({x:slot.x+(slot.axis==="y"?0:.33),y:slot.y+(slot.axis==="y"?.33:0)},camera,137):
       iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   const dist=Math.hypot(x-at.x,y-at.y);
   if(dist<distance){distance=dist;nearest=slot;}
@@ -509,10 +525,7 @@ canvas.addEventListener("click",e=>{
   if(wallMode){
     const wall=pickWall(x,y);
     if(!wall){placementNotice="Toque na borda de um tile para selecionar o segmento.";renderUI();return;}
-    const result=wallMode==="build"?buildWall(game,wall):wallMode==="door"?installInteriorDoor(game,wall):
-      (game.interiorDoors??[]).some(p=>p.axis===wall.axis&&p.x===wall.x&&p.y===wall.y)?removeInteriorDoor(game,wall):removeWall(game,wall);
-    placementNotice=result.message;
-    if(result.ok){applyResult(game,result);save();}
+    pendingWall=wall;hoveredWall=wall;placementNotice="Segmento selecionado. Confira a prévia e toque em Confirmar segmento.";
     renderUI();return;
   }
   if(relocating){
@@ -537,7 +550,7 @@ canvas.addEventListener("click",e=>{
   if(placingKind){
     const kind=placingKind,slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Clique em uma das posições sinalizadas.";renderUI();return;}
-    const result=placeFurniture(game,kind,slot.id);
+    const result=placeFurniture(game,kind,slot.id,purchaseRotation);
     if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
@@ -548,7 +561,7 @@ function renderShop():void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
- if(organize){const count=furnitureLocations(game).length;organize.disabled=count===0;organize.textContent=count?"↔ Organizar móveis instalados ("+count+")":"↔ Organizar móveis (nenhum instalado)";}
+ if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
  if(demolish){const count=(game.interiorWalls?.length??0)+(game.interiorDoors?.length??0);
   demolish.disabled=!count;demolish.textContent="Remover paredes e portas ("+count+")";}
@@ -577,9 +590,9 @@ function renderShop():void{
      max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
-  button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
+  button.textContent=full?(max>0?"Sem espaço livre":"Limite atingido"):game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
   card.append(art,category,title,description,button);
-  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+"/"+max;card.append(owned);}
+  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
  }
 }
@@ -625,13 +638,15 @@ function renderUI():void {
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
   const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
-  if(rotateButton){rotateButton.hidden=!relocating||!moving;rotateButton.disabled=!moving||moving.kind==="poster";}
+  if(rotateButton){rotateButton.hidden=!(placingKind&&placingKind!=="poster")&&(!relocating||!moving);rotateButton.disabled=placingKind?placingKind==="poster":!moving||moving.kind==="poster";}
+ const confirmWall=document.querySelector<HTMLButtonElement>("#confirm-wall"),turnWall=document.querySelector<HTMLButtonElement>("#turn-wall");
+ if(confirmWall){confirmWall.hidden=!wallMode;confirmWall.disabled=!pendingWall||(wallMode==="build"&&!canBuildWall(game,pendingWall));}if(turnWall){turnWall.hidden=wallMode!=="build";turnWall.disabled=!pendingWall;}
 
   if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode||installingAnnexPc));
   if(placementHelp)placementHelp.textContent=installingAnnexPc?
     (placementNotice||"Selecione um círculo verde para instalar um computador completo por R$ "+ANNEX_PC_COST+"."):
     wallMode?
-    (placementNotice||(wallMode==="build"?"Toque na borda de um tile para construir uma parede por R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
+    (placementNotice||(wallMode==="build"?"Selecione a borda, confira a prévia e confirme. Cada segmento custa R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
     relocating?
     (placementNotice||(relocationFrom?"Escolha o destino verde ou toque em Girar para mudar a orientação.":"Toque no móvel em dourado e escolha a nova posição. Sem custos.")):
     placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
@@ -992,10 +1007,10 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  const simulating=isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const simulating=isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
-  if(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
+  if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
@@ -1024,13 +1039,14 @@ function frame(timestamp:number):void {
     if(speechPopups.length>8)speechPopups.shift();
   }
   if(isPlaying)renderer.draw(sceneMotion.sample(game),elapsed);
+  if(isPlaying&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
   else if(menuRenderer&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
-  if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);
+  if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);
   if(isPlaying&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
   if(isPlaying&&wallMode){
-    if(wallMode==="door")renderer.drawDoorCandidates(game,hoveredWall);
-    else renderer.drawWallPreview(game,hoveredWall,wallMode==="remove");
+    if(wallMode==="door")renderer.drawDoorCandidates(game,pendingWall??hoveredWall);
+    else renderer.drawWallPreview(game,pendingWall??hoveredWall,wallMode==="remove");
   }
   if(isPlaying&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
   if(isPlaying&&timestamp-lastUI>450){lastUI=timestamp;renderUI();}

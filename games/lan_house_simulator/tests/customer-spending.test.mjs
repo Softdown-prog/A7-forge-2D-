@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame} from "../dist/js/sim/engine.js";
 import {selectPurchase,consumePurchase,chooseSessionMinutes} from "../dist/js/sim/needs.js";
-import {vendingApproach} from "../dist/js/sim/layout.js";
+import {vendingApproach,purchaseApproach} from "../dist/js/sim/layout.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 function shopping(wallet=25){
@@ -19,7 +19,7 @@ test("cliente com sede e fome compra bebida e alimento pelo trajeto real",()=>{
  assert.equal(c.stage,"shopping");assert.equal(c.desiredItem,"snacks");
  assert.equal(c.purchasedDrink,true);assert.equal(c.purchasedFood,undefined);
  assert.equal(c.wallet,17);assert.ok(c.needs.thirst<55);
- assert.deepEqual(c.route.at(-1)??c.target,vendingApproach("candy"));
+ assert.deepEqual(c.route.at(-1)??c.target,purchaseApproach("snacks",s));
  for(let i=0;i<80&&c.stage!=="leaving";i++)stepGame(s,1);
  assert.equal(c.stage,"leaving");assert.equal(c.purchasedFood,true);
  assert.equal(c.wallet,8);assert.equal(s.cash-opening,17);assert.equal(s.revenue,17);

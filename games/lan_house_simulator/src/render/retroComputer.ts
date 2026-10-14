@@ -1,5 +1,5 @@
 import type {GameState,Point} from "../sim/types.js";
-import {iso,polygon,cuboid,type Projection} from "./isometric.js";
+import {iso,polygon,cuboid,raisedCuboid,type Projection} from "./isometric.js";
 import {pcBroken} from "../sim/engine.js";
 import {installedGpu} from "../sim/gpu.js";
 import {installedLcd,type LcdId} from "../sim/computerModels.js";
@@ -16,6 +16,7 @@ const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:stri
 const gpuColors:Record<string,string>={gpu05:"#75aa85",gpu07:"#c1a15f",gpu09:"#6dabb8",gpu11:"#a393bc",gpu13:"#ba7773"};
 function raisedBox(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,w:number,d:number,z:number,h:number,
  top:string,front:string,side:string):void{
+ if(cam.rotation){raisedCuboid(c,cam,x,y,w,d,z,h,[top,front,side]);return;}
  const at=(px:number,py:number,pz:number)=>iso({x:px,y:py},cam,pz);
  polygon(c,[at(x+w,y,z),at(x+w,y+d,z),at(x+w,y+d,z+h),at(x+w,y,z+h)],side,"#6c665b");
  polygon(c,[at(x,y+d,z),at(x+w,y+d,z),at(x+w,y+d,z+h),at(x,y+d,z+h)],front,"#756650");
@@ -27,6 +28,7 @@ function path(c:CanvasRenderingContext2D,points:readonly Point[],color:string,wi
 }
 function plane(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,w:number,z:number,h:number,
  paint:()=>void):void{
+ if(cam.rotation===1||cam.rotation===2)return;
  const a=iso({x,y},cam,z+h),b=iso({x:x+w,y},cam,z+h),d=iso({x,y},cam,z);
  c.save();c.transform((b.x-a.x)/96,(b.y-a.y)/96,0,(d.y-a.y)/100,a.x,a.y);paint();c.restore();
 }
@@ -98,6 +100,11 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
  const top=tier===3?"#d3dedb":tier===2?"#eee0bc":"#f0e6d0";
  const side=tier===3?"#879fa0":tier===2?"#b9a57c":"#b7b1a0";
  const at=(x:number,y:number,h:number)=>iso({x,y},cam,h);
+ if(cam.rotation===1||cam.rotation===2){
+  raisedBox(c,cam,mx,my,mw,md,mz,mh,top,side,side);
+  for(let i=0;i<5;i++)path(c,[at(mx+.08,my,mz+10+i*4),at(mx+mw-.08,my,mz+10+i*4)],"#75867b",1*z);
+  raisedBox(c,cam,mx+.09,my+.12,.29,.27,34.5,3,"#dcd3bc","#a69f8a","#8f968a");return;
+ }
  // CRT back narrows and slopes away from the broad front bezel.
  polygon(c,[at(mx+mw,my+md,mz),at(mx+mw-.055,my,mz+5),
   at(mx+mw-.055,my,mz+mh-5),at(mx+mw,my+md,mz+mh)],side,"#7b7d72");
@@ -231,12 +238,12 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  if(!useCache||typeof document==="undefined"||ctx.globalAlpha!==1){paintComputer(ctx,camera,p,index,appearance);return;}
  const base=iso(p,camera),ix=Math.floor(base.x),iy=Math.floor(base.y),z=camera.zoom;
  const fx=base.x-ix,fy=base.y-iy;
- const key=JSON.stringify([index,z,fx,fy,appearance]);
+ const key=JSON.stringify([index,z,fx,fy,camera.rotation??0,appearance]);
  let cache=sprites.get(ctx);if(!cache){cache=new Map();sprites.set(ctx,cache);}
  let sprite=cache.get(key);
- const padX=Math.ceil(76*z)+3,padY=Math.ceil(91*z)+3;
+ const padX=Math.ceil((camera.rotation?130:76)*z)+3,padY=Math.ceil((camera.rotation?120:91)*z)+3;
  if(!sprite){
-  sprite=document.createElement("canvas");sprite.width=Math.ceil(158*z)+6;sprite.height=Math.ceil(154*z)+6;
+  sprite=document.createElement("canvas");sprite.width=Math.ceil((camera.rotation?260:158)*z)+6;sprite.height=Math.ceil((camera.rotation?240:154)*z)+6;
   const buffer=sprite.getContext("2d");
   if(!buffer){paintComputer(ctx,camera,p,index,appearance);return;}
   // Keep the original world-coordinate arithmetic; an integer translation

@@ -1,6 +1,28 @@
 import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {hallwayRoute} from "./route.js";
+import {editableObjects,objectRect} from "./editableObjects.js";
+
+/** Free-layout routing uses half-tile cells and tests every connecting segment. */
+function furnishedRoute(s:GameState,from:Point,to:Point):Point[]|null{
+ const b=roomBounds(s),step=.5,cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
+ const objects=editableObjects(s).filter(o=>o.surface==="floor").map(objectRect),point=(key:number)=>({x:b.minX+.25+(key%cols)*step,y:b.minY+.25+Math.floor(key/cols)*step});
+ const inside=(p:Point)=>p.x>b.minX&&p.x<b.maxX&&p.y>b.minY&&p.y<b.maxY;
+ const clear=(p:Point)=>inside(p)&&(Math.hypot(p.x-to.x,p.y-to.y)<.22||objects.every(r=>!(p.x>r.minX-.035&&p.x<r.maxX+.035&&p.y>r.minY-.035&&p.y<r.maxY+.035)));
+ if(!inside(to))return null;
+ const segment=(a:Point,d:Point)=>{if(!canTraverseLocalStep(s,a,d))return false;const n=Math.max(1,Math.ceil(Math.hypot(d.x-a.x,d.y-a.y)/.1));for(let i=1;i<=n;i++)if(!clear({x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n}))return false;return true;};
+ if(segment(from,to))return [{...to}];
+ const queue:number[]=[],parent=new Map<number,number>();
+ for(let y=Math.max(0,Math.floor((from.y-b.minY)/step)-2);y<Math.min(rows,Math.floor((from.y-b.minY)/step)+3);y++)for(let x=Math.max(0,Math.floor((from.x-b.minX)/step)-2);x<Math.min(cols,Math.floor((from.x-b.minX)/step)+3);x++){
+  const key=y*cols+x,p=point(key);if(Math.hypot(p.x-from.x,p.y-from.y)<1.1&&segment(from,p)){queue.push(key);parent.set(key,-1);}
+ }
+ for(let i=0;i<queue.length;i++){
+  const key=queue[i]!,p=point(key);if(Math.hypot(p.x-to.x,p.y-to.y)<.9&&segment(p,to)){const path:Point[]=[{...to}];let k=key;while(k!==-1){path.push(point(k));k=parent.get(k)!;}return path.reverse();}
+  for(const [dx,dy] of [[0,1],[-1,0],[1,0],[0,-1]]){const x=key%cols+dx!,y=Math.floor(key/cols)+dy!,next=y*cols+x;
+   if(x<0||x>=cols||y<0||y>=rows||parent.has(next)||!segment(p,point(next)))continue;parent.set(next,key);queue.push(next);}
+ }
+ return null;
+}
 
 /** O traçado clássico tem prioridade enquanto não atravessa nenhuma parede. */
 function crossesClosedWall(w:{axis:"x"|"y";x:number;y:number},a:Point,b:Point):boolean{
@@ -36,6 +58,7 @@ function tile(p:Point,b:{minX:number;maxX:number;minY:number;maxY:number}):[numb
          Math.max(b.minY,Math.min(b.maxY-1,Math.floor(p.y)))];
 }
 export function navigableRoute(s:GameState,from:Point,to:Point):Point[]|null{
+ if(s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:"))||s.furniturePlacements?.some(p=>p.slotId.startsWith("floor-grid-")))return furnishedRoute(s,from,to);
  const walls=s.interiorWalls??[];
  if(!walls.length)return hallwayRoute(from,to);
  const b=roomBounds(s);

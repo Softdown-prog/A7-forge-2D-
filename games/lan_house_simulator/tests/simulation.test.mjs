@@ -469,7 +469,7 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame\(game,dt\*4\.0\)/);
  assert.match(source,/if\(!isPlaying\)return;/);
  assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
 });
@@ -499,7 +499,7 @@ test("compras de computadores e móveis cobram e persistem sem alterar saves leg
  assert.equal(buyFurniture(s,"poster").ok,true);assert.equal(s.cash,before-45);
  assert.equal(buyFurniture(s,"plant").ok,true);
  assert.equal(buyFurniture(s,"table").ok,true);
- assert.equal(buyFurniture(s,"table").ok,false);
+ assert.equal(buyFurniture(s,"table").ok,true);
  const legacy=createGame();delete legacy.installedPcs;legacy.expansionLevel=1;
  assert.equal(pcCount(legacy),5);
 });
@@ -508,7 +508,7 @@ test("colocação guiada só cobra na confirmação e impede colisão",async()=>
  const {placeFurniture,availablePlacementSlots,occupiedFurnitureSlots}=await import("../dist/js/sim/shop.js");
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
  const s=createGame(); const cash=s.cash;
- assert.equal(availablePlacementSlots(s,"plant").length,4);
+ assert.ok(availablePlacementSlots(s,"plant").length>4);
  assert.equal(placeFurniture(s,"plant","wall-1").ok,false);
  assert.equal(s.cash,cash);
  assert.equal(placeFurniture(s,"plant","floor-1").ok,true);
@@ -531,7 +531,7 @@ test("móveis antigos reservam espaços para não haver duplicação",async()=>{
  assert.equal(placeFurniture(s,"plant","floor-1").ok,false);
  assert.equal(placeFurniture(s,"plant","floor-3").ok,true);
  assert.equal(s.furniture?.plant,2);
- assert.equal(s.furniturePlacements?.length,1);
+ assert.equal(s.furniturePlacements?.length,2);
 });
 
 test("reorganizar móveis existentes preserva caixa, despesas, posse e save",async()=>{
@@ -563,6 +563,7 @@ test("reposicionamento de save antigo converte móveis com segurança sem recomp
  const s=createGame();s.cash=2000;
  assert.equal(buyFurniture(s,"plant").ok,true);
  assert.equal(buyFurniture(s,"poster").ok,true);
+ delete s.furniturePlacements; // Simulate an actual pre-placement save.
  assert.equal(s.furniturePlacements,undefined);
  const snapshot={cash:s.cash,expenses:s.expenses,furniture:JSON.stringify(s.furniture)};
  assert.equal(relocateFurniture(s,"floor-1","floor-4").ok,true);
@@ -581,7 +582,7 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
  assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
- assert.match(main,/if\(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
+ assert.match(main,/if\(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
 });
 
 test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
@@ -699,21 +700,21 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
 
 test("a ampliação libera slots e capacidade real para novas decorações",async()=>{
  const {expandDirection}=await import("../dist/js/sim/room.js");
- const {furnitureLimit,placeFurniture,furnitureLocations,validFurniturePlacements}=await import("../dist/js/sim/shop.js");
+ const {furnitureLimit,placeFurniture,furnitureLocations,validFurniturePlacements,availablePlacementSlots}=await import("../dist/js/sim/shop.js");
  const {serializeSave,parseImportedSave}=await import("../dist/js/sim/saveTransfer.js");
  const s=createGame();s.cash=20000;
  for(const dir of ["west","east","north"])assert.equal(expandDirection(s,dir).ok,true);
- assert.equal(furnitureLimit(s,"poster"),5);
- assert.equal(furnitureLimit(s,"plant"),6);
- assert.equal(furnitureLimit(s,"table"),4);
- for(const id of ["wall-1","wall-2","wall-west-1","wall-east-1"])
+ assert.ok(furnitureLimit(s,"poster")>=5);
+ assert.ok(furnitureLimit(s,"plant")>6);
+ assert.ok(furnitureLimit(s,"table")>4);
+ for(const id of availablePlacementSlots(s,"poster").slice(0,4).map(p=>p.id))
   assert.equal(placeFurniture(s,"poster",id).ok,true,id);
  for(const id of ["floor-1","floor-2","floor-west-1","floor-east-1","floor-north-1-a","floor-north-1-b"])
   assert.equal(placeFurniture(s,"plant",id).ok,true,id);
- assert.equal(placeFurniture(s,"plant","floor-3").ok,false,"limite por tipo evita spam");
- assert.equal(furnitureLocations(s).length,10);
+ assert.equal(placeFurniture(s,"plant","floor-3").ok,true,"capacidade depende do espaço livre");
+ assert.equal(furnitureLocations(s).length,11);
  assert.equal(validFurniturePlacements(s),true);
- assert.equal(parseImportedSave(serializeSave(s)).furniturePlacements.length,10);
+ assert.equal(parseImportedSave(serializeSave(s)).furniturePlacements.length,11);
 });
 
 test("parede interna tem prévia, custo, bloqueio das rotas e remoção sem reembolso",async()=>{
@@ -737,14 +738,14 @@ test("parede interna tem prévia, custo, bloqueio das rotas e remoção sem reem
  assert.equal(removeWall(s,wall).ok,false);
  assert.equal(wallZoneCount(s),1);
 });
-test("paredes não atravessam trajetos de clientes ou bordas externas",async()=>{
+test("paredes podem desviar trajetos e respeitam bordas externas",async()=>{
  const {buildWall,canBuildWall,validInteriorWalls}=await import("../dist/js/sim/walls.js");
  const s=createGame();s.cash=10000;
  assert.equal(buildWall(s,{axis:"x",x:2,y:0}).ok,false);
  assert.equal(buildWall(s,{axis:"x",x:2,y:6}).ok,false);
  assert.equal(buildWall(s,{axis:"y",x:0,y:2}).ok,false);
  // Segmento transversal ao corredor principal dos clientes.
- assert.equal(canBuildWall(s,{axis:"y",x:4,y:4}),false);
+ assert.equal(canBuildWall(s,{axis:"y",x:4,y:4}),true);
  assert.equal(validInteriorWalls(s),true);
 });
 test("paredes criam setores físicos fechados na grade sem alterar os PCs",async()=>{

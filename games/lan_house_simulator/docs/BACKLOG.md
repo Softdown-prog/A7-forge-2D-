@@ -553,6 +553,14 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 
 **Observação:** valores e consequências são fictícios para game design e não representam leis específicas de prevenção de incêndio de qualquer cidade ou estado.
 
+## Salão editável e ampliação da tela móvel — 14/10/2026
+- [x] Adicionar zoom, deslocamento do mapa e tela cheia; celular inicia em 160%, com controles acessíveis por toque e proteção contra compra após deslizar.
+- [x] Organizar PCs com mesa/cadeira, balcão/dono, máquinas, prateleira, lixeiras, pôsteres iniciais e decoração comprada por lista/toque, prévia, giro e confirmação gratuita; preservar peças, licenças, estoque e receita por estação.
+- [x] Substituir limites fixos de decoração por encaixes reais, manter IDs após ampliações e validar espaço, clientes e passagens antes de cobrar.
+- [x] Selecionar e confirmar divisórias/portas/remoção; permitir desvios alcançáveis e impedir cortes de equipamentos, com recálculo das rotas.
+- [x] Verificar toque em 360/414 e desktop 1440, giro, recarga, compra confirmada de divisória e 60 casos de cache nas quatro orientações; proteger importação de saves e registrar `docs/LAYOUT_EDITOR.md`.
+- [ ] Conferir gestos e ergonomia em telefone físico, principalmente salões grandes; estudar corredores mais amplos e edição assistida por cômodos antes de expandir o construtor.
+
 ## Jogos GPU obrigatórios e licenças desde 2005 — 14/10/2026
 - [x] Preservar catálogo básico de jogos (R$ 450) e licenças Windows atuais; adicionar títulos fictícios desbloqueados em **2005, 2009 e 2013**, cada um com GPU mínima, Windows mínimo, preço único e indicação dos PCs elegíveis.
 - [x] Impedir licenciamento premium sem **ao menos uma estação com GPU e Windows licenciado compatíveis**, mesmo se houver dinheiro; impedir cobrança repetida, antecipação da data de lançamento e IDs adulterados em saves.
