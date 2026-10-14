@@ -6,7 +6,7 @@ import {stationModelName} from "../sim/computerModels.js";
 import {installedWindows,WINDOWS_ERAS} from "../sim/era.js";
 import {hardwareFor,buildParts,formatMemory,describePart} from "../sim/hardware.js";
 
-const icons=new Set("computer cart settings mail play pause continue save upload close coins chart calendar sun rain network users tag stock tools chip shield wall door expand move rotate plant poster table megaphone trash check cursor idea lock warning arrow soda candy snacks".split(" "));
+const icons=new Set("computer cart settings mail play pause continue save upload close coins chart disc calendar sun rain network users tag stock tools chip shield wall door expand move rotate plant poster table megaphone trash check cursor idea lock warning arrow soda candy snacks".split(" "));
 export function iconMarkup(name:string):string{
  const safe=icons.has(name)?name:"computer";
  return '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="./assets/ui/icons.svg#'+safe+'"></use></svg>';

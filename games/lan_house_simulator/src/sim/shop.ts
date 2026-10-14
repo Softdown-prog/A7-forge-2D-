@@ -9,11 +9,13 @@ import {WALL_COST} from "./walls.js";
 import {annexComputerSlots,ANNEX_PC_COST,availableAnnexComputers} from "./stations.js";
 import {installedLcd} from "./computerModels.js";
 import {emptyStationAccount} from "./stationAccounting.js";
+import {DISC_COPIER_COST} from "./discCopy.js";
 export type FurnitureKind="poster"|"plant"|"table";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
  {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
+ {id:"disc-copier",label:"Copiadora de CDs e DVDs",category:"Serviços · 2001",description:"Ativa cópias no balcão. Você define o preço por CD e DVD; cada venda inclui o custo da mídia. Não ocupa espaço no salão."},
  {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Aumenta o espaço à esquerda e libera uma posição para PC no anexo."},
  {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Aumenta o espaço à direita e libera uma posição para PC no anexo."},
  {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Aumenta o espaço atrás do balcão e libera uma posição para PC no anexo. A entrada fica no mesmo lugar."},
@@ -24,6 +26,7 @@ export const SHOP_CATALOG=[
  {id:"table",label:"Mesinha",category:"Móveis",description:"Mesa lateral decorativa."}
 ] as const;
 export function shopPrice(s:GameState,id:string):number{
+ if(id==="disc-copier")return DISC_COPIER_COST;
  if(id==="wall")return WALL_COST;
  if(id==="door")return 80;
  if(id==="computer-annex")return ANNEX_PC_COST;

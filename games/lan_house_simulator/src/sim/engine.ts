@@ -15,6 +15,7 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
+import {serveDiscCopy,validDiscCopier} from "./discCopy.js";
 import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
 import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
 
@@ -325,9 +326,13 @@ function tryServe(s: GameState, c: Customer): void {
   c.gpuGameCharged=paid>regular;
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
-  s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
    (c.gpuGameCharged?" Sessão de jogo com GPU.":""));
+  const copy=serveDiscCopy(s,c);
+  if(copy){
+   addLog(s,"Cliente pediu "+copy.quantity+" cópia(s) de "+copy.kind.toUpperCase()+": +R$ "+copy.revenue+" · mídia -R$ "+copy.cost+".");
+  }
+  s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0),x:c.x,y:c.y});
 }
 function resolvePurchase(s: GameState, c: Customer): void {
   const items: Item[] = ["soda", "candy", "snacks"];
@@ -497,7 +502,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -505,7 +510,7 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
