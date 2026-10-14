@@ -7,7 +7,7 @@ export interface GameNotice {
 const day=(s:GameState)=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 const computerCount=(s:GameState)=>Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
 export function missingWindowsLicenses(s:GameState):number{
- return Array.from({length:computerCount(s)},(_,i)=>s.pcWindowsLicenses?.[i]===true?0:1).reduce((a,b)=>a+b,0);
+ return Array.from({length:computerCount(s)},(_,i)=>s.pcWindowsLicenses?.[i]===true?0:1).reduce<number>((a,b)=>a+b,0);
 }
 export function unreadNotices(s:GameState):number{return (s.notices??[]).filter(n=>!n.read).length;}
 function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameNotice["severity"]="warning"):void{
