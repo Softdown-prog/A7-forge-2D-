@@ -588,3 +588,12 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 @media(max-width:780px){.era-game-grid{grid-template-columns:1fr}.era-game-card{display:grid;grid-template-columns:minmax(110px,40%) minmax(0,1fr)}.era-game-cover{min-height:185px}.era-cover-title{font-size:19px}.era-cover-symbol{font-size:58px}.era-game-details{padding:12px;gap:7px}}
 @media(max-width:390px){.era-game-cover{padding:10px;min-height:200px}.era-cover-title{font-size:17px}.era-cover-release,.era-cover-genre{font-size:7px;letter-spacing:.04em}.era-game-details>strong{font-size:12px}.era-game-details p,.era-game-details small{font-size:9px}}
 
+
+/* Energia individual, sem criar painéis de testes na interface de produção. */
+#pc-maintenance .station-power-hint{font-size:12px;line-height:1.5;color:#576e59;margin:8px 0 12px}
+#pc-maintenance .pc-operation{grid-template-columns:minmax(140px,1fr) repeat(3,minmax(95px,auto))}
+#pc-maintenance .pc-operation.is-powered-off{background:#dfe8db;border-color:#9daea1}
+#pc-maintenance .pc-operation.is-powered-off>span{font-weight:700;color:#436a58}
+#pc-maintenance .pc-power-toggle{background:#315c4f;color:#f6f1df;border-color:#315c4f;min-width:118px}
+#pc-maintenance .pc-power-toggle:hover:not(:disabled){background:#254b3f;color:#fff}
+@media(max-width:700px){#pc-maintenance .pc-operation{grid-template-columns:repeat(2,minmax(0,1fr))}#pc-maintenance .pc-operation>span{grid-column:1/-1}#pc-maintenance .pc-power-toggle{min-width:0}}

@@ -6,6 +6,7 @@ import {stationModelName,stationOccupied} from "../sim/computerModels.js";
 import {hardwareFor,buildParts,requiredPsuWatts,quotePart,quotePlatform,windowsHardwareIssues,
  HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,describePart,type HardwareKind} from "../sim/hardware.js";
 import {iconMarkup} from "./presentation.js";
+import {stationPoweredOn} from "../sim/stationPower.js";
 
 export type HardwareTab=HardwareKind|"platform";
 const element=<K extends keyof HTMLElementTagNameMap>(tag:K,className="",text=""):HTMLElementTagNameMap[K]=>{
@@ -28,6 +29,7 @@ export function renderHardwarePanel(s:GameState,index:number,year:number,tab:Har
  const headingText=element("div"),title=element("strong","","PC "+String(index+1).padStart(2,"0")+" · "+edition.name);
  title.dataset.configWindows="";headingText.append(title,element("small","",(licensed?"Windows licenciado":"Windows preinstalado · sem licença adquirida")+" · "+stationModelName(s,index)));
  heading.append(headingText);sheet.append(heading);
+  sheet.append(element("p","hardware-note",stationPoweredOn(s,index)?"PC ligado. Desligue na lista acima para instalar peças.":"PC desligado. Pode atualizar quando estiver livre."));
  const stats=element("dl","machine-specs");
  for(const kind of ["cpu","ram","storage","motherboard","psu"] as const){
   const item=element("div","machine-spec");item.dataset.config=kind;
@@ -40,14 +42,14 @@ export function renderHardwarePanel(s:GameState,index:number,year:number,tab:Har
  const os=element("section","machine-windows");os.setAttribute("aria-label","Windows da estação selecionada");
  os.append(element("h4","","Sistema operacional"),element("p","hardware-note","A licença e a instalação valem somente para este PC. O Windows permanece instalado quando você troca peças ou um kit."));
  const osChoices=element("div","machine-os-choices");
- const busy=stationOccupied(s,index)||!!s.repairJobs?.some(j=>j.pc===index);
+ const busy=stationOccupied(s,index)||!!s.repairJobs?.some(j=>j.pc===index),powered=stationPoweredOn(s,index);
  for(const release of WINDOWS_ERAS){
   const reasons=windowsHardwareIssues(s,index,release.id),owned=edition.id===release.id&&licensed,locked=year<release.year;
   const choice=element("button","slice",release.name+" · "+(owned?"Instalado":locked?release.year:"R$ "+release.cost));
   choice.type="button";choice.dataset.winPc=String(index);choice.dataset.winEdition=release.id;choice.id="hardware-windows-"+release.id;
-  choice.disabled=owned||locked||busy||reasons.length>0||s.cash<release.cost;
-  choice.title=owned?"Já instalado e licenciado.":locked?"Lançamento no jogo: "+release.year:reasons.length?reasons.join(" "):busy?"Libere esta estação.":"Instalar somente neste PC.";
-  const option=element("div","os-option");option.append(choice,element("small","",owned?"Instalado e licenciado.":locked?"Disponível no ano "+release.year+".":reasons.length?reasons.join(" "):busy?"Libere a estação para instalar.":s.cash<release.cost?"Caixa insuficiente.":"Compatível com esta configuração."));
+  choice.disabled=owned||locked||busy||powered||reasons.length>0||s.cash<release.cost;
+  choice.title=owned?"Já instalado e licenciado.":locked?"Lançamento no jogo: "+release.year:reasons.length?reasons.join(" "):busy?"Libere esta estação.":powered?"Desligue esta estação.":"Instalar somente neste PC.";
+  const option=element("div","os-option");option.append(choice,element("small","",owned?"Instalado e licenciado.":locked?"Disponível no ano "+release.year+".":reasons.length?reasons.join(" "):busy?"Libere a estação para instalar.":powered?"Desligue a estação para instalar.":s.cash<release.cost?"Caixa insuficiente.":"Compatível com esta configuração."));
   osChoices.append(option);
  }
  os.append(osChoices);
