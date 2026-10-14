@@ -396,3 +396,10 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Testar arquivo acima de 2 MB de efeitos temporários e importação compatível, bem como regressão do fluxo de compra de GPUs.
 - [ ] Testar renovação em salões com sete ou mais PCs, campanhas com financiamento/valor de revenda (não existentes) e preços dinâmicos antes de definir política final de amortização.
 - [ ] Fazer revisão visual humana do aviso de renovação em aparelhos móveis físicos.
+
+## Leitura de tarifas e virada de ano — 14/10/2026
+- [x] Comparar R$ −2/atual/+2 na aba Preços a partir da curva de demanda e da sessão de 45 min reais, sem alterar procura, RNG ou caixa.
+- [x] Mostrar reajuste da energia na próxima virada preservando PCs, ocupação de referência e custos existentes; documentar teto após 25 anos.
+- [x] Proteger limites de preço, cobrança no minuto da virada, controle manual e importação/exportação de saves com testes de regressão.
+- [ ] Executar campanhas longas de reajuste dinâmico e cenários alternativos de inflação, cinco versus sete ou mais PCs, antes de ajustar o balanceamento definitivo.
+- [ ] Conferir a legibilidade dos indicadores em telefone físico e inspeção humana.

@@ -6,7 +6,7 @@ import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
-import {hourlyPriceInsight} from "./sim/pricingInsights.js";
+import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
@@ -590,6 +590,20 @@ function renderUI():void {
   setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
   setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
   setText("price-caution",priceInsight.caution);
+  const scenarios=hourlyPriceScenarios(game);
+  const scenarioLine=(delta:-2|0|2,title:string):string=>{
+    const candidate=scenarios.find(p=>p.delta===delta);
+    return candidate?title+" · R$ "+candidate.price+"/h · procura "+candidate.demandIndex+
+      "% · receita bruta potencial "+candidate.grossIntakeIndex+"%":
+      title+" · fora do limite de R$ 4–40/h.";
+  };
+  setText("price-scenario-lower",scenarioLine(-2,"Reduzir R$ 2"));
+  setText("price-scenario-current",scenarioLine(0,"Manter"));
+  setText("price-scenario-higher",scenarioLine(2,"Aumentar R$ 2"));
+  const nextEnergy=energyYearOutlook(game);
+  setText("energy-year-outlook","Energia na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
+    ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
+    "% de tarifa, mantendo os mesmos PCs e a carga ociosa. Demais contas fixas não recebem inflação automática.");
   if(retailControls&&adminOpen&&activeAdminTab==="prices"){
    retailControls.replaceChildren();
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){

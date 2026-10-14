@@ -66,7 +66,13 @@ try{
   const priceText=page.locator("#price-demand-insight");
   const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\d+)%/)?.[1]);
   assert.equal(await pricePercent(),100);
+  // O novo comparador deve responder no Chromium real, inclusive em viewport móvel.
+  assert.ok((await page.locator("#price-scenario-lower").textContent())?.includes("R$ 10/h"));
+  assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 12/h"));
+  assert.ok((await page.locator("#price-scenario-higher").textContent())?.includes("R$ 14/h"));
+  assert.ok((await page.locator("#energy-year-outlook").textContent())?.includes("1998 → 1999"));
   await page.locator("#price-up").click();
+  assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 14/h"));
   const raised=await pricePercent();
   assert.ok(Number.isFinite(raised)&&raised<100&&raised>0,"preço maior reduz o primeiro percentual, não a legenda fixa");
   await page.locator("#price-down").click();
@@ -76,7 +82,12 @@ try{
   // Dispatch directly on the SVG child to cover event delegation too.
   await page.locator("#stock-soda .ui-icon").evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));
   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
-  assert.ok(after.inventory.soda>before.inventory.soda);assert.ok(after.expenses>before.expenses);
+  // A simulação continua atendendo clientes enquanto o painel fica aberto:
+  // uma venda simultânea pode reduzir o estoque entre os dois snapshots.
+  // Validar a transação registrada, não a quantidade líquida momentânea.
+  assert.ok(after.eventLog.some(line=>line.includes("Estoque de soda reposto:")),
+    "compra de refrigerante deve constar no diário real da partida");
+  assert.ok(after.expenses>before.expenses,"reposição deve debitar a despesa real");
   assert.equal(after.cash,before.cash+(after.revenue-before.revenue)-(after.expenses-before.expenses));
   await page.locator('[data-admin-tab="computers"]').click();
   await page.locator('[data-pc-repair="0"] .ui-icon').evaluate(svg=>svg.dispatchEvent(new MouseEvent("click",{bubbles:true})));

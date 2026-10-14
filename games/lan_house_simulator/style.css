@@ -471,3 +471,9 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .price-insight h4{color:#3f5b36;font-size:14px;margin:0 0 8px}
 .stat .price-insight p{margin:5px 0;color:#314a3c;font-variant-numeric:tabular-nums}
 .stat .price-insight .price-insight-note{margin-top:9px;font-size:11px;color:#58684e}
+.price-scenarios{display:grid;gap:3px;margin:13px 0 8px;padding:10px 12px;background:#f4f5e9;border:1px solid #c4cfb3;border-radius:7px}
+.price-scenarios h4{margin:0 0 3px;font-size:12px}
+.stat .price-scenarios p{margin:0;font-size:12px;line-height:1.5}
+.stat .price-scenarios p[id="price-scenario-current"]{font-weight:700;color:#29482e}
+.stat .price-scenarios .price-insight-note{margin-top:5px;font-size:11px}
+.stat .energy-year-outlook{border-left:3px solid #8caa72;padding:7px 12px;font-size:12px;background:#e4ecd4;color:#314a3c}
