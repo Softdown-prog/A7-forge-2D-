@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
@@ -34,9 +35,9 @@ function baseShop(seed,size) {
  if(size===7)accept(expandShop(s));
  while(pcCount(s)<size)accept(buyComputer(s));
  for(let i=0;i<size;i++){
-  accept(licenseWindows(s,i,"win98"));
-  accept(upgradeComputer(s,i));accept(upgradeComputer(s,i));
-  accept(buyGpu(s,i,"gpu09"));
+  accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+  accept(withStationOff(s,i,()=>upgradeComputer(s,i)));accept(withStationOff(s,i,()=>upgradeComputer(s,i)));
+  accept(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }
  assert.equal(pcCount(s),size);
  assert.equal(gameYear(s),2013);
@@ -56,8 +57,8 @@ function targetedIndices(size,strategy){
 function buyStrategy(s,size,strategy){
  const indices=targetedIndices(size,strategy);
  const before=s.expenses;
- for(const pc of indices.gpu)accept(buyGpu(s,pc,"gpu13"));
- for(const pc of indices.lcd)accept(buyLcdKit(s,pc,"lcd12"));
+ for(const pc of indices.gpu)accept(withStationOff(s,pc,()=>buyGpu(s,pc,"gpu13")));
+ for(const pc of indices.lcd)accept(withStationOff(s,pc,()=>buyLcdKit(s,pc,"lcd12")));
  const cost=indices.gpu.length*GPU_COST+indices.lcd.length*LCD_COST;
  assert.equal(s.expenses-before,cost);
  for(let i=0;i<size;i++){

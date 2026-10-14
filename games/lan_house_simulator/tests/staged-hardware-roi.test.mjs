@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -41,14 +42,14 @@ function prep(year,seed,strategy){
  for(let i=0;i<3;i++){
   if(strategy==="partial"){
    for(const [kind,id] of Object.entries(parts))
-    requireOk(buyPart(s,i,kind,id),"partial "+kind+" PC "+i);
-   requireOk(licenseWindows(s,i,"winxp"),"XP partial "+i);
+    requireOk(withStationOff(s,i,()=>buyPart(s,i,kind,id)),"partial "+kind+" PC "+i);
+   requireOk(withStationOff(s,i,()=>licenseWindows(s,i,"winxp")),"XP partial "+i);
   }else if(strategy==="one-kit"&&i===0||strategy==="all-kits"||strategy==="all-kits-gpu"){
-   requireOk(buyPlatform(s,i,catalog[year].kit),"full kit PC "+i);
+   requireOk(withStationOff(s,i,()=>buyPlatform(s,i,catalog[year].kit)),"full kit PC "+i);
    if(strategy==="all-kits-gpu")
-    requireOk(buyGpu(s,i,catalog[year].gpu),"graphics PC "+i);
-   requireOk(licenseWindows(s,i,catalog[year].windows),"modern Windows PC "+i);
-  }else requireOk(licenseWindows(s,i,"win98"),"legacy Windows PC "+i);
+    requireOk(withStationOff(s,i,()=>buyGpu(s,i,catalog[year].gpu)),"graphics PC "+i);
+   requireOk(withStationOff(s,i,()=>licenseWindows(s,i,catalog[year].windows)),"modern Windows PC "+i);
+  }else requireOk(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"legacy Windows PC "+i);
   assert.equal(buildIssues(hardwareFor(s,i),s.pcGpus?.[i])[0],undefined);
  }
  const initialSpend=s.expenses;
@@ -122,28 +123,28 @@ test("2005: upgrade gradual real respeita socket, RAM, disco, Windows e custo",(
  const game=createGame(101,"historical");
  game.totalMinutes=annualMinutes(2005);
  game.cash=9000;
- assert.equal(quotePart(game,0,"cpu","cpu05").ok,false,
+ assert.equal(withStationOff(game,0,()=>quotePart(game,0,"cpu","cpu05")).ok,false,
   "CPU Socket 478 não instala isoladamente na placa Slot 1");
- assert.equal(quotePart(game,0,"ram","ram1d").ok,false,
+ assert.equal(withStationOff(game,0,()=>quotePart(game,0,"ram","ram1d")).ok,false,
   "DDR não instala isoladamente na placa SDRAM");
- assert.equal(quotePart(game,0,"ram","ram256").ok,true);
+ assert.equal(withStationOff(game,0,()=>quotePart(game,0,"ram","ram256")).ok,true);
  const old=game.cash;
- requireOk(buyPart(game,0,"cpu","cpu00"),"CPU Slot 1");
- requireOk(buyPart(game,0,"ram","ram256"),"SDRAM");
- requireOk(buyPart(game,0,"storage","hd20"),"IDE");
- requireOk(licenseWindows(game,0,"winxp"),"XP");
+ requireOk(withStationOff(game,0,()=>buyPart(game,0,"cpu","cpu00")),"CPU Slot 1");
+ requireOk(withStationOff(game,0,()=>buyPart(game,0,"ram","ram256")),"SDRAM");
+ requireOk(withStationOff(game,0,()=>buyPart(game,0,"storage","hd20")),"IDE");
+ requireOk(withStationOff(game,0,()=>licenseWindows(game,0,"winxp")),"XP");
  assert.equal(game.cash,old-180-100-120-260);
  assert.equal(hardwareFor(game,0).cpu,"cpu00");
- assert.equal(quotePlatform(game,0,"platform05").ok,true);
+ assert.equal(withStationOff(game,0,()=>quotePlatform(game,0,"platform05")).ok,true);
  assert.ok(allowableHourlyPrice(game)<=annualHourlyCeiling(2005));
  assert.ok(isValidSave(game));
 });
 test("2012: kit completo + GPU mantém peças e salva sem alterar economia clássica",()=>{
  const s=createGame(19,"historical"),classic=createGame(19);
  s.totalMinutes=annualMinutes(2012);s.cash=30000;
- requireOk(buyPlatform(s,0,"platform12"),"platform 2012");
- requireOk(buyGpu(s,0,"gpu11"),"GPU 2011");
- requireOk(licenseWindows(s,0,"win7"),"Windows 7");
+ requireOk(withStationOff(s,0,()=>buyPlatform(s,0,"platform12")),"platform 2012");
+ requireOk(withStationOff(s,0,()=>buyGpu(s,0,"gpu11")),"GPU 2011");
+ requireOk(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows 7");
  assert.equal(hardwareFor(s,0).storage,"ssd512");
  assert.equal(hardwareFor(s,0).motherboard,"board12");
  assert.equal(parseImportedSave(serializeSave(s)).pcGpus[0],"gpu11");

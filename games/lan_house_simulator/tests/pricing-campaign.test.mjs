@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
@@ -25,11 +26,11 @@ function runScenario(year,price,upgraded){
   doIt(buyComputer(s));doIt(buyComputer(s));
   doIt(upgradeInternet(s));doIt(upgradeInternet(s));
  }
- for(let i=0;i<pcCount(s);i++)doIt(licenseWindows(s,i,"win98"));
+ for(let i=0;i<pcCount(s);i++)doIt(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
  if(upgraded){
   assert.equal(year,2009);
-  for(let i=0;i<3;i++)doIt(upgradeComputer(s,i));
-  for(let i=0;i<2;i++)doIt(buyGpu(s,i,"gpu09"));
+  for(let i=0;i<3;i++)doIt(withStationOff(s,i,()=>upgradeComputer(s,i)));
+  for(let i=0;i<2;i++)doIt(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }
  const installationCost=s.expenses;
  let vipSamples=0,allSamples=0,occupied=0,available=0;

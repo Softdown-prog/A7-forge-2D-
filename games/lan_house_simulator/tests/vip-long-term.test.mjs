@@ -1,3 +1,4 @@
+import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
@@ -55,7 +56,7 @@ function campaign(hourly,seed,days=720){
  assert.equal(setHourlyPrice(s,hourly).ok,true);
  assert.equal(licenseGames(s).ok,true);
  assert.equal(hireContentProgrammer(s).ok,true);
- for(let pc=0;pc<pcCount(s);pc++)assert.equal(licenseWindows(s,pc,"win98").ok,true);
+ for(let pc=0;pc<pcCount(s);pc++)assert.equal(withStationOff(s,pc,()=>licenseWindows(s,pc,"win98")).ok,true);
  let vipSamples=0,peopleSamples=0;
  const quarters=[];
  for(let day=1;day<=days;day++){
