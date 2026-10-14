@@ -687,11 +687,12 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
- const css=readFileSync(resolve(root,"style.css"),"utf8");
  assert.match(html,/id="rotate-furniture"/);
  assert.match(source,/expandDirection\(game,id.slice\(7\)/);
  assert.match(source,/rotateFurniture\(game,relocationFrom\)/);
- assert.match(css,/\.admin-tabs\{display:grid;grid-template-columns:repeat\(3/);
+ // The grid may change with the visual identity. capture_identity.mjs verifies
+ // actual overflow and interaction at 1440, 414 and 360 pixels in Chromium.
+ assert.match(html,/name="viewport"[^>]+width=device-width/);
 });
 
 test("a ampliação libera slots e capacidade real para novas decorações",async()=>{

@@ -10,8 +10,9 @@ import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
-import { roomWidth, pcWear, pcBroken } from "./sim/engine.js";
-import { makeNineSlice } from "./ui/nineSlice.js";
+import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
+import {computerSeat} from "./sim/route.js";
+import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
@@ -30,7 +31,16 @@ if (!canvas || !admin || !events || !status || !controls) throw new Error("DOM d
 const view = canvas.getContext("2d");
 if (!view) throw new Error("Canvas 2D indisponível");
 const renderer = new SceneRenderer(view);
-document.documentElement.style.setProperty("--nine-slice", 'url("' + makeNineSlice() + '")');
+const menuCanvas=document.querySelector<HTMLCanvasElement>("#menu-scene"),menuView=menuCanvas?.getContext("2d");
+const menuRenderer=menuView?new SceneRenderer(menuView):null;
+// Presentation-only preview: the player's save is never simulated by the menu.
+const menuPreview=createGame(98);
+menuPreview.customers=[0,1].map(i=>{
+ const seat=computerSeat(pcPosition(i,menuPreview));
+ return {id:i+1,x:seat.x,y:seat.y,target:seat,route:[],stage:"using",costume:"regular",pcIndex:i,
+  facing:"north",usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
+});
+menuRenderer?.draw(menuPreview,0);
 
 function readSave(): GameState {
   try {
@@ -87,7 +97,7 @@ document.getElementById("save-export")?.addEventListener("click",()=>{
   link.download="lan-house-simulator-dia-"+dayNumber(game)+".json";
   document.body.append(link);link.click();link.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),1000);
-  announceSave("Arquivo JSON exportado. Guarde-o em local seguro.");
+  announceSave("Partida salva em arquivo. Você pode carregá-la em outro navegador.");
  }catch{announceSave("Não foi possível exportar esta partida.");}
 });
 document.getElementById("save-import")?.addEventListener("click",()=>importFile!.click());
@@ -111,7 +121,9 @@ importFile.addEventListener("change",async()=>{
 function showMenu():void{
  soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;placingKind=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
+ continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;noticesOpen=false;placingKind=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
+ for(const id of ["admin","shop","notices"]){const panel=document.getElementById(id);if(panel)panel.hidden=true;}
+ syncWindowChrome();
 }
 function beginPlay():void{
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
@@ -227,7 +239,7 @@ button("open-notices",()=>{noticesOpen=!noticesOpen;if(noticesOpen){adminOpen=fa
 button("close-notices",()=>{noticesOpen=false;renderUI();});
 const noticesList=document.querySelector<HTMLElement>("#notices-list");
 noticesList?.addEventListener("click",event=>{
- const target=event.target;
+ const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement))return;
  if(target.dataset.decision&&target.dataset.choice){applyResult(game,chooseDecision(game,target.dataset.decision,target.dataset.choice));renderUI();save();}
  else if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
@@ -255,7 +267,7 @@ button("organize-furniture",()=>{
  shopOpen=false;adminOpen=false;renderUI();canvas!.scrollIntoView({block:"center",behavior:"smooth"});
 });
 shopCatalog?.addEventListener("click",event=>{
- const target=event.target;
+ const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
  const id=target.dataset.buy;
  if(id==="computer-annex"){
@@ -294,19 +306,19 @@ button("clean-bins",()=>{applyResult(game,requestCleaning(game));renderUI();save
 let selectedGpuPc=0;
 const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
 gpuPcChoice?.addEventListener("click",event=>{
- const button=event.target;if(!(button instanceof HTMLButtonElement))return;
+ const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement))return;
  const index=Number(button.dataset.gpuSelect);
  if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedGpuPc=index;renderUI();}
 });
 gpuList?.addEventListener("click",event=>{
- const button=event.target;if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement)||button.disabled)return;
  const id=button.dataset.gpuBuy;
  if(!GPU_CATALOG.some(model=>model.id===id))return;
  applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
 });
 const licensePanel=document.getElementById("windows-license-list");
 licensePanel?.addEventListener("click",event=>{
- const node=event.target;
+ const node=event.target instanceof Element?event.target.closest("button"):null;
  if(!(node instanceof HTMLButtonElement)||node.disabled)return;
  const index=Number(node.dataset.winPc),edition=node.dataset.winEdition;
  if(!Number.isInteger(index)||!WINDOWS_ERAS.some(e=>e.id===edition))return;
@@ -317,7 +329,7 @@ licensePanel?.addEventListener("click",event=>{
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
 if(!maintenancePanel)throw new Error("Manutenção ausente no painel");
 maintenancePanel.addEventListener("click",event=>{
- const target=event.target;
+ const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled)return;
  const index=Number(target.dataset.pcRepair??target.dataset.pcUpgrade);
  if(!Number.isInteger(index))return;
@@ -329,13 +341,13 @@ const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab
 const adminSections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
 function activateAdminTab(tab:string):void{
  activeAdminTab=tab;
- for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));}
+ for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));button.tabIndex=active?0:-1;}
  for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");});
 const retailControls=document.getElementById("retail-price-controls");
 retailControls?.addEventListener("click",event=>{
- const target=event.target;
+ const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement))return;
  const item=target.dataset.item as Item|undefined;
  const delta=Number(target.dataset.delta);
@@ -476,6 +488,7 @@ function renderShop():void{
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
   const card=document.createElement("article");card.className="shop-card";
+  const art=document.createElement("div");art.className="shop-art";art.dataset.item=item.id;art.setAttribute("aria-hidden","true");art.innerHTML=iconMarkup(catalogueIcon(item.id));
   const title=document.createElement("h3");title.textContent=item.label;
   const category=document.createElement("small");category.textContent=item.category;
   const description=document.createElement("p");description.textContent=item.description;
@@ -492,7 +505,7 @@ function renderShop():void{
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
   button.textContent=full?"Limite atingido":"Comprar · R$ "+price;
-  card.append(category,title,description,button);
+  card.append(art,category,title,description,button);
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+"/"+max;card.append(owned);}
   shopCatalog.append(card);
  }
@@ -500,10 +513,6 @@ function renderShop():void{
 function renderUI():void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
-  status.textContent="Dia "+dayNumber(game)+" · "+displayTime(game)+"  |  Caixa R$ "+game.cash.toLocaleString("pt-BR")+
-    "  |  Reputação "+game.reputation.toFixed(0)+"  |  Internet "+internetName()+" / "+(online(game)?"online":"OFFLINE")+
-    "  |  "+(game.weather==="rain"?"Chuva lá fora":"Tempo firme")+
-    (isPromotionActive(game)?"  |  📣 Panfletagem ativa":"");
   admin.hidden=!adminOpen;
   const mailbox=document.getElementById("notices");if(mailbox)mailbox.hidden=!noticesOpen;
   const unread=unreadNotices(game),badge=document.getElementById("notices-count");
@@ -514,7 +523,7 @@ function renderUI():void {
     if(!(game.notices?.length)){const empty=document.createElement("p");empty.textContent="Nenhuma mensagem recebida por enquanto.";noticesList.append(empty);}
     for(const n of game.notices??[]){
       const card=document.createElement("article");card.className="notice-letter notice-"+n.severity+(n.read?" read":"");
-      const title=document.createElement("h3");title.textContent=(n.read?"✉ ":"● ")+n.title;
+      const title=document.createElement("h3");title.textContent=n.title;title.insertAdjacentHTML("afterbegin",iconMarkup(n.severity==="urgent"?"warning":"mail"));
       const date=document.createElement("small");date.textContent="Dia "+n.day;
       const body=document.createElement("p");body.textContent=n.body;
       const actions=document.createElement("div");actions.className="action-row wrap";
@@ -554,9 +563,9 @@ function renderUI():void {
   const month=Math.floor((days%360)/30)+1;
   const monthDay=days%30+1;
   const calendar=document.getElementById("calendar-hud");
-  if(calendar)calendar.textContent="📅 Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);
+  if(calendar)calendar.textContent="Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);
   const weather=document.getElementById("weather-hud");
-  if(weather)weather.textContent=game.weather==="rain"?"🌧 Chuva":"☀ Tempo firme";
+  if(weather)weather.textContent=game.weather==="rain"?"Chuva":"Tempo firme";
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monthlyRent=270+game.expansionLevel*170;
@@ -573,7 +582,7 @@ function renderUI():void {
    retailControls.replaceChildren();
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
     const line=document.createElement("div");line.className="price-control";
-    const name=document.createElement("span");name.textContent=label;
+    const name=document.createElement("span");name.textContent=label;name.insertAdjacentHTML("afterbegin",iconMarkup(item));
     const actions=document.createElement("div");actions.className="price-actions";
     for(const delta of [-1,1]){
       const button=document.createElement("button");button.type="button";button.dataset.item=item;
@@ -704,11 +713,18 @@ function renderUI():void {
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   events.replaceChildren();
   for(const record of game.eventLog.slice(0,6)){
-    const li=document.createElement("li");li.textContent=record;events.appendChild(li);
+    const li=document.createElement("li"),text=document.createElement("span");
+    const match=record.match(/^(D\d+ [\d:]+) · (.*)$/);
+    if(match){const time=document.createElement("time");time.textContent=match[1]!;text.append(time,document.createTextNode(match[2]!));}
+    else text.textContent=record;
+    li.innerHTML=iconMarkup(/pagou|Venda/.test(record)?"coins":/internet/i.test(record)?"network":/PC|computador/i.test(record)?"computer":"mail");
+    li.append(text);events.appendChild(li);
   }
   controls.setAttribute("aria-expanded",String(adminOpen));
+  presentLiveState(game,internetName());
 }
-let lastFrame=0,lastUI=0,elapsed=0;
+let lastFrame=0,lastUI=0,lastMenuFrame=0,elapsed=0;
+const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
@@ -742,6 +758,7 @@ function frame(timestamp:number):void {
     if(speechPopups.length>8)speechPopups.shift();
   }
   if(isPlaying)renderer.draw(game,elapsed);
+  else if(menuRenderer&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
   if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);
   if(isPlaying&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
@@ -755,5 +772,6 @@ function frame(timestamp:number):void {
 }
 setInterval(save,8000);
 window.addEventListener("beforeunload",save);
+decorateControls();installWindowNavigation();
 showMenu();
 requestAnimationFrame(frame);

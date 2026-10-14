@@ -3,58 +3,67 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <meta name="theme-color" content="#172036"/>
-  <meta name="description" content="Lan House Simulator: abra, administre e expanda sua lan house em um tycoon 2D isométrico."/>
-  <title>Lan House Simulator — Protótipo</title>
+  <meta name="theme-color" content="#172c2a"/>
+  <meta name="description" content="Abra as portas, ligue os computadores e transforme sua pequena lan house em um grande negócio."/>
+  <title>Lan House Simulator · Softdown</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/ui/brand.svg"/>
   <link rel="stylesheet" href="./style.css"/>
   <script type="module" src="./js/main.js"></script>
 </head>
 <body>
   <section id="start-screen" class="start-screen" aria-label="Menu principal">
-    <div class="menu-art" aria-hidden="true"><div class="menu-sun"></div><div class="menu-building"><div class="menu-sign">LAN HOUSE</div><div class="menu-windows"><span>PC</span><span>PC</span><span>PC</span></div><div class="menu-door"></div></div><div class="menu-street"></div></div>
+    <header class="menu-topline"><a class="studio-mark" href="#start-screen" aria-label="Softdown · Lan House Simulator"><img src="./assets/ui/brand.svg" alt="" width="38" height="38"/><span>SOFTDOWN<span class="studio-label">JOGOS FEITOS DE IDEIAS</span></span></a><span class="edition-label"><i></i> UM NOVO NEGÓCIO. UMA NOVA HISTÓRIA.</span></header>
     <div class="menu-content">
-      <span class="menu-eyebrow">SOFTDOWN · TYCOON ISOMÉTRICO</span>
-      <h2>LAN HOUSE<br/><em>SIMULATOR</em></h2>
-      <p>Uma pequena lan house, grandes planos. Construa seu negócio, cuide dos computadores e conquiste clientes.</p>
+      <span class="menu-eyebrow"><span class="tiny-pixel"></span> SEU SONHO COMEÇA EM 1998</span>
+      <h2>LAN HOUSE<span>SIMULATOR<span class="title-cursor" aria-hidden="true">_</span></span></h2>
+      <p>Três computadores. Um pequeno salão.<br/>E um bairro inteiro para conquistar.</p>
       <div class="menu-actions">
-        <button id="menu-new" type="button">▶ Nova partida</button>
-        <button id="menu-continue" type="button">↪ Continuar</button>
-        <button id="menu-options" type="button" aria-expanded="false" aria-controls="menu-settings">⚙ Opções</button>
+        <button id="menu-new" type="button" class="primary" data-icon="play">Abrir minha lan house<span class="button-arrow" aria-hidden="true">→</span></button>
+        <button id="menu-continue" type="button" data-icon="continue">Continuar partida</button>
+        <button id="menu-options" type="button" data-icon="settings" aria-expanded="false" aria-controls="menu-settings">Opções</button>
       </div>
       <div class="save-actions" aria-label="Transferir progresso">
-        <button type="button" id="save-export">↓ Exportar JSON</button>
-        <button type="button" id="save-import">↑ Importar JSON</button>
-        <input type="file" id="save-import-file" accept=".json,application/json" hidden aria-label="Selecionar arquivo JSON de partida"/>
+        <button type="button" id="save-export" data-icon="save">Salvar em arquivo</button>
+        <button type="button" id="save-import" data-icon="upload">Carregar arquivo</button>
+        <input type="file" id="save-import-file" accept=".json,application/json" hidden aria-label="Selecionar arquivo de partida"/>
       </div>
-      <p id="save-message" class="save-message" role="status" aria-live="polite">Salve seu progresso em um arquivo e leve a partida para outro navegador.</p>
-      <div id="menu-settings" class="menu-settings" hidden><h3>Opções</h3>
-        <label><input type="checkbox" id="option-sound" checked/> Efeitos sonoros</label>
-        <p>O progresso fica salvo neste navegador. As opções de som também.</p>
+      <p id="save-message" class="save-message" role="status" aria-live="polite">Seu progresso fica salvo neste navegador.</p>
+      <div id="menu-settings" class="menu-settings" hidden><h3>Do seu jeito</h3>
+        <label class="sound-option"><input type="checkbox" id="option-sound" checked/><span>Efeitos sonoros<small>Teclados, cliques e o som de um bom negócio.</small></span></label>
+        <p>Suas preferências ficam salvas neste navegador.</p>
       </div>
-      <small>HTML5 · Protótipo em desenvolvimento · Arte de interface procedural</small>
+      <div class="menu-feature-row"><span data-icon="computer">Cuide dos PCs</span><span data-icon="users">Conquiste clientes</span><span data-icon="expand">Cresça no bairro</span></div>
     </div>
+    <div class="menu-art" aria-label="Prévia do salão do jogo">
+      <div class="hero-sticker"><span class="sticker-star">✳</span><div>INTERNET,<br/>JOGOS & BOAS IDEIAS.</div></div>
+      <div class="crt-shell"><div class="crt-top"><span>LAN HOUSE / 01</span><span class="crt-indicator"></span></div><div class="crt-screen"><canvas id="menu-scene" width="1000" height="610" aria-label="Prévia ilustrada da lan house">Prévia da lan house.</canvas><div class="screen-reflection" aria-hidden="true"></div></div><div class="crt-bottom"><span class="crt-vents" aria-hidden="true"></span><span class="crt-brand">SOFTDOWN<span>HOME BUSINESS SYSTEM</span></span><span class="power-button" aria-hidden="true"></span></div></div>
+      <div class="hero-caption"><span class="hero-caption-line"></span><span>Pequeno por fora.<br/><strong>Cheio de possibilidades por dentro.</strong></span><span class="hero-coordinate">01 / 1998</span></div>
+    </div>
+    <footer class="menu-footer"><span>DA PRIMEIRA CONEXÃO AO SEU PRÓPRIO IMPÉRIO.</span><span>UM JOGO SOFTDOWN <span class="tiny-pixel"></span></span></footer>
   </section>
   <div class="app" id="game-app" hidden>
     <header class="topbar">
-      <div class="brand"><span class="logo">LH</span><div><h1>Lan House Simulator</h1><p>O sonho começou. Agora vem a administração.</p></div></div>
-      <div class="topbar-actions"><button id="open-menu" class="slice" type="button">☰ Menu / Pausar</button><button id="open-shop" class="slice" type="button" aria-controls="shop" aria-expanded="false">🛒 Compras</button><button id="open-notices" class="slice notices-trigger" type="button" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><svg viewBox="0 0 32 28" width="24" height="22" aria-hidden="true" focusable="false"><path d="M3 5h26v18H3z" fill="#e9ddb5" stroke="#293c55" stroke-width="2.3"/><path d="m4 6 12 10L28 6" fill="none" stroke="#a57d50" stroke-width="2.4"/><path d="m4 22 9-8m15 8-9-8" fill="none" stroke="#a57d50" stroke-width="1.7"/></svg><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" aria-controls="admin" aria-expanded="false">Administração <span aria-hidden="true">⚙</span></button></div>
+      <div class="brand"><img class="logo" src="./assets/ui/brand.svg" alt="" width="44" height="44"/><div><h1>LAN HOUSE<span>SIMULATOR</span></h1><p>Seu bairro. Seu negócio. Sua história.</p></div></div>
+      <div class="topbar-actions"><button id="open-menu" class="slice" type="button" data-icon="pause">Menu<span class="keyboard-hint">ESC</span></button><button id="open-shop" class="slice" type="button" data-icon="cart" aria-controls="shop" aria-expanded="false">Compras</button><button id="open-notices" class="slice notices-trigger" type="button" data-icon="mail" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><span class="notice-label">Correio</span><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" data-icon="settings" aria-controls="admin" aria-expanded="false">Administrar</button></div>
     </header>
-    <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">📅 Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">☀ Tempo firme</div></div>
+    <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">Tempo firme</div><span id="promotion-hud" class="hud-promotion" data-icon="megaphone" hidden>Divulgação ativa</span><span class="hud-autosave" data-icon="save">Salvamento automático</span></div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
+        <div class="stage-titlebar"><div><span class="stage-pixel" aria-hidden="true"></span><strong>SEU SALÃO</strong><span class="stage-subtitle">Onde tudo acontece.</span></div><span class="stage-live"><i></i> AO VIVO</span></div>
         <canvas id="game" width="1000" height="610" aria-label="Cenário da lan house com balcão, proprietário, clientes e computadores">Seu navegador precisa de Canvas 2D.</canvas>
-        <div id="placement-toolbar" class="placement-toolbar" hidden role="status" aria-live="polite"><strong id="placement-help">Escolha uma posição no salão.</strong><div class="placement-actions"><button id="rotate-furniture" type="button" class="slice" hidden>↻ Girar 90°</button><button id="placement-cancel" type="button" class="slice">Cancelar / Sair</button></div></div>
-        <p class="note">Clique no dono atrás do balcão para abrir o painel. Use Menu / Pausar para voltar à tela inicial. Arte procedural em evolução.</p>
+        <div id="placement-toolbar" class="placement-toolbar" hidden role="status" aria-live="polite"><strong id="placement-help">Escolha uma posição no salão.</strong><div class="placement-actions"><button id="rotate-furniture" type="button" class="slice" data-icon="rotate" hidden>Girar 90°</button><button id="placement-cancel" type="button" class="slice" data-icon="close">Cancelar / Sair</button></div></div>
+        <p class="note"><span data-icon="cursor">Clique no dono atrás do balcão para administrar.</span><span><kbd>ESC</kbd> Menu e pausa</span></p>
       </section>
       <aside class="sidebar">
-        <div class="side-title"><h2>Acontecendo agora</h2><span class="live-dot"></span></div>
+        <div class="side-title"><span class="window-eyebrow">DIÁRIO DO SALÃO</span><div><h2>Acontecendo agora</h2><span class="live-dot"></span></div><p>Os pequenos passos do seu negócio.</p></div>
         <ul id="events" aria-label="Últimos acontecimentos"></ul>
-        <div class="tip"><strong>Dica:</strong> baixar preços aumenta a procura, mas não garante maior lucro. Reserve caixa para aluguel e internet.</div>
+        <div class="tip"><span class="tip-icon" data-icon="idea"></span><div><strong>De dono para dono</strong><p>Antes de crescer, faça o caixa respirar. Guarde uma reserva para aluguel e internet.</p></div></div>
       </aside>
     </main>
-    <section id="shop" class="admin slice" aria-label="Loja de móveis e computadores" hidden>
-      <div class="admin-title"><h2>Compras da Lan House</h2><button id="close-shop" type="button" class="slice">✕</button></div>
+    <div id="panel-backdrop" class="panel-backdrop" hidden aria-hidden="true"></div>
+    <section id="shop" class="admin" aria-label="Loja de móveis e computadores" role="dialog" aria-modal="true" aria-labelledby="shop-title" tabindex="-1" hidden>
+      <div class="admin-title"><div><span class="window-eyebrow">CATÁLOGO DO SALÃO</span><h2 id="shop-title">Monte o seu espaço</h2></div><button id="close-shop" type="button" class="slice" aria-label="Fechar painel" data-icon="close">Fechar</button></div>
       <p>Expanda o salão, instale computadores e decore seu estabelecimento.</p>
       <p id="shop-cash"></p>
       <button id="organize-furniture" class="slice organize-furniture" type="button">↔ Organizar móveis instalados</button>
@@ -62,43 +71,44 @@
       <button id="demolish-walls" class="slice organize-furniture" type="button">Remover divisórias (0)</button>
       <div id="shop-catalog" class="shop-grid"></div>
     </section>
-    <section id="notices" class="admin slice notice-inbox" aria-label="Caixa de mensagens" hidden>
-      <div class="admin-title"><h2>✉ Correspondência da lan house</h2><button id="close-notices" type="button" class="slice">✕</button></div>
+    <section id="notices" class="admin notice-inbox" aria-label="Caixa de mensagens" role="dialog" aria-modal="true" aria-labelledby="notices-title" tabindex="-1" hidden>
+      <div class="admin-title"><div><span class="window-eyebrow">AVISOS & OPORTUNIDADES</span><h2 id="notices-title">Correio da lan house</h2></div><button id="close-notices" type="button" class="slice" aria-label="Fechar painel" data-icon="close">Fechar</button></div>
       <p>Cartas, avisos, cobranças e oportunidades. Leia as mensagens e resolva os problemas do estabelecimento.</p>
       <div id="notices-list" class="notices-list" aria-live="polite"></div>
     </section>
-    <section id="admin" class="admin slice" aria-label="Painel administrativo" hidden>
-      <div class="admin-title"><h2>Administração da Lan House</h2><button id="close-admin" class="slice" aria-label="Fechar painel">✕</button></div>
+    <section id="admin" class="admin" aria-label="Painel administrativo" role="dialog" aria-modal="true" aria-labelledby="admin-title" tabindex="-1" hidden>
+      <div class="admin-title"><div><span class="window-eyebrow">CENTRAL DE ADMINISTRAÇÃO</span><h2 id="admin-title">Seu negócio, nas suas mãos</h2></div><button id="close-admin" class="slice" aria-label="Fechar painel" data-icon="close">Fechar</button></div>
       <div class="admin-summary" aria-label="Resumo da administração">
         <div><span>Caixa disponível</span><strong id="admin-cash">R$ 850</strong></div>
         <div><span>Saldo acumulado</span><strong id="admin-profit">R$ 0</strong></div>
         <div><span>Contas por mês</span><strong id="admin-bills">R$ 540</strong></div>
         <div><span>Clientes atendidos</span><strong id="admin-served">0</strong></div>
       </div>
-      <nav class="admin-tabs" aria-label="Seções da administração">
-        <button type="button" class="admin-tab active" data-admin-tab="prices" aria-selected="true">Preços</button>
-        <button type="button" class="admin-tab" data-admin-tab="computers" aria-selected="false">Computadores</button>
-        <button type="button" class="admin-tab" data-admin-tab="gpus" aria-selected="false">Placas de vídeo</button>
-        <button type="button" class="admin-tab" data-admin-tab="licenses" aria-selected="false">Windows / Licenças</button>
-        <button type="button" class="admin-tab" data-admin-tab="stock" aria-selected="false">Estoque</button>
-        <button type="button" class="admin-tab" data-admin-tab="services" aria-selected="false">Serviços</button>
-        <button type="button" class="admin-tab" data-admin-tab="finance" aria-selected="false">Finanças</button>
+      <nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
+        <button type="button" class="admin-tab active" data-admin-tab="prices" role="tab" aria-controls="section-prices" aria-selected="true">Preços</button>
+        <button type="button" class="admin-tab" data-admin-tab="computers" role="tab" aria-controls="section-computers" aria-selected="false">Computadores</button>
+        <button type="button" class="admin-tab" data-admin-tab="gpus" role="tab" aria-controls="section-gpus" aria-selected="false">Placas de vídeo</button>
+        <button type="button" class="admin-tab" data-admin-tab="licenses" role="tab" aria-controls="section-licenses" aria-selected="false">Windows / Licenças</button>
+        <button type="button" class="admin-tab" data-admin-tab="stock" role="tab" aria-controls="section-stock" aria-selected="false">Estoque</button>
+        <button type="button" class="admin-tab" data-admin-tab="services" role="tab" aria-controls="section-services" aria-selected="false">Serviços</button>
+        <button type="button" class="admin-tab" data-admin-tab="finance" role="tab" aria-controls="section-finance" aria-selected="false">Finanças</button>
       </nav>
       <div class="admin-grid">
-        <div class="stat admin-section" data-section="prices"><h3>Preços de venda</h3><div class="action-row"><button id="price-down" class="slice" aria-label="Diminuir preço">−</button><strong id="price">R$ 12/h</strong><button id="price-up" class="slice" aria-label="Aumentar preço">+</button></div><p>Preço da hora do computador</p><div id="retail-price-controls" class="price-controls" aria-label="Preços das mercadorias"></div></div>
-        <div class="stat admin-section" data-section="stock"><h3>Produtos e estoque</h3><p id="stock"></p><p id="supplier-status">Fornecedor básico</p><div class="action-row wrap"><button id="stock-soda" class="slice">+ Bebidas R$ 40</button><button id="stock-candy" class="slice">+ Doces R$ 28</button><button id="stock-snacks" class="slice">+ Salgados R$ 48</button><button id="supplier-up" class="slice">Contratar fornecedor parceiro · R$ 180</button></div></div>
-        <div class="stat admin-section" data-section="services"><h3>Serviços</h3><p id="bin-status">Lixeiras: 0% · 0%</p><button id="clean-bins" class="slice" type="button">Chamar faxineiro · R$ 55</button><p id="internet"></p><p id="license-status"></p><p class="catalog-game-note"><strong>Catálogo de jogos da lan house:</strong> Corrida Turbo 98, Arena dos Heróis e Estratégia 2000. O contrato de R$ 450 cobre o catálogo completo, não as licenças de Windows.</p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="internet-repair" class="slice" disabled>Chamar técnico · R$ 75</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
-        <div class="stat admin-section" data-section="finance"><h3>Investimento e finanças</h3><p id="finance"></p><p id="monthly-breakdown"></p><div class="finance-usage"><h4>Ocupação real dos computadores</h4><p id="pc-utilization">Coletando dados dos PCs.</p><p id="previous-occupancy">Ocupação do último mês: sem histórico.</p><p id="monthly-statement">Fechamento mensal: ainda não disponível.</p><p id="capacity-advice">Acompanhe a ocupação antes de expandir.</p></div><p id="expansion"></p><div class="promotion-panel"><h4>📣 Divulgação no bairro</h4><p id="promotion-status" role="status" aria-live="polite">Sem panfletagem hoje.</p><p>Uma campanha custa R$ 120 e aumenta em 40% a chance de novos visitantes até o fechamento. Não garante clientes nem vendas.</p><button id="launch-promotion" type="button" class="slice">📣 Fazer panfletagem · R$ 120</button></div><div class="action-row wrap"><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
-        <div class="stat admin-section" data-section="licenses"><h3>Licenciamento de Windows</h3><p>Cada computador precisa de uma licença própria. O Windows é independente do hardware.</p><div id="windows-license-list" aria-label="Licenças por computador"></div></div>
-        <div class="stat admin-section" data-section="gpus"><h3>Placas de vídeo · 2005–2013</h3><p>Placas independentes do hardware. Escolha um PC e desbloqueie modelos conforme o ano.</p><div id="gpu-pc-choice" class="gpu-stations" aria-label="Computador selecionado"></div><div id="gpu-catalog" class="gpu-catalog" aria-label="Catálogo ilustrado de GPUs"></div></div>
-        <div class="stat admin-section" data-section="computers">
+        <div class="stat admin-section" data-section="prices" id="section-prices" role="tabpanel"><h3>Preços de venda</h3><div class="action-row"><button id="price-down" class="slice" aria-label="Diminuir preço">−</button><strong id="price">R$ 12/h</strong><button id="price-up" class="slice" aria-label="Aumentar preço">+</button></div><p>Preço da hora do computador</p><div id="retail-price-controls" class="price-controls" aria-label="Preços das mercadorias"></div></div>
+        <div class="stat admin-section" data-section="stock" id="section-stock" role="tabpanel"><h3>Produtos e estoque</h3><div id="stock"></div><p id="supplier-status">Fornecedor básico</p><div class="action-row wrap"><button id="stock-soda" class="slice">+ Bebidas R$ 40</button><button id="stock-candy" class="slice">+ Doces R$ 28</button><button id="stock-snacks" class="slice">+ Salgados R$ 48</button><button id="supplier-up" class="slice">Contratar fornecedor parceiro · R$ 180</button></div></div>
+        <div class="stat admin-section" data-section="services" id="section-services" role="tabpanel"><h3>Serviços</h3><p id="bin-status">Lixeiras: 0% · 0%</p><button id="clean-bins" class="slice" type="button">Chamar faxineiro · R$ 55</button><p id="internet"></p><p id="license-status"></p><p class="catalog-game-note"><strong>Catálogo de jogos da lan house:</strong> Corrida Turbo 98, Arena dos Heróis e Estratégia 2000. O contrato de R$ 450 cobre o catálogo completo, não as licenças de Windows.</p><div class="action-row wrap"><button id="internet-up" class="slice">Melhorar internet</button><button id="internet-repair" class="slice" disabled>Chamar técnico · R$ 75</button><button id="license" class="slice">Licenciar jogos R$ 450</button></div></div>
+        <div class="stat admin-section" data-section="finance" id="section-finance" role="tabpanel"><h3>Investimento e finanças</h3><p id="finance"></p><p id="monthly-breakdown"></p><div class="finance-usage"><h4>Ocupação real dos computadores</h4><p id="pc-utilization">Coletando dados dos PCs.</p><p id="previous-occupancy">Ocupação do último mês: sem histórico.</p><p id="monthly-statement">Fechamento mensal: ainda não disponível.</p><p id="capacity-advice">Acompanhe a ocupação antes de expandir.</p></div><p id="expansion"></p><div class="promotion-panel"><h4>Divulgação no bairro</h4><p id="promotion-status" role="status" aria-live="polite">Sem panfletagem hoje.</p><p>Uma campanha custa R$ 120 e aumenta em 40% a chance de novos visitantes até o fechamento. Não garante clientes nem vendas.</p><button id="launch-promotion" type="button" class="slice">📣 Fazer panfletagem · R$ 120</button></div><div class="action-row wrap"><button id="reset-game" class="slice danger">Reiniciar</button></div></div>
+        <div class="stat admin-section" data-section="licenses" id="section-licenses" role="tabpanel"><h3>Licenciamento de Windows</h3><p>Cada computador precisa de uma licença própria. O Windows é independente do hardware.</p><div id="windows-license-list" aria-label="Licenças por computador"></div></div>
+        <div class="stat admin-section" data-section="gpus" id="section-gpus" role="tabpanel"><h3>Placas de vídeo · 2005–2013</h3><p>Placas independentes do hardware. Escolha um PC e desbloqueie modelos conforme o ano.</p><div id="gpu-pc-choice" class="gpu-stations" aria-label="Computador selecionado"></div><div id="gpu-catalog" class="gpu-catalog" aria-label="Catálogo ilustrado de GPUs"></div></div>
+        <div class="stat admin-section" data-section="computers" id="section-computers" role="tabpanel">
           <h3>Computadores e evolução</h3><p id="pc">3 computadores</p>
           <div id="pc-maintenance" aria-label="Manutenção e evolução dos computadores"></div>
         </div>
       </div>
       <p class="admin-hint">As contas são cobradas a cada 30 dias do jogo. Reposição de estoque e reparos são despesas adicionais.</p>
     </section>
-    <footer>Vertical slice V0.1 · HTML5 + TypeScript + Canvas 2D · Visual provisório criado com código</footer>
+
+    <footer class="game-footer"><span><span class="tiny-pixel"></span> UM JOGO SOFTDOWN</span><span>Um pequeno negócio. Um futuro enorme.</span></footer>
   </div>
 </body>
 </html>

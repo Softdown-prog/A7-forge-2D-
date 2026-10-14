@@ -34,6 +34,14 @@ npm test
 - O tempo da simulação corre sem pressionar botões; clientes aparecem conforme preço, reputação, lotação e serviço.
 - Os dados são salvos localmente no navegador (localStorage). Botão Reiniciar apaga o progresso.
 
+## Identidade visual — Terminal de bairro
+
+O jogo tem uma interface própria inspirada nas lan houses do fim dos anos 90: grafite verde, papel creme, verde de terminal e detalhes em âmbar. O menu mostra o próprio salão dentro de um monitor CRT desenhado com CSS; marca, favicon e 41 ícones SVG são originais e locais.
+
+HUD, sete abas administrativas, catálogo, correspondência, preços, manutenção, estoque, licenças, GPUs e finanças usam a mesma linguagem visual. Os indicadores mostram valores reais do motor. Janelas fecham com Escape, preservam foco e permitem navegar pelas abas com as setas. O menu pausa a partida; sua prévia não avança o save.
+
+Veja o [guia da identidade visual](docs/VISUAL_IDENTITY.md). `scripts/capture_identity.mjs` valida as telas em Chromium a 1440, 414 e 360 px, testa ações pelos ícones e gera o artifact `lhs-visual-identity`, incluindo vídeo MP4 silencioso.
+
 ## Fronteira com A7 Forge
 
 Este diretório pode ser movido integralmente para um repositório independente. O jogo **não importa código Python ou arquivos do A7 no navegador**. Receitas originais ficam em `authoring/`; workers do GitHub Actions podem executar o A7 para produzir PNGs de revisão em artifacts. Somente PNGs aprovados entram em `assets/`.

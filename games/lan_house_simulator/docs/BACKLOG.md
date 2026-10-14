@@ -317,3 +317,16 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Reexecutar nove campanhas de 45 dias (3, 5 e 7 PCs; três sementes). **Atendimentos e margem permaneceram idênticos à referência da main anterior**: 940,67 / 1.326,67 / 1.372,67 atendimentos médios e R$ 9.062,33 / R$ 13.422 / R$ 14.178,33 de margem operacional por cenário.
 - [ ] Medir o impacto dessa preferência em campanhas reais com upgrades instalados em índices altos e clientes VIP ao longo de vários anos; resultados idênticos na fixture atual não provam retorno extra do investimento.
 - [ ] Validar em vídeo o uso do PC melhorado com o público VIP, sem substituir personagens ou artes já aprovadas.
+
+## Identidade visual própria — Terminal de bairro (14/10/2026)
+- [x] Criar paleta, tipografia, marca CRT, favicon, bordas, estados de interação e família de 41 ícones SVG locais.
+- [x] Integrar menu inicial com o salão real dentro de um monitor CRT autoral; separar a prévia da simulação e do save do jogador.
+- [x] Reformular HUD, calendário, clima, diário do salão, dicas e ferramentas de construção com indicadores verdadeiros.
+- [x] Unificar sete abas administrativas, cartões de manutenção, preços, estoque, licenças, GPUs, finanças e divulgação.
+- [x] Integrar catálogo ilustrado por ícones próprios e cartas com aparência de correspondência de bairro.
+- [x] Harmonizar piso, paredes, base da sala e letreiro com a paleta da interface, preservando câmera, âncoras e os personagens existentes.
+- [x] Incluir contraste legível, opções de movimento reduzido, foco nas janelas, Escape, navegação por setas nas abas e retorno ao salão sem pausar ao fechar um painel.
+- [x] Validar clique em filhos SVG de ações dinâmicas: estoque, técnico, compra/posicionamento e leitura de cartas; conferir exportação/importação da partida.
+- [x] Inspecionar 11 telas em desktop e dois tamanhos móveis emulados (1440, 414 e 360 px), com filmagem contínua da interface integrada.
+- [x] Preservar as melhorias recentes de personagens e alocação VIP; executar 146 testes da versão conjunta, além da auditoria e das verificações do navegador.
+- [ ] Avaliar a identidade com o criador e conferir toque/legibilidade em aparelho móvel físico; esta integração não promove sprites finais de personagens.

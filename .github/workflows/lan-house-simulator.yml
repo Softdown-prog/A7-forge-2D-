@@ -69,6 +69,18 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_circulation.mjs out/validation
+      - name: Validate the original visual identity and record its workspaces
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_identity.mjs out/identity --video
+      - name: Upload original interface review
+        if: matrix.worker == 'scene'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-visual-identity
+          path: games/lan_house_simulator/out/identity/
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload actual gameplay MP4
         if: matrix.worker == 'scene'
         uses: actions/upload-artifact@v4

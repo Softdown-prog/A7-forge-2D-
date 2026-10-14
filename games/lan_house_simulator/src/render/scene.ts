@@ -10,6 +10,7 @@ import { VENDING_MACHINES, VENDING_WIDTH, VENDING_DEPTH } from "../sim/layout.js
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 import {BIN_SPOTS} from "../sim/services.js";
+import {SCENE_THEME as theme} from "./theme.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -22,7 +23,7 @@ export class SceneRenderer {
     const ctx = this.ctx, w=1000, h=610, roomW=roomWidth(s), camera=cameraForGame(s),bounds=roomBounds(s);
     ctx.clearRect(0,0,w,h);
     const sky = ctx.createLinearGradient(0,0,0,h);
-    sky.addColorStop(0,"#172036"); sky.addColorStop(1,"#34425C");
+    sky.addColorStop(0,theme.backgroundTop); sky.addColorStop(1,theme.backgroundBottom);
     ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
     this.floor(camera,bounds);
     this.walls(camera,bounds);
@@ -252,14 +253,14 @@ export class SceneRenderer {
     ctx.restore();
     polygon(ctx,[frontLeft,frontRight,
       {x:frontRight.x,y:frontRight.y+bottom},
-      {x:frontLeft.x,y:frontLeft.y+bottom}],"#615662","#3B3A49");
+      {x:frontLeft.x,y:frontLeft.y+bottom}],theme.baseFront,theme.ink);
     polygon(ctx,[rearRight,frontRight,
       {x:frontRight.x,y:frontRight.y+bottom},
-      {x:rearRight.x,y:rearRight.y+bottom}],"#6E5862","#3B3A49");
+      {x:rearRight.x,y:rearRight.y+bottom}],theme.baseSide,theme.ink);
     for(let y=north;y<south;y++) for(let x=minX;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
-      const tone=(x+y)%2===0?"#C4B7A8":"#B9AC9F";
-      polygon(ctx,ps,tone,"#938579");
+      const tone=(x+y)%2===0?theme.floorLight:theme.floorDark;
+      polygon(ctx,ps,tone,theme.floorLine);
       if(y===4 && x>0 && x<w-1) {
         const c=iso({x:x+0.5,y:y+0.5},camera);
         ctx.fillStyle="rgba(100,83,77,0.10)";
@@ -275,9 +276,9 @@ export class SceneRenderer {
   private walls(camera:Projection,bounds:RoomBounds):void {
     const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
     polygon(ctx,[iso({x:minX,y:north},camera,155),iso({x:w,y:north},camera,155),
-      iso({x:w,y:north},camera),iso({x:minX,y:north},camera)],"#D7C6B2","#715C60");
+      iso({x:w,y:north},camera),iso({x:minX,y:north},camera)],theme.wallBack,"#7f876e");
     polygon(ctx,[iso({x:minX,y:north},camera,155),iso({x:minX,y:south},camera,155),
-      iso({x:minX,y:south},camera),iso({x:minX,y:north},camera)],"#B9ABB2","#786877");
+      iso({x:minX,y:south},camera),iso({x:minX,y:north},camera)],theme.wallSide,"#748168");
     for(const position of [2.15,4.45]){
       const a=iso({x:position,y:north},camera,127),b=iso({x:position+1.2,y:north},camera,127),
         c=iso({x:position+1.2,y:north},camera,73),d=iso({x:position,y:north},camera,73);
@@ -615,23 +616,23 @@ export class SceneRenderer {
   }
   private sign(camera:Projection,w:number):void {
     // Plaqueta de marca na área vazia do fundo: não cobre quadros nem clientes.
-    const ctx=this.ctx,x=28,y=28,label=w>7?"SALÃO AMPLIADO":"PEQUENO NEGÓCIO";
+    const ctx=this.ctx,x=28,y=28,label=w>8?"SALÃO AMPLIADO":"PRIMEIRAS CONEXÕES";
     ctx.save();
-    ctx.fillStyle="rgba(22,35,52,0.94)";ctx.fillRect(x,y,238,53);
-    ctx.strokeStyle="#B89A78";ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,236,51);
-    ctx.fillStyle="#E6C795";ctx.fillRect(x+13,y+10,3,30);
-    ctx.font="bold 18px system-ui,sans-serif";ctx.fillStyle="#FFEDD1";
-    ctx.fillText("LAN HOUSE",x+28,y+25);
-    ctx.font="bold 10px system-ui,sans-serif";ctx.fillStyle="#A5D2C6";
-    ctx.fillText(label+"  ·  1998",x+28,y+42);
+    ctx.fillStyle="rgba(25,46,42,0.9)";ctx.fillRect(x,y,210,50);
+    ctx.strokeStyle="#5e7b52";ctx.lineWidth=1;ctx.strokeRect(x+.5,y+.5,209,49);
+    ctx.fillStyle=theme.mint;ctx.fillRect(x+13,y+14,9,9);
+    ctx.fillStyle=theme.amber;ctx.fillRect(x+20,y+22,4,4);
+    ctx.font="bold 17px Trebuchet MS, sans-serif";ctx.fillStyle=theme.paper;
+    ctx.fillText("LAN HOUSE",x+35,y+24);
+    ctx.font="bold 9px Courier New, monospace";ctx.fillStyle=theme.mint;
+    ctx.fillText(label,x+35,y+39);
     ctx.restore();
     void camera;
   }
   private hudInside(ctx:CanvasRenderingContext2D,s:GameState):void {
-    ctx.fillStyle="rgba(15,25,43,.88)";ctx.fillRect(18,526,395,64);
-    ctx.fillStyle="#FFECCB";ctx.font="bold 14px system-ui,sans-serif";
-    ctx.fillText("Clique no proprietário atrás do balcão",31,552);
-    ctx.fillStyle="#B6D9DF";ctx.font="12px system-ui,sans-serif";
-    ctx.fillText("Clientes: "+s.customers.length+"   |   PCs: "+pcCount(s)+"   |   Internet: "+(online(s)?"online":"offline"),31,575);
+    ctx.save();ctx.fillStyle="rgba(25,46,42,.88)";ctx.fillRect(18,558,310,29);
+    ctx.fillStyle=theme.mint;ctx.fillRect(29,571,5,5);
+    ctx.fillStyle=theme.paper;ctx.font="bold 10px Courier New, monospace";
+    ctx.fillText(pcCount(s)+" ESTAÇÕES  /  "+s.customers.length+" CLIENTES",44,576);ctx.restore();
   }
 }
