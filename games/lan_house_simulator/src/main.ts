@@ -605,10 +605,19 @@ function renderUI():void {
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
       if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
-      const options=decisionOptions(n.id);
+      const options=decisionOptions(n.id,game);
+      if(n.id==="electrical-inspection"&&game.electricalDeadlineDay!==undefined&&!n.resolved){
+        const pending=document.createElement("strong");
+        pending.textContent=game.electricalInspectionFineApplied
+          ?"Prazo vencido: multa já aplicada. Ainda é necessário regularizar."
+          :(game.electricalExtensionUsed?"Prazo prorrogado até o dia ":"Prazo para regularizar até o dia ")+game.electricalDeadlineDay+".";
+        actions.append(pending);
+      }
       if(options.length){
         if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
-        else for(const option of options){const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
+        else for(const option of options){
+          if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
+          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
       }
       card.append(title,date,body,actions);noticesList.append(card);
     }

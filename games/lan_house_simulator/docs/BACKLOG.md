@@ -542,10 +542,13 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - [x] Garantir compatibilidade socket/DDR/IDE/Windows e saves, introduzir `npm run audit:staged-hardware` e workflow manual; documentar `docs/STAGED_HARDWARE_ROI_2026.md`. Não modificar o balanceamento de hardware só para forçar ROI.
 - [ ] Testar compras mensais com caixa realmente acumulado, uma GPU no PC de maior atendimento, 5/7 estações e diferentes valores de tarifa em 2005–2024 antes de oferecer dicas automáticas de investimento.
 
-## Jogos GPU obrigatórios e licenças desde 2005 — 14/10/2026
-- [x] Preservar catálogo básico de jogos (R$ 450) e licenças Windows atuais; adicionar títulos fictícios desbloqueados em **2005, 2009 e 2013**, cada um com GPU mínima, Windows mínimo, preço único e indicação dos PCs elegíveis.
-- [x] Impedir licenciamento premium sem **ao menos uma estação com GPU e Windows licenciado compatíveis**, mesmo se houver dinheiro; impedir cobrança repetida, antecipação da data de lançamento e IDs adulterados em saves.
-- [x] Ao atender gamers desde 2005, preferir PCs que suportem os jogos e cobrar adicional **somente naquela estação e naquela sessão**, limitado ao teto anual, sem aumentar a chegada de clientes nem alterar o RNG das épocas anteriores.
-- [x] Exibir jogos, requisitos, motivos de bloqueio, preços e PCs elegíveis na aba Windows / Licenças; registrar contrato premium, receita e custo nos mesmos livros econômicos do motor.
-- [x] Preservar saves clássicos, históricos anteriores e ausência de `licensedGpuGames`; validar teste de autorização, compatibilidade, caixa, tarifa local e atendimento real.
-- [ ] Ampliar GPUs para 2005–2013, catálogo por gênero, demanda específica por título, instalação por máquina, preferência do cliente e preços locais configuráveis; somente então realizar uma **nova auditoria de ROI das GPUs**.
+## Evento esporádico — Bombeiros e rede elétrica (14/10/2026)
+
+- [x] Adicionar à carta de eventos uma vistoria única dos Bombeiros sobre cabos de rede e energia, extensões e adaptadores sobrecarregados, sem data fixa no calendário da campanha.
+- [x] Oferecer regularização completa por profissional, adequação essencial segura ou prorrogação única de oito dias sobre o prazo inicial de oito dias, com custos reais ajustados aos modos clássico/histórico.
+- [x] Se o prazo vencer sem regularização, aplicar autuação única e perda de reputação; a mesma carta continua aberta para regularizar e não reaparece como novo evento.
+- [x] Persistir vistoria, regularização, prazo e multa nos saves opcionais, preservando saves anteriores; apresentar botões e prazo no envelope do runtime.
+- [x] Adicionar regressões de duplicação, valores, prazo, serialização, modo histórico e não alteração do RNG de clientes.
+- [ ] Inspecionar interface da carta em navegador real (desktop/mobile) e validar testes no CI antes de promover a main.
+
+**Observação:** valores e consequências são fictícios para game design e não representam leis específicas de prevenção de incêndio de qualquer cidade ou estado.
