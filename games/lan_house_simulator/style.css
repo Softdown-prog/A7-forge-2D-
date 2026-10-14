@@ -550,3 +550,40 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .disc-copy-panel h4{color:#385842;margin:8px 0}
 .disc-copy-cost{flex-basis:100%;color:#5f704f;line-height:1.6}
 @media(max-width:560px){.shop-art[data-item="disc-copier"]{height:118px}.disc-copy-panel p{overflow-wrap:anywhere}}
+
+
+/* Coleção 1998–1999: capas locais desenhadas por CSS, sem conteúdo externo. */
+#era-game-catalog{margin:17px 0 28px;min-width:0}
+.era-game-summary{border:1px solid #b9c9a2;background:#e3edd5;padding:12px 14px;border-radius:9px;color:#35543b;font-size:12px;line-height:1.55}
+.era-game-section{margin:20px 0 25px}
+.era-game-section h4{font-size:17px;color:#274a36;margin:0 0 11px}
+.era-game-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.era-game-card{border:1px solid #c9d2b9;border-radius:10px;overflow:hidden;min-width:0;background:#faf8ec;display:flex;flex-direction:column;box-shadow:0 3px 0 #dce1d0}
+.era-game-cover{--art-a:#1a4463;--art-b:#7b3154;--art-c:#f0c375;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between;min-height:164px;padding:12px 15px;color:#fff8e6;text-shadow:0 2px 5px #0719239c;background:radial-gradient(ellipse at 76% 20%,var(--art-c),transparent 30%),linear-gradient(144deg,var(--art-a),var(--art-b))}
+.era-game-cover:before{content:"";position:absolute;z-index:-1;inset:0;background:repeating-linear-gradient(0deg,#ffffff0b 0 2px,transparent 2px 8px),linear-gradient(110deg,transparent 53%,#ffffff28 54%,transparent 58%);transform:skewY(-8deg) scale(1.2)}
+.era-game-cover:after{content:"";position:absolute;z-index:-1;width:175px;height:175px;border:4px solid #ffffff44;border-radius:18px;right:-40px;top:-32px;transform:rotate(38deg);box-shadow:0 0 0 19px #ffffff0c,0 0 0 46px #ffffff0b}
+.era-cover-release,.era-cover-genre{font:700 9px "Courier New",monospace;letter-spacing:.14em;z-index:1}
+.era-cover-symbol{position:absolute;right:13px;top:18px;font-size:76px;line-height:1;color:#fff9d5b5;transform:rotate(-15deg)}
+.era-cover-title{max-width:80%;font-size:23px;line-height:1.03;letter-spacing:-.055em;z-index:1;margin-top:auto;padding:18px 0 10px}
+.era-game-cover[data-theme="speed"]{--art-a:#17354c;--art-b:#ba4132;--art-c:#ffd25e}
+.era-game-cover[data-theme="castle"]{--art-a:#24365d;--art-b:#7e4a85;--art-c:#f6ce9f}
+.era-game-cover[data-theme="orbit"]{--art-a:#0e3849;--art-b:#225e71;--art-c:#93ddc6}
+.era-game-cover[data-theme="blocks"]{--art-a:#33513e;--art-b:#ae683c;--art-c:#e6ef82}
+.era-game-cover[data-theme="arena"]{--art-a:#4d202f;--art-b:#963b3d;--art-c:#f2b66a}
+.era-game-cover[data-theme="night"]{--art-a:#171d49;--art-b:#793580;--art-c:#fc77b2}
+.era-game-cover[data-theme="kingdom"]{--art-a:#32492b;--art-b:#77622b;--art-c:#edcb89}
+.era-game-cover[data-theme="cyber"]{--art-a:#15183e;--art-b:#3f4e9c;--art-c:#86d5f9}
+.era-game-cover[data-theme="island"]{--art-a:#135065;--art-b:#26765d;--art-c:#efd4a3}
+.era-game-cover[data-theme="circuit"]{--art-a:#234544;--art-b:#788d32;--art-c:#caee82}
+.era-game-details{display:flex;flex-direction:column;gap:8px;padding:13px;flex:1}
+.era-game-details>strong{color:#2d5038;font-size:14px}
+.era-game-details p{font-size:11px;line-height:1.55;color:#667959;margin:0;flex:1}
+.era-game-details small{font-size:10px;line-height:1.4;color:#71815f}
+.era-game-details .era-game-status{font-weight:700;color:#416b4e}
+.era-game-details button{width:100%;min-height:42px;white-space:normal;text-align:center}
+.era-game-locked .era-game-cover{filter:saturate(.55);opacity:.75}
+.era-game-locked .era-game-status{color:#805944}
+.era-game-owned{border-color:#6eab73}
+.era-game-owned .era-game-status{color:#28763e}
+@media(max-width:780px){.era-game-grid{grid-template-columns:1fr}.era-game-card{display:grid;grid-template-columns:minmax(110px,40%) minmax(0,1fr)}.era-game-cover{min-height:185px}.era-cover-title{font-size:19px}.era-cover-symbol{font-size:58px}.era-game-details{padding:12px;gap:7px}}
+@media(max-width:390px){.era-game-cover{padding:10px;min-height:200px}.era-cover-title{font-size:17px}.era-cover-release,.era-cover-genre{font-size:7px;letter-spacing:.04em}.era-game-details>strong{font-size:12px}.era-game-details p,.era-game-details small{font-size:9px}}
