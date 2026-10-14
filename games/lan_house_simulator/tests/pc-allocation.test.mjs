@@ -18,6 +18,13 @@ test("sem upgrades, mantém a escolha do PC mais próximo sem cobrar ou alterar 
  assert.equal(chooseAvailablePc(s,c),0);
  assert.deepEqual({cash:s.cash,revenue:s.revenue,rng:s.rng},before);
 });
+test("desgaste parcial não manda clientes para máquinas distantes sem upgrade",()=>{
+ const s=createGame(),c=waiting();
+ s.pcWear=[88,0,0];
+ assert.equal(chooseAvailablePc(s,c),0);
+ s.pcWear[0]=100;
+ assert.equal(chooseAvailablePc(s,c),1);
+});
 test("cliente prefere investimento de hardware que antes ficava ocioso no PC 3",()=>{
  const s=createGame();s.cash=10000;s.totalMinutes=5*360*DAY_MINUTES;
  const c=waiting();
