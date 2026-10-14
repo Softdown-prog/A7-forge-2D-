@@ -4,8 +4,8 @@
 
 ## 0. Nomes oficiais e identidade
 
-- O jogo chama-se **LHS — Lan House Simulator**. O diretório técnico existente continua \`games/lan_house_simulator\`; este contrato não determina uma renomeação de pasta ou de código legado.
-- A moeda premium é **Cookies** (**biscoitos**, 🍪, escrita exatamente **C-O-O-K-I-E-S**). Não confundir com cookies HTTP de sessão do navegador. Para código, preferir nomes inequívocos como \`cookiesBalance\`, \`cookiesLedger\` e \`cookiesEntitlements\`.
+- O jogo chama-se **LHS — Lan House Simulator**. O diretório técnico existente continua `games/lan_house_simulator`; este contrato não determina uma renomeação de pasta ou de código legado.
+- A moeda premium é **Cookies** (**biscoitos**, 🍪, escrita exatamente **C-O-O-K-I-E-S**). Não confundir com cookies HTTP de sessão do navegador. Para código, preferir nomes inequívocos como `cookiesBalance`, `cookiesLedger` e `cookiesEntitlements`.
 - Há duas economias independentes: **R$ fictícios do simulador**, usados para administrar a lan house, e **Cookies premium**, associados à conta e obtidos opcionalmente por pagamento e, caso decidido no futuro, recompensas.
 
 ## 1. Modelo de acesso e monetização
@@ -19,7 +19,7 @@
 
 ## 2. Arquitetura-alvo e limites do backend
 
-\`\`\`text
+```text
 Cloudflare — site próprio + frontend estático HTML5/TypeScript/Canvas
    ├── renderização 2D, personagens, lógica de NPCs, simulação e saves locais
    └── UI opcional de login, salvar/carregar na nuvem e loja de Cookies
@@ -32,23 +32,23 @@ Google Cloud Run — API Node.js (alvo: 1 vCPU, 512 MiB RAM, mín. 0 instâncias
             ├── Firebase Authentication: identidade e login
             ├── Firestore: conta, Cookies, itens adquiridos, pedidos e ledger
             └── Google Cloud Storage (GCS): saves JSON privados por usuário
-\`\`\`
+```
 
 - O backend **não** executa desenho por frame, relógio por minuto nem toda a simulação: o motor atual permanece **no navegador** para manter baixa latência e custo.
-- Cloud Run com \`min-instances=0\` e limitação de escala/concor­rência após testes de carga. Esta configuração é objetivo, não promessa de desempenho/preço.
+- Cloud Run com `min-instances=0` e limitação de escala/concor­rência após testes de carga. Esta configuração é objetivo, não promessa de desempenho/preço.
 - Firestore **não** guarda o snapshot completo do LHS. Pode guardar metadados mínimos de slot, mas a fonte do progresso salvo na nuvem é o **JSON no GCS**.
 - Firebase Authentication ou equivalente cuida de senhas/identidade; o Cloud Run valida os tokens. **Não armazenar senhas no Firestore**. Nunca expor segredos do Google Cloud ou do provedor de pagamentos no frontend.
 - A publicação continua controlada pelas regras do README e do CH-site. Documentar este contrato **não** autoriza deploy ou ativação de cobrança.
 
 ## 3. Salvar e carregar — intenção funcional
 
-- **Durante a partida:** simulação local sem chamadas repetitivas a Firestore/Cloud Run/GCS. Manter o save local e o exportar/importar JSON já existentes, inclusive compatibilidade com \`lhs-save-v1\`.
+- **Durante a partida:** simulação local sem chamadas repetitivas a Firestore/Cloud Run/GCS. Manter o save local e o exportar/importar JSON já existentes, inclusive compatibilidade com `lhs-save-v1`.
 - **Salvar na nuvem é manual:** botão explícito do jogador; não agendar uploads automáticos sem nova aprovação de produto. Pode haver pausa breve para snapshot consistente. Mostrar claramente sucesso, erro e último save confirmado. Não apagar o save local após upload.
 - **Ao entrar na conta:** backend valida UID, autoriza o GCS privado e o frontend busca o JSON do próprio usuário, valida esquema/versão, oferece restaurar a partida e continua do ponto salvo. A carteira e os itens premium vêm separadamente do Firestore.
 - **Um slot principal + um backup recuperável** no início. Exemplo de chaves privadas:
-  \`users/<uid>/slots/main/save.json\` e \`users/<uid>/slots/main/backup.json\`.
+  `users/<uid>/slots/main/save.json` e `users/<uid>/slots/main/backup.json`.
   A sobrescrita do principal substitui o JSON anterior; o backup é rotativo e limitado, não histórico infinito.
-- O GCS oferece **pré-condição por geração** (\`ifGenerationMatch\`) para bloquear sobrescritas concorrentes de abas/dispositivos. Em conflito, oferecer recarregar/comparar/decidir; não sobrescrever silenciosamente.
+- O GCS oferece **pré-condição por geração** (`ifGenerationMatch`) para bloquear sobrescritas concorrentes de abas/dispositivos. Em conflito, oferecer recarregar/comparar/decidir; não sobrescrever silenciosamente.
 - Para reduzir transferência pelo Cloud Run, autorizar **URL assinada por objeto e operação**, com prazo curto, origem/CORS restritos e limites de tamanho; nunca dar permissão de acesso ao bucket inteiro. A estratégia final deve considerar validação do conteúdo antes de aceitar o novo snapshot (por exemplo upload temporário + promoção controlada, caso necessário).
 - Falhas de conexão não invalidam progresso local; botão de tentar de novo e recuperação de backup. Aplicar validação de versão, formato, tamanho, titularidade e migração antes de restaurar.
 - Políticas de retenção, recuperação, exclusão de dados e localização/região do bucket ficam para a fase de implantação, respeitando privacidade/LGPD.
