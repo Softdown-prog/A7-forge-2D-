@@ -1,0 +1,67 @@
+name: Lan House - Promote soda sound
+on:
+  push:
+    paths:
+      - '.github/workflows/lan-house-promote-soda.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: lhs-promote-soda
+  cancel-in-progress: false
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install audio processing dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python -m pip install --disable-pip-version-check numpy scipy soundfile
+      - name: Render isolated vending transients from original owner recordings
+        run: |
+          python tools/a7_audio_lab/review_vending_recordings.py
+          python tools/a7_audio_lab/vending_impacts.py
+          mkdir -p games/lan_house_simulator/assets/audio
+          cp out/lhs-vending-review/refrigerante_01_isolado_forte.ogg games/lan_house_simulator/assets/audio/vending_soda_01.ogg
+          cp out/lhs-vending-review/refrigerante_02_isolado_forte.ogg games/lan_house_simulator/assets/audio/vending_soda_02.ogg
+      - name: Validate two distinct short effects
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from hashlib import sha256
+          import subprocess,json
+          folder=Path('games/lan_house_simulator/assets/audio')
+          hashes=[]
+          for i in (1,2):
+            p=folder/('vending_soda_0%d.ogg'%i)
+            assert p.stat().st_size>2000
+            result=json.loads(subprocess.check_output(['ffprobe','-v','error','-show_entries','stream=codec_name,sample_rate,channels:format=duration','-of','json',str(p)]))
+            assert result['streams'][0]['codec_name']=='vorbis'
+            assert result['streams'][0]['sample_rate']=='48000'
+            assert result['streams'][0]['channels']==1
+            assert 0.2<float(result['format']['duration'])<4
+            hashes.append(sha256(p.read_bytes()).hexdigest())
+          assert len(set(hashes))==2
+          PY
+      - name: Commit generated sounds to main without overwriting other changes
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add games/lan_house_simulator/assets/audio/vending_soda_01.ogg games/lan_house_simulator/assets/audio/vending_soda_02.ogg
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'assets(lhs): publish occasional cleaned soda sounds'
+          for n in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+          done
+          exit 1
