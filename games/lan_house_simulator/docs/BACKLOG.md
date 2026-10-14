@@ -267,5 +267,15 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Verificar conservação contábil do caixa, receita e despesas a cada dia, energia acumulada e limites de desgaste, reputação e lotação.
 - [x] Identificar e corrigir duplicidade de multa aleatória de jogos após a autuação formal por direitos autorais.
 - [x] Registrar indicadores de caixa, atendimentos, perdas e reputação nos dias 15, 30 e 45.
-- [ ] Testar múltiplas sementes, campanhas com upgrades reais, expansão e decisões pagas antes de concluir o balanceamento geral.
+- [x] Testar múltiplas sementes, campanhas com upgrades reais, expansão e decisões pagas: 9 campanhas de 45 dias comparadas e relatadas em `docs/ECONOMY_CAMPAIGN_AUDIT_2009.md`.
 - [ ] Inspecionar capturas reais de uma campanha avançada antes de declarar o acabamento final.
+
+## Balanceamento e escoamento do caixa — 13/10/2026
+- [x] Comparar 3/5/7 PCs em 2009, com capital inicial de teste declarado e compras feitas pelas APIs reais.
+- [x] Diagnosticar gargalo de circulação na fase `arriving` (7+ clientes presos em deslocamento para a fila).
+- [x] Permitir desvio lateral com checagem de colisões também aos visitantes chegando, sem atravessar divisórias.
+- [x] Reexecutar as mesmas 9 campanhas e comprovar mais atendimentos, maior ocupação e evolução do resultado operacional.
+- [x] Adicionar limites de regressão para fila, ocupação e quantidade de atendimentos; registrar números antes/depois no relatório.
+- [ ] Validar trajetos com várias salas/divisórias e circulação em alta lotação por vídeo real.
+- [ ] Avaliar retorno de investimento do salão grande, que ainda é caro e opera com capacidade ociosa.
+- [ ] Revisar progressão de reputação VIP e preços em campanhas de vários anos antes de declarar a economia balanceada.
