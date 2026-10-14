@@ -74,7 +74,7 @@ try{
   await page.locator('[data-admin-tab="licenses"]').click();
   assert.equal(await page.locator('[data-era-game-buy]').count(),10);
   assert.equal(await page.locator('[data-era-game-buy="asfalto-noturno"]').isDisabled(),true);
-  await page.locator('[data-win-pc="0"][data-win-edition="win98"]').click();
+  await page.locator('#windows-license-list [data-win-pc="0"][data-win-edition="win98"]').click();
   await page.locator('[data-era-game-buy="turbo-98"]').click();
   const licensed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   assert.ok(licensed.licensedEraGames?.includes("turbo-98"),"O jogo comprado deve persistir no save.");
