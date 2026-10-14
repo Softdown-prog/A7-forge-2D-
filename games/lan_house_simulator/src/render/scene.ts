@@ -95,7 +95,7 @@ export class SceneRenderer {
   private drawBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
     const live=this.ctx;
     const key=JSON.stringify([w,h,camera,bounds,s.furniture?.poster??0,
-      s.furniturePlacements?.filter(p=>p.kind==="poster")??[],s.objectPlacements?.filter(p=>p.id.startsWith("built-poster:"))??[]]);
+      s.furniturePlacements?.filter(p=>p.kind==="poster")??[],s.objectPlacements?.filter(p=>p.id.startsWith("built-poster:"))??[],s.removedBuiltPosters??[]]);
     if(typeof document!=="undefined"){
       if(!this.background){this.background=document.createElement("canvas");this.background.width=w;this.background.height=h;}
       const buffer=this.background.getContext("2d");

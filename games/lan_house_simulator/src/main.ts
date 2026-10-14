@@ -186,7 +186,6 @@ let purchaseRotation:0|1|2|3=0;
 let pendingWall:WallSegment|null=null;
 const layoutEditor=createLayoutEditor(canvas,()=>game,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
 installGameViewport(canvas);
-document.getElementById("organize-layout")?.addEventListener("click",()=>layoutEditor.open());
 
 let adminOpen = false;
 let noticesOpen=false;
@@ -288,8 +287,7 @@ button("open-shop",()=>{if(layoutEditor.active)layoutEditor.close();shopOpen=!sh
 button("close-shop",()=>{shopOpen=false;renderUI();});
 button("demolish-walls",()=>{
  if(!((game.interiorWalls?.length??0)+(game.interiorDoors?.length??0)))return;
- wallMode="remove";placingKind=null;relocating=false;hoveredWall=null;pendingWall=null;placementNotice="";
- shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
+ layoutEditor.open(true);
 });
 button("rotate-furniture",()=>{
  if(placingKind&&placingKind!=="poster"){purchaseRotation=((purchaseRotation+1)%4) as 0|1|2|3;renderUI();return;}
@@ -993,6 +991,7 @@ function frame(timestamp:number):void {
   if(isPlaying&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
   else if(menuRenderer&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
+  if(isPlaying&&layoutEditor.active&&layoutEditor.wall)renderer.drawWallPreview(game,layoutEditor.wall,true);
   if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);
   if(isPlaying&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
   if(isPlaying&&wallMode){

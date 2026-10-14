@@ -5,14 +5,14 @@ import {roomBounds} from "./room.js";
 import {computerSeat,counterQueue} from "./route.js";
 import {counterQueueSlot,counterQueueCustomers} from "./checkoutQueue.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
-import {furnitureLocations,furnitureSlots} from "./shop.js";
+import {furnitureLocations,furnitureSlots,removeFurniture} from "./shop.js";
 import {binSpots} from "./services.js";
 export interface EditableObject extends Point{id:string;label:string;kind:"pc"|"counter"|"soda"|"candy"|"shelf"|"bin"|"poster"|"plant"|"table";rotation:Rotation;w:number;d:number;index?:number;surface:"floor"|"wall";axis?:"x"|"y";span?:number;posterKind?:"terminal"|"arcade"|"coaster"|"tactical"|"golf"|"artillery"|"city"}
 export function builtPosters(s:GameState):EditableObject[]{
  const b=roomBounds(s),items:Array<[Point,"x"|"y",EditableObject["posterKind"]]>=[
  [{x:b.minX+.82,y:b.minY},"x","terminal"],[{x:Math.max(b.minX+3.25,b.maxX-2.2),y:b.minY},"x","arcade"],
  ...([.27,1.4,2.53,3.66,4.79] as const).map((y,i)=>[{x:b.minX+.012,y},"y",(["coaster","tactical","golf","artillery","city"] as const)[i]] as [Point,"y",EditableObject["posterKind"]])];
- return items.map(([p,axis,posterKind],i)=>{const saved=placedObject(s,"built-poster:"+i,p),r=saved.rotation??(axis==="y"?3:0);return {id:"built-poster:"+i,label:"Pôster · "+({terminal:"Terminal",arcade:"Arcade",coaster:"Montanha-russa",tactical:"Tático",golf:"Golfe",artillery:"Artilharia",city:"City Horizon"})[posterKind!],kind:"poster",...saved,rotation:r,w:.96,d:0,surface:"wall",axis:r===3?"y":"x",span:axis==="x"?.92:.96,posterKind};});
+ return items.map<EditableObject>(([p,axis,posterKind],i)=>{const saved=placedObject(s,"built-poster:"+i,p),r=saved.rotation??(axis==="y"?3:0);return {id:"built-poster:"+i,label:"Pôster · "+({terminal:"Terminal",arcade:"Arcade",coaster:"Montanha-russa",tactical:"Tático",golf:"Golfe",artillery:"Artilharia",city:"City Horizon"})[posterKind!],kind:"poster",...saved,rotation:r,w:.96,d:0,surface:"wall",axis:r===3?"y":"x",span:axis==="x"?.92:.96,posterKind};}).filter((_,i)=>!s.removedBuiltPosters?.includes(i));
 }
 export function fixedLayoutObjects(s:GameState):EditableObject[]{
  const b=roomBounds(s),counter=placedObject(s,"counter",{x:.9,y:1.42}),shelf=placedObject(s,"shelf",{x:b.minX+.23,y:2.92});
@@ -71,6 +71,7 @@ export function layoutPlacementIssue(s:GameState,o:EditableObject):string|null{
  return null;
 }
 export function validateObjectPlacements(s:GameState):boolean{
+ if(s.removedBuiltPosters!==undefined&&(!Array.isArray(s.removedBuiltPosters)||s.removedBuiltPosters.length>7||new Set(s.removedBuiltPosters).size!==s.removedBuiltPosters.length||!s.removedBuiltPosters.every(i=>Number.isInteger(i)&&i>=0&&i<7)))return false;
  if(s.objectPlacements===undefined)return true;
  if(!Array.isArray(s.objectPlacements)||s.objectPlacements.length>50)return false;
  const allowed=new Set([...fixedLayoutObjects(s),...builtPosters(s)].map(o=>o.id)),seen=new Set<string>();
@@ -79,6 +80,20 @@ export function validateObjectPlacements(s:GameState):boolean{
  }
  for(const goal of layoutGoals(s))if(!navigableRoute(s,entrance(s),goal))return false;
  return true;
+}
+/** Só decorações são descartadas: estações e serviços mantêm seus contratos ativos. */
+export function layoutRemovalIssue(s:GameState,id:string):string|null{
+ const object=editableObjects(s).find(o=>o.id===id);
+ if(!object)return "Selecione um item instalado.";
+ return id.startsWith("decor:")||id.startsWith("built-poster:")?null:"Este equipamento atende clientes; use mover ou girar para reorganizá-lo.";
+}
+export function removeLayoutObject(s:GameState,id:string):Result{
+ const issue=layoutRemovalIssue(s,id);if(issue)return {ok:false,message:issue};
+ if(id.startsWith("decor:"))return removeFurniture(s,id.slice(6));
+ const index=Number(id.slice("built-poster:".length));
+ s.removedBuiltPosters=[...(s.removedBuiltPosters??[]),index];
+ if(s.objectPlacements)s.objectPlacements=s.objectPlacements.filter(p=>p.id!==id);
+ return {ok:true,message:"Pôster retirado do salão. A mudança foi salva."};
 }
 export function moveLayoutObject(s:GameState,id:string,destination:Point,rotation:Rotation):Result{
  const original=editableObjects(s).find(o=>o.id===id);if(!original)return {ok:false,message:"Objeto inexistente."};

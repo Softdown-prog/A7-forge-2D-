@@ -105,6 +105,8 @@ export interface GameState {
   furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string;rotation?:0|1|2|3}>;
   /** Edição física gratuita; IDs das estações preservam peças, licenças e receita. */
   objectPlacements?: Array<{id:string;x:number;y:number;rotation:0|1|2|3}>;
+  /** Pôsteres originais retirados pelo jogador; índices estáveis de 0 a 6. */
+  removedBuiltPosters?: number[];
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
   repairJobs?: import("./services.js").RepairJob[];

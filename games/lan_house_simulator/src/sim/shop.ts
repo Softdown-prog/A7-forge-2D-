@@ -188,6 +188,15 @@ export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId
  }
  return result;
 }
+/** Retira uma unidade e libera seu encaixe. Materiais já comprados não geram reembolso. */
+export function removeFurniture(s:GameState,slotId:string):Result{
+ const furniture=furnitureLocations(s),item=furniture.find(p=>p.slotId===slotId);
+ if(!item||(s.furniture?.[item.kind]??0)<1)return {ok:false,message:"Não há um móvel instalado nessa posição."};
+ s.furniturePlacements=furniture.filter(p=>p.slotId!==slotId);
+ s.furniture={...(s.furniture??{poster:0,plant:0,table:0}),[item.kind]:s.furniture![item.kind]-1};
+ routesForCurrentCustomers(s);
+ return {ok:true,message:"Item removido. Espaço liberado, sem custo nem reembolso."};
+}
 /** Uma transação de mudança de lugar nunca cobra novamente nem altera a posse. */
 export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string):Result{
  if(fromSlotId===toSlotId)return {ok:false,message:"Escolha um destino diferente da posição atual."};

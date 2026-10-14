@@ -112,7 +112,16 @@ export function removeInteriorDoor(s:GameState,w:WallSegment):Result{
  const index=(s.interiorDoors??[]).findIndex(p=>wallId(p)===wallId(w));
  if(index<0)return {ok:false,message:"Não há porta nesse local."};
  s.interiorDoors!.splice(index,1);
+ routesForCurrentCustomers(s);
  return {ok:true,message:"Porta interna removida. Passagem livre."};
+}
+export function removablePartitions(s:GameState):Array<WallSegment&{id:string;label:string;kind:"wall"|"door"}>{
+ return (["wall","door"] as const).flatMap(kind=>((kind==="wall"?s.interiorWalls:s.interiorDoors)??[]).map((w,i)=>({...w,kind,id:kind+":"+wallId(w),label:(kind==="wall"?"Divisória ":"Porta interna ")+(i+1)+" · "+w.x+", "+w.y+" · "+(w.axis==="x"?"horizontal":"vertical")})));
+}
+export function removePartition(s:GameState,id:string):Result{
+ const partition=removablePartitions(s).find(p=>p.id===id);
+ if(!partition)return {ok:false,message:"Selecione uma divisória ou porta existente."};
+ return partition.kind==="door"?removeInteriorDoor(s,partition):removeWall(s,partition);
 }
 export function validInteriorDoors(s:GameState):boolean{
  if(s.interiorDoors===undefined)return true;
