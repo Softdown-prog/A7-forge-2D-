@@ -11,6 +11,7 @@ import {navigableRoute} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
 import {reviewNotices} from "./notices.js";
+import {scheduleDecisions} from "./decisions.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
@@ -306,6 +307,7 @@ function nextDay(s: GameState): void {
     addLog(s, "Contas do mês pagas: -R$ " + bill + " (incluindo energia R$ "+energy+"; aluguel, internet e manutenção).");
   }
   reviewNotices(s);
+  scheduleDecisions(s);
   if (!s.licensedGames && random(s) < 0.06) {
     const fine = 180;
     s.cash -= fine; s.expenses += fine; s.reputation = Math.max(10, s.reputation - 4);
