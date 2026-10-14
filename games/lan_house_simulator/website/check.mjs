@@ -13,6 +13,7 @@ for(const file of html){
  if(site){
   assert.equal((source.match(/<h1\b/g)??[]).length,1,name+" deve ter um h1");
   assert.match(source,/id="conteudo"/);assert.match(source,/Pular para o conteúdo/);
+  assert.doesNotMatch(source,/\bgithub\b|github\.com/i,"Página pública não deve fazer referência ao GitHub: "+name);
   const title=source.match(/<title>(.*?)<\/title>/s)?.[1];assert.ok(title&&!titles.has(title),"Título único: "+name);titles.add(title);
   const ids=[...source.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);assert.equal(new Set(ids).size,ids.length,"IDs duplicados: "+name);
   const structured=source.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)?.[1];assert.ok(structured);assert.equal(JSON.parse(structured).inLanguage,"pt-BR");

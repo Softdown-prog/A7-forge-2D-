@@ -606,3 +606,12 @@ Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Servi�
 - Administrador mantém âncoras e quatro direções, com uniforme/apron refinado, crachá de terminal, óculos, detalhes de cabelo e mãos em atendimento. Removida bandeja de restaurante para adaptar a postura à administração da lan house.
 - Cache estático do balcão por escala, orientação e fase de pixel; limite de 24 imagens por contexto. Não altera tamanho de ocupação, filas, salvamento ou economia.
 - Verificação Canvas: 32 comparações de cache/desenho direto, 72 combinações dos outros clientes sem pixels alterados e quatro hitboxes de administrador reposicionado/girado. Galeria antes/depois, quatro vistas, cena real e detalhes do figurino. CI executa a revisão do balcão.
+
+
+### Copiadora de CDs e DVDs — 14/10/2026
+
+- [x] Item de loja ilustrado em Canvas, compra única de R$ 900 e desbloqueio em 2001.
+- [x] Serviço de balcão sem objeto no salão, preços separados de CD/DVD, pedidos de clientes reais, custo de mídia e contabilidade de receita/despesa.
+- [x] Limitar pedidos à carteira e à capacidade diária; reduzir procura com preço alto, persistir aquisição/preços/histórico e evitar venda duplicada.
+- [x] Validar compra, preços e recarga em desktop/celular e confirmar pixels do salão idênticos após adquirir a máquina.
+- Contrato: `docs/DISC_COPY_SERVICE.md`. Valores iniciais são parâmetros de balanceamento.

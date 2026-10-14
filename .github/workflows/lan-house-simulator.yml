@@ -104,6 +104,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_counter_art.mjs out/validation
+      - name: Verify CD and DVD copier unlock, purchase, prices and mobile controls
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_disc_copy.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

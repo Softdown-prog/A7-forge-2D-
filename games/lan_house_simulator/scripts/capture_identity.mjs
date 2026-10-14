@@ -5,6 +5,7 @@ import {mkdir,writeFile,rm,readFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
+import {SHOP_CATALOG} from "../dist/js/sim/shop.js";
 import {GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 
 const output=resolve(process.argv[2]??"out/identity"),record=process.argv.includes("--video");
@@ -67,6 +68,18 @@ try{
    assert.equal(await page.locator('[data-section="'+tab+'"]').isVisible(),true);
    await shot("admin-"+tab,"#admin");
   }
+  // Fluxo real de compra em 1998: regularização, Windows e título individual.
+  await page.locator('[data-admin-tab="services"]').click();
+  await page.locator("#license").click();
+  await page.locator('[data-admin-tab="licenses"]').click();
+  assert.equal(await page.locator('[data-era-game-buy]').count(),10);
+  assert.equal(await page.locator('[data-era-game-buy="asfalto-noturno"]').isDisabled(),true);
+  await page.locator('[data-win-pc="0"][data-win-edition="win98"]').click();
+  await page.locator('[data-era-game-buy="turbo-98"]').click();
+  const licensed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+  assert.ok(licensed.licensedEraGames?.includes("turbo-98"),"O jogo comprado deve persistir no save.");
+  assert.equal(await page.locator('[data-era-game-buy="turbo-98"]').isDisabled(),true);
+  await shot("licensed-games-1998","#admin");
   // O indicador de procura acompanha o preço no Chromium real em todas
   // as resoluções, sem salvar receita fictícia nem perder o foco da aba.
   await page.locator('[data-admin-tab="prices"]').click();
@@ -102,7 +115,7 @@ try{
   assert.equal(repaired.repairJobs?.some(j=>j.pc===0),true);
   await page.keyboard.press("Escape");
   await page.locator("#open-shop").click();await shot("shop","#shop");
-  assert.equal(await page.locator("#shop-catalog .shop-art").count(),11);
+  assert.equal(await page.locator("#shop-catalog .shop-art").count(),SHOP_CATALOG.length);
   await clickSvg('[data-buy="plant"] .ui-icon');
   assert.equal(await page.locator("#placement-toolbar").isVisible(),true);
   assert.equal(await page.locator("#panel-backdrop").isVisible(),false);

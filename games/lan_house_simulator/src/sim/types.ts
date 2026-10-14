@@ -30,6 +30,8 @@ export interface Customer {
   /** No máximo uma bebida e um alimento por visita, inclusive após importar save. */
   purchasedDrink?: boolean;
   purchasedFood?: boolean;
+  /** Pedido de cópias já avaliado no balcão; impede reprocessamento após recarga. */
+  discCopyChecked?: boolean;
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;
@@ -81,6 +83,8 @@ export interface GameState {
   counterBusyUntil?: number;
   /** Preços por produto, opcionais para saves antigos. */
   retailPrices?: Record<Item,number>;
+  /** Serviço abstrato do balcão, sem objeto ou posição no mapa. */
+  discCopier?: import("./discCopy.js").DiscCopier;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
   /** Peças por estação; null/ausente usa a configuração CRT legada do nível. */
@@ -99,6 +103,8 @@ export interface GameState {
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
+  /** Títulos individuais de 1998/1999, ausentes em saves antigos. */
+  licensedEraGames?: import("./eraGames.js").EraGameId[];
   /** Licenças avançadas por estabelecimento (opcional em saves antigos). */
   licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
   expansionLevel: number;
