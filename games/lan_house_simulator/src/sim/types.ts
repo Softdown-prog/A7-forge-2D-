@@ -12,6 +12,8 @@ export interface Customer {
   /** Última orientação do deslocamento; persiste quando o cliente para. */
   facing?: ActorDirection;
   target: Point;
+  /** Lugar atual na fila física; opcional para partidas anteriores. */
+  queueIndex?: number;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];
   /** Minutos de transição sentando/levantando. */
@@ -41,6 +43,8 @@ export interface GameState {
   expenses: number;
   reputation: number;
   pricePerHour: number;
+  /** Próximo atendimento disponível no balcão, em minutos de jogo. */
+  counterBusyUntil?: number;
   /** Preços por produto, opcionais para saves antigos. */
   retailPrices?: Record<Item,number>;
   /** Nível de hardware por PC, 1 é o computador original. */
