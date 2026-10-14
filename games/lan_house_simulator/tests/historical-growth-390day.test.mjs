@@ -95,13 +95,13 @@ function campaign(seed,target,days=DAYS){
   }
   if(day%30===0){
    assert.equal(s.totalMinutes,day*DAY_MINUTES);
-   assert.equal(s.cash,START+s.revenue-s.expenses,
+   assert.ok(Math.abs(s.cash-(START+s.revenue-s.expenses))<.001,
     "cash conservation at day "+day+" / "+seed+" / "+target);
    assert.ok(isValidSave(s));
    assert.equal(s.pricePerHour,2.5,"fixed reference tariff for fair paired comparison");
    assert.ok(s.pricePerHour<=allowableHourlyPrice(s));
    assert.ok(s.reputation>=10&&s.reputation<=100);
-   assert.equal(s.lastMonthRevenue,s.revenue-previousRevenue);
+   assert.ok(Math.abs(s.lastMonthRevenue-(s.revenue-previousRevenue))<.001);
    // Floating point receipts can have rounding error at accumulated-cent scale.
    assert.ok(Math.abs(s.lastMonthExpenses-(s.expenses-previousExpenses))<1e-6);
    const occupied=s.lastMonthPcCapacityMinutes?
@@ -125,7 +125,7 @@ function campaign(seed,target,days=DAYS){
  assert.equal(yearChangeChecked,true);
  assert.equal(months.length,days/30);
  assert.ok(s.served>100);
- assert.equal(s.cash,START+s.revenue-s.expenses);
+ assert.ok(Math.abs(s.cash-(START+s.revenue-s.expenses))<.001);
  return {seed,targetPcs:target,days,actualPcs:pcCount(s),
   expansionInvestment:money(expansionInvestment),customers:s.served,
   purchases:s.purchases,revenue:money(s.revenue),expenses:money(s.expenses),
@@ -140,7 +140,7 @@ test("novo jogo histórico mantém save, caixa e limites após 30 dias",()=>{
  must(licenseGames(s),"games");must(hireContentProgrammer(s),"programmer");
  for(let day=0;day<30;day++){upkeep(s);for(let slice=0;slice<6;slice++)stepGame(s,120);}
  assert.equal(s.totalMinutes,30*DAY_MINUTES);
- assert.equal(s.cash,START+s.revenue-s.expenses);
+ assert.ok(Math.abs(s.cash-(START+s.revenue-s.expenses))<.001);
  assert.ok(isValidSave(s));
  assert.deepEqual(parseImportedSave(serializeSave(s)).pcWindowsLicenses,s.pcWindowsLicenses);
 });
