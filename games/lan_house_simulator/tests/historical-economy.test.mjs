@@ -95,7 +95,9 @@ test("a interface da nova partida oferece períodos e teto histórico, sem apaga
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  for(const id of ["year-price-ceiling","equipment-price-ceiling","annual-ipca","session-package-prices"])
   assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(main,/createGame\(72421,"historical"\)/);
+ assert.match(main,/newGameForPlayer\(72421,"historical"\)/);
+ assert.match(main,/const fresh=createGame\(seed,mode\)/);
+ assert.match(main,/crypto\.getRandomValues/);
  assert.ok(main.includes("allowableHourlyPrice(game)"));
  assert.ok(main.includes("clampPriceToEra(decoded)"));
 });

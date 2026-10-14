@@ -1,5 +1,6 @@
 import type {GameState} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
+import {GAME_LAST_YEAR,GAME_FIRST_YEAR,DAYS_PER_YEAR} from "./mailCalendar.js";
 import {hardwareFor} from "./hardware.js";
 import {hardwarePart} from "./hardwareCatalog.js";
 import {installedWindows,WINDOWS_ERAS} from "./era.js";
@@ -25,7 +26,7 @@ export function isHistorical(s:Pick<GameState,"economyVersion">):boolean{
 export const MAX_HOURLY_PRICE_1998=3; // Teto de design, NÃO tarifa histórica regulamentada.
 const roundMoney=(amount:number)=>Math.round(amount*100)/100;
 export function yearFromMinutes(minutes:number):number{
- return 1998+Math.floor(Math.max(0,minutes)/(DAY_MINUTES*360));
+ return Math.min(GAME_LAST_YEAR,GAME_FIRST_YEAR+Math.floor(Math.max(0,minutes)/(DAY_MINUTES*DAYS_PER_YEAR)));
 }
 export function priceIndex(year:number):number{
  let factor=1;

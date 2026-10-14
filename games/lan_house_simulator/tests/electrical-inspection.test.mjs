@@ -2,20 +2,24 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {decisionOptions,chooseDecision,scheduleDecisions} from "../dist/js/sim/decisions.js";
+import {DECISIONS,decisionOptions,chooseDecision,scheduleDecisions} from "../dist/js/sim/decisions.js";
 import {reviewNotices} from "../dist/js/sim/notices.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
+import {sporadicMailSchedule,GAME_END_DAY} from "../dist/js/sim/mailCalendar.js";
+import {priceIndex,yearFromMinutes} from "../dist/js/sim/historicalEconomy.js";
 
 const gotoDay=(s,day)=>{s.totalMinutes=(day-1)*DAY_MINUTES;};
 function discover(seed=72421,mode="classic"){
- const s=createGame(seed,mode);s.cash=10000;
- for(let d=4;d<=180&&!s.electricalInspectionSeen;d++){
-  gotoDay(s,d);scheduleDecisions(s);
-  const open=s.notices?.find(n=>decisionOptions(n.id,s).length>0&&!n.resolved);
+ const s=createGame(seed,mode);s.cash=10000;s.pcWear=[30,30,30];
+ const days=Object.values(sporadicMailSchedule(s)).sort((a,b)=>a-b);
+ for(const day of days){
+  if(s.electricalInspectionSeen)break;
+  gotoDay(s,day);scheduleDecisions(s);
+  const open=s.notices?.find(n=>n.id in DECISIONS&&!n.resolved);
   if(open&&open.id!=="electrical-inspection")
    assert.equal(chooseDecision(s,open.id,decisionOptions(open.id,s).at(-1).id).ok,true);
  }
- assert.equal(s.electricalInspectionSeen,true,"vistoria precisa ser sorteada sem ano/data fixa");
+ assert.equal(s.electricalInspectionSeen,true,"vistoria precisa ser sorteada em um ano da campanha");
  return s;
 }
 test("Bombeiros: sorteio de evento único e carta identificável",()=>{
@@ -23,7 +27,7 @@ test("Bombeiros: sorteio de evento único e carta identificável",()=>{
  assert.ok(letter);assert.equal(letter.severity,"warning");
  assert.match(letter.body,/Bombeiros/);
  const original=s.notices.filter(n=>n.id===letter.id).length;
- for(let day=111;day<300;day+=7){gotoDay(s,day);scheduleDecisions(s);}
+ for(let day=letter.day+15;day<GAME_END_DAY;day+=83){gotoDay(s,day);scheduleDecisions(s);}
  assert.equal(s.notices.filter(n=>n.id==="electrical-inspection").length,original);
 });
 test("adequação completa é definitiva, contabiliza gastos e persiste no JSON",()=>{
@@ -76,12 +80,14 @@ test("sem dinheiro não cobra nem conclui; saves legados seguem válidos",()=>{
  assert.equal(isValidSave(restored),false);
 });
 test("modo histórico usa custos proporcionais de 1998, não valores modernos",()=>{
- const s=discover(72421,"historical");gotoDay(s,16);s.cash=100;
+ const s=discover(72421,"historical");s.cash=1000;
+ const index=priceIndex(yearFromMinutes(s.totalMinutes));
  const choices=decisionOptions("electrical-inspection",s);
- assert.equal(choices.find(c=>c.id==="electrical-essential").cost,19);
- assert.equal(choices.find(c=>c.id==="electrical-complete").cost,32);
+ const essential=Math.round(19*index*100)/100,complete=Math.round(32*index*100)/100;
+ assert.equal(choices.find(c=>c.id==="electrical-essential").cost,essential);
+ assert.equal(choices.find(c=>c.id==="electrical-complete").cost,complete);
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-essential").ok,true);
- assert.equal(s.cash,81);
+ assert.equal(s.cash,Math.round((1000-essential)*100)/100);
 });
 test("regularização antes do prazo evita multa e não consome RNG de clientes",()=>{
  const s=discover(18);const rng=s.rng;
@@ -107,8 +113,8 @@ test("mesmo após compactar cartas, a vistoria já realizada não é sorteada ou
  const s=discover(7);
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-essential").ok,true);
  s.notices=s.notices.filter(n=>n.id!=="electrical-inspection");
- for(let day=100;day<200;day++){gotoDay(s,day);scheduleDecisions(s);
-  const open=s.notices.find(n=>decisionOptions(n.id,s).length>0&&!n.resolved);
+ for(let day=Math.floor(s.totalMinutes/DAY_MINUTES)+10;day<GAME_END_DAY;day+=87){gotoDay(s,day);scheduleDecisions(s);
+  const open=s.notices.find(n=>n.id in DECISIONS&&!n.resolved);
   if(open)chooseDecision(s,open.id,decisionOptions(open.id,s).at(-1).id);
  }
  assert.equal(s.notices.some(n=>n.id==="electrical-inspection"),false);

@@ -14,6 +14,7 @@ import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/p
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
+import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
 import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
@@ -70,15 +71,28 @@ menuPreview.customers=[0,1].map(i=>{
 });
 menuRenderer?.draw(menuPreview,0);
 
+/** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
+function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):GameState{
+ const fresh=createGame(seed,mode);
+ if(typeof crypto!=="undefined"&&typeof crypto.getRandomValues==="function"){
+  fresh.mailScheduleSeed=crypto.getRandomValues(new Uint32Array(1))[0]??(seed>>>0);
+ }else{
+  fresh.mailScheduleSeed=(Date.now()^Math.floor(Math.random()*0x100000000))>>>0;
+ }
+ return fresh;
+}
 function readSave(): GameState {
   try {
     const data = localStorage.getItem(GAME_SAVE_KEY);
     if (data) {
       const decoded: unknown = JSON.parse(data);
-      if(isValidSave(decoded)){clampPriceToEra(decoded);return decoded;}
+      if(isValidSave(decoded)){
+        if(decoded.totalMinutes>GAME_LAST_MINUTE){decoded.totalMinutes=GAME_LAST_MINUTE;decoded.leftoverMinutes=0;}
+        clampPriceToEra(decoded);return decoded;
+      }
     }
   } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
-  return createGame(72421,"historical");
+  return newGameForPlayer(72421,"historical");
 }
 let game = readSave();
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
@@ -163,7 +177,7 @@ function beginPlay():void{
 }
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- game=createGame(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ game=newGameForPlayer(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;save();beginPlay();
 });
 continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
@@ -441,7 +455,7 @@ retailControls?.addEventListener("click",event=>{
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=createGame();previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
+  game=newGameForPlayer(72421,"classic");previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
 const placementHelp=document.getElementById("placement-help");
@@ -677,7 +691,7 @@ function renderUI(liveOnly=false):void {
   const month=Math.floor((days%360)/30)+1;
   const monthDay=days%30+1;
   const calendar=document.getElementById("calendar-hud");
-  if(calendar){const html=iconMarkup("calendar")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
+  if(calendar){const html=iconMarkup("calendar")+(game.totalMinutes>=GAME_LAST_MINUTE?"Fim do calendário · ":"")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
@@ -1035,7 +1049,7 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  const simulating=isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const simulating=isPlaying&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);

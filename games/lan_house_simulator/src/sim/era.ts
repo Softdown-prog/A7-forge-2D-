@@ -1,10 +1,11 @@
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
+import {GAME_LAST_YEAR,GAME_FIRST_YEAR,DAYS_PER_YEAR} from "./mailCalendar.js";
 import {windowsHardwareIssues} from "./hardware.js";
 
 /** O jogo usa 12 meses de 30 dias para avançar um ano. */
 export function gameYear(state:Pick<GameState,"totalMinutes">):number{
- return 1998+Math.floor(Math.max(0,state.totalMinutes)/(DAY_MINUTES*360));
+ return Math.min(GAME_LAST_YEAR,GAME_FIRST_YEAR+Math.floor(Math.max(0,state.totalMinutes)/(DAY_MINUTES*DAYS_PER_YEAR)));
 }
 export const INTERNET_ERAS=[
  {tier:1,name:"Discada",year:1998,cost:0},

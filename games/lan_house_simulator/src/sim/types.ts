@@ -142,6 +142,12 @@ export interface GameState {
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
   lastDecisionDay?: number;
+  /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
+  mailScheduleSeed?: number;
+  /** Ponto de partida da distribuição, preservado ao migrar partidas anteriores. */
+  mailStartDay?: number;
+  /** Cartas já entregues; permanecem únicas mesmo após compactar o correio. */
+  mailSeenIds?: import("./mailCalendar.js").SporadicMailId[];
   /** Histórias únicas: sorteadas uma única vez, mesmo após compactar o envelope. */
   storySeenIds?: import("./storyEvents.js").StoryId[];
   /** Cadeias persistentes: retorno e encerramento independentes do RNG. */
