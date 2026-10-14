@@ -1,11 +1,6 @@
 name: Lan House historical growth audit
 on:
   workflow_dispatch:
-  push:
-    branches: [test/lhs-historical-growth-1998-2000-20261014]
-    paths:
-      - 'games/lan_house_simulator/tests/historical-growth-390day.test.mjs'
-      - '.github/workflows/lan-house-growth-audit.yml'
 permissions:
   contents: read
 jobs:

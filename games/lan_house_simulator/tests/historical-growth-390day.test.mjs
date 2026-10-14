@@ -171,7 +171,7 @@ test("crescimento real 1998–1999: 3 vs 5 vs 7 PCs com caixa inicial R$ 850",
   const oldNet=baseline.reduce((n,r)=>n+r.net,0)/baseline.length;
   console.log("LHS_GROWTH_SUMMARY "+JSON.stringify({
    targetPcs,avgActualPcs:avg("actualPcs"),avgExpansionInvestment:avg("expansionInvestment"),
-   avgNet:avg("net"),avgIncrementalNet:money(avg("net")-oldNet),
+   avgNet:avg("net"),avgIncrementalNet:targetPcs===3?0:money(avg("net")-oldNet),
    avgCustomers:avg("customers"),avgSales:avg("purchases"),
    avgMinimumCash:avg("lowestCash")}));
  }
