@@ -24,6 +24,8 @@ export interface Customer {
   wallet?: number;
   desiredItem?: Item | null;
   costume: Costume;
+  /** Cliente VIP (opcional para saves antigos). */
+  vip?: boolean;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
