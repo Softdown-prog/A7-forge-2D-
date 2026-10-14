@@ -40,15 +40,12 @@ export function pcUnderRepair(s:GameState,index:number):boolean{return !!s.repai
 export function addWaste(s:GameState,amount=1):void{
  if(!Number.isFinite(amount)||amount<=0)return;
  const bins=s.binFill??(s.binFill=[0,0]);
- let remaining=amount;
- // Priorizar a lixeira mais vazia; quando ambas atingem 100, o lixo transborda.
- for(let i=0;i<bins.length&&remaining>0;i++){
-  const available=bins.map((v,index)=>({index,fill:v??0})).filter(x=>x.fill<100).sort((a,b)=>a.fill-b.fill)[0];
-  if(!available)break;
-  const accepted=Math.min(100-available.fill,remaining);
-  bins[available.index]=Math.min(100,available.fill+accepted);
-  remaining-=accepted;
- }
+ // Cada descarte vai à lixeira menos cheia; um volume acima da sua capacidade
+ // transborda no chão, sem reescrever a distribuição anterior dos saves.
+ const index=(bins[0]??0)<=(bins[1]??0)?0:1;
+ const accepted=Math.max(0,Math.min(100-(bins[index]??0),amount));
+ bins[index]=Math.min(100,(bins[index]??0)+accepted);
+ const remaining=amount-accepted;
  if(remaining>0){
   s.overflowWaste=Math.min(1000,(s.overflowWaste??0)+remaining);
   s.reputation=Math.max(10,s.reputation-Math.min(1,remaining*.025));

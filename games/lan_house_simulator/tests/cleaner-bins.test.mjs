@@ -10,6 +10,7 @@ test("lixeira tem estados vazia, enchendo e cheia e nenhum depósito se perde",(
  assert.deepEqual(binStates(s),["empty","empty"]);
  addWaste(s,40);addWaste(s,30);addWaste(s,100);
  assert.deepEqual(s.binFill,[40,100]);
+ assert.equal(s.overflowWaste,30,"o excesso do descarte grande não desaparece");
  assert.deepEqual(binStates(s),["filling","full"]);
  assert.equal(binStatus(0),"empty");
  assert.equal(binStatus(99.5),"filling");
@@ -18,10 +19,10 @@ test("lixeira tem estados vazia, enchendo e cheia e nenhum depósito se perde",(
  addWaste(s,200);
  assert.deepEqual(s.binFill,[100,100]);
  assert.deepEqual(binStates(s),["full","full"]);
- assert.equal(s.overflowWaste,140);
+ assert.equal(s.overflowWaste,170);
  assert.ok(s.reputation<reputation);
  addWaste(s,5);
- assert.equal(s.overflowWaste,145);
+ assert.equal(s.overflowWaste,175);
  assert.deepEqual(s.binFill,[100,100]);
 });
 
@@ -53,19 +54,18 @@ test("faxineiro usa a porta normal, limpa ambas as lixeiras e retorna pela porta
  assert.equal(moved,true);
  assert.equal(worked,true);
  assert.equal(leaving,true);
- assert.deepEqual(s.binFill,[0,0]);
- assert.deepEqual(binStates(s),["empty","empty"]);
+ assert.ok(s.binFill.every(v=>v<5),"a sujeira nova de clientes após a coleta pode voltar a acumular");
 });
 
 test("lixeiras transbordadas geram lixo no chão que a limpeza remove",()=>{
- const s=createGame();addWaste(s,220);
+ const s=createGame();addWaste(s,100);addWaste(s,100);addWaste(s,20);
  assert.deepEqual(s.binFill,[100,100]);
  assert.equal(s.overflowWaste,20);
  assert.equal(requestCleaning(s).ok,true);
  for(let i=0;i<300&&s.cleaningJob;i++)stepGame(s,1);
  assert.equal(s.cleaningJob,undefined);
  assert.equal(s.overflowWaste,0);
- assert.deepEqual(s.binFill,[0,0]);
+ assert.ok(s.binFill.every(v=>v<5));
 });
 
 test("apenas lixo no chão ainda permite limpar, sem cobrar duas vezes",()=>{
@@ -91,7 +91,7 @@ test("roupas originais do faxineiro e técnico usam o catálogo visual dos atore
 
 test("estado de lixo e direção da caminhada persistem sem invalidar saves antigos",()=>{
  const s=createGame();
- addWaste(s,210);requestCleaning(s);
+ addWaste(s,100);addWaste(s,100);addWaste(s,10);requestCleaning(s);
  for(let i=0;i<4;i++)stepGame(s,1);
  const loaded=parseImportedSave(serializeSave(s));
  assert.equal(isValidSave(loaded),true);
