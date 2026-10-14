@@ -411,7 +411,8 @@ test("expositor e proprietário permanecem desenhados no renderizador procedural
  const retail=readFileSync(resolve(dirname(root),"retailArt.ts"),"utf8");
  assert.match(retail,/SALGADINHOS/);
  assert.match(retail,/for\(let row=0;row<4;row\+\+\)/);
- assert.match(source,/const plate=iso/);
+ assert.match(source,/drawActor\(this.ctx,camera,\{\.\.\.position,kind:"owner"/);
+ assert.match(source,/drawCounter\(this.ctx,objectCamera/);
 });
 
 test("preços de venda individuais alteram receita e respeitam saves antigos",async()=>{

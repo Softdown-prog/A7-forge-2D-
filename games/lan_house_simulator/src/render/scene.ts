@@ -15,6 +15,7 @@ import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from 
 import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../sim/services.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
+import {drawCounter} from "./counterArt.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -372,13 +373,7 @@ export class SceneRenderer {
     }
   }
   private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
-    camera=objectCamera(camera,p,1.75,.72,p.rotation);
-    const ctx=this.ctx;
-    cuboid(ctx,camera,p.x,p.y,1.75,0.68,49,["#EDCB8E","#7E5047","#986353"]);
-    cuboid(ctx,camera,p.x+.05,p.y+.03,1.65,0.7,12,["#F3D5A1","#9E6A4C","#A57958"]);
-    const point=iso({x:p.x+.65,y:p.y+.28},camera,62);
-    ctx.fillStyle="#26374E";ctx.fillRect(point.x-9,point.y-10,18,15);
-    ctx.fillStyle="#83D4CE";ctx.fillRect(point.x-6,point.y-7,12,8);
+    drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
   }
   private shelf(camera:Projection,minX=0,stock=20,p:PlacedPoint={x:minX+.23,y:2.92}):void {
     drawSnackShelf(this.ctx,objectCamera(camera,p,.46,1.22,p.rotation),minX,stock,true,p);
@@ -458,17 +453,6 @@ export class SceneRenderer {
     const position=counterPoint(s,{x:1.45,y:1.05}),r=placedObject(s,"counter",{x:.9,y:1.42}).rotation??0;
     // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
     drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose:"idle",direction:(["south","west","north","east"] as const)[r]});
-    // Bandeja oval na mão do proprietário, preservando rosto e hitbox do ator.
-    const plate=iso(counterPoint(s,{x:1.63,y:1.27}),camera,45),scale=camera.zoom;
-    this.ctx.save();
-    this.ctx.lineWidth=3*scale;
-    this.ctx.strokeStyle="#314859";
-    this.ctx.fillStyle="#edf1e6";
-    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,16*scale,6*scale,-0.10,0,Math.PI*2);
-    this.ctx.fill();this.ctx.stroke();
-    this.ctx.strokeStyle="#bdc9c5";this.ctx.lineWidth=1.2*scale;
-    this.ctx.beginPath();this.ctx.ellipse(plate.x,plate.y,11*scale,3.5*scale,-0.10,0,Math.PI*2);
-    this.ctx.stroke();this.ctx.restore();
     this.heroHitbox=actorHitbox(camera,position.x,position.y);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {

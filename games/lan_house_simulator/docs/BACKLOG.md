@@ -578,3 +578,11 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 - Reduzir frequência e custo das buscas de desvio; persistir intervalo de recuperação. Cobertura de congestionamento, saves e máquina movida.
 - Verificar no navegador áudio OGG existente de refrigerante em venda confirmada, mantendo mixagem ocasional anterior.
 - Remover tiles/grid das descrições ao jogador, explicar expansão + instalação de PCs e reescrever Sobre o jogo em tom acolhedor.
+
+
+### Arte do balcão e administrador — 14/10/2026
+
+- Balcão com base, tampo elevado e bisel, painéis verdes, madeira, identificação Caixa, gavetas e terminal CRT com faces coerentes nas quatro rotações. Teclado, caixa e caderno acompanham a superfície.
+- Administrador mantém âncoras e quatro direções, com uniforme/apron refinado, crachá de terminal, óculos, detalhes de cabelo e mãos em atendimento. Removida bandeja de restaurante para adaptar a postura à administração da lan house.
+- Cache estático do balcão por escala, orientação e fase de pixel; limite de 24 imagens por contexto. Não altera tamanho de ocupação, filas, salvamento ou economia.
+- Verificação Canvas: 32 comparações de cache/desenho direto, 72 combinações dos outros clientes sem pixels alterados e quatro hitboxes de administrador reposicionado/girado. Galeria antes/depois, quatro vistas, cena real e detalhes do figurino. CI executa a revisão do balcão.
