@@ -103,6 +103,8 @@ export interface GameState {
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;
+  /** Títulos individuais de 1998/1999, ausentes em saves antigos. */
+  licensedEraGames?: import("./eraGames.js").EraGameId[];
   /** Licenças avançadas por estabelecimento (opcional em saves antigos). */
   licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
   expansionLevel: number;
