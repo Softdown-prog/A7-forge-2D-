@@ -13,7 +13,7 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
-import {vipArrivalEligible,vipReputationAdjustment} from "./vip.js";
+import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
 import {crowdRoute} from "./crowdNavigation.js";
@@ -326,8 +326,8 @@ function advanceCustomer(s: GameState, c: Customer): void {
       (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
         const bonus=hardwareSatisfactionBonus(s,c.pcIndex??-1);
-        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+bonus+vipReputationAdjustment(c,bonus)));
-        const impact=c.happy?rating:Math.min(0,rating);
+        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+bonus+vipReputationAdjustment(c,bonus,s.pricePerHour)));
+        const impact=c.happy?serviceReputationImpact(s.reputation,s.pricePerHour,bonus,rating):Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
