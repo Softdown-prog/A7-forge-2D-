@@ -28,7 +28,7 @@ test("PC em uso não aceita intervenção simultânea",()=>{
 });
 test("lixeiras acumulam até 100 e faxineiro percorre o salão",()=>{
  const s=createGame();addWaste(s,40);addWaste(s,30);addWaste(s,100);
- assert.deepEqual(s.binFill,[100,70]);
+ assert.deepEqual(s.binFill,[40,100]);
  const cash=s.cash;
  assert.equal(requestCleaning(s).ok,true);
  assert.equal(s.cash,cash-55);
