@@ -14,7 +14,7 @@ test("indicador deriva exatamente da curva econômica real em preços intermedi�
   const insight=hourlyPriceInsight(s);
   const expected=Math.round(100*demandFactor(price,s.reputation,true,false)/demandFactor(12,s.reputation,true,false));
   assert.equal(insight.relativeDemandPercent,expected);
-  assert.ok(insight.relativeDemandPercent>0);
+  assert.ok(insight.relativeDemandPercent>=0,"uma taxa pequena pode arredondar para zero");
   if(price>18)assert.match(insight.caution,/sobrepreço/);
  }
 });
