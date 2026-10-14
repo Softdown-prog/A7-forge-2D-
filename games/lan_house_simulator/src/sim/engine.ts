@@ -152,11 +152,11 @@ function isReserved(s: GameState, index: number): boolean {
   return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "sitting" || c.stage === "using" || c.stage === "standing"));
 }
 /**
- * Distribui clientes entre PCs disponíveis usando QUALIDADE e distância navegável,
- * não simplesmente o primeiro índice. A melhoria não aumenta o fluxo de chegada,
+ * VIPs comparam QUALIDADE e distância navegável; clientes comuns mantêm
+ * a seleção antiga do primeiro PC disponível. Não aumenta o fluxo de chegada,
  * nem muda preços, reservas, desgaste ou o caixa.
  * A distância efetiva é calculada pelos waypoints, respeitando salas/portas.
- * Empate favorece o menor índice para preservar o comportamento dos PCs básicos.
+ * Empates favorecem o menor índice para não mudar os PCs básicos.
  */
 export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  let chosen:number|undefined,highest=-Infinity;
@@ -166,16 +166,18 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
   const destination=computerSeat(pcPosition(i,s));
   const route=navigableRoute(s,origin,destination);
   if(!route)continue;
+  // Para o público geral preservar exatamente a ordem de alocação legada
+  // evita regressões de tráfego: o primeiro PC disponível continua valendo.
+  if(!c.vip)return i;
   let distance=0,previous=origin;
   for(const point of route){
    distance+=Math.hypot(point.x-previous.x,point.y-previous.y);
    previous=point;
   }
   const quality=hardwareSatisfactionBonus(s,i);
-  // Clientes comuns preferem atendimento rápido e rotas curtas.
-  // VIPs valorizam mais máquinas potentes; sem diferença de hardware todos
-  // continuam preferindo a estação próxima, inclusive nos salões grandes.
-  const score=quality*(c.vip?110:14)-distance;
+  // VIPs preferem hardware mais potente, desde que a estação seja alcançável.
+  // Entre PCs equivalentes, o trajeto mais curto vence.
+  const score=quality*110-distance;
   if(score>highest+1e-6){highest=score;chosen=i;}
  }
  return chosen;
