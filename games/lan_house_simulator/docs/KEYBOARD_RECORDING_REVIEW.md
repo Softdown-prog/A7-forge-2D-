@@ -23,3 +23,8 @@ A montagem de audição de aproximadamente 10,8 s compara trechos de 3,3 s dos t
 ## Limites e promoção
 
 A ferramenta atenua ruído estacionário e intervalos sem digitação. Vozes, música ou outros sons que coincidem com as teclas **não podem ser removidos com garantia** usando esse método. Não integrar gravações ao runtime até aprovação auditiva; manter o teclado procedural atual e os sons aprovados de mouse e dinheiro. Depois da aprovação, é possível alternar determinísticamente entre as três variações com ganho inferior ao clique do mouse e ao som de caixa.
+
+
+## Promovido para o jogo
+
+O criador aprovou os três trechos de escuta. O workflow `lan-house-promote-keyboard.yml` reproduz o processamento e publica `keyboard_te1.ogg`, `keyboard_t2.ogg` e `keyboard_t3.ogg` na `main`. O runtime alterna os takes com o mixer Web Audio; sem arquivos disponíveis, usa fallback procedural. O arquivo de comparação permanece apenas para revisão, não é usado como loop.
