@@ -1,10 +1,11 @@
 import type {GameState,Point} from "../sim/types.js";
 import {iso,polygon,cuboid,raisedCuboid,type Projection} from "./isometric.js";
 import {pcBroken} from "../sim/engine.js";
+import {stationPoweredOn} from "../sim/stationPower.js";
 import {installedGpu} from "../sim/gpu.js";
 import {installedLcd,type LcdId} from "../sim/computerModels.js";
 
-type ComputerMode="ready"|"busy"|"offline"|"maintenance";
+type ComputerMode="ready"|"busy"|"offline"|"maintenance"|"powered-off";
 interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null}
 const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:string}>={
  lcd05:{top:"#d4dcd9",front:"#a5b6b5",side:"#71888a",accent:"#75a5a8"},
@@ -56,7 +57,7 @@ function lcdMonitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:Computer
   const edge=[8,6,4,2.5,2.5][n]!,foot=[12,10,7,6,6][n]!;
   round(c,edge,edge,96-edge*2,100-edge-foot,1,"#17333f");
   c.save();c.beginPath();c.rect(edge+1,edge+1,94-edge*2,98-edge-foot);c.clip();
-  if(a.mode==="maintenance"){
+  if(a.mode==="powered-off"){c.fillStyle="#10191b";c.fillRect(0,0,96,100);}else if(a.mode==="maintenance"){
    c.fillStyle="#243941";c.fillRect(0,0,96,100);
    path(c,[{x:34,y:30},{x:49,y:47},{x:62,y:34}],"#e0b77a",5);
    c.fillStyle="#d3a560";c.fillRect(30,61,38,4);
@@ -90,7 +91,7 @@ function lcdMonitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:Computer
   }
   polygon(c,[{x:9,y:6},{x:22,y:6},{x:60,y:90},{x:50,y:90}],"rgba(238,245,223,.07)");c.restore();
   c.fillStyle=colors.accent;c.fillRect(40,96-foot/2,15,1.5);
-  c.fillStyle=a.mode==="maintenance"?"#dfb166":a.mode==="offline"?"#a38f63":"#87c4ae";
+  c.fillStyle=a.mode==="powered-off"?"#536963":a.mode==="maintenance"?"#dfb166":a.mode==="offline"?"#a38f63":"#87c4ae";
   c.fillRect(87,95,2,2);
  });
 }
@@ -121,7 +122,7 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
   path(c,[{x:91,y:13},{x:91,y:91},{x:13,y:91}],"#b6af99",2);
   round(c,10,11,77,70,7,"#8a9384");round(c,13,14,71,64,6,"#122f33","#526e65");
   c.save();c.beginPath();c.roundRect(15,16,67,60,5);c.clip();
-  if(mode==="maintenance"){
+  if(mode==="powered-off"){c.fillStyle="#10191b";c.fillRect(15,16,67,60);}else if(mode==="maintenance"){
    c.fillStyle="#263c3c";c.fillRect(15,16,67,60);
    path(c,[{x:34,y:34},{x:49,y:49},{x:59,y:38}],"#d7ae65",5);
    c.fillStyle="#d7ae65";c.fillRect(33,56,30,4);
@@ -138,7 +139,7 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
   }
   polygon(c,[{x:18,y:17},{x:35,y:17},{x:62,y:76},{x:53,y:76}],"rgba(245,246,212,.08)");c.restore();
   round(c,16,86,33,4,2,"#a49e8c");
-  c.fillStyle=mode==="maintenance"?"#d19a53":mode==="offline"?"#beaa72":"#7fae86";c.fillRect(77,88,5,3);
+  c.fillStyle=mode==="powered-off"?"#536963":mode==="maintenance"?"#d19a53":mode==="offline"?"#beaa72":"#7fae86";c.fillRect(77,88,5,3);
   round(c,84,87,5,6,2,"#aea994");
  });
 }
@@ -179,7 +180,7 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
    c.fillStyle=accent;c.fillRect(16,88,8,2);c.fillRect(30,88,8,2);
   }
   if(!lcd||lcd==="lcd05"||lcd==="lcd08")for(let row=0;row<3;row++){c.fillStyle="#889580";c.fillRect(15,54+row*7,44,2);}
-  c.fillStyle=mode==="maintenance"?"#b68449":mode==="offline"?"#b1a070":"#8fc090";c.fillRect(72,68,7,7);
+  c.fillStyle=mode==="powered-off"?"#536963":mode==="maintenance"?"#b68449":mode==="offline"?"#b1a070":"#8fc090";c.fillRect(72,68,7,7);
   if(tier>1){c.fillStyle=accent;c.fillRect(65,44,15,14);}
  });
  if(gpu){const label=at(.108,.22,44);c.fillStyle=gpuColors[gpu];c.beginPath();c.ellipse(label.x,label.y,3*z,4*z,-.3,0,Math.PI*2);c.fill();}
@@ -202,6 +203,15 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
   c.fillStyle="#486b5d";c.fillRect(0,0,96,100);c.fillStyle="#eee2b4";c.textAlign="center";
   c.font="bold 68px Arial,sans-serif";c.fillText(String(index+1).padStart(2,"0"),48,78);
  });
+ if(mode==="powered-off"){
+  // Indicação legível mesmo com a câmera na parte de trás do monitor.
+  const badge=at(.44,.11,95),z=cam.zoom;
+  c.save();c.fillStyle="#13231f";c.strokeStyle="#829d91";c.lineWidth=z;
+  c.beginPath();c.roundRect(badge.x-33*z,badge.y-12*z,66*z,18*z,4*z);c.fill();c.stroke();
+  c.fillStyle="#e8ede2";c.textAlign="center";c.textBaseline="middle";
+  c.font=`bold ${Math.max(7,8*z)}px Arial,sans-serif`;c.fillText("DESLIGADO",badge.x,badge.y-3*z);
+  c.restore();
+ }
  const cx=.35,cy=.87,base=at(cx,cy,4),seat=at(cx,cy,25);
  // Five caster spokes, upholstered thickness and curved backrest.
  for(const [dx,dy] of [[-.25,0],[.25,0],[0,-.23],[0,.23],[.18,.18]]){
@@ -233,7 +243,7 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  const rawTier=s.pcTiers?.[index]??1;
  const tier=Number.isInteger(rawTier)?Math.max(1,Math.min(3,rawTier)):1;
  const occupied=s.customers.some(c=>c.pcIndex===index&&["sitting","using","standing"].includes(c.stage));
- const mode:ComputerMode=pcBroken(s,index)?"maintenance":!isOnline?"offline":occupied?"busy":"ready";
+ const mode:ComputerMode=!stationPoweredOn(s,index)?"powered-off":pcBroken(s,index)?"maintenance":!isOnline?"offline":occupied?"busy":"ready";
  const appearance:ComputerAppearance={tier,occupied,mode,pulse:mode==="busy"?Math.floor(t*1.7+index)%2:0,gpu:installedGpu(s,index),lcd:installedLcd(s,index)};
  if(!useCache||typeof document==="undefined"||ctx.globalAlpha!==1){paintComputer(ctx,camera,p,index,appearance);return;}
  const base=iso(p,camera),ix=Math.floor(base.x),iy=Math.floor(base.y),z=camera.zoom;
