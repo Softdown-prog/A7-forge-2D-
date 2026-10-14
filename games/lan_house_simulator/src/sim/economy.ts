@@ -6,18 +6,22 @@ import {startRepair} from "./services.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";
 import {buyPlatform,componentSatisfactionBonus,hardwareFor,hardwareLoadWatts} from "./hardware.js";
 import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,yearFromMinutes,
-  sessionPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";
+  sessionPrice,MIN_HOURLY_PRICE,isHistorical} from "./historicalEconomy.js";
 
 /** Valores iniciais de 1998 no universo do jogo; inflação vem do IPCA. */
-export const ITEM_PRICES: Record<Item, number> = { soda: 1.5, candy: 1, snacks: 2 };
+export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
+export const HISTORICAL_ITEM_PRICES:Record<Item,number>={soda:1.5,candy:1,snacks:2};
 export function productPrice(s:GameState,item:Item):number {
  const value=s.retailPrices?.[item];
  return Number.isFinite(value)&&value!>=.25&&value!<=100?value!:
-  Math.round(ITEM_PRICES[item]*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100;
+  (isHistorical(s)?Math.round(HISTORICAL_ITEM_PRICES[item]*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100:ITEM_PRICES[item]);
 }
 export function setProductPrice(s:GameState,item:Item,value:number):Result {
- if(!Number.isFinite(value)||value<.25||value>100||Math.round(value*100)!==value*100)
- return {ok:false,message:"Preço permitido: R$ 0,25 a R$ 100,00, em centavos."};
+ if(isHistorical(s)){
+  if(!Number.isFinite(value)||value<.25||value>100||Math.abs(Math.round(value*100)-value*100)>1e-7)
+   return {ok:false,message:"Preço permitido: R$ 0,25 a R$ 100,00, em centavos."};
+ }else if(!Number.isInteger(value)||value<1||value>40)
+  return {ok:false,message:"Preço permitido: R$ 1 a R$ 40."};
  (s.retailPrices??={...ITEM_PRICES})[item]=value;
  return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
 }
@@ -40,7 +44,8 @@ export function hardwareSatisfactionBonus(state:GameState,index:number):number {
  return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+gpuBonus(state,index)+
    (lcdSpec(installedLcd(state,index))?.bonus??0);
 }
-export const ITEM_WHOLESALE: Record<Item, number> = { soda: 7, candy: 7, snacks: 12 };
+export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
+export const HISTORICAL_ITEM_WHOLESALE:Record<Item,number>={soda:7,candy:7,snacks:12};
 export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
 
 export function demandFactor(price: number, reputation: number, internetOnline: boolean, rainy: boolean): number {
@@ -63,8 +68,9 @@ export function customerSatisfactionDelta(price:number,wait:number,offline:numbe
     Math.max(0,wait-5)*0.014+Math.min(0.55,Math.max(0,offline)*0.025);
   return Math.max(-0.9,Math.min(0.22,0.22-penalty));
 }
-export function sessionRevenue(hourly: number, minutes = SESSION_MINUTES): number {
-  return sessionPrice(hourly,minutes);
+export function sessionRevenue(hourly:number,minutes=SESSION_MINUTES,historical=false):number{
+ return historical?sessionPrice(hourly,minutes):
+  Math.round(Math.max(0,hourly)*Math.max(0,minutes)/60);
 }
 /** Consumo fictício por minuto aberto: instalações ociosas usam standby e clientes aumentam carga.
  * Tarifa sobe gradualmente com os anos; hardware mais avançado gasta mais por estação.
@@ -75,7 +81,7 @@ export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansi
  const count=original+(state.annexPcs?.length??0);
  const busy=active??(state.customers??[]).filter(c=>c.stage==="using").length;
  const year=Math.floor(Math.max(0,state.totalMinutes)/(720*360));
- const tariff=priceIndex(1998+year);
+ const tariff=isHistorical(state as GameState)?priceIndex(1998+year):Math.pow(1.03,Math.min(25,year));
  const base=(65+state.expansionLevel*15)/(30*720);
  let hardware=0;
  for(let i=0;i<count;i++){
@@ -92,7 +98,7 @@ export function energyMonthlyEstimate(state:Pick<GameState,"internetTier"|"expan
  return Math.round(energyCostPerMinute({...state,totalMinutes:state.totalMinutes??0},state.customers?.filter(c=>c.stage==="using").length??0)*30*720);
 }
 export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionLevel"> & Partial<GameState>): number {
- const factor=priceIndex(yearFromMinutes(state.totalMinutes??0));
+ const factor=isHistorical(state as GameState)?priceIndex(yearFromMinutes(state.totalMinutes??0)):1;
  const rent = Math.round((270 + state.expansionLevel * 170)*factor);
  const internet = Math.round((110 + (state.internetTier - 1) * 85)*factor);
  // Ao fechar o mês, usar o consumo acumulado; para saves antigos, projetar.
@@ -101,6 +107,11 @@ export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionL
  return rent + internet + energy + maintenance;
 }
 export function setHourlyPrice(state: GameState, amount: number): Result {
+  if(!isHistorical(state)){
+   if(!Number.isInteger(amount)||amount<4||amount>40)return {ok:false,message:"Preço permitido: R$ 4 a R$ 40."};
+   state.pricePerHour=amount;
+   return {ok:true,message:"Preço alterado para R$ "+amount+"/h."};
+  }
   const ceiling=allowableHourlyPrice(state);
   if(!Number.isFinite(amount)||amount<MIN_HOURLY_PRICE||amount>ceiling||
      Math.abs(amount*4-Math.round(amount*4))>1e-8)
@@ -116,7 +127,8 @@ export function supplierLevel(state: GameState):1|2 {
 }
 export function wholesaleCost(state:GameState,item:Item):number {
   // O parceiro cobra taxa de adesão e reduz o valor de novos pedidos.
-  const normal=ITEM_WHOLESALE[item]*priceIndex(yearFromMinutes(state.totalMinutes));
+  if(!isHistorical(state))return supplierLevel(state)===2?Math.round(ITEM_WHOLESALE[item]*.8):ITEM_WHOLESALE[item];
+ const normal=HISTORICAL_ITEM_WHOLESALE[item]*priceIndex(yearFromMinutes(state.totalMinutes));
  return Math.round(100*normal*(supplierLevel(state)===2?.8:1))/100;
 }
 export function contractSupplier(state:GameState):Result {

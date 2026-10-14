@@ -19,6 +19,9 @@ export const IPCA_ANNUAL:Readonly<Record<number,number>>={
 };
 export const SESSION_PACKAGES=[30,45,60,90,120,180,240] as const;
 export const MIN_HOURLY_PRICE=.50;
+export function isHistorical(s:Pick<GameState,"economyVersion">):boolean{
+ return s.economyVersion===2;
+}
 export const MAX_HOURLY_PRICE_1998=3; // Teto de design, NÃO tarifa histórica regulamentada.
 const roundMoney=(amount:number)=>Math.round(amount*100)/100;
 export function yearFromMinutes(minutes:number):number{
@@ -62,6 +65,7 @@ export function qualityMultiplier(s:GameState):number{
  return Math.max(.4,Math.min(1,1-gap*.065));
 }
 export function allowableHourlyPrice(s:GameState):number{
+ if(!isHistorical(s))return 40;
  const ceiling=annualHourlyCeiling(yearFromMinutes(s.totalMinutes));
  return Math.max(MIN_HOURLY_PRICE,Math.floor(ceiling*qualityMultiplier(s)*4+1e-7)/4);
 }
@@ -74,9 +78,10 @@ export function sessionPrice(price:number,minutes:number):number{
  return roundMoney(Math.max(0,price)*Math.max(0,minutes)/60);
 }
 export function normalizedHourlyPrice(s:Pick<GameState,"totalMinutes">,price:number):number{
- return priceIn1998Terms(s,price)*4; // R$ 3/h em 1998 equivale à referência 12.
+ return (s as Partial<GameState>).economyVersion===2?priceIn1998Terms(s,price)*4:price; // R$ 3/h em 1998 equivale à referência 12.
 }
 export function clampPriceToEra(s:GameState):boolean{
+ if(!isHistorical(s))return false;
  const max=allowableHourlyPrice(s);
  const corrected=Math.min(max,Math.max(MIN_HOURLY_PRICE,s.pricePerHour));
  if(Math.abs(s.pricePerHour-corrected)<1e-8)return false;
@@ -84,6 +89,7 @@ export function clampPriceToEra(s:GameState):boolean{
  return true;
 }
 export function suggestedHourlyPrice(s:GameState):number{
+ if(!isHistorical(s))return 12;
  return Math.min(allowableHourlyPrice(s),Math.floor(2.5*priceIndex(yearFromMinutes(s.totalMinutes))*4)/4);
 }
 export function referenceWage1998():number{return 130;}
