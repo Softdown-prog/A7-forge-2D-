@@ -30,6 +30,7 @@ import {validHardwareState} from "./hardware.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
+import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
@@ -453,7 +454,7 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
-  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*congestion;
+  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
@@ -502,7 +503,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
