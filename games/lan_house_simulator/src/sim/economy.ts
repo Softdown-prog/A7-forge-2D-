@@ -2,6 +2,7 @@ import type { GameState, Inventory, Item, Result } from "./types.js";
 import { SESSION_MINUTES } from "./types.js";
 import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./era.js";
 import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
+import {startRepair} from "./services.js";
 
 export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
 export function productPrice(s:GameState,item:Item):number {
@@ -148,6 +149,11 @@ export function cloneInventory(stock: Inventory): Inventory {
 
 /** Reparo por estação: sem cobrança se o PC já estiver íntegro. */
 export function repairComputer(state:GameState,index:number):Result {
+ // Reparo físico agora exige visita do técnico; compatibilidade do comando existente.
+ return startRepair(state,index);
+}
+/* old direct repair retired */
+function legacyRepairComputer(state:GameState,index:number):Result {
  const count=Math.max(3,Math.min(3+state.expansionLevel*2,state.installedPcs??(3+state.expansionLevel*2)))+(state.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"Computador inexistente."};
  const wear=Math.max(0,Math.min(100,state.pcWear?.[index]??0));
