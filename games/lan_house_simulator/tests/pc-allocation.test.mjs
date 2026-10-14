@@ -25,9 +25,9 @@ test("desgaste parcial não manda clientes para máquinas distantes sem upgrade"
  s.pcWear[0]=100;
  assert.equal(chooseAvailablePc(s,c),1);
 });
-test("cliente prefere investimento de hardware que antes ficava ocioso no PC 3",()=>{
+test("VIP prefere PC 3 atualizado, mesmo que esteja mais distante",()=>{
  const s=createGame();s.cash=10000;s.totalMinutes=5*360*DAY_MINUTES;
- const c=waiting();
+ const c=waiting(7,true);
  assert.equal(chooseAvailablePc(s,c),0);
  assert.equal(upgradeComputer(s,2).ok,true);
  assert.equal(chooseAvailablePc(s,c),2);
@@ -45,8 +45,8 @@ test("GPU melhor em outro PC participa da escolha; preferências VIP permanecem 
  const s=createGame();s.cash=10000;s.totalMinutes=11*360*DAY_MINUTES;
  assert.equal(buyGpu(s,2,"gpu09").ok,true);
  const normal=waiting(8),vip=waiting(9,true);
- assert.equal(chooseAvailablePc(s,normal),2);
- assert.equal(chooseAvailablePc(s,vip),2);
+ assert.equal(chooseAvailablePc(s,normal),0,"cliente comum escolhe a estação próxima");
+ assert.equal(chooseAvailablePc(s,vip),2,"VIP escolhe a melhor placa");
  const snapshot=parseImportedSave(serializeSave(s));
  assert.equal(chooseAvailablePc(snapshot,vip),2);
 });
