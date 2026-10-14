@@ -7,9 +7,15 @@ import {validInteriorWalls,validInteriorDoors} from "./walls.js";
 import {validAnnexComputers} from "./stations.js";
 export const SAVE_EXPORT_FORMAT="softdown-lan-house-save";
 export interface SaveEnvelope { format:typeof SAVE_EXPORT_FORMAT; exportVersion:1; exportedAt:string; state:GameState }
+/** Exclui filas visuais efêmeras. O estado econômico e das estações
+ * permanece idêntico, inclusive em saves antigos importados. */
+export function snapshotGameState(state:GameState):GameState {
+ const {paymentEffects,saleEffects,keyboardEffects,speechEffects,...persisted}=state;
+ return persisted;
+}
 export function serializeSave(state:GameState):string {
  if(!isValidSave(state))throw Error("Estado de jogo inválido.");
- const envelope:SaveEnvelope={format:SAVE_EXPORT_FORMAT,exportVersion:1,exportedAt:new Date().toISOString(),state};
+ const envelope:SaveEnvelope={format:SAVE_EXPORT_FORMAT,exportVersion:1,exportedAt:new Date().toISOString(),state:snapshotGameState(state)};
  return JSON.stringify(envelope,null,2);
 }
 export function parseImportedSave(input:string):GameState {

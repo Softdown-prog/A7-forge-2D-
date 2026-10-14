@@ -1,4 +1,4 @@
-import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
+import { serializeSave, parseImportedSave, snapshotGameState } from "./sim/saveTransfer.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {buildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
@@ -229,7 +229,7 @@ const internetNames = INTERNET_ERAS.map(x=>x.name);
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 function save(): void {
   if(!isPlaying)return;
-  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(game)); hasSavedGame=true; exportButton!.disabled=false; }
+  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(snapshotGameState(game))); hasSavedGame=true; exportButton!.disabled=false; }
   catch { /* Storage cheio/bloqueado: jogo continua em memória. */ }
 }
 function button(id:string, handler:()=>void):void {

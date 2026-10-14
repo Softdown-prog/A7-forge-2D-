@@ -188,8 +188,17 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  }
  return preferred??fallback;
 }
+/** Eventos de apresentação nunca devem crescer indefinidamente quando
+ * o navegador está em segundo plano ou o motor roda em modo headless.
+ * A UI continua consumindo a fila via splice(0) a cada render. */
+function queueVisualEvent<T>(queue:T[]|undefined,item:T):T[]{
+ const out=queue??[];
+ out.push(item);
+ if(out.length>48)out.splice(0,out.length-48);
+ return out;
+}
 function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"praise"="complaint"):void {
-  (s.speechEffects??=[]).push({text,x:c.x,y:c.y,kind});
+  s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.queueIndex=undefined;
@@ -273,7 +282,7 @@ function tryServe(s: GameState, c: Customer): void {
   s.counterBusyUntil=s.totalMinutes+3;
   const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
   s.cash += paid; s.revenue += paid; s.served++;
-  (s.paymentEffects??=[]).push({amount:paid,x:c.x,y:c.y});
+  s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos.");
 }
 function resolvePurchase(s: GameState, c: Customer): void {
@@ -287,7 +296,7 @@ function resolvePurchase(s: GameState, c: Customer): void {
   const result = sellItem(s, chosen);
   if (result.ok){
     if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
-    (s.saleEffects??=[]).push({item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
+    s.saleEffects=queueVisualEvent(s.saleEffects,{item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
     addWaste(s,chosen==="soda"?5:3);
     addLog(s,result.message);
   }
@@ -306,7 +315,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
         c.stage = "using"; c.poseMinutes = 0;
-        if(c.pcIndex!==null)(s.keyboardEffects??=[]).push({customerId:c.id,pcIndex:c.pcIndex});
+        if(c.pcIndex!==null)s.keyboardEffects=queueVisualEvent(s.keyboardEffects,{customerId:c.id,pcIndex:c.pcIndex});
       }
       return;
     case "using":
