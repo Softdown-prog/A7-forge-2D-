@@ -479,7 +479,7 @@ export function isValidSave(value: unknown): value is GameState {
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&
     (v.notices===undefined || (Array.isArray(v.notices)&&v.notices.every(n=>typeof n.id==="string"&&typeof n.title==="string"&&typeof n.body==="string"&&typeof n.read==="boolean"))) &&
-    [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalInspectionFineApplied]
+    [v.electricalInspectionSeen,v.electricalWiringRegularized,v.electricalExtensionUsed,v.electricalInspectionFineApplied]
       .every(flag=>flag===undefined||typeof flag==="boolean") &&
     (v.electricalDeadlineDay===undefined || (Number.isInteger(v.electricalDeadlineDay)&&v.electricalDeadlineDay>=1&&v.electricalDeadlineDay<=1e7)) &&
     (v.promotionDay===undefined || (Number.isInteger(v.promotionDay)&&v.promotionDay>=1&&v.promotionDay<=Math.floor(v.totalMinutes! / DAY_MINUTES)+1));

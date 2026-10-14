@@ -49,12 +49,12 @@ test("adequação essencial cobra apenas o preço próprio e elimina a pendênci
 test("pedido de prazo é único, carta fica aberta e autuação não se repete",()=>{
  const s=discover();const cash=s.cash,day=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-defer").ok,true);
- assert.equal(s.electricalDeadlineDay,day+8);assert.equal(s.cash,cash);
+ assert.equal(s.electricalDeadlineDay,day+16);assert.equal(s.electricalExtensionUsed,true);assert.equal(s.cash,cash);
  assert.equal(s.notices.find(n=>n.id==="electrical-inspection").resolved,undefined);
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-defer").ok,false);
- gotoDay(s,day+8);reviewNotices(s);
+ gotoDay(s,day+16);reviewNotices(s);
  assert.equal(s.electricalInspectionFineApplied,undefined);
- gotoDay(s,day+9);reviewNotices(s);
+ gotoDay(s,day+17);reviewNotices(s);
  assert.equal(s.electricalInspectionFineApplied,true);
  const after=s.cash;reviewNotices(s);
  assert.equal(s.cash,after);assert.equal(s.notices.find(n=>n.id==="electrical-inspection").severity,"urgent");
@@ -87,4 +87,26 @@ test("regularização antes do prazo evita multa e não consome RNG de clientes"
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-complete").ok,true);
  gotoDay(s,s.electricalDeadlineDay+30);reviewNotices(s);
  assert.equal(s.electricalInspectionFineApplied,undefined);
+});
+test("ignorar notificação não impede fiscalização nem cria cobrança diária",()=>{
+ const s=discover(93);const notice=s.notices.find(n=>n.id==="electrical-inspection");
+ const deadline=s.electricalDeadlineDay;
+ assert.ok(deadline>notice.day,"a carta define prazo relativo após sorteio");
+ gotoDay(s,deadline+1);reviewNotices(s);
+ assert.equal(s.electricalInspectionFineApplied,true);
+ const cash=s.cash;
+ gotoDay(s,deadline+60);reviewNotices(s);
+ assert.equal(s.cash,cash);
+ assert.equal(s.notices.filter(n=>n.id==="electrical-inspection").length,1);
+ assert.equal(s.electricalWiringRegularized,undefined);
+});
+test("mesmo após compactar cartas, a vistoria já realizada não é sorteada outra vez",()=>{
+ const s=discover(7);
+ assert.equal(chooseDecision(s,"electrical-inspection","electrical-essential").ok,true);
+ s.notices=s.notices.filter(n=>n.id!=="electrical-inspection");
+ for(let day=100;day<200;day++){gotoDay(s,day);scheduleDecisions(s);
+  const open=s.notices.find(n=>n.id in DECISIONS&&!n.resolved);
+  if(open)chooseDecision(s,open.id,decisionOptions(open.id,s).at(-1).id);
+ }
+ assert.equal(s.notices.some(n=>n.id==="electrical-inspection"),false);
 });

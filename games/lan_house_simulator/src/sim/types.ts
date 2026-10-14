@@ -132,6 +132,8 @@ export interface GameState {
   electricalWiringRegularized?: boolean;
   /** Dia limite contado a partir do pedido de prazo, não é data fixa de evento. */
   electricalDeadlineDay?: number;
+  /** A prorrogação é única e opcional. */
+  electricalExtensionUsed?: boolean;
   /** Autuação única, sem multas diárias repetidas. */
   electricalInspectionFineApplied?: boolean;
   contentFilterInstalled?: boolean;

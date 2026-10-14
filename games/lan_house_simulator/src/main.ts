@@ -601,13 +601,13 @@ function renderUI():void {
         const pending=document.createElement("strong");
         pending.textContent=game.electricalInspectionFineApplied
           ?"Prazo vencido: multa já aplicada. Ainda é necessário regularizar."
-          :"Prazo concedido até o dia "+game.electricalDeadlineDay+". Ainda é necessário regularizar.";
+          :(game.electricalExtensionUsed?"Prazo prorrogado até o dia ":"Prazo para regularizar até o dia ")+game.electricalDeadlineDay+".";
         actions.append(pending);
       }
       if(options.length){
         if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
         else for(const option of options){
-          if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&game.electricalDeadlineDay!==undefined)continue;
+          if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
           const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=game.cash<option.cost;actions.append(choice);}
       }
       card.append(title,date,body,actions);noticesList.append(card);

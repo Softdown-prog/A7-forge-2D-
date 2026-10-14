@@ -545,7 +545,7 @@ Documento normativo: [ONLINE_COOKIES_CLOUD_CONTRACT.md](ONLINE_COOKIES_CLOUD_CON
 ## Evento esporádico — Bombeiros e rede elétrica (14/10/2026)
 
 - [x] Adicionar à carta de eventos uma vistoria única dos Bombeiros sobre cabos de rede e energia, extensões e adaptadores sobrecarregados, sem data fixa no calendário da campanha.
-- [x] Oferecer regularização completa por profissional, adequação essencial segura ou pedido único de prazo de oito dias, com custos reais ajustados aos modos clássico/histórico.
+- [x] Oferecer regularização completa por profissional, adequação essencial segura ou prorrogação única de oito dias sobre o prazo inicial de oito dias, com custos reais ajustados aos modos clássico/histórico.
 - [x] Se o prazo vencer sem regularização, aplicar autuação única e perda de reputação; a mesma carta continua aberta para regularizar e não reaparece como novo evento.
 - [x] Persistir vistoria, regularização, prazo e multa nos saves opcionais, preservando saves anteriores; apresentar botões e prazo no envelope do runtime.
 - [x] Adicionar regressões de duplicação, valores, prazo, serialização, modo histórico e não alteração do RNG de clientes.

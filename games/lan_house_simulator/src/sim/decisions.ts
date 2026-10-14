@@ -46,7 +46,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  const option=options.find(o=>o.id===choiceId);
  if(!notice||!option)return {ok:false,message:"Decisão indisponível."};
  if(notice.resolved)return {ok:false,message:"Esta proposta já foi respondida."};
- if(option.id==="electrical-defer"&&s.electricalDeadlineDay!==undefined)
+ if(option.id==="electrical-defer"&&(s.electricalExtensionUsed||s.electricalInspectionFineApplied))
   return {ok:false,message:"O prazo desta fiscalização já foi solicitado. Regularize a instalação."};
  if(s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
  s.cash-=option.cost;s.expenses+=option.cost;
@@ -60,7 +60,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
   case "fault-delay":s.pcWear=(s.pcWear??[]).map(x=>Math.min(100,x+8));break;
   case "electrical-complete":s.electricalWiringRegularized=true;s.reputation=Math.min(100,s.reputation+2);break;
   case "electrical-essential":s.electricalWiringRegularized=true;break;
-  case "electrical-defer":s.electricalDeadlineDay=Math.floor(s.totalMinutes/DAY_MINUTES)+1+8;break;
+  case "electrical-defer":s.electricalDeadlineDay=(s.electricalDeadlineDay??Math.floor(s.totalMinutes/DAY_MINUTES)+1)+8;s.electricalExtensionUsed=true;break;
  }
  notice.read=true;
  // Pedir prazo não resolve a irregularidade; a carta permanece aberta.
@@ -90,7 +90,7 @@ export function scheduleDecisions(s:GameState):void{
  const id=candidates[seed%candidates.length]!;
  const spec=DECISIONS[id];
  const notice:GameNotice={id,title:spec.title,body:spec.body,day:today,read:false,severity:id==="electrical-inspection"?"warning":"info"};
- if(id==="electrical-inspection")s.electricalInspectionSeen=true;
+ if(id==="electrical-inspection"){s.electricalInspectionSeen=true;s.electricalDeadlineDay=today+8;}
  (s.notices??=[]).unshift(notice);
  s.notices.splice(40);
  s.lastDecisionDay=today;
