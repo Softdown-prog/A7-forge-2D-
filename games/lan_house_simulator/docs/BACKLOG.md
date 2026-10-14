@@ -307,3 +307,13 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Executar 135 testes, auditoria estática e captura da aplicação real em Chromium sem erros de página ou overflow horizontal.
 - [x] Gerar vídeo de gameplay via `requestAnimationFrame` da aplicação; gravação silenciosa, sem animar PNGs nem reposicionar atores durante a filmagem.
 - [ ] Aprovação artística dos sprites e revisão de legibilidade em aparelho móvel físico continuam pendentes.
+
+## Alocação de computadores por qualidade — 14/10/2026
+- [x] Corrigir preferência cega por índice para **clientes VIP**: oferecer estação melhor quando o ganho de hardware superar o desvio necessário.
+- [x] Preservar rigorosamente a seleção anterior do primeiro PC livre para **clientes comuns**, e também para VIPs quando não existe ganho de qualidade.
+- [x] Avaliar somente estações acessíveis pelo sistema real de rotas, livres, sem falha e fora de manutenção; não cobrar nem alterar RNG durante a escolha.
+- [x] Integrar a decisão ao atendimento real no balcão; hardware/GPU já adquiridos passam a influenciar qual PC o VIP utiliza, sem alterar chance de chegada, preço ou sessão.
+- [x] Cobrir a política com testes de upgrade, GPU, VIP, empate de qualidade, reserva, desgaste, reparo, pagamento único, determinismo e importação de save.
+- [x] Reexecutar nove campanhas de 45 dias (3, 5 e 7 PCs; três sementes). **Atendimentos e margem permaneceram idênticos à referência da main anterior**: 940,67 / 1.326,67 / 1.372,67 atendimentos médios e R$ 9.062,33 / R$ 13.422 / R$ 14.178,33 de margem operacional por cenário.
+- [ ] Medir o impacto dessa preferência em campanhas reais com upgrades instalados em índices altos e clientes VIP ao longo de vários anos; resultados idênticos na fixture atual não provam retorno extra do investimento.
+- [ ] Validar em vídeo o uso do PC melhorado com o público VIP, sem substituir personagens ou artes já aprovadas.
