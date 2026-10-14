@@ -13,6 +13,7 @@ import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
+import {vipArrivalEligible,vipReputationAdjustment} from "./vip.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
@@ -178,7 +179,7 @@ function spawn(s: GameState): void {
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
     stage: "arriving", target: counterQueueSlot(queueIndex),queueIndex,
-    costume, pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
+    costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:12+Math.floor(random(s)*18)
   };
@@ -193,7 +194,7 @@ function tryServe(s: GameState, c: Customer): void {
     !isReserved(s,i)&&!pcBroken(s,i)&&!!navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))));
   if (index === undefined) {
     c.waitingMinutes++;
-    if (c.waitingMinutes > 25) {
+    if (c.waitingMinutes > (c.vip?19:25)) {
       s.lostCustomers++; s.reputation = Math.max(10, s.reputation - 0.4);
       customerSays(s,c,"Que fila enorme!");
       sendHome(s, c);
@@ -263,7 +264,8 @@ function advanceCustomer(s: GameState, c: Customer): void {
       // Desgaste avança apenas durante uso; falha só bloqueia NOVAS reservas.
       (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
-        const rating=Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+hardwareSatisfactionBonus(s,c.pcIndex??-1));
+        const bonus=hardwareSatisfactionBonus(s,c.pcIndex??-1);
+        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+bonus+vipReputationAdjustment(c,bonus)));
         const impact=c.happy?rating:Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
