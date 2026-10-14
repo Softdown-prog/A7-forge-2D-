@@ -13,7 +13,7 @@ Publicado em 14/10/2026: https://lhs.analysepro.com/conta/ . A publicação mant
 
 ## Configuração e contato
 
-`account-config.json` contém somente a URL pública da API e a chave pública Firebase dedicada `lhs-web-auth`, habilitada para o painel. A chave é restrita às APIs `identitytoolkit.googleapis.com` e `securetoken.googleapis.com` e às origens LHS do domínio e do Pages; não é uma credencial administrativa. CORS do Cloud Run aceita o domínio e o Pages de produção. A política CSP do build permite apenas os endpoints necessários. A restrição da chave não substitui a verificação de identidade e de UID na API.
+`account-config.json` contém somente a URL pública da API e a chave pública Firebase dedicada `lhs-web-auth`, habilitada para o painel. A chave é restrita às APIs `identitytoolkit.googleapis.com` e `securetoken.googleapis.com`, às origens LHS do domínio/Pages e a `https://loyal-road-395203.firebaseapp.com/*` (página oficial que conclui confirmação e recuperação); não é uma credencial administrativa. O [handler padrão do Firebase](https://firebase.google.com/docs/auth/custom-email-handler) permanece em uso, sem mudar os templates compartilhados do projeto. CORS do Cloud Run aceita o domínio e o Pages de produção. A política CSP do build permite apenas os endpoints necessários. A restrição da chave não substitui a verificação de identidade e de UID na API.
 
 `online-config.json` continua desabilitado: o antigo controle dentro do jogo não é usado por esta publicação. `website/config.mjs` usa a marca Softdown do projeto e o contato `softloady@gmail.com`, informado pelo usuário, sem presumir razão social. Termos, privacidade e ajuda descrevem a conta e o fluxo manual. O site mantém o modo de prévia/noindex; a abertura do painel não liga pagamentos nem transforma a prévia em lançamento comercial.
 
@@ -24,5 +24,6 @@ Publicado em 14/10/2026: https://lhs.analysepro.com/conta/ . A publicação mant
 - Cliente validado contra Firebase/Cloud Run com chave restrita: login, confirmação, conta, save, refresh e logout. Conta temporária removida.
 - Interface publicada validada em desktop e celular (390 px, sem rolagem horizontal). Login real com conta artificial confirmada, consulta de saldo/save, envio de JSON, confirmação da gravação e download do principal. Conta artificial, save GCS e documentos Firestore removidos ao final.
 - Nenhum email de teste foi enviado ao contato do usuário. Entrega em caixas postais reais e telas de ação de email dependem do Firebase e ainda precisam ser conferidas por um usuário com seu próprio email. As ações de confirmação/reenvio/recuperação estão implementadas, mas não declaramos validação de entrega postal.
+- A origem do handler oficial foi verificada sem alterar senhas: um código artificial inválido em `accounts:resetPassword` recebe `INVALID_OOB_CODE` (400), enquanto uma origem externa recebe bloqueio de referrer (403). Isso confirma a restrição da chave, não entrega de email nem consumo de um código real.
 
 Deployment Pages desta etapa: `7b568b7f.lhs-lan-house-simulator.pages.dev`. Operação do backend, backups e manutenção: [CLOUD_BACKEND_DEPLOYMENT.md](CLOUD_BACKEND_DEPLOYMENT.md).
