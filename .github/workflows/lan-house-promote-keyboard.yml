@@ -1,0 +1,106 @@
+name: Lan House - Promote approved keyboard recordings
+on:
+  push:
+    paths:
+      - '.github/workflows/lan-house-promote-keyboard.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: lhs-promote-approved-keyboard
+  cancel-in-progress: false
+jobs:
+  promote-keyboard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Prepare approved audio processing
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Reproduce three approved audition clips from author recordings
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p out/lhs-keyboard-production
+          for entry in te1:2.3 t2:4.3 t3:4.9; do
+            name="${entry%:*}"
+            offset="${entry#*:}"
+            cat > out/lhs-keyboard-production/job.json <<EOF
+          {
+            "source": "games/lan_house_simulator/assets/Convert/$name.m4a",
+            "output": "out/lhs-keyboard-production/$name-lab.ogg",
+            "kind": "effect",
+            "register": false,
+            "report": "out/lhs-keyboard-production/$name-report.json",
+            "cleanup": {
+              "enabled": true, "profile": "recorded_sfx_cleanup",
+              "noiseReductionDb": 13, "noiseFloorDb": -55,
+              "trackNoise": true, "highpassHz": 145,
+              "lowpassHz": 8000, "trimSilence": false
+            },
+            "mastering": {"channels": 1, "quality": 6, "normalize": false}
+          }
+          EOF
+            python tools/a7_audio_lab/audio_asset_worker.py out/lhs-keyboard-production/job.json
+            ffmpeg -hide_banner -loglevel error -y \
+              -i "out/lhs-keyboard-production/$name-lab.ogg" \
+              -af 'agate=threshold=0.002:ratio=4:attack=2:release=85' \
+              -c:a libvorbis -q:a 5 "out/lhs-keyboard-production/$name-gated.ogg"
+            ffmpeg -hide_banner -loglevel error -y -ss "$offset" \
+              -i "out/lhs-keyboard-production/$name-gated.ogg" -t 3.3 \
+              -af 'loudnorm=I=-24:TP=-4:LRA=10' \
+              -ar 48000 -ac 1 -c:a libvorbis -q:a 5 \
+              "games/lan_house_simulator/assets/audio/keyboard_$name.ogg"
+          done
+      - name: Verify three unique mono OGG tracks and durations
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, subprocess
+          root=Path('games/lan_house_simulator/assets/audio')
+          seen=set()
+          for name in ('te1','t2','t3'):
+              f=root/('keyboard_'+name+'.ogg')
+              assert f.stat().st_size > 3000, f
+              info=json.loads(subprocess.check_output([
+                  'ffprobe','-v','error','-show_entries',
+                  'stream=codec_name,sample_rate,channels:format=duration',
+                  '-of','json',str(f)],text=True))
+              stream=info['streams'][0]
+              assert stream['codec_name']=='vorbis'
+              assert stream['sample_rate']=='48000' and stream['channels']==1
+              duration=float(info['format']['duration'])
+              assert 3.2 <= duration <= 3.4, (f,duration)
+              digest=hashlib.sha256(f.read_bytes()).hexdigest()
+              assert digest not in seen
+              seen.add(digest)
+              print(name, round(duration,2), f.stat().st_size, digest[:12])
+          PY
+      - name: Commit only approved sound assets to main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add games/lan_house_simulator/assets/audio/keyboard_te1.ogg
+          git add games/lan_house_simulator/assets/audio/keyboard_t2.ogg
+          git add games/lan_house_simulator/assets/audio/keyboard_t3.ogg
+          if git diff --cached --quiet; then
+            echo 'Approved keyboard assets already exist; no new commit.'
+            exit 0
+          fi
+          git commit -m 'assets(lhs): publish three approved cleaned keyboard recordings'
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then exit 0; fi
+            sleep 2
+          done
+          echo 'Could not fast-forward main; manual review required.' >&2
+          exit 1
