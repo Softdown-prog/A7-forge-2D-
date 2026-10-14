@@ -92,3 +92,12 @@ test("desligar só PC 02 ou 03 gera array denso e volta do save sem perder progr
   assert.equal(stationPoweredOn(loaded,0),true);
  }
 });
+
+test("não recebe novos clientes se todas as estações estão desligadas",async()=>{
+ const {visitorArrivalChance}=await import("../dist/js/sim/engine.js");
+ const s=createGame();assert.ok(visitorArrivalChance(s,0)>0);
+ for(let i=0;i<pcCount(s);i++)assert.equal(toggleStationPower(s,i).ok,true);
+ assert.equal(visitorArrivalChance(s,0),0);
+ assert.equal(toggleStationPower(s,0).ok,true);
+ assert.ok(visitorArrivalChance(s,0)>0);
+});

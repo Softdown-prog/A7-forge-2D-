@@ -460,6 +460,8 @@ function nextDay(s: GameState): void {
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
 export function visitorArrivalChance(s:GameState,occupied:number):number {
+  // Quando todas as máquinas estão desligadas, o salão não aceita novas sessões.
+  if(Array.from({length:pcCount(s)},(_,i)=>i).every(i=>!stationPoweredOn(s,i)))return 0;
   if(localMinute(s)>=LAST_ADMISSION_MINUTE||
     (localMinute(s)<10&&s.customers.some(c=>c.stage==="leaving")))return 0;
   const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
