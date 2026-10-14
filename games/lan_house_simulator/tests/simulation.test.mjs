@@ -26,6 +26,7 @@ test("compras e expansão alteram sistemas separadamente",()=>{
   const s=createGame();
   assert.equal(licenseGames(s).ok,true);
   assert.equal(s.licensedGames,true);
+  s.totalMinutes=4*360*720;
   assert.equal(upgradeInternet(s).ok,true);
   assert.equal(s.internetTier,2);
   s.cash=1200;
@@ -417,6 +418,7 @@ test("preços de venda individuais alteram receita e respeitam saves antigos",as
  assert.equal(s.revenue,13);
  assert.equal(setProductPrice(s,"candy",41).ok,false);
  delete s.retailPrices;assert.equal(productPrice(s,"soda"),8);
+ s.totalMinutes=2*360*720;
  const before=s.cash;assert.equal(upgradeComputer(s,0).ok,true);
  assert.equal(s.pcTiers?.[0],2);assert.equal(s.cash,before-240);
 });
@@ -425,11 +427,13 @@ test("hardware atualizado dá satisfação real sem cobrar novamente por sessão
  const {hardwareSatisfactionBonus,upgradeComputer,customerSatisfactionDelta}=await import("../dist/js/sim/economy.js");
  const s=createGame();
  assert.equal(hardwareSatisfactionBonus(s,0),0);
+ s.totalMinutes=2*360*720;
  const before=s.cash;
  assert.equal(upgradeComputer(s,0).ok,true);
  assert.equal(s.cash,before-240);
  assert.equal(hardwareSatisfactionBonus(s,0),0.08);
  assert.equal(hardwareSatisfactionBonus(s,1),0);
+ s.totalMinutes=5*360*720;
  assert.equal(upgradeComputer(s,0).ok,true);
  assert.equal(hardwareSatisfactionBonus(s,0),0.16);
  assert.equal(upgradeComputer(s,0).ok,false);
@@ -448,6 +452,7 @@ test("arte dos três níveis de hardware permanece ligada ao estado real do PC",
  assert.match(source,/if\(tier>1\)/);
  const s=createGame();assert.deepEqual(s.pcTiers,[1,1,1]);
  const {upgradeComputer}=await import("../dist/js/sim/economy.js");
+ s.totalMinutes=2*360*720;
  assert.equal(upgradeComputer(s,1).ok,true);assert.deepEqual(s.pcTiers,[1,2,1]);
 });
 
@@ -809,6 +814,7 @@ test("manutenção e upgrades reconhecem os PCs nas expansões",async()=>{
  const s=createGame();s.cash=6000;expandDirection(s,"east");
  assert.equal(installAnnexComputer(s,"pc-east-1").ok,true);
  assert.equal(pcCount(s),4);
+ s.totalMinutes=2*360*720;
  assert.equal(upgradeComputer(s,3).ok,true);
  assert.equal(s.pcTiers[3],2);
  s.pcWear[3]=90;
