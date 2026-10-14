@@ -46,8 +46,9 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  const option=options.find(o=>o.id===choiceId);
  if(!notice||!option)return {ok:false,message:"Decisão indisponível."};
  if(notice.resolved)return {ok:false,message:"Esta proposta já foi respondida."};
+ // Operação idempotente: scripts antigos de campanha repetem a última escolha.
  if(option.id==="electrical-defer"&&(s.electricalExtensionUsed||s.electricalInspectionFineApplied))
-  return {ok:false,message:"O prazo desta fiscalização já foi solicitado. Regularize a instalação."};
+  return {ok:true,message:"Prazo já solicitado; nenhuma nova prorrogação foi concedida. Regularize a instalação."};
  if(s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
  s.cash-=option.cost;s.expenses+=option.cost;
  switch(option.id){

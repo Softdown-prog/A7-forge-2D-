@@ -51,7 +51,10 @@ test("pedido de prazo é único, carta fica aberta e autuação não se repete",
  assert.equal(chooseDecision(s,"electrical-inspection","electrical-defer").ok,true);
  assert.equal(s.electricalDeadlineDay,day+16);assert.equal(s.electricalExtensionUsed,true);assert.equal(s.cash,cash);
  assert.equal(s.notices.find(n=>n.id==="electrical-inspection").resolved,undefined);
- assert.equal(chooseDecision(s,"electrical-inspection","electrical-defer").ok,false);
+ const originalDeadline=s.electricalDeadlineDay,originalExpenses=s.expenses;
+ assert.equal(chooseDecision(s,"electrical-inspection","electrical-defer").ok,true);
+ assert.equal(s.electricalDeadlineDay,originalDeadline);
+ assert.equal(s.expenses,originalExpenses);
  gotoDay(s,day+16);reviewNotices(s);
  assert.equal(s.electricalInspectionFineApplied,undefined);
  gotoDay(s,day+17);reviewNotices(s);
