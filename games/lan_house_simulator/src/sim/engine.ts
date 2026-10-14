@@ -172,9 +172,10 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
    previous=point;
   }
   const quality=hardwareSatisfactionBonus(s,i);
-  // VIP valoriza mais hardware; para os demais, a estação próxima
-  // continua vantajosa quando os equipamentos são equivalentes.
-  const score=quality*(c.vip?145:100)-distance*.65;
+  // Clientes comuns preferem atendimento rápido e rotas curtas.
+  // VIPs valorizam mais máquinas potentes; sem diferença de hardware todos
+  // continuam preferindo a estação próxima, inclusive nos salões grandes.
+  const score=quality*(c.vip?110:14)-distance;
   if(score>highest+1e-6){highest=score;chosen=i;}
  }
  return chosen;
