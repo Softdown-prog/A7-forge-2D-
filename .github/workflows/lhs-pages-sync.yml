@@ -1,0 +1,86 @@
+name: LHS - publicar main no Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lhs-pages-sync.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhs-pages-production-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Obter o commit que disparou a publicação
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          path: source
+          persist-credentials: false
+
+      - name: Preparar Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Compilar e validar o site
+        working-directory: source/games/lan_house_simulator
+        run: |
+          npm ci
+          npm run build:site
+          npm run check:site
+          node --test tests/website.test.mjs tests/account-client.test.mjs
+
+      - name: Conferir credencial dedicada do espelho
+        env:
+          MIRROR_KEY: ${{ secrets.LHS_PAGES_MIRROR_SSH_KEY }}
+        run: |
+          if [ -z "$MIRROR_KEY" ]; then
+            echo 'Configure o segredo LHS_PAGES_MIRROR_SSH_KEY.' >&2
+            exit 1
+          fi
+
+      - name: Obter o repositório ligado ao Pages
+        uses: actions/checkout@v4
+        with:
+          repository: Softdown-prog/a7-forge-2d
+          ref: main
+          path: mirror
+          ssh-key: ${{ secrets.LHS_PAGES_MIRROR_SSH_KEY }}
+          ssh-strict: true
+
+      - name: Sincronizar somente o LHS e publicar
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p mirror/games/lan_house_simulator
+          rsync -a --checksum --delete \
+            --exclude '/node_modules/' --exclude '/dist/' --exclude '/out/' \
+            source/games/lan_house_simulator/ mirror/games/lan_house_simulator/
+          cd mirror
+          printf '%s\n' "$SOURCE_SHA" > .lhs-upstream-sha
+          git add -A games/lan_house_simulator .lhs-upstream-sha
+          if git diff --cached --quiet; then
+            echo 'Este commit já está sincronizado.'
+            exit 0
+          fi
+          if git diff --cached --quiet -- games/lan_house_simulator; then
+            MESSAGE="[CF-Pages-Skip] sync(lhs): atualizar origem ${SOURCE_SHA:0:12}"
+          else
+            MESSAGE="sync(lhs): publicar main ${SOURCE_SHA:0:12}"
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m "$MESSAGE"
+          git push origin HEAD:main
