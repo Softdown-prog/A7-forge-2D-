@@ -487,7 +487,8 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Refinar gabinetes, portas, vidro, latas, doces, controles e bandejas de retirada com perspectiva e profundidade; redesenhar o expositor metálico com pacotes CROC e letreiro integrado.
 - [x] Refletir vendas, estoque vazio e reposição nas vitrines; reutilizar sprites em cache sem modificar estado, RNG, rotas ou economia.
 - [x] Verificar 147 casos Canvas, compras dos três produtos em dois dias simulados e encaixe desktop/mobile; registrar `docs/RETAIL_ART.md` e automatizar no worker de cena.
-\n## Contrato de infraestrutura online e Cookies — 14/10/2026
+
+## Contrato de infraestrutura online e Cookies — 14/10/2026
 
 - [x] Registrar a decisão de produto: **LHS — Lan House Simulator**, moeda premium **Cookies (biscoitos)**, jogo integralmente gratuito, sem assinatura obrigatória ou venda da campanha.
 - [x] Contratar em documentação as fronteiras Cloudflare (frontend e jogo local), Cloud Run Node.js (API e pagamentos), Firebase Authentication (login), Firestore (contas, carteira, ledger e compras) e GCS (JSON de saves manuais).

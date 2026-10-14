@@ -79,7 +79,8 @@ Funcionalidades além do vertical slice permanecem neste documento e no backlog,
 **Computadores**: ponto de partida com máquinas da era **Windows 98**; evolução por compras/atualizações para **Windows 2000, XP, Vista, Windows 7, 8/8.1, 10 e 11**. São referências de época e progresso da loja, não softwares reais instalados no navegador. A arte deve usar computadores originais (CRT antigos até desktops modernos), sem reproduzir ícones/logos/temas gráficos protegidos. Os upgrades deverão alterar custo, demanda, manutenção e eventualmente catálogo de jogos compatíveis; por enquanto registramos a sequência, sem comprar uma quantidade enorme de equipamentos de uma vez.
 
 **Ordem de implementação**: primeiro validar sala/câmera/fluxo. Depois internet de 3 níveis; só mais tarde modelos de computador e UI de upgrades. Não inserir todos os objetos e desafios simultaneamente.
-\n## 12. Modelo de negócio aprovado — gratuito + Cookies (14/10/2026)
+
+## 12. Modelo de negócio aprovado — gratuito + Cookies (14/10/2026)
 
 - O nome oficial é **LHS — Lan House Simulator** e os créditos premium chamam-se **Cookies (biscoitos, 🍪)**. Não confundir a moeda com cookies HTTP. A moeda em R$ da administração é separada.
 - Jogo integralmente gratuito, sem assinatura nem venda obrigatória; login opcional para jogar. A loja oferece itens opcionais como decoração, pôsteres, temas, skins e aparências de computadores, sem bloquear progressão.
