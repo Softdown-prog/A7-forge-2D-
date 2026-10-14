@@ -35,6 +35,19 @@ test("preço caro e internet fora do ar continuam reduzindo procura mesmo com bo
  s.offlineUntil=s.totalMinutes+100;
  assert.ok(visitorArrivalChance(s,0)<expensive*.2);
 });
+test("fila congestionada limita novas entradas mesmo com alta atratividade",()=>{
+ const s=createGame();s.reputation=100;s.internetTier=3;
+ s.expansionLevel=2;s.installedPcs=7;s.pcTiers=[3,3,3,3,3,3,3];
+ const open=visitorArrivalChance(s,0);
+ for(let i=0;i<8;i++)s.customers.push({
+  id:100+i,x:1,y:1,stage:"arriving",target:{x:1.5,y:2.5},
+  costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true
+ });
+ const crowded=visitorArrivalChance(s,0);
+ assert.ok(crowded<open*.3);
+ assert.equal(s.revenue,0);
+});
 test("bônus é limitado e respeita saves legados",()=>{
  const s=createGame();s.expansionLevel=2;s.installedPcs=7;s.internetTier=3;
  s.pcTiers=[3,3,3,3,3,3,3];s.pcGpus=Array(7).fill("gpu13");
