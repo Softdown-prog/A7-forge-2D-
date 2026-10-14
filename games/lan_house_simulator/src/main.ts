@@ -589,7 +589,7 @@ function renderUI():void {
       control.dataset.gpuSelect=String(i);
       control.className="gpu-station"+(selectedGpuPc===i?" selected":"");
       control.textContent="PC "+(i+1)+(installedGpu(game,i)?" · GPU":" · sem GPU");
-      control.setAttribute("aria-pressed",String(selectedGpuPc===i}));
+      control.setAttribute("aria-pressed",String(selectedGpuPc===i));
       gpuPcChoice.append(control);
     }
     const current=gpuSpec(installedGpu(game,selectedGpuPc));
