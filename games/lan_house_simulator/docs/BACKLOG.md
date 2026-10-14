@@ -367,6 +367,14 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Inspecionar 336 combinações de figurino, direção, pose e transição no Chromium; adicionar pranchas e verificação ao worker de cena.
 - [ ] Aprovação artística com o criador e inspeção em aparelho móvel físico.
 
+## Pacotes de horas e consumo combinado — 14/10/2026
+- [x] Auditar nove cenários de tarifa/estoque/operação com sessões e vendas reais; confirmar pacotes de 30/45/60/90 e esgotamento do estoque sem reposição.
+- [x] Corrigir saída após uma única compra: permitir uma bebida e um alimento quando necessidades, orçamento restante, estoque e rota permitem.
+- [x] Aliviar a necessidade correspondente somente após venda confirmada; impedir repetição por grupo e preservar os marcadores no save.
+- [x] Manter preço, pacote contratado, pagamentos, som, estoque e lixo associados a transações reais.
+- [x] Executar 173 testes, incluindo cinco regressões novas de consumo, limite financeiro, substituição de alimentos, save e pacotes.
+- [ ] Ampliar campanhas multissemente e rever margens de longo prazo após o consumo combinado; detalhes em `docs/CUSTOMER_SPENDING_AUDIT.md`.
+
 ## Retorno do hardware moderno em campanhas de longo prazo — 14/10/2026
 - [x] Executar 36 campanhas de 120 dias em 2011 e 2013, com três sementes, R$ 18/22/24 por hora, cinco PCs e os mesmos contratos/rede em cada par.
 - [x] Adquirir por APIs do jogo o hardware nível 3 e placas PixelForce 560/770 nos PCs 4 e 5; medir desgaste, serviços, estoque, energia, ocupação, receita, atendimentos, VIPs e reputação sem fabricar valores.

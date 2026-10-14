@@ -6,7 +6,7 @@ import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_CO
 import { vendingApproach } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
-import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
+import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
@@ -295,10 +295,21 @@ function resolvePurchase(s: GameState, c: Customer): void {
   }
   const result = sellItem(s, chosen);
   if (result.ok){
-    if(c.desiredItem)c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
+    if(c.desiredItem){
+      c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
+      consumePurchase(c,chosen);
+    }
     s.saleEffects=queueVisualEvent(s.saleEffects,{item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
     addWaste(s,chosen==="soda"?5:3);
     addLog(s,result.message);
+    // Uma bebida não elimina a fome. Permitir o outro grupo se necessário,
+    // com dinheiro restante, estoque e rota reais; nunca repetir um grupo.
+    if(c.desiredItem){
+      const next=selectPurchase(c,s.inventory,s);
+      if(next&&setTravel(s,c,next==="soda"?vendingApproach("soda"):vendingApproach("candy"))){
+        c.desiredItem=next;return;
+      }
+    }
   }
   sendHome(s, c);
 }
@@ -438,7 +449,8 @@ export function isValidSave(value: unknown): value is GameState {
     v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
-    Array.isArray(v.customers) && Array.isArray(v.eventLog) &&
+    Array.isArray(v.customers) && v.customers.every(c=>!!c&&
+      [c.purchasedDrink,c.purchasedFood].every(flag=>flag===undefined||typeof flag==="boolean")) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&
     (v.energyAccrued===undefined || (Number.isFinite(v.energyAccrued)&&v.energyAccrued>=0)) &&
     (v.binFill===undefined || (Array.isArray(v.binFill)&&v.binFill.length===2&&v.binFill.every(n=>Number.isFinite(n)&&n>=0&&n<=100))) &&

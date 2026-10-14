@@ -23,6 +23,9 @@ export interface Customer {
   /** Dinheiro pessoal fictício do visitante; não é o caixa do estabelecimento. */
   wallet?: number;
   desiredItem?: Item | null;
+  /** No máximo uma bebida e um alimento por visita, inclusive após importar save. */
+  purchasedDrink?: boolean;
+  purchasedFood?: boolean;
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;

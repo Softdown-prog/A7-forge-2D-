@@ -16,12 +16,19 @@ export function tickNeeds(c:Customer):void{
 export function selectPurchase(c:Customer,inventory:Inventory,state?:GameState):Item|null{
   const n=c.needs??initialNeeds(c.id);
   const cash=c.wallet??18;
-  if(n.thirst>=55&&inventory.soda>0&&cash>=(state?productPrice(state,"soda"):ITEM_PRICES.soda))return "soda";
-  if(n.hunger>=55){
+  if(!c.purchasedDrink&&n.thirst>=55&&inventory.soda>0&&cash>=(state?productPrice(state,"soda"):ITEM_PRICES.soda))return "soda";
+  if(!c.purchasedFood&&n.hunger>=55){
     if(inventory.snacks>0&&cash>=(state?productPrice(state,"snacks"):ITEM_PRICES.snacks))return "snacks";
     if(inventory.candy>0&&cash>=(state?productPrice(state,"candy"):ITEM_PRICES.candy))return "candy";
   }
   return null;
+}
+
+/** Aplicar apenas após a venda real; impede compras repetidas durante o trajeto. */
+export function consumePurchase(c:Customer,item:Item):void{
+ const n=c.needs??(c.needs=initialNeeds(c.id));
+ if(item==="soda"){c.purchasedDrink=true;n.thirst=Math.max(0,n.thirst-55);}
+ else{c.purchasedFood=true;n.hunger=Math.max(0,n.hunger-(item==="snacks"?55:35));}
 }
 
 /** Escolha determinística por perfil, energia e sede. O tempo é contratado antes do pagamento. */
