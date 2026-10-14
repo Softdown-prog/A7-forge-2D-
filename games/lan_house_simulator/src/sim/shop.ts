@@ -36,6 +36,7 @@ export function buyComputer(s:GameState):Result{
  (s.pcTiers??=[]).splice(count,0,1);
  (s.pcWindows??=[]).splice(count,0,"win98");
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
+ (s.pcGpus??=[]).splice(count,0,null);
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }
