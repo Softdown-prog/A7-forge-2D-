@@ -474,3 +474,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Adicionar Windows 7/8/10/11, requisitos visíveis, licença e instalação por PC; manter saves V1 e reindexação de anexos compatíveis.
 - [x] Passar 207 testes ativos após integrar receita por estação da main, seis cenários Chromium desktop/mobile de compra/recarga e regressão dos cinco LCDs; documentar em `docs/HARDWARE_GENERATIONS.md`.
 - [ ] Auditar amortização das peças nas campanhas longas e verificar ergonomia em telefone físico; estudar bibliotecas de jogos/requisitos por época antes de expandir a simulação.
+
+## Economia histórica com preços máximos por ano — 14/10/2026
+- [x] Usar salário mínimo nominal R$ 130 (1998) como referência histórica e IPCA anual do IBGE para índice monetário; teto nominal inicial R$ 3/h é parâmetro de balanceamento, NÃO preço histórico regulamentado.
+- [x] Adicionar modelo econômico histórico para partidas novas: teto anual por IPCA e teto adicional pela idade de CPU, GPU, RAM, placa-mãe, HD/SSD, LCD e Windows; R$ 18/h com Windows 98 em 2010 deixa de ser possível nesse modelo.
+- [x] Tornar contas fixas, energia e atacado indexados no modelo novo; reajustar defaults de mercadorias e cobrar sessão com centavos, sem inflação duplicada sobre catálogos de componentes geracionais.
+- [x] Oferecer tabela para sessões 30/45/60/90/120/180/240 min, preservar valores proporcionais e impedir contratação além do expediente no modo histórico.
+- [x] Preservar saves clássicos e oferecer migração explícita, sem alterar patrimônio já ganho; virada cobra custos do último ano no fechamento.
+- [ ] Rodar campanhas históricas de longo prazo (1998–2024), revisar liquidez e demanda, custos de aquisição de hardware completo, modelagem do varejo e reajustes após 2025 antes de declarar o balanceamento final.
