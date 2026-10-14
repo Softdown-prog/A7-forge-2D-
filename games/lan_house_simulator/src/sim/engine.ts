@@ -7,7 +7,7 @@ import { vendingApproach } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
-import {navigableRoute} from "./navigation.js";
+import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
 import {tickServices,pcUnderRepair,addWaste} from "./services.js";
@@ -92,19 +92,19 @@ function move(s:GameState,c:Customer,speed=0.38):boolean {
     if(remaining<=0.005)break;
     const nx=vx/remaining,ny=vy/remaining,step=Math.min(length,remaining);
     const desired={x:c.x+nx*step,y:c.y+ny*step};
-    if(canCustomerOccupy(s,c,desired)){
+    if(canTraverseLocalStep(s,{x:c.x,y:c.y},desired)&&canCustomerOccupy(s,c,desired)){
       c.x=desired.x;c.y=desired.y;continue;
     }
-    // Desvio local para passantes e visitantes a caminho da fila; quem espera mantém sua posição.
-    // Só aplicar sem divisórias, para nunca atravessar uma parede por um desvio lateral.
-    if(!(s.interiorWalls?.length)){
+    // Desvio local seguro inclusive em salas divididas: testar cada movimento
+    // contra as divisórias antes de tentar contornar outros visitantes.
+    {
       const bounds=roomBounds(s);
       for(const sign of [c.id%2===0?1:-1,c.id%2===0?-1:1]){
         const alternative={x:c.x+nx*step*0.65-ny*0.17*sign,
           y:c.y+ny*step*0.65+nx*0.17*sign};
         if(alternative.x<=bounds.minX+0.12||alternative.x>=bounds.maxX-0.12||
           alternative.y<=bounds.minY+0.12||alternative.y>=bounds.maxY-0.12)continue;
-        if(canCustomerOccupy(s,c,alternative)){
+        if(canTraverseLocalStep(s,{x:c.x,y:c.y},alternative)&&canCustomerOccupy(s,c,alternative)){
           c.x=alternative.x;c.y=alternative.y;break;
         }
       }
