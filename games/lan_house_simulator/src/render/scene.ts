@@ -582,6 +582,12 @@ export class SceneRenderer {
       drawSeatedKeyboardOverlay(this.ctx,camera,pcPosition(c.pcIndex,s),t,
         style.skin,style.shirt,weight);
     }
+    if(c.vip){
+      const marker=iso({x,y},camera,100);
+      this.ctx.save();this.ctx.font="bold "+Math.max(10,12*camera.zoom)+"px system-ui,sans-serif";
+      this.ctx.textAlign="center";this.ctx.lineWidth=2*camera.zoom;this.ctx.strokeStyle="#273448";
+      this.ctx.strokeText("★ VIP",marker.x,marker.y);this.ctx.fillStyle="#f5ca64";this.ctx.fillText("★ VIP",marker.x,marker.y);this.ctx.restore();
+    }
     if(c.stage==="waiting"){
       const p=iso({x,y},camera,95);
       this.ctx.save();
