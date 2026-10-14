@@ -277,5 +277,15 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Reexecutar as mesmas 9 campanhas e comprovar mais atendimentos, maior ocupação e evolução do resultado operacional.
 - [x] Adicionar limites de regressão para fila, ocupação e quantidade de atendimentos; registrar números antes/depois no relatório.
 - [ ] Validar trajetos com várias salas/divisórias e circulação em alta lotação por vídeo real.
-- [ ] Avaliar retorno de investimento do salão grande, que ainda é caro e opera com capacidade ociosa.
+- [x] Avaliar retorno de investimento do salão grande: auditoria 3/5/7 PCs mostrou custo elevado, retorno inicial limitado e capacidade ociosa; não alterar demanda artificialmente sem resolver circulação.
 - [ ] Revisar progressão de reputação VIP e preços em campanhas de vários anos antes de declarar a economia balanceada.
+
+## Fechamento do diagnóstico financeiro — 13/10/2026
+- [x] Rejeitar ajuste de aumento artificial da procura após regressão na ocupação do salão grande; preservar balanceamento anterior.
+- [x] Registrar minutos-PC usados e minutos-PC disponíveis por minuto de simulação, inclusive quando o jogador compra computadores no meio do mês.
+- [x] Apresentar ocupação do mês corrente e do último mês na aba Finanças, sem estatísticas inventadas.
+- [x] Fechar entradas, saídas e resultado mensal após o pagamento das contas; incluir multas e investimentos na explicação.
+- [x] Mostrar recomendação cautelosa de expansão com base em ocupação medida e amostra mínima de três dias.
+- [x] Manter dados novos opcionais em saves antigos e validar entradas inválidas.
+- [ ] Avaliar políticas alternativas de retorno para sete PCs em sessões de vários anos, sem comprometer fila, satisfação nem velocidade de chegada.
+- [ ] Revisar leitura dos novos indicadores no tamanho real do navegador antes da aprovação visual final.
