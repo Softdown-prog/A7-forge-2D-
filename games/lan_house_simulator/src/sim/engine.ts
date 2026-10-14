@@ -1,6 +1,6 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
-import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute, establishmentAppealMultiplier } from "./economy.js";
+import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach } from "./layout.js";
@@ -324,11 +324,7 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   const factor=demandFactor(s.pricePerHour,s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
-  // A fama atrai visitantes, mas o balcão precisa de espaço físico para recebê-los.
-  // Reduzir novas entradas quando a fila estiver cheia evita bloqueios em cascata.
-  const queueSize=counterQueueCustomers(s).length;
-  const entrySpace=Math.max(0.08,1-Math.max(0,queueSize-3)*0.18);
-  return 0.052*factor*establishmentAppealMultiplier(s)*promotionVisitorMultiplier(s)*congestion*entrySpace;
+  return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
 }
 function advanceMinute(s: GameState): void {
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
