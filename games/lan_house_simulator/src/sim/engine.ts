@@ -1,13 +1,15 @@
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus } from "./economy.js";
-import { COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
+import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
+import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds } from "./needs.js";
 import {navigableRoute} from "./navigation.js";
 import {annexComputerPosition} from "./stations.js";
+import {roomBounds} from "./room.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
@@ -60,13 +62,51 @@ export function applyResult(s: GameState, result: Result): Result {
   addLog(s, result.message);
   return result;
 }
-function move(c: Customer, speed = 0.38): boolean {
-  const dx = c.target.x - c.x, dy = c.target.y - c.y;
-  const distance = Math.hypot(dx, dy);
-  if(distance>0.0001)c.facing=directionFromDelta(dx,dy,c.facing);
-  if (distance <= speed) { c.x = c.target.x; c.y = c.target.y; return true; }
-  c.x += dx / distance * speed;
-  c.y += dy / distance * speed;
+/** Verificação contra os outros corpos, independente da escala do Canvas. */
+export function canCustomerOccupy(s:GameState,c:Customer,at:Point):boolean {
+  return s.customers.every(other=>{
+    if(other===c || other.id===c.id)return true;
+    const current=Math.hypot(c.x-other.x,c.y-other.y);
+    const next=Math.hypot(at.x-other.x,at.y-other.y);
+    // Saves antigos podem conter sobreposição: permitir apenas passos que afastem.
+    return next>=CUSTOMER_COLLISION_RADIUS ||
+      (current<CUSTOMER_COLLISION_RADIUS&&next>current+0.0001);
+  });
+}
+function move(s:GameState,c:Customer,speed=0.38):boolean {
+  const dx=c.target.x-c.x,dy=c.target.y-c.y;
+  const distance=Math.hypot(dx,dy);
+  if(distance<=0.005){c.x=c.target.x;c.y=c.target.y;return true;}
+  c.facing=directionFromDelta(dx,dy,c.facing);
+  // Subpassos impedem troca de lado atravessando o corpo do outro.
+  const count=Math.ceil(Math.min(speed,distance)/0.10);
+  const length=Math.min(speed,distance)/count;
+  for(let i=0;i<count;i++){
+    const vx=c.target.x-c.x,vy=c.target.y-c.y,remaining=Math.hypot(vx,vy);
+    if(remaining<=0.005)break;
+    const nx=vx/remaining,ny=vy/remaining,step=Math.min(length,remaining);
+    const desired={x:c.x+nx*step,y:c.y+ny*step};
+    if(canCustomerOccupy(s,c,desired)){
+      c.x=desired.x;c.y=desired.y;continue;
+    }
+    // Pequeno desvio só para passantes; quem está na fila mantém sua posição.
+    if(c.stage!=="arriving"&&!(s.interiorWalls?.length)){
+      const bounds=roomBounds(s);
+      for(const sign of [c.id%2===0?1:-1,c.id%2===0?-1:1]){
+        const alternative={x:c.x+nx*step*0.65-ny*0.17*sign,
+          y:c.y+ny*step*0.65+nx*0.17*sign};
+        if(alternative.x<=bounds.minX+0.12||alternative.x>=bounds.maxX-0.12||
+          alternative.y<=bounds.minY+0.12||alternative.y>=bounds.maxY-0.12)continue;
+        if(canCustomerOccupy(s,c,alternative)){
+          c.x=alternative.x;c.y=alternative.y;break;
+        }
+      }
+    }
+    return false; // Caso contrário, aguardar o outro passar.
+  }
+  if(Math.hypot(c.target.x-c.x,c.target.y-c.y)<=0.005){
+    c.x=c.target.x;c.y=c.target.y;return true;
+  }
   return false;
 }
 function setTravel(s:GameState,c:Customer,destination:Point):boolean{
@@ -75,8 +115,8 @@ function setTravel(s:GameState,c:Customer,destination:Point):boolean{
  c.target=points[0]!;c.route=points.slice(1);
  return true;
 }
-function moveRoute(c: Customer): boolean {
-  if (!move(c)) return false;
+function moveRoute(s:GameState,c: Customer): boolean {
+  if (!move(s,c)) return false;
   const next = c.route?.shift();
   if (next) { c.target = next; return false; }
   return true;
@@ -93,23 +133,59 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
   (s.speechEffects??=[]).push({text,x:c.x,y:c.y,kind});
 }
 function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.pcIndex = null;
+  c.stage = "leaving"; c.pcIndex = null; c.queueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
+/** Avança cada cliente uma casa quando a primeira posição é liberada. */
+function refreshCounterQueue(s:GameState):void {
+  const line=counterQueueCustomers(s);
+  for(let index=0;index<line.length;index++){
+    const c=line[index]!,previousIndex=c.queueIndex;
+    if(previousIndex===index)continue;
+    const dest=counterQueueSlot(index);
+    c.queueIndex=index;
+    // Saves antigos: a pessoa já estava parada no ponto de atendimento.
+    if(c.stage==="waiting"&&previousIndex===undefined&&index===0)continue;
+    if(Math.hypot(c.x-dest.x,c.y-dest.y)<0.05){
+      c.stage="waiting";c.target=dest;c.route=[];continue;
+    }
+    const previous=previousIndex===undefined?null:counterQueueSlot(previousIndex);
+    if(previous&&previousIndex===index+1&&Math.hypot(c.x-previous.x,c.y-previous.y)<0.10){
+      c.target=dest;c.route=[];c.stage="arriving";
+    }else if(setTravel(s,c,dest)){
+      c.stage="arriving";
+    }else{
+      c.queueIndex=undefined; // Recalcular caso alguma divisória bloqueie a passagem.
+    }
+  }
+}
+
+/** A saída lateral do caixa não cruza a coluna de pessoas aguardando. */
+function leaveCounterForPc(s:GameState,c:Customer,destination:Point):boolean {
+  if(s.interiorWalls?.length)return setTravel(s,c,destination);
+  const outside={x:2.46,y:COUNTER_QUEUE.y},aisle={x:2.46,y:AISLE_Y};
+  c.target=outside;c.route=[aisle,...hallwayRoute(aisle,destination)];
+  return true;
+}
 function spawn(s: GameState): void {
+  const queueIndex=counterQueueCustomers(s).length;
+  if(queueIndex>=MAX_COUNTER_QUEUE)return;
   const e = entrance(s);
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
-    stage: "arriving", target: { ...COUNTER_QUEUE },
+    stage: "arriving", target: counterQueueSlot(queueIndex),queueIndex,
     costume, pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:12+Math.floor(random(s)*18)
   };
-  if(!setTravel(s,c,COUNTER_QUEUE))return;
+  if(!setTravel(s,c,c.target))return;
   s.customers.push(c);
 }
 function tryServe(s: GameState, c: Customer): void {
+  if(counterQueueCustomers(s)[0]?.id!==c.id||s.totalMinutes<(s.counterBusyUntil??0)){
+    c.waitingMinutes++;return;
+  }
   const index = Array.from({ length: pcCount(s) }, (_, i) => i).find(i =>
     !isReserved(s,i)&&!pcBroken(s,i)&&!!navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))));
   if (index === undefined) {
@@ -122,12 +198,14 @@ function tryServe(s: GameState, c: Customer): void {
     return;
   }
   c.sessionMinutes??=chooseSessionMinutes(c);
-  if(!setTravel(s,c,computerSeat(pcPosition(index,s)))){
+  if(!leaveCounterForPc(s,c,computerSeat(pcPosition(index,s)))){
     c.waitingMinutes++;
     return; // Não cobrar se a sala não for acessível.
   }
   c.pcIndex=index;
+  c.queueIndex=undefined;
   c.stage="to_pc";
+  s.counterBusyUntil=s.totalMinutes+3;
   const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
   s.cash += paid; s.revenue += paid; s.served++;
   (s.paymentEffects??=[]).push({amount:paid,x:c.x,y:c.y});
@@ -152,11 +230,11 @@ function resolvePurchase(s: GameState, c: Customer): void {
 function advanceCustomer(s: GameState, c: Customer): void {
   switch (c.stage) {
     case "arriving":
-      if (moveRoute(c)) c.stage = "waiting";
+      if (moveRoute(s,c)) c.stage = "waiting";
       return;
     case "waiting": tryServe(s, c); return;
     case "to_pc":
-      if (moveRoute(c)) { c.stage = "sitting"; c.poseMinutes = 0; }
+      if (moveRoute(s,c)) { c.stage = "sitting"; c.poseMinutes = 0; }
       return;
     case "sitting":
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
@@ -209,9 +287,9 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "shopping":
-      if (moveRoute(c)) resolvePurchase(s, c);
+      if (moveRoute(s,c)) resolvePurchase(s, c);
       return;
-    case "leaving": moveRoute(c); return;
+    case "leaving": moveRoute(s,c); return;
   }
 }
 function nextDay(s: GameState): void {
@@ -252,6 +330,7 @@ function advanceMinute(s: GameState): void {
   if (s.customers.length < 14) {
     if (random(s) < visitorArrivalChance(s,occupied)) spawn(s);
   }
+  refreshCounterQueue(s);
   for (const c of s.customers) { tickNeeds(c); advanceCustomer(s, c); }
   const e = entrance(s);
   s.customers = s.customers.filter(c => c.stage !== "leaving" || Math.hypot(c.x - e.x, c.y - e.y) > 0.001);

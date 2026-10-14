@@ -82,8 +82,8 @@ test("dois visitantes reservam computadores distintos e sentam antes de usar",()
     costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true
   });
   stepGame(s,1);
-  assert.equal(s.served,2);
-  assert.deepEqual(s.customers.map(c=>c.pcIndex).sort(),[0,1]);
+  assert.equal(s.served,1,"o caixa atende uma pessoa de cada vez");
+  assert.equal(s.customers.filter(c=>c.pcIndex!==null).length,1);
   const first=s.customers.find(c=>c.id===1);
   assert.ok(first);
   for(let i=0;i<35 && first.stage!=="using";i++) stepGame(s,1);

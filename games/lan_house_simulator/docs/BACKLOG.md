@@ -245,3 +245,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Expiração automática no fechamento (22h), sem timers reais; dia de compra opcional em saves antigos, com validação de importação.
 - [x] Indicador de campanha no HUD, duração restante e botão bloqueado quando não há caixa ou a campanha está ativa.
 - [ ] Avaliar efeito sobre a demanda em sessões longas e conferir o painel de Finanças no PNG real de desktop/mobile do CI.
+
+## Fila física e colisões entre visitantes — 13/10/2026
+- [x] Atendimento sequencial do caixa por ordem de chegada e intervalo entre clientes, sem cobranças antecipadas.
+- [x] Até dez lugares físicos: o corredor comporta a fila sem empilhar os personagens.
+- [x] Passos subdivididos com bloqueio de espaço entre atores; saída lateral do balcão quando não há divisórias.
+- [x] "?" dos clientes em vermelho com contorno escuro; retirar os nomes brancos das máquinas.
+- [x] Preservar síntese sonora procedural HTML5 e os dois efeitos já aprovados, sem incluir gravações externas.
+- [ ] Conferir circulação sob lotação e salas separadas por paredes no runtime.

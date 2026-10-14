@@ -482,11 +482,7 @@ export class SceneRenderer {
     }
     polygon(ctx,[front(.39,h-14),front(.46,h-14),
       front(.23,h-64),front(.15,h-64)],"rgba(182,220,234,0.16)");
-    // A faixa de marca é legível, sem copiar marca comercial.
-    const label=front(.32,h-5);
-    ctx.save();ctx.textAlign="center";ctx.font="bold "+Math.max(7,9*z)+"px system-ui,sans-serif";
-    ctx.fillStyle="#FFF2D1";ctx.fillText(soda?"REFRI":"DOCES",label.x,label.y);
-    ctx.restore();
+    // Sem textos brancos: cores e produtos diferenciam as máquinas.
     // Moedeiro, seleção e porta de entrega na mesma face frontal.
     polygon(ctx,[front(.535,h-31),front(.62,h-31),
       front(.62,h-55),front(.535,h-55)],"#D8C2A1","#815E54");
@@ -549,10 +545,14 @@ export class SceneRenderer {
         style.skin,style.shirt,weight);
     }
     if(c.stage==="waiting"){
-      const p=iso({x,y},camera,91);
-      this.ctx.fillStyle="#FFF4BC";
-      this.ctx.font="bold 15px system-ui,sans-serif";
-      this.ctx.fillText("?",p.x-4,p.y);
+      const p=iso({x,y},camera,95);
+      this.ctx.save();
+      this.ctx.font="900 "+Math.max(20,23*camera.zoom)+"px system-ui,sans-serif";
+      this.ctx.textAlign="center";this.ctx.textBaseline="middle";
+      this.ctx.lineJoin="round";this.ctx.lineWidth=4*camera.zoom;
+      this.ctx.strokeStyle="#222535";this.ctx.strokeText("?",p.x,p.y);
+      this.ctx.fillStyle="#FF4848";this.ctx.fillText("?",p.x,p.y);
+      this.ctx.restore();
     }
   }
   private doorMarker(camera:Projection,s:GameState):void {
