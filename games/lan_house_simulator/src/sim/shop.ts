@@ -14,10 +14,10 @@ export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
  {id:"computer",label:"Computador com mesa",category:"Computadores",description:"Instala um computador completo."},
  {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
- {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Adiciona uma faixa de 2 tiles a oeste."},
- {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Adiciona uma faixa de 2 tiles a leste."},
- {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Adiciona 2 tiles para o norte, atrás do balcão. Porta sul fixa."},
- {id:"wall",label:"Construir divisórias",category:"Construção",description:"Parede interna de 1 tile, encaixe no grid e proteção de rotas."},
+ {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Aumenta o espaço à esquerda e libera uma posição para PC no anexo."},
+ {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Aumenta o espaço à direita e libera uma posição para PC no anexo."},
+ {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Aumenta o espaço atrás do balcão e libera uma posição para PC no anexo. A entrada fica no mesmo lugar."},
+ {id:"wall",label:"Construir divisórias",category:"Construção",description:"Escolha a posição de cada trecho. Mantém livres as passagens para clientes."},
  {id:"door",label:"Instalar porta interna",category:"Construção",description:"Converte uma divisória em passagem para clientes."},
  {id:"poster",label:"Pôster",category:"Decoração",description:"Pôster geométrico de parede."},
  {id:"plant",label:"Planta",category:"Decoração",description:"Vaso com folhagens."},
@@ -187,6 +187,15 @@ export function furnitureLocations(s:GameState):Array<{kind:FurnitureKind;slotId
   }
  }
  return result;
+}
+/** Retira uma unidade e libera seu encaixe. Materiais já comprados não geram reembolso. */
+export function removeFurniture(s:GameState,slotId:string):Result{
+ const furniture=furnitureLocations(s),item=furniture.find(p=>p.slotId===slotId);
+ if(!item||(s.furniture?.[item.kind]??0)<1)return {ok:false,message:"Não há um móvel instalado nessa posição."};
+ s.furniturePlacements=furniture.filter(p=>p.slotId!==slotId);
+ s.furniture={...(s.furniture??{poster:0,plant:0,table:0}),[item.kind]:s.furniture![item.kind]-1};
+ routesForCurrentCustomers(s);
+ return {ok:true,message:"Item removido. Espaço liberado, sem custo nem reembolso."};
 }
 /** Uma transação de mudança de lugar nunca cobra novamente nem altera a posse. */
 export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string):Result{

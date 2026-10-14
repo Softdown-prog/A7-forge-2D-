@@ -49,15 +49,15 @@ try{
   c.drawImage(now,530,30,300,180,660,510,600,360);
   if(JSON.stringify(s)!==stateBefore)throw Error("Desenho alterou o save");
   // Preserve paid placements through expansion/relocation and save-compatible data.
-  const expandedRoom=expandDirection(s,"north");
-  if(!expandedRoom.ok)throw Error("Expansão norte não concluída: "+expandedRoom.message);
-  // A nova planta tem pôsteres originais e paredes bloqueadas; usar uma
-  // posição REALMENTE disponível no salão expandido, não um ID antigo fixo.
-  const slots=availablePlacementSlots(s,"poster");
-  const freeSlot=slots.find(slot=>slot.id.startsWith("wall-north-"))??slots[0];
-  if(!freeSlot)throw Error("Nenhuma parede livre para realocar o pôster");
-  const move=relocateFurniture(s,"wall-1",freeSlot.id);
-  if(!move.ok)throw Error("Realocação não concluída: "+move.message);
+  const expansion=expandDirection(s,"north");
+  if(!expansion.ok)throw Error("Expansão norte falhou: "+expansion.message);
+  const destinations=availablePlacementSlots(s,"poster");
+  const destination=destinations.find(p=>p.id.startsWith("wall-north"))
+    ??destinations.find(p=>p.id.startsWith("wall-side-"))
+    ??destinations.find(p=>p.id!=="wall-1");
+  if(!destination)throw Error("Nenhum encaixe de pôster ficou disponível após expansão");
+  const moved=relocateFurniture(s,"wall-1",destination.id);
+  if(!moved.ok)throw Error("Realocação de pôster: "+moved.message);
   const expanded=surface(1000,610);new SceneRenderer(expanded.getContext("2d")).draw(s,2);
   return {gallery:gallery.toDataURL(),comparison:comparison.toDataURL(),scene:now.toDataURL(),expanded:expanded.toDataURL(),
    checks:{designs:POSTER_KINDS.length,paidPosters:s.furniture.poster,placement:s.furniturePlacements[0].slotId,unchangedState:true}};

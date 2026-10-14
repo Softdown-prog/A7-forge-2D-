@@ -240,22 +240,65 @@ try{
       await writeFile(resolve(output,"lhs_full_scene_lifecycle.png"),
         Buffer.from(lifecycle,"base64"));
     }
-    // O editor 2D unificado substituiu o antigo posicionamento por barra.
-    // Exercitar os controles reais (PC selecionado, preview de rotação).
-    // A confirmação por toque, persistência e verificação de parede têm
-    // cobertura profunda independente em verify_layout_editor.mjs.
-    await page.locator("#organize-layout").click();
-    await page.locator("#layout-editor").waitFor({state:"visible"});
-    await page.locator("#layout-object").selectOption("pc:0");
+    await page.locator("#open-shop").click();
+    await page.locator('[data-buy="plant"]').click();
+    await page.locator("#placement-toolbar").waitFor({state:"visible"});
     await writeFile(resolve(output,"lhs_furniture_placement_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
-    await page.locator("#layout-rotate").click();
+    await page.locator("#placement-cancel").click();
+    // Exercício completo com mouse real: compra, seleção, prévia e mudança sem cobrança.
+    async function clickFurnitureSlot(slotId){
+      await page.locator("#game").scrollIntoViewIfNeeded();
+      const point=await page.evaluate(async slotId=>{
+        const [{FURNITURE_SLOTS},{cameraForRoom,iso}]=await Promise.all([
+          import("./js/sim/shop.js"),import("./js/render/isometric.js")
+        ]);
+        const slot=FURNITURE_SLOTS.find(p=>p.id===slotId);
+        if(!slot)throw Error("Slot de teste inexistente: "+slotId);
+        const pos=slot.surface==="wall"
+          ?iso({x:slot.x+0.33,y:0.01},cameraForRoom(8),137)
+          :iso({x:slot.x+0.25,y:slot.y+0.20},cameraForRoom(8),9);
+        const canvas=document.querySelector("#game"),bounds=canvas.getBoundingClientRect();
+        return {x:bounds.left+pos.x*bounds.width/canvas.width,y:bounds.top+pos.y*bounds.height/canvas.height};
+      },slotId);
+      await page.mouse.move(point.x,point.y);
+      await page.mouse.click(point.x,point.y);
+    }
+    await page.locator("#open-shop").click();
+    await page.locator('[data-buy="plant"]').click();
+    await clickFurnitureSlot("floor-1");
+    await page.locator("#open-shop").click();
+    await page.locator("#organize-furniture").click();
+    // O editor novo substituiu o antigo toolbar de reposicionamento.
+    await page.locator("#layout-editor").waitFor({state:"visible"});
+    await page.locator("#layout-object").selectOption("decor:floor-1");
+    const beforeMoving=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+    // A captura mostra a prévia do móvel sendo levado à nova posição.
+    await page.locator("#game").scrollIntoViewIfNeeded();
+    const destination=await page.evaluate(async()=>{
+      const [{FURNITURE_SLOTS},{cameraForRoom,iso}]=await Promise.all([
+        import("./js/sim/shop.js"),import("./js/render/isometric.js")
+      ]);
+      const slot=FURNITURE_SLOTS.find(p=>p.id==="floor-3");
+      const at=iso({x:slot.x+0.25,y:slot.y+0.20},cameraForRoom(8),9);
+      const canvas=document.querySelector("#game"),bounds=canvas.getBoundingClientRect();
+      return {x:bounds.left+at.x*bounds.width/canvas.width,y:bounds.top+at.y*bounds.height/canvas.height};
+    });
+    await page.mouse.move(destination.x,destination.y);
+    await clickFurnitureSlot("floor-3");
+    await page.waitForTimeout(120);
     await writeFile(resolve(output,"lhs_furniture_relocation_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
+    // Somente Confirmar salva a mudança no editor novo.
+    await page.locator("#layout-confirm").click();
+    await page.waitForFunction(key=>{
+      const saved=JSON.parse(localStorage.getItem(key)??"null");
+      return saved?.furniturePlacements?.some(p=>p.kind==="plant"&&p.slotId==="floor-3");
+    },GAME_SAVE_KEY);
+    const moved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
     await page.locator("#layout-close").click();
-    if(!(await page.locator("#layout-editor").isHidden()))
-      throw Error("Editor deveria fechar após a visualização");
-
+    if(moved.cash!==beforeMoving.cash||moved.expenses!==beforeMoving.expenses)
+      throw Error("Reposicionamento cobrou novamente: "+JSON.stringify({cash:moved.cash,expenses:moved.expenses}));
     const directionalPreview=await page.evaluate(async()=>{
       const [{createGame},{SceneRenderer},{placeFurniture,rotateFurniture},{buildWall}]=await Promise.all([
         import("./js/sim/engine.js"),import("./js/render/scene.js"),import("./js/sim/shop.js"),import("./js/sim/walls.js")

@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcPosition,isValidSave} from "../dist/js/sim/engine.js";
-import {editableObjects,moveLayoutObject,validateObjectPlacements,layoutGoals} from "../dist/js/sim/editableObjects.js";
+import {editableObjects,moveLayoutObject,validateObjectPlacements,layoutGoals,removeLayoutObject} from "../dist/js/sim/editableObjects.js";
 import {purchaseApproach} from "../dist/js/sim/layout.js";
 import {computerSeat} from "../dist/js/sim/route.js";
 import {buyFurniture,furnitureLocations,availablePlacementSlots,placeFurniture} from "../dist/js/sim/shop.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {buildWall,canBuildWall} from "../dist/js/sim/walls.js";
+import {buildWall,canBuildWall,removePartition,removablePartitions,installInteriorDoor} from "../dist/js/sim/walls.js";
 import {navigableRoute} from "../dist/js/sim/navigation.js";
 import {expandDirection} from "../dist/js/sim/room.js";
 const fresh=()=>{const s=createGame();s.cash=20000;return s;};
@@ -82,4 +82,41 @@ test("salão reorganizado continua recebendo pagamentos e compras reais",()=>{
  for(let minute=0;minute<720;minute++)stepGame(s,1);
  assert.ok(s.served>=10,"a fila precisa continuar avançando");assert.ok(s.revenue>start);assert.ok(s.purchases>0);
  const restored=parseImportedSave(serializeSave(s));assert.deepEqual(restored.objectPlacements,s.objectPlacements);
+});
+test("remover cada decoração libera o encaixe e persiste sem reembolso nem item fantasma",()=>{
+ for(const kind of ["table","plant","poster"]){
+  const s=fresh();assert.equal(buyFurniture(s,kind).ok,true);assert.equal(buyFurniture(s,kind).ok,true);
+  const [item,other]=furnitureLocations(s),money=[s.cash,s.expenses,s.revenue],id="decor:"+item.slotId;
+  assert.equal(removeLayoutObject(s,id).ok,true);assert.equal(s.furniture[kind],1);
+  assert.deepEqual(furnitureLocations(s),[other]);assert.ok(availablePlacementSlots(s,kind).some(p=>p.id===item.slotId));
+  const saved=parseImportedSave(serializeSave(s));assert.equal(editableObjects(saved).some(o=>o.id===id),false);
+  const before=JSON.stringify(s);assert.equal(removeLayoutObject(s,id).ok,false);assert.equal(JSON.stringify(s),before);assert.deepEqual([s.cash,s.expenses,s.revenue],money);
+  assert.equal(placeFurniture(s,kind,item.slotId).ok,true);assert.equal(s.furniture[kind],2);
+ }
+});
+test("remover móvel de save antigo normaliza as outras unidades sem fazê-las reaparecer",()=>{
+ const s=fresh();s.furniture={plant:2,table:1,poster:2};delete s.furniturePlacements;
+ const initial=furnitureLocations(s),plant=initial.find(p=>p.kind==="plant");
+ assert.equal(removeLayoutObject(s,"decor:"+plant.slotId).ok,true);
+ assert.deepEqual(furnitureLocations(parseImportedSave(serializeSave(s))),initial.filter(p=>p.slotId!==plant.slotId));
+});
+test("pôster inicial removido não retorna com reload ou ampliação; serviços essenciais são preservados",()=>{
+ const s=fresh();assert.equal(moveLayoutObject(s,"built-poster:2",{x:3.15,y:0},0).ok,true);
+ assert.equal(removeLayoutObject(s,"built-poster:2").ok,true);assert.deepEqual(s.objectPlacements,[]);
+ assert.equal(expandDirection(s,"north").ok,true);assert.equal(expandDirection(s,"west").ok,true);
+ assert.equal(editableObjects(parseImportedSave(serializeSave(s))).some(o=>o.id==="built-poster:2"),false);
+ for(const id of ["pc:0","counter","soda","candy","shelf","bin:0","built-poster:2","unknown"]){const before=JSON.stringify(s);assert.equal(removeLayoutObject(s,id).ok,false);assert.equal(JSON.stringify(s),before);}
+ for(const values of [[0,0],[-1],[7],[1.5],"invalid"]){const bad=structuredClone(s);bad.removedBuiltPosters=values;assert.equal(isValidSave(bad),false);}
+});
+test("remover divisória ou porta libera circulação sem cobrar, incluindo rotas já em curso",()=>{
+ for(const kind of ["wall","door"]){
+  const s=fresh(),wall={axis:"y",x:4,y:4};assert.equal(buildWall(s,wall).ok,true);
+  if(kind==="door")assert.equal(installInteriorDoor(s,wall).ok,true);
+  s.customers=[{id:1,stage:"leaving",pcIndex:null,x:3.5,y:4.5,target:{x:7.5,y:5.35},route:[{x:3.5,y:3.5},{x:5,y:3.5},{x:7.5,y:5.35}],costume:"regular",happy:true,usedMinutes:0,waitingMinutes:0,offlineWait:0}];
+  const [partition]=removablePartitions(s),money=[s.cash,s.expenses];assert.equal(partition.kind,kind);
+  assert.equal(removePartition(s,partition.id).ok,true);assert.deepEqual(removablePartitions(s),[]);assert.deepEqual([s.cash,s.expenses],money);
+  assert.notDeepEqual(s.customers[0].route,[{x:3.5,y:3.5},{x:5,y:3.5},{x:7.5,y:5.35}]);
+  assert.ok(navigableRoute(s,s.customers[0],s.customers[0].target));assert.equal(parseImportedSave(serializeSave(s)).interiorWalls.length,0);
+  const before=JSON.stringify(s);assert.equal(removePartition(s,partition.id).ok,false);assert.equal(JSON.stringify(s),before);
+ }
 });

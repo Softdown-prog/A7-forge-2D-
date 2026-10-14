@@ -14,6 +14,10 @@ export interface Customer {
   target: Point;
   /** Lugar atual na fila física; opcional para partidas anteriores. */
   queueIndex?: number;
+  retailQueueItem?: Item;
+  retailQueueIndex?: number;
+  /** Limita buscas de desvio; salvo para conservar retomadas de partidas. */
+  nextCrowdRetryMinute?: number;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];
   /** Minutos de transição sentando/levantando. */
@@ -111,10 +115,14 @@ export interface GameState {
   furniturePlacements?: Array<{kind:"poster"|"plant"|"table";slotId:string;rotation?:0|1|2|3}>;
   /** Edição física gratuita; IDs das estações preservam peças, licenças e receita. */
   objectPlacements?: Array<{id:string;x:number;y:number;rotation:0|1|2|3}>;
+  /** Pôsteres originais retirados pelo jogador; índices estáveis de 0 a 6. */
+  removedBuiltPosters?: number[];
   /** Desgaste percentual por estação; saves antigos iniciam em zero. */
   pcWear?: number[];
   repairJobs?: import("./services.js").RepairJob[];
   binFill?: number[];
+  /** Lixo derramado quando as lixeiras atingem a capacidade total. */
+  overflowWaste?: number;
   cleaningJob?: import("./services.js").CleaningJob;
   inventory: Inventory;
   customers: Customer[];

@@ -5,6 +5,8 @@ import {mkdir,writeFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
+import {buyFurniture} from "../dist/js/sim/shop.js";
+import {buildWall,installInteriorDoor} from "../dist/js/sim/walls.js";
 const output=resolve(process.argv[2]??"out/layout-editor");await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,"serve.mjs")],{stdio:["ignore","pipe","inherit"]});let browser;
 try{
@@ -13,10 +15,12 @@ try{
  for(const width of [1440,414,360]){
   const context=await browser.newContext({viewport:{width,height:950},hasTouch:width<700,isMobile:width<700}),page=await context.newPage(),errors=[];
   const press=locator=>width<700?locator.tap():locator.click();
-  page.on("pageerror",e=>errors.push(String(e)));const state=createGame();state.cash=20000;
+  const openEditor=async()=>{await press(page.locator("#open-shop"));await press(page.locator("#organize-furniture"));};
+  page.on("pageerror",e=>errors.push(String(e)));const state=createGame();state.cash=20000;assert.equal(buyFurniture(state,"poster").ok,true);
+  const originalDoor={axis:"y",x:4,y:4};assert.equal(buildWall(state,originalDoor).ok,true);assert.equal(installInteriorDoor(state,originalDoor).ok,true);
   await page.addInitScript(s=>{if(!localStorage.getItem("lhs-save-v1"))localStorage.setItem("lhs-save-v1",JSON.stringify(s));},state);
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});await press(page.locator("#menu-continue"));
-  await press(page.locator("#organize-layout"));await page.locator("#layout-object").selectOption("pc:0");
+  await openEditor();await page.locator("#layout-object").selectOption("pc:0");assert.equal(await page.locator("#layout-remove").isDisabled(),true);assert.equal(await page.locator(".scene-controls #organize-furniture").count(),0);
   if(width===1440){
    const cases=await page.evaluate(async()=>{
     const [{objectCamera},{drawRetroComputer},{drawVendingMachine,drawSnackShelf},{createGame}]=await Promise.all([import("./js/render/isometric.js"),import("./js/render/retroComputer.js"),import("./js/render/retailArt.js"),import("./js/sim/engine.js")]);
@@ -50,7 +54,7 @@ try{
   console.log("checking",width,await page.locator("#layout-message").textContent());
   let saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));const placed=saved.objectPlacements?.find(p=>p.id==="pc:0");assert.ok(placed);assert.equal(placed.rotation,1);assert.equal(placed.x,2.5);assert.equal(placed.y,3);
   const minutes=saved.totalMinutes;await page.waitForTimeout(300);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")).totalMinutes),minutes);
-  await press(page.locator("#layout-close"));await press(page.locator("#open-menu"));await page.reload();await press(page.locator("#menu-continue"));await press(page.locator("#organize-layout"));await page.locator("#layout-object").selectOption("pc:0");
+  await press(page.locator("#layout-close"));await press(page.locator("#open-menu"));await page.reload();await press(page.locator("#menu-continue"));await openEditor();await page.locator("#layout-object").selectOption("pc:0");
   saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));assert.deepEqual(saved.objectPlacements.find(p=>p.id==="pc:0"),placed);
   const bounds=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,viewport:document.querySelector("#scene-viewport").clientWidth,canvas:document.querySelector("#game").getBoundingClientRect().width}));assert.ok(bounds.scroll<=bounds.width+3);assert.ok(bounds.canvas>=bounds.viewport);
   await page.screenshot({path:resolve(output,"layout_"+width+".png")});
@@ -63,7 +67,27 @@ try{
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")).interiorWalls?.length??0),beforeWall.interiorWalls?.length??0,"Primeiro toque apenas seleciona");
   await press(page.locator("#turn-wall"));await press(page.locator("#confirm-wall"));
   const afterWall=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));assert.equal(afterWall.interiorWalls.length,(beforeWall.interiorWalls?.length??0)+1);assert.equal(afterWall.expenses,beforeWall.expenses+30);
-assert.deepEqual(errors,[]);results.push({width,zoom,bounds,placement:placed,wallConfirmed:true,errors});await context.close();
+  await press(page.locator("#placement-cancel"));await press(page.locator("#open-shop"));await press(page.locator("#demolish-walls"));
+  const wall=afterWall.interiorWalls.at(-1),wallId="wall:"+wall.axis+":"+wall.x+":"+wall.y;
+  await page.locator("#layout-object").selectOption(wallId);await press(page.locator("#layout-remove"));
+  assert.equal(await page.locator("#layout-removal").isVisible(),true);
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")).interiorWalls.length),1,"Seleção não remove parede");
+  await press(page.locator("#layout-removal-cancel"));assert.equal(await page.locator("#layout-removal").isVisible(),false);
+  await press(page.locator("#layout-remove"));await press(page.locator("#layout-removal-confirm"));
+  let removed=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));assert.equal(removed.interiorWalls.length,0);assert.equal(removed.expenses,afterWall.expenses);
+  await page.locator("#layout-object").selectOption("door:y:4:4");await press(page.locator("#layout-remove"));await press(page.locator("#layout-removal-confirm"));
+  removed=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));assert.equal(removed.interiorDoors.length,0);
+  await press(page.locator("#layout-close"));await openEditor();
+  const decorId="decor:"+removed.furniturePlacements[0].slotId;
+  await page.locator("#layout-object").selectOption(decorId);await press(page.locator("#layout-remove"));await press(page.locator("#layout-removal-cancel"));
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")).furniture.poster),1);
+  await press(page.locator("#layout-remove"));await press(page.locator("#layout-removal-confirm"));
+  await page.locator("#layout-object").selectOption("built-poster:0");await press(page.locator("#layout-remove"));await press(page.locator("#layout-removal-confirm"));
+  await page.reload();await press(page.locator("#menu-continue"));await openEditor();
+  const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));
+  assert.equal(restored.furniture.poster,0);assert.equal(restored.furniturePlacements.length,0);assert.deepEqual(restored.removedBuiltPosters,[0]);assert.equal(restored.interiorWalls.length,0);assert.equal(restored.interiorDoors.length,0);
+  assert.equal(await page.locator('#layout-object option[value="'+decorId+'"]').count(),0);assert.equal(await page.locator('#layout-object option[value="built-poster:0"]').count(),0);
+  assert.deepEqual(errors,[]);results.push({width,zoom,bounds,placement:placed,wallConfirmed:true,wallRemoved:true,doorRemoved:true,decorRemoved:true,removalCancelPreserved:true,errors});await context.close();
  }
  await writeFile(resolve(output,"layout_ui_validation.json"),JSON.stringify(results,null,2));console.log(JSON.stringify(results));
 }finally{await browser?.close();server.kill();}
