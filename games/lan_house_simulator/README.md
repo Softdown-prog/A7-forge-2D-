@@ -67,6 +67,8 @@ A aparência procedural V1 dos personagens é desenhada por `src/render/actorArt
 
 ## Publicação no CH-site (sob demanda)
 
+A fluidez usa apresentação intermediária de posições/poses, atualização de listas visíveis e cache do fundo estático, mantendo a simulação em quatro minutos por segundo. Método de medição, resultados e reprodução: [docs/RUNTIME_PERFORMANCE.md](docs/RUNTIME_PERFORMANCE.md).
+
 O jogo continua sendo desenvolvido e testado em `Softdown-prog/A7-forge-2D-`, pasta `games/lan_house_simulator`. Commits aqui **não disparam deploy do site**.
 
 Quando uma versão estiver aprovada para publicação, atualize a integração no repositório `Softdown-prog/CH-site` (branch `main`). O build Astro desse repositório compila o jogo pelo script `scripts/sync-games.mjs` e coloca o HTML5 em `/play/lan-house-simulator/`. Se o Cloudflare Pages estiver vinculado à `main` do CH-site, o commit/merge do site aciona seu deploy automático.

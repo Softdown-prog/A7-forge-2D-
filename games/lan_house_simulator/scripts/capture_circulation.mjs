@@ -42,7 +42,10 @@ try{
    summary.served=final.served;summary.purchases=final.purchases;
    await context.close();
    const raw=await video.path();
-   execFileSync("ffmpeg",["-y","-i",raw,"-an","-c:v","libx264","-crf","23","-pix_fmt","yuv420p","-movflags","+faststart",resolve(output,"lhs_circulation_runtime.mp4")],{stdio:"ignore"});
+   execFileSync("ffmpeg",["-y","-i",raw,"-an","-c:v","libx264","-threads","2","-preset","veryfast","-crf","23","-pix_fmt","yuv420p","-movflags","+faststart",resolve(output,"lhs_circulation_runtime.mp4")],{stdio:"ignore"});
+   const seconds=Number(execFileSync("ffprobe",["-v","error","-show_entries","format=duration","-of","default=noprint_wrappers=1:nokey=1",resolve(output,"lhs_circulation_runtime.mp4")],{encoding:"utf8"}).trim());
+   if(!Number.isFinite(seconds)||seconds<duration/1000)throw Error("MP4 incompleto");
+   summary.videoSeconds=seconds;
    await rm(resolve(output,"recording"),{recursive:true,force:true});
   }else await context.close();
  }

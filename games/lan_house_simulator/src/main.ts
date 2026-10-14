@@ -9,6 +9,7 @@ import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js
 import {hourlyPriceInsight} from "./sim/pricingInsights.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
+import {SceneMotion} from "./render/motion.js";
 import { PROMOTION_COST, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
@@ -32,6 +33,7 @@ if (!canvas || !admin || !events || !status || !controls) throw new Error("DOM d
 const view = canvas.getContext("2d");
 if (!view) throw new Error("Canvas 2D indisponível");
 const renderer = new SceneRenderer(view);
+const sceneMotion=new SceneMotion();
 const menuCanvas=document.querySelector<HTMLCanvasElement>("#menu-scene"),menuView=menuCanvas?.getContext("2d");
 const menuRenderer=menuView?new SceneRenderer(menuView):null;
 // Presentation-only preview: the player's save is never simulated by the menu.
@@ -120,6 +122,7 @@ importFile.addEventListener("change",async()=>{
  }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
 });
 function showMenu():void{
+ sceneMotion.reset();
  soundscape.stopKeyboard();
  isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
  continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;noticesOpen=false;placingKind=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
@@ -127,6 +130,7 @@ function showMenu():void{
  syncWindowChrome();
 }
 function beginPlay():void{
+ sceneMotion.reset();
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
  renderUI();
@@ -159,6 +163,7 @@ let noticesOpen=false;
 let activeAdminTab="prices";
 let previousServed = game.served;
 let previousPurchases = game.purchases;
+let lastEventSignature="";
 // Playback is handled by the shared Soundscape. No repeated HTMLAudioElements.
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
@@ -345,7 +350,7 @@ function activateAdminTab(tab:string):void{
  for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));button.tabIndex=active?0:-1;}
  for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
-for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");});
+for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");renderUI();});
 const retailControls=document.getElementById("retail-price-controls");
 retailControls?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
@@ -474,6 +479,7 @@ canvas.addEventListener("click",e=>{
   if(renderer.hitOwner(x,y)){soundscape.click();adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
 function renderShop():void{
+ if(!shopOpen)return;
  if(!shopCatalog)return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=furnitureLocations(game).length;organize.disabled=count===0;organize.textContent=count?"↔ Organizar móveis instalados ("+count+")":"↔ Organizar móveis (nenhum instalado)";}
@@ -519,7 +525,7 @@ function renderUI():void {
   const unread=unreadNotices(game),badge=document.getElementById("notices-count");
   if(badge){badge.hidden=unread===0;badge.textContent=String(unread);}
   document.getElementById("open-notices")?.setAttribute("aria-expanded",String(noticesOpen));
-  if(noticesList){
+  if(noticesList&&noticesOpen){
     noticesList.replaceChildren();
     if(!(game.notices?.length)){const empty=document.createElement("p");empty.textContent="Nenhuma mensagem recebida por enquanto.";noticesList.append(empty);}
     for(const n of game.notices??[]){
@@ -584,7 +590,7 @@ function renderUI():void {
   setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
   setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
   setText("price-caution",priceInsight.caution);
-  if(retailControls){
+  if(retailControls&&adminOpen&&activeAdminTab==="prices"){
    retailControls.replaceChildren();
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
     const line=document.createElement("div");line.className="price-control";
@@ -623,7 +629,7 @@ function renderUI():void {
   const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+broken+" em manutenção · início: era Windows 98");
   const maintenance=document.getElementById("pc-maintenance");
-  if(maintenance){
+  if(maintenance&&adminOpen&&activeAdminTab==="computers"){
     const header=document.createElement("strong");header.textContent="Manutenção por computador";maintenance.replaceChildren(header);
     for(let i=0;i<pcCount(game);i++){
       const wear=pcWear(game,i);
@@ -643,7 +649,7 @@ function renderUI():void {
       line.append(label,repair,upgrade);maintenance.appendChild(line);
     }
   }
-  if(gpuPcChoice&&gpuList){
+  if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"){
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
     gpuPcChoice.replaceChildren();gpuList.replaceChildren();
     for(let i=0;i<pcCount(game);i++){
@@ -672,7 +678,7 @@ function renderUI():void {
     }
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
-  if(licensePanel){
+  if(licensePanel&&adminOpen&&activeAdminTab==="licenses"){
     licensePanel.replaceChildren();
     for(let i=0;i<pcCount(game);i++){
       const line=document.createElement("div");line.className="price-control";
@@ -717,8 +723,10 @@ function renderUI():void {
     promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · R$ "+PROMOTION_COST;
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
+  const recentEvents=game.eventLog.slice(0,6),eventSignature=JSON.stringify(recentEvents);
+  if(eventSignature!==lastEventSignature){
   events.replaceChildren();
-  for(const record of game.eventLog.slice(0,6)){
+  for(const record of recentEvents){
     const li=document.createElement("li"),text=document.createElement("span");
     const match=record.match(/^(D\d+ [\d:]+) · (.*)$/);
     if(match){const time=document.createElement("time");time.textContent=match[1]!;text.append(time,document.createTextNode(match[2]!));}
@@ -726,15 +734,21 @@ function renderUI():void {
     li.innerHTML=iconMarkup(/pagou|Venda/.test(record)?"coins":/internet/i.test(record)?"network":/PC|computador/i.test(record)?"computer":"mail");
     li.append(text);events.appendChild(li);
   }
+  lastEventSignature=eventSignature;
+  }
   controls.setAttribute("aria-expanded",String(adminOpen));
-  presentLiveState(game,internetName());
+  presentLiveState(game,internetName(),adminOpen?activeAdminTab:null);
 }
 let lastFrame=0,lastUI=0,lastMenuFrame=0,elapsed=0;
+let wasSimulating=false;
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
+  const simulating=isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
+  if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(isPlaying&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
@@ -763,7 +777,7 @@ function frame(timestamp:number):void {
     speechPopups.push({...speech,age:0});
     if(speechPopups.length>8)speechPopups.shift();
   }
-  if(isPlaying)renderer.draw(game,elapsed);
+  if(isPlaying)renderer.draw(sceneMotion.sample(game),elapsed);
   else if(menuRenderer&&!reduceMotion.matches&&timestamp-lastMenuFrame>65){menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
   if(isPlaying){paintPayments(dt);paintSales(dt);paintSpeech(dt);}
   if(isPlaying&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement);

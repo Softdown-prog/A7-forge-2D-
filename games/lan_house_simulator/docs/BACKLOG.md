@@ -350,3 +350,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Executar onze campanhas controladas de 180 dias em 1998 e 2009, comparando preços intermediários, reputação, margem, VIPs, ocupação, investimentos e upgrades.
 - [ ] Repetir os cenários com várias sementes e os anos 2011–2013 antes de chamar o preço ideal de definitivo.
 - [ ] Aprovar visualmente o painel em aparelho móvel físico; capturas e testes de emulação não substituem essa revisão.
+
+## Fluidez e custo de apresentação — 14/10/2026
+- [x] Medir RAF, tempo de desenho, movimento, DOM e CPU limitada; registrar método/resultados em `docs/RUNTIME_PERFORMANCE.md`.
+- [x] Apresentar movimento/poses intermediárias de clientes, técnico e faxineiro, preservando relógio de quatro minutos/segundo, RNG, economia, saves e navegação.
+- [x] Atualizar listas administrativas, cartas e catálogo quando visíveis; memoizar o diário e atualizar abas imediatamente ao abri-las.
+- [x] Guardar fundo estático em cache invalidado por câmera, tamanho, expansão e pôsteres; comparar seis cenários com o desenho original no Chromium e no CI.
+- [x] Cobrir apresentação, soleira, assentos, reset, remoção, paredes, funcionários e determinismo com sete testes; executar os 160 testes da versão conjunta.
+- [ ] Medir em aparelho móvel físico e salões máximos antes de prometer 60 FPS em todos os casos.

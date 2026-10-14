@@ -14,6 +14,8 @@ import {SCENE_THEME as theme} from "./theme.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
+  private background:HTMLCanvasElement|null=null;
+  private backgroundKey="";
   constructor(private ctx: CanvasRenderingContext2D) {}
   hitOwner(x: number, y: number): boolean {
     const r = this.heroHitbox;
@@ -21,14 +23,7 @@ export class SceneRenderer {
   }
   draw(s: GameState, elapsedSeconds: number): void {
     const ctx = this.ctx, w=1000, h=610, roomW=roomWidth(s), camera=cameraForGame(s),bounds=roomBounds(s);
-    ctx.clearRect(0,0,w,h);
-    const sky = ctx.createLinearGradient(0,0,0,h);
-    sky.addColorStop(0,theme.backgroundTop); sky.addColorStop(1,theme.backgroundBottom);
-    ctx.fillStyle=sky; ctx.fillRect(0,0,w,h);
-    this.floor(camera,bounds);
-    this.walls(camera,bounds);
-    this.decor(camera,bounds);
-    this.extraPosters(camera,s);
+    this.drawBackground(s,camera,bounds,w,h);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:3.7,paint:()=>this.shelf(camera,bounds.minX)},
@@ -64,6 +59,32 @@ export class SceneRenderer {
     for (const e of entries) e.paint();
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
+  }
+  /** One local bitmap for the unchanged room: shadow, floor, outside walls and
+   * fixed decoration. Animated objects keep their original depth-sorted paint. */
+  private drawBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
+    const live=this.ctx;
+    const key=JSON.stringify([w,h,camera,bounds,s.furniture?.poster??0,
+      s.furniturePlacements?.filter(p=>p.kind==="poster")??[]]);
+    if(typeof document!=="undefined"){
+      if(!this.background){this.background=document.createElement("canvas");this.background.width=w;this.background.height=h;}
+      const buffer=this.background.getContext("2d");
+      if(buffer){
+        if(key!==this.backgroundKey){
+          this.ctx=buffer;
+          try{this.paintBackground(s,camera,bounds,w,h);this.backgroundKey=key;}
+          finally{this.ctx=live;}
+        }
+        live.drawImage(this.background,0,0);return;
+      }
+    }
+    this.paintBackground(s,camera,bounds,w,h);
+  }
+  private paintBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
+    const ctx=this.ctx,sky=ctx.createLinearGradient(0,0,0,h);
+    sky.addColorStop(0,theme.backgroundTop);sky.addColorStop(1,theme.backgroundBottom);
+    ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+    this.floor(camera,bounds);this.walls(camera,bounds);this.decor(camera,bounds);this.extraPosters(camera,s);
   }
   /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
   private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
@@ -559,7 +580,7 @@ export class SceneRenderer {
     let x=c.x,y=c.y;
     const moving=c.stage==="arriving" || c.stage==="to_pc" ||
       c.stage==="shopping" || c.stage==="leaving";
-    let pose:ActorPose=moving?"walking":"idle";
+    let pose:ActorPose=moving&&Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001?"walking":"idle";
     let transition=1;
     if(seated && c.pcIndex!==null){
       const p=pcPosition(c.pcIndex,s);

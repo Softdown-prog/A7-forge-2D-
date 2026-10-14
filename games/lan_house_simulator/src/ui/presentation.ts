@@ -41,7 +41,7 @@ export function decorateControls():void{
   if(!node.querySelector(".ui-icon"))node.insertAdjacentHTML("beforeend",iconMarkup(summaryIcons[i]??"chart"));
  });
 }
-export function presentLiveState(s:GameState,internet:string):void{
+export function presentLiveState(s:GameState,internet:string,section:string|null=null):void{
  const count=pcCount(s),occupied=s.customers.filter(c=>c.stage==="using").length;
  const cards=[
   {icon:"coins",label:"Caixa disponível",value:"R$ "+s.cash.toLocaleString("pt-BR"),className:"cash"},
@@ -56,16 +56,16 @@ export function presentLiveState(s:GameState,internet:string):void{
  const calendar=document.getElementById("calendar-hud");if(calendar)calendar.insertAdjacentHTML("afterbegin",iconMarkup("calendar"));
  const weather=document.getElementById("weather-hud");if(weather)weather.insertAdjacentHTML("afterbegin",iconMarkup(s.weather==="rain"?"rain":"sun"));
  const stock=document.getElementById("stock");
- if(stock){stock.className="stock-metrics";stock.innerHTML=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");}
+ if(stock&&section==="stock"){stock.className="stock-metrics";stock.innerHTML=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");}
  const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!isPromotionActive(s);
  const usage=document.querySelector(".finance-usage"),capacity=s.monthPcCapacityMinutes??0;
- if(usage){
+ if(usage&&section==="finance"){
   let meter=usage.querySelector<HTMLElement>(".occupancy-meter");
   if(!meter){meter=document.createElement("div");meter.className="occupancy-meter";meter.setAttribute("role","progressbar");meter.setAttribute("aria-label","Ocupação real neste mês");meter.setAttribute("aria-valuemin","0");meter.setAttribute("aria-valuemax","100");usage.querySelector("h4")?.after(meter);}
   const pct=computerOccupancyPercent(s.monthPcUsedMinutes??0,capacity);
   meter.setAttribute("aria-valuenow",String(pct));meter.innerHTML='<span style="width:'+pct+'%"></span>';
  }
- for(const line of Array.from(document.querySelectorAll<HTMLElement>("#pc-maintenance>div"))){
+ for(const line of section==="computers"?Array.from(document.querySelectorAll<HTMLElement>("#pc-maintenance>div")):[]){
   const repair=line.querySelector<HTMLButtonElement>("[data-pc-repair]"),label=line.querySelector<HTMLElement>(":scope>span");
   if(!repair||!label)continue;
   const i=Number(repair.dataset.pcRepair),wear=pcWear(s,i),broken=pcBroken(s,i);
