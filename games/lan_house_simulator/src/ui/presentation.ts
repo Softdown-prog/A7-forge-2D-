@@ -2,6 +2,7 @@ import type {GameState} from "../sim/types.js";
 import {online,pcCount,pcWear,pcBroken} from "../sim/engine.js";
 import {computerOccupancyPercent} from "../sim/financialReview.js";
 import {isPromotionActive} from "../sim/promotion.js";
+import {stationModelName} from "../sim/computerModels.js";
 
 const icons=new Set("computer cart settings mail play pause continue save upload close coins chart calendar sun rain network users tag stock tools chip shield wall door expand move rotate plant poster table megaphone trash check cursor idea lock warning arrow soda candy snacks".split(" "));
 export function iconMarkup(name:string):string{
@@ -23,7 +24,7 @@ const tabIcons:Record<string,string>={prices:"tag",computers:"computer",gpus:"ch
 export function decorateControls():void{
  for(const button of Array.from(document.querySelectorAll<HTMLButtonElement>("button"))){
   let name=button.dataset.icon??controlIcons[button.id]??tabIcons[button.dataset.adminTab??""]??
-   (button.dataset.buy?"cart":button.dataset.pcRepair!==undefined?"tools":button.dataset.pcUpgrade!==undefined?"chip":
+   (button.dataset.buy?"cart":button.dataset.lcdBuy?"computer":button.dataset.lcdSelect!==undefined?"computer":button.dataset.pcRepair!==undefined?"tools":button.dataset.pcUpgrade!==undefined?"chip":
     button.dataset.winPc!==undefined?"shield":button.dataset.gpuBuy?"chip":button.dataset.gpuSelect!==undefined?"computer":
     button.dataset.noticeRead?"check":button.dataset.noticeAction?"arrow":button.dataset.decision?"arrow":null);
   if(!name||button.querySelector(":scope > .ui-icon"))continue;
@@ -70,7 +71,7 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
   if(!repair||!label)continue;
   const i=Number(repair.dataset.pcRepair),wear=pcWear(s,i),broken=pcBroken(s,i);
   label.className="pc-label";
-  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>Hardware '+(s.pcTiers?.[i]??1)+' · desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
+  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+stationModelName(s,i)+' · hardware '+(s.pcTiers?.[i]??1)+' · desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
  }
  decorateControls();syncWindowChrome();
 }

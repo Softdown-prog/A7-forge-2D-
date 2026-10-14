@@ -74,6 +74,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_computer_art.mjs out/validation
+      - name: Verify five LCD generations, release years and paid station upgrades
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/capture_lcd_generations.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

@@ -435,3 +435,11 @@ A tarefa só recebe status concluído se código + testes + visualização em ta
 - [x] Identificar erro de política no controlador ingênuo por ocupação: reduziu preço de R$ 12 para R$ 8 a partir do terceiro mês, com queda do resultado líquido; não promover para gameplay.
 - [x] Separar teste anual pesado de `npm test` para não atrasar toda compilação: `npm run audit:annual` ou `workflow_dispatch` manual.
 - [ ] Validar mais sementes e condições de procura, e estimar amortização/desgaste de GPUs e salões com divisórias antes de retocar preços do jogo; revisar arte e indicadores em telefone físico.
+
+## Cinco gerações de kits LCD — 14/10/2026
+- [x] Preservar três CRTs e desenhar LCD 4:3, widescreen, LED, IPS e Arena com monitores, pedestais, gabinetes e periféricos próprios.
+- [x] Liberar por ano (2005/2008/2012/2017/2024), comprar por estação após hardware 3, preservar GPU/licenças/desgaste e informar preço integral e benefício incremental.
+- [x] Integrar bônus modesto e economia de energia, save antigo/novo, anexos/reindexação e cache de sprites; catálogo reutiliza ilustrações de produção.
+- [x] Passar 188 testes ativos, auditoria estática e 240 comparações Canvas; comprar e recarregar em 1440/414/360 e conferir bloqueios de 2005.
+- [x] Registrar catálogo, custos e limites em `docs/LCD_GENERATIONS.md`; adicionar verificação ao worker de cena.
+- [ ] Auditar retorno dos kits em campanhas longas e conferir os novos modelos em telefone físico antes de revisar o balanceamento inicial.

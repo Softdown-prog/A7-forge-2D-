@@ -2,6 +2,7 @@ import type {GameState,Result} from "./types.js";
 import {roomBounds,expansionPrice} from "./room.js";
 import {WALL_COST} from "./walls.js";
 import {annexComputerSlots,ANNEX_PC_COST,availableAnnexComputers} from "./stations.js";
+import {installedLcd} from "./computerModels.js";
 export type FurnitureKind="poster"|"plant"|"table";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar salão",category:"Expansão",description:"Libera espaço para mais dois PCs."},
@@ -38,6 +39,8 @@ export function buyComputer(s:GameState):Result{
  (s.pcWindows??=[]).splice(count,0,"win98");
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
  (s.pcGpus??=[]).splice(count,0,null);
+ s.pcLcdModels=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>installedLcd(s,i));
+ s.pcLcdModels.splice(count,0,null);
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
  return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
 }

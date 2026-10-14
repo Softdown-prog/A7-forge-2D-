@@ -43,6 +43,7 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
  (s.annexPcs??=[]).push({slotId});
  (s.pcTiers??=[])[index]=1;
  (s.pcGpus??=[])[index]=null;
+ if(s.pcLcdModels)s.pcLcdModels[index]=null;
  (s.pcWear??=[])[index]=0;
  return {ok:true,message:"PC instalado no anexo: -R$ "+ANNEX_PC_COST+"."};
 }

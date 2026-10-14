@@ -68,6 +68,7 @@ export interface GameState {
   pcTiers?: number[];
   /** GPU por computador; ausente em saves anteriores. */
   pcGpus?: Array<"gpu05"|"gpu07"|"gpu09"|"gpu11"|"gpu13"|null>;
+  pcLcdModels?: Array<"lcd05"|"lcd08"|"lcd12"|"lcd17"|"lcd24"|null>;
   /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
   supplierTier?: 1 | 2;
   /** Dia da última campanha; compatível com saves antigos. */

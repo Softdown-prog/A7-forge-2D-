@@ -17,6 +17,7 @@ import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
 import {crowdRoute} from "./crowdNavigation.js";
+import {validLcdModels} from "./computerModels.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 export function createGame(seed = 72421): GameState {
@@ -445,7 +446,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
+  return validLcdModels(v.pcLcdModels) && metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
     v.version === 1 && Number.isFinite(v.totalMinutes) && Number.isFinite(v.cash) &&
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&

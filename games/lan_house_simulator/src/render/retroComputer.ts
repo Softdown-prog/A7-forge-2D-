@@ -2,9 +2,17 @@ import type {GameState,Point} from "../sim/types.js";
 import {iso,polygon,cuboid,type Projection} from "./isometric.js";
 import {pcBroken} from "../sim/engine.js";
 import {installedGpu} from "../sim/gpu.js";
+import {installedLcd,type LcdId} from "../sim/computerModels.js";
 
 type ComputerMode="ready"|"busy"|"offline"|"maintenance";
-interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null}
+interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null}
+const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:string}>={
+ lcd05:{top:"#d4dcd9",front:"#a5b6b5",side:"#71888a",accent:"#75a5a8"},
+ lcd08:{top:"#535d60",front:"#39474b",side:"#26383d",accent:"#98b9b7"},
+ lcd12:{top:"#677579",front:"#3a5058",side:"#283e46",accent:"#68b9c4"},
+ lcd17:{top:"#64706f",front:"#364846",side:"#253b38",accent:"#d7b477"},
+ lcd24:{top:"#384d55",front:"#243c47",side:"#172e39",accent:"#8bb8bd"}
+};
 const gpuColors:Record<string,string>={gpu05:"#75aa85",gpu07:"#c1a15f",gpu09:"#6dabb8",gpu11:"#a393bc",gpu13:"#ba7773"};
 function raisedBox(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,w:number,d:number,z:number,h:number,
  top:string,front:string,side:string):void{
@@ -25,6 +33,64 @@ function plane(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,w:num
 function round(c:CanvasRenderingContext2D,x:number,y:number,w:number,h:number,r:number,color:string,outline?:string):void{
  c.beginPath();c.roundRect(x,y,w,h,r);c.fillStyle=color;c.fill();
  if(outline){c.strokeStyle=outline;c.lineWidth=1.5;c.stroke();}
+}
+function lcdMonitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerAppearance):void{
+ const id=a.lcd!;const n=["lcd05","lcd08","lcd12","lcd17","lcd24"].indexOf(id);
+ const colors=lcdMaterials[id],z=cam.zoom,at=(x:number,y:number,h:number)=>iso({x:p.x+x,y:p.y+y},cam,h);
+ // Width follows the horizontal face in isometric world units (sqrt(64²+32²));
+ // heights keep a 4:3 first LCD and genuinely wide later panels.
+ const width=[.52,.62,.67,.70,.74][n]!,height=[28,25,27,28,30][n]!;
+ const x=.44-width/2,y=.12,depth=[.095,.075,.045,.035,.04][n]!,bottom=43;
+ // Each stand has its own silhouette; all stay on the existing desk footprint.
+ if(n===0)raisedBox(c,cam,p.x+.27,p.y+.09,.34,.20,34.5,1.8,colors.top,colors.front,colors.side);
+ else if(n===1)raisedBox(c,cam,p.x+.30,p.y+.11,.28,.19,34.5,1.4,colors.top,colors.front,colors.side);
+ else if(n===2){const base=at(.44,.21,35);c.fillStyle=colors.front;c.beginPath();c.ellipse(base.x,base.y,12*z,5*z,0,0,Math.PI*2);c.fill();}
+ else if(n===3)raisedBox(c,cam,p.x+.30,p.y+.10,.28,.21,34.5,1.3,"#b5c1ba",colors.top,colors.side);
+ else for(const side of [-1,1])path(c,[at(.44,.16,36),at(.44+side*.20,.28,35)],colors.top,3*z);
+ path(c,[at(.44,.16,36),at(.44,.16,bottom+9)],n===3?"#b7c7c1":colors.front,(n===0?5:3.2)*z);
+ raisedBox(c,cam,p.x+x,p.y+y,width,depth,bottom,height,colors.top,colors.front,colors.side);
+ plane(c,cam,p.x+x,p.y+y+depth+.003,width,bottom,height,()=>{
+  round(c,0,0,96,100,n<2?3:1.5,colors.front,"#1f393d");
+  const edge=[8,6,4,2.5,2.5][n]!,foot=[12,10,7,6,6][n]!;
+  round(c,edge,edge,96-edge*2,100-edge-foot,1,"#17333f");
+  c.save();c.beginPath();c.rect(edge+1,edge+1,94-edge*2,98-edge-foot);c.clip();
+  if(a.mode==="maintenance"){
+   c.fillStyle="#243941";c.fillRect(0,0,96,100);
+   path(c,[{x:34,y:30},{x:49,y:47},{x:62,y:34}],"#e0b77a",5);
+   c.fillStyle="#d3a560";c.fillRect(30,61,38,4);
+  }else if(a.mode==="offline"){
+   c.fillStyle="#233c47";c.fillRect(0,0,96,100);
+   round(c,30,32,36,25,2,"#879e9c");
+   path(c,[{x:37,y:64},{x:59,y:64}],"#c7ac76",3);
+   path(c,[{x:41,y:40},{x:55,y:51}],"#896d52",3);
+  }else if(n===4){
+   c.fillStyle="#193a4e";c.fillRect(0,0,96,100);
+   polygon(c,[{x:0,y:72},{x:47,y:24},{x:96,y:73},{x:96,y:94},{x:0,y:94}],"#275870");
+   for(let i=0;i<4;i++)path(c,[{x:16+i*21,y:90},{x:47,y:30}],"#4d8791",1);
+   path(c,[{x:3,y:74},{x:93,y:74}],"#84afa3",2);
+   const target=a.mode==="busy"&&a.pulse?59:48;
+   path(c,[{x:target-4,y:47},{x:target+4,y:47}],"#e4c181",1.5);
+   path(c,[{x:target,y:43},{x:target,y:51}],"#e4c181",1.5);
+   c.fillStyle="#d9b976";c.fillRect(8,12,24,4);c.fillStyle="#8cb6b6";c.fillRect(8,19,16,3);
+  }else{
+   c.fillStyle=["#467e94","#40697d","#3c8591","#467b71"][n]!;c.fillRect(0,0,96,100);
+   polygon(c,[{x:0,y:77},{x:35,y:33},{x:96,y:70},{x:96,y:95},{x:0,y:95}],n<2?"#719a7c":"#63a498");
+   polygon(c,[{x:0,y:88},{x:57,y:62},{x:96,y:81},{x:96,y:95},{x:0,y:95}],"#3f746c");
+   for(let i=0;i<3;i++){c.fillStyle=i===1?"#e2c17b":"#bed5c6";c.fillRect(12,16+i*15,6,7);}
+   round(c,29,24,n===0?54:40,46,2,"#e5e7d5");
+   c.fillStyle=n<2?"#335e7e":"#407b79";c.fillRect(30,25,n===0?52:38,7);
+   c.fillStyle="#86ada1";c.fillRect(34,39,n===0?40:27,5);
+   c.fillStyle="#b1c5b0";c.fillRect(34,49,24,3);
+   c.fillStyle=a.mode==="busy"&&a.pulse?"#d9b573":"#6b9d8d";c.fillRect(34,58,a.pulse?26:16,4);
+   if(n>0){round(c,73,38,17,31,1,"#aec6ba");c.fillStyle="#54786f";c.fillRect(75,42,12,4);c.fillRect(75,51,9,2);}
+   c.fillStyle=n===3?"#284e4a":"#b9c5ad";c.fillRect(edge,85,96-edge*2,7);
+   c.fillStyle="#e5d8b5";c.fillRect(n===3?39:12,87,16,3);
+  }
+  polygon(c,[{x:9,y:6},{x:22,y:6},{x:60,y:90},{x:50,y:90}],"rgba(238,245,223,.07)");c.restore();
+  c.fillStyle=colors.accent;c.fillRect(40,96-foot/2,15,1.5);
+  c.fillStyle=a.mode==="maintenance"?"#dfb166":a.mode==="offline"?"#a38f63":"#87c4ae";
+  c.fillRect(87,95,2,2);
+ });
 }
 function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerAppearance):void{
  const {tier,mode,pulse}=a,z=cam.zoom;
@@ -70,8 +136,9 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
  });
 }
 function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:number,a:ComputerAppearance):void{
- const {tier,occupied,mode,gpu}=a,z=cam.zoom;
- const accent=tier===3?"#619493":tier===2?"#bca16b":"#a99c7d";
+ const {tier,occupied,mode,gpu,lcd}=a,z=cam.zoom;
+ const kit=lcd?lcdMaterials[lcd]:null;
+ const accent=kit?.accent??(tier===3?"#619493":tier===2?"#bca16b":"#a99c7d");
  const at=(x:number,y:number,h=0)=>iso({x:p.x+x,y:p.y+y},cam,h);
  c.save();c.lineJoin="round";
  const ground=at(.35,.38);c.fillStyle="rgba(26,39,38,.18)";
@@ -88,30 +155,40 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
  polygon(c,[at(.17,.0,34.1),at(.73,.0,34.1),at(.73,.35,34.1),at(.17,.35,34.1)],"rgba(43,54,45,.15)");
  path(c,[at(.22,.38,35),at(.07,.19,35),at(-.02,.22,35)],"#6b7161",1.2*z);
  raisedBox(c,cam,p.x-.12,p.y+.06,.22,.34,35,20,
-  tier===3?"#ccd7ce":tier===2?"#e8d7ae":"#e7deca",
-  tier===3?"#9eb5a8":tier===2?"#c6ad7f":"#c4b89d",
-  tier===3?"#718d83":tier===2?"#a08d6d":"#a59e8b");
+  kit?.top??(tier===3?"#ccd7ce":tier===2?"#e8d7ae":"#e7deca"),
+  kit?.front??(tier===3?"#9eb5a8":tier===2?"#c6ad7f":"#c4b89d"),
+  kit?.side??(tier===3?"#718d83":tier===2?"#a08d6d":"#a59e8b"));
  plane(c,cam,p.x-.12,p.y+.403,.22,35,20,()=>{
-  round(c,8,9,80,17,2,"#b1aa96","#7d8171");c.fillStyle="#657264";c.fillRect(17,17,54,3);
-  round(c,14,33,65,8,2,"#9c9c89");
-  for(let row=0;row<3;row++){c.fillStyle="#889580";c.fillRect(15,54+row*7,44,2);}
+  if(!lcd||lcd==="lcd05"||lcd==="lcd08"){
+   round(c,8,9,80,17,2,kit?.top??"#b1aa96","#7d8171");c.fillStyle="#657264";c.fillRect(17,17,54,3);
+   round(c,14,33,65,8,2,kit?.side??"#9c9c89");
+  }else{
+   round(c,9,7,76,77,3,kit!.side);
+   for(const cy of lcd==="lcd24"?[28,62]:[48]){
+    c.fillStyle=kit!.front;c.beginPath();c.arc(45,cy,17,0,Math.PI*2);c.fill();
+    c.strokeStyle=lcd==="lcd24"?accent:"#6c8585";c.lineWidth=2;c.stroke();
+    for(let i=0;i<4;i++){const r=i*Math.PI/2;c.fillStyle=kit!.top;c.beginPath();c.ellipse(45+Math.cos(r)*8,cy+Math.sin(r)*8,7,3,r+.6,0,Math.PI*2);c.fill();}
+   }
+   c.fillStyle=accent;c.fillRect(16,88,8,2);c.fillRect(30,88,8,2);
+  }
+  if(!lcd||lcd==="lcd05"||lcd==="lcd08")for(let row=0;row<3;row++){c.fillStyle="#889580";c.fillRect(15,54+row*7,44,2);}
   c.fillStyle=mode==="maintenance"?"#b68449":mode==="offline"?"#b1a070":"#8fc090";c.fillRect(72,68,7,7);
   if(tier>1){c.fillStyle=accent;c.fillRect(65,44,15,14);}
  });
  if(gpu){const label=at(.108,.22,44);c.fillStyle=gpuColors[gpu];c.beginPath();c.ellipse(label.x,label.y,3*z,4*z,-.3,0,Math.PI*2);c.fill();}
- monitor(c,cam,p,a);
+ if(lcd)lcdMonitor(c,cam,p,a);else monitor(c,cam,p,a);
  // Keyboard stays at its existing anchor so seated hands remain aligned.
  const keyX=p.x+.15,keyY=p.y+.38;
- raisedBox(c,cam,keyX,keyY,.42,.12,34.7,1.1,"#e1d8be","#aba68e","#b9b59e");
+ raisedBox(c,cam,keyX,keyY,.42,.12,34.7,1.1,kit?.top??"#e1d8be",kit?.side??"#aba68e",kit?.front??"#b9b59e");
  for(let row=0;row<3;row++)for(let col=0;col<7;col++){
   const x=keyX+.025+col*.05,y=keyY+.013+row*.028;
   polygon(c,[iso({x,y},cam,36),iso({x:x+.036,y},cam,36),
-   iso({x:x+.036,y:y+.017},cam,36),iso({x,y:y+.017},cam,36)],"#f0e8d2","#a49f8b");
+   iso({x:x+.036,y:y+.017},cam,36),iso({x,y:y+.017},cam,36)],kit?kit.front:"#f0e8d2",kit?kit.accent:"#a49f8b");
  }
  polygon(c,[at(.24,.48,36),at(.44,.48,36),at(.44,.494,36),at(.24,.494,36)],"#e3dac2","#9b9884");
  polygon(c,[at(.61,.38,35),at(.77,.38,35),at(.77,.56,35),at(.61,.56,35)],"#657e72","#50695f");
  const mouse=at(.69,.46,36.5),lead=at(.66,.39,36);path(c,[lead,at(.59,.34,35),at(.57,.21,35)],"#757666",.9*z);
- c.fillStyle="#e3d9c0";c.beginPath();c.ellipse(mouse.x,mouse.y,3.5*z,4.7*z,.65,0,Math.PI*2);c.fill();
+ c.fillStyle=kit?.top??"#e3d9c0";c.beginPath();c.ellipse(mouse.x,mouse.y,3.5*z,4.7*z,.65,0,Math.PI*2);c.fill();
  path(c,[{x:mouse.x-1*z,y:mouse.y-2.5*z},{x:mouse.x+1.2*z,y:mouse.y-.5*z}],"#9a9c86",.7*z);
  // Physical station label on the desk's front rail.
  plane(c,cam,p.x+.40,p.y+.603,.24,30,4,()=>{
@@ -150,7 +227,7 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  const tier=Number.isInteger(rawTier)?Math.max(1,Math.min(3,rawTier)):1;
  const occupied=s.customers.some(c=>c.pcIndex===index&&["sitting","using","standing"].includes(c.stage));
  const mode:ComputerMode=pcBroken(s,index)?"maintenance":!isOnline?"offline":occupied?"busy":"ready";
- const appearance:ComputerAppearance={tier,occupied,mode,pulse:mode==="busy"?Math.floor(t*1.7+index)%2:0,gpu:installedGpu(s,index)};
+ const appearance:ComputerAppearance={tier,occupied,mode,pulse:mode==="busy"?Math.floor(t*1.7+index)%2:0,gpu:installedGpu(s,index),lcd:installedLcd(s,index)};
  if(!useCache||typeof document==="undefined"||ctx.globalAlpha!==1){paintComputer(ctx,camera,p,index,appearance);return;}
  const base=iso(p,camera),ix=Math.floor(base.x),iy=Math.floor(base.y),z=camera.zoom;
  const fx=base.x-ix,fy=base.y-iy;
