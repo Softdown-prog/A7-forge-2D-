@@ -21,14 +21,17 @@ import {crowdRoute} from "./crowdNavigation.js";
 import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {WINDOWS_ERAS} from "./era.js";
+import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
-export function createGame(seed = 72421): GameState {
+export function createGame(seed=72421,economyMode:"classic"|"historical"="classic"):GameState {
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     cash: 850, revenue: 0, expenses: 0, reputation: 75,
     monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
-    pricePerHour: 12, retailPrices:{soda:8,candy:5,snacks:9}, pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
+    pricePerHour:economyMode==="historical"?2.5:12,
+    ...(economyMode==="historical"?{economyVersion:2 as const}:{retailPrices:{soda:8,candy:5,snacks:9}}),
+    pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
     expansionLevel: 0, roomExtensions:{west:0,east:0,south:0,north:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,
     weather: "sun", eventLog: ["Dia 1: a Lan House Simulator abriu as portas!"]
@@ -256,7 +259,8 @@ function spawn(s: GameState): void {
     stage: "arriving", target: counterQueueSlot(queueIndex),queueIndex,
     costume, vip:vipArrivalEligible(s,s.nextCustomerId-1), pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
-    needs:initialNeeds(s.nextCustomerId-1),wallet:12+Math.floor(random(s)*18)
+    needs:initialNeeds(s.nextCustomerId-1),wallet:
+    (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
   };
   if(!setTravel(s,c,c.target))return;
   s.customers.push(c);
@@ -275,7 +279,13 @@ function tryServe(s: GameState, c: Customer): void {
     }
     return;
   }
-  c.sessionMinutes??=chooseSessionMinutes(c);
+  if(s.economyVersion===2){
+   const openLeft=DAY_MINUTES-(s.totalMinutes%DAY_MINUTES);
+   if(openLeft<30){sendHome(s,c);return;}
+   c.sessionMinutes??=chooseSessionMinutes(c,true);
+   if(c.sessionMinutes>openLeft)c.sessionMinutes=
+    ([240,180,120,90,60,45,30] as number[]).find(n=>n<=openLeft)??30;
+  }else c.sessionMinutes??=chooseSessionMinutes(c);
   if(!leaveCounterForPc(s,c,computerSeat(pcPosition(index,s)))){
     c.waitingMinutes++;
     return; // Não cobrar se a sala não for acessível.
@@ -284,7 +294,7 @@ function tryServe(s: GameState, c: Customer): void {
   c.queueIndex=undefined;
   c.stage="to_pc";
   s.counterBusyUntil=s.totalMinutes+3;
-  const paid = sessionRevenue(s.pricePerHour,c.sessionMinutes);
+  const paid=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
@@ -351,8 +361,9 @@ function advanceCustomer(s: GameState, c: Customer): void {
       (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
         const bonus=hardwareSatisfactionBonus(s,c.pcIndex??-1);
-        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(s.pricePerHour,c.waitingMinutes,c.offlineWait)+bonus+vipReputationAdjustment(c,bonus,s.pricePerHour)));
-        const impact=c.happy?serviceReputationImpact(s.reputation,s.pricePerHour,bonus,rating):Math.min(0,rating);
+        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(normalizedHourlyPrice(s,s.pricePerHour),c.waitingMinutes,c.offlineWait)+
+          bonus+vipReputationAdjustment(c,bonus,normalizedHourlyPrice(s,s.pricePerHour))));
+        const impact=c.happy?serviceReputationImpact(s.reputation,normalizedHourlyPrice(s,s.pricePerHour),bonus,rating):Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
@@ -386,11 +397,14 @@ function advanceCustomer(s: GameState, c: Customer): void {
 }
 function nextDay(s: GameState): void {
   s.customers = [];
+  // Na virada, máquina que envelheceu pode perder competitividade.
+  if(clampPriceToEra(s))addLog(s,"Tarifa ajustada ao teto da época e aos computadores disponíveis.");
   s.weather = random(s) < 0.27 ? "rain" : "sun";
   s.offlineUntil = Math.min(s.offlineUntil, s.totalMinutes);
   addLog(s, s.weather === "rain" ? "Dia chuvoso: demanda menor e rede instável." : "Novo dia: portas abertas.");
   if (dayNumber(s) > 1 && (dayNumber(s) - 1) % 30 === 0) {
-    const bill = monthlyBills(s);
+    // A conta encerra o mês que acabou, não antecipa o índice do mês seguinte.
+    const bill=monthlyBills({...s,totalMinutes:Math.max(0,s.totalMinutes-1)});
     const energy=Math.round(s.energyAccrued??0);
     s.cash -= bill; s.expenses += bill;
     s.energyAccrued=0;
@@ -408,7 +422,7 @@ function nextDay(s: GameState): void {
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
 export function visitorArrivalChance(s:GameState,occupied:number):number {
-  const factor=demandFactor(s.pricePerHour,s.reputation,online(s),s.weather==="rain");
+  const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
   const congestion=occupied>=pcCount(s)?0.38:1;
   return 0.052*factor*promotionVisitorMultiplier(s)*congestion;
 }
@@ -452,7 +466,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return (v.economyVersion===undefined||v.economyVersion===2) && validHardwareState(v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&

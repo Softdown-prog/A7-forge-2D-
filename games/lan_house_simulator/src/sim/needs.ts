@@ -1,6 +1,7 @@
 import type { Customer, Inventory, Item } from "./types.js";
 import { ITEM_PRICES, productPrice } from "./economy.js";
 import type {GameState} from "./types.js";
+import {SESSION_PACKAGES} from "./historicalEconomy.js";
 
 /** Necessidades 0..100. Cada minuto do jogo atualiza uma vez; sem decisões por frame. */
 export function initialNeeds(id:number):NonNullable<Customer["needs"]>{
@@ -32,11 +33,20 @@ export function consumePurchase(c:Customer,item:Item):void{
 }
 
 /** Escolha determinística por perfil, energia e sede. O tempo é contratado antes do pagamento. */
-export function chooseSessionMinutes(c:Customer):number {
+export function chooseSessionMinutes(c:Customer,historical=false):number {
   const n=c.needs??initialNeeds(c.id);
   // Cliente cansado ou com muita sede prefere jogar menos; entusiasta pode ficar 90 min.
-  if(n.energy<45 || n.thirst>=72)return 30;
-  if(n.energy>=82 && n.thirst<45 && c.id%3===0)return 90;
-  if(n.energy>=65 && n.thirst<65 && c.id%2===0)return 60;
-  return 45;
+  if(!historical){
+   if(n.energy<45||n.thirst>=72)return 30;
+   if(n.energy>=82&&n.thirst<45&&c.id%3===0)return 90;
+   if(n.energy>=65&&n.thirst<65&&c.id%2===0)return 60;
+   return 45;
+  }
+  if(n.energy<45||n.thirst>=72)return 30;
+  if(n.energy>=87&&n.thirst<40&&c.id%17===0)return 240;
+  if(n.energy>=82&&n.thirst<50&&c.id%11===0)return 180;
+  if(n.energy>=78&&n.thirst<55&&c.id%7===0)return 120;
+  if(n.energy>=75&&n.thirst<60&&c.id%3===0)return 90;
+  if(n.energy>=65&&n.thirst<65&&c.id%2===0)return 60;
+  return SESSION_PACKAGES[1];
 }

@@ -8,6 +8,8 @@ import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPr
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
+import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
+ SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
 import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
@@ -68,10 +70,10 @@ function readSave(): GameState {
     const data = localStorage.getItem(GAME_SAVE_KEY);
     if (data) {
       const decoded: unknown = JSON.parse(data);
-      if (isValidSave(decoded)) return decoded;
+      if(isValidSave(decoded)){clampPriceToEra(decoded);return decoded;}
     }
   } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
-  return createGame();
+  return createGame(72421,"historical");
 }
 let game = readSave();
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
@@ -155,7 +157,7 @@ function beginPlay():void{
 }
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- game=createGame();paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ game=createGame(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;save();beginPlay();
 });
 continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
@@ -316,8 +318,17 @@ shopCatalog?.addEventListener("click",event=>{
  applyResult(game,result);renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
-button("price-down",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour-2));renderUI();save();});
-button("price-up",()=>{applyResult(game,setHourlyPrice(game,game.pricePerHour+2));renderUI();save();});
+button("price-down",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour-step)*100)/100));renderUI();save();});
+button("price-up",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour+step)*100)/100));renderUI();save();});
+button("migrate-historical-pricing",()=>{
+ if(game.economyVersion===2)return;
+ if(!window.confirm("Ativar o modelo histórico nesta partida? O preço da hora será limitado pelo ano e pelas máquinas, mas saldo, compras e resultados antigos não serão reescritos. Esta mudança não pode ser desfeita neste save."))return;
+ game.economyVersion=2;
+ if(game.retailPrices?.soda===8&&game.retailPrices.candy===5&&game.retailPrices.snacks===9)
+  delete game.retailPrices;
+ clampPriceToEra(game);
+ renderUI();save();
+});
 button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();save();});
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
 button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
@@ -621,33 +632,70 @@ function renderUI():void {
   if(weather)weather.textContent=game.weather==="rain"?"Chuva":"Tempo firme";
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node) node.textContent=value;};
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
-  const monthlyRent=270+game.expansionLevel*170;
-  const monthlyInternet=110+(game.internetTier-1)*85;
+  const monetaryIndex=priceIndex(year);
+  const historical=game.economyVersion===2;
+  const monthlyRent=Math.round((270+game.expansionLevel*170)*(historical?monetaryIndex:1));
+  const monthlyInternet=Math.round((110+(game.internetTier-1)*85)*(historical?monetaryIndex:1));
   const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
-  const monthlyMaintenance=75+game.expansionLevel*35;
+  const monthlyMaintenance=Math.round((75+game.expansionLevel*35)*(historical?monetaryIndex:1));
   setText("admin-cash",money(game.cash));
   setText("admin-profit",money(game.revenue-game.expenses));
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". A energia aumenta com PCs instalados, hardware e uso.");
-  setText("price", "R$ "+game.pricePerHour+"/h");
+  // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
+  clampPriceToEra(game);
+  const marketMax=annualHourlyCeiling(year);
+  const max=allowableHourlyPrice(game);
+  const inReais=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const perHour=inReais(game.pricePerHour);
+  setText("price",perHour+"/h");
+  const migration=document.getElementById("migrate-historical-pricing");
+  if(migration instanceof HTMLButtonElement)migration.hidden=historical;
+  setText("year-price-ceiling",historical?
+    year+" · teto nominal da época "+inReais(marketMax)+"/h":
+    "Modo clássico: tarifa histórica disponível apenas em novas partidas.");
+  setText("equipment-price-ceiling",historical?
+    "Máquinas e Windows instalados: até "+inReais(max)+"/h. Modernizar pode liberar uma tarifa maior.":
+    "Esta partida conserva a economia anterior e seus preços.");
+  setText("annual-ipca",historical?"IPCA anual aplicado aos custos fixos, energia e atacado. Índice acumulado desde 1998: "+
+    ((priceIndex(year)-1)*100).toFixed(1)+"%"+(ipcaLastYear(year)!==null?
+    " · variação do ano anterior "+ipcaLastYear(year)!.toFixed(2)+"%.":" · último ano sem dado oficial: congelado."):
+    "Partida clássica: inflação antiga de energia (+3% ao ano); sem indexação do IPCA.");
+  const durations=document.getElementById("session-package-prices");
+  if(durations&&adminOpen&&activeAdminTab==="prices"){
+   durations.replaceChildren();
+   for(const min of (historical?SESSION_PACKAGES:[30,45,60,90])){
+    const li=document.createElement("li");
+    li.textContent=(min<60?min+" minutos":Number(min/60).toLocaleString("pt-BR")+" h")+
+      " — "+inReais(sessionPrice(game.pricePerHour,min));
+    durations.append(li);
+   }
+  }
+  const priceDown=document.getElementById("price-down"),priceUp=document.getElementById("price-up");
+  if(priceDown instanceof HTMLButtonElement)priceDown.disabled=game.pricePerHour-(historical?.5:2)<(historical?MIN_HOURLY_PRICE:4);
+  if(priceUp instanceof HTMLButtonElement)priceUp.disabled=game.pricePerHour+(historical?.5:2)>max;
   const priceInsight=hourlyPriceInsight(game);
   const priceDemandLabel=priceInsight.relativeDemandPercent===0?"menos de 1%":priceInsight.relativeDemandPercent+"%";
   setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
   setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
   setText("price-caution",priceInsight.caution);
   const scenarios=hourlyPriceScenarios(game);
-  const scenarioLine=(delta:-2|0|2,title:string):string=>{
+  const scenarioLine=(delta:-2|-0.5|0|0.5|2,title:string):string=>{
     const candidate=scenarios.find(p=>p.delta===delta);
-    return candidate?title+" · R$ "+candidate.price+"/h · procura "+candidate.demandIndex+
+    return candidate?title+" · R$ "+(historical?candidate.price.toFixed(2):String(candidate.price))+"/h · procura "+candidate.demandIndex+
       "% · receita bruta potencial "+candidate.grossIntakeIndex+"%":
-      title+" · fora do limite de R$ 4–40/h.";
+      title+" · fora do teto de "+inReais(max)+"/h.";
   };
-  setText("price-scenario-lower",scenarioLine(-2,"Reduzir R$ 2"));
+  setText("price-scenario-lower",historical?scenarioLine(-.5,"Reduzir R$ 0,50"):scenarioLine(-2,"Reduzir R$ 2"));
   setText("price-scenario-current",scenarioLine(0,"Manter"));
-  setText("price-scenario-higher",scenarioLine(2,"Aumentar R$ 2"));
+  setText("price-scenario-higher",historical?scenarioLine(.5,"Aumentar R$ 0,50"):scenarioLine(2,"Aumentar R$ 2"));
   const nextEnergy=energyYearOutlook(game);
-  setText("energy-year-outlook","Energia na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
+  setText("energy-year-outlook",historical?
+    "IPCA na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
+    ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
+    "% aplicado ao custo energético e às demais contas indexadas, mantendo as máquinas iguais.":
+    "Energia na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
     ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
     "% de tarifa, mantendo os mesmos PCs e a carga ociosa. Demais contas fixas não recebem inflação automática.");
   if(retailControls&&adminOpen&&activeAdminTab==="prices"){

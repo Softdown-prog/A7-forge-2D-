@@ -66,6 +66,8 @@ export interface GameState {
   /** Métricas opcionais; saves antigos começam a coletar após carregar. */
   stationLedger?: StationAccount[];
   reputation: number;
+  /** 2 = modelo de preços histórico; ausência = save clássico. */
+  economyVersion?:2;
   pricePerHour: number;
   /** Próximo atendimento disponível no balcão, em minutos de jogo. */
   counterBusyUntil?: number;
