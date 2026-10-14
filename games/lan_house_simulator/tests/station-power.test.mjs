@@ -77,3 +77,18 @@ test("estado desligado acompanha PC do anexo quando PCs originais são adicionad
  assert.equal(stationPoweredOn(s,4),false,"estado do anexo preservado");
  assert.equal(stationPoweredOn(parseImportedSave(serializeSave(s)),4),false);
 });
+
+test("desligar só PC 02 ou 03 gera array denso e volta do save sem perder progresso",()=>{
+ for(const selected of [1,2]){
+  const s=createGame(101+selected);s.totalMinutes=734;s.cash=4793;
+  assert.equal(toggleStationPower(s,selected).ok,true);
+  assert.equal(s.pcPoweredOff.length,3);
+  assert.deepEqual(s.pcPoweredOff.map(Boolean),[0,1,2].map(i=>i===selected));
+  assert.equal(isValidSave(s),true);
+  const loaded=parseImportedSave(serializeSave(s));
+  assert.equal(loaded.totalMinutes,734);
+  assert.equal(loaded.cash,4793);
+  assert.equal(stationPoweredOn(loaded,selected),false);
+  assert.equal(stationPoweredOn(loaded,0),true);
+ }
+});
