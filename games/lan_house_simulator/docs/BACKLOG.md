@@ -640,3 +640,12 @@ Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Servi�
 - [ ] Aprovar fluxo e interface no navegador real (desktop/mobile) e auditar o balanceamento salarial em campanhas completas.
 
 Contrato: [EMPLOYEES.md](EMPLOYEES.md).
+
+## Etapa 1 — recuperação de saves no navegador (15/10/2026)
+- [x] Validar save antes de liberar Continuar; tentar recuperação de backup local.
+- [x] Checkpoint anterior com rotação por dia do jogo e tolerância a falha de cota.
+- [x] Proteger nova partida, importação, restauração e reinício contra perda em falhas de gravação.
+- [x] Testes de corrupção, recuperação, rotação e indisponibilidade de armazenamento.
+- [ ] Validar alertas em dispositivo real e medir quotas em partidas longas.
+
+Contrato: [LOCAL_SAVE_RECOVERY.md](LOCAL_SAVE_RECOVERY.md).

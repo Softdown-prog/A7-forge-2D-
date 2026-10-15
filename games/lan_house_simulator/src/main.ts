@@ -4,7 +4,8 @@ import {drawDiscCopier} from "./render/discCopierArt.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
-import { serializeSave, parseImportedSave, snapshotGameState } from "./sim/saveTransfer.js";
+import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
+import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
 import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
@@ -16,7 +17,7 @@ import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
-import { GAME_SAVE_KEY, type GameState, type Item } from "./sim/types.js";
+import { type GameState, type Item } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
@@ -91,20 +92,14 @@ function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):G
  }
  return fresh;
 }
-function readSave(): GameState {
-  try {
-    const data = localStorage.getItem(GAME_SAVE_KEY);
-    if (data) {
-      const decoded: unknown = JSON.parse(data);
-      if(isValidSave(decoded)){
-        if(decoded.totalMinutes>GAME_LAST_MINUTE){decoded.totalMinutes=GAME_LAST_MINUTE;decoded.leftoverMinutes=0;}
-        clampPriceToEra(decoded);return decoded;
-      }
-    }
-  } catch { /* Navegação privada, save antigo ou JSON inválido. */ }
-  return newGameForPlayer(72421,"historical");
+const startupSave=loadLocalSave({
+ getItem:(key:string)=>{try{return localStorage.getItem(key);}catch{return null;}}
+});
+let game=startupSave.state??newGameForPlayer(72421,"historical");
+if(startupSave.state){
+ if(game.totalMinutes>GAME_LAST_MINUTE){game.totalMinutes=GAME_LAST_MINUTE;game.leftoverMinutes=0;}
+ clampPriceToEra(game);
 }
-let game = readSave();
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
 const gameApp=document.querySelector<HTMLElement>("#game-app");
 const continueButton=document.querySelector<HTMLButtonElement>("#menu-continue");
@@ -112,8 +107,7 @@ const settingsPanel=document.querySelector<HTMLElement>("#menu-settings");
 const soundToggle=document.querySelector<HTMLInputElement>("#option-sound");
 if(!startScreen||!gameApp||!continueButton||!settingsPanel||!soundToggle)throw new Error("Menu inicial incompleto");
 let isPlaying=false;
-let hasSavedGame=false;
-try{hasSavedGame=localStorage.getItem(GAME_SAVE_KEY)!==null;}catch{}
+let hasSavedGame=startupSave.source!=="none";
 let soundEnabled=true;
 try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
 soundToggle.checked=soundEnabled;
@@ -140,6 +134,8 @@ const exportButton=document.querySelector<HTMLButtonElement>("#save-export");
 if(!importFile||!saveMessage||!exportButton)throw Error("Controles de save ausentes");
 exportButton.disabled=!hasSavedGame;
 function announceSave(message:string):void{saveMessage!.textContent=message;}
+if(startupSave.source==="backup")announceSave("Save principal danificado: cópia local anterior recuperada. Exporte o JSON para maior segurança.");
+else if(startupSave.invalidPrimary)announceSave("O save local está inválido e não há cópia recuperável. O arquivo danificado não foi apagado.");
 document.getElementById("save-export")?.addEventListener("click",()=>{
  if(!hasSavedGame){announceSave("Nenhuma partida disponível para exportar.");return;}
  try{
@@ -161,7 +157,7 @@ importFile.addEventListener("change",async()=>{
   const state=parseImportedSave(await file.text());
   if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
   // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
-  localStorage.setItem(GAME_SAVE_KEY,JSON.stringify(state));
+  replaceLocalSave(localStorage,state);
   game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);
   soundscape.stopKeyboard();
   previousServed=game.served;previousPurchases=game.purchases;
@@ -171,7 +167,7 @@ importFile.addEventListener("change",async()=>{
  }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
 });
 mountCloudControls(saveMessage,()=>game,(state)=>{
- localStorage.setItem(GAME_SAVE_KEY,JSON.stringify(state));
+ replaceLocalSave(localStorage,state);
  game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
  previousServed=game.served;previousPurchases=game.purchases;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
@@ -195,8 +191,12 @@ function beginPlay():void{
 }
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- game=newGameForPlayer(72421,"historical");paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
- previousServed=0;previousPurchases=0;save();beginPlay();
+ const fresh=newGameForPlayer(72421,"historical");
+ try{replaceLocalSave(localStorage,fresh);}
+ catch{announceSave("Não foi possível gravar uma nova partida. A anterior foi preservada.");return;}
+ game=fresh;hasSavedGame=true;exportButton!.disabled=false;
+ paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
+ previousServed=0;previousPurchases=0;beginPlay();
 });
 continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
 document.getElementById("menu-options")?.addEventListener("click",()=>{
@@ -295,8 +295,8 @@ const internetNames = INTERNET_ERAS.map(x=>x.name);
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 function save(): void {
   if(!isPlaying)return;
-  try { localStorage.setItem(GAME_SAVE_KEY, JSON.stringify(snapshotGameState(game))); hasSavedGame=true; exportButton!.disabled=false; }
-  catch { /* Storage cheio/bloqueado: jogo continua em memória. */ }
+  try { writeLocalSave(localStorage,game);hasSavedGame=true;exportButton!.disabled=false; }
+  catch { announceSave("Falha ao salvar no navegador. Exporte a partida em JSON para evitar perda de progresso."); }
 }
 function button(id:string, handler:()=>void):void {
   const el=document.getElementById(id);
@@ -499,7 +499,11 @@ retailControls?.addEventListener("click",event=>{
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  game=newGameForPlayer(72421,"classic");previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;save();renderUI();
+  const fresh=newGameForPlayer(72421,"classic");
+  try{replaceLocalSave(localStorage,fresh);}
+  catch{announceSave("Falha ao salvar reinício. Progresso anterior preservado.");return;}
+  game=fresh;hasSavedGame=true;
+  previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
 const placementHelp=document.getElementById("placement-help");
