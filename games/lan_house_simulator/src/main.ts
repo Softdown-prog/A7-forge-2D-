@@ -34,6 +34,7 @@ import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
+import {employeeHired,employeeDailyWage,employeeMonthlyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
@@ -380,7 +381,13 @@ button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI(
 button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
 button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
 button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
-button("clean-bins",()=>{applyResult(game,requestCleaning(game));renderUI();save();});
+const toggleEmployee=(role:EmployeeRole):void=>{
+ const result=employeeHired(game,role)?dismissEmployee(game,role):hireEmployee(game,role);
+ applyResult(game,result);renderUI();if(result.ok)save();
+};
+button("clean-bins",()=>toggleEmployee("cleaner"));
+button("hire-technician",()=>toggleEmployee("technician"));
+button("clean-bins-now",()=>{applyResult(game,requestCleaning(game));renderUI();save();});
 let selectedGpuPc=0;
 const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
 gpuPcChoice?.addEventListener("click",event=>{
@@ -740,7 +747,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -748,11 +755,12 @@ function renderUI(liveOnly=false):void {
   const monthlyInternet=Math.round((110+(game.internetTier-1)*85)*(historical?monetaryIndex:1));
   const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
   const monthlyMaintenance=Math.round((75+game.expansionLevel*35)*(historical?monetaryIndex:1));
+   const wages=game.employeePayrollAccrued??0;
   setText("admin-cash",money(game.cash));
   setText("admin-profit",money(game.revenue-game.expenses));
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served));
-  setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". A energia aumenta com PCs instalados, hardware e uso.");
+  setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Salários proporcionais aos dias de contrato.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
   const marketMax=annualHourlyCeiling(year);
@@ -919,7 +927,8 @@ function renderUI(liveOnly=false):void {
       power.title=isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?"Economize energia e libere atualizações.":"Religue para receber clientes.";
       const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
       const job=game.repairJobs?.find(j=>j.pc===i);
-      repair.textContent=job?"Técnico · "+Math.round(job.progress/job.duration*100)+"%":"Chamar técnico · R$ "+(20+Math.ceil(wear*0.7));
+      repair.textContent=job?"Técnico · "+Math.round(job.progress/job.duration*100)+"%":
+     employeeHired(game,"technician")?"Solicitar reparo · equipe contratada":"Chamar técnico avulso · R$ "+(20+Math.ceil(wear*0.7));
       repair.disabled=wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage));
       if(job){const meter=document.createElement("progress");meter.max=job.duration;meter.value=job.progress;meter.setAttribute("aria-label","Reparo do PC "+(i+1));line.append(meter);}
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
@@ -1110,12 +1119,29 @@ function renderUI(liveOnly=false):void {
       gpuGamePanel.append(card);
     }
   }
-  setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
+  const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
+   for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
+    const el=document.querySelector<HTMLButtonElement>("#"+id);
+    if(el)el.textContent=employeeHired(game,role)?"Dispensar "+label:
+      "Contratar "+label+" · "+money(employeeMonthlyWage(game,role))+"/mês";
+   }
+   setText("staff-summary","Equipe: faxineiro "+(cleanerHired?"contratado":"não contratado")+
+     " · técnico "+(technicianHired?"contratado":"não contratado")+
+     " · folha acumulada "+money(wages)+". Diárias: faxineiro "+money(employeeDailyWage(game,"cleaner"))+
+     ", técnico "+money(employeeDailyWage(game,"technician"))+
+     ". Cada dia contratado é remunerado, mesmo sem chamados; cobrança no fechamento mensal.");
+   setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
     const state=binStatus(n);
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
   }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
   " · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
-  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins");if(cleanButton)cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||game.cash<serviceVisitCost(game,"cleaning");
+  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
+   if(cleanButton){
+    cleanButton.textContent=cleanerHired?"Solicitar limpeza · coberta pelo contrato":
+      "Chamar faxineiro avulso · "+money(serviceVisitCost(game,"cleaning"));
+    cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||
+      (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
+   }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
