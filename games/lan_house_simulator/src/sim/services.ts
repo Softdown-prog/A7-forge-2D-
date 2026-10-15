@@ -32,7 +32,7 @@ export function startRepair(s:GameState,pc:number):Result{
  if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))
   return {ok:false,message:"Aguarde o cliente terminar antes de chamar o técnico."};
  const cost=employeeHired(s,"technician")?0:serviceVisitCost(s,"repair",wear);
- if(s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
+ if(cost>0&&s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
  (s.repairJobs??=[]).push({pc,x:entry.x,y:entry.y,phase:"arriving",progress:0,duration:REPAIR_DURATION,facing:"north",moving:false});
@@ -57,7 +57,7 @@ export function requestCleaning(s:GameState):Result{
  if(s.cleaningJob)return {ok:false,message:"Faxineiro já está a caminho."};
  if(!(s.binFill??[]).some(x=>x>=10)&&(s.overflowWaste??0)<1)return {ok:false,message:"As lixeiras ainda estão quase vazias."};
  const cost=employeeHired(s,"cleaner")?0:serviceVisitCost(s,"cleaning");
- if(s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
+ if(cost>0&&s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
  s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false};
