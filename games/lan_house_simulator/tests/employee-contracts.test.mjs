@@ -35,6 +35,8 @@ test("salários são cobrados uma vez no mês; a diária do dia 31 fica no mês 
  assert.equal(s.employeePayrollAccrued,18);
  for(let d=2;d<=30;d++){s.totalMinutes=(d-1)*DAY_MINUTES;accrueEmployeeDay(s);}
  assert.equal(s.employeePayrollAccrued,540);
+ // Fixture salta os dias sem simular energia; zerar a energia projetada.
+ s.energyAccrued=0;
  const bill=monthlyBills({...s,totalMinutes:30*DAY_MINUTES-1});
  assert.equal(bill-monthlyBills({...s,employeePayrollAccrued:0}),540);
  s.totalMinutes=30*DAY_MINUTES-1;
