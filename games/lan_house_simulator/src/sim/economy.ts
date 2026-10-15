@@ -113,7 +113,8 @@ export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionL
  // Ao fechar o mês, usar o consumo acumulado; para saves antigos, projetar.
  const energy = state.energyAccrued!==undefined?Math.round(state.energyAccrued):energyMonthlyEstimate(state);
  const maintenance = Math.round((75 + state.expansionLevel * 35)*factor);
- return rent + internet + energy + maintenance;
+ const wages=Math.round((state.employeePayrollAccrued??0)*100)/100;
+  return Math.round((rent+internet+energy+maintenance+wages)*100)/100;
 }
 export function setHourlyPrice(state: GameState, amount: number): Result {
   if(!isHistorical(state)){
