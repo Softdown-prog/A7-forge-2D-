@@ -26,7 +26,8 @@ export function loadLocalSave(store:Pick<SaveStore,"getItem">):SaveRead{
  return {state:null,source:"none",invalidPrimary:primary!==null};
 }
 function encode(state:GameState):string{
- if(!isValidSave(state))throw Error("Estado do jogo inválido.");
+ if(!isValidSave(state)||!Number.isInteger(state.totalMinutes)||state.totalMinutes<0||
+    !Number.isInteger(state.rng)||state.rng<0)throw Error("Estado do jogo inválido.");
  const json=JSON.stringify(snapshotGameState(state));
  if(json.length>2_000_000)throw Error("Limite local de 2 MB excedido.");
  return json;
