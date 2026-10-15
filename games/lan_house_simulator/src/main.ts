@@ -928,7 +928,7 @@ function renderUI(liveOnly=false):void {
       const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
       const job=game.repairJobs?.find(j=>j.pc===i);
       repair.textContent=job?"Técnico · "+Math.round(job.progress/job.duration*100)+"%":
-     employeeHired(game,"technician")?"Solicitar reparo · equipe contratada":"Chamar técnico avulso · R$ "+(20+Math.ceil(wear*0.7));
+     employeeHired(game,"technician")?"Solicitar reparo · equipe contratada":"Chamar técnico avulso · "+money(serviceVisitCost(game,"repair",wear));
       repair.disabled=wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage));
       if(job){const meter=document.createElement("progress");meter.max=job.duration;meter.value=job.progress;meter.setAttribute("aria-label","Reparo do PC "+(i+1));line.append(meter);}
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
@@ -1134,7 +1134,7 @@ function renderUI(liveOnly=false):void {
     const state=binStatus(n);
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
   }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
-  " · faxineiro "+(game.cleaningJob?"em serviço":"disponível"));
+  " · faxineiro "+(game.cleaningJob?"em serviço":cleanerHired?"contratado":"sem contrato"));
   const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
    if(cleanButton){
     cleanButton.textContent=cleanerHired?"Solicitar limpeza · coberta pelo contrato":
