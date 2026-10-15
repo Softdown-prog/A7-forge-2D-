@@ -12,7 +12,8 @@ import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
 import {roomBounds} from "./room.js";
-import {tickServices,pcUnderRepair,addWaste} from "./services.js";
+import {tickServices,pcUnderRepair,addWaste,dispatchHiredStaff} from "./services.js";
+import {accrueEmployeeDay,validEmployeeState} from "./staff.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import {serveDiscCopy,validDiscCopier} from "./discCopy.js";
@@ -449,11 +450,15 @@ function nextDay(s: GameState): void {
     // A conta encerra o mês que acabou, não antecipa o índice do mês seguinte.
     const bill=monthlyBills({...s,totalMinutes:Math.max(0,s.totalMinutes-1)});
     const energy=Math.round(s.energyAccrued??0);
+    const wages=s.employeePayrollAccrued??0;
     s.cash -= bill; s.expenses += bill;
     s.energyAccrued=0;
+    s.employeePayrollAccrued=0;
     closeFinancialMonth(s);
-    addLog(s, "Contas do mês pagas: -R$ " + bill + " (incluindo energia R$ "+energy+"; aluguel, internet e manutenção).");
+    addLog(s, "Contas do mês pagas: -R$ " + bill + " (energia R$ "+energy+"; salários R$ "+wages+"; aluguel, internet e manutenção).");
   }
+  // A diária do novo dia só entra depois do fechamento mensal anterior.
+  accrueEmployeeDay(s);
   reviewNotices(s);
   scheduleDecisions(s);
   // Infrações dependem de cartas e prazos relativos, nunca de multas aleatórias diárias.
@@ -506,6 +511,7 @@ function advanceMinute(s: GameState): void {
       addLog(s, "Internet caiu! Previsão de reparo: " + duration + " minutos do jogo.");
     }
   }
+  dispatchHiredStaff(s);
   tickServices(s);
   prepareClosing(s);
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
@@ -545,7 +551,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
