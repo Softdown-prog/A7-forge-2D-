@@ -486,7 +486,8 @@ printControls?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button[data-print-delta]"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled||!game.printer)return;
  const delta=Number(target.dataset.printDelta);
- if(![-.5,.5].includes(delta))return;
+ const allowed=game.economyVersion===2?[-.5,.5]:[-1,1];
+ if(!allowed.includes(delta))return;
  applyResult(game,setPrintPrice(game,Math.round((game.printer.price+delta)*100)/100));renderUI();save();
 });
 discControls?.addEventListener("click",event=>{
@@ -883,11 +884,12 @@ function renderUI(liveOnly=false):void {
    const row=document.createElement("div");row.className="price-control";
    const label=document.createElement("span");label.textContent="Preço por página";
    const actions=document.createElement("div");actions.className="price-actions";
-   for(const delta of [-.5,.5] as const){
+   const printStep=game.economyVersion===2?.5:1;
+   for(const delta of [-printStep,printStep]){
     if(delta>.0){const amount=document.createElement("strong");amount.textContent=inReais(game.printer.price);actions.append(amount);}
     const button=document.createElement("button");button.type="button";button.className="slice";
     button.dataset.printDelta=String(delta);button.textContent=delta<0?"−":"+";
-    button.disabled=delta<0?game.printer.price<=.5:game.printer.price>=PRINT_MAX_PRICE;
+    button.disabled=delta<0?game.printer.price<=(game.economyVersion===2?.5:1):game.printer.price>=PRINT_MAX_PRICE;
     button.setAttribute("aria-label",(delta<0?"Reduzir":"Aumentar")+" preço da impressão");
     actions.append(button);
    }

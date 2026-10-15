@@ -61,7 +61,14 @@ test("save mantém serviço, idempotência e rejeita estado adulterado",()=>{
  const recovered=parseImportedSave(serializeSave(s));
  assert.deepEqual(recovered.printer,s.printer);
  assert.equal(servePrinting(recovered,recovered.customers[0]),null);
+ assert.equal(Number.isInteger(recovered.cash),true,"modo clássico mantém caixa com reais inteiros");
  const legacy=createGame();assert.equal(isValidSave(legacy),true);
+ assert.equal(s.printer.price,3);assert.equal(printPaperInkCost(s),1);
+ assert.equal(setPrintPrice(s,1.5).ok,false,"partidas clássicas não podem gerar centavos");
+ const historical=createGame(10,"historical");historical.cash=2000;buyPrinter(historical);
+ assert.equal(historical.printer.price,1.5);
+ assert.equal(setPrintPrice(historical,2.5).ok,true);
+ assert.equal(isValidSave(historical),true);
  for(const change of [{price:0},{dayPages:36},{pages:-1},{revenue:NaN},{day:999999999}]){
   const bad=structuredClone(s);Object.assign(bad.printer,change);assert.equal(isValidSave(bad),false);
  }
@@ -74,6 +81,6 @@ test("motor contabiliza impressão de cliente real no caixa e no pagamento visua
  stepGame(s,1);
  assert.equal(s.served,1);assert.ok(s.printer.pages>0,"cliente deve fazer pedido de impressão");assert.equal(s.paymentEffects.length,1);
  assert.equal(s.paymentEffects[0].amount,s.revenue-before.revenue);
- assert.equal(s.cash-before.cash,s.revenue-before.revenue-(s.expenses-before.expenses));
+ assert.ok(Math.abs((s.cash-before.cash)-(s.revenue-before.revenue-(s.expenses-before.expenses)))<1e-6);
  assert.equal(isValidSave(s),true);
 });
