@@ -63,6 +63,10 @@ export interface GameState {
   expenses: number;
   /** Energia acumulada desde a última cobrança mensal (R$ fracionários). */
   energyAccrued?: number;
+  /** Contratos, salários a pagar e último dia remunerado de cada função. */
+  employees?:{cleaner?:boolean;technician?:boolean};
+  employeePayrollAccrued?:number;
+  employeeLastAccruedDay?:{cleaner?:number;technician?:number};
   /** Minutos-PC utilizados e disponíveis no mês atual: acumuladores de uso real. */
   monthPcUsedMinutes?: number;
   monthPcCapacityMinutes?: number;
