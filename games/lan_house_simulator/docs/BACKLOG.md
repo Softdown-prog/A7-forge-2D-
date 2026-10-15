@@ -630,3 +630,13 @@ Contrato: [STORY_CONSEQUENCE_PIPELINE.md](STORY_CONSEQUENCE_PIPELINE.md). Servi�
 - [x] Impedir que a ancoragem automática da administração puxe a leitura de volta à categoria selecionada.
 - [x] Verificar as seis categorias em 1998 e 2024, teclado, toque e rolagem nativa em computador e celulares de 360/414 px, incluindo atualizações reais de desgaste.
 - [x] Executar essa regressão no navegador antes da sincronização automática com o site público.
+
+## Funcionários contratados e folha diária — 15/10/2026
+- [x] Contratar/dispensar faxineiro e técnico de forma independente, com valor mensal proporcional aos dias de vínculo.
+- [x] Acumular e pagar folha no fechamento de 30 dias, sem dupla diária ao recontratar no mesmo dia.
+- [x] Limpeza automática a partir de 75% da lixeira e reparo automático de PCs quebrados com espera por clientes e técnico livre.
+- [x] Manter visitas avulsas e reutilizar atores, animações e rotas sem taxa adicional para serviço contratado.
+- [x] Controles na Administração, valores no demonstrativo, campos opcionais nos saves e testes de regressão.
+- [ ] Aprovar fluxo e interface no navegador real (desktop/mobile) e auditar o balanceamento salarial em campanhas completas.
+
+Contrato: [EMPLOYEES.md](EMPLOYEES.md).
