@@ -45,7 +45,7 @@ test("salários são cobrados uma vez no mês; a diária do dia 31 fica no mês 
  assert.equal(monthlyBills(s)-monthlyBills({...s,employeePayrollAccrued:0}),18);
 });
 test("faxineiro contratado limpa lixeira cheia sem taxa por visita",()=>{
- const s=createGame();hireEmployee(s,"cleaner");const cash=s.cash;
+ const s=createGame();s.pcPoweredOff=[true,true,true];hireEmployee(s,"cleaner");const cash=s.cash;
  addWaste(s,80);
  stepGame(s,1);
  assert.ok(s.cleaningJob);
@@ -57,7 +57,7 @@ test("faxineiro contratado limpa lixeira cheia sem taxa por visita",()=>{
  assert.equal(s.cash,cash);
 });
 test("técnico contratado repara uma máquina por vez sem taxa de chamado",()=>{
- const s=createGame();hireEmployee(s,"technician");const cash=s.cash;
+ const s=createGame();s.pcPoweredOff=[true,true,true];hireEmployee(s,"technician");const cash=s.cash;
  s.pcWear=[100,100,0];
  dispatchHiredStaff(s);
  assert.equal(s.repairJobs?.length,1);
