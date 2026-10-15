@@ -26,7 +26,7 @@ function approach(a:{x:number;y:number},b:Point,speed:number):boolean{
 export function startRepair(s:GameState,pc:number):Result{
  if(!Number.isInteger(pc)||pc<0||pc>=pcCount(s))return {ok:false,message:"PC inexistente."};
  if(s.repairJobs?.some(j=>j.pc===pc))return {ok:false,message:"Já existe um técnico atendendo esse PC."};
- if(employeeHired(s,"technician")&&s.repairJobs?.some(j=>j.phase!=="leaving"))return {ok:false,message:"O técnico contratado já está atendendo outro PC."};
+ if(employeeHired(s,"technician")&&s.repairJobs?.length)return {ok:false,message:"O técnico contratado já está atendendo outro PC."};
  const wear=Math.max(0,Math.min(100,s.pcWear?.[pc]??0));
  if(wear<1)return {ok:false,message:"Esse PC não precisa de manutenção."};
  if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))
@@ -96,7 +96,7 @@ export function dispatchHiredStaff(s:GameState):void{
  if(employeeHired(s,"cleaner")&&!s.cleaningJob&&
     ((s.binFill??[]).some(x=>x>=75)||(s.overflowWaste??0)>0))
   requestCleaning(s);
- if(employeeHired(s,"technician")&&!(s.repairJobs??[]).some(job=>job.phase!=="leaving")){
+ if(employeeHired(s,"technician")&&!(s.repairJobs?.length)){
   for(let pc=0;pc<pcCount(s);pc++){
    if((s.pcWear?.[pc]??0)<100||(s.repairJobs??[]).some(j=>j.pc===pc))continue;
    if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))continue;
