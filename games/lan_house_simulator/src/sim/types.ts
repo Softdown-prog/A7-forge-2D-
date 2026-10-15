@@ -32,6 +32,8 @@ export interface Customer {
   purchasedFood?: boolean;
   /** Pedido de cópias já avaliado no balcão; impede reprocessamento após recarga. */
   discCopyChecked?: boolean;
+  /** Pedido de impressão já avaliado no balcão; não repetir após salvar. */
+  printChecked?: boolean;
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;
@@ -89,6 +91,8 @@ export interface GameState {
   retailPrices?: Record<Item,number>;
   /** Serviço abstrato do balcão, sem objeto ou posição no mapa. */
   discCopier?: import("./discCopy.js").DiscCopier;
+  /** Impressão de documentos no balcão; sem ocupar um PC. */
+  printer?: import("./printService.js").PrinterService;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
   /** Desligamento por estação, ausente em saves antigos = ligado. */

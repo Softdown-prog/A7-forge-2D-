@@ -1,4 +1,5 @@
 import {mountCloudControls} from "./ui/cloudControls.js";
+import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
 import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,setDiscCopyPrice,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
 import {installGameViewport} from "./ui/gameViewport.js";
@@ -358,6 +359,7 @@ shopCatalog?.addEventListener("click",event=>{
  }
  const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
    id==="disc-copier"?buyDiscCopier(game):
+   id==="printer"?buyPrinter(game):
    id.startsWith("extend-")?expandDirection(game,id.slice(7) as ExtensionDirection):{ok:false,message:"Compra desconhecida."};
  applyResult(game,result);renderUI();save();
 });
@@ -479,6 +481,14 @@ function activateAdminTab(tab:string):void{
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");renderUI();});
 const retailControls=document.getElementById("retail-price-controls");
 const discControls=document.getElementById("disc-copy-price-controls");
+const printControls=document.getElementById("print-price-controls");
+printControls?.addEventListener("click",event=>{
+ const target=event.target instanceof Element?event.target.closest("button[data-print-delta]"):null;
+ if(!(target instanceof HTMLButtonElement)||target.disabled||!game.printer)return;
+ const delta=Number(target.dataset.printDelta);
+ if(![-.5,.5].includes(delta))return;
+ applyResult(game,setPrintPrice(game,Math.round((game.printer.price+delta)*100)/100));renderUI();save();
+});
 discControls?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button[data-disc-kind]"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled||!game.discCopier)return;
@@ -629,7 +639,7 @@ function panelChanged(name:string,revision:unknown,force:boolean):boolean{
 function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
- if(!panelChanged("shop",[game.cash,game.discCopier,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
+ if(!panelChanged("shop",[game.cash,game.discCopier,game.printer,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
@@ -665,6 +675,10 @@ function renderShop(force=true):void{
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
   button.textContent=full?(max>0?"Sem espaço livre":"Limite atingido"):game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
+  if(item.id==="printer"){
+   const quote=quotePrinter(game);button.disabled=!quote.ok;button.title=quote.message;
+   button.textContent=game.printer?"Adquirida · serviço ativo":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
+  }
   if(item.id==="disc-copier"){
    const quote=quoteDiscCopier(game);button.disabled=!quote.ok;button.title=quote.message;
    button.textContent=game.discCopier?"Adquirida · serviço ativo":gameYear(game)<DISC_COPIER_YEAR?"🔒 Disponível em 2001":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
@@ -751,7 +765,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -861,6 +875,28 @@ function renderUI(liveOnly=false):void {
    const copier=game.discCopier;
    setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado do serviço "+inReais(copier.revenue-copier.expenses)+" (antes do investimento na copiadora).");
    setText("disc-copy-capacity",discCopiesToday(game)+" de "+DISC_COPIES_PER_DAY+" cópias feitas hoje. Preços altos reduzem a procura; o orçamento do cliente limita o pedido.");
+  }
+  const printPanel=document.getElementById("print-service-panel");
+  if(printPanel)printPanel.hidden=!game.printer;
+  if(printControls&&game.printer&&activeAdminTab==="prices"){
+   printControls.replaceChildren();
+   const row=document.createElement("div");row.className="price-control";
+   const label=document.createElement("span");label.textContent="Preço por página";
+   const actions=document.createElement("div");actions.className="price-actions";
+   for(const delta of [-.5,.5] as const){
+    if(delta>.0){const amount=document.createElement("strong");amount.textContent=inReais(game.printer.price);actions.append(amount);}
+    const button=document.createElement("button");button.type="button";button.className="slice";
+    button.dataset.printDelta=String(delta);button.textContent=delta<0?"−":"+";
+    button.disabled=delta<0?game.printer.price<=.5:game.printer.price>=PRINT_MAX_PRICE;
+    button.setAttribute("aria-label",(delta<0?"Reduzir":"Aumentar")+" preço da impressão");
+    actions.append(button);
+   }
+   const expense=document.createElement("small");expense.className="disc-copy-cost";
+   expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(game.printer.price-printPaperInkCost(game));
+   row.append(label,actions,expense);printControls.append(row);
+   setText("print-service-summary",game.printer.pages+" páginas realizadas · faturamento "+inReais(game.printer.revenue)+
+     " · materiais "+inReais(game.printer.expenses)+".");
+   setText("print-service-capacity",pagesPrintedToday(game)+" de 35 páginas hoje. Pedidos dependem dos clientes, carteira e tarifa.");
   }
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");

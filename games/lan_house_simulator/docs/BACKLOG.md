@@ -649,3 +649,12 @@ Contrato: [EMPLOYEES.md](EMPLOYEES.md).
 - [ ] Validar alertas em dispositivo real e medir quotas em partidas longas.
 
 Contrato: [LOCAL_SAVE_RECOVERY.md](LOCAL_SAVE_RECOVERY.md).
+
+## Serviço de impressão de documentos — 15/10/2026
+- [x] Equipamento único na loja, preço configurável em Preços, custo de papel/tinta e receita por cliente real.
+- [x] Capacidade diária, demanda sensível à tarifa e orçamento; nenhuma renda passiva ou alteração no RNG de clientes.
+- [x] Integrar caixa, despesas, mensagem e popup de pagamento; salvar de forma opcional e validar importação.
+- [x] Testes de serviço, contabilidade, idempotência e saves antigos.
+- [ ] Verificar interface e demanda em navegador móvel físico e considerar equipamento visual, clientes exclusivos, fila e outros serviços numa etapa futura.
+
+Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
