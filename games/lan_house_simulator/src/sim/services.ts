@@ -3,6 +3,7 @@ import type {GameState,Result,Point} from "./types.js";
 import {pcCount,pcPosition,entrance} from "./engine.js";
 import {workerRoute} from "./workerNavigation.js";
 import {serviceVisitCost} from "./historicalEconomy.js";
+import {employeeHired} from "./staff.js";
 import {directionFromDelta,type ActorDirection} from "../render/direction.js";
 import {canTraverseLocalStep} from "./navigation.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean}
@@ -25,16 +26,17 @@ function approach(a:{x:number;y:number},b:Point,speed:number):boolean{
 export function startRepair(s:GameState,pc:number):Result{
  if(!Number.isInteger(pc)||pc<0||pc>=pcCount(s))return {ok:false,message:"PC inexistente."};
  if(s.repairJobs?.some(j=>j.pc===pc))return {ok:false,message:"Já existe um técnico atendendo esse PC."};
+ if(employeeHired(s,"technician")&&s.repairJobs?.some(j=>j.phase!=="leaving"))return {ok:false,message:"O técnico contratado já está atendendo outro PC."};
  const wear=Math.max(0,Math.min(100,s.pcWear?.[pc]??0));
  if(wear<1)return {ok:false,message:"Esse PC não precisa de manutenção."};
  if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))
   return {ok:false,message:"Aguarde o cliente terminar antes de chamar o técnico."};
- const cost=serviceVisitCost(s,"repair",wear);
+ const cost=employeeHired(s,"technician")?0:serviceVisitCost(s,"repair",wear);
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
  (s.repairJobs??=[]).push({pc,x:entry.x,y:entry.y,phase:"arriving",progress:0,duration:REPAIR_DURATION,facing:"north",moving:false});
- return {ok:true,message:"Técnico chamado para o PC "+(pc+1)+": -R$ "+cost+". Computador interditado até o fim do reparo."};
+ return {ok:true,message:"Técnico chamado para o PC "+(pc+1)+(cost?": -R$ "+cost:": visita coberta pelo contrato")+". Computador interditado até o fim do reparo."};
 }
 export function pcUnderRepair(s:GameState,index:number):boolean{return !!s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving");}
 export function addWaste(s:GameState,amount=1):void{
@@ -54,12 +56,12 @@ export function addWaste(s:GameState,amount=1):void{
 export function requestCleaning(s:GameState):Result{
  if(s.cleaningJob)return {ok:false,message:"Faxineiro já está a caminho."};
  if(!(s.binFill??[]).some(x=>x>=10)&&(s.overflowWaste??0)<1)return {ok:false,message:"As lixeiras ainda estão quase vazias."};
- const cost=serviceVisitCost(s,"cleaning");
+ const cost=employeeHired(s,"cleaner")?0:serviceVisitCost(s,"cleaning");
  if(s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
  s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false};
- return {ok:true,message:"Faxineiro contratado por R$ "+cost.toFixed(2)+" para recolher o lixo."};
+ return {ok:true,message:cost?"Faxineiro avulso chamado por R$ "+cost.toFixed(2)+" para recolher o lixo.":"Limpeza coberta pelo contrato do faxineiro."};
 }
 function navigate(s:GameState,job:{x:number;y:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean},to:Point,speed:number,exact=false):boolean{
  const close=(a:Point,b:Point)=>Math.hypot(a.x-b.x,a.y-b.y)<.12;
@@ -87,6 +89,20 @@ function navigate(s:GameState,job:{x:number;y:number;route?:Point[];target?:Poin
  job.moving=Math.hypot(dx,dy)>.001;
  if(job.moving)job.facing=directionFromDelta(dx,dy,job.facing??"north");
  return close(job,to)||(!job.route?.length&&Math.hypot(job.x-to.x,job.y-to.y)<.6);
+}
+/** Chamar funcionários contratados só quando necessário.
+ * Técnico contratado atende uma estação de cada vez. */
+export function dispatchHiredStaff(s:GameState):void{
+ if(employeeHired(s,"cleaner")&&!s.cleaningJob&&
+    ((s.binFill??[]).some(x=>x>=75)||(s.overflowWaste??0)>0))
+  requestCleaning(s);
+ if(employeeHired(s,"technician")&&!(s.repairJobs??[]).some(job=>job.phase!=="leaving")){
+  for(let pc=0;pc<pcCount(s);pc++){
+   if((s.pcWear?.[pc]??0)<100||(s.repairJobs??[]).some(j=>j.pc===pc))continue;
+   if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))continue;
+   startRepair(s,pc);break;
+  }
+ }
 }
 /** Funcionários entram e saem pela porta e não atravessam paredes internas. */
 export function tickServices(s:GameState):void{
