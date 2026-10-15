@@ -99,7 +99,10 @@ test("a interface da nova partida oferece períodos e teto histórico, sem apaga
  assert.match(main,/const fresh=createGame\(seed,mode\)/);
  assert.match(main,/crypto\.getRandomValues/);
  assert.ok(main.includes("allowableHourlyPrice(game)"));
- assert.ok(main.includes("clampPriceToEra(decoded)"));
+ // Save local agora é decodificado em localSave.ts; o estado recuperado
+ // passa pelo ajuste de teto (que não altera o modo clássico).
+ assert.ok(main.includes("loadLocalSave("));
+ assert.match(main,/if\s*\(startupSave\.state\)\s*\{[\s\S]*?clampPriceToEra\(game\)/);
 });
 
 test("preço histórico de técnicos e limpeza é consistente com a época e não altera o clássico",()=>{
