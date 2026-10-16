@@ -681,3 +681,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Registrar instante opcional de impressão no save, validar dados e manter partidas antigas.
 - [x] Adicionar regressão de compra, loja e efeitos visuais em desktop/mobile ao CI.
 - [ ] Validar quatro orientações do balcão e fluidez dos braços em aparelho físico; refinar após avaliação.
+
+## Etapa 2 — clientes de cópia sem aluguel de PC
+- [x] Permitir clientes de CD/DVD exclusivamente, com fila única, caminhos físicos e cobrança apenas no balcão.
+- [x] Respeitar compra em 2001 por R$ 900, preços CD/DVD, orçamento, 24 cópias/dia, mídia, horário e capacidade.
+- [x] Contar cópias avulsas sem alterar a métrica histórica de sessões e sem dupla cobrança.
+- [x] Preservar saves legados e não consumir RNG da simulação para sorteio avulso.
+- [x] Validar motor, limites, contabilidade, reinício e interface desktop/mobile no CI.
+- [ ] Balancear procura de cópias em campanhas longas, testar fila e legibilidade em celular físico.

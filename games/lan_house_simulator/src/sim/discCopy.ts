@@ -7,6 +7,8 @@ export interface DiscCopier {
  prices:Record<DiscKind,number>;
  cdCopies:number;dvdCopies:number;revenue:number;expenses:number;
  day:number;dayCopies:number;
+ /** Atendimentos exclusivos de cópia, separados das sessões de computadores. */
+ walkIns?:number;
 }
 export const DISC_COPIER_YEAR=2001;
 export const DISC_COPIER_COST=900;
@@ -45,18 +47,44 @@ export function setDiscCopyPrice(s:GameState,kind:DiscKind,price:number):Result{
 export function discCopiesToday(s:GameState):number{
  return s.discCopier?.day===day(s)?s.discCopier.dayCopies:0;
 }
+/** Mesma escolha de CD/DVD do pedido real, disponível antes de criar o visitante. */
+export function discWalkInKind(id:number):DiscKind{
+ const profile=(Math.imul(id,1664525)+1013904223)>>>0;
+ return ((profile>>>8)%100)<55?"cd":"dvd";
+}
+/** Procura de cópias avulsas: sem RNG global, sensível ao preço e sem renda passiva. */
+export function discWalkInDemand(s:GameState):number{
+ const copier=s.discCopier;
+ if(!copier||yearFromMinutes(s.totalMinutes)<DISC_COPIER_YEAR||discCopiesToday(s)>=DISC_COPIES_PER_DAY)return 0;
+ const priceRatio=(["cd","dvd"] as const).reduce((sum,k)=>
+  sum+Math.min(1,discReferencePrice(s,k)/copier.prices[k]),0)/2;
+ return .0065*priceRatio*(.7+Math.max(0,Math.min(s.reputation,100))/300);
+}
+/** A entrada é determinada por minuto e semente salva, independentemente de visitas de PC. */
+export function discWalkInDue(s:GameState):boolean{
+ if(s.totalMinutes%DAY_MINUTES>=DAY_MINUTES-90)return false;
+ const chance=discWalkInDemand(s);
+ if(chance<=0)return false;
+ let hash=(s.totalMinutes^(s.mailScheduleSeed??0)^0x27d4eb2f)>>>0;
+ hash=Math.imul(hash^(hash>>>16),0x85ebca6b)>>>0;
+ hash=Math.imul(hash^(hash>>>13),0xc2b2ae35)>>>0;
+ hash^=hash>>>16;
+ return (hash>>>0)/0x100000000<chance;
+}
 /** Perfil determinístico, independente do RNG dos clientes; cerca de 20% procuram cópias
  * ao preço de referência. Cobrar mais reduz a procura e a carteira limita a quantidade. */
 export function serveDiscCopy(s:GameState,c:Customer):{kind:DiscKind;quantity:number;revenue:number;cost:number}|null{
- if(!s.discCopier||yearFromMinutes(s.totalMinutes)<DISC_COPIER_YEAR||c.discCopyChecked||c.stage!=="to_pc")return null;
+ const walkIn=c.serviceRequest==="disc-copy";
+ if(!s.discCopier||yearFromMinutes(s.totalMinutes)<DISC_COPIER_YEAR||
+    c.discCopyChecked||!(c.stage==="to_pc"||(walkIn&&c.stage==="waiting")))return null;
  c.discCopyChecked=true;
  const copier=s.discCopier;
  if(copier.day!==day(s)){copier.day=day(s);copier.dayCopies=0;}
  const profile=(Math.imul(c.id,1664525)+1013904223)>>>0;
- const kind:DiscKind=((profile>>>8)%100)<55?"cd":"dvd";
+ const kind=discWalkInKind(c.id);
  const price=copier.prices[kind],cost=discMediaCost(s,kind);
  const demand=.2*Math.min(1,discReferencePrice(s,kind)/price);
- if((profile%1000)/1000>=demand)return null;
+ if(!walkIn&&(profile%1000)/1000>=demand)return null;
  const requested=1+(profile>>>16)%3;
  const quantity=Math.min(requested,DISC_COPIES_PER_DAY-copier.dayCopies,Math.floor((c.wallet??18)/price));
  if(quantity<1||s.cash+price*quantity<cost*quantity)return null;
@@ -65,6 +93,7 @@ export function serveDiscCopy(s:GameState,c:Customer):{kind:DiscKind;quantity:nu
  s.cash=round(s.cash+revenue-expense);s.revenue=round(s.revenue+revenue);s.expenses=round(s.expenses+expense);
  copier[kind==="cd"?"cdCopies":"dvdCopies"]+=quantity;
  copier.revenue=round(copier.revenue+revenue);copier.expenses=round(copier.expenses+expense);copier.dayCopies+=quantity;
+ if(walkIn)copier.walkIns=(copier.walkIns??0)+1;
  return {kind,quantity,revenue,cost:expense};
 }
 export function validDiscCopier(s:Partial<GameState>):boolean{
@@ -75,5 +104,6 @@ export function validDiscCopier(s:Partial<GameState>):boolean{
   [v.cdCopies,v.dvdCopies].every(n=>Number.isSafeInteger(n)&&n>=0&&n<=1e9)&&
   [v.revenue,v.expenses].every(n=>Number.isFinite(n)&&n>=0&&n<=1e12&&Math.abs(n*100-Math.round(n*100))<1e-6)&&
   Number.isInteger(v.day)&&v.day>=1&&v.day<=Math.floor((s.totalMinutes??0)/DAY_MINUTES)+1&&
-  Number.isInteger(v.dayCopies)&&v.dayCopies>=0&&v.dayCopies<=DISC_COPIES_PER_DAY&&v.dayCopies<=v.cdCopies+v.dvdCopies;
+  Number.isInteger(v.dayCopies)&&v.dayCopies>=0&&v.dayCopies<=DISC_COPIES_PER_DAY&&v.dayCopies<=v.cdCopies+v.dvdCopies&&
+  (v.walkIns===undefined||(Number.isSafeInteger(v.walkIns)&&v.walkIns>=0&&v.walkIns<=v.cdCopies+v.dvdCopies));
 }

@@ -795,7 +795,7 @@ function renderUI(liveOnly=false):void {
   setText("admin-cash",money(game.cash));
   setText("admin-profit",money(game.revenue-game.expenses));
   setText("admin-bills",money(monthlyBills(game)));
-  setText("admin-served",String(game.served+(game.printer?.walkIns??0)));
+  setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Salários proporcionais aos dias de contrato.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
@@ -891,7 +891,8 @@ function renderUI(liveOnly=false):void {
     row.append(name,actions,cost);discControls.append(row);
    }
    const copier=game.discCopier;
-   setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado do serviço "+inReais(copier.revenue-copier.expenses)+" (antes do investimento na copiadora).");
+   setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado do serviço "+inReais(copier.revenue-copier.expenses)+" (antes do investimento na copiadora) · "+
+     (copier.walkIns??0)+(copier.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para cópias.");
    setText("disc-copy-capacity",discCopiesToday(game)+" de "+DISC_COPIES_PER_DAY+" cópias feitas hoje. Preços altos reduzem a procura; o orçamento do cliente limita o pedido.");
   }
   const printPanel=document.getElementById("print-service-panel");
@@ -1202,8 +1203,9 @@ function renderUI(liveOnly=false):void {
       (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
    }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
-    " · Atendimentos "+(game.served+(game.printer?.walkIns??0))+
-    " (PCs "+game.served+" · Impressões avulsas "+(game.printer?.walkIns??0)+")");
+    " · Atendimentos "+(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0))+
+    " (PCs "+game.served+" · Impressões avulsas "+(game.printer?.walkIns??0)+
+    " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
   setText("pc-utilization","Ocupação neste mês: "+monthPct.toLocaleString("pt-BR")+"% dos minutos-PC disponíveis ("+monthUsed.toLocaleString("pt-BR")+"/"+monthCapacity.toLocaleString("pt-BR")+").");

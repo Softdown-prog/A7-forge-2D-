@@ -16,7 +16,7 @@ import {tickServices,pcUnderRepair,addWaste,dispatchHiredStaff} from "./services
 import {accrueEmployeeDay,validEmployeeState} from "./staff.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
-import {serveDiscCopy,validDiscCopier} from "./discCopy.js";
+import {serveDiscCopy,validDiscCopier,discWalkInDue,discWalkInKind,discReferencePrice,discCopiesToday,DISC_COPIES_PER_DAY} from "./discCopy.js";
 import {servePrinting,validPrinterService,printWalkInDue,printReferencePrice,pagesPrintedToday,PRINT_PAGES_PER_DAY} from "./printService.js";
 import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
 import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
@@ -320,6 +320,24 @@ function spawnPrintWalkIn(s:GameState):void {
  s.nextCustomerId++;
  s.customers.push(c);
 }
+/** Outro tipo de visitante avulso; usa exatamente a mesma navegação e fila da impressão. */
+function spawnDiscWalkIn(s:GameState):void {
+ const queueIndex=counterQueueCustomers(s).length;
+ if(queueIndex>=MAX_COUNTER_QUEUE)return;
+ const entry=entrance(s);
+ if(s.customers.some(c=>Math.hypot(c.x-entry.x,c.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
+ const id=s.nextCustomerId,kind=discWalkInKind(id),copier=s.discCopier;
+ if(!copier)return;
+ const seed=(Math.imul(id,2246822519)^s.totalMinutes)>>>0;
+ const wallet=Math.max(6,Math.round(discReferencePrice(s,kind)*(3+seed%4)));
+ if(wallet<copier.prices[kind])return;
+ const c:Customer={id,x:entry.x,y:entry.y,facing:"north",stage:"arriving",
+  target:counterQueueSlot(queueIndex,s),queueIndex,costume:"regular",
+  serviceRequest:"disc-copy",wallet,pcIndex:null,usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true};
+ if(!setTravel(s,c,c.target))return;
+ s.nextCustomerId++;s.customers.push(c);
+}
 function tryServe(s: GameState, c: Customer): void {
   if(counterQueueCustomers(s)[0]?.id!==c.id||s.totalMinutes<(s.counterBusyUntil??0)){
     c.waitingMinutes++;return;
@@ -334,6 +352,19 @@ function tryServe(s: GameState, c: Customer): void {
       s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:result.revenue,x:c.x,y:c.y});
     }else{
       addLog(s,"Cliente de impressão saiu sem atendimento.");
+    }
+    sendHome(s,c);
+    return;
+  }
+  if(c.serviceRequest==="disc-copy"){
+    if(localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+    const result=serveDiscCopy(s,c);
+    if(result){
+      s.counterBusyUntil=s.totalMinutes+3;
+      addLog(s,"Cliente avulso copiou "+result.quantity+" "+result.kind.toUpperCase()+"(s): +R$ "+result.revenue+" · mídias -R$ "+result.cost+".");
+      s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:result.revenue,x:c.x,y:c.y});
+    }else{
+      addLog(s,"Cliente de cópias saiu sem atendimento.");
     }
     sendHome(s,c);
     return;
@@ -557,6 +588,7 @@ function advanceMinute(s: GameState): void {
   if (s.customers.length < 14 && admission>0 && random(s)<admission)spawn(s);
   // Outra fonte de movimento comercial: sem PC, sem receita passiva e sem RNG adicional.
   if(s.customers.length<14&&printWalkInDue(s)&&pagesPrintedToday(s)<PRINT_PAGES_PER_DAY)spawnPrintWalkIn(s);
+  if(s.customers.length<14&&discWalkInDue(s)&&discCopiesToday(s)<DISC_COPIES_PER_DAY)spawnDiscWalkIn(s);
   if(localMinute(s)<CLOSING_START_MINUTE){
     refreshCounterQueue(s);
     refreshRetailQueues(s);
@@ -600,7 +632,7 @@ export function isValidSave(value: unknown): value is GameState {
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
-      (c.serviceRequest===undefined||c.serviceRequest==="printing")&&
+      (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&

@@ -35,7 +35,7 @@ export interface Customer {
   /** Pedido de impressão já avaliado no balcão; não repetir após salvar. */
   printChecked?: boolean;
   /** Atendimento exclusivo de impressão, sem sessão, reserva ou desgaste de PC. */
-  serviceRequest?: "printing";
+  serviceRequest?: "printing" | "disc-copy";
   costume: Costume;
   /** Cliente VIP (opcional para saves antigos). */
   vip?: boolean;
