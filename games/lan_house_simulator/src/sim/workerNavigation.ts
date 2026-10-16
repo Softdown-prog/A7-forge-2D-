@@ -45,9 +45,10 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const result:Point[]=[];let k=bkey;
  while(k!==akey){const [x,y]=k.split(",").map(Number);result.push(point(x!,y!));k=prev.get(k)!;}
  result.reverse();
- // O primeiro movimento sempre alcança o nó inicial antes de percorrer a grade.
- // Impede atalhos diagonais através de uma parede entre dois nós válidos.
- result.unshift(point(...start));
+ // Nas plantas livres, ir diretamente ao primeiro desvio mantém a fluidez
+ // original. Só inserimos o nó inicial se pular para o primeiro waypoint
+ // atravessaria uma divisória (especialmente em posição não alinhada à grade).
+ if(!result.length||!canCross(from,result[0]!))result.unshift(point(...start));
  const endpoint=result.at(-1)!;
  if(!canCross(endpoint,to))return null;
  if(clear(to))result.push({...to});
