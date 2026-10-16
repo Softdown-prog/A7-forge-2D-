@@ -24,7 +24,10 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const cols=Math.max(1,Math.ceil((b.maxX-b.minX)/step)),rows=Math.max(1,Math.ceil((b.maxY-b.minY)/step));
  const closest=(p:Point)=>{let best:[number,number]|null=null,dist=Infinity;
   for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){const q=point(x,y);
-   if(!clear(q))continue;const d=Math.hypot(p.x-q.x,p.y-q.y);
+   // O ponto de ancoragem deve pertencer à mesma zona da origem/destino.
+   // Sem isso, a grade pode saltar uma divisória logo no primeiro passo.
+   if(!clear(q)||!canTraverseLocalStep(s,p,q))continue;
+   const d=Math.hypot(p.x-q.x,p.y-q.y);
    if(d<dist){dist=d;best=[x,y];}
   }return best;};
  const start=closest(from),finish=closest(to);if(!start||!finish)return null;
@@ -41,7 +44,12 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  if(!seen.has(bkey))return null;
  const result:Point[]=[];let k=bkey;
  while(k!==akey){const [x,y]=k.split(",").map(Number);result.push(point(x!,y!));k=prev.get(k)!;}
- result.reverse();const endpoint=result.at(-1)??point(...start);
- if(clear(to)&&canCross(endpoint,to))result.push({...to});
- return result.length?result:[point(...finish)];
+ result.reverse();
+ // O primeiro movimento sempre alcança o nó inicial antes de percorrer a grade.
+ // Impede atalhos diagonais através de uma parede entre dois nós válidos.
+ result.unshift(point(...start));
+ const endpoint=result.at(-1)!;
+ if(!canCross(endpoint,to))return null;
+ if(clear(to))result.push({...to});
+ return result;
 }

@@ -31,6 +31,11 @@ export function startRepair(s:GameState,pc:number):Result{
  if(wear<1)return {ok:false,message:"Esse PC não precisa de manutenção."};
  if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))
   return {ok:false,message:"Aguarde o cliente terminar antes de chamar o técnico."};
+ // Não cobrar diária/visita de um técnico que não consegue chegar ao equipamento.
+ // Em especial depois da construção de divisórias e reposicionamento de móveis.
+ const approachPoint=stationPoint(pcPosition(pc,s),.55,.60);
+ if(!workerRoute(s,entrance(s),approachPoint))
+  return {ok:false,message:"Não há passagem para o PC "+(pc+1)+". Abra uma porta ou reorganize o salão antes de chamar o técnico."};
  const cost=employeeHired(s,"technician")?0:serviceVisitCost(s,"repair",wear);
  if(cost>0&&s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
@@ -54,14 +59,25 @@ export function addWaste(s:GameState,amount=1):void{
   s.reputation=Math.max(10,s.reputation-Math.min(1,remaining*.025));
  }
 }
+/** Escolhe uma lixeira que realmente tem acesso pela rede de corredores.
+ * Lixeira inalcançável mantém seu lixo; nunca gera visita fantasma. */
+function accessibleCleaningBin(s:GameState,from:Point):number|null{
+ const bins=s.binFill??[0,0],overflow=(s.overflowWaste??0)>=1;
+ const choices=[0,1].filter(i=>(bins[i]??0)>=5||overflow)
+  .sort((a,b)=>(bins[b]??0)-(bins[a]??0)||a-b);
+ const spots=binSpots(s);
+ for(const i of choices)if(workerRoute(s,from,spots[i]!))return i;
+ return null;
+}
 export function requestCleaning(s:GameState):Result{
  if(s.cleaningJob)return {ok:false,message:"Faxineiro já está a caminho."};
  if(!(s.binFill??[]).some(x=>x>=10)&&(s.overflowWaste??0)<1)return {ok:false,message:"As lixeiras ainda estão quase vazias."};
+ const entry=entrance(s),binIndex=accessibleCleaningBin(s,entry);
+ if(binIndex===null)return {ok:false,message:"O faxineiro não consegue alcançar as lixeiras que precisam de limpeza. Abra uma passagem ou reorganize o salão."};
  const cost=employeeHired(s,"cleaner")?0:serviceVisitCost(s,"cleaning");
  if(cost>0&&s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
- const entry=entrance(s);
- s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false,coveredByContract:employeeHired(s,"cleaner")};
+ s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false,coveredByContract:employeeHired(s,"cleaner"),binIndex};
  accrueEmployeeDay(s);
  return {ok:true,message:cost?"Faxineiro avulso chamado por R$ "+cost.toFixed(2)+" para recolher o lixo.":"Limpeza coberta pelo contrato do faxineiro."};
 }
@@ -130,9 +146,15 @@ export function tickServices(s:GameState):void{
  if(!job)return;
  if(job.phase==="arriving"){
   if(job.binIndex===undefined){
-   const bins=s.binFill??[0,0],index=bins[0]>=bins[1]?0:1;
-   if((bins[index]??0)>=5||(s.overflowWaste??0)>=1)job.binIndex=index;
-   else{job.phase="leaving";job.route=undefined;job.target=undefined;}
+   const index=accessibleCleaningBin(s,{x:job.x,y:job.y});
+   if(index!==null)job.binIndex=index;
+   else{
+    // Nunca atravessar divisórias só para finalizar o segundo chamado.
+    // O lixo inacessível continua na lixeira, sem nova despesa.
+    job.phase="leaving";job.route=undefined;job.target=undefined;
+    s.eventLog.unshift("Faxineiro encerrou a visita: há lixeira sem passagem. Verifique as divisórias.");
+    s.eventLog.splice(14);
+   }
   }
   if(job.phase==="arriving"&&job.binIndex!==undefined&&navigate(s,job,binSpots(s)[job.binIndex]!, .32)){
    job.phase="working";job.progress=0;job.moving=false;

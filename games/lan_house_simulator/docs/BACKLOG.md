@@ -734,3 +734,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Usar quadros em tempo visual; nenhuma alteração no relógio de serviços ou no sistema financeiro.
 - [x] Testar quatro direções, variação real de frames e produzir vídeo curto em MP4 para revisão.
 - [ ] Ajustes de detalhe e ângulo das mãos após avaliação visual do vídeo, se necessário.
+
+
+## Funcionários: visita somente quando há acesso físico
+- [x] Verificar as duas ligações da grade ao começo/fim da rota para impedir travessias pelas divisórias.
+- [x] Recusar reparo ou limpeza sem caminho **antes** de debitar taxa de visita ou registrar diária contratual.
+- [x] Priorizar lixeira mais cheia alcançável; deixar lixeira inacessível intacta e retornar à porta sem visita presa.
+- [x] Validar reabertura de passagem, múltiplas lixeiras e operação padrão sem paredes.
+- [ ] Testar fisicamente plantas de grandes salões montadas por jogadores, com todas as máquinas e móveis reposicionados.

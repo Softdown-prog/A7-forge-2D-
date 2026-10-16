@@ -44,3 +44,11 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - O arquivo `src/render/workerMotion.ts` calcula, apenas a partir do tempo de renderização, a posição das mãos e da ferramenta. `src/render/actorArt.ts` desenha os braços sobre as mesmas coordenadas de trabalho e `src/render/scene.ts` desenha vassoura e chave. As quatro vistas respeitam o flip de perfil existente.
 - Somente `job.phase==="working"` ativa as novas poses; para chegada e saída, o personagem continua com a animação de caminhada aprovada.
 - Nenhuma receita de corpo, rosto, capacete, colisão, duração, demanda, RNG, salário ou save foi substituída. Os testes `tests/worker-motion.test.mjs` e `scripts/verify_worker_motion.mjs` verificam determinismo, amplitudes, quatro direções, quadros distintos, Canvas do jogo e vídeo `worker_actions.mp4` no artefato de gameplay.
+
+
+## Proteção de visitas e circulação em salões divididos
+- O cálculo de rota conecta **origem → primeiro ponto da grade → corredores → destino**, verificando todas as ligações contra as divisórias. A aproximação à grade não pode deslocar um funcionário para o outro lado de uma parede fechada.
+- O técnico só aceita atendimento quando existe um caminho da porta até o ponto de reparo. Se não houver, a interface recebe uma mensagem orientando a abrir uma porta ou reorganizar o salão; nenhuma visita avulsa é cobrada, nem é criada diária contratual.
+- O faxineiro prioriza a lixeira mais cheia **entre as alcançáveis**. Se ambas estiverem inacessíveis, recusa o chamado antes do pagamento. Se uma lixeira alcançável foi esvaziada e a outra continua isolada, encerra a visita e deixa o lixo intacto, com aviso no histórico.
+- A intervenção sobre geometria acontece antes de qualquer mutação de caixa, folha, RNG ou lista de serviços. Saves existentes mantêm a estrutura anterior; nenhuma migração foi necessária.
+- Cobertura em `tests/services-accessibility.test.mjs` e `tests/worker-navigation.test.mjs`: isolamento de lixeira/PC, retorno da passagem, serviço parcial, dia contratado não cobrado sem rota e validação de cada segmento.

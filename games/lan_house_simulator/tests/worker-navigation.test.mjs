@@ -21,3 +21,23 @@ test("técnico consegue finalizar um reparo após percorrer um caminho",()=>{
  for(let i=0;i<180&&s.pcWear[0]>0;i++)stepGame(s,1);
  assert.equal(s.pcWear[0],0);
 });
+
+test("grade não atravessa a parede nas conexões de início e destino",async()=>{
+ const s=createGame();
+ // Isola somente a célula da primeira lixeira, sem bloquear os PCs.
+ s.interiorWalls=[
+  {axis:"x",x:1,y:3},{axis:"x",x:1,y:4},
+  {axis:"y",x:1,y:3},{axis:"y",x:2,y:3}
+ ];
+ const from={x:7.5,y:5.35};
+ assert.equal(workerRoute(s,from,BIN_SPOTS[0]),null,"lixeira cercada não pode ser alcançada");
+ const accessible=workerRoute(s,from,BIN_SPOTS[1]);
+ assert.ok(accessible?.length,"segunda lixeira permanece acessível");
+ const {canTraverseLocalStep}=await import("../dist/js/sim/navigation.js");
+ let previous=from;
+ for(const target of accessible){
+  assert.equal(canTraverseLocalStep(s,previous,target),true,
+   "todos os segmentos, inclusive o primeiro, devem respeitar a divisória");
+  previous=target;
+ }
+});
