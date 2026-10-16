@@ -31,6 +31,7 @@ import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
+import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
@@ -100,6 +101,8 @@ const startupSave=loadLocalSave({
  getItem:(key:string)=>{try{return localStorage.getItem(key);}catch{return null;}}
 });
 let game=startupSave.state??newGameForPlayer(72421,"historical");
+let knownMailIds=mailBaseline(game.notices);
+function resetMailAudioBaseline():void{knownMailIds=mailBaseline(game.notices);}
 if(startupSave.state){
  if(game.totalMinutes>GAME_LAST_MINUTE){game.totalMinutes=GAME_LAST_MINUTE;game.leftoverMinutes=0;}
  clampPriceToEra(game);
@@ -165,7 +168,7 @@ importFile.addEventListener("change",async()=>{
   if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
   // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
   replaceLocalSave(localStorage,state);
-  game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);
+  game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);
   soundscape.stopKeyboard();
   previousServed=game.served;previousPurchases=game.purchases;
   paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
@@ -175,7 +178,7 @@ importFile.addEventListener("change",async()=>{
 });
 mountCloudControls(saveMessage,()=>game,(state)=>{
  replaceLocalSave(localStorage,state);
- game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
+ game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
  previousServed=game.served;previousPurchases=game.purchases;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  continueButton!.disabled=false;exportButton!.disabled=false;
@@ -193,6 +196,7 @@ function showMenu():void{
 function beginPlay():void{
  sceneMotion.reset();
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
+ resetMailAudioBaseline(); // Existing saved mail never replays.
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
  renderUI();
 }
@@ -201,7 +205,7 @@ document.getElementById("menu-new")?.addEventListener("click",()=>{
  const fresh=newGameForPlayer(72421,"historical");
  try{replaceLocalSave(localStorage,fresh);}
  catch{announceSave("Não foi possível gravar uma nova partida. A anterior foi preservada.");return;}
- game=fresh;hasSavedGame=true;exportButton!.disabled=false;
+ game=fresh;resetMailAudioBaseline();hasSavedGame=true;exportButton!.disabled=false;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;beginPlay();
 });
@@ -529,7 +533,7 @@ button("reset-game",()=>{
   const fresh=newGameForPlayer(72421,"classic");
   try{replaceLocalSave(localStorage,fresh);}
   catch{announceSave("Falha ao salvar reinício. Progresso anterior preservado.");return;}
-  game=fresh;hasSavedGame=true;
+  game=fresh;resetMailAudioBaseline();hasSavedGame=true;
   previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
@@ -1286,6 +1290,9 @@ function frame(timestamp:number):void {
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
+  // Detect new mail from every delivery path, not from opening the envelope.
+  const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
+  if(arrivedMail>0&&!document.hidden)soundscape.mail();
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});
