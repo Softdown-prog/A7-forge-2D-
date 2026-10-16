@@ -30,3 +30,10 @@ Testes da simulação validam compra sem PC, capacidade, contabilidade, determin
 - O campo printer.lastPrintedMinute é opcional e validado, de modo que saves anteriores continuam válidos. Ausência do dado ou compra sem venda deixam a impressora inativa.
 - QA em Chromium verifica preço, compra, bloqueio da segunda compra, desenho real da loja e do salão, diferença entre quadros parados/ativos e ausência de alterações de layout em desktop, 414px e 360px.
 - Aprovação de acabamento, posição e gestos finais ainda exige avaliação visual em telefone físico.
+
+## Transparência econômica dos serviços (Etapa 2)
+- Administração → Preços mostra agora **resultado operacional** (faturamento menos materiais), **quanto falta para recuperar os R$ 320 da impressora** e o saldo líquido depois do investimento inicial. A compra é contabilizada somente uma vez, nas despesas globais.
+- Tarifa inferior ao custo corrente de papel e tinta recebe aviso de **prejuízo**. Tarifa igual ao custo recebe aviso de ausência de margem para recuperar o investimento. O jogador continua livre para definir valores permitidos, inclusive promoções com prejuízo consciente.
+- Exibe uma expectativa matemática de **tentativas de entrada de clientes de impressão avulsa por dia**, antes de fila, orçamento e limite diário. Não se trata de vendas prometidas nem altera o sorteio existente.
+- A simulação não ganha renda passiva, não muda o valor histórico das compras, nem reajusta tarifas existentes automaticamente. O painel usa apenas receitas e despesas que já eram registradas e as chances de entrada atuais.
+- Testes incluem comparação de anos e campanhas finitas, retorno de investimento, custo negativo, saves antigos e interface desktop/414/360 px.

@@ -698,3 +698,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Preservar partidas antigas, adicionar validação do minuto do último serviço e regressão das quatro rotações.
 - [x] Atualizar antigo teste de pixels do salão para detectar a nova máquina sem alteração de layout.
 - [ ] Rever tamanho, visibilidade e naturalidade do gesto em telefone físico antes de fechar o acabamento final.
+
+## Etapa 2 — instrumentação econômica dos serviços comerciais
+- [x] Exibir faturamento, custo operacional e retorno líquido após recuperar investimento de R$ 320/R$ 900 sem dupla contagem.
+- [x] Apresentar quanto ainda falta amortizar cada máquina, em vez de tratar receita bruta como lucro.
+- [x] Destacar impressões vendidas abaixo do custo de materiais, mantendo o preço sob controle do jogador.
+- [x] Mostrar tentativa potencial diária de procura avulsa, identificada como estimativa não garantida.
+- [x] Acrescentar testes de campanhas históricas e de interface mobile (1998, 2001, 2025, 2030).
+- [ ] Reavaliar probabilidades e preços no balanceamento final, após ampliar hardware e funcionalidades do jogo.

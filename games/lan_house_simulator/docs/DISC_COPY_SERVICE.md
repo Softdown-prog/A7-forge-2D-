@@ -28,3 +28,9 @@ Validação: testes de motor, compra única, desbloqueio, demanda/preço, cartei
 - Partidas salvas antes desta atualização continuam válidas porque o novo campo é opcional. Minutos negativos, fracionários, futuros ou inválidos são rejeitados na importação.
 - Os testes `disc-copier-tony.test.mjs` e `verify_disc_copier_tony.mjs` verificam compra, ausência de receita passiva, persistência, coexistência dos equipamentos, quatro rotações e desktop/mobile (1280/414/360 px). As capturas PNG são anexadas ao artefato visual do GitHub Actions.
 - Ainda é necessária a avaliação visual em telefone físico, particularmente a legibilidade das bandejas na câmera com zoom mínimo.
+
+## Transparência econômica dos serviços (Etapa 2)
+- O painel exibe o **resultado operacional** do CD/DVD, descontando mídias, e **quanto falta para recuperar os R$ 900 investidos** na máquina. Após amortizar, mostra o saldo acumulado depois do investimento inicial.
+- A procura avulsa potencial por dia é estimada usando a chance real de entrada e o tempo de admissão. Filas, carteira, expediente e capacidade podem reduzir o total efetivo; nunca confundir previsão matemática de tentativas com clientes atendidos.
+- Margens por CD/DVD, preços individuais e avisos existentes de prejuízo permanecem. Não houve reajuste automático, aumento artificial de clientela ou mudança nos preços base: o balanceamento amplo fica para a etapa de campanha completa.
+- O cálculo não modifica RNG, salvamento, fluxo dos NPCs, quantidade de CDs/DVDs nem finanças; apenas interpreta valores já registrados no jogo. Testes cobrem anos da campanha, custo de mídias, retorno de investimento, saves e desktop/mobile.

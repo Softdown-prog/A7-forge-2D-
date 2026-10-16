@@ -2,6 +2,7 @@ import {mountCloudControls} from "./ui/cloudControls.js";
 import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
 import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,setDiscCopyPrice,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
+import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
@@ -890,10 +891,12 @@ function renderUI(liveOnly=false):void {
     cost.textContent="Mídia: "+inReais(discMediaCost(game,kind))+" · resultado por cópia: "+inReais(margin)+(margin<0?" · este preço dá prejuízo":"");
     row.append(name,actions,cost);discControls.append(row);
    }
-   const copier=game.discCopier;
-   setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado do serviço "+inReais(copier.revenue-copier.expenses)+" (antes do investimento na copiadora) · "+
+   const copier=game.discCopier,report=discEconomy(game)!;
+   setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado operacional "+inReais(report.operatingResult)+" · "+
      (copier.walkIns??0)+(copier.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para cópias.");
-   setText("disc-copy-capacity",discCopiesToday(game)+" de "+DISC_COPIES_PER_DAY+" cópias feitas hoje. Preços altos reduzem a procura; o orçamento do cliente limita o pedido.");
+   setText("disc-copy-capacity",discCopiesToday(game)+" de "+DISC_COPIES_PER_DAY+" cópias feitas hoje. "+
+     (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 900 da máquina.")+
+     " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
   }
   const printPanel=document.getElementById("print-service-panel");
   if(printPanel)printPanel.hidden=!game.printer;
@@ -912,11 +915,17 @@ function renderUI(liveOnly=false):void {
     actions.append(button);
    }
    const expense=document.createElement("small");expense.className="disc-copy-cost";
-   expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(game.printer.price-printPaperInkCost(game));
+   const printMargin=game.printer.price-printPaperInkCost(game);
+   expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(printMargin)+
+     (printMargin<0?" · atenção: este preço dá prejuízo":printMargin===0?" · sem margem para recuperar a máquina":"");
    row.append(label,actions,expense);printControls.append(row);
+   const report=printEconomy(game)!;
    setText("print-service-summary",game.printer.pages+" páginas realizadas · faturamento "+inReais(game.printer.revenue)+
-     " · materiais "+inReais(game.printer.expenses)+" · "+(game.printer.walkIns??0)+(game.printer.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para imprimir.");
-   setText("print-service-capacity",pagesPrintedToday(game)+" de 35 páginas hoje. Pedidos dependem dos clientes, carteira e tarifa.");
+     " · materiais "+inReais(game.printer.expenses)+" · resultado operacional "+inReais(report.operatingResult)+
+     " · "+(game.printer.walkIns??0)+(game.printer.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para imprimir.");
+   setText("print-service-capacity",pagesPrintedToday(game)+" de 35 páginas hoje. "+
+     (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 320 da impressora.")+
+     " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
   }
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
