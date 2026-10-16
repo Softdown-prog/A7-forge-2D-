@@ -84,7 +84,18 @@ try{
     assert.ok(pixels>120,"marcador deve alterar pixels reais do salão: "+pixels);
     await tap("#show-service-access");
     assert.equal(await page.locator("#admin").isVisible(),false);
-    assert.equal(await page.locator("#service-access-toolbar").isVisible(),true);
+    const visibility=await page.evaluate(()=>{
+     const el=document.getElementById("service-access-toolbar");
+     const stage=document.querySelector(".stage");
+     const app=document.getElementById("game-app");
+     const styles=el?getComputedStyle(el):null;
+     return {exists:!!el,hidden:el?.hidden,display:styles?.display,
+      box:el?{w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}:null,
+      parentHidden:stage?.hasAttribute("hidden"),appHidden:app?.hidden,
+      mapHint:document.getElementById("service-access-map-hint")?.textContent};
+    });
+    assert.equal(await page.locator("#service-access-toolbar").isVisible(),true,
+     kind+"/"+width+": "+JSON.stringify(visibility));
     await page.locator("#service-access-toolbar").screenshot({
      path:resolve(output,"access_"+kind+"_"+width+"_toolbar.png")
     });
