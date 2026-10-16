@@ -1253,12 +1253,6 @@ function renderUI(liveOnly=false):void {
    const see=document.querySelector<HTMLButtonElement>("#show-service-access");
    if(see){see.disabled=issues.length===0;see.textContent="Ver bloqueios no salão ("+issues.length+")";}
   }
-  const inspectToolbar=document.getElementById("service-access-toolbar");
-  if(inspectToolbar)inspectToolbar.hidden=!serviceAccessVisible;
-  if(serviceAccessVisible)setText("service-access-map-hint",
-   serviceAccessCache.length
-    ?serviceAccessCache.map(issue=>issue.label).join(", ")+": sem acesso. Abra uma porta ou reorganize o salão."
-    :"Nenhum destino está bloqueado. Você pode fechar as marcações.");
   const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
    if(cleanButton){
     cleanButton.textContent=game.cleaningJob?"Faxineiro · "+workPhaseLabel("cleaner",game.cleaningJob):
@@ -1296,6 +1290,14 @@ function renderUI(liveOnly=false):void {
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   }
+  // Independente do painel administrativo: as marcações continuam visíveis
+  // depois de fechar Administração para inspecionar o salão no Canvas.
+  const inspectToolbar=document.getElementById("service-access-toolbar");
+  if(inspectToolbar)inspectToolbar.hidden=!serviceAccessVisible;
+  if(serviceAccessVisible)setText("service-access-map-hint",
+   serviceAccessCache.length
+    ?serviceAccessCache.map(issue=>issue.label).join(", ")+": sem acesso. Abra uma porta ou reorganize o salão."
+    :"Nenhum destino está bloqueado. Você pode fechar as marcações.");
   const recentEvents=game.eventLog.slice(0,6),eventSignature=JSON.stringify(recentEvents);
   if(eventSignature!==lastEventSignature){
   events.replaceChildren();
