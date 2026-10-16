@@ -48,7 +48,11 @@ export function workerRoute(s:GameState,from:Point,to:Point):Point[]|null{
  // Nas plantas livres, ir diretamente ao primeiro desvio mantém a fluidez
  // original. Só inserimos o nó inicial se pular para o primeiro waypoint
  // atravessaria uma divisória (especialmente em posição não alinhada à grade).
- if(!result.length||!canCross(from,result[0]!))result.unshift(point(...start));
+ if(!result.length){
+  // Origem e destino próximos: não obrigar um desvio artificial à grade.
+  if(clear(to)&&canCross(from,to))return [{...to}];
+  result.push(point(...start));
+ }else if(!canCross(from,result[0]!))result.unshift(point(...start));
  const endpoint=result.at(-1)!;
  if(!canCross(endpoint,to))return null;
  if(clear(to))result.push({...to});
