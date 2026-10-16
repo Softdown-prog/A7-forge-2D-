@@ -14,7 +14,8 @@ export const AUDIO_LEVELS=Object.freeze({
   keyboard:0.040, // fundo discreto; continua abaixo de mouse (0.105) e caixa (0.24).
   vending:0.45,
   soda:0.085, // Mais audível (+8,5 dB), mas ainda abaixo de mouse e caixa.
-  printer:0.058 // Impressora discreta, entre teclado e refrigerante.
+  printer:0.058, // Impressora discreta, entre teclado e refrigerante.
+  mail:0.12 // Correio, entre mouse e venda.
 });
 export const KEYBOARD_DURATION=3.5;
 
@@ -46,10 +47,11 @@ export function shouldPlayPrinterSound(roll:number,elapsed:number):boolean{
  return roll<PRINTER_CHANCE&&elapsed>=PRINTER_COOLDOWN_SECONDS;
 }
 type SodaTake="vending_soda_01"|"vending_soda_02";
-type ApprovedSample="mouse"|"income"|KeyboardTake|SodaTake;
+type ApprovedSample="mouse"|"income"|"mail"|KeyboardTake|SodaTake;
 const SAMPLES:Record<ApprovedSample,string>={
  mouse:"./assets/audio/mouse_click_002.ogg",
  income:"./assets/audio/money_income_01.ogg",
+ mail:"./assets/audio/mail_notification_01.ogg",
  keyboard_te1:"./assets/audio/keyboard_te1.ogg",
  keyboard_t2:"./assets/audio/keyboard_t2.ogg",
  keyboard_t3:"./assets/audio/keyboard_t3.ogg",
@@ -71,6 +73,7 @@ export class Soundscape {
  private lastIncome=-100;
  private lastSoda=-100;
  private lastPrinter=-100;
+ private lastMail=-100;
  private printerBuffer:AudioBuffer|null=null;
  private sodaTake=0;
  private readonly sodaRandom:()=>number;
@@ -167,6 +170,14 @@ export class Soundscape {
      this.tone(ctx.currentTime+0.008,390,0.040,0.022);
      this.tone(ctx.currentTime+0.016,230,0.024,0.011);
    }
+ }
+ /** Notificação de carta nova: um poc curto, sem repetir ao abrir o correio. */
+ mail():boolean{
+  const ctx=this.context;
+  if(!this.enabled||!ctx||ctx.state!=="running"||ctx.currentTime-this.lastMail<1.5)return false;
+  if(!this.playSample("mail",AUDIO_LEVELS.mail,.65))return false;
+  this.lastMail=ctx.currentTime;
+  return true;
  }
  /** O som de dinheiro é distinto e mais presente do que o clique UI. */
  income(kind:"payment"|"sale"="payment"):void{

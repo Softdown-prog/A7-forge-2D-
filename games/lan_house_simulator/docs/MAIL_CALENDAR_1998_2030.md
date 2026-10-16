@@ -23,3 +23,7 @@
 - `tests/mail-calendar.test.mjs`: várias sementes, distribuição entre anos, saves antigos, multas, idempotência e encerramento em 2030.
 
 O calendário é determinístico por partida; **esporádico** não significa repetição diária nem uma obrigação de preencher todos os anos com correspondência.
+
+
+## Notificação sonora de correio
+O correio utiliza o efeito autoral tratado `mail_notification_01.ogg`, selecionado entre 8 batidas gravadas pelo criador. A interface observa novos IDs de mensagens, independentemente do fluxo de entrega (avisos, decisões, histórias, relatórios). Uma mensagem nova dispara um toque curto. Um item já conhecido, reabertura do correio, leitura, mudança de lida para não lida e retomada de save não emitem som. Os IDs são controlados só na UI, sem alterar economia ou RNG do jogo.

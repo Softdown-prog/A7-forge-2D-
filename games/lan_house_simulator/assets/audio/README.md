@@ -66,3 +66,10 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - Ganho de impressora `0.058`, inferior a refrigerante `0.085` e pagamento `0.24`; envelope com fade para evitar estalos.
 - A amostra é sintetizada uma vez por AudioContext e reutilizada; desligar efeitos silencia; filas efêmeras não são salvas; a chance não usa RNG econômico.
 - Revisão de volume em telefone físico recomendada.
+
+
+## Correio — poc autoral tratado (16/10/2026)
+- Fonte: gravação original do criador `assets/Convert/7 de out. 18.05​.m4a`, preservada.
+- `tools/a7_audio_lab/review_mail_pocs.py` tratou e comparou oito pocs; selecionou `poc_candidate_06` pelo contraste/ruído de fundo e gravou o OGG Vorbis mono 48 kHz `assets/audio/mail_notification_01.ogg`.
+- Auditoria e hashes em `assets/audio/mail_notification_provenance.json`; outros candidatos disponíveis no artefato Actions da revisão.
+- Volume `0.12` no Soundscape, entre clique e venda. Uma reprodução por chegada de mensagem nova, cooldown 1,5 segundo, nunca ao abrir/reler o correio ou retomar uma partida.
