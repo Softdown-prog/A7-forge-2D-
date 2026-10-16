@@ -104,6 +104,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+      - name: Verify recovered long-campaign saves, quota alerts and mobile retry
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_save_recovery.mjs out/validation
       - name: Inspect administrator and counter art in four orientations
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

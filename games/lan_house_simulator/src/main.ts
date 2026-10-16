@@ -133,6 +133,9 @@ const importFile=document.querySelector<HTMLInputElement>("#save-import-file");
 const saveMessage=document.querySelector<HTMLElement>("#save-message");
 const exportButton=document.querySelector<HTMLButtonElement>("#save-export");
 if(!importFile||!saveMessage||!exportButton)throw Error("Controles de save ausentes");
+const autosaveState=document.querySelector<HTMLElement>("#autosave-state");
+const autosaveIndicator=document.querySelector<HTMLElement>(".hud-autosave");
+let autosaveFailed=false;
 exportButton.disabled=!hasSavedGame;
 function announceSave(message:string):void{saveMessage!.textContent=message;}
 if(startupSave.source==="backup")announceSave("Save principal danificado: cópia local anterior recuperada. Exporte o JSON para maior segurança.");
@@ -296,8 +299,18 @@ const internetNames = INTERNET_ERAS.map(x=>x.name);
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 function save(): void {
   if(!isPlaying)return;
-  try { writeLocalSave(localStorage,game);hasSavedGame=true;exportButton!.disabled=false; }
-  catch { announceSave("Falha ao salvar no navegador. Exporte a partida em JSON para evitar perda de progresso."); }
+  try {
+    writeLocalSave(localStorage,game);hasSavedGame=true;exportButton!.disabled=false;
+    if(autosaveState)autosaveState.textContent="Salvo neste navegador";
+    autosaveIndicator?.removeAttribute("data-state");
+    if(autosaveFailed)announceSave("Salvamento automático restabelecido neste navegador.");
+    autosaveFailed=false;
+  }catch{
+    autosaveFailed=true;
+    if(autosaveState)autosaveState.textContent="Falha ao salvar — exporte sua partida";
+    autosaveIndicator?.setAttribute("data-state","error");
+    announceSave("Falha ao salvar no navegador. Exporte a partida em JSON para evitar perda de progresso.");
+  }
 }
 function button(id:string, handler:()=>void):void {
   const el=document.getElementById(id);

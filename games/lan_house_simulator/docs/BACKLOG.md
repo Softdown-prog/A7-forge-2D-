@@ -650,6 +650,13 @@ Contrato: [EMPLOYEES.md](EMPLOYEES.md).
 
 Contrato: [LOCAL_SAVE_RECOVERY.md](LOCAL_SAVE_RECOVERY.md).
 
+### Revisão automatizada da Etapa 1 — 15/10/2026
+- [x] Permitir backup mesmo quando ler a chave principal falha e não travar salvamento principal por erro ao consultar checkpoint.
+- [x] Exibir falha de gravação no HUD do jogo, inclusive em larguras móveis, e limpar aviso após nova gravação válida.
+- [x] Acrescentar regressões de save avançado até o fim de 2030, corrupção, falha isolada de leitura e estados econômicos opcionais.
+- [x] Adicionar teste Chromium de recuperação, exportação, quota e rolagem horizontal em 1280/414/360 ao worker de cena.
+- [ ] Validar armazenamento com quota real e navegador fechado/reaberto em aparelhos Android/iOS; observar alertas, importação e exportação em partidas extensas.
+
 ## Serviço de impressão de documentos — 15/10/2026
 - [x] Equipamento único na loja, preço configurável em Preços, custo de papel/tinta e receita por cliente real.
 - [x] Capacidade diária, demanda sensível à tarifa e orçamento; nenhuma renda passiva ou alteração no RNG de clientes.

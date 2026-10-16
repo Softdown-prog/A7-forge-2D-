@@ -15,8 +15,8 @@ function decode(raw:string|null):GameState|null{
 }
 export function loadLocalSave(store:Pick<SaveStore,"getItem">):SaveRead{
  let primary:string|null=null;
- try{primary=store.getItem(GAME_SAVE_KEY);}
- catch{return {state:null,source:"none",invalidPrimary:false};}
+ // Mesmo que a leitura da chave principal falhe, o backup pode estar acessível.
+ try{primary=store.getItem(GAME_SAVE_KEY);}catch{}
  const state=decode(primary);
  if(state)return {state,source:"primary",invalidPrimary:false};
  let backup:string|null=null;
@@ -36,7 +36,9 @@ function encode(state:GameState):string{
 export function writeLocalSave(store:SaveStore,state:GameState):void{
  const payload=encode(state),old=store.getItem(GAME_SAVE_KEY),existing=decode(old);
  if(existing){
-  const last=decode(store.getItem(GAME_SAVE_BACKUP_KEY));
+  // Falha de leitura do checkpoint não deve bloquear uma gravação principal válida.
+  let last:GameState|null=null;
+  try{last=decode(store.getItem(GAME_SAVE_BACKUP_KEY));}catch{}
   const oldDay=Math.floor(existing.totalMinutes/DAY_MINUTES);
   const backDay=last?Math.floor(last.totalMinutes/DAY_MINUTES):-1;
   if(!last||oldDay>backDay){
