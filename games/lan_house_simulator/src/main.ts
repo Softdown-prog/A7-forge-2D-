@@ -40,6 +40,7 @@ import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
+import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
@@ -235,6 +236,17 @@ installGameViewport(canvas);
 let adminOpen = false;
 let noticesOpen=false;
 let activeAdminTab="prices";
+// Diagnóstico visual transitório: nunca entra no GameState nem no save.
+let serviceAccessVisible=false,serviceAccessAt=-10000;
+let serviceAccessCache:ServiceAccessIssue[]=[];
+function inspectServiceAccess(force=false):readonly ServiceAccessIssue[]{
+ const now=performance.now();
+ if(force||now-serviceAccessAt>1600){
+  serviceAccessCache=serviceAccessIssues(game);
+  serviceAccessAt=now;
+ }
+ return serviceAccessCache;
+}
 let previousServed = game.served;
 let previousPurchases = game.purchases;
 let lastEventSignature="";
@@ -410,6 +422,14 @@ const toggleEmployee=(role:EmployeeRole):void=>{
 button("clean-bins",()=>toggleEmployee("cleaner"));
 button("hire-technician",()=>toggleEmployee("technician"));
 button("clean-bins-now",()=>{applyResult(game,requestCleaning(game));renderUI();save();});
+button("show-service-access",()=>{
+ const issues=inspectServiceAccess(true);
+ if(!issues.length)return;
+ serviceAccessVisible=true;
+ adminOpen=false;renderUI();
+ canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
+});
+button("hide-service-access",()=>{serviceAccessVisible=false;renderUI();});
 let selectedGpuPc=0;
 const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
 gpuPcChoice?.addEventListener("click",event=>{
@@ -1221,6 +1241,24 @@ function renderUI(liveOnly=false):void {
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
   }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
   " · faxineiro "+(game.cleaningJob?workPhaseLabel("cleaner",game.cleaningJob).toLowerCase():cleanerHired?"contratado":"sem contrato"));
+  if(adminOpen&&activeAdminTab==="services"){
+   const issues=inspectServiceAccess(!liveOnly);
+   const summary=issues.length
+    ?issues.length+" destino(s) sem passagem para atendimento."
+    :"Nenhum destino com necessidade de atendimento está bloqueado.";
+   setText("service-access-summary",summary);
+   setText("service-access-list",issues.length
+    ?issues.map(issue=>issue.label+" · sem rota desde a porta").join(" · ")
+    :"Uma ocorrência futura só será verificada quando precisar de atendimento.");
+   const see=document.querySelector<HTMLButtonElement>("#show-service-access");
+   if(see){see.disabled=issues.length===0;see.textContent="Ver bloqueios no salão ("+issues.length+")";}
+  }
+  const inspectToolbar=document.getElementById("service-access-toolbar");
+  if(inspectToolbar)inspectToolbar.hidden=!serviceAccessVisible;
+  if(serviceAccessVisible)setText("service-access-map-hint",
+   serviceAccessCache.length
+    ?serviceAccessCache.map(issue=>issue.label).join(", ")+": sem acesso. Abra uma porta ou reorganize o salão."
+    :"Nenhum destino está bloqueado. Você pode fechar as marcações.");
   const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
    if(cleanButton){
     cleanButton.textContent=game.cleaningJob?"Faxineiro · "+workPhaseLabel("cleaner",game.cleaningJob):
@@ -1326,6 +1364,7 @@ function frame(timestamp:number):void {
   }
   const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastScroll>120;
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
+  if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
   if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
   if(!isPlaying&&menuRenderer&&menuPreviewAvailable&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>90){
      try{menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}

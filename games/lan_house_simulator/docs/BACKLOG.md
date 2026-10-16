@@ -742,3 +742,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Priorizar lixeira mais cheia alcançável; deixar lixeira inacessível intacta e retornar à porta sem visita presa.
 - [x] Validar reabertura de passagem, múltiplas lixeiras e operação padrão sem paredes.
 - [ ] Testar fisicamente plantas de grandes salões montadas por jogadores, com todas as máquinas e móveis reposicionados.
+
+
+## Acessibilidade visual para chamados de funcionários
+- [x] Indicar quais lixeiras ou PCs com necessidade de serviço não possuem passagem desde a porta.
+- [x] Oferecer na aba Serviços um atalho para localizar os destinos inacessíveis no salão.
+- [x] Desenhar indicação no Canvas sem criar colisões, objetos salvos ou interferir nos sprites.
+- [x] Evitar cálculo de rotas a cada frame e mostrar o diagnóstico somente com demanda real.
+- [x] Cobrir situações inacessíveis/reabertas, saves e interface Chromium desktop/mobile no CI.
+- [ ] Validar no telefone físico a legibilidade dos avisos em plantas com ampliação máxima.

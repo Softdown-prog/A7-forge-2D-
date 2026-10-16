@@ -52,3 +52,11 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - O faxineiro prioriza a lixeira mais cheia **entre as alcançáveis**. Se ambas estiverem inacessíveis, recusa o chamado antes do pagamento. Se uma lixeira alcançável foi esvaziada e a outra continua isolada, encerra a visita e deixa o lixo intacto, com aviso no histórico.
 - A intervenção sobre geometria acontece antes de qualquer mutação de caixa, folha, RNG ou lista de serviços. Saves existentes mantêm a estrutura anterior; nenhuma migração foi necessária.
 - Cobertura em `tests/services-accessibility.test.mjs` e `tests/worker-navigation.test.mjs`: isolamento de lixeira/PC, retorno da passagem, serviço parcial, dia contratado não cobrado sem rota e validação de cada segmento.
+
+
+## Identificação visual dos destinos sem passagem
+- **Administração → Serviços** consulta apenas locais que precisam de limpeza (lixeiras com pelo menos 10% de ocupação ou lixo no chão) ou computadores com desgaste passível de reparo e sem técnico já em atendimento.
+- O diagnóstico `src/sim/serviceAccess.ts` consulta `workerRoute`, sem alterar caixa, RNG, funcionários ou saves. Só conta um bloqueio quando não há rota desde a entrada; não deduz uma parede específica pela linha reta entre os dois pontos.
+- A relação de destinos inacessíveis aparece na aba Serviços. **Ver bloqueios no salão** fecha o painel administrativo e desenha os marcadores sobre cada computador/lixeira inacessível; **Fechar marcações** volta ao jogo. A câmera, zoom, movimentação e desenho original permanecem intactos.
+- O cálculo das rotas é reaproveitado por cerca de 1,6 segundo, evitando busca de caminhos em toda atualização de desenho. Os marcadores são uma sobreposição de Canvas transitória, não um objeto salvo no mundo.
+- Testes Node em `tests/service-access-review.test.mjs` cobrem destinos isolados, abertura de passagem, reparo, ausência de falsos alertas e integridade do save. Teste de navegador `scripts/verify_service_access.mjs` cobre visualização, abertura e fechamento, pixels do Canvas e layouts de 1280/414/360 px.
