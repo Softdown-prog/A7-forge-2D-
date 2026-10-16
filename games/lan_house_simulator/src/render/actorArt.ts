@@ -1,8 +1,9 @@
 import type { Costume } from "../sim/types.js";
 import { iso, type Projection } from "./isometric.js";
 import type { ActorDirection } from "./direction.js";
+import {workerMotion} from "./workerMotion.js";
 
-export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying";
+export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing";
 export type ActorKind = Costume | "owner" | "cleaner" | "technician";
 export interface ActorStyle {
   shirt: string; dark: string; highlight: string;
@@ -103,6 +104,8 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const z=camera.zoom, style=actorStyleFor(a.kind,a.id);
   const pose=a.pose??"idle";
   const walking=pose==="walking";
+  const work=a.kind==="cleaner"&&pose==="sweeping"?workerMotion("sweeping",a.time):
+    a.kind==="technician"&&pose==="repairing"?workerMotion("repairing",a.time):null;
   const transition=clamp01(a.transition??1);
   // A cabeça mantém exatamente as mesmas feições, materiais e cores em todas as poses.
   const seated=pose==="sitting"?transition:pose==="standing-up"?1-transition:0;
@@ -112,7 +115,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
   // Antes, o corpo afundava 18px e parecia agachado no chão.
   const headShift=seated*3;
-  const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:seated*2;
+  const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:work?work.pulse*.65:seated*2;
   const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south";
   const back=direction==="north";
@@ -174,10 +177,12 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
     const ax=side*(sideways?10:15), ay=-47+headShift;
     const wave=step*5*-side*(1-seated);
-    const elbowX=side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
-    const elbowY=(serving?-39:-36)+headShift+seated*3;
-    const handX=copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+typing*side;
+    const elbowX=work?(side===1?21:-17)+work.pulse*1.7:
+      side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
+    const elbowY=work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
+    const movingHand=work?(side===1?work.nearHand:work.farHand):null;
+    const handX=movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
+    const handY=movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+typing*side;
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
     // Borda da manga e luz discreta: o braço continua legível de costas.

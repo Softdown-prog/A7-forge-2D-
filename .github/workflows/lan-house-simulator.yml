@@ -104,6 +104,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+      - name: Verify animated broom strokes and technician repair gestures in four views
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_worker_motion.mjs out/validation
       - name: Verify cleaner and technician work phases in Canvas and mobile admin
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
@@ -155,6 +159,10 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
             -movflags +faststart out/live-video/lan_house_gameplay_live.mp4
           test -s out/live-video/lan_house_gameplay_live.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/validation/worker_actions.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/live-video/worker_actions.mp4
+          test -s out/live-video/worker_actions.mp4
       - name: Record continuous circulation through divided rooms
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
@@ -176,7 +184,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lhs-real-gameplay-video
-          path: games/lan_house_simulator/out/live-video/lan_house_gameplay_live.mp4
+          path: games/lan_house_simulator/out/live-video/*.mp4
           if-no-files-found: error
           retention-days: 7
       - name: Upload Canvas visual validation

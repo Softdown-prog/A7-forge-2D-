@@ -14,6 +14,7 @@ import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../sim/services.js";
 import {workPhaseLabel} from "../sim/staffPresentation.js";
+import {workerMotion} from "./workerMotion.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
@@ -435,22 +436,62 @@ export class SceneRenderer {
     const ctx=this.ctx,z=camera.zoom,working=job.phase==="working";
     drawActor(ctx,camera,{
       x:job.x,y:job.y,kind,id:kind==="cleaner"?-17:-19,
-      time,pose:!working&&job.moving?"walking":"idle",
+      time,pose:working?(kind==="cleaner"?"sweeping":"repairing"):job.moving?"walking":"idle",
       direction:job.facing??"north"
     });
     const p=iso({x:job.x,y:job.y},camera);
     if(working){
-      // Ferramenta simples, ancorada no chão; sem substituir corpo ou pernas.
-      ctx.save();ctx.lineCap="round";ctx.lineJoin="round";
+      // Movimento de trabalho compartilhado com as mãos do personagem.
+      // Mantém âncora, escala e espelhamento idênticos ao actorArt.
+      const motion=workerMotion(kind==="cleaner"?"sweeping":"repairing",time);
+      ctx.save();ctx.translate(p.x,p.y);
+      ctx.scale(z*(job.facing==="west"?-1:1),z);
+      ctx.lineCap="round";ctx.lineJoin="round";
       if(kind==="cleaner"){
-        ctx.strokeStyle="#7A5B3E";ctx.lineWidth=2.8*z;
-        ctx.beginPath();ctx.moveTo(p.x+16*z,p.y-30*z);ctx.lineTo(p.x+25*z,p.y-3*z);ctx.stroke();
-        ctx.fillStyle="#D6B26E";ctx.fillRect(p.x+18*z,p.y-5*z,19*z,5*z);
-        ctx.strokeStyle="#364A53";ctx.lineWidth=1*z;ctx.strokeRect(p.x+18*z,p.y-5*z,19*z,5*z);
+        const tip=motion.toolTip,grip=motion.nearHand;
+        // Sombras curtas da vassoura no chão; cabeça em contato com os pés.
+        ctx.strokeStyle="rgba(51,50,40,.2)";ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(tip.x-13,tip.y+2);ctx.lineTo(tip.x+13,tip.y+2);ctx.stroke();
+        // Cabo e anéis, alinhados aos dedos da mão superior e inferior.
+        ctx.strokeStyle="#34444A";ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(grip.x-1,grip.y-5);ctx.lineTo(tip.x,tip.y-2);ctx.stroke();
+        ctx.strokeStyle="#A87E51";ctx.lineWidth=2.8;
+        ctx.beginPath();ctx.moveTo(grip.x-1,grip.y-5);ctx.lineTo(tip.x,tip.y-2);ctx.stroke();
+        ctx.fillStyle="#C0AC76";ctx.strokeStyle="#46544D";ctx.lineWidth=1.2;
+        ctx.beginPath();ctx.moveTo(tip.x-12,tip.y-4);ctx.lineTo(tip.x+12,tip.y-4);
+        ctx.lineTo(tip.x+15,tip.y+1);ctx.lineTo(tip.x-15,tip.y+1);
+        ctx.closePath();ctx.fill();ctx.stroke();
+        // Cerdas se curvam discretamente a cada passada.
+        for(let b=-11;b<=11;b+=3){
+          ctx.strokeStyle=b%2===0?"#9C8D66":"#DAC394";ctx.lineWidth=1.3;
+          ctx.beginPath();ctx.moveTo(tip.x+b,tip.y);ctx.lineTo(tip.x+b+motion.pulse*2,tip.y+5);ctx.stroke();
+        }
+        if(Math.abs(motion.pulse)>.65){
+          ctx.strokeStyle="rgba(187,177,139,.48)";ctx.lineWidth=1.5;
+          for(let j=0;j<2;j++){
+            ctx.beginPath();ctx.moveTo(tip.x-20-j*4,tip.y+3+j*2);
+            ctx.lineTo(tip.x-25-j*4,tip.y+4+j*2);ctx.stroke();
+          }
+        }
       }else{
-        ctx.fillStyle="#D6B568";ctx.strokeStyle="#405760";ctx.lineWidth=1.5*z;
-        ctx.fillRect(p.x+16*z,p.y-12*z,13*z,10*z);
-        ctx.strokeRect(p.x+16*z,p.y-12*z,13*z,10*z);
+        const tip=motion.toolTip,grip=motion.nearHand;
+        // Maleta aberta no chão: a mão esquerda sustenta enquanto a direita
+        // gira a ferramenta. Evita desenhar um segundo PC sobre a estação.
+        ctx.fillStyle="#394F53";ctx.strokeStyle="#263843";ctx.lineWidth=1.6;
+        ctx.fillRect(15,-14,24,13);ctx.strokeRect(15,-14,24,13);
+        ctx.fillStyle="#E0C27A";ctx.fillRect(17,-12,20,4);
+        ctx.fillStyle="#879CA0";ctx.fillRect(18,-7,6,3);ctx.fillRect(27,-7,7,3);
+        // Chave de fenda acompanha a oscilação do punho até a maleta.
+        ctx.strokeStyle="#A9BDCB";ctx.lineWidth=2;
+        ctx.beginPath();ctx.moveTo(grip.x,grip.y+4);ctx.lineTo(tip.x,tip.y);ctx.stroke();
+        ctx.strokeStyle="#D7AF60";ctx.lineWidth=4;
+        ctx.beginPath();ctx.moveTo(grip.x,grip.y+3);ctx.lineTo(grip.x+2,grip.y+10);ctx.stroke();
+        ctx.fillStyle=motion.pulse>.2?"#F3CE7F":"#9CABAB";
+        ctx.fillRect(34,-16,3,3);
+        if(motion.pulse>.74){
+          ctx.strokeStyle="#F3D17A";ctx.lineWidth=1.2;
+          ctx.beginPath();ctx.moveTo(tip.x+2,tip.y-3);ctx.lineTo(tip.x+5,tip.y-6);ctx.stroke();
+        }
       }
       ctx.restore();
       ctx.save();ctx.fillStyle="#142934";

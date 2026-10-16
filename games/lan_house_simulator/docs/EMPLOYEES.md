@@ -36,3 +36,11 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - Dois reparos avulsos coexistentes são resumidos sem assumir que há vários técnicos contratados. Serviços em execução têm prioridade sobre chegada/saída na informação consolidada.
 - As identificações são sobrepostas no Canvas e os resumos são derivados das fases já salvas. Nenhum novo campo de save, gasto, teleporte, fila, trabalhador ou colisão foi acrescentado.
 - Regressão: `tests/staff-presentation.test.mjs` exercita os estados reais, inclusive navegação, conclusão, saves e contabilidade; `scripts/verify_staff_phases.mjs` verifica tela desktop/414/360 px, snapshots Canvas e acessibilidade básica dos indicadores.
+
+
+## Animação procedural durante o trabalho
+- **Faxineiro**: braços articulados seguram a vassoura em dois pontos do cabo, com deslocamento lateral da cabeça de cerdas, sombra e indicação discreta da varredura. Os pés permanecem no piso, sem movimento de caminhada enquanto está limpando.
+- **Técnico**: um braço firma o equipamento e a mão dominante oscila com uma pequena chave de fenda; a maleta de ferramentas continua no chão. A animação é mais curta e contida do que a varredura.
+- O arquivo `src/render/workerMotion.ts` calcula, apenas a partir do tempo de renderização, a posição das mãos e da ferramenta. `src/render/actorArt.ts` desenha os braços sobre as mesmas coordenadas de trabalho e `src/render/scene.ts` desenha vassoura e chave. As quatro vistas respeitam o flip de perfil existente.
+- Somente `job.phase==="working"` ativa as novas poses; para chegada e saída, o personagem continua com a animação de caminhada aprovada.
+- Nenhuma receita de corpo, rosto, capacete, colisão, duração, demanda, RNG, salário ou save foi substituída. Os testes `tests/worker-motion.test.mjs` e `scripts/verify_worker_motion.mjs` verificam determinismo, amplitudes, quatro direções, quadros distintos, Canvas do jogo e vídeo `worker_actions.mp4` no artefato de gameplay.

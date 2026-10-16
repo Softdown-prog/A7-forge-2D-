@@ -725,3 +725,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Registrar início de limpeza/reparo no histórico, sem emitir registro novo a cada minuto.
 - [x] Adicionar testes Node e Chromium nas quatro fases e nas resoluções desktop/mobile com snapshots para revisão.
 - [ ] Revisar legibilidade do marcador do personagem com zoom mínimo e salas ampliadas em aparelho físico.
+
+
+## Animações dos trabalhadores
+- [x] Movimento da vassoura sincronizado com as mãos do faxineiro e cerdas próximas ao chão.
+- [x] Movimentos menores de braço e chave de fenda para o técnico durante reparos.
+- [x] Preservar pés, sombra, caminhada, capacete e quatro orientações do actor original.
+- [x] Usar quadros em tempo visual; nenhuma alteração no relógio de serviços ou no sistema financeiro.
+- [x] Testar quatro direções, variação real de frames e produzir vídeo curto em MP4 para revisão.
+- [ ] Ajustes de detalhe e ângulo das mãos após avaliação visual do vídeo, se necessário.
