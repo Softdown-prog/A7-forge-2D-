@@ -22,3 +22,11 @@ Ampliar as fontes de receita sem converter o Lan House Simulator em um jogo dife
 
 ## Expansão comercial — visitantes avulsos
 Testes da simulação validam compra sem PC, capacidade, contabilidade, determinismo de chegadas, importação de saves e ausência de receita duplicada. Uma regressão em Chromium confirma o fluxo real na interface desktop/mobile. Ainda depende de playtest físico e campanhas mais longas antes de balanceamento final.
+
+## Arte do equipamento e atendimento do Tony (15/10/2026)
+- A impressora já era vendida por R$ 320; o cartão agora contém uma ilustração procedural 2.5D própria, em Canvas, na mesma linguagem da copiadora.
+- Depois de adquirir o equipamento, o serviço é ativado e a impressora aparece sobre o balcão existente. A arte utiliza o pivô e rotação do balcão, sem ocupar nova posição, alterar colisões ou gerar custo adicional.
+- Tony permanece atrás do balcão: respiração leve quando ocioso; após impressão paga, movimenta braços por um curto período. A impressora pisca a luz e ejeta papel durante a animação.
+- O campo printer.lastPrintedMinute é opcional e validado, de modo que saves anteriores continuam válidos. Ausência do dado ou compra sem venda deixam a impressora inativa.
+- QA em Chromium verifica preço, compra, bloqueio da segunda compra, desenho real da loja e do salão, diferença entre quadros parados/ativos e ausência de alterações de layout em desktop, 414px e 360px.
+- Aprovação de acabamento, posição e gestos finais ainda exige avaliação visual em telefone físico.

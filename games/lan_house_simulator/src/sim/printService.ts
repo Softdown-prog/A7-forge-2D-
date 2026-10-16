@@ -37,6 +37,11 @@ export function setPrintPrice(s:GameState,price:number):Result{
  s.printer.price=price;
  return {ok:true,message:"Impressão: R$ "+price.toFixed(2)+" por página."};
 }
+/** Animação de apresentação: só após serviço pago, sem afetar estado do jogo. */
+export function printingAnimationActive(s:GameState):boolean{
+ const last=s.printer?.lastPrintedMinute;
+ return last!==undefined&&s.totalMinutes>=last&&s.totalMinutes-last<=8;
+}
 export function pagesPrintedToday(s:GameState):number{
  return s.printer?.day===day(s)?s.printer.dayPages:0;
 }

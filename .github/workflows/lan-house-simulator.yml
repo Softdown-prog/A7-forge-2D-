@@ -104,6 +104,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+      - name: Verify purchasable printer art, Tony gesture and responsive catalog
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_printer_tony.mjs out/validation
       - name: Verify paid walk-in printing, checkout and responsive financial UI
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

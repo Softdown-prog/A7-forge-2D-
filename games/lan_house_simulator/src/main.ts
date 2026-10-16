@@ -2,6 +2,7 @@ import {mountCloudControls} from "./ui/cloudControls.js";
 import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
 import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,setDiscCopyPrice,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
+import {drawPrinterShop} from "./render/printerArt.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
@@ -669,9 +670,12 @@ function renderShop(force=true):void{
  for(const item of SHOP_CATALOG){
   const card=document.createElement("article");card.className="shop-card";
   const art=document.createElement("div");art.className="shop-art";art.dataset.item=item.id;art.setAttribute("aria-hidden","true");art.innerHTML=iconMarkup(catalogueIcon(item.id));
-  if(item.id==="disc-copier"){
-   art.replaceChildren();const preview=document.createElement("canvas");preview.width=640;preview.height=360;
-   const ctx=preview.getContext("2d");if(ctx)drawDiscCopier(ctx,640,360);art.append(preview);
+  if(item.id==="disc-copier"||item.id==="printer"){
+   art.replaceChildren();const preview=document.createElement("canvas");
+   preview.width=640;preview.height=360;
+   const ctx=preview.getContext("2d");
+   if(ctx){if(item.id==="printer")drawPrinterShop(ctx,640,360);else drawDiscCopier(ctx,640,360);}
+   art.append(preview);
   }
   const title=document.createElement("h3");title.textContent=item.label;
   const category=document.createElement("small");category.textContent=item.category;

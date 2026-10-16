@@ -673,3 +673,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Contabilizar clientes avulsos separadamente e somar ao indicador geral sem falsificar sessões ou métricas dos PCs.
 - [x] Testar saves antigos, casos de erro, balanço de receita/despesa e interface automatizada desktop/mobile.
 - [ ] Ajustar procura avulsa em campanhas longas, validar fila e legibilidade em celulares físicos; estudar solicitações de digitalização e trabalhos escolares.
+
+## Etapa 2 — vitrine de impressora e Tony atendendo (15/10/2026)
+- [x] Equipamento de R$ 320 já disponível: substituir ícone genérico por ilustração procedural do produto.
+- [x] Exibir a impressora sobre o balcão somente após a compra, sem criar obstáculo, custo extra ou alterar a cena antes da compra.
+- [x] Dar ao Tony animação discreta em repouso e gesto de atendimento após impressão de verdade; luz e papel respondem ao mesmo evento.
+- [x] Registrar instante opcional de impressão no save, validar dados e manter partidas antigas.
+- [x] Adicionar regressão de compra, loja e efeitos visuais em desktop/mobile ao CI.
+- [ ] Validar quatro orientações do balcão e fluidez dos braços em aparelho físico; refinar após avaliação.
