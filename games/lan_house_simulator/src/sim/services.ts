@@ -3,11 +3,11 @@ import type {GameState,Result,Point} from "./types.js";
 import {pcCount,pcPosition,entrance} from "./engine.js";
 import {workerRoute} from "./workerNavigation.js";
 import {serviceVisitCost} from "./historicalEconomy.js";
-import {employeeHired} from "./staff.js";
+import {employeeHired,accrueEmployeeDay} from "./staff.js";
 import {directionFromDelta,type ActorDirection} from "../render/direction.js";
 import {canTraverseLocalStep} from "./navigation.js";
-export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean}
-export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;binIndex?:number}
+export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean}
+export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean;binIndex?:number}
 export const BIN_SPOTS:Point[]=[{x:1.1,y:3.1},{x:5.65,y:4.65}];
 export function binSpots(s:GameState):Point[]{return BIN_SPOTS.map((p,i)=>placedObject(s,"bin:"+i,p));}
 export type BinStatus="empty"|"filling"|"full";
@@ -35,7 +35,8 @@ export function startRepair(s:GameState,pc:number):Result{
  if(cost>0&&s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
- (s.repairJobs??=[]).push({pc,x:entry.x,y:entry.y,phase:"arriving",progress:0,duration:REPAIR_DURATION,facing:"north",moving:false});
+ (s.repairJobs??=[]).push({pc,x:entry.x,y:entry.y,phase:"arriving",progress:0,duration:REPAIR_DURATION,facing:"north",moving:false,coveredByContract:employeeHired(s,"technician")});
+ accrueEmployeeDay(s);
  return {ok:true,message:"Técnico chamado para o PC "+(pc+1)+(cost?": -R$ "+cost:": visita coberta pelo contrato")+". Computador interditado até o fim do reparo."};
 }
 export function pcUnderRepair(s:GameState,index:number):boolean{return !!s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving");}
@@ -60,7 +61,8 @@ export function requestCleaning(s:GameState):Result{
  if(cost>0&&s.cash<cost)return {ok:false,message:"Limpeza custa R$ "+cost+"."};
  s.cash-=cost;s.expenses+=cost;
  const entry=entrance(s);
- s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false};
+ s.cleaningJob={x:entry.x,y:entry.y,phase:"arriving",progress:0,facing:"north",moving:false,coveredByContract:employeeHired(s,"cleaner")};
+ accrueEmployeeDay(s);
  return {ok:true,message:cost?"Faxineiro avulso chamado por R$ "+cost.toFixed(2)+" para recolher o lixo.":"Limpeza coberta pelo contrato do faxineiro."};
 }
 function navigate(s:GameState,job:{x:number;y:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean},to:Point,speed:number,exact=false):boolean{

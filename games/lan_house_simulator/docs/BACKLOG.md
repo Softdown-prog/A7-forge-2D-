@@ -706,3 +706,13 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Mostrar tentativa potencial diária de procura avulsa, identificada como estimativa não garantida.
 - [x] Acrescentar testes de campanhas históricas e de interface mobile (1998, 2001, 2025, 2030).
 - [ ] Reavaliar probabilidades e preços no balanceamento final, após ampliar hardware e funcionalidades do jogo.
+
+
+## Contratos mensais com pagamento apenas por dias de atendimento
+- [x] Corrigir cobrança por disponibilidade: contratar faxineiro ou técnico não deve gerar diária.
+- [x] Gerar uma diária quando um serviço contratado começa; chamados repetidos no mesmo dia não duplicam salário.
+- [x] Contabilizar atendimento que permanece ativo na virada para outro dia, depois do fechamento mensal.
+- [x] Distinguir a visita avulsa já paga daquela executada por contratado ao contratar durante trabalho.
+- [x] Exibir a quantidade de dias trabalhados do ciclo e a folha ainda não paga; manter histórico antigo sem estorno.
+- [x] Atualizar testes de contratos e adicionar regressões de fila, folha, save, navegador desktop/414/360 px.
+- [ ] Avaliar se os valores por dia trabalhado precisam mudar ao final do balanceamento da campanha completa.

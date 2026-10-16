@@ -1,0 +1,108 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {createGame,stepGame,isValidSave} from "../dist/js/sim/engine.js";
+import {DAY_MINUTES} from "../dist/js/sim/types.js";
+import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,accrueEmployeeDay} from "../dist/js/sim/staff.js";
+import {requestCleaning,startRepair,dispatchHiredStaff} from "../dist/js/sim/services.js";
+import {monthlyBills} from "../dist/js/sim/economy.js";
+import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+
+test("contrato mensal permanece ocioso sem salário por 30 dias de simulação",()=>{
+ const s=createGame(14,"historical");
+ s.cash=3000;s.pcPoweredOff=[true,true,true];
+ hireEmployee(s,"cleaner");hireEmployee(s,"technician");
+ assert.equal(s.employeePayrollAccrued??0,0);
+ stepGame(s,29*DAY_MINUTES);
+ assert.equal(s.employeePayrollAccrued??0,0);
+ assert.equal(s.employeeWorkedDays?.cleaner??0,0);
+ assert.equal(s.employeeWorkedDays?.technician??0,0);
+ assert.equal(s.employeeLastAccruedDay,undefined);
+ assert.equal(isValidSave(s),true);
+});
+test("dois chamados no dia só geram uma diária, sem afetar custo de visitas avulsas",()=>{
+ const s=createGame(21);s.cash=4000;s.pcPoweredOff=[true,true,true];
+ hireEmployee(s,"cleaner");hireEmployee(s,"technician");
+ s.binFill=[80,0];s.pcWear=[100,0,0];
+ dispatchHiredStaff(s);
+ assert.equal(s.employeePayrollAccrued,18);
+ assert.deepEqual(s.employeeWorkedDays,{cleaner:1,technician:1});
+ assert.equal(s.cleaningJob.coveredByContract,true);
+ assert.equal(s.repairJobs[0].coveredByContract,true);
+ s.cleaningJob=undefined;s.repairJobs=[];
+ s.binFill=[80,0];s.pcWear=[100,0,0];
+ assert.equal(requestCleaning(s).ok,true);
+ assert.equal(startRepair(s,0).ok,true);
+ accrueEmployeeDay(s);
+ assert.equal(s.employeePayrollAccrued,18);
+ assert.deepEqual(s.employeeWorkedDays,{cleaner:1,technician:1});
+ assert.equal(isValidSave(s),true);
+});
+test("visita avulsa iniciada antes da contratação não vira salário retroativo",()=>{
+ const s=createGame(4);s.cash=2000;s.binFill=[80,0];s.pcWear=[100,0,0];
+ assert.equal(requestCleaning(s).ok,true);
+ assert.equal(startRepair(s,0).ok,true);
+ assert.equal(s.cleaningJob.coveredByContract,false);
+ assert.equal(s.repairJobs[0].coveredByContract,false);
+ assert.equal(hireEmployee(s,"cleaner").ok,true);
+ assert.equal(hireEmployee(s,"technician").ok,true);
+ accrueEmployeeDay(s);
+ assert.equal(s.employeePayrollAccrued??0,0);
+ s.cleaningJob=undefined;s.repairJobs=[];
+ s.binFill=[80,0];s.pcWear=[100,0,0];
+ requestCleaning(s);startRepair(s,0);
+ assert.equal(s.employeePayrollAccrued,18);
+ assert.equal(isValidSave(s),true);
+});
+test("save do meio do trabalho não repete salário; novo dia e rescisão são respeitados",()=>{
+ const s=createGame(71);s.cash=3000;s.binFill=[80,0];
+ hireEmployee(s,"cleaner");requestCleaning(s);
+ assert.equal(s.employeePayrollAccrued,7);
+ let saved=parseImportedSave(serializeSave(s));
+ accrueEmployeeDay(saved);
+ assert.equal(saved.employeePayrollAccrued,7);
+ saved.totalMinutes=DAY_MINUTES;
+ accrueEmployeeDay(saved);
+ assert.equal(saved.employeePayrollAccrued,14);
+ assert.equal(saved.employeeWorkedDays.cleaner,2);
+ dismissEmployee(saved,"cleaner");
+ saved.totalMinutes=2*DAY_MINUTES;
+ accrueEmployeeDay(saved);
+ assert.equal(saved.employeePayrollAccrued,14);
+ assert.equal(isValidSave(saved),true);
+});
+test("migração preserva folha antiga sem estorno e sem pagamento dobrado no dia",()=>{
+ const s=createGame(7,"historical");
+ s.employees={cleaner:true,technician:true};
+ s.employeePayrollAccrued=70;
+ s.employeeLastAccruedDay={cleaner:1,technician:1};
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(restored.employeeWorkedDays,undefined);
+ restored.binFill=[80,0];restored.pcWear=[100,0,0];
+ dispatchHiredStaff(restored);
+ assert.equal(restored.employeePayrollAccrued,70);
+ assert.equal(restored.employeeWorkedDays,undefined);
+ restored.totalMinutes=DAY_MINUTES;
+ accrueEmployeeDay(restored);
+ assert.equal(restored.employeePayrollAccrued,70+
+  employeeDailyWage(restored,"cleaner")+employeeDailyWage(restored,"technician"));
+ assert.equal(isValidSave(restored),true);
+});
+test("folha mensal separa o último dia e o primeiro dia do novo mês",()=>{
+ const s=createGame(3);s.pcPoweredOff=[true,true,true];
+ s.cash=10000;s.totalMinutes=29*DAY_MINUTES;
+ hireEmployee(s,"cleaner");hireEmployee(s,"technician");
+ s.binFill=[80,0];s.pcWear=[100,0,0];
+ dispatchHiredStaff(s);
+ const previous=monthlyBills({...s,totalMinutes:30*DAY_MINUTES-1});
+ const without=monthlyBills({...s,employeePayrollAccrued:0,totalMinutes:30*DAY_MINUTES-1});
+ assert.equal(previous-without,18);
+ s.totalMinutes=30*DAY_MINUTES-1;s.energyAccrued=0;
+ // Como o saldo mensal será cobrado antes dos serviços do dia seguinte.
+ const closingBill=monthlyBills({...s,totalMinutes:30*DAY_MINUTES-1});
+ const cash=s.cash;
+ stepGame(s,1);
+ assert.equal(s.cash,cash-closingBill);
+ assert.equal(s.employeePayrollAccrued,18);
+ assert.equal(s.employeeWorkedDays.cleaner,1);
+ assert.equal(s.employeeWorkedDays.technician,1);
+});

@@ -14,21 +14,26 @@ export function employeeMonthlyWage(s:Pick<GameState,"totalMinutes"|"economyVers
 export function employeeDailyWage(s:Pick<GameState,"totalMinutes"|"economyVersion">,role:EmployeeRole):number{
  return cents(employeeMonthlyWage(s,role)/30);
 }
-/** Cada dia com contrato é remunerado, mesmo sem chamados.
- * Dispensa e recontratação no mesmo dia nunca duplicam a diária. */
+/** Um dia só é pago se houve visita de trabalho coberta pelo contrato.
+ * Inclui deslocamento para/de um serviço; nunca remunera simples disponibilidade.
+ * Jobs antigos sem marcação continuam compatíveis quando o empregado é contratado.
+ * O registro do último dia também evita repetir uma diária após save ou recontratação. */
 export function accrueEmployeeDay(s:GameState):void{
  const today=dayNumber(s);
  for(const role of ROLES){
   if(!employeeHired(s,role)||s.employeeLastAccruedDay?.[role]===today)continue;
+  const jobs=role==="cleaner"?(s.cleaningJob?[s.cleaningJob]:[]):(s.repairJobs??[]);
+  if(!jobs.some(job=>job.coveredByContract??true))continue;
   s.employeeLastAccruedDay={...(s.employeeLastAccruedDay??{}),[role]:today};
   s.employeePayrollAccrued=cents((s.employeePayrollAccrued??0)+employeeDailyWage(s,role));
+  s.employeeWorkedDays={...(s.employeeWorkedDays??{}),
+   [role]:(s.employeeWorkedDays?.[role]??0)+1};
  }
 }
 export function hireEmployee(s:GameState,role:EmployeeRole):Result{
  if(employeeHired(s,role))return {ok:false,message:"Esse profissional já está contratado."};
  s.employees={...(s.employees??{}),[role]:true};
- accrueEmployeeDay(s);
- return {ok:true,message:(role==="cleaner"?"Faxineiro":"Técnico")+" contratado. Diária de R$ "+employeeDailyWage(s,role).toFixed(2)+" acumulada; pagamento no fechamento do mês."};
+ return {ok:true,message:(role==="cleaner"?"Faxineiro":"Técnico")+" contratado por mês. R$ "+employeeDailyWage(s,role).toFixed(2)+"/dia efetivamente trabalhado; sem taxa por dia ocioso. Cobrança no fechamento mensal."};
 }
 export function dismissEmployee(s:GameState,role:EmployeeRole):Result{
  if(!employeeHired(s,role))return {ok:false,message:"Esse profissional não está contratado."};
@@ -48,6 +53,14 @@ export function validEmployeeState(s:Partial<GameState>):boolean{
   const today=dayNumber(s as GameState);
   if(ROLES.some(k=>{const n=s.employeeLastAccruedDay?.[k];return n!==undefined&&(!Number.isInteger(n)||n<1||n>today);}))return false;
  }
+ const worked=s.employeeWorkedDays;
+ if(worked!==undefined){
+  if(!worked||typeof worked!=="object"||Array.isArray(worked)||
+    Object.keys(worked).some(k=>!ROLES.includes(k as EmployeeRole))||
+    ROLES.some(k=>{const n=worked[k];return n!==undefined&&(!Number.isInteger(n)||n<0||n>30);}))return false;
+ }
+ if(s.cleaningJob?.coveredByContract!==undefined&&typeof s.cleaningJob.coveredByContract!=="boolean")return false;
+ if(Array.isArray(s.repairJobs)&&s.repairJobs.some(j=>j?.coveredByContract!==undefined&&typeof j.coveredByContract!=="boolean"))return false;
  const payroll=s.employeePayrollAccrued;
  return payroll===undefined||(Number.isFinite(payroll)&&payroll>=0&&payroll<=1e9&&Math.abs(payroll*100-Math.round(payroll*100))<1e-5);
 }

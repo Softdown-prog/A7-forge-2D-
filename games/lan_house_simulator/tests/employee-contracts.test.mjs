@@ -7,43 +7,50 @@ import {monthlyBills} from "../dist/js/sim/economy.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 
-test("um contrato remunera cada dia uma única vez, inclusive ao recontratar",()=>{
+test("contratação mensal sem chamados não gera diária, inclusive após recontratação",()=>{
  const s=createGame(),cash=s.cash;
  assert.equal(employeeMonthlyWage(s,"cleaner"),210);
  assert.equal(employeeDailyWage(s,"cleaner"),7);
  assert.equal(hireEmployee(s,"cleaner").ok,true);
  assert.equal(employeeHired(s,"cleaner"),true);
  assert.equal(s.cash,cash);
- assert.equal(s.employeePayrollAccrued,7);
+ assert.equal(s.employeePayrollAccrued??0,0);
  assert.equal(hireEmployee(s,"cleaner").ok,false);
  accrueEmployeeDay(s);
- assert.equal(s.employeePayrollAccrued,7);
+ assert.equal(s.employeePayrollAccrued??0,0);
  assert.equal(dismissEmployee(s,"cleaner").ok,true);
  assert.equal(dismissEmployee(s,"cleaner").ok,false);
  assert.equal(hireEmployee(s,"cleaner").ok,true);
- assert.equal(s.employeePayrollAccrued,7);
- dismissEmployee(s,"cleaner");
- s.totalMinutes=DAY_MINUTES;
- accrueEmployeeDay(s);
- assert.equal(s.employeePayrollAccrued,7);
- hireEmployee(s,"cleaner");
- assert.equal(s.employeePayrollAccrued,14);
+ assert.equal(s.employeePayrollAccrued??0,0);
+ s.pcPoweredOff=[true,true,true];
+ stepGame(s,3*DAY_MINUTES);
+ assert.equal(s.employeePayrollAccrued??0,0);
+ assert.equal(s.employeeWorkedDays?.cleaner??0,0);
 });
-test("salários são cobrados uma vez no mês; a diária do dia 31 fica no mês seguinte",()=>{
- const s=createGame();
+test("chamados reais acumulam diária uma vez; fechamento paga só atendimento e reinicia período",()=>{
+ const s=createGame();s.pcPoweredOff=[true,true,true];
  hireEmployee(s,"cleaner");hireEmployee(s,"technician");
+ s.totalMinutes=29*DAY_MINUTES;
+ s.binFill=[80,0];s.pcWear=[100,0,0];
+ dispatchHiredStaff(s);
  assert.equal(s.employeePayrollAccrued,18);
- for(let d=2;d<=30;d++){s.totalMinutes=(d-1)*DAY_MINUTES;accrueEmployeeDay(s);}
- assert.equal(s.employeePayrollAccrued,540);
- // Fixture salta os dias sem simular energia; zerar a energia projetada.
- s.energyAccrued=0;
+ assert.deepEqual(s.employeeWorkedDays,{cleaner:1,technician:1});
+ const wage=monthlyBills({...s,totalMinutes:30*DAY_MINUTES-1})-
+  monthlyBills({...s,employeePayrollAccrued:0,totalMinutes:30*DAY_MINUTES-1});
+ assert.equal(wage,18);
+ const snapshot=s.employeePayrollAccrued;
+ dispatchHiredStaff(s);accrueEmployeeDay(s);
+ assert.equal(s.employeePayrollAccrued,snapshot);
+ // Mantém uma visita contratada atravessando o último dia.
+ s.cleaningJob.phase="working";s.repairJobs[0].phase="working";
+ s.cleaningJob.progress=0;s.repairJobs[0].progress=0;
+ s.totalMinutes=30*DAY_MINUTES-1;s.energyAccrued=0;
  const bill=monthlyBills({...s,totalMinutes:30*DAY_MINUTES-1});
- assert.equal(bill-monthlyBills({...s,employeePayrollAccrued:0}),540);
- s.totalMinutes=30*DAY_MINUTES-1;
  const cash=s.cash;
  stepGame(s,1);
  assert.equal(s.cash,cash-bill);
- assert.equal(s.employeePayrollAccrued,18);
+ assert.equal(s.employeePayrollAccrued,18,"dia 31 deve entrar na folha do mês novo");
+ assert.deepEqual(s.employeeWorkedDays,{cleaner:1,technician:1});
  assert.equal(monthlyBills(s)-monthlyBills({...s,employeePayrollAccrued:0}),18);
 });
 test("faxineiro contratado limpa lixeira cheia sem taxa por visita",()=>{
@@ -95,11 +102,18 @@ test("contratos persistem no save JSON e importações antigas continuam válida
  const loaded=parseImportedSave(serializeSave(s));
  assert.equal(isValidSave(loaded),true);
  assert.deepEqual(loaded.employees,{cleaner:true,technician:true});
- assert.deepEqual(loaded.employeeLastAccruedDay,{cleaner:1,technician:1});
- assert.equal(loaded.employeePayrollAccrued,18);
+ assert.equal(loaded.employeeLastAccruedDay,undefined);
+ assert.equal(loaded.employeePayrollAccrued,undefined);
+ const active=structuredClone(loaded);
+ active.binFill=[80,0];dispatchHiredStaff(active);
+ assert.deepEqual(active.employeeLastAccruedDay,{cleaner:1});
+ assert.deepEqual(active.employeeWorkedDays,{cleaner:1});
+ assert.equal(active.employeePayrollAccrued,7);
  const old=createGame();assert.equal(isValidSave(old),true);
  assert.equal(employeeHired(old,"cleaner"),false);
- for(const invalid of [{employeePayrollAccrued:-1},{employeePayrollAccrued:NaN},{employeeLastAccruedDay:{cleaner:5}},{employees:{cleaner:"yes"}},{employeePayrollAccrued:1234567890}]){
+ for(const invalid of [{employeePayrollAccrued:-1},{employeePayrollAccrued:NaN},{employeeLastAccruedDay:{cleaner:5}},{employees:{cleaner:"yes"}},{employeePayrollAccrued:1234567890},
+  {employeeWorkedDays:{cleaner:-1}},{employeeWorkedDays:{technician:31}},
+  {employeeWorkedDays:{cleaner:1.4}},{employeeWorkedDays:{spy:1}}]){
   assert.equal(isValidSave({...s,...invalid}),false);
  }
 });

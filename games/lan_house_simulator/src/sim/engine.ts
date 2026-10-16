@@ -350,7 +350,6 @@ function tryServe(s: GameState, c: Customer): void {
       s.counterBusyUntil=s.totalMinutes+3;
       addLog(s,"Cliente avulso imprimiu "+result.pages+" página(s): +R$ "+result.revenue+" · papel/tinta -R$ "+result.cost+".");
       s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:result.revenue,x:c.x,y:c.y});
-      s.printEffects=queueVisualEvent(s.printEffects,{customerId:c.id});
     }else{
       addLog(s,"Cliente de impressão saiu sem atendimento.");
     }
@@ -408,10 +407,7 @@ function tryServe(s: GameState, c: Customer): void {
    addLog(s,"Cliente pediu "+copy.quantity+" cópia(s) de "+copy.kind.toUpperCase()+": +R$ "+copy.revenue+" · mídia -R$ "+copy.cost+".");
   }
   const printing=servePrinting(s,c);
-  if(printing){
-   addLog(s,"Cliente imprimiu "+printing.pages+" página(s): +R$ "+printing.revenue+" · papel/tinta -R$ "+printing.cost+".");
-   s.printEffects=queueVisualEvent(s.printEffects,{customerId:c.id});
-  }
+  if(printing)addLog(s,"Cliente imprimiu "+printing.pages+" página(s): +R$ "+printing.revenue+" · papel/tinta -R$ "+printing.cost+".");
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0)+(printing?.revenue??0),x:c.x,y:c.y});
 }
 function resolvePurchase(s: GameState, c: Customer): void {
@@ -527,6 +523,7 @@ function nextDay(s: GameState): void {
     s.cash -= bill; s.expenses += bill;
     s.energyAccrued=0;
     s.employeePayrollAccrued=0;
+    s.employeeWorkedDays={cleaner:0,technician:0};
     closeFinancialMonth(s);
     addLog(s, "Contas do mês pagas: -R$ " + bill + " (energia R$ "+energy+"; salários R$ "+wages+"; aluguel, internet e manutenção).");
   }
@@ -585,6 +582,9 @@ function advanceMinute(s: GameState): void {
     }
   }
   dispatchHiredStaff(s);
+  // Uma visita contratual ainda ativa após a virada do dia ganha uma só diária
+  // no novo dia, também quando o jogo retoma um save intermediário.
+  accrueEmployeeDay(s);
   tickServices(s);
   prepareClosing(s);
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;

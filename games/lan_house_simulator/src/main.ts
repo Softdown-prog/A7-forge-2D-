@@ -38,7 +38,7 @@ import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
-import {employeeHired,employeeDailyWage,employeeMonthlyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
+import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
@@ -784,7 +784,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -797,7 +797,7 @@ function renderUI(liveOnly=false):void {
   setText("admin-profit",money(game.revenue-game.expenses));
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
-  setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Salários proporcionais aos dias de contrato.");
+  setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
   const marketMax=annualHourlyCeiling(year);
@@ -1192,13 +1192,15 @@ function renderUI(liveOnly=false):void {
    for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
     const el=document.querySelector<HTMLButtonElement>("#"+id);
     if(el)el.textContent=employeeHired(game,role)?"Dispensar "+label:
-      "Contratar "+label+" · "+money(employeeMonthlyWage(game,role))+"/mês";
+      "Contratar "+label+" · "+money(employeeDailyWage(game,role))+"/dia trabalhado";
    }
    setText("staff-summary","Equipe: faxineiro "+(cleanerHired?"contratado":"não contratado")+
      " · técnico "+(technicianHired?"contratado":"não contratado")+
      " · folha acumulada "+money(wages)+". Diárias: faxineiro "+money(employeeDailyWage(game,"cleaner"))+
      ", técnico "+money(employeeDailyWage(game,"technician"))+
-     ". Cada dia contratado é remunerado, mesmo sem chamados; cobrança no fechamento mensal.");
+     " · dias trabalhados neste mês: faxineiro "+(game.employeeWorkedDays?.cleaner??0)+
+     ", técnico "+(game.employeeWorkedDays?.technician??0)+
+     ". Contratos mensais sem diária ociosa; folha cobrada no fechamento.");
    setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
     const state=binStatus(n);
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
@@ -1289,10 +1291,6 @@ function frame(timestamp:number):void {
     soundscape.income("sale");
     if(sale.item==="soda")soundscape.soda();
     else soundscape.candy();
-  }
-  // Impressão paga (avulsa ou na sessão): chance e cooldown no mixer.
-  for(const print of (isPlaying?(game.printEffects?.splice(0)??[]):[])){
-   if(Number.isInteger(print.customerId))soundscape.printer();
   }
   // A gentle 3.5-second phrase once a visitor starts a PC session.
   for(const started of (isPlaying?(game.keyboardEffects?.splice(0)??[]):[])){

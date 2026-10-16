@@ -104,6 +104,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+      - name: Verify paid-only worked days, historic payroll and mobile staff controls
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_employee_workdays.mjs out/validation
       - name: Validate service profitability, historical prices and mobile accounting
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

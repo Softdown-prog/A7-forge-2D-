@@ -67,10 +67,12 @@ export interface GameState {
   expenses: number;
   /** Energia acumulada desde a última cobrança mensal (R$ fracionários). */
   energyAccrued?: number;
-  /** Contratos, salários a pagar e último dia remunerado de cada função. */
+  /** Contratos mensais, diárias de atendimento pendentes e último dia de serviço remunerado. */
   employees?:{cleaner?:boolean;technician?:boolean};
   employeePayrollAccrued?:number;
   employeeLastAccruedDay?:{cleaner?:number;technician?:number};
+  /** Dias de atendimento contratual neste ciclo de 30 dias (ausente em saves antigos). */
+  employeeWorkedDays?:{cleaner?:number;technician?:number};
   /** Minutos-PC utilizados e disponíveis no mês atual: acumuladores de uso real. */
   monthPcUsedMinutes?: number;
   monthPcCapacityMinutes?: number;
@@ -152,8 +154,6 @@ export interface GameState {
   purchases: number;
   /** Eventos de venda para que o áudio use a mercadoria correta, não um contador genérico. */
   saleEffects?: Array<{item:Item;amount?:number;x?:number;y?:number}>;
-  /** Impressão paga: evento de áudio efêmero, sem persistência. */
-  printEffects?: Array<{customerId:number}>;
   /** Efeitos transitórios de início de digitação, disparados apenas ao começar a usar o PC. */
   keyboardEffects?: Array<{customerId:number;pcIndex:number}>;
   /** Falas temporárias; não afetam economia, descartadas pela UI. */
