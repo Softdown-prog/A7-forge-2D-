@@ -60,3 +60,12 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - A relação de destinos inacessíveis aparece na aba Serviços. **Ver bloqueios no salão** fecha o painel administrativo e desenha os marcadores sobre cada computador/lixeira inacessível; **Fechar marcações** volta ao jogo. A câmera, zoom, movimentação e desenho original permanecem intactos.
 - O cálculo das rotas é reaproveitado por cerca de 1,6 segundo, evitando busca de caminhos em toda atualização de desenho. Os marcadores são uma sobreposição de Canvas transitória, não um objeto salvo no mundo.
 - Testes Node em `tests/service-access-review.test.mjs` cobrem destinos isolados, abertura de passagem, reparo, ausência de falsos alertas e integridade do save. Teste de navegador `scripts/verify_service_access.mjs` cobre visualização, abertura e fechamento, pixels do Canvas e layouts de 1280/414/360 px.
+
+
+## Posição dos trabalhadores junto aos equipamentos (revisão de vídeo)
+- O técnico usa `technicianWorkPoint()`, ao lado da cadeira no corredor, em vez de ficar sobre a mesa. A geometria gira com o computador; `technicianContactPoint()` mantém a área da estação que realmente será atendida.
+- O faxineiro usa `cleanerWorkPoint()`, ao lado da lixeira e não no centro do recipiente. A simulação anda até a mesma âncora que o renderer usa: não há teleporte de personagem ao iniciar ou terminar uma animação.
+- `canTraverseLocalStep()` verifica que o ponto onde o funcionário fica e a máquina/lixeira não estão separados por uma divisória fechada. O diagnóstico da aba Serviços reutiliza essas posições, preservando a recusa de chamados inacessíveis antes da cobrança.
+- Enquanto ocorre o serviço, um contorno suave no destino e uma linha discreta conectam trabalhador e objeto: é gráfico, sem impacto na colisão ou economia.
+- O workflow cria `staff_full_cycle.mp4` (entrada, serviço, saída e fim do chamado) e `service_blockages.mp4` (lixeira isolada, PC isolado, passagem livre), sem menu sobre a cena. Os dois arquivos ficam no artefato `lhs-real-gameplay-video`.
+- Regressões: `tests/staff-worksites.test.mjs` e `scripts/record_staff_diagnostics.mjs` verificam quatro orientações de PC, acesso, âncoras de pés, conclusão real dos serviços e fases do ciclo no Chromium.

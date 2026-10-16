@@ -1,7 +1,8 @@
 import type {GameState,Point} from "./types.js";
 import {entrance,pcCount,pcPosition} from "./engine.js";
 import {binSpots} from "./services.js";
-import {stationPoint} from "./layout.js";
+import {canTraverseLocalStep} from "./navigation.js";
+import {technicianWorkPoint,technicianContactPoint,cleanerWorkPoint} from "./staffWorksites.js";
 import {workerRoute} from "./workerNavigation.js";
 
 export type ServiceAccessIssue={
@@ -18,14 +19,14 @@ export function serviceAccessIssues(s:GameState):ServiceAccessIssue[]{
  for(let i=0;i<bins.length;i++){
   if((s.binFill?.[i]??0)<10&&!overflow)continue;
   if(s.cleaningJob?.binIndex===i)continue;
-  const point=bins[i]!;
-  if(!workerRoute(s,entry,point))
+  const point=bins[i]!,stand=cleanerWorkPoint(point);
+  if(!workerRoute(s,entry,stand)||!canTraverseLocalStep(s,stand,point))
    issues.push({kind:"bin",index:i,point,label:"Lixeira "+(i+1)});
  }
  for(let i=0;i<pcCount(s);i++){
   if((s.pcWear?.[i]??0)<1||s.repairJobs?.some(j=>j.pc===i))continue;
-  const point=stationPoint(pcPosition(i,s),.55,.60);
-  if(!workerRoute(s,entry,point))
+  const pc=pcPosition(i,s),point=technicianContactPoint(pc),stand=technicianWorkPoint(pc);
+  if(!workerRoute(s,entry,stand)||!canTraverseLocalStep(s,stand,point))
    issues.push({kind:"pc",index:i,point,label:"PC "+(i+1)});
  }
  return issues;

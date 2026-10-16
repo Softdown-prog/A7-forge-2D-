@@ -16,6 +16,7 @@ import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../s
 import {workPhaseLabel} from "../sim/staffPresentation.js";
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import {workerMotion} from "./workerMotion.js";
+import {technicianContactPoint} from "../sim/staffWorksites.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
@@ -91,8 +92,8 @@ export class SceneRenderer {
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
     }
-    for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job,elapsedSeconds,"technician",job.progress/job.duration)});
-    if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j,elapsedSeconds,"cleaner",j.progress/9)});}
+    for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job,elapsedSeconds,"technician",job.progress/job.duration,s)});
+    if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j,elapsedSeconds,"cleaner",j.progress/9,s)});}
     for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
@@ -463,8 +464,28 @@ export class SceneRenderer {
   }
   /** Trabalhadores agora usam EXATAMENTE a geometria, câmera e caminhada dos clientes. */
   private worker(camera:Projection,job:RepairJob|CleaningJob,time:number,
-    kind:"technician"|"cleaner",progress:number):void{
+    kind:"technician"|"cleaner",progress:number,s:GameState):void{
     const ctx=this.ctx,z=camera.zoom,working=job.phase==="working";
+    // Vincula visualmente o funcionário ao equipamento. As linhas e os círculos
+    // são puramente gráficos: sem caminho fantasma ou mudança de posição.
+    if(working){
+      const target=kind==="cleaner"
+       ?binSpots(s)[(job as CleaningJob).binIndex??0]
+       :technicianContactPoint(pcPosition((job as RepairJob).pc,s));
+      if(target){
+        const floor=iso(target,camera,3),worker=iso({x:job.x,y:job.y},camera,2);
+        ctx.save();
+        ctx.strokeStyle=kind==="cleaner"?"rgba(154,219,171,.85)":"rgba(235,194,111,.82)";
+        ctx.lineWidth=Math.max(1.3,1.8*z);
+        ctx.setLineDash([5*z,4*z]);
+        ctx.beginPath();ctx.moveTo(worker.x,worker.y);ctx.lineTo(floor.x,floor.y);ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle=kind==="cleaner"?"rgba(103,181,132,.13)":"rgba(239,190,99,.11)";
+        ctx.beginPath();ctx.ellipse(floor.x,floor.y,16*z,9*z,0,0,Math.PI*2);
+        ctx.fill();ctx.stroke();
+        ctx.restore();
+      }
+    }
     drawActor(ctx,camera,{
       x:job.x,y:job.y,kind,id:kind==="cleaner"?-17:-19,
       time,pose:working?(kind==="cleaner"?"sweeping":"repairing"):job.moving?"walking":"idle",

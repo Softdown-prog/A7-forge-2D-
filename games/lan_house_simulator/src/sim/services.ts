@@ -1,4 +1,4 @@
-import {placedObject,stationPoint} from "./layout.js";
+import {placedObject} from "./layout.js";
 import type {GameState,Result,Point} from "./types.js";
 import {pcCount,pcPosition,entrance} from "./engine.js";
 import {workerRoute} from "./workerNavigation.js";
@@ -6,6 +6,7 @@ import {serviceVisitCost} from "./historicalEconomy.js";
 import {employeeHired,accrueEmployeeDay} from "./staff.js";
 import {directionFromDelta,type ActorDirection} from "../render/direction.js";
 import {canTraverseLocalStep} from "./navigation.js";
+import {technicianWorkPoint,technicianContactPoint,cleanerWorkPoint} from "./staffWorksites.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean;binIndex?:number}
 export const BIN_SPOTS:Point[]=[{x:1.1,y:3.1},{x:5.65,y:4.65}];
@@ -33,8 +34,9 @@ export function startRepair(s:GameState,pc:number):Result{
   return {ok:false,message:"Aguarde o cliente terminar antes de chamar o técnico."};
  // Não cobrar diária/visita de um técnico que não consegue chegar ao equipamento.
  // Em especial depois da construção de divisórias e reposicionamento de móveis.
- const approachPoint=stationPoint(pcPosition(pc,s),.55,.60);
- if(!workerRoute(s,entrance(s),approachPoint))
+ const machine=pcPosition(pc,s),approachPoint=technicianWorkPoint(machine);
+ if(!workerRoute(s,entrance(s),approachPoint)||
+    !canTraverseLocalStep(s,approachPoint,technicianContactPoint(machine)))
   return {ok:false,message:"Não há passagem para o PC "+(pc+1)+". Abra uma porta ou reorganize o salão antes de chamar o técnico."};
  const cost=employeeHired(s,"technician")?0:serviceVisitCost(s,"repair",wear);
  if(cost>0&&s.cash<cost)return {ok:false,message:"Caixa insuficiente: técnico custa R$ "+cost+"."};
@@ -66,7 +68,10 @@ function accessibleCleaningBin(s:GameState,from:Point):number|null{
  const choices=[0,1].filter(i=>(bins[i]??0)>=5||overflow)
   .sort((a,b)=>(bins[b]??0)-(bins[a]??0)||a-b);
  const spots=binSpots(s);
- for(const i of choices)if(workerRoute(s,from,spots[i]!))return i;
+ for(const i of choices){
+  const spot=spots[i]!,stand=cleanerWorkPoint(spot);
+  if(workerRoute(s,from,stand)&&canTraverseLocalStep(s,stand,spot))return i;
+ }
  return null;
 }
 export function requestCleaning(s:GameState):Result{
@@ -126,7 +131,7 @@ export function dispatchHiredStaff(s:GameState):void{
 export function tickServices(s:GameState):void{
  const exit=entrance(s);
  for(const job of s.repairJobs??[]){
-  const pc=pcPosition(job.pc,s),target=stationPoint(pc,.55,.60);
+  const pc=pcPosition(job.pc,s),target=technicianWorkPoint(pc);
   if(job.phase==="arriving"){
    if(navigate(s,job,target,.35)){
     job.phase="working";job.moving=false;
@@ -156,7 +161,7 @@ export function tickServices(s:GameState):void{
     s.eventLog.splice(14);
    }
   }
-  if(job.phase==="arriving"&&job.binIndex!==undefined&&navigate(s,job,binSpots(s)[job.binIndex]!, .32)){
+  if(job.phase==="arriving"&&job.binIndex!==undefined&&navigate(s,job,cleanerWorkPoint(binSpots(s)[job.binIndex]!), .32)){
    job.phase="working";job.progress=0;job.moving=false;
    s.eventLog.unshift("Faxineiro chegou à lixeira "+(job.binIndex+1)+" e iniciou a limpeza.");s.eventLog.splice(14);
   }

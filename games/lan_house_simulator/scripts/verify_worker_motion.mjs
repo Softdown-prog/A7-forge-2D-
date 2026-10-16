@@ -32,12 +32,13 @@ try{
    const {cameraForGame,iso}=await import("./js/render/isometric.js");
    const {binSpots}=await import("./js/sim/services.js");
    const {pcPosition}=await import("./js/sim/engine.js");
+   const {technicianWorkPoint,cleanerWorkPoint}=await import("./js/sim/staffWorksites.js");
    const frames=[],times=[0,.19,.38,.57];
    const directions=["south","east","north","west"];
    for(const direction of directions)for(const time of times){
     const s=structuredClone(state);
     const job=kind==="cleaner"?s.cleaningJob:s.repairJobs[0];
-    const point=kind==="cleaner"?binSpots(s)[0]:pcPosition(0,s);
+    const point=kind==="cleaner"?cleanerWorkPoint(binSpots(s)[0]):technicianWorkPoint(pcPosition(0,s));
     Object.assign(job,{x:point.x,y:point.y,phase:"working",moving:false,
      facing:direction,progress:kind==="cleaner"?5:12});
     if(kind==="cleaner")s.repairJobs=[];
@@ -82,8 +83,9 @@ try{
   const {SceneRenderer}=await import("./js/render/scene.js");
   const {binSpots}=await import("./js/sim/services.js");
   const {pcPosition}=await import("./js/sim/engine.js");
+  const {technicianWorkPoint,cleanerWorkPoint}=await import("./js/sim/staffWorksites.js");
   const s=structuredClone(state);
-  const b=binSpots(s)[0],pc=pcPosition(0,s);
+  const b=cleanerWorkPoint(binSpots(s)[0]),pc=technicianWorkPoint(pcPosition(0,s));
   Object.assign(s.cleaningJob,{x:b.x,y:b.y,phase:"working",progress:5,facing:"south",moving:false});
   Object.assign(s.repairJobs[0],{x:pc.x,y:pc.y,phase:"working",progress:12,facing:"south",moving:false});
   const canvas=document.createElement("canvas");canvas.width=1000;canvas.height=610;

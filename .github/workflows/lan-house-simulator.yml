@@ -152,6 +152,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_disc_copy.mjs out/validation
+      - name: Record actual employee full cycle and service blockage diagnostics
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/record_staff_diagnostics.mjs out/validation
       - name: Record continuous Chromium gameplay and encode MP4
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
@@ -167,6 +171,14 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/live-video/worker_actions.mp4
           test -s out/live-video/worker_actions.mp4
+          ffmpeg -hide_banner -loglevel error -y -ss 0.7 -i out/validation/staff_full_cycle.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/live-video/staff_full_cycle.mp4
+          test -s out/live-video/staff_full_cycle.mp4
+          ffmpeg -hide_banner -loglevel error -y -ss 0.7 -i out/validation/service_blockages.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/live-video/service_blockages.mp4
+          test -s out/live-video/service_blockages.mp4
       - name: Record continuous circulation through divided rooms
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

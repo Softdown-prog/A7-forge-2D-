@@ -751,3 +751,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Evitar cálculo de rotas a cada frame e mostrar o diagnóstico somente com demanda real.
 - [x] Cobrir situações inacessíveis/reabertas, saves e interface Chromium desktop/mobile no CI.
 - [ ] Validar no telefone físico a legibilidade dos avisos em plantas com ampliação máxima.
+
+
+## Revisão de gravação — funcionários
+- [x] Corrigir o técnico cuja posição aparecia sobre a mesa do PC: ficar ao lado da estação, sem invadir cadeira e tampo, inclusive após rotação.
+- [x] Corrigir os pés do faxineiro sobre a lixeira e indicar visualmente qual recipiente está sendo atendido.
+- [x] Impedir atendimento se a passagem entre funcionário e máquina/lixeira estiver isolada por divisória, inclusive quando o funcionário consegue caminhar ao lado de fora.
+- [x] Alinhar as âncoras de trabalho entre simulação, renderização e diagnóstico de acesso.
+- [x] Gravar vídeos exclusivos, sem menu inicial, do ciclo completo dos funcionários e da sinalização de bloqueios.
+- [ ] Rever enquadramento e clareza das ferramentas com o vídeo atualizado no aparelho do jogador.
