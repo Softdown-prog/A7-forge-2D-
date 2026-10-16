@@ -350,6 +350,7 @@ function tryServe(s: GameState, c: Customer): void {
       s.counterBusyUntil=s.totalMinutes+3;
       addLog(s,"Cliente avulso imprimiu "+result.pages+" página(s): +R$ "+result.revenue+" · papel/tinta -R$ "+result.cost+".");
       s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:result.revenue,x:c.x,y:c.y});
+      s.printEffects=queueVisualEvent(s.printEffects,{customerId:c.id});
     }else{
       addLog(s,"Cliente de impressão saiu sem atendimento.");
     }
@@ -407,7 +408,10 @@ function tryServe(s: GameState, c: Customer): void {
    addLog(s,"Cliente pediu "+copy.quantity+" cópia(s) de "+copy.kind.toUpperCase()+": +R$ "+copy.revenue+" · mídia -R$ "+copy.cost+".");
   }
   const printing=servePrinting(s,c);
-  if(printing)addLog(s,"Cliente imprimiu "+printing.pages+" página(s): +R$ "+printing.revenue+" · papel/tinta -R$ "+printing.cost+".");
+  if(printing){
+   addLog(s,"Cliente imprimiu "+printing.pages+" página(s): +R$ "+printing.revenue+" · papel/tinta -R$ "+printing.cost+".");
+   s.printEffects=queueVisualEvent(s.printEffects,{customerId:c.id});
+  }
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0)+(printing?.revenue??0),x:c.x,y:c.y});
 }
 function resolvePurchase(s: GameState, c: Customer): void {
