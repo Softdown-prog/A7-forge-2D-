@@ -689,3 +689,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Preservar saves legados e não consumir RNG da simulação para sorteio avulso.
 - [x] Validar motor, limites, contabilidade, reinício e interface desktop/mobile no CI.
 - [ ] Balancear procura de cópias em campanhas longas, testar fila e legibilidade em celular físico.
+
+## Etapa 2 — miniatura da copiadora e gesto do Tony
+- [x] Mostrar a torre copiadora sobre o balcão apenas após a compra de 2001, sem criar novas colisões nem posições editáveis.
+- [x] Reaproveitar o estilo procedural da ilustração do catálogo na torre isométrica de quatro bandejas.
+- [x] Animar luz, disco na bandeja e braços do Tony apenas depois de cópia realmente paga.
+- [x] Coexistir com a impressora em um só balcão; eventos de impressão/cópia independentes e gesto do Tony baseado no serviço mais recente.
+- [x] Preservar partidas antigas, adicionar validação do minuto do último serviço e regressão das quatro rotações.
+- [x] Atualizar antigo teste de pixels do salão para detectar a nova máquina sem alteração de layout.
+- [ ] Rever tamanho, visibilidade e naturalidade do gesto em telefone físico antes de fechar o acabamento final.

@@ -1,6 +1,6 @@
 # Copiadora de CDs e DVDs
 
-Disponível na loja a partir de 2001 por R$ 900, em partidas históricas e clássicas. Compra única; não exige expansão, posicionamento nem cria objetos, colisões ou novas filas no mapa. A arte Canvas da torre com quatro unidades ópticas aparece apenas no catálogo.
+Disponível na loja a partir de 2001 por R$ 900, em partidas históricas e clássicas. Compra única; não exige expansão, posicionamento nem cria novos objetos, colisões ou filas no mapa; a miniatura fica sobre o tampo do balcão já existente. A mesma arte Canvas da torre com quatro unidades ópticas é reaproveitada como miniatura no balcão após a compra. Antes da compra, a torre não aparece.
 
 Após a compra, Administração → Preços mostra preços independentes por CD e DVD, custo da mídia, resultado por cópia, volumes acumulados, faturamento e resultado do serviço. O resultado acumulado exclui o investimento inicial, que entra nas despesas gerais da lan house.
 
@@ -10,7 +10,7 @@ Valores de design em 2001: CD R$ 3 com mídia R$ 1; DVD R$ 6 com mídia R$ 2. N�
 
 Cada venda soma o valor cobrado à receita, o custo de mídia às despesas e a diferença ao caixa. O total recebido no balcão aparece em um único efeito de pagamento, evitando textos sobrepostos. O histórico do PC continua contando apenas a sessão. Compra, preços, volumes e valores são persistidos e validados; saves anteriores sem copiadora continuam válidos. Uma visita não pode repetir o pedido após salvar/carregar.
 
-Validação: testes de motor, compra única, desbloqueio, demanda/preço, carteira, capacidade diária, contabilidade, importação e clientes reais. `scripts/verify_disc_copy.mjs` exercita os controles em 1440/414/360 px, confirma persistência, ausência de erros/rolagem horizontal e comparação exata dos pixels do salão antes/depois da compra.
+Validação: testes de motor, compra única, desbloqueio, demanda/preço, carteira, capacidade diária, contabilidade, importação e clientes reais. `scripts/verify_disc_copy.mjs` exercita os controles em 1440/414/360 px, confirma persistência, ausência de erros/rolagem horizontal e comparação de pixels para confirmar que a nova torre aparece sobre o balcão após a compra, mantendo as posições do salão inalteradas.
 
 ## Etapa 2 — clientes exclusivamente de cópias
 - A compra continua disponível **somente a partir de 2001**, uma vez, por **R$ 900**. Sem aquisição não há procura avulsa, nem vendas.
@@ -20,3 +20,11 @@ Validação: testes de motor, compra única, desbloqueio, demanda/preço, cartei
 - Administração passa a distinguir sessões de PCs, clientes só de impressão e clientes só de cópias, sem somar os serviços agregados à sessão uma segunda vez.
 - Saves anteriores sem `discCopier.walkIns` ou `serviceRequest: "disc-copy"` continuam válidos. Casos adversos são testados por Node e em Chromium desktop/414/360 px.
 - Pendente: avaliação física no Android/iOS e balanceamento de procura/retorno em campanhas extensas; a copiadora visual segue apenas na vitrine da loja.
+
+## Equipamento visível e Tony copiando — Etapa 2
+- Após a compra, a torre de CDs/DVDs surge sobre a extremidade do balcão. Ela respeita a câmera isométrica e as quatro rotações do balcão, sem ocupar espaço adicional, sem modificar o layout nem registrar novos objetos no save.
+- Ao copiar CDs/DVDs com pagamento confirmado, o campo **opcional** `discCopier.lastCopiedMinute` registra o minuto da transação. A torre indica atividade, movimenta um disco na bandeja e Tony faz um gesto curto com os braços. Apenas comprar a copiadora não inicia animação nem gera receita.
+- A animação dura até 8 minutos do jogo após uma venda; não muda a lógica de atendimento, preços, patrimônio ou duração das sessões de PC. Se copiadora e impressora tiverem pedidos próximos, ambos os equipamentos podem animar, e Tony gesticula conforme o serviço pago mais recente.
+- Partidas salvas antes desta atualização continuam válidas porque o novo campo é opcional. Minutos negativos, fracionários, futuros ou inválidos são rejeitados na importação.
+- Os testes `disc-copier-tony.test.mjs` e `verify_disc_copier_tony.mjs` verificam compra, ausência de receita passiva, persistência, coexistência dos equipamentos, quatro rotações e desktop/mobile (1280/414/360 px). As capturas PNG são anexadas ao artefato visual do GitHub Actions.
+- Ainda é necessária a avaliação visual em telefone físico, particularmente a legibilidade das bandejas na câmera com zoom mínimo.

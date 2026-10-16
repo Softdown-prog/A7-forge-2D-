@@ -18,6 +18,8 @@ import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
+import {copyingAnimationActive} from "../sim/discCopy.js";
+import {drawCounterDiscCopier} from "./discCopierArt.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -72,6 +74,9 @@ export class SceneRenderer {
         // Impressora decorativa paga: sobre o tampo, sem novo footprint ou colisão.
         if(s.printer)drawCounterPrinter(this.ctx,objectCamera(camera,counter,1.75,.72,counter.rotation),
           counter,printingAnimationActive(s),elapsedSeconds);
+        // A copiadora tem footprint só visual, no outro extremo do tampo.
+        if(s.discCopier)drawCounterDiscCopier(this.ctx,objectCamera(camera,counter,1.75,.72,counter.rotation),
+          counter,copyingAnimationActive(s),elapsedSeconds);
       }},
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
     ];
@@ -460,7 +465,11 @@ export class SceneRenderer {
   private owner(camera:Projection,t:number,s?:GameState):void {
     const position=counterPoint(s,{x:1.45,y:1.05}),r=placedObject(s,"counter",{x:.9,y:1.42}).rotation??0;
     // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
-    drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose:s&&printingAnimationActive(s)?"printing":"idle",direction:(["south","west","north","east"] as const)[r]});
+    const printAt=s?.printer?.lastPrintedMinute??-1,copyAt=s?.discCopier?.lastCopiedMinute??-1;
+    // Prioridade ao serviço pago mais recente; ambos os equipamentos animam independente.
+    const pose=s&&copyingAnimationActive(s)&&copyAt>=printAt?"copying":
+      s&&printingAnimationActive(s)?"printing":"idle";
+    drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,direction:(["south","west","north","east"] as const)[r]});
     this.heroHitbox=actorHitbox(camera,position.x,position.y);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {

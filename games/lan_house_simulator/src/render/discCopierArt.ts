@@ -1,4 +1,58 @@
-/** Ilustração exclusiva da loja; a copiadora não faz parte da cena nem de suas colisões. */
+import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
+import type {Point} from "../sim/types.js";
+
+/** Miniatura da mesma torre óptica usada na vitrine.
+ * Instalada SOBRE o balcão (não cria objeto nem colisão) após a compra. */
+export function drawCounterDiscCopier(ctx:CanvasRenderingContext2D,cam:Projection,
+ counter:Point,active=false,time=0):void{
+ const x=counter.x+1.48,y=counter.y+.065,w=.22,d=.31,base=55.3,height=46;
+ ctx.save();
+ raisedCuboid(ctx,cam,x,y,w,d,base,height,["#e8e9da","#b5c5af","#829788"]);
+ // Quatro bandejas da torre; a face frontal segue a rotação do balcão.
+ // Atrás da torre ficam apenas as laterais com ventilações, sem frente espelhada.
+ if(cam.rotation===undefined||cam.rotation===0||cam.rotation===3){
+  for(let i=0;i<4;i++){
+   const upper=base+34-i*7.3;
+   polygon(ctx,[
+    iso({x:x+.024,y:y+d+.006},cam,upper),
+    iso({x:x+w-.024,y:y+d+.006},cam,upper),
+    iso({x:x+w-.024,y:y+d+.006},cam,upper-5.5),
+    iso({x:x+.024,y:y+d+.006},cam,upper-5.5)
+   ],i===0?"#6a8979":"#4b6d5d","#354c42");
+   const light=iso({x:x+w-.042,y:y+d+.012},cam,upper-4);
+   ctx.fillStyle=active&&i===0&&Math.sin(time*13)>0?"#f4cf71":"#bad48f";
+   ctx.beginPath();ctx.arc(light.x,light.y,Math.max(1,cam.zoom*1.4),0,Math.PI*2);ctx.fill();
+  }
+ }
+ // Ventilações discretas nas laterais; a torre não parece um bloco cinza.
+ for(let i=0;i<3;i++){
+  const at=iso({x:x+w+.001,y:y+.055+i*.068},cam,base+17);
+  ctx.fillStyle="#4a6255";
+  ctx.beginPath();ctx.ellipse(at.x,at.y,1.2*cam.zoom,2*cam.zoom,0,0,Math.PI*2);ctx.fill();
+ }
+ // Logo/indicador superior garante leitura também de costas.
+ polygon(ctx,[
+  iso({x:x+.05,y:y+.07},cam,base+height+.15),
+  iso({x:x+.17,y:y+.07},cam,base+height+.15),
+  iso({x:x+.17,y:y+.13},cam,base+height+.15),
+  iso({x:x+.05,y:y+.13},cam,base+height+.15)
+ ],active?"#e9c37b":"#617f65");
+ if(active){
+  // Disco em movimento para a bandeja; uma só forma elíptica, sem PNG.
+  const advance=.02+.075*(.5+.5*Math.sin(time*6.4));
+  const center=iso({x:x+w*.50,y:y+d+advance},cam,base+33);
+  ctx.save();ctx.translate(center.x,center.y);
+  ctx.scale(1,Math.max(.25,cam.zoom*.6));
+  ctx.fillStyle="#d0e0ce";ctx.strokeStyle="#789b98";ctx.lineWidth=Math.max(.7,cam.zoom);
+  ctx.beginPath();ctx.ellipse(0,0,Math.max(2,6*cam.zoom),Math.max(1.4,3*cam.zoom),0,0,Math.PI*2);
+  ctx.fill();ctx.stroke();
+  ctx.fillStyle="#4d756b";ctx.beginPath();ctx.arc(0,0,Math.max(.6,1.4*cam.zoom),0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ }
+ ctx.restore();
+}
+
+/** Ilustração da loja: a instalação no balcão reutiliza as formas da torre. */
 export function drawDiscCopier(ctx:CanvasRenderingContext2D,width=320,height=180):void{
  ctx.save();ctx.scale(width/320,height/180);
  const polygon=(points:number[][],fill:string)=>{ctx.fillStyle=fill;ctx.beginPath();points.forEach(([x,y],i)=>i?ctx.lineTo(x!,y!):ctx.moveTo(x!,y!));ctx.closePath();ctx.fill();};

@@ -1,4 +1,4 @@
-// Actual purchase/pricing controls plus exact scene-pixel comparison: no machine on the map.
+// Actual purchase/pricing controls plus scene-pixel validation: the purchased machine now appears on the counter.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -38,10 +38,21 @@ try{
   checks.push({width,year,locked:year<2001});await context.close();
  }
  const page=await browser.newPage();await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
- const unchanged=await page.evaluate(async()=>{
-  const [{createGame},{SceneRenderer},{buyDiscCopier}]=await Promise.all([import('./js/sim/engine.js'),import('./js/render/scene.js'),import('./js/sim/discCopy.js')]);
+ const pixels=await page.evaluate(async()=>{
+  const [{createGame},{SceneRenderer},{buyDiscCopier},{editableObjects}]=await Promise.all([
+   import('./js/sim/engine.js'),import('./js/render/scene.js'),
+   import('./js/sim/discCopy.js'),import('./js/sim/editableObjects.js')]);
   const s=createGame();s.totalMinutes=3*360*720;s.cash=10000;
-  const draw=()=>{const c=document.createElement('canvas');c.width=1000;c.height=610;new SceneRenderer(c.getContext('2d')).draw(s,0);return c.getContext('2d').getImageData(0,0,c.width,c.height).data;};
-  const before=draw();if(!buyDiscCopier(s).ok)throw Error('Compra falhou');const after=draw();return before.every((v,i)=>v===after[i]);
- });assert.equal(unchanged,true);assert.deepEqual(errors,[]);await writeFile(resolve(output,'validation.json'),JSON.stringify({checks,scenePixelsUnchanged:unchanged,errors},null,2));console.log(JSON.stringify({checks,scenePixelsUnchanged:unchanged,errors}));
+  const beforeLayout=JSON.stringify(editableObjects(s));
+  const draw=()=>{const c=document.createElement('canvas');c.width=1000;c.height=610;new SceneRenderer(c.getContext('2d')).draw(s,0);
+   return c.getContext('2d').getImageData(0,0,c.width,c.height).data;};
+  const before=draw();if(!buyDiscCopier(s).ok)throw Error('Compra falhou');const after=draw();
+  let count=0;for(let i=0;i<before.length;i+=4)if(before[i]!==after[i]||before[i+1]!==after[i+1]||before[i+2]!==after[i+2])count++;
+  return {changedPixels:count,layoutUnchanged:beforeLayout===JSON.stringify(editableObjects(s))};
+ });
+ assert.ok(pixels.changedPixels>35,'copiadora comprada deve ser visível');
+ assert.equal(pixels.layoutUnchanged,true);
+ assert.deepEqual(errors,[]);
+ await writeFile(resolve(output,'validation.json'),JSON.stringify({checks,...pixels,errors},null,2));
+ console.log(JSON.stringify({checks,...pixels,errors}));
 }finally{await browser?.close();server.kill();}

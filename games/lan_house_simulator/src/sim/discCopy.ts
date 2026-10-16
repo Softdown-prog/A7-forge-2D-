@@ -9,6 +9,8 @@ export interface DiscCopier {
  day:number;dayCopies:number;
  /** Atendimentos exclusivos de cópia, separados das sessões de computadores. */
  walkIns?:number;
+ /** Momento do último serviço cobrado; apenas aciona o visual do balcão. */
+ lastCopiedMinute?:number;
 }
 export const DISC_COPIER_YEAR=2001;
 export const DISC_COPIER_COST=900;
@@ -43,6 +45,11 @@ export function setDiscCopyPrice(s:GameState,kind:DiscKind,price:number):Result{
  if(!Number.isInteger(price)||price<1||price>MAX_DISC_PRICE)return {ok:false,message:"Escolha um preço entre R$ 1 e R$ 80, em reais inteiros."};
  s.discCopier.prices[kind]=price;
  return {ok:true,message:"Cópia de "+kind.toUpperCase()+": R$ "+price+" por unidade."};
+}
+/** Efeito visual temporal; nunca cobra ou incrementa o progresso sozinho. */
+export function copyingAnimationActive(s:GameState):boolean{
+ const last=s.discCopier?.lastCopiedMinute;
+ return last!==undefined&&s.totalMinutes>=last&&s.totalMinutes-last<=8;
 }
 export function discCopiesToday(s:GameState):number{
  return s.discCopier?.day===day(s)?s.discCopier.dayCopies:0;
@@ -94,6 +101,7 @@ export function serveDiscCopy(s:GameState,c:Customer):{kind:DiscKind;quantity:nu
  copier[kind==="cd"?"cdCopies":"dvdCopies"]+=quantity;
  copier.revenue=round(copier.revenue+revenue);copier.expenses=round(copier.expenses+expense);copier.dayCopies+=quantity;
  if(walkIn)copier.walkIns=(copier.walkIns??0)+1;
+ copier.lastCopiedMinute=s.totalMinutes;
  return {kind,quantity,revenue,cost:expense};
 }
 export function validDiscCopier(s:Partial<GameState>):boolean{
@@ -105,5 +113,6 @@ export function validDiscCopier(s:Partial<GameState>):boolean{
   [v.revenue,v.expenses].every(n=>Number.isFinite(n)&&n>=0&&n<=1e12&&Math.abs(n*100-Math.round(n*100))<1e-6)&&
   Number.isInteger(v.day)&&v.day>=1&&v.day<=Math.floor((s.totalMinutes??0)/DAY_MINUTES)+1&&
   Number.isInteger(v.dayCopies)&&v.dayCopies>=0&&v.dayCopies<=DISC_COPIES_PER_DAY&&v.dayCopies<=v.cdCopies+v.dvdCopies&&
-  (v.walkIns===undefined||(Number.isSafeInteger(v.walkIns)&&v.walkIns>=0&&v.walkIns<=v.cdCopies+v.dvdCopies));
+  (v.walkIns===undefined||(Number.isSafeInteger(v.walkIns)&&v.walkIns>=0&&v.walkIns<=v.cdCopies+v.dvdCopies))&&
+  (v.lastCopiedMinute===undefined||(Number.isSafeInteger(v.lastCopiedMinute)&&v.lastCopiedMinute>=0&&v.lastCopiedMinute<=(s.totalMinutes??0)));
 }

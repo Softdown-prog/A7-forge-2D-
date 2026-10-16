@@ -108,6 +108,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_printer_tony.mjs out/validation
+      - name: Verify disc copier counter art, Tony gesture and four rotations
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_disc_copier_tony.mjs out/validation
       - name: Verify disc-copy-only customers, cashflow and responsive UI
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
