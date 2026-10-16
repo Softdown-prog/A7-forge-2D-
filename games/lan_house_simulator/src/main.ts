@@ -1290,6 +1290,10 @@ function frame(timestamp:number):void {
     if(sale.item==="soda")soundscape.soda();
     else soundscape.candy();
   }
+  // Impressão paga (avulsa ou na sessão): chance e cooldown no mixer.
+  for(const print of (isPlaying?(game.printEffects?.splice(0)??[]):[])){
+   if(Number.isInteger(print.customerId))soundscape.printer();
+  }
   // A gentle 3.5-second phrase once a visitor starts a PC session.
   for(const started of (isPlaying?(game.keyboardEffects?.splice(0)??[]):[])){
     if(Number.isInteger(started.customerId)&&Number.isInteger(started.pcIndex))soundscape.keyboard();

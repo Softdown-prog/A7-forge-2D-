@@ -13,7 +13,7 @@ export interface SaveEnvelope { format:typeof SAVE_EXPORT_FORMAT; exportVersion:
 /** Exclui filas visuais efêmeras. O estado econômico e das estações
  * permanece idêntico, inclusive em saves antigos importados. */
 export function snapshotGameState(state:GameState):GameState {
- const {paymentEffects,saleEffects,keyboardEffects,speechEffects,...persisted}=state;
+ const {paymentEffects,saleEffects,keyboardEffects,speechEffects,printEffects,...persisted}=state;
  return persisted;
 }
 export function serializeSave(state:GameState):string {

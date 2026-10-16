@@ -57,3 +57,12 @@ Os arquivos serão opcionais. Reprodução apenas após interação (política d
 - O ganho passou de `0.032` para `0.085` e o líquido agora começa `0.90 s` após o caixa: menos mascaramento; ainda abaixo de mouse e pagamento.
 - Não há botão de prévia ou outras opções técnicas no site em produção: o efeito é reproduzido somente no fluxo normal das vendas reais.
 - Validação: `tests/soda-audio.test.mjs` verifica alternância, temporização, níveis, arquivos OGG originais e cópias do build, silenciamento e ausência de controles de teste na UI.
+
+
+## Impressora procedural V2 suave (15/10/2026)
+- `src/audio/printerSfx.ts` gera localmente uma interpretação Web Audio da receita V2 de ~2,95 segundos (cabeçote, motor, roletes e papel). Não é um arquivo idêntico à prévia OGG nem usa serviços externos.
+- Emite apenas após **impressão realmente paga**, no atendimento avulso ou na compra associada ao PC; um evento por atendimento, não por página ou frame.
+- Chance `0.35` por evento, intervalo mínimo de 14 segundos reais entre reproduções e atraso de 0,90 segundo após o caixa.
+- Ganho de impressora `0.058`, inferior a refrigerante `0.085` e pagamento `0.24`; envelope com fade para evitar estalos.
+- A amostra é sintetizada uma vez por AudioContext e reutilizada; desligar efeitos silencia; filas efêmeras não são salvas; a chance não usa RNG econômico.
+- Revisão de volume em telefone físico recomendada.

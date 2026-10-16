@@ -37,3 +37,7 @@ Testes da simulação validam compra sem PC, capacidade, contabilidade, determin
 - Exibe uma expectativa matemática de **tentativas de entrada de clientes de impressão avulsa por dia**, antes de fila, orçamento e limite diário. Não se trata de vendas prometidas nem altera o sorteio existente.
 - A simulação não ganha renda passiva, não muda o valor histórico das compras, nem reajusta tarifas existentes automaticamente. O painel usa apenas receitas e despesas que já eram registradas e as chances de entrada atuais.
 - Testes incluem comparação de anos e campanhas finitas, retorno de investimento, custo negativo, saves antigos e interface desktop/414/360 px.
+
+
+## Áudio procedural durante a impressão
+Após cada impressão paga (cliente avulso ou usuário de PC), o jogo sinaliza um evento efêmero ao Soundscape. A receita V2 suave é sintetizada em Web Audio por 2,95 segundos. A chance é 35% por serviço concluído, cooldown de 14 s, ganho de 0,058 e início 0,90 s após o caixa. Nenhum som é criado ao apenas comprar a impressora, e a economia/saves não são alterados.

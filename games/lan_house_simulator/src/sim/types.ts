@@ -152,6 +152,8 @@ export interface GameState {
   purchases: number;
   /** Eventos de venda para que o áudio use a mercadoria correta, não um contador genérico. */
   saleEffects?: Array<{item:Item;amount?:number;x?:number;y?:number}>;
+  /** Impressão paga: evento de áudio efêmero, sem persistência. */
+  printEffects?: Array<{customerId:number}>;
   /** Efeitos transitórios de início de digitação, disparados apenas ao começar a usar o PC. */
   keyboardEffects?: Array<{customerId:number;pcIndex:number}>;
   /** Falas temporárias; não afetam economia, descartadas pela UI. */

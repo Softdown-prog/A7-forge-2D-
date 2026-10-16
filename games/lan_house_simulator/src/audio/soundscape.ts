@@ -5,6 +5,7 @@
  * Uma única frase por início de sessão, sem loop ou sons por frame.
  */
 import { playCandyDispense } from "./vendingSfx.js";
+import {createPrinterBuffer} from "./printerSfx.js";
 
 export const AUDIO_LEVELS=Object.freeze({
   mouse:0.105,
@@ -12,7 +13,8 @@ export const AUDIO_LEVELS=Object.freeze({
   smallSale:0.15,
   keyboard:0.040, // fundo discreto; continua abaixo de mouse (0.105) e caixa (0.24).
   vending:0.45,
-  soda:0.085 // Mais audível (+8,5 dB), mas ainda abaixo de mouse e caixa.
+  soda:0.085, // Mais audível (+8,5 dB), mas ainda abaixo de mouse e caixa.
+  printer:0.058 // Impressora discreta, entre teclado e refrigerante.
 });
 export const KEYBOARD_DURATION=3.5;
 
@@ -36,6 +38,12 @@ export const SODA_COOLDOWN_SECONDS=12;
 export const SODA_AFTER_SALE_DELAY_SECONDS=0.90;
 export function shouldPlaySodaSound(roll:number,elapsed:number):boolean {
  return roll<SODA_CHANCE && elapsed>=SODA_COOLDOWN_SECONDS;
+}
+export const PRINTER_CHANCE=0.35;
+export const PRINTER_COOLDOWN_SECONDS=14;
+export const PRINTER_AFTER_PAYMENT_DELAY_SECONDS=0.90;
+export function shouldPlayPrinterSound(roll:number,elapsed:number):boolean{
+ return roll<PRINTER_CHANCE&&elapsed>=PRINTER_COOLDOWN_SECONDS;
 }
 type SodaTake="vending_soda_01"|"vending_soda_02";
 type ApprovedSample="mouse"|"income"|KeyboardTake|SodaTake;
@@ -62,10 +70,15 @@ export class Soundscape {
  private nextKeyboardTake=0;
  private lastIncome=-100;
  private lastSoda=-100;
+ private lastPrinter=-100;
+ private printerBuffer:AudioBuffer|null=null;
  private sodaTake=0;
  private readonly sodaRandom:()=>number;
+ private readonly printerRandom:()=>number;
 
- constructor(private enabled=true,random:()=>number=Math.random){this.sodaRandom=random;}
+ constructor(private enabled=true,random:()=>number=Math.random,printerRandom:()=>number=Math.random){
+  this.sodaRandom=random;this.printerRandom=printerRandom;
+ }
 
  /** Pré-decodifica arquivos autorais sem tentar reproduzir áudio antes do gesto. */
  preload():void{if(this.enabled)this.ensureContext();}
@@ -91,6 +104,7 @@ export class Soundscape {
      keyboardBus.gain.value=AUDIO_LEVELS.keyboard;
      effects.connect(master);keyboardBus.connect(master);master.connect(ctx.destination);
      this.context=ctx;this.master=master;this.effects=effects;this.keyboardBus=keyboardBus;
+     this.printerBuffer=null;this.lastPrinter=-100;
      this.requested=false;this.loadApprovedSamples(ctx);
      return ctx;
    }catch{return null;}
@@ -182,6 +196,26 @@ export class Soundscape {
    this.lastSoda=ctx.currentTime;
    this.sodaTake++;
    return true;
+ }
+ /** Impressora: 35% por serviço pago, nunca por frame ou por página. */
+ printer():boolean{
+  const ctx=this.context,master=this.master;
+  if(!this.enabled||!ctx||!master||ctx.state!=="running")return false;
+  if(!shouldPlayPrinterSound(this.printerRandom(),ctx.currentTime-this.lastPrinter))return false;
+  try{
+   if(!this.printerBuffer)this.printerBuffer=createPrinterBuffer(ctx);
+   const buffer=this.printerBuffer,at=ctx.currentTime+0.006+PRINTER_AFTER_PAYMENT_DELAY_SECONDS;
+   const source=ctx.createBufferSource(),gain=ctx.createGain();
+   source.buffer=buffer;
+   gain.gain.setValueAtTime(0.0001,at);
+   gain.gain.linearRampToValueAtTime(AUDIO_LEVELS.printer,at+0.030);
+   gain.gain.setValueAtTime(AUDIO_LEVELS.printer,at+Math.max(.031,buffer.duration-.100));
+   gain.gain.linearRampToValueAtTime(0.0001,at+buffer.duration);
+   source.connect(gain).connect(master);
+   source.start(at);source.stop(at+buffer.duration+0.005);
+   this.lastPrinter=ctx.currentTime;
+   return true;
+  }catch{return false;}
  }
  /** Sons de produtos autorizados: nunca tocar o efeito de lata reprovado. */
  candy():void{
