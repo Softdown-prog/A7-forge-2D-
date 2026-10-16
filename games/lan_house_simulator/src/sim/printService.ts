@@ -7,6 +7,8 @@ export interface PrinterService {
  price:number;pages:number;revenue:number;expenses:number;day:number;dayPages:number;
  /** Clientes que utilizaram apenas a impressão, sem contratar PC (legado: zero). */
  walkIns?:number;
+ /** Instante do último atendimento pago; usado apenas na animação do equipamento. */
+ lastPrintedMinute?:number;
 }
 export const PRINTER_COST=320;
 export const PRINT_PAGES_PER_DAY=35;
@@ -83,6 +85,7 @@ export function servePrinting(s:GameState,c:Customer):{pages:number;revenue:numb
  printer.pages+=qty;printer.dayPages+=qty;
  printer.revenue=cents(printer.revenue+revenue);printer.expenses=cents(printer.expenses+cost);
  if(walkIn)printer.walkIns=(printer.walkIns??0)+1;
+ printer.lastPrintedMinute=s.totalMinutes;
  return {pages:qty,revenue,cost};
 }
 export function validPrinterService(s:Partial<GameState>):boolean{
@@ -95,5 +98,6 @@ export function validPrinterService(s:Partial<GameState>):boolean{
   Number.isSafeInteger(v.pages)&&v.pages>=0&&v.pages<=1e9&&
   money(v.revenue)&&money(v.expenses)&&Number.isInteger(v.day)&&v.day>=1&&v.day<=maxDay&&
   Number.isInteger(v.dayPages)&&v.dayPages>=0&&v.dayPages<=PRINT_PAGES_PER_DAY&&v.dayPages<=v.pages&&
-  (v.walkIns===undefined||(Number.isSafeInteger(v.walkIns)&&v.walkIns>=0&&v.walkIns<=v.pages));
+  (v.walkIns===undefined||(Number.isSafeInteger(v.walkIns)&&v.walkIns>=0&&v.walkIns<=v.pages))&&
+  (v.lastPrintedMinute===undefined||(Number.isSafeInteger(v.lastPrintedMinute)&&v.lastPrintedMinute>=0&&v.lastPrintedMinute<=(s.totalMinutes??0)));
 }
