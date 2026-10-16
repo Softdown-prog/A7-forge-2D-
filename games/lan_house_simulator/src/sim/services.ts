@@ -112,7 +112,10 @@ export function tickServices(s:GameState):void{
  for(const job of s.repairJobs??[]){
   const pc=pcPosition(job.pc,s),target=stationPoint(pc,.55,.60);
   if(job.phase==="arriving"){
-   if(navigate(s,job,target,.35)){job.phase="working";job.moving=false;}
+   if(navigate(s,job,target,.35)){
+    job.phase="working";job.moving=false;
+    s.eventLog.unshift("Técnico chegou ao PC "+(job.pc+1)+" e iniciou o reparo.");s.eventLog.splice(14);
+   }
   }else if(job.phase==="working"){
    job.moving=false;job.progress=Math.min(job.duration,job.progress+1);
    if(job.progress>=job.duration){
@@ -133,6 +136,7 @@ export function tickServices(s:GameState):void{
   }
   if(job.phase==="arriving"&&job.binIndex!==undefined&&navigate(s,job,binSpots(s)[job.binIndex]!, .32)){
    job.phase="working";job.progress=0;job.moving=false;
+   s.eventLog.unshift("Faxineiro chegou à lixeira "+(job.binIndex+1)+" e iniciou a limpeza.");s.eventLog.splice(14);
   }
  }else if(job.phase==="working"){
   job.moving=false;job.progress=Math.min(9,job.progress+1);

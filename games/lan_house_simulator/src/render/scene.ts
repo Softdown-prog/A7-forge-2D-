@@ -13,6 +13,7 @@ import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,type AnnexComputerSlot} from "../sim/stations.js";
 import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../sim/services.js";
+import {workPhaseLabel} from "../sim/staffPresentation.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
@@ -458,6 +459,21 @@ export class SceneRenderer {
       ctx.fillRect(p.x-21*z,p.y-106*z,42*z*Math.max(0,Math.min(1,progress)),5*z);
       ctx.restore();
     }
+    // Etiqueta curta segue o personagem e reaproveita exatamente a fase do job.
+    // Não altera a câmera, o deslocamento, a colisão ou o estado persistido.
+    ctx.save();
+    const caption=workPhaseLabel(kind,job).toUpperCase();
+    const font=Math.max(9,10.5*z),pad=5;
+    ctx.font="700 "+font+"px system-ui";
+    const width=ctx.measureText(caption).width+pad*2;
+    // Os dois profissionais chegam pela mesma porta; evitar etiquetas sobrepostas.
+    const badgeY=p.y-(kind==="technician"?152:132)*z-font, badgeX=p.x-width/2;
+    ctx.fillStyle="rgba(24,43,47,.92)";
+    ctx.fillRect(badgeX,badgeY,width,font+8);
+    ctx.fillStyle=working?(kind==="technician"?"#efcd82":"#b1e6da"):"#f6f0d9";
+    ctx.textAlign="center";ctx.textBaseline="top";
+    ctx.fillText(caption,p.x,badgeY+4);
+    ctx.restore();
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     drawRetroComputer(this.ctx,objectCamera(camera,p,1.1,.7,(p as PlacedPoint).rotation),p,i,t,isOnline,s);

@@ -26,3 +26,13 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - Serviços novos recebem `coveredByContract` booleano opcional. Visitas iniciadas como avulsas não viram serviços remunerados pelo contrato se o jogador contratar alguém no meio da visita. Jobs anteriores à atualização sem essa marca continuam válidos e são tratados conforme o contrato ativo.
 - Funcionários contratados continuam aparecendo automaticamente ao detectar trabalho. Chamadas manuais pelo jogador também geram diária somente se forem cobertas por contrato; visitas avulsas permanecem cobradas à parte.
 - A cobrança mensal não altera os valores de aluguel, energia, custos dos reparos avulsos nem remuneração acumulada em outros sistemas. Testes Node e Chromium desktop/mobile cobrem dias ociosos, simultaneidade, virada de mês, saves legados, dispensas e contratação durante visita avulsa.
+
+
+## Estados visuais do atendimento — Etapa 3
+- **A caminho:** o profissional caminha pela rota real até a lixeira ou estação, com uma pequena identificação sobre a cabeça e status visível em Administração → Serviços.
+- **Limpando / Reparando:** ao alcançar o destino, o log anuncia o início; a barra de progresso já existente acompanha a ação no cenário. A Administração apresenta também a porcentagem e, para o técnico, o número do computador atendido.
+- **Saindo:** depois de completar o serviço, o profissional usa o caminho existente até a porta. O status informa a saída; o histórico anterior já confirma lixeira limpa ou PC reparado.
+- Quando não há chamado, o painel distingue **contratado aguardando necessidade** de **sem contrato**. O progresso é ocultado nos períodos de deslocamento e ociosidade.
+- Dois reparos avulsos coexistentes são resumidos sem assumir que há vários técnicos contratados. Serviços em execução têm prioridade sobre chegada/saída na informação consolidada.
+- As identificações são sobrepostas no Canvas e os resumos são derivados das fases já salvas. Nenhum novo campo de save, gasto, teleporte, fila, trabalhador ou colisão foi acrescentado.
+- Regressão: `tests/staff-presentation.test.mjs` exercita os estados reais, inclusive navegação, conclusão, saves e contabilidade; `scripts/verify_staff_phases.mjs` verifica tela desktop/414/360 px, snapshots Canvas e acessibilidade básica dos indicadores.

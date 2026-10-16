@@ -31,7 +31,6 @@ import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
-import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
@@ -39,6 +38,7 @@ import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
+import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
 import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
@@ -100,8 +100,6 @@ const startupSave=loadLocalSave({
  getItem:(key:string)=>{try{return localStorage.getItem(key);}catch{return null;}}
 });
 let game=startupSave.state??newGameForPlayer(72421,"historical");
-let knownMailIds=mailBaseline(game.notices);
-function resetMailAudioBaseline():void{knownMailIds=mailBaseline(game.notices);}
 if(startupSave.state){
  if(game.totalMinutes>GAME_LAST_MINUTE){game.totalMinutes=GAME_LAST_MINUTE;game.leftoverMinutes=0;}
  clampPriceToEra(game);
@@ -167,7 +165,7 @@ importFile.addEventListener("change",async()=>{
   if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
   // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
   replaceLocalSave(localStorage,state);
-  game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);
+  game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);
   soundscape.stopKeyboard();
   previousServed=game.served;previousPurchases=game.purchases;
   paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
@@ -177,7 +175,7 @@ importFile.addEventListener("change",async()=>{
 });
 mountCloudControls(saveMessage,()=>game,(state)=>{
  replaceLocalSave(localStorage,state);
- game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
+ game=state;hasSavedGame=true;game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
  previousServed=game.served;previousPurchases=game.purchases;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  continueButton!.disabled=false;exportButton!.disabled=false;
@@ -195,7 +193,6 @@ function showMenu():void{
 function beginPlay():void{
  sceneMotion.reset();
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
- resetMailAudioBaseline(); // Existing saved mail never replays.
  isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
  renderUI();
 }
@@ -204,7 +201,7 @@ document.getElementById("menu-new")?.addEventListener("click",()=>{
  const fresh=newGameForPlayer(72421,"historical");
  try{replaceLocalSave(localStorage,fresh);}
  catch{announceSave("Não foi possível gravar uma nova partida. A anterior foi preservada.");return;}
- game=fresh;resetMailAudioBaseline();hasSavedGame=true;exportButton!.disabled=false;
+ game=fresh;hasSavedGame=true;exportButton!.disabled=false;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
  previousServed=0;previousPurchases=0;beginPlay();
 });
@@ -532,7 +529,7 @@ button("reset-game",()=>{
   const fresh=newGameForPlayer(72421,"classic");
   try{replaceLocalSave(localStorage,fresh);}
   catch{announceSave("Falha ao salvar reinício. Progresso anterior preservado.");return;}
-  game=fresh;resetMailAudioBaseline();hasSavedGame=true;
+  game=fresh;hasSavedGame=true;
   previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;renderUI();
 });
 const placementToolbar=document.getElementById("placement-toolbar");
@@ -788,7 +785,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,!!game.cleaningJob,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -1000,7 +997,7 @@ function renderUI(liveOnly=false):void {
       power.title=isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?"Economize energia e libere atualizações.":"Religue para receber clientes.";
       const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
       const job=game.repairJobs?.find(j=>j.pc===i);
-      repair.textContent=job?"Técnico · "+Math.round(job.progress/job.duration*100)+"%":
+      repair.textContent=job?"Técnico · "+workPhaseLabel("technician",job)+(job.phase==="working"?" · "+Math.floor(job.progress/job.duration*100)+"%":""):
      employeeHired(game,"technician")?"Solicitar reparo · equipe contratada":"Chamar técnico avulso · "+money(serviceVisitCost(game,"repair",wear));
       repair.disabled=wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage));
       if(job){const meter=document.createElement("progress");meter.max=job.duration;meter.value=job.progress;meter.setAttribute("aria-label","Reparo do PC "+(i+1));line.append(meter);}
@@ -1205,14 +1202,25 @@ function renderUI(liveOnly=false):void {
      " · dias trabalhados neste mês: faxineiro "+(game.employeeWorkedDays?.cleaner??0)+
      ", técnico "+(game.employeeWorkedDays?.technician??0)+
      ". Contratos mensais sem diária ociosa; folha cobrada no fechamento.");
+   const cleanState=staffActivity(game,"cleaner"),techState=staffActivity(game,"technician");
+   setText("cleaner-activity","Faxineiro · "+cleanState.label);
+   setText("technician-activity","Técnico · "+techState.label);
+   for(const [id,activity] of [["cleaner-progress",cleanState],["technician-progress",techState]] as const){
+    const meter=document.getElementById(id);
+    if(meter instanceof HTMLProgressElement){
+     meter.hidden=activity.percent===null;
+     meter.value=activity.percent??0;
+    }
+   }
    setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
     const state=binStatus(n);
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
   }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
-  " · faxineiro "+(game.cleaningJob?"em serviço":cleanerHired?"contratado":"sem contrato"));
+  " · faxineiro "+(game.cleaningJob?workPhaseLabel("cleaner",game.cleaningJob).toLowerCase():cleanerHired?"contratado":"sem contrato"));
   const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
    if(cleanButton){
-    cleanButton.textContent=cleanerHired?"Solicitar limpeza · coberta pelo contrato":
+    cleanButton.textContent=game.cleaningJob?"Faxineiro · "+workPhaseLabel("cleaner",game.cleaningJob):
+      cleanerHired?"Solicitar limpeza · coberta pelo contrato":
       "Chamar faxineiro avulso · "+money(serviceVisitCost(game,"cleaning"));
     cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||
       (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
@@ -1278,9 +1286,6 @@ function frame(timestamp:number):void {
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
-  // Detect new mail from every delivery path, not from opening the envelope.
-  const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
-  if(arrivedMail>0&&!document.hidden)soundscape.mail();
   const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
   for(const payment of payments){
     paymentPopups.push({...payment,age:0});

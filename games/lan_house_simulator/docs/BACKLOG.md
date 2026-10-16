@@ -716,3 +716,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Exibir a quantidade de dias trabalhados do ciclo e a folha ainda não paga; manter histórico antigo sem estorno.
 - [x] Atualizar testes de contratos e adicionar regressões de fila, folha, save, navegador desktop/414/360 px.
 - [ ] Avaliar se os valores por dia trabalhado precisam mudar ao final do balanceamento da campanha completa.
+
+
+## Identificação e andamento dos funcionários
+- [x] Mostrar A caminho, Limpando/Reparando e Saindo junto do personagem no cenário, sem mudar deslocamento nem animação.
+- [x] Expor o estado e o percentual atual de limpeza/reparo na aba Serviços e nas operações do computador.
+- [x] Diferenciar contratado ocioso, ausência de contrato e atendimento avulso; barras apenas durante execução.
+- [x] Registrar início de limpeza/reparo no histórico, sem emitir registro novo a cada minuto.
+- [x] Adicionar testes Node e Chromium nas quatro fases e nas resoluções desktop/mobile com snapshots para revisão.
+- [ ] Revisar legibilidade do marcador do personagem com zoom mínimo e salas ampliadas em aparelho físico.
