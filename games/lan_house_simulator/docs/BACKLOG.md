@@ -665,3 +665,11 @@ Contrato: [LOCAL_SAVE_RECOVERY.md](LOCAL_SAVE_RECOVERY.md).
 - [ ] Verificar interface e demanda em navegador móvel físico e considerar equipamento visual, clientes exclusivos, fila e outros serviços numa etapa futura.
 
 Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
+
+## Etapa 2 — clientes exclusivos de impressão (15/10/2026)
+- [x] Permitir visitantes que procuram somente impressão, com circulação pela porta e fila única do balcão, sem alugar computador.
+- [x] Confirmar cobrança após atendimento e limites reais de papel/tinta, dinheiro, expediente e capacidade de impressão.
+- [x] Sortear a procura independentemente do RNG das chegadas tradicionais e reduzir demanda com preço mais alto.
+- [x] Contabilizar clientes avulsos separadamente e somar ao indicador geral sem falsificar sessões ou métricas dos PCs.
+- [x] Testar saves antigos, casos de erro, balanço de receita/despesa e interface automatizada desktop/mobile.
+- [ ] Ajustar procura avulsa em campanhas longas, validar fila e legibilidade em celulares físicos; estudar solicitações de digitalização e trabalhos escolares.

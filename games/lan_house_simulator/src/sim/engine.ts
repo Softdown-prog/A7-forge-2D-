@@ -17,7 +17,7 @@ import {accrueEmployeeDay,validEmployeeState} from "./staff.js";
 import {reviewNotices} from "./notices.js";
 import {scheduleDecisions} from "./decisions.js";
 import {serveDiscCopy,validDiscCopier} from "./discCopy.js";
-import {servePrinting,validPrinterService} from "./printService.js";
+import {servePrinting,validPrinterService,printWalkInDue,printReferencePrice,pagesPrintedToday,PRINT_PAGES_PER_DAY} from "./printService.js";
 import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
 import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
 
@@ -299,9 +299,44 @@ function spawn(s: GameState): void {
   if(!setTravel(s,c,c.target))return;
   s.customers.push(c);
 }
+/** Clientes avulsos de impressão usam a mesma fila e saída física dos demais,
+ * mas não reservam PCs nem recebem cobrança por sessão. */
+function spawnPrintWalkIn(s:GameState):void {
+ const queueIndex=counterQueueCustomers(s).length;
+ if(queueIndex>=MAX_COUNTER_QUEUE)return;
+ const entry=entrance(s);
+ if(s.customers.some(c=>Math.hypot(c.x-entry.x,c.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
+ const id=s.nextCustomerId;
+ const seed=(Math.imul(id,2654435761)^(s.totalMinutes>>>0))>>>0;
+ const reference=printReferencePrice(s);
+ const wallet=s.economyVersion===2?Math.round(Math.max(5,reference*(2+seed%5))*100)/100:12+seed%17;
+ // Quem nem sequer pode pagar uma página não ocupa espaço de quem veio jogar.
+ if(wallet<(s.printer?.price??Infinity))return;
+ const c:Customer={id,x:entry.x,y:entry.y,facing:"north",stage:"arriving",
+  target:counterQueueSlot(queueIndex,s),queueIndex,costume:"regular",
+  serviceRequest:"printing",wallet,pcIndex:null,usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true};
+ if(!setTravel(s,c,c.target))return;
+ s.nextCustomerId++;
+ s.customers.push(c);
+}
 function tryServe(s: GameState, c: Customer): void {
   if(counterQueueCustomers(s)[0]?.id!==c.id||s.totalMinutes<(s.counterBusyUntil??0)){
     c.waitingMinutes++;return;
+  }
+  if(c.serviceRequest==="printing"){
+    // O atendente só imprime quando há espaço na fila e tempo de expediente.
+    if(localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+    const result=servePrinting(s,c);
+    if(result){
+      s.counterBusyUntil=s.totalMinutes+3;
+      addLog(s,"Cliente avulso imprimiu "+result.pages+" página(s): +R$ "+result.revenue+" · papel/tinta -R$ "+result.cost+".");
+      s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:result.revenue,x:c.x,y:c.y});
+    }else{
+      addLog(s,"Cliente de impressão saiu sem atendimento.");
+    }
+    sendHome(s,c);
+    return;
   }
   const index=chooseAvailablePc(s,c);
   if (index === undefined) {
@@ -520,6 +555,8 @@ function advanceMinute(s: GameState): void {
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
   const admission=visitorArrivalChance(s,occupied);
   if (s.customers.length < 14 && admission>0 && random(s)<admission)spawn(s);
+  // Outra fonte de movimento comercial: sem PC, sem receita passiva e sem RNG adicional.
+  if(s.customers.length<14&&printWalkInDue(s)&&pagesPrintedToday(s)<PRINT_PAGES_PER_DAY)spawnPrintWalkIn(s);
   if(localMinute(s)<CLOSING_START_MINUTE){
     refreshCounterQueue(s);
     refreshRetailQueues(s);
@@ -563,6 +600,7 @@ export function isValidSave(value: unknown): value is GameState {
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      (c.serviceRequest===undefined||c.serviceRequest==="printing")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&

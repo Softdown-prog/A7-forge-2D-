@@ -791,7 +791,7 @@ function renderUI(liveOnly=false):void {
   setText("admin-cash",money(game.cash));
   setText("admin-profit",money(game.revenue-game.expenses));
   setText("admin-bills",money(monthlyBills(game)));
-  setText("admin-served",String(game.served));
+  setText("admin-served",String(game.served+(game.printer?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Salários proporcionais aos dias de contrato.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
@@ -910,7 +910,7 @@ function renderUI(liveOnly=false):void {
    expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(game.printer.price-printPaperInkCost(game));
    row.append(label,actions,expense);printControls.append(row);
    setText("print-service-summary",game.printer.pages+" páginas realizadas · faturamento "+inReais(game.printer.revenue)+
-     " · materiais "+inReais(game.printer.expenses)+".");
+     " · materiais "+inReais(game.printer.expenses)+" · "+(game.printer.walkIns??0)+(game.printer.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para imprimir.");
    setText("print-service-capacity",pagesPrintedToday(game)+" de 35 páginas hoje. Pedidos dependem dos clientes, carteira e tarifa.");
   }
   setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
@@ -1197,7 +1197,9 @@ function renderUI(liveOnly=false):void {
     cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||
       (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
    }
-  setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+" · Atendimentos "+game.served);
+  setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
+    " · Atendimentos "+(game.served+(game.printer?.walkIns??0))+
+    " (PCs "+game.served+" · Impressões avulsas "+(game.printer?.walkIns??0)+")");
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
   setText("pc-utilization","Ocupação neste mês: "+monthPct.toLocaleString("pt-BR")+"% dos minutos-PC disponíveis ("+monthUsed.toLocaleString("pt-BR")+"/"+monthCapacity.toLocaleString("pt-BR")+").");
