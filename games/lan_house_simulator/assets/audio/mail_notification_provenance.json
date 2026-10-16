@@ -1,0 +1,113 @@
+{
+  "contract": "LHS_MAIL_POC_AUTHOR_RECORDING_REVIEW_V1",
+  "source": "games/lan_house_simulator/assets/Convert/7 de out. 18.05​.m4a",
+  "sourceSha256": "5aa1867e6ee5913695674bf4c00bbeb42107501dbb52b3d614726a47bd086ecd",
+  "sourceDurationSeconds": 8.555,
+  "cleanup": {
+    "noiseFloorRms": 0.0024981,
+    "thresholdRms": 0.0067448,
+    "rawRegions": 9
+  },
+  "registered": true,
+  "candidates": [
+    {
+      "name": "poc_candidate_01",
+      "startSeconds": 0.97,
+      "durationSeconds": 0.53,
+      "rawPeak": 0.54309,
+      "rawRms": 0.03335,
+      "contrastDb": 14.74,
+      "tailRelativeDb": -15.63,
+      "highBandFraction": 2e-05,
+      "clippingFraction": 0.0,
+      "score": 17.2865
+    },
+    {
+      "name": "poc_candidate_02",
+      "startSeconds": 2.21,
+      "durationSeconds": 0.4,
+      "rawPeak": 0.49415,
+      "rawRms": 0.03239,
+      "contrastDb": 16.39,
+      "tailRelativeDb": -18.54,
+      "highBandFraction": 2e-05,
+      "clippingFraction": 0.0,
+      "score": 18.2267
+    },
+    {
+      "name": "poc_candidate_03",
+      "startSeconds": 2.87,
+      "durationSeconds": 0.4,
+      "rawPeak": 0.56902,
+      "rawRms": 0.03267,
+      "contrastDb": 15.49,
+      "tailRelativeDb": -22.58,
+      "highBandFraction": 7e-05,
+      "clippingFraction": 0.0,
+      "score": 17.1412
+    },
+    {
+      "name": "poc_candidate_04",
+      "startSeconds": 3.93,
+      "durationSeconds": 1.13,
+      "rawPeak": 0.55374,
+      "rawRms": 0.02931,
+      "contrastDb": 17.35,
+      "tailRelativeDb": -9.74,
+      "highBandFraction": 5e-05,
+      "clippingFraction": 0.0,
+      "score": 14.4147
+    },
+    {
+      "name": "poc_candidate_05",
+      "startSeconds": 5.17,
+      "durationSeconds": 0.38,
+      "rawPeak": 0.50445,
+      "rawRms": 0.02932,
+      "contrastDb": 14.85,
+      "tailRelativeDb": -19.02,
+      "highBandFraction": 1e-05,
+      "clippingFraction": 0.0,
+      "score": 16.2211
+    },
+    {
+      "name": "poc_candidate_06",
+      "startSeconds": 6.22,
+      "durationSeconds": 0.38,
+      "rawPeak": 0.50711,
+      "rawRms": 0.03182,
+      "contrastDb": 16.91,
+      "tailRelativeDb": -18.44,
+      "highBandFraction": 2e-05,
+      "clippingFraction": 0.0,
+      "score": 18.6964
+    },
+    {
+      "name": "poc_candidate_07",
+      "startSeconds": 6.97,
+      "durationSeconds": 0.38,
+      "rawPeak": 0.49932,
+      "rawRms": 0.02929,
+      "contrastDb": 16.68,
+      "tailRelativeDb": -19.28,
+      "highBandFraction": 4e-05,
+      "clippingFraction": 0.0,
+      "score": 18.4097
+    },
+    {
+      "name": "poc_candidate_08",
+      "startSeconds": 7.43,
+      "durationSeconds": 0.37,
+      "rawPeak": 0.51304,
+      "rawRms": 0.02676,
+      "contrastDb": 15.71,
+      "tailRelativeDb": -16.37,
+      "highBandFraction": 4e-05,
+      "clippingFraction": 0.0,
+      "score": 17.1747
+    }
+  ],
+  "selected": "poc_candidate_06",
+  "selectedAsset": "games/lan_house_simulator/assets/audio/mail_notification_01.ogg",
+  "sha256": "813c7d49440f260adc132eeb679daa1b23fea661fe1dcdc58581d6b9b2c49590"
+}
