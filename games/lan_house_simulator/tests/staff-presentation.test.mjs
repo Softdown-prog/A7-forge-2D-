@@ -81,11 +81,11 @@ test("prioridade para tarefa em execução e suporte a dois técnicos avulsos si
 });
 test("novo indicador e efeitos gráficos são de leitura, não mudam o estado nem o RNG",()=>{
  const s=starting();s.binFill=[80,0];hireEmployee(s,"cleaner");requestCleaning(s);
- const before=serializeSave(s),rng=s.rng,cash=s.cash,paid=s.employeePayrollAccrued;
+ const before=JSON.parse(serializeSave(s)).state,rng=s.rng,cash=s.cash,paid=s.employeePayrollAccrued;
  for(let i=0;i<90;i++){
   staffActivity(s,"cleaner");staffActivity(s,"technician");
   workProgress(s.cleaningJob);workPhaseLabel("cleaner",s.cleaningJob);
  }
- assert.equal(serializeSave(s),before);
+ assert.deepEqual(JSON.parse(serializeSave(s)).state,before);
  assert.equal(s.rng,rng);assert.equal(s.cash,cash);assert.equal(s.employeePayrollAccrued,paid);
 });

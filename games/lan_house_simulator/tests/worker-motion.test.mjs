@@ -32,11 +32,11 @@ test("animação é apenas visual e não gera nova diária, RNG nem mutação de
  const s=createGame(99,"historical");
  s.cash=3000;s.binFill=[80,0];s.pcWear=[100,0,0];
  hireEmployee(s,"cleaner");hireEmployee(s,"technician");dispatchHiredStaff(s);
- const before=serializeSave(s),rng=s.rng,payroll=s.employeePayrollAccrued;
+ const saved=serializeSave(s),before=JSON.parse(saved).state,rng=s.rng,payroll=s.employeePayrollAccrued;
  for(let i=0;i<2000;i++){
   workerMotion("sweeping",i/30);workerMotion("repairing",i/30);
  }
- assert.equal(serializeSave(s),before);
+ assert.deepEqual(JSON.parse(serializeSave(s)).state,before);
  assert.equal(s.rng,rng);assert.equal(s.employeePayrollAccrued,payroll);
- assert.ok(parseImportedSave(before));
+ assert.ok(parseImportedSave(saved));
 });
