@@ -56,7 +56,11 @@ test("diagnóstico não usa RNG nem modifica saves, caixa ou salários",()=>{
  const previous=JSON.parse(serializeSave(s)).state;
  for(let i=0;i<30;i++)serviceAccessIssues(s);
  assert.deepEqual(JSON.parse(serializeSave(s)).state,previous);
- assert.deepEqual(serviceAccessIssues(parseImportedSave(serializeSave(s))),serviceAccessIssues(s));
+ // A geometria forçada acima serve apenas para isolar a lixeira;
+ // ela não representa necessariamente uma planta aceita pelo validador geral.
+ assert.deepEqual(serviceAccessIssues(JSON.parse(serializeSave(s)).state),serviceAccessIssues(s));
+ const normal=createGame(14,"historical");normal.binFill=[80,0];
+ assert.deepEqual(serviceAccessIssues(parseImportedSave(serializeSave(normal))),serviceAccessIssues(normal));
 });
 test("não anuncia bloqueio quando todos os destinos com demanda têm passagem",()=>{
  const s=createGame(12);s.binFill=[80,0];s.pcWear=[100,0,0];

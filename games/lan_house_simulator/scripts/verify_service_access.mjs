@@ -95,7 +95,7 @@ try{
       mapHint:document.getElementById("service-access-map-hint")?.textContent};
     });
     assert.equal(await page.locator("#service-access-toolbar").isVisible(),true,
-     kind+"/"+width+": "+JSON.stringify(visibility));
+     kind+"/"+width+": "+JSON.stringify(visibility)+" pageErrors="+JSON.stringify(errors));
     await page.locator("#service-access-toolbar").screenshot({
      path:resolve(output,"access_"+kind+"_"+width+"_toolbar.png")
     });
