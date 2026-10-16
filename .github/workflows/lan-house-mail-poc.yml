@@ -1,0 +1,67 @@
+name: LHS - tratar e selecionar poc do correio
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'tools/a7_audio_lab/review_mail_pocs.py'
+      - 'games/lan_house_simulator/assets/Convert/7 de out. 18.05*.m4a'
+      - '.github/workflows/lan-house-mail-poc.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  review-and-promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install FFmpeg and analysis dependency
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python -m pip install --disable-pip-version-check numpy==2.1.3
+      - name: Run author's original through A7 Audio Lab; compare pocs
+        run: python tools/a7_audio_lab/review_mail_pocs.py
+      - name: Verify candidate and stable original
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, subprocess
+          report=json.loads(Path('out/lhs-mail-poc-review/review.json').read_text())
+          assert report['contract']=='LHS_MAIL_POC_AUTHOR_RECORDING_REVIEW_V1'
+          assert report['candidates'] and report['selected']
+          assert any(x['name']==report['selected'] for x in report['candidates'])
+          p=Path(report['source'])
+          assert hashlib.sha256(p.read_bytes()).hexdigest()==report['sourceSha256']
+          artifact=Path(report['selectedAsset'])
+          assert artifact.is_file() and artifact.stat().st_size>1000
+          assert hashlib.sha256(artifact.read_bytes()).hexdigest()==report['sha256']
+          subprocess.run(['ffmpeg','-v','error','-i',str(artifact),'-f','null','-'], check=True)
+          print('A7 mail SFX validated:', report['selected'], artifact, 'score=', next(x['score'] for x in report['candidates'] if x['name']==report['selected']))
+          PY
+      - name: Upload comparison, candidate OGGs and review report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-poc-mail-cleaned-review
+          path: out/lhs-mail-poc-review/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Commit best treated 'poc' to main (preserve all M4A originals)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add games/lan_house_simulator/assets/audio/mail_notification_01.ogg \
+                  games/lan_house_simulator/assets/audio/mail_notification_provenance.json
+          if ! git diff --cached --quiet; then
+            git commit -m "asset(lhs): promover melhor poc tratado do correio via A7 Audio Lab"
+            git push origin HEAD:main
+          else
+            echo "Identical mail notification already promoted."
+          fi
