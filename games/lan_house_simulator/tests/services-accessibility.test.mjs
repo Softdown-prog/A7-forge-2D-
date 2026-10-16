@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcPosition,isValidSave} from "../dist/js/sim/engine.js";
-import {startRepair,requestCleaning,dispatchHiredStaff} from "../dist/js/sim/services.js";
+import {startRepair,requestCleaning,dispatchHiredStaff,tickServices} from "../dist/js/sim/services.js";
 import {hireEmployee} from "../dist/js/sim/staff.js";
 import {workerRoute} from "../dist/js/sim/workerNavigation.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
@@ -43,7 +43,7 @@ test("limpa a lixeira alcançável sem atravessar a divisória para buscar a out
  assert.equal(requestCleaning(s).ok,true);
  assert.equal(s.cleaningJob.binIndex,1);
  const paid=s.cash;
- for(let i=0;i<230&&s.cleaningJob;i++)stepGame(s,1);
+ for(let i=0;i<230&&s.cleaningJob;i++)tickServices(s);
  assert.equal(s.cleaningJob,undefined,"o funcionário deve conseguir deixar o salão");
  assert.equal(s.binFill[1],0);
  assert.equal(s.binFill[0],80,"não pode recolher lixo através da parede");
