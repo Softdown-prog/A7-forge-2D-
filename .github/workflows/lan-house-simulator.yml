@@ -41,7 +41,7 @@ jobs:
       - name: Audit 90-day GPU license costs and actual game demand
         if: matrix.worker == 'simulation'
         working-directory: games/lan_house_simulator
-        run: LHS_GPU_DIAG=1 npm run audit:gpu-licenses
+        run: npm run audit:gpu-licenses
       - name: Run extensive 360-day economy audit on manual workflow dispatch
         if: matrix.worker == 'simulation' && github.event_name == 'workflow_dispatch'
         working-directory: games/lan_house_simulator
