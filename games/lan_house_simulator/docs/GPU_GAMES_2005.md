@@ -218,3 +218,20 @@ são disponibilizadas nas máquinas já compatíveis.
 Clientes gamers só conseguem jogar o título solicitado quando o jogo
 está **licenciado, instalado e compatível com GPU e Windows** no PC;
 caso contrário, podem usar uma sessão comum, sem adicional inventado.
+
+## Instalar em múltiplas estações
+
+O catálogo agora permite **Instalar nos PCs disponíveis**, distribuindo o
+jogo já licenciado para todos os computadores compatíveis que estiverem
+ligados, livres e sem manutenção ativa. Um PC ocupado ou desligado
+fica pendente; a operação não desliga computadores, não tira clientes
+e não modifica o custo da licença. O botão apresenta a quantidade de
+máquinas disponíveis e o total ainda sem o jogo.
+
+Ao comprar uma estação **depois** da primeira escolha manual de jogos,
+ela começa sem títulos instalados. A instalação precisa ser feita no
+novo PC depois do upgrade de GPU e Windows. Inserir um computador
+original antes de PCs anexos também desloca corretamente as instalações
+dos anexos, preservando a associação com as máquinas físicas em vez
+de transferir os jogos para outro índice. Saves legados, sem lista
+explícita de instalações, continuam preservados.

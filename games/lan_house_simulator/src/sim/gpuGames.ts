@@ -44,6 +44,17 @@ export function validGpuGameInstalls(value:unknown,s:Partial<GameState>):boolean
   new Set(row).size===row.length&&row.every(id=>typeof id==="string"&&
    s.licensedGpuGames?.some(owned=>owned===id)&&!!gpuGameSpec(id)));
 }
+/** Preserva todos os títulos nas partidas antigas, mas não inventa instalação
+ * em computadores adquiridos APÓS a primeira edição. */
+function currentGpuInstallRows(s:GameState):GpuGameId[][]{
+ const legacy=s.gpuGameInstalls===undefined;
+ return Array.from({length:stationPowerCount(s)},(_,i)=>
+  legacy?[...(s.licensedGpuGames??[])]:[...(s.gpuGameInstalls?.[i]??[])]);
+}
+function pcAvailableForGameManagement(s:GameState,index:number):boolean{
+ return stationPoweredOn(s,index)&&!stationHasCustomer(s,index)&&
+  !(s.repairJobs?.some(job=>job.pc===index&&job.phase!=="leaving")??false);
+}
 /** A licença já foi paga. A instalação exige PC ligado, livre e sem manutenção. */
 export function toggleGpuGameInstallation(s:GameState,index:number,id:GpuGameId):Result{
  const game=gpuGameSpec(id);
@@ -61,13 +72,30 @@ export function toggleGpuGameInstallation(s:GameState,index:number,id:GpuGameId)
  if(!installed&&!gpuGameCompatible(s,index,game))
   return {ok:false,message:"PC "+(index+1)+" não possui GPU e Windows compatíveis."};
  // A transição inicial copia o estado antigo de todas as estações.
- s.gpuGameInstalls=Array.from({length:stationPowerCount(s)},(_,i)=>
-  [...(s.gpuGameInstalls?.[i]??s.licensedGpuGames??[])]);
+ s.gpuGameInstalls=currentGpuInstallRows(s);
  const row=s.gpuGameInstalls[index]!;
  if(installed)s.gpuGameInstalls[index]=row.filter(title=>title!==id);
  else row.push(id);
  return {ok:true,message:game.name+(installed?" removido do PC ":" instalado no PC ")+(index+1)+
   ". Não há nova cobrança de licença."};
+}
+/** Distribuição gratuita para PCs aptos, sem mexer nas máquinas ocupadas
+ * ou desligadas. Nenhuma mutação quando todas as estações estão bloqueadas.
+ * O retorno informa quantas instalações foram realizadas ou adiadas. */
+export function installGpuGameOnAvailablePcs(s:GameState,id:GpuGameId):Result{
+ const spec=gpuGameSpec(id);
+ if(!spec||!isHistorical(s)||!s.licensedGpuGames?.includes(id))
+  return {ok:false,message:"É necessário licenciar este jogo antes de distribuí-lo."};
+ const missing=gpuGameEligiblePcs(s,spec).filter(i=>!gpuGameInstalledOnPc(s,i,id));
+ if(!missing.length)return {ok:false,message:spec.name+" já está instalado em todos os PCs compatíveis."};
+ const available=missing.filter(i=>pcAvailableForGameManagement(s,i));
+ if(!available.length)return {ok:false,message:"Não há PCs livres e ligados para instalar "+spec.name+" agora."};
+ const rows=currentGpuInstallRows(s);
+ for(const i of available)rows[i]!.push(id);
+ s.gpuGameInstalls=rows;
+ const waiting=missing.length-available.length;
+ return {ok:true,message:spec.name+" instalado em "+available.length+" PC(s)"+
+  (waiting?"; "+waiting+" aguardando estação livre ou ligada":"")+". Sem custo adicional."};
 }
 /** Licença Windows paga e hardware compatível na estação especificada. */
 export function gpuGameCompatible(s:GameState,index:number,game:GpuGameSpec):boolean{

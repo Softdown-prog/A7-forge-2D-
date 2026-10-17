@@ -36,7 +36,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
@@ -457,6 +457,12 @@ eraGamePanel?.addEventListener("click",event=>{
 gpuGamePanel?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const bulkId=button.dataset.gpuGameInstallAll;
+ if(bulkId){
+  if(!GPU_GAME_CATALOG.some(x=>x.id===bulkId))return;
+  applyResult(game,installGpuGameOnAvailablePcs(game,bulkId as typeof GPU_GAME_CATALOG[number]["id"]));
+  renderUI();save();return;
+ }
  const installId=button.dataset.gpuGameInstall;
  if(installId){
   const index=Number(button.dataset.gpuGamePc);
@@ -1259,6 +1265,18 @@ function renderUI(liveOnly=false):void {
         control.disabled=!!blocked;
         control.title=blocked||"Instalação e remoção gratuitas; a licença pertence à lan house.";
         stations.append(control);
+       }
+       const pending=quote.eligiblePcs.filter(i=>!gpuGameInstalledOnPc(game,i,title.id));
+       if(pending.length){
+        const ready=pending.filter(i=>stationPoweredOn(game,i)&&!stationHasCustomer(game,i)&&
+         !game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving"));
+        const bulk=document.createElement("button");bulk.type="button";bulk.className="slice";
+        bulk.dataset.gpuGameInstallAll=title.id;
+        bulk.textContent="Instalar nos PCs disponíveis ("+ready.length+"/"+pending.length+")";
+        bulk.disabled=ready.length===0;
+        bulk.title=ready.length?"Distribuir sem cobrança. PCs ocupados/desligados ficam para depois.":
+         "Aguarde PCs livres, ligados e fora de manutenção.";
+        stations.append(bulk);
        }
        card.append(stations);
       }

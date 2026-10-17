@@ -852,3 +852,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Exigir instalação do título solicitado para priorização de clientes gamers e tarifa premium.
 - [x] Persistir estado por PC, preservar saves legados e validar identificadores instalados.
 - [x] Testar interface em Chromium desktop e mobile, com recarga após remoção/reinstalação.
+
+## Distribuição de software após ampliação do salão
+- [x] Instalação em lote nos PCs compatíveis livres e ligados, sem nova cobrança, sem alterar RNG.
+- [x] Bloquear PCs em uso, desligados ou em manutenção e mostrar quantidade pendente na interface.
+- [x] Novos PCs começam sem instalações quando a partida já usa gestão manual de jogos.
+- [x] Preservar associação entre instalações e PCs anexos ao inserir PCs originais.
+- [ ] Explorar progresso animado de download/instalação por título numa próxima etapa.

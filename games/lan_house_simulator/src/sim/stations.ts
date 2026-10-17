@@ -52,6 +52,9 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
  }
  (s.pcTiers??=[])[index]=1;
  (s.pcGpus??=[])[index]=null;
+ // Estação do anexo não herda jogos das estações que já existiam.
+ if(s.gpuGameInstalls)
+  s.gpuGameInstalls=Array.from({length:index+1},(_,i)=>[...(s.gpuGameInstalls?.[i]??[])]);
  if(s.pcPoweredOff)s.pcPoweredOff[index]=false;
  if(s.pcLcdModels)s.pcLcdModels[index]=null;
  if(s.pcComponents)s.pcComponents[index]=null;

@@ -57,6 +57,14 @@ export function buyComputer(s:GameState):Result{
  (s.pcWindows??=[]).splice(count,0,"win98");
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
  (s.pcGpus??=[]).splice(count,0,null);
+ // PC inserido ANTES dos anexos desloca as licenças de software por índice,
+ // exatamente como GPU/Windows/contabilidade; PC novo começa sem instalações.
+ if(s.gpuGameInstalls){
+  const size=count+(s.annexPcs?.length??0);
+  const installs=Array.from({length:size},(_,i)=>[...(s.gpuGameInstalls?.[i]??[])]);
+  installs.splice(count,0,[]);
+  s.gpuGameInstalls=installs;
+ }
  // Um PC original inserido antes dos anexos também desloca seus estados de energia.
  if(s.pcPoweredOff){
   const power=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>!stationPoweredOn(s,i));

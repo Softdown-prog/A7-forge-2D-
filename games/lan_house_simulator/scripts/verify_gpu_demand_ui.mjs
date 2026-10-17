@@ -76,11 +76,21 @@ try{
   const button=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
   await (mobile?button.tap():button.click());
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Instalar no PC 2/);
+  const bulk=page.locator('[data-gpu-game-install-all="neon-rush"]');
+  assert.match(await bulk.innerText(),/1\/1/);
+  await (mobile?bulk.tap():bulk.click());
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Remover do PC 2/);
+  // A instalação em lote é persistida em desktop e mobile.
   await page.reload({waitUntil:"networkidle"});
   await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
   const restored=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
-  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Instalar no PC 2/);
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Remover do PC 2/);
   await (mobile?restored.tap():restored.click());
+  await page.reload({waitUntil:"networkidle"});
+  await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
+  const pending=page.locator('[data-gpu-game-install-all="neon-rush"]');
+  assert.match(await pending.innerText(),/1\/1/);
+  await (mobile?pending.tap():pending.click());
   await page.reload({waitUntil:"networkidle"});
   const second=await check();
   await page.locator("#section-licenses").screenshot({path:resolve(out,"gpu_demand_licenses_"+width+".png")});
