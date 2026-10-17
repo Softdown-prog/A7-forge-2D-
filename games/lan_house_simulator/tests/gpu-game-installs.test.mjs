@@ -52,7 +52,10 @@ test("cliente gamer não busca uma estação sem o jogo desejado instalado",()=>
  assert.equal(chooseAvailablePc(s,gamer),1);
  ok(toggleGpuGameInstallation(s,1,"neon-rush"));
  assert.equal(hasPlayableGpuGame(s),false);
- assert.equal(chooseAvailablePc(s,gamer),2,"PCs baixando estão temporariamente indisponíveis");
+ assert.equal(chooseAvailablePc(s,gamer),0,"sem jogo, os PCs continuam aceitando sessões comuns");
+ ok(toggleGpuGameInstallation(s,0,"neon-rush"));
+ ok(toggleGpuGameInstallation(s,1,"neon-rush"));
+ assert.equal(chooseAvailablePc(s,gamer),2,"durante o download, PCs 1 e 2 ficam indisponíveis");
 });
 test("PC desligado, ocupado ou em manutenção não permite instalação",()=>{
  const s=ready();
