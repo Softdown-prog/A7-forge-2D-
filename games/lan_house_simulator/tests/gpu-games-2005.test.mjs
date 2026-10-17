@@ -11,7 +11,7 @@ import {licenseWindows} from "../dist/js/sim/era.js";
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
 import {
  GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameEligiblePcs,
- gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame
+ gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame,gpuGamePlayableOnPc
 } from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
@@ -144,4 +144,65 @@ test("clientes reais usam preferencialmente estação premium; sem licença pre�
  assert.ok(s.revenue>0);
  assert.ok(isValidSave(s));
  assert.ok(s.cash!==prior);
+});
+
+
+test("preferência por título lançado independe do inventário de licenças e do RNG",()=>{
+ const s=createGame(18,"historical");
+ const rng=s.rng;
+ assert.equal(preferredGpuGame(s,4),undefined);
+ year(s,2005);
+ assert.equal(preferredGpuGame(s,4),"neon-rush");
+ assert.equal(preferredGpuGame(s,8),"neon-rush");
+ year(s,2009);
+ assert.equal(preferredGpuGame(s,4),"circuito-competitivo");
+ assert.equal(preferredGpuGame(s,8),"neon-rush");
+ year(s,2013);
+ const options=new Set(Array.from({length:12},(_,i)=>preferredGpuGame(s,(i+1)*4)));
+ assert.deepEqual(options,new Set(GPU_GAME_CATALOG.map(g=>g.id)));
+ assert.equal(preferredGpuGame(s,5),undefined);
+ assert.equal(s.rng,rng,"não consumir RNG de visitantes");
+});
+test("jogador de título específico não paga pelo bônus de outro jogo",()=>{
+ const s=setup(2005,1);
+ accept(licenseGpuGame(s,"neon-rush"),"neon");
+ year(s,2013);
+ // Mesmo com GPU e Windows adequados, a licença do jogo desejado falta.
+ assert.equal(gpuGamePlayableOnPc(s,1,"neon-rush"),true);
+ assert.equal(gpuGamePlayableOnPc(s,1,"arena-do-futuro"),false);
+ assert.equal(gpuGameHourlyRate(s,1,"arena-do-futuro"),s.pricePerHour);
+ assert.equal(gpuGameSessionPrice(s,1,90,true,"arena-do-futuro"),
+  sessionRevenue(s.pricePerHour,90,true));
+ assert.ok(gpuGameSessionPrice(s,1,90,true,"neon-rush")>
+  sessionRevenue(s.pricePerHour,90,true));
+});
+test("preços de títulos diferentes respeitam o bônus da licença pedida, nunca o máximo alheio",()=>{
+ const s=setup(2005,0);
+ accept(licenseGpuGame(s,"neon-rush"),"neon");
+ year(s,2009);
+ accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"platform");
+ accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU");
+ accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows");
+ accept(licenseGpuGame(s,"circuito-competitivo"),"circuito");
+ const neon=gpuGameHourlyRate(s,0,"neon-rush");
+ const circuit=gpuGameHourlyRate(s,0,"circuito-competitivo");
+ assert.ok(circuit>neon,"jogo novo rende adicional individual maior");
+ assert.equal(gpuGameHourlyRate(s,0),circuit,"clientes antigos mantêm maior adicional");
+ assert.equal(gpuGameSessionPrice(s,0,90,true,"neon-rush"),sessionRevenue(neon,90,true));
+ assert.equal(gpuGameSessionPrice(s,0,90,true,"circuito-competitivo"),sessionRevenue(circuit,90,true));
+});
+test("cliente com preferência nova persiste no save e recusa ID inventado",()=>{
+ const s=setup();accept(licenseGpuGame(s,"neon-rush"),"premium");
+ // Cliente ainda entrando: apenas campos opcionais novos, sem interferir
+ // no relógio, na contabilidade ou na seleção de sprites.
+ const c={id:4,x:0,y:0,stage:"arriving",target:{x:0,y:0},costume:"regular",
+  pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,
+  gpuGamer:true,preferredGpuGame:"neon-rush"};
+ s.customers=[c];
+ assert.equal(isValidSave(s),true);
+ assert.equal(parseImportedSave(serializeSave(s)).customers[0].preferredGpuGame,"neon-rush");
+ c.preferredGpuGame="jogo-falso";
+ assert.equal(isValidSave(s),false);
+ c.preferredGpuGame=undefined;
+ assert.equal(isValidSave(s),true,"saves anteriores podem omitir o campo");
 });

@@ -79,28 +79,46 @@ export function licenseGpuGame(s:GameState,id:string):Result{
  (s.licensedGpuGames??=[]).push(game.id);
  return {ok:true,message:game.name+" licenciado por R$ "+quote.cost+". Disponível somente nos PCs compatíveis."};
 }
-/** Adicional local, limitado pelo teto horário ANUAL; nunca amplia a tarifa
- * dos PCs sem placa, sem Windows ou sem a licença avançada.
- * Entre títulos compatíveis vale o maior adicional (não são cumulativos).
+/** A preferência é fixada na chegada, apenas entre títulos já lançados.
+ * Atribuição determinística por ID, sem sorteio extra ou dependência das
+ * licenças atualmente compradas; salva com o visitante para não mudar no reload.
  */
-export function gpuGameHourlyRate(s:GameState,index:number):number{
+export function preferredGpuGame(s:Pick<GameState,"economyVersion"|"totalMinutes">,visitorId:number):GpuGameId|undefined{
+ if(!wantsGpuGame(s,visitorId))return undefined;
+ const year=yearFromMinutes(s.totalMinutes);
+ const launched=GPU_GAME_CATALOG.filter(game=>game.year<=year);
+ return launched[Math.floor(visitorId/4)%launched.length]?.id;
+}
+/** Licença do estabelecimento, ano do lançamento e requisitos por estação.
+ * Compatibilidade nunca depende da tarifa ou de haver bônus econômico. */
+export function gpuGamePlayableOnPc(s:GameState,index:number,id:GpuGameId):boolean{
+ const spec=gpuGameSpec(id);
+ return !!spec&&isHistorical(s)&&!!s.licensedGames&&
+  spec.year<=yearFromMinutes(s.totalMinutes)&&
+  !!s.licensedGpuGames?.includes(id)&&gpuGameCompatible(s,index,spec);
+}
+/** Adicional local, limitado pelo teto horário anual.
+ * Um título pedido nunca cobra o bônus de OUTRO título mais caro; sem
+ * preferência especificada, preserva o maior bônus de saves antigos.
+ */
+export function gpuGameHourlyRate(s:GameState,index:number,requestedGameId?:GpuGameId):number{
  if(!isHistorical(s)||yearFromMinutes(s.totalMinutes)<2005||!s.licensedGames)return s.pricePerHour;
  let maxBonus=0;
- for(const id of s.licensedGpuGames??[]){
-  const spec=gpuGameSpec(id);
-  if(spec&&spec.year<=yearFromMinutes(s.totalMinutes)&&gpuGameCompatible(s,index,spec))
-   maxBonus=Math.max(maxBonus,spec.hourlyBonus);
+ const ids=requestedGameId?[requestedGameId]:(s.licensedGpuGames??[]);
+ for(const id of ids){
+  if(!gpuGamePlayableOnPc(s,index,id))continue;
+  maxBonus=Math.max(maxBonus,gpuGameSpec(id)!.hourlyBonus);
  }
  return Math.max(s.pricePerHour,Math.min(annualHourlyCeiling(yearFromMinutes(s.totalMinutes)),s.pricePerHour+maxBonus));
 }
-/** Apenas clientes interessados em jogos avançados pagam o adicional.
- * Valor total por sessão, arredondado uma única vez em centavos.
+/** Cobrança por sessão real: sem compra do título pedido, tarifa normal.
+ * Argumento opcional conserva compatibilidade com clientes/saves antigos.
  */
-export function gpuGameSessionPrice(s:GameState,index:number,minutes:number,wantsAdvancedGame:boolean):number{
- const hourly=wantsAdvancedGame?gpuGameHourlyRate(s,index):s.pricePerHour;
+export function gpuGameSessionPrice(s:GameState,index:number,minutes:number,wantsAdvancedGame:boolean,requestedGameId?:GpuGameId):number{
+ const hourly=wantsAdvancedGame?gpuGameHourlyRate(s,index,requestedGameId):s.pricePerHour;
  return sessionPrice(hourly,minutes);
 }
-/** Perfil determinístico sem sortear mais números nem afetar RNG do jogo clássico. */
+/** Cerca de 1/4 dos visitantes, a partir de 2005, sem consumo de RNG. */
 export function wantsGpuGame(s:Pick<GameState,"economyVersion"|"totalMinutes">,visitorId:number):boolean{
  return isHistorical(s as GameState)&&yearFromMinutes(s.totalMinutes)>=2005&&visitorId%4===0;
 }

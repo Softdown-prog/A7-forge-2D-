@@ -41,6 +41,9 @@ export interface Customer {
   vip?: boolean;
   /** Prefere títulos 2005+; derivado do ID, sem sorteio adicional. */
   gpuGamer?: boolean;
+  /** Jogo avançado desejado ao entrar; opcional para saves antigos.
+   * Não é compra nem garante vaga/licença/execução. */
+  preferredGpuGame?: import("./gpuGames.js").GpuGameId;
   /** Sessão cobrada com adicional de jogo GPU; preservado em saves. */
   gpuGameCharged?: boolean;
   pcIndex: number | null;

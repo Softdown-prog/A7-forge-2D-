@@ -32,7 +32,7 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
-import {validGpuGameLicenses,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame} from "./gpuGames.js";
+import {validGpuGameLicenses,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
 const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
@@ -191,12 +191,16 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
- // Jogadores de títulos 2005+ buscam primeiro um PC capaz de rodá-los.
- // A fila e a escolha antiga não mudam para os demais visitantes.
+ // O título pedido governa a seleção: uma GPU capaz de rodar OUTRO
+ // jogo não satisfaz a preferência. Clientes de saves antigos que ainda
+ // não possuem preferência mantêm a lógica anterior de prioridade premium.
  if(c.gpuGamer){
   for(let i=0;i<pcCount(s);i++){
-   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameHourlyRate(s,i)<=s.pricePerHour)continue;
-   if(navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
+   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i))continue;
+   const playable=c.preferredGpuGame
+    ?gpuGamePlayableOnPc(s,i,c.preferredGpuGame)
+    :gpuGameHourlyRate(s,i)>s.pricePerHour;
+   if(playable&&navigableRoute(s,origin,computerSeat(pcPosition(i,s))))return i;
   }
  }
  for(let i=0;i<pcCount(s);i++){
@@ -291,6 +295,7 @@ function spawn(s: GameState): void {
     stage: "arriving", target: counterQueueSlot(queueIndex,s),queueIndex,
     costume, vip:vipArrivalEligible(s,s.nextCustomerId-1),
     gpuGamer:wantsGpuGame(s,s.nextCustomerId-1),
+    preferredGpuGame:preferredGpuGame(s,s.nextCustomerId-1),
     pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
@@ -396,13 +401,15 @@ function tryServe(s: GameState, c: Customer): void {
   s.counterBusyUntil=s.totalMinutes+3;
   const regular=sessionRevenue(s.pricePerHour,c.sessionMinutes,s.economyVersion===2);
   const paid=s.economyVersion===2
-   ?gpuGameSessionPrice(s,index,c.sessionMinutes,!!c.gpuGamer)
+   ?gpuGameSessionPrice(s,index,c.sessionMinutes,!!c.gpuGamer,c.preferredGpuGame)
    :regular;
   c.gpuGameCharged=paid>regular;
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
-   (c.gpuGameCharged?" Sessão de jogo com GPU.":""));
+   (c.gpuGameCharged
+    ?" Sessão GPU: "+(c.preferredGpuGame?gpuGameSpec(c.preferredGpuGame)?.name??"jogo avançado":"jogo avançado")+"."
+    :""));
   const copy=serveDiscCopy(s,c);
   if(copy){
    addLog(s,"Cliente pediu "+copy.quantity+" cópia(s) de "+copy.kind.toUpperCase()+": +R$ "+copy.revenue+" · mídia -R$ "+copy.cost+".");
@@ -640,6 +647,7 @@ export function isValidSave(value: unknown): value is GameState {
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&

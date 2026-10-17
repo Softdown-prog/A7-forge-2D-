@@ -110,3 +110,25 @@ inalterado.
 O texto de conclusão também diferencia a pesquisa/espera sem novos prejuízos de
 um plano de divulgação efetivamente concluído; não afirma perdas genéricas para
 quem escolheu não investir.
+\n## Preferências por título (primeira etapa)
+
+A partir de 2005, cerca de um quarto dos visitantes deseja um jogo GPU
+específico, escolhido deterministicamente pelo ID do cliente entre os
+títulos **já lançados** no ano. Em 2005 apenas Neon Rush; a partir de 2009,
+há procura tanto por Neon Rush quanto por Circuito Competitivo; em 2013
+a procura se distribui pelos três títulos. A preferência independe de
+quais jogos a lan house comprou e não consome números aleatórios adicionais.
+
+O visitante procura primeiro um computador alcançável, ligado, livre e
+capaz de executar **o jogo desejado com licença**, não apenas qualquer
+jogo GPU. Sem estação disponível para esse título, continua usando
+o atendimento normal: paga a tarifa básica, sem cobrar pelo jogo de
+outro cliente. A regra vale inclusive quando uma máquina tem diversos
+títulos; o bônus vem do jogo procurado, respeitando o teto anual.
+
+A preferência viaja no salvamento do cliente ativo, para não mudar após
+recarregar. Saves anteriores com `gpuGamer` mas sem `preferredGpuGame`
+continuam usando a seleção e o adicional antigos até que esse cliente
+encerre sua sessão. O catálogo, as licenças por estabelecimento, as
+relações de hardware e o RNG original permanecem intactos. Esta etapa
+não cria tela extra, compra obrigatória ou receita sem atendimento.
