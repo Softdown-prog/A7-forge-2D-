@@ -37,7 +37,7 @@ import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
-import {gpuDemandReport} from "./sim/gpuDemand.js";
+import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
@@ -1202,7 +1202,7 @@ function renderUI(liveOnly=false):void {
        "/h, somente para clientes de jogos avançados e dentro do teto anual.";
       if(bought&&quote.eligiblePcs.length){
         status.textContent+=" Valor atual por hora: "+
-         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i).toFixed(2)).join(" · ")+".";
+         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i,title.id).toFixed(2)).join(" · ")+".";
       }
       const action=document.createElement("button");
       action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
@@ -1218,7 +1218,20 @@ function renderUI(liveOnly=false):void {
          observed.withoutSession+" pedidos sem sessão concluída · adicional recebido "+
          observed.premiumRevenue.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})+"."
        :"Procura observada: nenhum pedido registrado nesta partida.";
-      card.append(heading,requirements,status,measured,action);
+      const coverage=gpuLicenseCoverage(game,title.id);
+      const payback=document.createElement("p");payback.className="catalog-game-note";
+      if(coverage){
+       const moneyPaid=(value:number)=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+       payback.textContent="Cobertura da licença por adicionais recebidos: "+
+        moneyPaid(coverage.premiumRevenue)+" de "+moneyPaid(coverage.licenseCost)+
+        " ("+coverage.coveragePercent.toLocaleString("pt-BR")+"%). "+
+        (coverage.covered?"Os adicionais igualaram o custo nominal da licença.":
+         "Faltam "+moneyPaid(coverage.remaining)+" em adicionais para igualar apenas a licença.")+
+        " Não inclui GPU, Windows, energia ou demais despesas; não é lucro.";
+      }
+      card.append(heading,requirements,status,measured);
+      if(coverage)card.append(payback);
+      card.append(action);
       gpuGamePanel.append(card);
     }
   }

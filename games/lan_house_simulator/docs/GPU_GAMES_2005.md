@@ -149,3 +149,20 @@ Não se reconstrói o passado de um save antigo. Visitantes importados que
 já estão na fila com título identificado têm seu pedido conciliado na
 hora do atendimento. A medição não modifica caixa, RNG, circulação,
 limites de preço nem licenças.
+
+## Cobertura do custo nominal da licença (não é lucro)
+
+O painel compara **somente o adicional em sessões reais** do título
+com seu custo de licenciamento em reais, sem incluir a tarifa comum.
+Exemplo: R$ 100 em adicionais de um jogo de R$ 580 representam
+17,2% de cobertura nominal e ainda faltam R$ 480. Mesmo quando
+atingir 100%, isso **não significa que houve lucro**: o cálculo
+não desconta placa de vídeo, Windows, plataforma, energia, funcionários,
+manutenção, aluguel ou outros investimentos. Ele tampouco assume que
+a procura ainda pendente seria atendida ou que todos os jogadores
+teriam comprado uma sessão premium.
+
+A métrica é parcial e começa a valer com a coleta de procura;
+saves antigos não podem reconstruir adicionais anteriores à medição.
+O cartão também exibe a tarifa de **seu próprio jogo**, e não o
+adicional máximo de outro título licenciado na mesma estação.

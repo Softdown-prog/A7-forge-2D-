@@ -48,3 +48,21 @@ export function gpuDemandReport(s:GameState){
    premiumRevenue:row.premiumCents/100};
  });
 }
+
+// Comparação conservadora: apenas o adicional de sessão pago por este
+// título versus sua licença nominal. Hardware, Windows, energia e encargos
+// NÃO estão aqui; não é lucro ou ROI global do estabelecimento.
+export function gpuLicenseCoverage(s:GameState,id:GpuGameId):{
+ licenseCost:number;premiumRevenue:number;remaining:number;
+ coveragePercent:number;covered:boolean
+}|undefined{
+ if(!s.licensedGpuGames?.includes(id))return undefined;
+ const game=gpuGameSpec(id);
+ if(!game)return undefined;
+ const cents=s.gpuGameDemand?.[id]?.premiumCents??0;
+ const target=Math.round(game.cost*100);
+ return {licenseCost:game.cost,premiumRevenue:cents/100,
+  remaining:Math.max(0,target-cents)/100,
+  coveragePercent:Math.round(cents/target*1000)/10,
+  covered:cents>=target};
+}

@@ -818,3 +818,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [ ] Medir o retorno por licença em campanhas longas antes de recalibrar custos.
 
 - [x] Validar relatório real em Chromium (1280/414/360 px), recarga de save e capturas no workflow visual.
+
+## Diagnóstico econômico inicial do catálogo GPU
+- [x] Mostrar cobertura do custo nominal de cada licença apenas pelos adicionais reais pagos.
+- [x] Evitar chamar a cobertura de lucro/ROI líquido: peças, Windows, energia e outros custos ficam fora.
+- [x] Corrigir preço exibido para cada título quando o PC possui licenças avançadas diferentes.
+- [x] Testar limiar de cobertura, economia/RNG inalterados e persistência; verificar Chromium em desktop e mobile.
+- [ ] Rodar comparação contínua com/s/sem licenças em 2005, 2009 e 2013, registrar cenários por semente, 1 versus 2 PCs aptos.

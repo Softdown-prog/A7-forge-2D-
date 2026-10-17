@@ -7,11 +7,25 @@ import {chromium} from "playwright";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {licenseGames} from "../dist/js/sim/economy.js";
+import {buyPlatform} from "../dist/js/sim/hardware.js";
+import {buyGpu} from "../dist/js/sim/gpu.js";
+import {licenseWindows} from "../dist/js/sim/era.js";
+import {licenseGpuGame} from "../dist/js/sim/gpuGames.js";
+import {withStationOff} from "../tests/station-power-fixture.mjs";
 
 const out=resolve(process.argv[2]??"out/validation");
 await mkdir(out,{recursive:true});
 const s=createGame(1549,"historical");
 s.totalMinutes=(2013-1998)*360*DAY_MINUTES;
+s.cash=25000;
+for(const result of [
+ licenseGames(s),
+ withStationOff(s,1,()=>buyPlatform(s,1,"platform05")),
+ withStationOff(s,1,()=>buyGpu(s,1,"gpu05")),
+ withStationOff(s,1,()=>licenseWindows(s,1,"winxp")),
+ licenseGpuGame(s,"neon-rush")
+])assert.equal(result.ok,true,result.message);
 s.gpuGameDemand={
  "neon-rush":{requested:9,played:3,basic:4,premiumCents:350},
  "circuito-competitivo":{requested:5,played:1,basic:2,premiumCents:100}
@@ -49,6 +63,9 @@ try{
    assert.match(all,/3,50/);
    assert.match(all,/Circuito Competitivo/);
    assert.match(all,/5 pedidos/);
+   assert.match(all,/Cobertura da licença por adicionais recebidos/);
+   assert.match(all,/3,50 de R\\$\\s*580,00/);
+   assert.match(all,/Não inclui GPU, Windows, energia ou demais despesas; não é lucro/);
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
    assert.ok(overflow<=3,"Largura excedida em "+width+": "+overflow);
    return {overflow,preview:all.slice(0,180)};

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {gpuDemandReport,recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "../dist/js/sim/gpuDemand.js";
+import {gpuDemandReport,recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand,gpuLicenseCoverage} from "../dist/js/sim/gpuDemand.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
@@ -64,4 +64,38 @@ test("interface apresenta o histórico real na aba de licenças",()=>{
  assert.match(text,/gpuDemandReport\(game\)/);
  assert.match(text,/observed.premiumRevenue/);
  assert.match(text,/pedidos sem sessão concluída/);
+});
+
+test("cobertura da licença usa apenas adicional de cada título e não altera o caixa",()=>{
+ const s=createGame(3,"historical");s.totalMinutes=(2013-1998)*360*DAY_MINUTES;
+ const cash=s.cash,rng=s.rng;
+ assert.equal(gpuLicenseCoverage(s,"neon-rush"),undefined,"sem licença, sem cobertura fictícia");
+ s.licensedGames=true;
+ s.licensedGpuGames=["neon-rush","circuito-competitivo"];
+ assert.deepEqual(gpuLicenseCoverage(s,"neon-rush"),{
+  licenseCost:580,premiumRevenue:0,remaining:580,coveragePercent:0,covered:false
+ });
+ recordGpuGameRequest(s,"neon-rush");
+ recordGpuGameSession(s,"neon-rush",true,300);
+ let status=gpuLicenseCoverage(s,"neon-rush");
+ assert.equal(status.remaining,280);
+ assert.equal(status.coveragePercent,51.7);
+ assert.equal(status.covered,false);
+ recordGpuGameRequest(s,"neon-rush");
+ recordGpuGameSession(s,"neon-rush",true,280);
+ status=gpuLicenseCoverage(s,"neon-rush");
+ assert.equal(status.remaining,0);
+ assert.equal(status.coveragePercent,100);
+ assert.equal(status.covered,true);
+ assert.equal(gpuLicenseCoverage(s,"circuito-competitivo").premiumRevenue,0,
+  "adicionais não são atribuídos automaticamente a outro título");
+ assert.equal(s.cash,cash);
+ assert.equal(s.rng,rng);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).gpuGameDemand,s.gpuGameDemand);
+});
+test("painel não confunde adicional do jogo solicitado com o máximo de outro jogo",()=>{
+ const source=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
+ assert.match(source,/gpuGameHourlyRate\(game,i,title.id\)/);
+ assert.match(source,/gpuLicenseCoverage\(game,title.id\)/);
+ assert.match(source,/Não inclui GPU, Windows, energia ou demais despesas; não é lucro/);
 });
