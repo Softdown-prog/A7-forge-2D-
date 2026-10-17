@@ -119,3 +119,27 @@ test("saves antigos, slots adulterados e receita impossível não passam",()=>{
  s.totalMinutes=(2001-1998)*360*DAY_MINUTES;
  assert.equal(validPs1State(s),false);
 });
+
+test("desvio por aglomeração preserva entrada lateral na cadeira PS1",()=>{
+ const s=setup();
+ const c={id:5,x:1.55,y:2.56,target:{x:1.55,y:2.56},stage:"waiting",
+  queueIndex:0,pcIndex:null,costume:"regular",usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true,sessionMinutes:45,wallet:20};
+ s.customers.push(c);
+ stepGame(s,1);
+ assert.equal(c.ps1StationIndex,0);
+ const seat=ps1Seat(s,0);
+ assert.ok(seat);
+ // Congestionar o waypoint de propósito; o desvio não pode esquecer
+ // o ponto final da cadeira nem transformar a lateral em destino final.
+ const obstacle={id:999,x:c.target.x,y:c.target.y,target:{...c.target},
+  stage:"using",pcIndex:null,costume:"regular",usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true,sessionMinutes:9999};
+ s.customers.push(obstacle);
+ stepGame(s,5);
+ assert.equal(c.ps1StationIndex,0);
+ assert.equal(c.stage,"to_pc");
+ const last=c.route?.at(-1)??c.target;
+ assert.ok(Math.hypot(last.x-seat.x,last.y-seat.y)<.001,
+  "a rota recalculada deve continuar terminando na cadeira do console");
+});
