@@ -138,7 +138,7 @@ test("comparativo controlado 2005/2009/2013: licen√ßas e 1 ou 2 GPUs com transa√
    scope:"Game simulation; 3 base PCs, one/two upgraded; paired runs with/without only the requested advanced license.",
    caution:"GPU/Windows/platform, rent, energy and service costs included in net; no real-world profitability claim.",
    scenarios:results,summary:summaries};
-  writeFileSync(new URL("gpu-license-90-day.json",dir),JSON.stringify(report,null,2)+"\\n");
+  writeFileSync(new URL("gpu-license-90-day.json",dir),JSON.stringify(report,null,2)+"\n");
   console.log("GPU_LICENSE_REPORT saved out/audits/gpu-license-90-day.json");
  }
 });
