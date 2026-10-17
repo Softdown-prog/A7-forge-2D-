@@ -1,0 +1,43 @@
+name: LHS Scene Forge - PS1 customer cycle
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/scripts/render_ps1_scene.mjs'
+      - '.github/workflows/lhs-scene-forge.yml'
+permissions:
+  contents: read
+jobs:
+  ps1-scene:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install game and browser tools
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Build real LHS renderer
+        working-directory: games/lan_house_simulator
+        run: npm run build
+      - name: Capture PS1 scene without campaign or checkout
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_ps1_scene.mjs out/forge-ps1
+      - name: Encode mobile-friendly MP4
+        working-directory: games/lan_house_simulator
+        run: |
+          ffmpeg -hide_banner -loglevel error -y -i out/forge-ps1/ps1_cliente_ciclo.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/forge-ps1/ps1_cliente_ciclo.mp4
+          test -s out/forge-ps1/ps1_cliente_ciclo.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-scene-forge-ps1-video
+          path: games/lan_house_simulator/out/forge-ps1/ps1_cliente_ciclo.mp4
+          if-no-files-found: error
+          retention-days: 14
