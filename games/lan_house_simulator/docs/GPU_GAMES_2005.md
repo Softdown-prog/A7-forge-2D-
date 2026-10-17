@@ -17,7 +17,7 @@ anteriores a 2005 continuam funcionando sem alteração.
 | Jogo | Lançamento | Licença de estabelecimento | GPU mínima | Windows mínimo | Adicional máximo |
 |---|---:|---:|---|---|---:|
 | Neon Rush Online | 2005 | R$ 580 | PixelForce 6600 | Windows XP | R$ 0,75/h |
-| Circuito Competitivo | 2009 | R$ 950 | PixelForce 260 | Windows XP | R$ 1,25/h |
+| Circuito Competitivo | 2009 | R$ 950 | PixelForce 260 | Windows 7 | R$ 1,25/h |
 | Arena do Futuro | 2013 | R$ 1.550 | PixelForce 770 | Windows 7 | R$ 1,75/h |
 
 Nomes, títulos, preços, requisitos e bonificações são hipóteses de
@@ -95,3 +95,15 @@ GPU em apenas um PC versus vários, custo das licenças,
 reputação, ocupação e receita adicional efetivamente paga.
 
 Testes de regressão: `tests/gpu-games-2005.test.mjs`.
+
+## Correio histórico de 2005: publicidade condicionada à oferta real
+
+As decisões de divulgação e pesquisa podem ser tomadas antes da compra de GPUs,
+mas **somente produzem o bônus temporário de procura** se houver pelo menos um
+jogo avançado licenciado, lançado e utilizável em algum PC com GPU e Windows
+licenciado adequados. Investir antecipadamente pode melhorar a reputação,
+mas não gera automaticamente clientes por serviços que ainda não são oferecidos.
+O acompanhamento gratuito de uma pesquisa não provoca desgaste, penalidade de
+procura ou reputação. A compatibilidade é recalculada na decisão; não é gravada
+como uma flag nova no save. O mecanismo normal de cobrança por sessão segue
+inalterado.

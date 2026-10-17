@@ -6,6 +6,12 @@ import {GAME_FIRST_YEAR,DAYS_PER_YEAR,additionalMailSchedule} from "../dist/js/s
 import {scheduleDecisions,decisionOptions,chooseDecision} from "../dist/js/sim/decisions.js";
 import {STORY_IDS,STORIES,processStoryFollowups,storySeen} from "../dist/js/sim/storyEvents.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
+import {hasPlayableGpuGame,licenseGpuGame} from "../dist/js/sim/gpuGames.js";
+import {licenseGames} from "../dist/js/sim/economy.js";
+import {buyPlatform} from "../dist/js/sim/hardware.js";
+import {buyGpu} from "../dist/js/sim/gpu.js";
+import {licenseWindows} from "../dist/js/sim/era.js";
+import {withStationOff} from "./station-power-fixture.mjs";
 
 const id="gpu-games-2005";
 const at=(s,y,d)=>{s.totalMinutes=((y-GAME_FIRST_YEAR)*DAYS_PER_YEAR+d-1)*DAY_MINUTES;};
@@ -95,4 +101,58 @@ test("sem caixa, esperar pela GPU continua sendo uma escolha possível",()=>{
  assert.equal(s.notices.find(n=>n.id===id).resolved,undefined);
  assert.equal(chooseDecision(s,id,"gpu-defer").ok,true);
  assert.equal(s.cash,0);
+});
+
+
+// Divulgação é uma ação real de negócio, mas só movimenta consumidores quando
+// Tony consegue vender o serviço anunciado (GPU, Windows e jogo licenciados).
+test("propaganda GPU sem título utilizável não cria demanda artificial",()=>{
+ const s=deliver(416);s.cash=25000;
+ const initialRng=s.rng;
+ assert.equal(chooseDecision(s,id,"gpu-plan").ok,true);
+ assert.equal((s.storyVisitorEffects??[]).some(e=>e.id===id+":start"),false);
+ assert.equal(s.rng,initialRng);
+ const record=s.storyRecords.find(r=>r.id===id);
+ s.totalMinutes=(record.dueDay-1)*DAY_MINUTES;
+ processStoryFollowups(s);
+ assert.equal(chooseDecision(s,id+":followup","story-consolidate").ok,true);
+ assert.equal((s.storyVisitorEffects??[]).some(e=>e.id===id+":followup"),false);
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+});
+test("apenas comprar GPU e Windows não ativa procura premium sem jogo licenciado",()=>{
+ const s=deliver(415);s.cash=25000;
+ assert.equal(hasPlayableGpuGame(s),false);
+ assert.equal(licenseGames(s).ok,true);
+ assert.equal(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")).ok,true);
+ assert.equal(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")).ok,true);
+ assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")).ok,true);
+ assert.equal(hasPlayableGpuGame(s),false);
+ assert.equal(chooseDecision(s,id,"gpu-survey").ok,true);
+ assert.equal((s.storyVisitorEffects??[]).some(e=>e.id===id+":start"),false);
+ const record=s.storyRecords.find(r=>r.id===id);
+ s.totalMinutes=(record.dueDay-1)*DAY_MINUTES;
+ processStoryFollowups(s);
+ const before=JSON.stringify(s.pcWear),rep=s.reputation;
+ assert.equal(chooseDecision(s,id+":followup","story-maintain").ok,true);
+ assert.equal(JSON.stringify(s.pcWear),before);
+ assert.equal(s.reputation,rep);
+ assert.equal((s.storyVisitorEffects??[]).some(e=>e.id===id+":followup"),false);
+});
+test("licença avançada + estação compatível liberam divulgação sem vender sessões falsas",()=>{
+ const s=deliver(414);s.cash=25000;
+ assert.equal(licenseGames(s).ok,true);
+ assert.equal(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")).ok,true);
+ assert.equal(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")).ok,true);
+ assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")).ok,true);
+ assert.equal(licenseGpuGame(s,"neon-rush").ok,true);
+ assert.equal(hasPlayableGpuGame(s),true);
+ const previousRevenue=s.revenue,previousServed=s.served,previousCash=s.cash;
+ assert.equal(chooseDecision(s,id,"gpu-plan").ok,true);
+ assert.ok((s.storyVisitorEffects??[]).some(e=>e.id===id+":start"&&e.factor>1));
+ assert.equal(s.revenue,previousRevenue);
+ assert.equal(s.served,previousServed);
+ assert.ok(s.cash<previousCash,"somente custo da campanha");
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(hasPlayableGpuGame(restored),true);
+ assert.equal(isValidSave(restored),true);
 });

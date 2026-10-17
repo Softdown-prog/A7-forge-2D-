@@ -793,3 +793,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Confirmar que adiar GPU não altera contratos, hardware nem sorteios dos clientes.
 - [x] Adicionar prova de navegador real desktop/414/360 px com persistência de ambas as cartas após recarregar.
 - [ ] Conferir as capturas do Chromium em telefone físico e revisar se o texto está confortável em telas pequenas.
+
+## Correio de 2005 — demanda compatível com a capacidade real
+- [x] Exigir título avançado licenciado e PC compatível antes de gerar bônus de procura por propaganda.
+- [x] Preservar pesquisa/planejamento sem GPU, sem inventar vendas nem comprar licenças automaticamente.
+- [x] Não penalizar a escolha gratuita de acompanhar pesquisa; respeitar os eventos e saves existentes.
+- [x] Ajustar requisitos do título de 2009 na documentação para Windows 7, conforme implementação e testes.
+- [x] Cobrir licenciamento inexistente, GPU sem licença, oferta compatível, decisões de retorno e reload em testes Node.

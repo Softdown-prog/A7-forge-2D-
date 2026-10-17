@@ -6,6 +6,7 @@ import type {GameState,Result,Item} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {DAY_MINUTES} from "./types.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {hasPlayableGpuGame} from "./gpuGames.js";
 
 export const STORY_IDS=[
  "roof-leak","neighbor-noise","damaged-keyboard","malware-incident",
@@ -299,7 +300,10 @@ export function storyOptions(s:GameState,id:string):Array<{id:string;label:strin
  const r=recordFor(s,storyId);
  if(!r||r.stage!=="awaiting")return [];
  if(r.outcome==="bad"&&chainDefinition(storyId).category==="opportunity")return [
-  {id:"story-reconnect",label:"Retomar contato · "+money(actualCost(s,40)),cost:actualCost(s,40),description:"Tenta recuperar a oportunidade de divulgação ou parceria"},
+  {id:"story-reconnect",
+   label:storyId==="gpu-games-2005"?"Retomar pesquisa de jogos · "+money(actualCost(s,40)):"Retomar contato · "+money(actualCost(s,40)),
+   cost:actualCost(s,40),
+   description:storyId==="gpu-games-2005"?"Consulta o interesse pelos novos jogos sem comprar GPU ou licença":"Tenta recuperar a oportunidade de divulgação ou parceria"},
   {id:"story-let-go",label:"Encerrar o assunto",cost:0,description:"Sem punição por recusar uma parceria opcional"}
  ];
  // Duas ações reais no retorno; o estado criado pela escolha anterior muda as alternativas.
@@ -315,7 +319,9 @@ export function storyOptions(s:GameState,id:string):Array<{id:string;label:strin
   ({id:"story-"+choiceId,
    label:(isStoryId(storyId)?FOLLOWUP_LABELS[storyId][FOLLOWUP_KEYS.indexOf(choiceId)]??label:label)+
      (baseCost?" · "+money(actualCost(s,baseCost)):""),
-   cost:actualCost(s,baseCost),description}));
+   cost:actualCost(s,baseCost),
+   description:storyId==="gpu-games-2005"&&choiceId==="maintain"
+    ?"Continuar pesquisa sem prejuízo, mesmo sem jogo avançado licenciado":description}));
 }
 export function chooseStory(s:GameState,noticeId:string,choiceId:string):Result{
  const n=s.notices?.find(x=>x.id===noticeId);
@@ -326,7 +332,11 @@ export function chooseStory(s:GameState,noticeId:string,choiceId:string):Result{
   if(!c)return {ok:false,message:"Opção desconhecida."};
   const cost=actualCost(s,c.cost);
   if(!purchase(s,cost))return {ok:false,message:"Caixa insuficiente: "+money(cost)+"."};
-  applyImpact(s,noticeId+":start",c.impact);
+  // Divulgação de títulos GPU só aumenta a procura se existir uma licença
+  // avançada utilizável em algum PC. A pesquisa/preparação pode ocorrer antes.
+  const ready=noticeId!=="gpu-games-2005"||hasPlayableGpuGame(s);
+  const startImpact=!ready&&c.impact?{...c.impact,visitors:undefined,visitorDays:undefined}:c.impact;
+  applyImpact(s,noticeId+":start",startImpact);
   (s.storyRecords??=[]).push({id:noticeId,choice:c.id,choiceLabel:c.label,outcome:c.outcome,
    stage:"pending",dueDay:DAY(s)+2+((s.rng>>>5)%4)});
   if(!(s.storySeenIds??=[]).includes(noticeId))s.storySeenIds.push(noticeId);
@@ -355,6 +365,16 @@ export function chooseStory(s:GameState,noticeId:string,choiceId:string):Result{
  else if(kind==="recover"){impact={reputation:1,visitors:1.02,visitorDays:7};ending="Correção tardia concluída, mas os danos anteriores não são desfeitos.";}
  else if(kind==="persist"){impact={reputation:-5,visitors:.82,visitorDays:18,...(PERSISTENT_ESCALATIONS[base]??{})};ending="O problema se agravou. Clientes comentam a situação e a procura cai por vários dias.";}
  else return {ok:false,message:"Opção desconhecida."};
+ // Esta carta é uma oportunidade, não uma infração. Esperar ou seguir
+ // pesquisando não estraga computadores nem pune quem não tem GPU.
+ if(base==="gpu-games-2005"){
+  if(kind==="maintain"){
+   impact={};ending="Tony continuou acompanhando o interesse, sem gastos nem prejuízos para o salão.";
+  }else if(!hasPlayableGpuGame(s)){
+   impact={...impact,visitors:undefined,visitorDays:undefined};
+   ending="A iniciativa foi registrada, mas a procura por jogos avançados só aumenta quando houver licença e PC compatível.";
+  }
+ }
  applyImpact(s,base+":followup",impact);
  record.stage="ending";record.followupChoice=choiceId;record.followupLabel=option.label;record.finalOutcome=kind==="persist"?"bad":kind==="maintain"?"mixed":kind==="let-go"?"mixed":"good";
  record.dueDay=DAY(s)+2+((s.rng>>>9)%3);
@@ -388,8 +408,10 @@ export function processStoryFollowups(s:GameState):void{
     mixed:"O episódio terminou com pendências e gastos indiretos. A decisão teve reflexo na administração.",
     bad:"A ocorrência deixou consequências para os equipamentos e para a confiança do bairro. A queda de procura será temporária, mas real."
    };
+   const gpuNote=record.id==="gpu-games-2005"
+    ?" Os jogos avançados continuam sujeitos à compra de licença e à compatibilidade de GPU/Windows em cada estação.":"";
    send(s,`${record.id}:report`,"Conclusão: "+def.title,
-    "Sua primeira decisão: "+(record.choiceLabel??record.choice)+". Depois: "+(record.followupLabel??record.followupChoice??"sem resposta")+". "+outcomes[record.finalOutcome??"mixed"],
+    "Sua primeira decisão: "+(record.choiceLabel??record.choice)+". Depois: "+(record.followupLabel??record.followupChoice??"sem resposta")+". "+outcomes[record.finalOutcome??"mixed"]+gpuNote,
     record.finalOutcome==="bad"?"warning":"info");
    const n=s.notices?.find(x=>x.id===`${record.id}:report`);
    if(n)n.resolved="summary";

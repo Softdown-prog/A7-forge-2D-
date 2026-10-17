@@ -47,6 +47,16 @@ export function gpuGameEligiblePcs(s:GameState,game:GpuGameSpec):number[]{
  const count=original+(s.annexPcs?.length??0);
  return Array.from({length:count},(_,i)=>i).filter(i=>gpuGameCompatible(s,i,game));
 }
+/** Somente uma licença paga E ao menos um PC realmente compatível representam
+ * oferta comercial de jogos avançados. Planejar divulgação não cria capacidade. */
+export function hasPlayableGpuGame(s:GameState):boolean{
+ if(!isHistorical(s)||!s.licensedGames)return false;
+ const year=yearFromMinutes(s.totalMinutes);
+ return (s.licensedGpuGames??[]).some(id=>{
+  const game=gpuGameSpec(id);
+  return !!game&&game.year<=year&&gpuGameEligiblePcs(s,game).length>0;
+ });
+}
 export interface GpuGameQuote extends Result {cost:number;eligiblePcs:number[]}
 export function quoteGpuGame(s:GameState,id:string):GpuGameQuote{
  const game=gpuGameSpec(id),cost=game?.cost??0;
