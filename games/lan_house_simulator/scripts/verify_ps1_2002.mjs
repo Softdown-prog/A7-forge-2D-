@@ -33,9 +33,8 @@ try{
   assert.equal(await buy.isEnabled(),true,"PS1 purchasable in 2002");
   assert.ok(await page.locator("#ps1-placement option").count()>0,"bench placement slots");
   await click('[data-buy="ps1"]');
-  assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\\$ 5440/);
+  assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\$ 5440/);
   await click("#close-shop");
-  await page.locator("canvas#game-canvas").count().catch(()=>0);
   await page.screenshot({path:resolve(out,"ps1_shop_"+width+".png")});
   await click("#open-admin");await click('[data-admin-tab="consoles"]');
   assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\/3/);
