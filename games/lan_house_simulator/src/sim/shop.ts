@@ -52,6 +52,7 @@ export function buyComputer(s:GameState):Result{
  // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
  for(const job of s.repairJobs??[])if(job.pc>=count)job.pc++;
+ for(const job of s.gpuGameInstallJobs??[])if(job.pc>=count)job.pc++;
  (s.pcWear??=[]).splice(count,0,0);
  (s.pcTiers??=[]).splice(count,0,1);
  (s.pcWindows??=[]).splice(count,0,"win98");

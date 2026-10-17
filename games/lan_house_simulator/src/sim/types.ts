@@ -126,6 +126,8 @@ export interface GameState {
   licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
   /** Instalações por PC; sem este campo, saves antigos mantêm todos os jogos licenciados instalados. */
   gpuGameInstalls?: import("./gpuGames.js").GpuGameId[][];
+  /** Downloads de software por PC; ausente nos saves anteriores. */
+  gpuGameInstallJobs?: import("./gpuGames.js").GpuGameInstallJob[];
   /** Procura e atendimento medidos por jogo; opcional em saves antigos. */
   gpuGameDemand?: import("./gpuDemand.js").GpuGameDemand;
   expansionLevel: number;

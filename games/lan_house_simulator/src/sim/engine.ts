@@ -32,7 +32,7 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
-import {validGpuGameLicenses,validGpuGameInstalls,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
+import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameInstallJob,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
@@ -197,7 +197,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  // não possuem preferência mantêm a lógica anterior de prioridade premium.
  if(c.gpuGamer){
   for(let i=0;i<pcCount(s);i++){
-   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i))continue;
+   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameInstallJob(s,i))continue;
    const playable=c.preferredGpuGame
     ?gpuGamePlayableOnPc(s,i,c.preferredGpuGame)
     :gpuGameHourlyRate(s,i)>s.pricePerHour;
@@ -205,7 +205,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
   }
  }
  for(let i=0;i<pcCount(s);i++){
-  if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i))continue;
+  if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameInstallJob(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
   const route=navigableRoute(s,origin,destination);
   if(!route)continue;
@@ -584,6 +584,8 @@ function advanceMinute(s: GameState): void {
   recordComputerUtilization(s);
   recordStationMinute(s,pcCount(s),energyExpense);
   s.totalMinutes++;
+  for(const installed of tickGpuGameInstallations(s))
+    addLog(s,"Download concluído: "+gpuGameSpec(installed.id)?.name+" no PC "+(installed.pc+1)+".");
   if(s.totalMinutes===GAME_LAST_MINUTE)addLog(s,"Fim de 2030: calendário da campanha concluído.");
   if(s.totalMinutes===1)reviewNotices(s);
   if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
@@ -642,7 +644,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&

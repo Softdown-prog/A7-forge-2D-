@@ -19,6 +19,7 @@ import {workerMotion} from "./workerMotion.js";
 import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
 import {SCENE_THEME as theme} from "./theme.js";
+import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
@@ -106,8 +107,28 @@ export class SceneRenderer {
     }
     entries.sort((a,b)=>a.depth-b.depth);
     for (const e of entries) e.paint();
+    this.drawGpuInstallMarkers(s,camera);
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
+  }
+  /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */
+  private drawGpuInstallMarkers(s:GameState,camera:Projection):void{
+    if(!s.gpuGameInstallJobs?.length)return;
+    const ctx=this.ctx;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
+    for(const job of s.gpuGameInstallJobs){
+      const pc=pcPosition(job.pc,s),at=iso({x:pc.x+.40,y:pc.y+.28},camera,92);
+      const w=Math.max(27,42*camera.zoom),h=Math.max(4,5*camera.zoom);
+      const x=at.x-w/2,y=at.y-15*camera.zoom,pct=job.elapsedMinutes/job.durationMinutes;
+      const paused=!!gpuGameInstallPausedReason(s,job.pc);
+      ctx.fillStyle="rgba(15,27,35,.92)";
+      ctx.fillRect(x-3,y-18*camera.zoom,w+6,18*camera.zoom+h+6);
+      ctx.fillStyle=paused?"#f6b96e":"#dbf7ea";
+      ctx.font="bold "+Math.max(9,10*camera.zoom)+"px system-ui,sans-serif";
+      ctx.fillText(paused?"PAUSA":Math.floor(pct*100)+"%",at.x,y-8*camera.zoom);
+      ctx.fillStyle="#4c5a60";ctx.fillRect(x,y,w,h);
+      ctx.fillStyle=paused?"#dd9754":"#69d5a4";ctx.fillRect(x,y,w*pct,h);
+    }
+    ctx.restore();
   }
   /** Modo de inspeção acionado na aba Serviços, sem recalcular caminhos por frame.
    * Destaca o destino inacessível, não afirma identificar a parede culpada. */
