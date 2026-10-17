@@ -808,3 +808,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Salvar a preferência nos visitantes ativos e manter compatibilidade com saves sem o novo campo.
 - [x] Adicionar testes para os anos 2005, 2009 e 2013, preço individual, RNG e dados de saves.
 - [ ] Medir demanda por título e ocupação em campanhas longas antes de balancear licenças.
+
+## Histórico de procura por título GPU
+- [x] Contar pedidos quando o visitante gamer entra efetivamente no salão.
+- [x] Contar sessão no jogo solicitado versus sessão comum, sem cobrança fictícia.
+- [x] Somar apenas o prêmio pago acima da tarifa comum e manter não atendidos separados.
+- [x] Mostrar os dados por título na aba Windows / Licenças.
+- [x] Persistir e validar métricas opcionais, preservando saves anteriores e RNG.
+- [ ] Medir o retorno por licença em campanhas longas antes de recalibrar custos.

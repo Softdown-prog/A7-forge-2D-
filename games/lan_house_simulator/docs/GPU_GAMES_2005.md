@@ -133,3 +133,19 @@ continuam usando a seleção e o adicional antigos até que esse cliente
 encerre sua sessão. O catálogo, as licenças por estabelecimento, as
 relações de hardware e o RNG original permanecem intactos. Esta etapa
 não cria tela extra, compra obrigatória ou receita sem atendimento.
+
+## Medição da procura por jogo GPU
+
+Na aba **Windows / Licenças**, cada título avançado exibe pedidos de
+clientes que realmente entraram, sessões atendidas com o título desejado,
+sessões comuns e pedidos ainda sem sessão concluída. Essa última diferença
+inclui visitantes ainda na fila e visitantes que desistiram; não representa
+automaticamente vendas perdidas. A medição inclui apenas o adicional
+efetivamente recebido, sem atribuir artificialmente todo o preço da sessão
+ao jogo.
+
+Os contadores são opcionais no save e acumulam a partir desta versão.
+Não se reconstrói o passado de um save antigo. Visitantes importados que
+já estão na fila com título identificado têm seu pedido conciliado na
+hora do atendimento. A medição não modifica caixa, RNG, circulação,
+limites de preço nem licenças.
