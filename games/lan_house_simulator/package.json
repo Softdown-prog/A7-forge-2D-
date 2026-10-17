@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
+    "forge:ps1": "node scripts/render_ps1_scene.mjs out/forge-ps1",
     "test": "npm run build && node --test tests/*.test.mjs",
     "serve": "node scripts/serve.mjs",
     "audit": "node scripts/audit.mjs",
