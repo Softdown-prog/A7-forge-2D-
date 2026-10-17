@@ -74,6 +74,33 @@ try{
   await writeFile(resolve(out,kind+"_work_four_directions.png"),Buffer.from(four.png.split(",")[1],"base64"));
   shots.push({kind,differences:four.differences});
  }
+ // Ampliação máxima: efeitos reais de contato legíveis também com zoom reduzido.
+ const small=await page.evaluate(async state=>{
+  const {SceneRenderer}=await import("./js/render/scene.js");
+  const {cameraForGame}=await import("./js/render/isometric.js");
+  const {binSpots}=await import("./js/sim/services.js");
+  const {pcPosition}=await import("./js/sim/engine.js");
+  const {cleanerWorkPoint,technicianWorkPoint}=await import("./js/sim/staffWorksites.js");
+  const s=structuredClone(state);
+  s.roomExtensions={north:6,south:0,east:6,west:6};
+  const zoom=cameraForGame(s).zoom;
+  const bin=cleanerWorkPoint(binSpots(s)[0]),pc=technicianWorkPoint(pcPosition(0,s));
+  Object.assign(s.cleaningJob,{...bin,phase:"working",moving:false,progress:4,binIndex:0,facing:"south"});
+  Object.assign(s.repairJobs[0],{...pc,phase:"working",moving:false,progress:10,facing:"north"});
+  const canvas=document.createElement("canvas");canvas.width=1000;canvas.height=610;
+  const ctx=canvas.getContext("2d"),draw=new SceneRenderer(ctx);
+  draw.draw(s,.10);const first=ctx.getImageData(0,0,1000,610).data.slice();
+  draw.draw(s,.34);const second=ctx.getImageData(0,0,1000,610).data;
+  let changed=0;
+  for(let i=0;i<first.length;i+=4)
+   if(Math.abs(first[i]-second[i])+Math.abs(first[i+1]-second[i+1])+Math.abs(first[i+2]-second[i+2])>50)changed++;
+  return {zoom,changed,png:canvas.toDataURL("image/png")};
+ },sample);
+ assert.ok(small.zoom<.7,"a vista deve verificar câmera afastada");
+ assert.ok(small.changed>50,"movimento de trabalho deve permanecer visível no zoom mínimo: "+small.changed);
+ await writeFile(resolve(out,"worker_contact_small_zoom.png"),
+  Buffer.from(small.png.split(",")[1],"base64"));
+ shots.push({kind:"small-zoom",differences:small.changed,zoom:small.zoom});
  // Vídeo de validação real com os dois personagens trabalhando no Canvas.
  const movieCtx=await browser.newContext({viewport:{width:1000,height:610},
   recordVideo:{dir:out,size:{width:1000,height:610}}});

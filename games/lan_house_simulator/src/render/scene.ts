@@ -16,6 +16,7 @@ import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../s
 import {workPhaseLabel} from "../sim/staffPresentation.js";
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import {workerMotion} from "./workerMotion.js";
+import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
@@ -546,6 +547,12 @@ export class SceneRenderer {
         }
       }
       ctx.restore();
+      // O gesto da ferramenta responde no objeto trabalhado, além da pose do ator.
+      // Calculado da posição real da máquina/lixeira; o render não afeta o save.
+      const contact=kind==="cleaner"
+        ?binSpots(s)[(job as CleaningJob).binIndex??0]
+        :technicianContactPoint(pcPosition((job as RepairJob).pc,s));
+      if(contact)drawWorkContact(ctx,camera,kind,contact,time);
       ctx.save();ctx.fillStyle="#142934";
       ctx.fillRect(p.x-22*z,p.y-107*z,44*z,7*z);
       ctx.fillStyle=kind==="technician"?"#E5BD59":"#8CC6B8";

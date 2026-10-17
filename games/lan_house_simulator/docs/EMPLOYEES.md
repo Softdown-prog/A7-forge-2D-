@@ -69,3 +69,9 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - Enquanto ocorre o serviço, um contorno suave no destino e uma linha discreta conectam trabalhador e objeto: é gráfico, sem impacto na colisão ou economia.
 - O workflow cria `staff_full_cycle.mp4` (entrada, serviço, saída e fim do chamado) e `service_blockages.mp4` (lixeira isolada, PC isolado, passagem livre), sem menu sobre a cena. Os dois arquivos ficam no artefato `lhs-real-gameplay-video`.
 - Regressões: `tests/staff-worksites.test.mjs` e `scripts/record_staff_diagnostics.mjs` verificam quatro orientações de PC, acesso, âncoras de pés, conclusão real dos serviços e fases do ciclo no Chromium.
+
+## Refinamento de contato das ferramentas (16/10/2026)
+- A vassoura continua sincronizada com as mãos, e pequenos rastros curtos no piso da lixeira respondem à mesma senoide de `workerMotion("sweeping")`. Poeira discreta, sem partículas persistentes nem alteração da geometria.
+- O técnico mantém o gesto da chave e ganha um reflexo metálico pequeno no contato do equipamento, sincronizado com `workerMotion("repairing")`, sem solda/raios chamativos.
+- O efeito é calculado em `src/render/workEffects.ts` com a posição física real da lixeira ou PC, renderizado no `SceneRenderer` após o personagem. Não usa RNG nem altera tempo, cobrança, rota, funcionários ou saves.
+- Nova suíte `tests/work-effects.test.mjs` verifica sincronia, ausência de flash permanente, determinismo e integridade do estado. `scripts/verify_worker_motion.mjs` agora captura `worker_contact_small_zoom.png` em sala ampliada, além das quatro direções e do vídeo.

@@ -760,3 +760,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Alinhar as âncoras de trabalho entre simulação, renderização e diagnóstico de acesso.
 - [x] Gravar vídeos exclusivos, sem menu inicial, do ciclo completo dos funcionários e da sinalização de bloqueios.
 - [ ] Rever enquadramento e clareza das ferramentas com o vídeo atualizado no aparelho do jogador.
+
+
+## Contato das ferramentas no zoom reduzido
+- [x] Sinalizar discretamente as passadas da vassoura junto à lixeira com movimento sincronizado às mãos.
+- [x] Acrescentar reflexo de contato da chave do técnico junto ao computador, sem transformar reparo em solda.
+- [x] Manter efeitos só no Canvas, sem alterar IA, saves, RNG, custos ou duração dos serviços.
+- [x] Incluir validação determinística e captura Chromium com sala ampliada/zoom menor.
+- [ ] Confirmar no aparelho físico a intensidade dos efeitos e ajustar sem exagerar no brilho.
