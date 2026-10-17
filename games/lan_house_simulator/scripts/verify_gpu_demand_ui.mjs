@@ -79,20 +79,26 @@ try{
   const bulk=page.locator('[data-gpu-game-install-all="neon-rush"]');
   assert.match(await bulk.innerText(),/1\/1/);
   await (mobile?bulk.tap():bulk.click());
-  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Remover do PC 2/);
-  // A instalação em lote é persistida em desktop e mobile.
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
+  const progress=page.locator('[aria-label="Download de Neon Rush Online no PC 2"]');
+  assert.equal(await progress.count(),1);
+  // Download em progresso persistente em desktop e mobile.
   await page.reload({waitUntil:"networkidle"});
   await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
   const restored=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
-  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Remover do PC 2/);
-  await (mobile?restored.tap():restored.click());
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
+  const cancel=page.locator('[data-gpu-game-cancel="neon-rush"][data-gpu-game-pc="1"]');
+  await (mobile?cancel.tap():cancel.click());
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Instalar no PC 2/);
+  const retry=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
+  await (mobile?retry.tap():retry.click());
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
   await page.reload({waitUntil:"networkidle"});
   await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
-  const pending=page.locator('[data-gpu-game-install-all="neon-rush"]');
-  assert.match(await pending.innerText(),/1\/1/);
-  await (mobile?pending.tap():pending.click());
-  await page.reload({waitUntil:"networkidle"});
-  const second=await check();
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+  assert.ok(overflow<=3,"Download causou rolagem horizontal em "+width);
+  const second={overflow,preview:(await page.locator("#gpu-game-catalog").innerText()).slice(0,180)};
   await page.locator("#section-licenses").screenshot({path:resolve(out,"gpu_demand_licenses_"+width+".png")});
   assert.deepEqual(errors,[]);
   reports.push({width,initial:first.overflow,reload:second.overflow,persisted:true});

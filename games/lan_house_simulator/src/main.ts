@@ -36,7 +36,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,cancelGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
@@ -457,6 +457,13 @@ eraGamePanel?.addEventListener("click",event=>{
 gpuGamePanel?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const cancelId=button.dataset.gpuGameCancel;
+ if(cancelId){
+  const index=Number(button.dataset.gpuGamePc);
+  if(!Number.isInteger(index)||!GPU_GAME_CATALOG.some(x=>x.id===cancelId))return;
+  applyResult(game,cancelGpuGameInstallation(game,index,cancelId as typeof GPU_GAME_CATALOG[number]["id"]));
+  renderUI();save();return;
+ }
  const bulkId=button.dataset.gpuGameInstallAll;
  if(bulkId){
   if(!GPU_GAME_CATALOG.some(x=>x.id===bulkId))return;
@@ -823,7 +830,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.elapsedMinutes,j.durationMinutes]),game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -1254,21 +1261,37 @@ function renderUI(liveOnly=false):void {
        stations.setAttribute("aria-label","Instalações de "+title.name+" por computador");
        for(const i of quote.eligiblePcs){
         const installed=gpuGameInstalledOnPc(game,i,title.id);
+        const job=gpuGameInstallJob(game,i);
+        const downloading=job?.id===title.id;
         const control=document.createElement("button");
         control.type="button";control.className="slice";
-        control.dataset.gpuGameInstall=title.id;
+        if(downloading)control.dataset.gpuGameCancel=title.id;
+        else control.dataset.gpuGameInstall=title.id;
         control.dataset.gpuGamePc=String(i);
-        control.textContent=(installed?"Remover do PC ":"Instalar no PC ")+(i+1);
+        control.textContent=downloading?"Cancelar download PC "+(i+1):
+         (installed?"Remover do PC ":"Instalar no PC ")+(i+1);
         const blocked=!stationPoweredOn(game,i)?"Ligue o computador para alterar os jogos.":
          stationHasCustomer(game,i)?"Aguarde o cliente sair do PC.":
          game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving")?"Aguarde a manutenção concluir.":"";
-        control.disabled=!!blocked;
-        control.title=blocked||"Instalação e remoção gratuitas; a licença pertence à lan house.";
+        control.disabled=!downloading&&(!!blocked||!!job);
+        control.title=downloading?"Cancelar a instalação sem custo, preservando a licença.":blocked||
+         (job?"Aguarde o download atual deste PC.":"Instalação e remoção gratuitas; a licença pertence à lan house.");
         stations.append(control);
+        if(downloading){
+         const status=document.createElement("span");status.className="catalog-game-note";
+         const paused=gpuGameInstallPausedReason(game,i);
+         const remain=job.durationMinutes-job.elapsedMinutes;
+         status.textContent="PC "+(i+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
+          (paused?" · Pausado: "+paused:" · "+remain+" min do jogo restantes");
+         const bar=document.createElement("progress");
+         bar.max=job.durationMinutes;bar.value=job.elapsedMinutes;
+         bar.setAttribute("aria-label","Download de "+title.name+" no PC "+(i+1));
+         stations.append(status,bar);
+        }
        }
        const pending=quote.eligiblePcs.filter(i=>!gpuGameInstalledOnPc(game,i,title.id));
        if(pending.length){
-        const ready=pending.filter(i=>stationPoweredOn(game,i)&&!stationHasCustomer(game,i)&&
+        const ready=pending.filter(i=>!gpuGameInstallJob(game,i)&&stationPoweredOn(game,i)&&!stationHasCustomer(game,i)&&
          !game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving"));
         const bulk=document.createElement("button");bulk.type="button";bulk.className="slice";
         bulk.dataset.gpuGameInstallAll=title.id;

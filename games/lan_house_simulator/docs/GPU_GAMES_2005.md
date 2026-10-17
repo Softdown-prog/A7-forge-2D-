@@ -235,3 +235,24 @@ original antes de PCs anexos também desloca corretamente as instalações
 dos anexos, preservando a associação com as máquinas físicas em vez
 de transferir os jogos para outro índice. Saves legados, sem lista
 explícita de instalações, continuam preservados.
+
+## Download com tempo e barra de progresso (por PC)
+
+Instalações **manuais**, individuais ou em lote, agora passam por downloads
+com duração de **18, 28 ou 40 minutos de jogo** conforme o título, reduzida
+pela geração de internet contratada (mínimo de 5 minutos).
+Cada estação baixa apenas um título por vez. Durante o download, o PC
+não aceita sessões; a tarifa GPU só fica disponível **ao completar**.
+Uma barra com porcentagem aparece na aba Windows / Licenças e sobre o
+computador no salão isométrico. É possível cancelar um download, sem
+custo nem perda da licença. Falta de internet, PC desligado, sessão
+ocupada ou reparo **pausam** o progresso; ao restabelecer, ele retoma
+do minuto anterior. Os trabalhos e suas durações são gravados no
+salvamento, e a simulação termina o download mesmo com o painel fechado.
+
+Compatibilidade: partidas anteriores sem `gpuGameInstallJobs` não
+ganham trabalhos fictícios e mantêm os títulos já instalados. A
+compra inicial de licenças mantém o funcionamento existente de
+instalação automática em PCs elegíveis; as ações **manuais** passam
+a exigir download, para não modificar retroativamente saves antigos
+nem a economia das campanhas já existentes.

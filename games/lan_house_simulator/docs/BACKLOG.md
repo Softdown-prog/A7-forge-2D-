@@ -859,3 +859,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Novos PCs começam sem instalações quando a partida já usa gestão manual de jogos.
 - [x] Preservar associação entre instalações e PCs anexos ao inserir PCs originais.
 - [ ] Explorar progresso animado de download/instalação por título numa próxima etapa.
+
+## Downloads visuais de jogos por PC
+- [x] Instalação manual por título e por PC com duração em minutos do jogo.
+- [x] Pausar/reiniciar por energia ou internet, e não oferecer PC para sessões enquanto baixa.
+- [x] Progresso visível em Administração e no salão, com cancelamento gratuito.
+- [x] Persistência e validação dos downloads, inclusive após inserir PCs originais antes de anexos.
+- [ ] Opcional futuro: limitar velocidade conforme banda compartilhada entre vários downloads simultâneos.
