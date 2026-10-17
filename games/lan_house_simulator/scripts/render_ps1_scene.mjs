@@ -68,6 +68,7 @@ try{
   // 4.8-9: joga; 9-10: levanta; 10-13: sai pelo corredor.
   const duration=13;
   function frame(t){
+   window.__lhsForgeTime=t;
    let at,pose,transition=1,direction="north",playing=false;
    if(t<2.7){at=lerp(from,side,clamp(t/2.7));pose="walking";direction="west";}
    else if(t<3.7){at=lerp(side,seat,clamp((t-2.7)/1));pose="walking";direction="west";}
@@ -82,7 +83,7 @@ try{
    drawPs1Station(ctx,cam,point,0,playing,t);
    // Desenhar a pessoa por cima da cadeira permite inspecionar mãos, sentar e levantar.
    drawActor(ctx,cam,{x:at.x,y:at.y,kind:"regular",id:5,time:t,
-    pose,direction,transition});
+    pose,direction,transition,gamepad:playing});
    if(playing)drawPs1Controller(ctx,cam,seat,t);
   }
   frame(0);
@@ -96,9 +97,13 @@ try{
   }
   requestAnimationFrame(loop);
  });
- // Amostra do quadro jogando: inspeção estática sem abrir a partida.
- await page.waitForTimeout(6900);
- await page.locator("canvas").screenshot({path:resolve(output,"ps1_cliente_jogando.png")});
+ // Marcos reais do navegador, no mesmo fluxo usado pelo vídeo.
+ // O teste visual não precisa de 2002 nem cria estado de save.
+ for(const [seconds,name] of [[4.2,"ps1_cliente_sentando.png"],
+   [7.0,"ps1_cliente_jogando.png"],[9.45,"ps1_cliente_levantando.png"]]){
+  await page.waitForFunction(s=>window.__lhsForgeTime>=s,seconds,{timeout:20000});
+  await page.locator("canvas").screenshot({path:resolve(output,name)});
+ }
  await page.waitForFunction(()=>window.__lhsForgeDone===true,null,{timeout:40000});
  if(errors.length)throw Error("Erros de renderização: "+errors.join(" | "));
  const raw=await page.video().path();
