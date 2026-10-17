@@ -120,6 +120,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_historical_mail_transition.mjs out/validation
+      - name: Verify GPU game demand metrics on actual desktop and mobile
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_gpu_demand_ui.mjs out/validation
       - name: Verify service access warnings and map overlays on desktop and mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

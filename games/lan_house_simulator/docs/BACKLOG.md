@@ -816,3 +816,5 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Mostrar os dados por título na aba Windows / Licenças.
 - [x] Persistir e validar métricas opcionais, preservando saves anteriores e RNG.
 - [ ] Medir o retorno por licença em campanhas longas antes de recalibrar custos.
+
+- [x] Validar relatório real em Chromium (1280/414/360 px), recarga de save e capturas no workflow visual.
