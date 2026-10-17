@@ -116,6 +116,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_uniform_2004.mjs out/validation
+      - name: Verify 2004 to 2005 historic mail transition and persistent choices on desktop/mobile
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_historical_mail_transition.mjs out/validation
       - name: Verify service access warnings and map overlays on desktop and mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

@@ -32,3 +32,7 @@ O correio utiliza o efeito autoral tratado `mail_notification_01.ogg`, seleciona
 - **2004, dias 121–150:** estudantes de uniforme no horário de aula, com consequências por escolha e retorno.
 - **2005, dias 61–90:** novos jogos que exigem GPU e Windows compatíveis, com alternativas de preparação, pesquisa ou adiamento. É um aviso narrativo; não compra equipamentos nem libera licenças. Nenhuma destas duas cartas entra no sorteio das doze histórias esporádicas.
 - Cada carta histórica tem registro único por save e não reaparece em outro ano, mesmo após limpeza das mensagens.
+
+## Testes de continuidade dos eventos de 2004 e 2005
+- `tests/historical-mail-transition.test.mjs` percorre a campanha entre os dois eventos com saves reimportados, escolhas concluídas e ausência de duplicação.
+- `scripts/verify_historical_mail_transition.mjs` valida a convivência das cartas no correio e a persistência real no Chromium em desktop e celulares (414/360 px). Capturas e relatório JSON ficam em `lhs-visual-validation`.

@@ -786,3 +786,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Respeitar o sistema existente de desbloqueio GPU/Windows e não penalizar quem preferir esperar.
 - [x] Incluir testes Node para calendário, persistência, escolhas, ausência de caixa e idempotência.
 - [ ] Revisar ritmo e impactos desta carta após campanhas completas e teste em dispositivo físico.
+
+## Regressão integrada 2004 → 2005
+- [x] Simular as duas cartas na mesma campanha, incluindo escolhas, retornos, relatórios e importação de save entre os anos.
+- [x] Garantir que cartas já resolvidas não reapareçam em 2006 ou após limpeza da caixa.
+- [x] Confirmar que adiar GPU não altera contratos, hardware nem sorteios dos clientes.
+- [x] Adicionar prova de navegador real desktop/414/360 px com persistência de ambas as cartas após recarregar.
+- [ ] Conferir as capturas do Chromium em telefone físico e revisar se o texto está confortável em telas pequenas.
