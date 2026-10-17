@@ -64,7 +64,7 @@ try{
    assert.match(all,/Circuito Competitivo/);
    assert.match(all,/5 pedidos/);
    assert.match(all,/Cobertura da licença por adicionais recebidos/);
-   assert.match(all,/3,50 de R\\$\\s*580,00/);
+   assert.match(all,/3,50 de R\$\s*580,00/);
    assert.match(all,/Não inclui GPU, Windows, energia ou demais despesas; não é lucro/);
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
    assert.ok(overflow<=3,"Largura excedida em "+width+": "+overflow);

@@ -824,4 +824,4 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Evitar chamar a cobertura de lucro/ROI líquido: peças, Windows, energia e outros custos ficam fora.
 - [x] Corrigir preço exibido para cada título quando o PC possui licenças avançadas diferentes.
 - [x] Testar limiar de cobertura, economia/RNG inalterados e persistência; verificar Chromium em desktop e mobile.
-- [ ] Rodar comparação contínua com/s/sem licenças em 2005, 2009 e 2013, registrar cenários por semente, 1 versus 2 PCs aptos.
+- [x] Criar auditoria de 90 dias com/sem licença em 2005, 2009, 2013, duas sementes e 1 versus 2 PCs aptos, executada no CI.

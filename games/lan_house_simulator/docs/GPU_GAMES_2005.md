@@ -166,3 +166,20 @@ A métrica é parcial e começa a valer com a coleta de procura;
 saves antigos não podem reconstruir adicionais anteriores à medição.
 O cartão também exibe a tarifa de **seu próprio jogo**, e não o
 adicional máximo de outro título licenciado na mesma estação.
+
+## Auditoria de 90 dias por campanha
+
+O teste `npm run audit:gpu-licenses` compara os anos de 2005, 2009 e
+2013, sementes 23 e 137, e um ou dois PCs equipados. Para cada cenário
+são executados dois braços de 90 dias, com **hardware e Windows iguais**;
+um compra apenas a licença do título e outro não. A simulação real
+registra receita, despesa total, saldo, ocupação observada, pedidos,
+sessões pagas e adicionais. Visitas de reparo, reposição de estoque e
+limpeza continuam usando as APIs econômicas do jogo, sem inventar vendas.
+
+A diferença entre braços não deve ser interpretada como retorno causal
+isolado sem ressalvas: filas, ocupação e satisfação podem mudar depois
+da licença. Os dados são um diagnóstico de balanceamento, não autorização
+para alterar preços automaticamente. O teste padrão `npm test`
+executa versão curta de 8 dias; o workflow executa também a auditoria
+completa de 90 dias.
