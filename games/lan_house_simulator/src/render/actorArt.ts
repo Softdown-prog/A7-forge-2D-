@@ -37,6 +37,8 @@ export interface ActorRender {
   transition?: number;
   /** Cliente usando controle de console; anima mãos sem alterar poses de PC. */
   gamepad?: boolean;
+  /** Proporções do agachamento diante da cadeira de videogame. */
+  consoleSeat?: boolean;
 }
 function ell(ctx: CanvasRenderingContext2D,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
@@ -118,13 +120,14 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
   const eased=seatTransitionWeight(transition);
   const seated=pose==="sitting"?eased:pose==="standing-up"?1-eased:0;
   const gamepadActive=!!a.gamepad&&pose==="sitting"&&seated>.99;
+  const consoleSeat=!!a.consoleSeat&&(pose==="sitting"||pose==="standing-up");
   const step=walking?Math.sin(a.time*7.7+a.id*.27):0;
   const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*1.4)*.6:0;
   const bob=walking?Math.abs(step)*1.5:0;
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
   // Antes, o corpo afundava 18px e parecia agachado no chão.
   const settle=(pose==="sitting"||pose==="standing-up")?Math.sin(Math.PI*transition)*1.5:0;
-  const headShift=seated*3+settle;
+  const headShift=seated*(consoleSeat?10:3)+settle;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:work?work.pulse*.65:seated*2;
   const typing=seated>0.95&&!gamepadActive?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south";
@@ -163,7 +166,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const swing=step*7*side*(1-seated);
     const kneeX=side*7+swing*.55+side*seated*10;
     // Coxa dobra junto à altura do assento; panturrilha desce até o chão.
-    const kneeY=-13-seated*8;
+    const kneeY=-13-seated*(consoleSeat?1:8);
     const toeX=side*7+swing+side*seated*12;
     limb(ctx,side*6,legY,kneeX,kneeY,9.6,style.pants);
     limb(ctx,kneeX,kneeY,toeX,footY-seated*4,8.2,style.pants);
