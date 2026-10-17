@@ -59,22 +59,29 @@ try{
   paid.employeePayrollAccrued=19.75;
   stepGame(paid,1);
   assert.equal(paid.lastPaidMonthlyBill.endDay,30);
-  await page.evaluate(({key,state})=>localStorage.setItem(key,JSON.stringify(state)),
-   {key:GAME_SAVE_KEY,state:paid});
-  await page.reload({waitUntil:"networkidle"});
-  await click("#menu-continue");await click("#open-admin");
-  await click('[data-admin-tab="finance"]');
-  assert.match(await page.locator("#last-bill-info").innerText(),/Último fechamento: mês 01\/1998/);
-  assert.match(await page.locator("#last-bill-info").innerText(),/caixa após pagamento/);
-  assert.equal(await page.locator("#last-bill-details").isVisible(),true);
-  await click("#last-bill-details summary");
-  assert.equal(await page.locator("#last-bill-details").evaluate(el=>el.open),true);
+  const settledContext=await browser.newContext({viewport:{width,height:920},isMobile:mobile,hasTouch:mobile});
+  await settledContext.addInitScript(({key,state})=>{
+   localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");
+  },{key:GAME_SAVE_KEY,state:paid});
+  const paidPage=await settledContext.newPage(),paidErrors=[];
+  paidPage.on("pageerror",e=>paidErrors.push(String(e)));
+  await paidPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  const paidClick=async selector=>mobile?await paidPage.locator(selector).tap():
+   await paidPage.locator(selector).click();
+  await paidClick("#menu-continue");await paidClick("#open-admin");
+  await paidClick('[data-admin-tab="finance"]');
+  assert.match(await paidPage.locator("#last-bill-info").innerText(),/Último fechamento: mês 01\/1998/);
+  assert.match(await paidPage.locator("#last-bill-info").innerText(),/caixa após pagamento/);
+  assert.equal(await paidPage.locator("#last-bill-details").isVisible(),true);
+  await paidClick("#last-bill-details summary");
+  assert.equal(await paidPage.locator("#last-bill-details").evaluate(el=>el.open),true);
   for(const id of ["rent","internet","energy","maintenance","wages","total"])
-   assert.match(await page.locator("#last-bill-"+id).innerText(),/R\$/);
-  assert.deepEqual(errors,[]);
-  const settledOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+   assert.match(await paidPage.locator("#last-bill-"+id).innerText(),/R\$/);
+  assert.deepEqual([...errors,...paidErrors],[]);
+  const settledOverflow=await paidPage.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(settledOverflow<=3,"comprovante rompe a largura em "+width+"px: "+settledOverflow);
-  await page.locator(".paid-bill-panel").screenshot({path:resolve(out,"paid_bill_"+width+".png")});
+  await paidPage.locator(".paid-bill-panel").screenshot({path:resolve(out,"paid_bill_"+width+".png")});
+  await settledContext.close();
   reports.push({width,cash:386.49,netResult:-463.51,daysUntilBills:1,
    receiptTotal:paid.lastPaidMonthlyBill.total,warning:true,opened:true,scrollOverflow,settledOverflow});
   await context.close();
