@@ -18,6 +18,9 @@ const out=resolve(process.argv[2]??"out/validation");
 await mkdir(out,{recursive:true});
 const s=createGame(1549,"historical");
 s.totalMinutes=(2013-1998)*360*DAY_MINUTES;
+// Janela controlada sem conexão para o teste visual: o download não termina
+// antes do reload em runners lentos e confirma a mensagem de pausa.
+s.offlineUntil=s.totalMinutes+120;
 s.cash=25000;
 for(const result of [
  licenseGames(s),
@@ -80,6 +83,7 @@ try{
   assert.match(await bulk.innerText(),/1\/1/);
   await (mobile?bulk.tap():bulk.click());
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
+  assert.match(await page.locator("#gpu-game-catalog").innerText(),/Pausado: sem internet/);
   const progress=page.locator('[aria-label="Download de Neon Rush Online no PC 2"]');
   assert.equal(await progress.count(),1);
   // Download em progresso persistente em desktop e mobile.
