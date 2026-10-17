@@ -845,3 +845,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Publicar arquivo JSON de 90 dias como artefato independente do CI e documentar limitações.
 - [x] Concluir as 72 campanhas de 90 dias no CI, com relatório de preços efetivos, receita premium e saldo incremental.
 - [ ] Investigar progressão orgânica partindo de R$ 850 e comparar preços após avanços reais.
+
+## Gerenciamento de jogos por computador
+- [x] Instalar e remover jogos GPU licenciados em PCs individuais, sem nova cobrança.
+- [x] Bloquear alterações com a máquina desligada, ocupada ou em reparo.
+- [x] Exigir instalação do título solicitado para priorização de clientes gamers e tarifa premium.
+- [x] Persistir estado por PC, preservar saves legados e validar identificadores instalados.
+- [x] Testar interface em Chromium desktop e mobile, com recarga após remoção/reinstalação.

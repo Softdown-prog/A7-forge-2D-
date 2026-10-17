@@ -199,3 +199,22 @@ Os resultados mostram cobertura nominal abaixo de 37% no período,
 mesmo com dois computadores aptos, nas condições de laboratório
 descritas no relatório. Isso ainda não autoriza reduzir preços de
 licenças: o estudo manteve a tarifa inicial de R$ 2,50/h.
+
+## Instalar ou remover jogos por PC
+
+A licença avançada continua sendo comprada apenas uma vez pelo estabelecimento.
+Na aba **Windows / Licenças**, cada título licenciado mostra controles
+**Instalar no PC / Remover do PC** para computadores compatíveis.
+Essas ações são gratuitas; exigem estação ligada, desocupada e sem
+manutenção ativa. A lista instalada é salva com a partida.
+
+Saves antigos não têm `gpuGameInstalls` e continuam com jogos
+implicitamente instalados nas máquinas compatíveis, sem regressão.
+Na primeira modificação, as instalações existentes são preservadas nas
+outras máquinas. Novos PCs que se tornarem compatíveis depois da
+conversão precisam receber o jogo manualmente. Novas licenças adquiridas
+são disponibilizadas nas máquinas já compatíveis.
+
+Clientes gamers só conseguem jogar o título solicitado quando o jogo
+está **licenciado, instalado e compatível com GPU e Windows** no PC;
+caso contrário, podem usar uma sessão comum, sem adicional inventado.

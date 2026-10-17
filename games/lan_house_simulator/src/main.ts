@@ -36,7 +36,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
@@ -455,8 +455,15 @@ eraGamePanel?.addEventListener("click",event=>{
  applyResult(game,licenseEraGame(game,id));renderUI();save();
 });
 gpuGamePanel?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button[data-gpu-game-buy]"):null;
+ const button=event.target instanceof Element?event.target.closest("button"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
+ const installId=button.dataset.gpuGameInstall;
+ if(installId){
+  const index=Number(button.dataset.gpuGamePc);
+  if(!Number.isInteger(index)||!GPU_GAME_CATALOG.some(x=>x.id===installId))return;
+  applyResult(game,toggleGpuGameInstallation(game,index,installId as typeof GPU_GAME_CATALOG[number]["id"]));
+  renderUI();save();return;
+ }
  const id=button.dataset.gpuGameBuy;
  if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
  applyResult(game,licenseGpuGame(game,id));renderUI();save();
@@ -810,7 +817,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -1196,13 +1203,17 @@ function renderUI(liveOnly=false):void {
       const bought=game.licensedGpuGames?.includes(title.id)===true;
       status.textContent=(bought?"Licenciado. ":quote.message+" ")+
        (quote.eligiblePcs.length
-        ?"Roda no(s) PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
+        ?"Compatível com PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
         :"Nenhuma máquina compatível ainda.")+
        " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
        "/h, somente para clientes de jogos avançados e dentro do teto anual.";
       if(bought&&quote.eligiblePcs.length){
-        status.textContent+=" Valor atual por hora: "+
-         quote.eligiblePcs.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i,title.id).toFixed(2)).join(" · ")+".";
+        const enabled=quote.eligiblePcs.filter(i=>gpuGameInstalledOnPc(game,i,title.id));
+        status.textContent+=enabled.length
+         ?" Instalado no(s) PC(s) "+enabled.map(i=>i+1).join(", ")+
+          ". Valor atual por hora: "+
+          enabled.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i,title.id).toFixed(2)).join(" · ")+"."
+         :" Nenhuma instalação ativa. Use os botões abaixo para instalar o jogo.";
       }
       const action=document.createElement("button");
       action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
@@ -1232,6 +1243,25 @@ function renderUI(liveOnly=false):void {
       card.append(heading,requirements,status,measured);
       if(coverage)card.append(payback);
       card.append(action);
+      if(bought&&quote.eligiblePcs.length){
+       const stations=document.createElement("div");stations.className="action-row wrap";
+       stations.setAttribute("aria-label","Instalações de "+title.name+" por computador");
+       for(const i of quote.eligiblePcs){
+        const installed=gpuGameInstalledOnPc(game,i,title.id);
+        const control=document.createElement("button");
+        control.type="button";control.className="slice";
+        control.dataset.gpuGameInstall=title.id;
+        control.dataset.gpuGamePc=String(i);
+        control.textContent=(installed?"Remover do PC ":"Instalar no PC ")+(i+1);
+        const blocked=!stationPoweredOn(game,i)?"Ligue o computador para alterar os jogos.":
+         stationHasCustomer(game,i)?"Aguarde o cliente sair do PC.":
+         game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving")?"Aguarde a manutenção concluir.":"";
+        control.disabled=!!blocked;
+        control.title=blocked||"Instalação e remoção gratuitas; a licença pertence à lan house.";
+        stations.append(control);
+       }
+       card.append(stations);
+      }
       gpuGamePanel.append(card);
     }
   }
