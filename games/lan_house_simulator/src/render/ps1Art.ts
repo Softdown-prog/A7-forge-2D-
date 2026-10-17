@@ -48,7 +48,7 @@ export function drawPs1Station(
  * do tronco, na altura do colo, e não flutuar atrás da cabeça.
  * Deslocamento em direção à TV (norte) respeita a projeção isométrica. */
 export function ps1ControllerAnchor(seat:Point):{point:Point;height:number}{
- return {point:{x:seat.x+.10,y:seat.y-.23},height:28};
+ return {point:{x:seat.x+.04,y:seat.y-.14},height:22};
 }
 /** Ponto onde o cabo encontra a frente do console, na bancada. */
 export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
@@ -59,7 +59,7 @@ export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
 export function drawPs1Controller(ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,t:number):void{
  const anchor=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat);
  const p=iso(anchor.point,cam,anchor.height);
- const plug=iso(port.point,cam,port.height),z=cam.zoom;
+ const plug=iso(port.point,cam,port.height),z=cam.zoom*.85;
  ctx.save();
  // Um cabo solto ligando o controle ao videogame; curvatura discreta
  // deixa claro que não se trata de um teclado suspenso.
