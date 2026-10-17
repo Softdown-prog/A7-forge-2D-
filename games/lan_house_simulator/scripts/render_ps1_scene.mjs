@@ -96,6 +96,9 @@ try{
   }
   requestAnimationFrame(loop);
  });
+ // Amostra do quadro jogando: inspeção estática sem abrir a partida.
+ await page.waitForTimeout(6900);
+ await page.locator("canvas").screenshot({path:resolve(output,"ps1_cliente_jogando.png")});
  await page.waitForFunction(()=>window.__lhsForgeDone===true,null,{timeout:40000});
  if(errors.length)throw Error("Erros de renderização: "+errors.join(" | "));
  const raw=await page.video().path();
