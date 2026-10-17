@@ -1,4 +1,5 @@
-import {ps1ControllerAnchor,ps1ControllerPort} from "../dist/js/render/ps1Art.js";
+import {ps1ControllerAnchor,ps1ControllerPort,ps1ScreenFrame} from "../dist/js/render/ps1Art.js";
+import {seatTransitionWeight} from "../dist/js/render/actorArt.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -158,4 +159,33 @@ test("controle de PS1 permanece à frente do personagem e conectado ao console",
  for(const n of [pad.point.x,pad.point.y,pad.height,port.point.x,port.point.y,port.height])
   assert.ok(Number.isFinite(n));
  assert.deepEqual(ps1ControllerAnchor(seat),pad,"âncora estável entre frames");
+});
+
+test("PS1: sentar e levantar suavizam o movimento sem saltar no começo e fim",()=>{
+ assert.equal(seatTransitionWeight(0),0);
+ assert.equal(seatTransitionWeight(1),1);
+ assert.equal(seatTransitionWeight(.5),.5);
+ assert.ok(seatTransitionWeight(.1)<.1,"entrada suave");
+ assert.ok(seatTransitionWeight(.9)>.9,"chegada suave");
+ for(let i=0;i<=20;i++) {
+  const progress=i/20,weight=seatTransitionWeight(progress);
+  assert.ok(weight>=0&&weight<=1);
+  if(i)assert.ok(weight>=seatTransitionWeight((i-1)/20));
+ }
+ assert.equal(seatTransitionWeight(-1),0);
+ assert.equal(seatTransitionWeight(5),1);
+});
+
+test("PS1: microjogo do CRT anima de forma determinística dentro do visor",()=>{
+ const first=ps1ScreenFrame(0);
+ assert.deepEqual(ps1ScreenFrame(0),first);
+ assert.notDeepEqual(ps1ScreenFrame(.2),first,"tela não pode parecer estática");
+ for(let i=0;i<120;i++){
+  const f=ps1ScreenFrame(i/10);
+  assert.ok(f.heroX>=0&&f.heroX+.12<=1,"personagem cabe na TV");
+  assert.ok(f.heroY>=0&&f.heroY+.20<=.7,"personagem fica acima do chão");
+  assert.equal(typeof f.sparkle,"boolean");
+ }
+ assert.deepEqual(ps1ScreenFrame(-1),first);
+ assert.deepEqual(ps1ScreenFrame(Number.NaN),first);
 });
