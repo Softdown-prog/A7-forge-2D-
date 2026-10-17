@@ -42,6 +42,18 @@ jobs:
         if: matrix.worker == 'simulation'
         working-directory: games/lan_house_simulator
         run: npm run audit:gpu-licenses
+      - name: Audit historical GPU tariffs at 3 legal price levels
+        if: matrix.worker == 'simulation'
+        working-directory: games/lan_house_simulator
+        run: npm run audit:gpu-pricing
+      - name: Upload controlled 90-day tariff comparison
+        if: matrix.worker == 'simulation'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-gpu-tariff-90day-audit
+          path: games/lan_house_simulator/out/audits/gpu-price-comparison-90day.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Upload controlled 90-day GPU license audit
         if: matrix.worker == 'simulation'
         uses: actions/upload-artifact@v4

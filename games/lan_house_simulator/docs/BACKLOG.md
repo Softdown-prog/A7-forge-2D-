@@ -837,3 +837,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Registrar as seis médias de cobertura da licença sem confundi-las com lucro líquido ou retorno de GPUs.
 - [x] Gerar relatório JSON reproduzível como artefato do workflow e documentar limitações do financiamento de laboratório.
 - [ ] Simular tarifas anuais otimizadas e campanhas de orçamento inicial real antes de mudar preços ou custos.
+
+## Diagnóstico das tarifas por ano (GPU)
+- [x] Implementar auditoria isolada: referência, valor intermediário e teto legal por qualidade das estações.
+- [x] Cobrir os anos 2005/2009/2013, 1/2 PCs, duas sementes, com/sem licença, sem alterar jogo.
+- [x] Validar salvar/importar e conservação econômica em cada cenário, sem receita fictícia.
+- [x] Publicar arquivo JSON de 90 dias como artefato independente do CI e documentar limitações.
+- [ ] Investigar progressão orgânica partindo de R$ 850 e comparar preços após avanços reais.

@@ -57,3 +57,14 @@ Reproduzir: `cd games/lan_house_simulator && npm run audit:gpu-licenses`.
 A execução gera um JSON com os **24 resultados individuais e as seis
 médias**, enviado como artefato `lhs-gpu-license-90day-audit` do
 workflow. Nenhuma tarifa é alterada por esta auditoria.
+
+
+## Próximo estudo: tarifas legais por qualidade do parque
+
+Os resultados fixos de 90 dias acima usam uma tarifa de referência de
+R$ 2,50/h. Para não concluir precipitadamente que as licenças são caras,
+a comparação adicional de três tarifas permitidas pelo ano e pela
+qualidade das estações está descrita em
+[`GPU_PRICING_AUDIT.md`](./GPU_PRICING_AUDIT.md).
+Essa auditoria preserva os valores do catálogo e salva resultados
+reproduzíveis separados.
