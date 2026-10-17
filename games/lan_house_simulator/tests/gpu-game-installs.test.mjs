@@ -8,9 +8,14 @@ import {buyGpu} from "../dist/js/sim/gpu.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {withStationOff} from "./station-power-fixture.mjs";
-import {licenseGpuGame,gpuGamePlayableOnPc,gpuGameInstalledOnPc,toggleGpuGameInstallation,validGpuGameInstalls,gpuGameSessionPrice,hasPlayableGpuGame} from "../dist/js/sim/gpuGames.js";
+import {licenseGpuGame,gpuGamePlayableOnPc,gpuGameInstalledOnPc,toggleGpuGameInstallation,validGpuGameInstalls,gpuGameSessionPrice,hasPlayableGpuGame,tickGpuGameInstallations,gpuGameInstallJob} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
+function finish(s,pc){
+ const job=gpuGameInstallJob(s,pc);
+ assert.ok(job);
+ for(let n=0;n<job.durationMinutes;n++){s.totalMinutes++;tickGpuGameInstallations(s);}
+}
 function ready(year=2005){
  const s=createGame(20,"historical");s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=30000;
  ok(licenseGames(s));
@@ -35,6 +40,9 @@ test("saves antigos preservam jogos; remover de um PC não afeta os outros nem o
  assert.equal(s.cash,cash);assert.equal(s.expenses,expenses);assert.equal(s.rng,rng);
  assert.deepEqual(parseImportedSave(serializeSave(s)).gpuGameInstalls,s.gpuGameInstalls);
  ok(toggleGpuGameInstallation(s,1,"neon-rush"));
+ assert.equal(gpuGamePlayableOnPc(s,1,"neon-rush"),false);
+ assert.equal(gpuGameInstallJob(s,1).elapsedMinutes,0);
+ finish(s,1);
  assert.equal(gpuGamePlayableOnPc(s,1,"neon-rush"),true);
 });
 test("cliente gamer não busca uma estação sem o jogo desejado instalado",()=>{
@@ -44,7 +52,7 @@ test("cliente gamer não busca uma estação sem o jogo desejado instalado",()=>
  assert.equal(chooseAvailablePc(s,gamer),1);
  ok(toggleGpuGameInstallation(s,1,"neon-rush"));
  assert.equal(hasPlayableGpuGame(s),false);
- assert.equal(chooseAvailablePc(s,gamer),0);
+ assert.equal(chooseAvailablePc(s,gamer),2,"PCs baixando estão temporariamente indisponíveis");
 });
 test("PC desligado, ocupado ou em manutenção não permite instalação",()=>{
  const s=ready();
@@ -76,6 +84,8 @@ test("novas licenças e upgrades de GPU exigem PC compatível e instalação exp
  ok(withStationOff(s,1,()=>licenseWindows(s,1,"win7")));
  assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),false);
  ok(toggleGpuGameInstallation(s,1,"circuito-competitivo"));
+ assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),false);
+ finish(s,1);
  assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),true);
  assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });

@@ -9,10 +9,13 @@ import {buyGpu} from "../dist/js/sim/gpu.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {withStationOff} from "./station-power-fixture.mjs";
-import {licenseGpuGame,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstalledOnPc,gpuGamePlayableOnPc} from "../dist/js/sim/gpuGames.js";
+import {licenseGpuGame,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstalledOnPc,gpuGamePlayableOnPc,gpuGameInstallJob,tickGpuGameInstallations} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 const ok=r=>assert.equal(r.ok,true,r.message);
+function finish(s){
+ for(let n=0;n<41;n++){s.totalMinutes++;tickGpuGameInstallations(s);}
+}
 function setup(){
  const s=createGame(219,"historical");s.totalMinutes=7*360*DAY_MINUTES;s.cash=35000;
  ok(licenseGames(s));
@@ -35,13 +38,17 @@ test("instalação em lote atende PCs livres, ignora ocupados e desligados, sem 
  assert.equal(result.ok,true);
  assert.match(result.message,/1 PC\(s\)/);
  assert.match(result.message,/2 aguardando/);
- assert.deepEqual(s.gpuGameInstalls,[["neon-rush"],[],[]]);
+ assert.deepEqual(s.gpuGameInstalls,[[],[],[]]);
+ assert.equal(gpuGameInstallJob(s,0).elapsedMinutes,0);
  assert.deepEqual([s.cash,s.expenses,s.rng],[cash,expenses,rng]);
- assert.deepEqual(parseImportedSave(serializeSave({...s,customers:[]})).gpuGameInstalls,s.gpuGameInstalls);
+ assert.deepEqual(parseImportedSave(serializeSave({...s,customers:[]})).gpuGameInstallJobs,s.gpuGameInstallJobs);
  assert.equal(installGpuGameOnAvailablePcs(s,"neon-rush").ok,false);
  s.customers=[];
  ok(toggleStationPower(s,1));
  ok(installGpuGameOnAvailablePcs(s,"neon-rush"));
+ assert.deepEqual(s.gpuGameInstalls,[[],[],[]]);
+ assert.deepEqual(s.gpuGameInstallJobs.map(x=>x.pc),[0,1,2]);
+ finish(s);
  assert.deepEqual(s.gpuGameInstalls,[["neon-rush"],["neon-rush"],["neon-rush"]]);
  assert.equal(installGpuGameOnAvailablePcs(s,"neon-rush").ok,false);
  assert.equal(isValidSave(s),true);
@@ -60,6 +67,9 @@ test("instalar em estação nova após criar lista explícita não duplica títu
  ok(withStationOff(s,3,()=>licenseWindows(s,3,"winxp")));
  assert.equal(gpuGameInstalledOnPc(s,3,"neon-rush"),false);
  ok(toggleGpuGameInstallation(s,3,"neon-rush"));
+ assert.deepEqual(s.gpuGameInstalls[3],[]);
+ assert.equal(gpuGamePlayableOnPc(s,3,"neon-rush"),false);
+ finish(s);
  assert.deepEqual(s.gpuGameInstalls[3],["neon-rush"]);
  assert.equal(gpuGamePlayableOnPc(s,3,"neon-rush"),true);
  assert.deepEqual(parseImportedSave(serializeSave(s)).gpuGameInstalls,s.gpuGameInstalls);
