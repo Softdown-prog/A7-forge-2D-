@@ -825,3 +825,9 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Corrigir preço exibido para cada título quando o PC possui licenças avançadas diferentes.
 - [x] Testar limiar de cobertura, economia/RNG inalterados e persistência; verificar Chromium em desktop e mobile.
 - [x] Criar auditoria de 90 dias com/sem licença em 2005, 2009, 2013, duas sementes e 1 versus 2 PCs aptos, executada no CI.
+
+## Compatibilidade monetária após campanhas longas
+- [x] Detectado em auditoria real de 90 dias: saldo R$ 94.492,13000001055 era rejeitado por tolerância sub-centavo excessivamente estrita.
+- [x] Aceitar exclusivamente erro binário inferior a 0,0001 centavo ao importar valores históricos; preservar valor original e a contabilidade.
+- [x] Testar valores reais de 2013, frações de centavos adulteradas, infinito e regras estritas do modo clássico.
+- [ ] Concluir comparativo integral da auditoria longa no CI antes de ajustar custos de licenciamento.

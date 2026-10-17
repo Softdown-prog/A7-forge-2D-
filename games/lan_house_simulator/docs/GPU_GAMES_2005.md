@@ -183,3 +183,12 @@ da licença. Os dados são um diagnóstico de balanceamento, não autorização
 para alterar preços automaticamente. O teste padrão `npm test`
 executa versão curta de 8 dias; o workflow executa também a auditoria
 completa de 90 dias.
+
+## Importação monetária nas campanhas longas
+
+A importação do modo histórico aceita resíduos de ponto flutuante inferiores
+a **0,0001 centavo** em saldos e tarifas. Em 90 dias, milhares de operações
+podem resultar internamente em `94492.13000001055`, equivalente a
+R$ 94.492,13. Essa diferença é insignificante e não deve invalidar o save.
+Frações de centavo materiais continuam bloqueadas. Nenhuma taxa, despesa
+ou venda é alterada por esta correção.

@@ -31,8 +31,11 @@ export function parseImportedSave(input:string):GameState {
  if(!isValidSave(e.state))throw Error("A partida contém dados inválidos.");
  const state=e.state;
  const historical=state.economyVersion===2;
+ // Após milhares de transações, somas em ponto flutuante acumulam
+ // resíduos ínfimos (ex.: R$ 94492.13000001055). Aceitar no máximo
+ // 0,0001 centavo de diferença, sem permitir frações monetárias reais.
  const validCents=(value:number)=>Number.isFinite(value)&&
-  Math.abs(value*100-Math.round(value*100))<1e-6;
+  Math.abs(value*100-Math.round(value*100))<1e-4;
  if(!Number.isInteger(state.totalMinutes)||state.totalMinutes<0||state.totalMinutes>1e9 ||
     Math.abs(state.cash)>1e9||(historical?!validCents(state.cash):!Number.isInteger(state.cash))||
     !Number.isInteger(state.rng)||state.rng<0||
