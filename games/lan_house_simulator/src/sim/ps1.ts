@@ -2,6 +2,7 @@ import type {GameState,Point,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import {availablePlacementSlots,furnitureSlots,shopPrice} from "./shop.js";
 import {annualHourlyCeiling,isHistorical,yearFromMinutes} from "./historicalEconomy.js";
+import {roomBounds} from "./room.js";
 
 /** Marco de design: mistura das antigas locadoras de console com lan houses. */
 export const PS1_UNLOCK_YEAR=2002;
@@ -25,6 +26,20 @@ export function ps1StationPoint(s:GameState,index:number):Point|null{
 export function ps1Seat(s:GameState,index:number):Point|null{
  const p=ps1StationPoint(s,index);
  return p?{x:p.x+.43,y:p.y+.77}:null;
+}
+/** Contornar a bancada pelo lado antes de alcançar a cadeira, em vez de
+ * atravessar a TV. Funciona também em salas com extensão lateral. */
+export function ps1SeatApproach(s:GameState,index:number):Point|null{
+ const p=ps1StationPoint(s,index),seat=ps1Seat(s,index);
+ if(!p||!seat)return null;
+ const bounds=roomBounds(s);
+ const right=p.x+1.36;
+ return {x:right<bounds.maxX-.22?right:p.x-.35,y:seat.y};
+}
+export function ps1StationAvailable(s:GameState,index:number):boolean{
+ const station=s.ps1Stations?.[index];
+ return !!station&&station.wear<PS1_WEAR_LIMIT&&!s.customers.some(c=>
+  c.ps1StationIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage));
 }
 export function ps1HourPrice(s:GameState):number{
  return s.ps1HourlyPrice??2.5;
@@ -58,10 +73,7 @@ export function setPs1HourlyPrice(s:GameState,price:number):Result{
  return {ok:true,message:"PlayStation: R$ "+price.toFixed(2)+" por hora."};
 }
 export function ps1AvailableStation(s:GameState):number{
- return s.ps1Stations?.findIndex((station,i)=>station.wear<PS1_WEAR_LIMIT&&
-  !s.customers.some(c=>c.ps1StationIndex===i&&
-   ["to_pc","sitting","using","standing"].includes(c.stage))) ?? -1
-  /* índice -1 significa nenhuma vaga */ ;
+ return s.ps1Stations?.findIndex((_,i)=>ps1StationAvailable(s,i))??-1;
 }
 export function ps1EnergyCostPerMinute(s:GameState):number{
  return (s.ps1Stations?.length??0)*.0008;

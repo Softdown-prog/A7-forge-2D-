@@ -1516,7 +1516,8 @@ function renderUI(liveOnly=false):void {
    }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
     " · Atendimentos "+(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0))+
-    " (PCs "+game.served+" · Impressões avulsas "+(game.printer?.walkIns??0)+
+    " (PCs "+(game.served-(game.ps1Sessions??0))+" · PlayStation "+(game.ps1Sessions??0)+
+    " · Impressões avulsas "+(game.printer?.walkIns??0)+
     " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);

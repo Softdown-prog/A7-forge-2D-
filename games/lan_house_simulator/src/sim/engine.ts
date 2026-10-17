@@ -33,7 +33,7 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
-import {ps1StationPoint,ps1Seat,ps1AvailableStation,ps1SessionPrice,ps1EnergyCostPerMinute,
+import {ps1Seat,ps1SeatApproach,ps1StationAvailable,ps1SessionPrice,ps1EnergyCostPerMinute,
  ps1SessionWear,ps1HourPrice,validPs1State,PS1_UNLOCK_YEAR} from "./ps1.js";
 import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameInstallJob,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
@@ -383,15 +383,23 @@ function tryServe(s: GameState, c: Customer): void {
   // Em 2002 as bancadas de videogame passam a dividir o público com PCs.
   // Um em cada cinco visitantes não gamers prefere console; nunca há
   // reservas extras nem sorteio novo. Só cobra quando a rota existe.
-  const consoleIndex=!c.gpuGamer&&c.id%5===0?ps1AvailableStation(s):-1;
+  const consoleIndex=!c.gpuGamer&&c.id%5===0?(s.ps1Stations??[]).findIndex((_,i)=>{
+    if(!ps1StationAvailable(s,i))return false;
+    const side=ps1SeatApproach(s,i),seat=ps1Seat(s,i);
+    return !!side&&!!seat&&!!navigableRoute(s,{x:c.x,y:c.y},side)&&
+      !!navigableRoute(s,side,seat);
+  }): -1;
   const consoleSeat=consoleIndex>=0?ps1Seat(s,consoleIndex):null;
-  if(consoleSeat&&navigableRoute(s,{x:c.x,y:c.y},consoleSeat)){
+  const consoleSide=consoleIndex>=0?ps1SeatApproach(s,consoleIndex):null;
+  if(consoleSeat&&consoleSide){
     const remaining=SESSION_FINISH_MINUTE-localMinute(s);
     if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
     c.sessionMinutes??=chooseSessionMinutes(c,s.economyVersion===2);
     if(c.sessionMinutes>remaining)c.sessionMinutes=
       ([240,180,120,90,60,45,30] as number[]).find(n=>n<=remaining)??30;
-    if(leaveCounterForPc(s,c,consoleSeat)){
+    if(leaveCounterForPc(s,c,consoleSide)){
+      const tail=navigableRoute(s,consoleSide,consoleSeat)!;
+      c.route=[...(c.route??[]),...tail];
       const paid=ps1SessionPrice(s,c.sessionMinutes);
       c.pcIndex=null;c.ps1StationIndex=consoleIndex;
       c.queueIndex=undefined;c.stage="to_pc";s.counterBusyUntil=s.totalMinutes+3;
