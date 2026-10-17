@@ -3,6 +3,7 @@
 // clientes/receita. Compara separadamente 1 PC ou 2 PCs equipados.
 import test from "node:test";
 import assert from "node:assert/strict";
+import {mkdirSync,writeFileSync} from "node:fs";
 import {createGame,isValidSave,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,stockItem,wholesaleCost} from "../dist/js/sim/economy.js";
@@ -128,4 +129,16 @@ test("comparativo controlado 2005/2009/2013: licenças e 1 ou 2 GPUs com transa�
    meanCoveragePct:avg(true,"coveragePct")});
  }
  for(const row of summaries)console.log("GPU_LICENSE_SUMMARY "+JSON.stringify(row));
+ if(process.env.LHS_GPU_LICENSE_AUDIT==="1"&&process.env.LHS_GPU_DIAG!=="1"){
+  const dir=new URL("../out/audits/",import.meta.url);
+  mkdirSync(dir,{recursive:true});
+  const report={name:"Lan House Simulator — GPU licenses, controlled 90-day audit",
+   periodDays:DAYS,seeds,years:configs.map(x=>x.year),pcOptions:pcChoices,
+   initialCash:ENDOWMENT,openingHourlyPrice:2.5,
+   scope:"Game simulation; 3 base PCs, one/two upgraded; paired runs with/without only the requested advanced license.",
+   caution:"GPU/Windows/platform, rent, energy and service costs included in net; no real-world profitability claim.",
+   scenarios:results,summary:summaries};
+  writeFileSync(new URL("gpu-license-90-day.json",dir),JSON.stringify(report,null,2)+"\\n");
+  console.log("GPU_LICENSE_REPORT saved out/audits/gpu-license-90-day.json");
+ }
 });

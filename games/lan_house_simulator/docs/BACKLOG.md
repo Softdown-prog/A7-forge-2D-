@@ -831,3 +831,9 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Aceitar exclusivamente erro binário inferior a 0,0001 centavo ao importar valores históricos; preservar valor original e a contabilidade.
 - [x] Testar valores reais de 2013, frações de centavos adulteradas, infinito e regras estritas do modo clássico.
 - [ ] Concluir comparativo integral da auditoria longa no CI antes de ajustar custos de licenciamento.
+
+## Auditoria financeira concluída — 90 dias
+- [x] Validar os 24 cenários de 2005, 2009 e 2013 (2 sementes, 1/2 PCs, com/sem título licenciado).
+- [x] Registrar as seis médias de cobertura da licença sem confundi-las com lucro líquido ou retorno de GPUs.
+- [x] Gerar relatório JSON reproduzível como artefato do workflow e documentar limitações do financiamento de laboratório.
+- [ ] Simular tarifas anuais otimizadas e campanhas de orçamento inicial real antes de mudar preços ou custos.

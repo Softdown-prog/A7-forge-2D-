@@ -192,3 +192,10 @@ podem resultar internamente em `94492.13000001055`, equivalente a
 R$ 94.492,13. Essa diferença é insignificante e não deve invalidar o save.
 Frações de centavo materiais continuam bloqueadas. Nenhuma taxa, despesa
 ou venda é alterada por esta correção.
+
+O relatório observado na execução completa de 90 dias está em
+[`GPU_LICENSE_AUDIT_90D.md`](./GPU_LICENSE_AUDIT_90D.md).
+Os resultados mostram cobertura nominal abaixo de 37% no período,
+mesmo com dois computadores aptos, nas condições de laboratório
+descritas no relatório. Isso ainda não autoriza reduzir preços de
+licenças: o estudo manteve a tarifa inicial de R$ 2,50/h.
