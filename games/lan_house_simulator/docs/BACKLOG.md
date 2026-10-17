@@ -880,3 +880,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Informar que "Contas por mês" é uma estimativa para a cobrança de 30 dias, não segunda dívida já paga.
 - [x] Destacar divergências de caixa em salvamentos antigos sem alterar dados ou inventar receitas.
 - [x] Testes Node e Chromium desktop/414/360 px, incluindo cenário real de R$ 386,49 e −R$ 463,51.
+
+## Aviso de contas e liquidez no fechamento do mês
+- [x] Mostrar contagem correta de dias até cobrança na virada a cada 30 dias.
+- [x] Comparar o caixa de hoje com a provisão até agora, sem chamar de previsão definitiva.
+- [x] Destacar falta de caixa só nos sete dias finais e avisar que energia/salários ainda mudam.
+- [x] Parar de prometer vencimento após o último dia de 2030.
+- [x] Exibir no celular sem rolagem horizontal, com teste visual no 30º dia do jogo.
+- [x] Garantir cálculo somente leitura: não antecipar conta, não alterar save nem RNG.

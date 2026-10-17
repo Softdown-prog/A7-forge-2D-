@@ -15,7 +15,7 @@ import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
-import {financialSnapshot} from "./sim/financialClarity.js";
+import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
@@ -856,7 +856,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,Math.floor(game.totalMinutes/DAY_MINUTES),activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -882,6 +882,22 @@ function renderUI(liveOnly=false):void {
     inCurrency(statement.differenceCents/100)+
     " do cálculo pelo capital inicial e pelos lançamentos. Confira o histórico em Finanças.";
   }
+  const closing=monthlyClosingSnapshot(game);
+  const dueLabel=document.getElementById("bill-watch-title");
+  const dueStatus=document.getElementById("bill-watch-status");
+  const dueBox=document.getElementById("bill-watch");
+  if(closing.campaignEnding){
+   if(dueLabel)dueLabel.textContent="Calendário encerrando";
+   if(dueStatus)dueStatus.textContent="A campanha termina neste dia; não há outro fechamento agendado.";
+  }else{
+   if(dueLabel)dueLabel.textContent="Próximo fechamento em "+closing.daysRemaining+
+    (closing.daysRemaining===1?" dia do jogo":" dias do jogo");
+   if(dueStatus)dueStatus.textContent="Provisão acumulada até agora: "+inCurrency(closing.provision)+
+    ". "+(closing.coversProvision?"O caixa atual cobre este valor.":"Se a cobrança fosse agora, faltariam "+
+      inCurrency(closing.shortfall)+".");
+  }
+  if(dueBox)dueBox.classList.toggle("bill-watch-warning",
+   !closing.campaignEnding&&!closing.coversProvision&&closing.daysRemaining<=7);
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");

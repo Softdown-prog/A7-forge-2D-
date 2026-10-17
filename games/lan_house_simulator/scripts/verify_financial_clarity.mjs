@@ -5,7 +5,7 @@ import {mkdir,writeFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
-import {GAME_SAVE_KEY} from "../dist/js/sim/types.js";
+import {GAME_SAVE_KEY,DAY_MINUTES} from "../dist/js/sim/types.js";
 
 const out=resolve(process.argv[2]??"out/balance-panel");
 await mkdir(out,{recursive:true});
@@ -20,6 +20,8 @@ try{
   const mobile=width<700,context=await browser.newContext({viewport:{width,height:920},isMobile:mobile,hasTouch:mobile});
   const s=createGame(width,"historical");
   s.cash=386.49;s.revenue=900;s.expenses=1363.51;
+  // Dia 30 do ciclo: testar o aviso de fechamento antes da virada.
+  s.totalMinutes=29*DAY_MINUTES;s.energyAccrued=325;
   await context.addInitScript(({key,state})=>{
    localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");
   },{key:GAME_SAVE_KEY,state:s});
@@ -41,11 +43,15 @@ try{
   assert.match(await page.locator("#balance-available").innerText(),/386,49/);
   assert.equal(await page.locator("#balance-reconciliation").isVisible(),false);
   assert.match(await page.locator(".balance-guide").innerText(),/As contas por mês são uma previsão/);
+  assert.match(await page.locator("#bill-watch-title").innerText(),/1 dia do jogo/);
+  assert.match(await page.locator("#bill-watch-status").innerText(),/Se a cobrança fosse agora, faltariam/);
+  assert.equal(await page.locator("#bill-watch").evaluate(el=>el.classList.contains("bill-watch-warning")),true);
   const scrollOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(scrollOverflow<=3,"painel rompe a largura em "+width+"px: "+scrollOverflow);
   await page.locator(".balance-guide").screenshot({path:resolve(out,"balance_guide_"+width+".png")});
+  await page.locator("#bill-watch").screenshot({path:resolve(out,"bill_watch_"+width+".png")});
   assert.deepEqual(errors,[]);
-  reports.push({width,cash:386.49,netResult:-463.51,opened:true,scrollOverflow});
+  reports.push({width,cash:386.49,netResult:-463.51,daysUntilBills:1,warning:true,opened:true,scrollOverflow});
   await context.close();
  }
  await writeFile(resolve(out,"balance_guide.json"),JSON.stringify({reports,passed:true},null,2));

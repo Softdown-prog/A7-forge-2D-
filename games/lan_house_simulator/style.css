@@ -647,3 +647,17 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .balance-guide-intro{display:block}.balance-guide-intro>p{margin-top:4px;font-size:10px}
  .balance-breakdown{padding:2px 9px}.balance-breakdown dt{font-size:10px}
  .balance-breakdown dd{font-size:11px}}
+
+/* Aviso de vencimento: compacto, sem alertas falsos durante o começo do mês. */
+.bill-watch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:3px 11px;
+ align-items:baseline;margin:-7px 0 16px;padding:9px 13px;
+ border-radius:9px;border:1px solid #d7dcc8;background:#f6f5e9;color:#445849}
+.bill-watch>strong{font-size:11px;line-height:1.5;color:#3a5943}
+.bill-watch>span{font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.bill-watch>small{grid-column:1/-1;color:#657460;font-size:10px;line-height:1.4}
+.bill-watch.bill-watch-warning{background:#fbede2;border-color:#dda784;color:#754024}
+.bill-watch.bill-watch-warning>strong{color:#87451f}
+.bill-watch.bill-watch-warning>small{color:#885d44}
+@media(max-width:700px){.bill-watch{grid-template-columns:1fr;padding:9px 12px;
+ margin:-5px 0 12px;gap:2px}.bill-watch>span{font-size:10px}
+ .bill-watch>small{font-size:10px}}
