@@ -44,3 +44,8 @@ Uma carta não termina no clique do jogador. Cada decisão deve produzir efeito 
 Toda alternativa deve ter efeito concreto e um retorno, inclusive as opções gratuitas e as de ignorar. O retorno não pode repetir o mesmo texto para escolhas distintas. Recusar divulgação ou uma ação comunitária não deve ser tratado como infração. Nenhum evento esporádico volta depois de resolvido na mesma partida. Criar testes de cada ramo, save/importação, falta de caixa, efeitos prolongados e idempotência.
 
 Nesta implementação, as 12 histórias novas recebem o ciclo completo. Também foram incluídas as quatro propostas legadas (fornecedor, escola, campeonato e manutenção), preservando o efeito imediato original de cada escolha e agora acrescentando retorno e conclusão. São 16 cadeias de decisões ao todo. A fiscalização dos Bombeiros conserva sua continuação própria por prazo, multa e regularização.
+
+## Histórias históricas com ano fixo (16/10/2026)
+- 2004 — orientação local sobre estudantes de uniforme durante as aulas. Não corresponde a uma proibição nacional.
+- 2005 — surgimento, dentro do jogo, de um catálogo avançado com requisitos de GPU/Windows. As decisões representam interesse e planejamento; não modificam hardware ou licenças automaticamente e adiar não gera multa.
+- As duas histórias usam o mesmo fluxo de três escolhas, retorno e conclusão; não integram o sorteio de doze histórias esporádicas.

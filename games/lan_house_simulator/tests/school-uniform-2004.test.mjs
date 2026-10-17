@@ -24,7 +24,7 @@ test("evento da escola é de 2004, não sorteado em outros anos",()=>{
    at(s,y,d);scheduleDecisions(s);
    assert.equal(s.notices?.some(n=>n.id===id)??false,false,y+"/"+d);
   }
- assert.equal(additionalMailSchedule(s,STORY_IDS.filter(k=>k!==id))[id],undefined);
+ assert.equal(additionalMailSchedule(s,STORY_IDS.filter(k=>k!==id&&k!=="gpu-games-2005"))[id],undefined);
  assert.ok(STORIES[id].body.includes("não uma proibição nacional"));
 });
 test("carta aparece uma só vez durante 2004, mesmo se removida da caixa",()=>{
@@ -88,7 +88,7 @@ test("com caixa zerado, alternativas gratuitas continuam disponíveis",()=>{
  assert.equal(s.cash,0);
 });
 test("a história preserva as 12 histórias esporádicas e saves antigos",()=>{
- assert.equal(STORY_IDS.length,13);
+ assert.equal(STORY_IDS.length,14);
  const s=createGame(2,"historical");
  const restored=parseImportedSave(serializeSave(s));
  assert.equal(restored.storySeenIds?.includes(id)??false,false);

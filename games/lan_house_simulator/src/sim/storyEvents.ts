@@ -11,7 +11,7 @@ export const STORY_IDS=[
  "roof-leak","neighbor-noise","damaged-keyboard","malware-incident",
  "missing-stock","unexpected-power-bill","late-supplier","lost-document",
  "local-network","neighborhood-paper","privacy-exposure","community-drive",
- "school-uniform-policy"
+ "school-uniform-policy","gpu-games-2005"
 ] as const;
 export type StoryId=typeof STORY_IDS[number];
 export const LEGACY_CHAIN_IDS=["supplier-offer","school-booking","gaming-tournament","equipment-fault"] as const;
@@ -161,6 +161,19 @@ export const STORIES:Record<StoryId,StoryDefinition>={
  ],"A escola agradeceu a colaboração. Os alunos receberam orientações sobre os horários de aula.",
  "Alguns estudantes passaram a respeitar os horários, mas a direção ainda recebeu relatos de faltas.",
  "A escola voltou a procurar Tony: responsáveis reclamaram que estudantes seguem faltando às aulas."),
+ "gpu-games-2005":story("2005: jogos avançados pedem placa de vídeo",
+  "Alguns lançamentos já exigem placa de vídeo dedicada e um Windows compatível e licenciado. Tony percebeu que pode atrair um novo público, mas anunciar esses jogos não os instala: para licenciar um título avançado, a lan house precisa ter ao menos um computador com GPU e Windows adequados. Como se preparar?", "opportunity",[
+  choice("gpu-plan", "Preparar divulgação para a nova geração", 90,
+   "Planeja a comunicação sem comprar placas nem licenças automaticamente","good",
+   {reputation:1,visitors:1.06,visitorDays:8}),
+  choice("gpu-survey", "Pesquisar interesse dos clientes", 20,
+   "Escuta os jogadores antes de investir em máquinas e contratos","mixed",
+   {reputation:1,visitors:1.02,visitorDays:5}),
+  choice("gpu-defer", "Adiar a entrada nos jogos avançados", 0,
+   "Mantém o catálogo atual, sem cobrança nem punição por esperar","bad",{})
+ ],"O plano de divulgação encontrou jogadores interessados. Para atendê-los, ainda será preciso instalar GPU e Windows compatíveis e comprar as licenças.",
+ "A pesquisa mostrou curiosidade por jogos novos, mas os clientes querem saber quando haverá PCs preparados.",
+ "Tony preferiu manter os jogos disponíveis. O novo segmento seguirá como uma possibilidade futura, sem obrigação de compra."),
  "community-drive":story("Associação pede computadores para uma ação social",
   "Uma associação do bairro quer utilizar algumas horas de computador para ajudar moradores.","opportunity",[
   choice("community-donate","Ceder horas gratuitas",65,"Apoio comunitário fortalece os laços do bairro","good",{reputation:3,visitors:1.07,visitorDays:10}),
@@ -203,7 +216,8 @@ const FOLLOWUP_LABELS:Record<StoryId,readonly string[]>={
  "neighborhood-paper":["Manter contato com jornal","Deixar matéria repercutir","Divulgar matéria no bairro","Manter divulgação discreta","Retomar contato com redação","Não participar da publicação"],
  "privacy-exposure":["Auditar todos os perfis","Manter limpeza de dados","Revisar demais máquinas","Limpar só após reclamação","Contratar limpeza completa","Ignorar outra exposição de dados"],
  "community-drive":["Organizar nova ação","Manter parceria","Reservar horários adicionais","Limitar colaboração","Procurar a associação","Não participar da iniciativa"],
- "school-uniform-policy":["Reunir escola e responsáveis","Manter avisos de horários","Formalizar orientação por escrito","Continuar conversas informais","Adotar regra com apoio da escola","Ignorar nova reclamação"]
+ "school-uniform-policy":["Reunir escola e responsáveis","Manter avisos de horários","Formalizar orientação por escrito","Continuar conversas informais","Adotar regra com apoio da escola","Ignorar nova reclamação"],
+ "gpu-games-2005":["Divulgar requisitos de hardware","Manter plano de comunicação","Testar interesse por títulos novos","Acompanhar as preferências","Retomar conversa com jogadores","Continuar com o catálogo atual"]
 };
 const FOLLOWUP_KEYS=["consolidate","observe","complete","maintain","recover","persist"];
 const PERSISTENT_ESCALATIONS:Partial<Record<StoryChainId,StoryImpact>>={

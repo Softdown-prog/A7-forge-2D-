@@ -83,15 +83,17 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
 export function scheduleDecisions(s:GameState):void{
  processStoryFollowups(s);
  const today=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
- // A carta de uniforme tem ano fixo; não participa do sorteio esporádico 1998–2030.
- const randomStories=STORY_IDS.filter(id=>id!=="school-uniform-policy");
+ // As cartas históricas de 2004 e 2005 não participam do sorteio esporádico 1998–2030.
+ const randomStories=STORY_IDS.filter(id=>id!=="school-uniform-policy"&&id!=="gpu-games-2005");
  const storyDates=additionalMailSchedule(s,randomStories);
  const ids:Array<DecisionId|StoryId>=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection",...STORY_IDS];
  const candidates=ids.filter(id=>
   (isStoryId(id)
    ?(id==="school-uniform-policy"
      ?fixedYearMailWindowDue(s,2004,121,150)
-     :storyDates[id]!==undefined&&today>=storyDates[id]!&&today<storyDates[id]!+45)&&!storySeen(s,id)
+     :id==="gpu-games-2005"
+       ?fixedYearMailWindowDue(s,2005,61,90)
+       :storyDates[id]!==undefined&&today>=storyDates[id]!&&today<storyDates[id]!+45)&&!storySeen(s,id)
    :sporadicMailDue(s,id))&&
   !(s.storyRecords??[]).some(r=>r.id===id)&&
   (id!=="electrical-inspection"||!s.electricalInspectionSeen)&&
@@ -102,7 +104,8 @@ export function scheduleDecisions(s:GameState):void{
  if(!candidates.length)return;
  const dates:Partial<Record<string,number>>={
   ...sporadicMailSchedule(s),...storyDates,
-  "school-uniform-policy":(2004-1998)*360+121
+  "school-uniform-policy":(2004-1998)*360+121,
+  "gpu-games-2005":(2005-1998)*360+61
  };
  // Nunca escolher uma mensagem aleatória extra em dias adjacentes.
  const id=candidates.sort((a,b)=>(dates[a]??0)-(dates[b]??0))[0]!;

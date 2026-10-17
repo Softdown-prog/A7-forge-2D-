@@ -778,3 +778,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Não consumir RNG de visitantes, não duplicar cobranças nem reeditar a carta após compactação das correspondências.
 - [x] Cobrir ano fixo, orçamento insuficiente, importação, retorno e UI desktop/mobile em testes Node e Chromium.
 - [ ] Ajustar impacto econômico desse evento depois de campanhas completas com regras e outros compromissos escolares.
+
+## Evento histórico de 2005 — jogos que exigem GPU
+- [x] Avisar no correio, só em 2005, que alguns novos jogos exigem GPU dedicada, Windows compatível e licença.
+- [x] Dar opções de divulgação, pesquisa e adiamento, com desdobramento e conclusão persistentes.
+- [x] Não instalar GPUs, comprar jogos, licenciar Windows nem cobrar o jogador automaticamente.
+- [x] Respeitar o sistema existente de desbloqueio GPU/Windows e não penalizar quem preferir esperar.
+- [x] Incluir testes Node para calendário, persistência, escolhas, ausência de caixa e idempotência.
+- [ ] Revisar ritmo e impactos desta carta após campanhas completas e teste em dispositivo físico.

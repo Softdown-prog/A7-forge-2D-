@@ -56,8 +56,8 @@ function runStory(id,choiceIndex,followupIndex){
  assert.equal(isValidSave(final),true);
  return final;
 }
-test("13 histórias com três escolhas e dois desdobramentos cada, todas persistentes e não repetidas",()=>{
- assert.equal(STORY_IDS.length,13);
+test("14 histórias com três escolhas e dois desdobramentos cada, todas persistentes e não repetidas",()=>{
+ assert.equal(STORY_IDS.length,14);
  for(const id of STORY_IDS){
   assert.ok(STORIES[id].title.length>5);
   assert.ok(STORIES[id].body.length>30);

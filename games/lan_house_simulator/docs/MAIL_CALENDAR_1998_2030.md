@@ -27,3 +27,8 @@ O calendário é determinístico por partida; **esporádico** não significa rep
 
 ## Notificação sonora de correio
 O correio utiliza o efeito autoral tratado `mail_notification_01.ogg`, selecionado entre 8 batidas gravadas pelo criador. A interface observa novos IDs de mensagens, independentemente do fluxo de entrega (avisos, decisões, histórias, relatórios). Uma mensagem nova dispara um toque curto. Um item já conhecido, reabertura do correio, leitura, mudança de lida para não lida e retomada de save não emitem som. Os IDs são controlados só na UI, sem alterar economia ou RNG do jogo.
+
+## Cartas históricas integradas
+- **2004, dias 121–150:** estudantes de uniforme no horário de aula, com consequências por escolha e retorno.
+- **2005, dias 61–90:** novos jogos que exigem GPU e Windows compatíveis, com alternativas de preparação, pesquisa ou adiamento. É um aviso narrativo; não compra equipamentos nem libera licenças. Nenhuma destas duas cartas entra no sorteio das doze histórias esporádicas.
+- Cada carta histórica tem registro único por save e não reaparece em outro ano, mesmo após limpeza das mensagens.

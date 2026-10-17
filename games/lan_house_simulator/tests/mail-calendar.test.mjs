@@ -118,10 +118,10 @@ test("salvamento antigo após 2030 importa no limite sem apagar caixa e bens",()
 });
 
 
-test("doze histórias esporádicas, evento histórico de 2004 e oito cartas preservam o calendário",()=>{
+test("doze histórias esporádicas, eventos de 2004/2005 e oito cartas preservam o calendário",()=>{
  for(const seed of [1,23,72421,123456,987654,0xffffffff]){
   const s=createGame(seed);s.cash=100000;s.pcWear=[45,45,45];
-  const rng=s.rng,stories=additionalMailSchedule(s,STORY_IDS.filter(id=>id!=="school-uniform-policy"));
+  const rng=s.rng,stories=additionalMailSchedule(s,STORY_IDS.filter(id=>id!=="school-uniform-policy"&&id!=="gpu-games-2005"));
   assert.equal(Object.keys(stories).length,12);
   const dates=[...Object.values(sporadicMailSchedule(s)),...Object.values(stories)].sort((a,b)=>a-b);
   assert.equal(dates.length,20);
@@ -136,9 +136,9 @@ test("doze histórias esporádicas, evento histórico de 2004 e oito cartas pres
     if(options.length)assert.equal(chooseDecision(s,n.id,options.at(-1).id).ok,true,n.id);
    }
   }
-  assert.equal(firstLetters.size,21);
-  assert.equal(s.storySeenIds.length,13);
-  assert.equal(s.storyRecords.length,17);
+  assert.equal(firstLetters.size,22);
+  assert.equal(s.storySeenIds.length,14);
+  assert.equal(s.storyRecords.length,18);
   assert.ok(s.storyRecords.every(r=>r.stage==="done"));
   assert.equal(s.rng,rng);
   assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
