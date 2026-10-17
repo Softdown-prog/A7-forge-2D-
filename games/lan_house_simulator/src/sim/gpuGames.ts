@@ -2,6 +2,7 @@ import type {GameState,Result} from "./types.js";
 import {GPU_CATALOG,installedGpu,type GpuId} from "./gpu.js";
 import {WINDOWS_ERAS,installedWindows} from "./era.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
+import {stationPowerCount,stationPoweredOn,stationHasCustomer} from "./stationPower.js";
 
 /** Títulos fictícios, independentes do catálogo básico R$ 450.
  * A licença é do estabelecimento; a execução e o adicional são por PC.
@@ -30,6 +31,44 @@ export function validGpuGameLicenses(value:unknown,s:Partial<GameState>):boolean
   return !!spec&&spec.year<=year;
  });
 }
+
+/** Jogos implicitamente instalados em saves antigos até a primeira edição. */
+export function gpuGameInstalledOnPc(s:GameState,index:number,id:GpuGameId):boolean{
+ if(!Number.isInteger(index)||index<0||index>=stationPowerCount(s)||!s.licensedGpuGames?.includes(id))return false;
+ return s.gpuGameInstalls===undefined?true:s.gpuGameInstalls[index]?.includes(id)===true;
+}
+export function validGpuGameInstalls(value:unknown,s:Partial<GameState>):boolean{
+ if(value===undefined)return true;
+ if(!isHistorical(s as GameState)||!Array.isArray(value)||value.length>stationPowerCount(s as GameState))return false;
+ return value.every(row=>Array.isArray(row)&&row.length<=GPU_GAME_CATALOG.length&&
+  new Set(row).size===row.length&&row.every(id=>typeof id==="string"&&
+   s.licensedGpuGames?.includes(id)&&!!gpuGameSpec(id)));
+}
+/** A licença já foi paga. A instalação exige PC ligado, livre e sem manutenção. */
+export function toggleGpuGameInstallation(s:GameState,index:number,id:GpuGameId):Result{
+ const game=gpuGameSpec(id);
+ if(!game||!s.licensedGpuGames?.includes(id)||!isHistorical(s))
+  return {ok:false,message:"É necessário licenciar este jogo primeiro."};
+ if(!Number.isInteger(index)||index<0||index>=stationPowerCount(s))
+  return {ok:false,message:"Computador inexistente."};
+ if(!stationPoweredOn(s,index))
+  return {ok:false,message:"Ligue o PC "+(index+1)+" antes de alterar os jogos."};
+ if(stationHasCustomer(s,index))
+  return {ok:false,message:"PC "+(index+1)+" ocupado. Aguarde o cliente sair."};
+ if(s.repairJobs?.some(job=>job.pc===index&&job.phase!=="leaving"))
+  return {ok:false,message:"Aguarde o reparo do PC "+(index+1)+"."};
+ const installed=gpuGameInstalledOnPc(s,index,id);
+ if(!installed&&!gpuGameCompatible(s,index,game))
+  return {ok:false,message:"PC "+(index+1)+" não possui GPU e Windows compatíveis."};
+ // A transição inicial copia o estado antigo de todas as estações.
+ s.gpuGameInstalls=Array.from({length:stationPowerCount(s)},(_,i)=>
+  [...(s.gpuGameInstalls?.[i]??s.licensedGpuGames??[])]);
+ const row=s.gpuGameInstalls[index]!;
+ if(installed)s.gpuGameInstalls[index]=row.filter(title=>title!==id);
+ else row.push(id);
+ return {ok:true,message:game.name+(installed?" removido do PC ":" instalado no PC ")+(index+1)+
+  ". Não há nova cobrança de licença."};
+}
 /** Licença Windows paga e hardware compatível na estação especificada. */
 export function gpuGameCompatible(s:GameState,index:number,game:GpuGameSpec):boolean{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
@@ -54,7 +93,7 @@ export function hasPlayableGpuGame(s:GameState):boolean{
  const year=yearFromMinutes(s.totalMinutes);
  return (s.licensedGpuGames??[]).some(id=>{
   const game=gpuGameSpec(id);
-  return !!game&&game.year<=year&&gpuGameEligiblePcs(s,game).length>0;
+  return !!game&&game.year<=year&&gpuGameEligiblePcs(s,game).some(i=>gpuGamePlayableOnPc(s,i,id));
  });
 }
 export interface GpuGameQuote extends Result {cost:number;eligiblePcs:number[]}
@@ -77,7 +116,17 @@ export function licenseGpuGame(s:GameState,id:string):Result{
  const game=gpuGameSpec(id)!;
  s.cash-=quote.cost;s.expenses+=quote.cost;
  (s.licensedGpuGames??=[]).push(game.id);
- return {ok:true,message:game.name+" licenciado por R$ "+quote.cost+". Disponível somente nos PCs compatíveis."};
+ // Em partidas com instalações explícitas, habilitar o novo jogo somente
+ // nos PCs que já eram compatíveis ao comprar a licença.
+ if(s.gpuGameInstalls!==undefined){
+  const eligible=new Set(quote.eligiblePcs);
+  s.gpuGameInstalls=Array.from({length:stationPowerCount(s)},(_,i)=>{
+   const titles=[...(s.gpuGameInstalls?.[i]??[])];
+   if(eligible.has(i))titles.push(game.id);
+   return titles;
+  });
+ }
+ return {ok:true,message:game.name+" licenciado por R$ "+quote.cost+". Instalação disponível nos PCs compatíveis."};
 }
 /** A preferência é fixada na chegada, apenas entre títulos já lançados.
  * Atribuição determinística por ID, sem sorteio extra ou dependência das
@@ -95,7 +144,7 @@ export function gpuGamePlayableOnPc(s:GameState,index:number,id:GpuGameId):boole
  const spec=gpuGameSpec(id);
  return !!spec&&isHistorical(s)&&!!s.licensedGames&&
   spec.year<=yearFromMinutes(s.totalMinutes)&&
-  !!s.licensedGpuGames?.includes(id)&&gpuGameCompatible(s,index,spec);
+  !!s.licensedGpuGames?.includes(id)&&gpuGameCompatible(s,index,spec)&&gpuGameInstalledOnPc(s,index,id);
 }
 /** Adicional local, limitado pelo teto horário anual.
  * Um título pedido nunca cobra o bônus de OUTRO título mais caro; sem

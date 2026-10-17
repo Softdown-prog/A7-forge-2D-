@@ -32,7 +32,7 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
-import {validGpuGameLicenses,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
+import {validGpuGameLicenses,validGpuGameInstalls,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
@@ -642,7 +642,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&

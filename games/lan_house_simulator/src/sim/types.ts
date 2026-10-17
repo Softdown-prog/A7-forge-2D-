@@ -124,6 +124,8 @@ export interface GameState {
   licensedEraGames?: import("./eraGames.js").EraGameId[];
   /** Licenças avançadas por estabelecimento (opcional em saves antigos). */
   licensedGpuGames?: import("./gpuGames.js").GpuGameId[];
+  /** Instalações por PC; sem este campo, saves antigos mantêm todos os jogos licenciados instalados. */
+  gpuGameInstalls?: import("./gpuGames.js").GpuGameId[][];
   /** Procura e atendimento medidos por jogo; opcional em saves antigos. */
   gpuGameDemand?: import("./gpuDemand.js").GpuGameDemand;
   expansionLevel: number;
