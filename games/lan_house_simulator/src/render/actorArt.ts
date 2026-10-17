@@ -35,6 +35,8 @@ export interface ActorRender {
   facing?: -1 | 1;
   direction?: ActorDirection;
   transition?: number;
+  /** Cliente usando controle de console; anima mãos sem alterar poses de PC. */
+  gamepad?: boolean;
 }
 function ell(ctx: CanvasRenderingContext2D,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
@@ -55,6 +57,11 @@ function segment(ctx:CanvasRenderingContext2D,
   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
 }
 const clamp01=(v:number):number=>Math.min(1,Math.max(0,v));
+/** Ease-in/out contínuo: cliente não salta ao começar ou terminar de sentar. */
+export function seatTransitionWeight(progress:number):number{
+ const t=clamp01(progress);
+ return t*t*(3-2*t);
+}
 /** Broad light and a shaded edge describe a cylinder without textures or 3D. */
 function limb(ctx:CanvasRenderingContext2D,x1:number,y1:number,x2:number,y2:number,
  width:number,fill:string):void{
@@ -108,15 +115,18 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     a.kind==="technician"&&pose==="repairing"?workerMotion("repairing",a.time):null;
   const transition=clamp01(a.transition??1);
   // A cabeça mantém exatamente as mesmas feições, materiais e cores em todas as poses.
-  const seated=pose==="sitting"?transition:pose==="standing-up"?1-transition:0;
+  const eased=seatTransitionWeight(transition);
+  const seated=pose==="sitting"?eased:pose==="standing-up"?1-eased:0;
+  const gamepadActive=!!a.gamepad&&pose==="sitting"&&seated>.99;
   const step=walking?Math.sin(a.time*7.7+a.id*.27):0;
   const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*1.4)*.6:0;
   const bob=walking?Math.abs(step)*1.5:0;
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
   // Antes, o corpo afundava 18px e parecia agachado no chão.
-  const headShift=seated*3;
+  const settle=(pose==="sitting"||pose==="standing-up")?Math.sin(Math.PI*transition)*1.5:0;
+  const headShift=seated*3+settle;
   const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:work?work.pulse*.65:seated*2;
-  const typing=seated>0.95?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
+  const typing=seated>0.95&&!gamepadActive?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south";
   const back=direction==="north";
   const sideways=direction==="east"||direction==="west";
@@ -182,7 +192,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
     const elbowY=work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
     const handX=movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+typing*side;
+    const handY=movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
     // Borda da manga e luz discreta: o braço continua legível de costas.
