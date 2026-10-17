@@ -758,7 +758,7 @@ function renderShop(force=true):void{
  * posição de rolagem no painel mobile. */
 function refreshGpuDownloadMeters():void{
  if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses")return;
- for(const label of gpuGamePanel.querySelectorAll<HTMLElement>("[data-gpu-download-status]")){
+ for(const label of Array.from(gpuGamePanel.querySelectorAll<HTMLElement>("[data-gpu-download-status]"))){
   const pc=Number(label.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
   if(!job||job.id!==label.dataset.gpuDownloadStatus)continue;
   const reason=gpuGameInstallPausedReason(game,pc);
@@ -766,7 +766,7 @@ function refreshGpuDownloadMeters():void{
   label.textContent="PC "+(pc+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
    (reason?" · Pausado: "+reason:" · "+remaining+" min do jogo restantes");
  }
- for(const meter of gpuGamePanel.querySelectorAll<HTMLProgressElement>("[data-gpu-download-progress]")){
+ for(const meter of Array.from(gpuGamePanel.querySelectorAll<HTMLProgressElement>("[data-gpu-download-progress]"))){
   const pc=Number(meter.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
   if(job&&job.id===meter.dataset.gpuDownloadProgress)meter.value=job.elapsedMinutes;
  }
