@@ -15,6 +15,64 @@ export const GPU_GAME_CATALOG=[
 ] as const;
 export type GpuGameId=(typeof GPU_GAME_CATALOG)[number]["id"];
 export type GpuGameSpec=(typeof GPU_GAME_CATALOG)[number];
+export interface GpuGameInstallJob {pc:number;id:GpuGameId;durationMinutes:number;elapsedMinutes:number}
+/** Duração fixa no começo; upgrades de internet afetam apenas os próximos. */
+export function gpuGameInstallDuration(s:GameState,id:GpuGameId):number{
+ const base=id==="neon-rush"?18:id==="circuito-competitivo"?28:40;
+ return Math.max(5,Math.ceil(base/Math.max(1,Math.min(3,s.internetTier))));
+}
+export function gpuGameInstallJob(s:GameState,pc:number):GpuGameInstallJob|undefined{
+ return s.gpuGameInstallJobs?.find(j=>j.pc===pc);
+}
+export function gpuGameInstallPausedReason(s:GameState,pc:number):string|null{
+ if(!stationPoweredOn(s,pc))return "PC desligado";
+ if(s.totalMinutes<s.offlineUntil)return "sem internet";
+ if(stationHasCustomer(s,pc))return "PC ocupado";
+ if(s.repairJobs?.some(j=>j.pc===pc&&j.phase!=="leaving"))return "em manutenção";
+ return null;
+}
+export function validGpuGameInstallJobs(value:unknown,s:Partial<GameState>):boolean{
+ if(value===undefined)return true;
+ if(!isHistorical(s as GameState)||!Array.isArray(value)||
+    value.length>stationPowerCount(s as GameState)||s.gpuGameInstalls===undefined)return false;
+ const seen=new Set<number>();
+ return value.every((job:GpuGameInstallJob)=>{
+  if(!job||typeof job!=="object"||Array.isArray(job))return false;
+  if(!Number.isInteger(job.pc)||job.pc<0||job.pc>=stationPowerCount(s as GameState)||seen.has(job.pc))return false;
+  seen.add(job.pc);
+  return typeof job.id==="string"&&!!gpuGameSpec(job.id)&&
+   s.licensedGpuGames?.includes(job.id)===true&&
+   s.gpuGameInstalls?.[job.pc]?.includes(job.id)!==true&&
+   Number.isInteger(job.durationMinutes)&&job.durationMinutes>=5&&job.durationMinutes<=40&&
+   Number.isInteger(job.elapsedMinutes)&&job.elapsedMinutes>=0&&job.elapsedMinutes<job.durationMinutes;
+ });
+}
+/** Um minuto de simulação, sem temporizadores externos nem RNG. */
+export function tickGpuGameInstallations(s:GameState):Array<{pc:number;id:GpuGameId}>{
+ const completed:Array<{pc:number;id:GpuGameId}>=[];
+ if(!s.gpuGameInstallJobs?.length)return completed;
+ const pending:GpuGameInstallJob[]=[];
+ for(const job of s.gpuGameInstallJobs){
+  const spec=gpuGameSpec(job.id);
+  if(gpuGameInstallPausedReason(s,job.pc)||!spec||!gpuGameCompatible(s,job.pc,spec)){
+   pending.push(job);continue;
+  }
+  job.elapsedMinutes++;
+  if(job.elapsedMinutes>=job.durationMinutes){
+   const installed=s.gpuGameInstalls?.[job.pc];
+   if(installed&&!installed.includes(job.id))installed.push(job.id);
+   completed.push({pc:job.pc,id:job.id});
+  }else pending.push(job);
+ }
+ s.gpuGameInstallJobs=pending;
+ return completed;
+}
+export function cancelGpuGameInstallation(s:GameState,pc:number,id:GpuGameId):Result{
+ const job=gpuGameInstallJob(s,pc);
+ if(!job||job.id!==id)return {ok:false,message:"Não há download deste título no PC."};
+ s.gpuGameInstallJobs=s.gpuGameInstallJobs!.filter(j=>j!==job);
+ return {ok:true,message:"Download de "+gpuGameSpec(id)!.name+" cancelado no PC "+(pc+1)+". Sem custo."};
+}
 export function gpuGameSpec(id:string):GpuGameSpec|undefined{
  return GPU_GAME_CATALOG.find(game=>game.id===id);
 }
@@ -68,16 +126,21 @@ export function toggleGpuGameInstallation(s:GameState,index:number,id:GpuGameId)
   return {ok:false,message:"PC "+(index+1)+" ocupado. Aguarde o cliente sair."};
  if(s.repairJobs?.some(job=>job.pc===index&&job.phase!=="leaving"))
   return {ok:false,message:"Aguarde o reparo do PC "+(index+1)+"."};
+ if(gpuGameInstallJob(s,index))return {ok:false,message:"O PC "+(index+1)+" já está baixando um jogo."};
  const installed=gpuGameInstalledOnPc(s,index,id);
  if(!installed&&!gpuGameCompatible(s,index,game))
   return {ok:false,message:"PC "+(index+1)+" não possui GPU e Windows compatíveis."};
  // A transição inicial copia o estado antigo de todas as estações.
  s.gpuGameInstalls=currentGpuInstallRows(s);
  const row=s.gpuGameInstalls[index]!;
- if(installed)s.gpuGameInstalls[index]=row.filter(title=>title!==id);
- else row.push(id);
- return {ok:true,message:game.name+(installed?" removido do PC ":" instalado no PC ")+(index+1)+
-  ". Não há nova cobrança de licença."};
+ if(installed){
+  s.gpuGameInstalls[index]=row.filter(title=>title!==id);
+  return {ok:true,message:game.name+" removido do PC "+(index+1)+". Sem custo."};
+ }
+ const durationMinutes=gpuGameInstallDuration(s,id);
+ (s.gpuGameInstallJobs??=[]).push({pc:index,id,durationMinutes,elapsedMinutes:0});
+ return {ok:true,message:"Baixando "+game.name+" no PC "+(index+1)+
+  " · "+durationMinutes+" minutos do jogo. Sem custo."};
 }
 /** Distribuição gratuita para PCs aptos, sem mexer nas máquinas ocupadas
  * ou desligadas. Nenhuma mutação quando todas as estações estão bloqueadas.
@@ -88,14 +151,15 @@ export function installGpuGameOnAvailablePcs(s:GameState,id:GpuGameId):Result{
   return {ok:false,message:"É necessário licenciar este jogo antes de distribuí-lo."};
  const missing=gpuGameEligiblePcs(s,spec).filter(i=>!gpuGameInstalledOnPc(s,i,id));
  if(!missing.length)return {ok:false,message:spec.name+" já está instalado em todos os PCs compatíveis."};
- const available=missing.filter(i=>pcAvailableForGameManagement(s,i));
+ const available=missing.filter(i=>pcAvailableForGameManagement(s,i)&&!gpuGameInstallJob(s,i));
  if(!available.length)return {ok:false,message:"Não há PCs livres e ligados para instalar "+spec.name+" agora."};
- const rows=currentGpuInstallRows(s);
- for(const i of available)rows[i]!.push(id);
- s.gpuGameInstalls=rows;
+ s.gpuGameInstalls=currentGpuInstallRows(s);
+ const durationMinutes=gpuGameInstallDuration(s,id);
+ (s.gpuGameInstallJobs??=[]).push(...available.map(pc=>({pc,id,durationMinutes,elapsedMinutes:0})));
  const waiting=missing.length-available.length;
- return {ok:true,message:spec.name+" instalado em "+available.length+" PC(s)"+
-  (waiting?"; "+waiting+" aguardando estação livre ou ligada":"")+". Sem custo adicional."};
+ return {ok:true,message:"Download de "+spec.name+" iniciado em "+available.length+" PC(s)"+
+  (waiting?"; "+waiting+" aguardando PC disponível":"")+
+  ". Duração: "+durationMinutes+" minutos do jogo. Sem custo."};
 }
 /** Licença Windows paga e hardware compatível na estação especificada. */
 export function gpuGameCompatible(s:GameState,index:number,game:GpuGameSpec):boolean{
