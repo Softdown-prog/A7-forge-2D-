@@ -2,7 +2,7 @@ import {validateObjectPlacements} from "./editableObjects.js";
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
-import {INITIAL_CASH} from "./financialClarity.js";
+import {INITIAL_CASH,paidMonthlyBillReceipt,validPaidMonthlyBill} from "./financialClarity.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
@@ -533,10 +533,15 @@ function nextDay(s: GameState): void {
   addLog(s, s.weather === "rain" ? "Dia chuvoso: demanda menor e rede instável." : "Novo dia: portas abertas.");
   if (dayNumber(s) > 1 && (dayNumber(s) - 1) % 30 === 0) {
     // A conta encerra o mês que acabou, não antecipa o índice do mês seguinte.
-    const bill=monthlyBills({...s,totalMinutes:Math.max(0,s.totalMinutes-1)});
+    const closingState={...s,totalMinutes:Math.max(0,s.totalMinutes-1)};
+    const bill=monthlyBills(closingState);
     const energy=Math.round(s.energyAccrued??0);
     const wages=s.employeePayrollAccrued??0;
+    const cashAfterPayment=s.cash-bill;
+    // Registrar as parcelas antes de limpar os acumuladores de energia/salários.
+    const paidReceipt=paidMonthlyBillReceipt(closingState,dayNumber(s)-1,bill,cashAfterPayment);
     s.cash -= bill; s.expenses += bill;
+    s.lastPaidMonthlyBill=paidReceipt;
     s.energyAccrued=0;
     s.employeePayrollAccrued=0;
     s.employeeWorkedDays={cleaner:0,technician:0};
@@ -645,7 +650,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validEmployeeState(v) && validStationPower(v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validEmployeeState(v) && validStationPower(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&

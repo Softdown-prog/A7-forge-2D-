@@ -86,6 +86,9 @@ export interface GameState {
   monthExpensesBase?: number;
   lastMonthRevenue?: number;
   lastMonthExpenses?: number;
+  /** Última conta mensal paga, com as cinco parcelas e data do fechamento.
+   * Ausente em saves de versões anteriores. */
+  lastPaidMonthlyBill?: import("./financialClarity.js").PaidMonthlyBill;
   /** Métricas opcionais; saves antigos começam a coletar após carregar. */
   stationLedger?: StationAccount[];
   reputation: number;

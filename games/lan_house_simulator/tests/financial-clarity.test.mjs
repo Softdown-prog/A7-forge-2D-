@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {createGame} from "../dist/js/sim/engine.js";
-import {INITIAL_CASH,financialSnapshot,monthlyClosingSnapshot} from "../dist/js/sim/financialClarity.js";
+import {createGame,stepGame,isValidSave} from "../dist/js/sim/engine.js";
+import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {INITIAL_CASH,financialSnapshot,monthlyClosingSnapshot,paidMonthlyBillReceipt,validPaidMonthlyBill} from "../dist/js/sim/financialClarity.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {monthlyBills} from "../dist/js/sim/economy.js";
 
@@ -60,4 +61,67 @@ test("alerta depende de insuficiência real no momento e reconhece fim da campan
  assert.equal(monthlyClosingSnapshot(s).coversProvision,true);
  s.totalMinutes=(33*360-1)*DAY_MINUTES;
  assert.equal(monthlyClosingSnapshot(s).campaignEnding,true);
+});
+
+test("fechamento real guarda as cinco parcelas e preserva o caixa cobrado",()=>{
+ const s=createGame(13,"historical");
+ s.cash=1800;
+ s.totalMinutes=30*DAY_MINUTES-1;
+ s.energyAccrued=78.5;
+ s.employeePayrollAccrued=27.25;
+ const bill=monthlyBills({...s,totalMinutes:s.totalMinutes});
+ const cashBefore=s.cash,expensesBefore=s.expenses;
+ stepGame(s,1);
+ const receipt=s.lastPaidMonthlyBill;
+ assert.ok(receipt,"comprovante registrado ao entrar no dia 31");
+ assert.equal(receipt.endDay,30);
+ assert.equal(receipt.total,bill,"nenhum centavo adicional foi cobrado");
+ assert.equal(Math.round(s.cash*100),Math.round((cashBefore-bill)*100));
+ assert.equal(Math.round(s.expenses*100),Math.round((expensesBefore+bill)*100));
+ assert.equal(receipt.cashAfterPayment,s.cash);
+ assert.equal(Math.round((receipt.rent+receipt.internet+receipt.energy+
+   receipt.maintenance+receipt.wages)*100),Math.round(receipt.total*100));
+ assert.equal(s.energyAccrued,0);
+ assert.equal(s.employeePayrollAccrued,0);
+ assert.equal(isValidSave(s),true);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).lastPaidMonthlyBill,receipt);
+});
+test("comprovante só é substituído no próximo fechamento; saves antigos válidos",()=>{
+ const s=createGame(41,"historical");
+ assert.equal(validPaidMonthlyBill(undefined,s),true);
+ assert.equal(s.lastPaidMonthlyBill,undefined);
+ s.totalMinutes=30*DAY_MINUTES-1;s.cash=5000;
+ stepGame(s,1);
+ const first=structuredClone(s.lastPaidMonthlyBill);
+ s.totalMinutes=60*DAY_MINUTES-1;
+ assert.deepEqual(s.lastPaidMonthlyBill,first);
+ stepGame(s,1);
+ assert.equal(s.lastPaidMonthlyBill.endDay,60);
+ assert.equal(isValidSave(s),true);
+ delete s.lastPaidMonthlyBill;
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+});
+test("comprovantes adulterados e cobrança em data futura são rejeitados",()=>{
+ const s=createGame(17,"historical");
+ s.totalMinutes=30*DAY_MINUTES-1;s.cash=5000;
+ stepGame(s,1);
+ const good=structuredClone(s.lastPaidMonthlyBill);
+ const invalid=[
+  {...good,endDay:31},
+  {...good,endDay:60},
+  {...good,endDay:-30},
+  {...good,total:good.total+1},
+  {...good,energy:-0.01},
+  {...good,wages:NaN},
+  {...good,cashAfterPayment:Infinity},
+  "fake bill",null
+ ];
+ for(const altered of invalid){
+  s.lastPaidMonthlyBill=altered;
+  assert.equal(validPaidMonthlyBill(altered,s),false);
+  assert.equal(isValidSave(s),false);
+  assert.throws(()=>serializeSave(s));
+ }
+ s.lastPaidMonthlyBill=good;
+ assert.equal(validPaidMonthlyBill(good,s),true);
 });

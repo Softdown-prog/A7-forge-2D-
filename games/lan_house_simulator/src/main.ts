@@ -1459,6 +1459,24 @@ function renderUI(liveOnly=false):void {
   setText("previous-occupancy","Ocupação do último mês: "+previous+".");
   const hasStatement=game.lastMonthRevenue!==undefined&&game.lastMonthExpenses!==undefined;
   const lastNet=(game.lastMonthRevenue??0)-(game.lastMonthExpenses??0);
+  const lastBill=game.lastPaidMonthlyBill;
+  const billInfo=document.getElementById("last-bill-info");
+  const billDetails=document.getElementById("last-bill-details");
+  if(billInfo)billInfo.textContent=lastBill?
+   "Último fechamento: mês "+String(Math.floor(((lastBill.endDay-1)%360)/30)+1).padStart(2,"0")+
+   "/"+(1998+Math.floor((lastBill.endDay-1)/360))+
+   " · pago "+inCurrency(lastBill.total)+
+   " · caixa após pagamento "+inCurrency(lastBill.cashAfterPayment)+"."
+   :"Nenhum fechamento pago nesta partida ainda. A primeira cobrança acontece após 30 dias do jogo.";
+  if(billDetails)billDetails.hidden=!lastBill;
+  if(lastBill){
+   setText("last-bill-rent",inCurrency(lastBill.rent));
+   setText("last-bill-internet",inCurrency(lastBill.internet));
+   setText("last-bill-energy",inCurrency(lastBill.energy));
+   setText("last-bill-maintenance",inCurrency(lastBill.maintenance));
+   setText("last-bill-wages",inCurrency(lastBill.wages));
+   setText("last-bill-total",inCurrency(lastBill.total));
+  }
   setText("monthly-statement",hasStatement
     ?"Fechamento anterior: entradas "+money(game.lastMonthRevenue??0)+" · saídas "+money(game.lastMonthExpenses??0)+" · resultado "+money(lastNet)+". Inclui investimentos e multas pagos no período."
     :"Fechamento mensal: disponível após o primeiro mês completo desta partida.");

@@ -661,3 +661,22 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 @media(max-width:700px){.bill-watch{grid-template-columns:1fr;padding:9px 12px;
  margin:-5px 0 12px;gap:2px}.bill-watch>span{font-size:10px}
  .bill-watch>small{font-size:10px}}
+
+/* Comprovante da última fatura paga, separado da provisão para o próximo mês. */
+.paid-bill-panel{min-width:0;margin:12px 0;padding:12px;border-radius:10px;
+ border:1px solid #c8d3bd;background:#f4f7ee;color:#334b3d}
+.paid-bill-panel>h4{font-size:13px;margin:0 0 5px}
+.paid-bill-panel>p{font-size:11px;margin:0 0 8px;line-height:1.5;overflow-wrap:anywhere}
+.paid-bill-panel summary{font-size:12px;cursor:pointer;min-height:30px;line-height:30px}
+.paid-bill-panel summary:focus-visible{outline:2px solid #456b53;outline-offset:2px}
+.paid-bill-rows{margin:5px 0;display:grid;gap:0}
+.paid-bill-rows>div{display:flex;justify-content:space-between;gap:12px;
+ padding:7px 2px;border-bottom:1px solid #dae3d2;min-width:0}
+.paid-bill-rows dt{font-size:11px;color:#536756}
+.paid-bill-rows dd{font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;
+ margin:0;text-align:right;white-space:nowrap}
+.paid-bill-rows .paid-bill-total{border-bottom:0;font-weight:700}
+.paid-bill-rows .paid-bill-total dd{font-size:14px;color:#244e37}
+.paid-bill-note{font-size:10px;color:#66766a;line-height:1.5}
+@media(max-width:700px){.paid-bill-panel{padding:10px}.paid-bill-rows dt{font-size:10px}
+ .paid-bill-rows dd{font-size:11px}}

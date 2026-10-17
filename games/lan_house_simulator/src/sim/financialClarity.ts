@@ -1,6 +1,7 @@
 import type {GameState} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
-import {monthlyBills} from "./economy.js";
+import {monthlyBills,energyMonthlyEstimate} from "./economy.js";
+import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {GAME_END_DAY} from "./mailCalendar.js";
 
 /** Capital inicial da partida padrão; os saves anteriores mantêm seu caixa. */
@@ -47,4 +48,48 @@ export function monthlyClosingSnapshot(s:GameState):MonthlyClosingSnapshot{
   coversProvision:cashAfterIfChargedNow>=0,
   campaignEnding:dayIndex>=GAME_END_DAY-1,
  };
+}
+
+/** A última fatura realmente paga, não uma previsão nem um histórico infinito. */
+export interface PaidMonthlyBill {
+ endDay:number;
+ rent:number;
+ internet:number;
+ energy:number;
+ maintenance:number;
+ wages:number;
+ total:number;
+ cashAfterPayment:number;
+}
+/** Chamar com a data do ÚLTIMO minuto do mês encerrado. Os números usam
+ * exatamente as mesmas parcelas e arredondamentos de monthlyBills. */
+export function paidMonthlyBillReceipt(
+ s:GameState,endDay:number,paidTotal:number,cashAfterPayment:number
+):PaidMonthlyBill{
+ const factor=isHistorical(s)?priceIndex(yearFromMinutes(s.totalMinutes)):1;
+ return {
+  endDay,
+  rent:Math.round((270+s.expansionLevel*170)*factor),
+  internet:Math.round((110+(s.internetTier-1)*85)*factor),
+  energy:s.energyAccrued!==undefined?Math.round(s.energyAccrued):energyMonthlyEstimate(s),
+  maintenance:Math.round((75+s.expansionLevel*35)*factor),
+  wages:Math.round((s.employeePayrollAccrued??0)*100)/100,
+  total:paidTotal,cashAfterPayment,
+ };
+}
+/** Rejeita comprovantes adulterados, duplicações e valores fora do período.
+ * Saves anteriores (campo ausente) continuam válidos. */
+export function validPaidMonthlyBill(value:unknown,s:Partial<GameState>):boolean{
+ if(value===undefined)return true;
+ if(!value||typeof value!=="object"||Array.isArray(value))return false;
+ const receipt=value as Partial<PaidMonthlyBill>;
+ if(!Number.isInteger(receipt.endDay)||receipt.endDay!<30||
+    receipt.endDay!>GAME_END_DAY||receipt.endDay!%30!==0||
+    receipt.endDay!>Math.floor((s.totalMinutes??0)/DAY_MINUTES))return false;
+ const parts=[receipt.rent,receipt.internet,receipt.energy,receipt.maintenance,receipt.wages];
+ const cents=(v:unknown)=>typeof v==="number"&&Number.isFinite(v)&&v>=0&&v<=1e9&&
+  Math.abs(Math.round(v*100)-v*100)<1e-4;
+ if(!parts.every(cents)||!cents(receipt.total)||typeof receipt.cashAfterPayment!=="number"||
+    !Number.isFinite(receipt.cashAfterPayment)||Math.abs(receipt.cashAfterPayment)>1e9)return false;
+ return Math.abs((parts.reduce((sum,n)=>sum+(n??0),0)-receipt.total!)*100)<1e-4;
 }

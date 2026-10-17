@@ -888,3 +888,10 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Parar de prometer vencimento após o último dia de 2030.
 - [x] Exibir no celular sem rolagem horizontal, com teste visual no 30º dia do jogo.
 - [x] Garantir cálculo somente leitura: não antecipar conta, não alterar save nem RNG.
+
+## Comprovante da última cobrança mensal
+- [x] Guardar a última fatura REAL paga no fechamento, discriminando aluguel, internet, energia, manutenção e salários.
+- [x] Não cobrar valores extras nem confundir a fatura anterior com o próximo vencimento.
+- [x] Exibir comprovante recolhível na aba Finanças, preservando o caixa após pagamento.
+- [x] Persistir apenas o último comprovante, validar seus campos e aceitar salvamentos anteriores sem ele.
+- [x] Testar fechamento real, integridade contábil, segundo fechamento e rejeição de campos adulterados.
