@@ -33,6 +33,8 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
+import {ps1StationPoint,ps1Seat,ps1AvailableStation,ps1SessionPrice,ps1EnergyCostPerMinute,
+ ps1SessionWear,ps1HourPrice,validPs1State,PS1_UNLOCK_YEAR} from "./ps1.js";
 import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameInstallJob,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
@@ -244,7 +246,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
   s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.pcIndex = null; c.queueIndex=undefined;
+  c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.queueIndex=undefined;
   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
@@ -378,6 +380,29 @@ function tryServe(s: GameState, c: Customer): void {
     sendHome(s,c);
     return;
   }
+  // Em 2002 as bancadas de videogame passam a dividir o público com PCs.
+  // Um em cada cinco visitantes não gamers prefere console; nunca há
+  // reservas extras nem sorteio novo. Só cobra quando a rota existe.
+  const consoleIndex=!c.gpuGamer&&c.id%5===0?ps1AvailableStation(s):-1;
+  const consoleSeat=consoleIndex>=0?ps1Seat(s,consoleIndex):null;
+  if(consoleSeat&&navigableRoute(s,{x:c.x,y:c.y},consoleSeat)){
+    const remaining=SESSION_FINISH_MINUTE-localMinute(s);
+    if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+    c.sessionMinutes??=chooseSessionMinutes(c,s.economyVersion===2);
+    if(c.sessionMinutes>remaining)c.sessionMinutes=
+      ([240,180,120,90,60,45,30] as number[]).find(n=>n<=remaining)??30;
+    if(leaveCounterForPc(s,c,consoleSeat)){
+      const paid=ps1SessionPrice(s,c.sessionMinutes);
+      c.pcIndex=null;c.ps1StationIndex=consoleIndex;
+      c.queueIndex=undefined;c.stage="to_pc";s.counterBusyUntil=s.totalMinutes+3;
+      s.cash+=paid;s.revenue+=paid;s.served++;
+      s.ps1Sessions=(s.ps1Sessions??0)+1;s.ps1Revenue=Math.round(((s.ps1Revenue??0)+paid)*100)/100;
+      s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
+      addLog(s,"Cliente pagou R$ "+paid.toFixed(2)+" por "+c.sessionMinutes+
+        " minutos de PlayStation 1 na bancada "+(consoleIndex+1)+".");
+      return;
+    }
+  }
   const index=chooseAvailablePc(s,c);
   if (index === undefined) {
     c.waitingMinutes++;
@@ -471,7 +496,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "using":
-      if (!online(s)) {
+      if (c.ps1StationIndex===undefined&&!online(s)) {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;
@@ -483,10 +508,13 @@ function advanceCustomer(s: GameState, c: Customer): void {
         return;
       }
       c.usedMinutes++;
-      // Desgaste avança apenas durante uso; falha só bloqueia NOVAS reservas.
-      (s.pcWear??=[])[c.pcIndex??-1]=Math.min(100,pcWear(s,c.pcIndex??-1)+(0.045 / (s.pcTiers?.[c.pcIndex??-1]??1)));
+      // Sessões de PlayStation são independentes de PC e da internet.
+      // O controle do PS1 se desgasta, mas a sessão em curso termina.
+      if(c.ps1StationIndex!==undefined)ps1SessionWear(s,c.ps1StationIndex);
+      else if(c.pcIndex!==null)(s.pcWear??=[])[c.pcIndex]=
+        Math.min(100,pcWear(s,c.pcIndex)+(0.045 / (s.pcTiers?.[c.pcIndex]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
-        const bonus=hardwareSatisfactionBonus(s,c.pcIndex??-1);
+        const bonus=c.ps1StationIndex!==undefined?0:hardwareSatisfactionBonus(s,c.pcIndex??-1);
         const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(normalizedHourlyPrice(s,s.pricePerHour),c.waitingMinutes,c.offlineWait)+
           bonus+vipReputationAdjustment(c,bonus,normalizedHourlyPrice(s,s.pricePerHour))));
         const impact=c.happy?serviceReputationImpact(s.reputation,normalizedHourlyPrice(s,s.pricePerHour),bonus,rating):Math.min(0,rating);
@@ -509,7 +537,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
         if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
-        c.pcIndex = null;
+        c.pcIndex = null;c.ps1StationIndex=undefined;
         if (c.wantsSnack) {
           c.stage = "shopping";
           setTravel(s,c,c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s));
@@ -585,11 +613,13 @@ function advanceMinute(s: GameState): void {
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
-  const energyExpense=energyCostPerMinute(s);
+  const energyExpense=energyCostPerMinute(s)+ps1EnergyCostPerMinute(s);
   s.energyAccrued=(s.energyAccrued??0)+energyExpense;
   recordComputerUtilization(s);
   recordStationMinute(s,pcCount(s),energyExpense);
   s.totalMinutes++;
+  if(s.economyVersion===2&&s.totalMinutes===4*360*DAY_MINUTES)
+    addLog(s,"2002: chegaram os videogames! A loja agora oferece bancada com PlayStation 1, TV de tubo e cadeira.");
   for(const installed of tickGpuGameInstallations(s))
     addLog(s,"Download concluído: "+gpuGameSpec(installed.id)?.name+" no PC "+(installed.pc+1)+".");
   if(s.totalMinutes===GAME_LAST_MINUTE)addLog(s,"Fim de 2030: calendário da campanha concluído.");
@@ -650,7 +680,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validEmployeeState(v) && validStationPower(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -661,6 +691,8 @@ export function isValidSave(value: unknown): value is GameState {
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
+      (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&
+        c.ps1StationIndex<(v.ps1Stations?.length??0)&&c.pcIndex===null))&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
