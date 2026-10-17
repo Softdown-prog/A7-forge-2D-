@@ -83,7 +83,8 @@ try{
    drawPs1Station(ctx,cam,point,0,playing,t);
    // Desenhar a pessoa por cima da cadeira permite inspecionar mãos, sentar e levantar.
    drawActor(ctx,cam,{x:at.x,y:at.y,kind:"regular",id:5,time:t,
-    pose,direction,transition,gamepad:playing});
+    pose,direction,transition,gamepad:playing,
+    consoleSeat:pose==="sitting"||pose==="standing-up"});
    if(playing)drawPs1Controller(ctx,cam,seat,t);
   }
   frame(0);
