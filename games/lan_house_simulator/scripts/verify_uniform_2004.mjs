@@ -48,7 +48,18 @@ try{
   }
   await notices.screenshot({path:resolve(out,"school_uniform_2004_"+width+".png")});
   await press('button[data-decision="school-uniform-policy"][data-choice="uniform-talk"]');
-  assert.match(await notices.innerText(),/Decisão tomada/);
+  await page.waitForTimeout(100);
+  const afterChoice=await page.evaluate(key=>{
+    const stored=localStorage.getItem(key);
+    let saved=null;try{saved=stored?JSON.parse(stored):null;}catch{}
+    const state=saved?.state??saved;
+    return {resolved:state?.notices?.find(n=>n.id==="school-uniform-policy")?.resolved,
+      storyRecords:state?.storyRecords?.filter(r=>r.id==="school-uniform-policy"),
+      toast:document.getElementById("status")?.textContent,
+      text:document.getElementById("notices-list")?.textContent?.slice(0,650)};
+  },GAME_SAVE_KEY);
+  assert.match(await notices.innerText(),/Decisão tomada/,
+    "Escolha nao confirmada: "+JSON.stringify(afterChoice)+" errors "+JSON.stringify(errors));
   const duplicated=await notices.locator('button[data-decision="school-uniform-policy"]').count();
   assert.equal(duplicated,0,"não pode oferecer nova compra da mesma decisão");
   await page.reload({waitUntil:"networkidle"});

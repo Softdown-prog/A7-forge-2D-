@@ -656,7 +656,7 @@ export function isValidSave(value: unknown): value is GameState {
     (v.storySeenIds===undefined||(Array.isArray(v.storySeenIds)&&v.storySeenIds.length<=STORY_IDS.length&&
       new Set(v.storySeenIds).size===v.storySeenIds.length&&
       v.storySeenIds.every(id=>STORY_IDS.some(key=>key===id)))) &&
-    (v.storyRecords===undefined||(Array.isArray(v.storyRecords)&&v.storyRecords.length<=16&&
+    (v.storyRecords===undefined||(Array.isArray(v.storyRecords)&&v.storyRecords.length<=STORY_IDS.length+4&&
       new Set(v.storyRecords.map(r=>r.id)).size===v.storyRecords.length&&
       v.storyRecords.every(r=>!!r&&CHAIN_IDS.some(id=>id===r.id)&&
        typeof r.choice==="string"&&r.choice.length<=80&&
