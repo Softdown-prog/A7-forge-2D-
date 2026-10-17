@@ -44,14 +44,56 @@ export function drawPs1Station(
  }
  ctx.restore();
 }
-/** Controle pequeno nas mãos do cliente sentado, sem teclado de computador. */
+/** Âncora compartilhada com o Scene Forge: o controle deve ficar à frente
+ * do tronco, na altura do colo, e não flutuar atrás da cabeça.
+ * Deslocamento em direção à TV (norte) respeita a projeção isométrica. */
+export function ps1ControllerAnchor(seat:Point):{point:Point;height:number}{
+ return {point:{x:seat.x+.10,y:seat.y-.23},height:28};
+}
+/** Ponto onde o cabo encontra a frente do console, na bancada. */
+export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
+ return {point:{x:seat.x+.40,y:seat.y-.35},height:35};
+}
+/** Gamepad com cabo, duas empunhaduras, direcional e botões de ação.
+ * Desenhado pelo renderer oficial apenas durante a sessão do console. */
 export function drawPs1Controller(ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,t:number):void{
- const p=iso(seat,cam,47),z=cam.zoom;
- ctx.save();ctx.translate(p.x,p.y);ctx.rotate(Math.sin(t*4)*.05);
- ctx.fillStyle="#414246";ctx.strokeStyle="#abb8ac";ctx.lineWidth=Math.max(1,z);
- ctx.beginPath();ctx.ellipse(0,0,12*z,5*z,0,0,Math.PI*2);ctx.fill();ctx.stroke();
- ctx.fillStyle="#dcbf8e";
- for(const side of [-1,1]){ctx.beginPath();ctx.ellipse(side*11*z,0,5*z,4*z,0,0,Math.PI*2);ctx.fill();}
- ctx.fillStyle="#b7dbaa";ctx.beginPath();ctx.arc(5*z,-1*z,1.7*z,0,Math.PI*2);ctx.fill();
+ const anchor=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat);
+ const p=iso(anchor.point,cam,anchor.height);
+ const plug=iso(port.point,cam,port.height),z=cam.zoom;
+ ctx.save();
+ // Um cabo solto ligando o controle ao videogame; curvatura discreta
+ // deixa claro que não se trata de um teclado suspenso.
+ ctx.strokeStyle="#252d30";ctx.lineWidth=Math.max(1.1,1.35*z);
+ ctx.lineCap="round";ctx.beginPath();
+ ctx.moveTo(plug.x,plug.y);
+ ctx.bezierCurveTo(plug.x+4*z,plug.y+11*z,p.x+12*z,p.y+12*z,p.x+3*z,p.y-3*z);
+ ctx.stroke();
+ ctx.translate(p.x,p.y+Math.sin(t*7)*.55*z);
+ ctx.rotate(Math.sin(t*4)*.035);
+ ctx.fillStyle="#383d42";ctx.strokeStyle="#b0b6ad";
+ ctx.lineWidth=Math.max(1,1.15*z);
+ // Alças atrás do centro para preservar a silhueta do controle.
+ for(const side of [-1,1]){
+  ctx.beginPath();ctx.ellipse(side*9.5*z,3.5*z,6.4*z,6*z,side*.24,0,Math.PI*2);
+  ctx.fill();ctx.stroke();
+ }
+ ctx.beginPath();ctx.ellipse(0,0,12*z,5.4*z,0,0,Math.PI*2);
+ ctx.fill();ctx.stroke();
+ ctx.fillStyle="#959f9b";
+ // Direcional em cruz e dois pequenos botões centrais.
+ ctx.fillRect(-7.5*z,-1.8*z,4.6*z,1.3*z);
+ ctx.fillRect(-5.9*z,-3.4*z,1.4*z,4.6*z);
+ ctx.fillRect(-1*z,-.5*z,2*z,1*z);
+ // Botões característicos, discretos na escala pequena do jogo.
+ for(const [dx,dy,color] of [[6,-2.2,"#9c91c8"],[8.4,-.2,"#d28791"],
+  [3.6,-.2,"#82b9a1"],[6,1.8,"#94a9d2"]] as const){
+  ctx.fillStyle=color;ctx.beginPath();ctx.arc(dx*z,dy*z,1.1*z,0,Math.PI*2);ctx.fill();
+ }
+ // Mãos seguram as extremidades na altura da cintura.
+ ctx.fillStyle="#dab18c";
+ for(const side of [-1,1]){
+  ctx.beginPath();ctx.ellipse(side*13*z,3.2*z,4.1*z,3.2*z,side*.18,0,Math.PI*2);
+  ctx.fill();
+ }
  ctx.restore();
 }
