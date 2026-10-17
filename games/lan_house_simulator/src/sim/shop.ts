@@ -19,6 +19,7 @@ export const SHOP_CATALOG=[
  {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
  {id:"disc-copier",label:"Copiadora de CDs e DVDs",category:"Serviços · 2001",description:"Ativa cópias no balcão. Você define o preço por CD e DVD; cada venda inclui o custo da mídia. Não ocupa espaço no salão."},
  {id:"printer",label:"Impressora de documentos",category:"Serviços",description:"Ofereça impressão de documentos no balcão. Você define o preço por página; papel e tinta são descontados por pedido. Não ocupa espaço no salão nesta etapa."},
+ {id:"ps1",label:"Bancada de PlayStation 1",category:"Videogames · 2002",description:"TV de tubo, PS1, bancada e uma cadeira. Escolha uma posição livre no salão. Uma sessão por vez, com tarifa própria e desgaste dos controles."},
  {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Aumenta o espaço à esquerda e libera uma posição para PC no anexo."},
  {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Aumenta o espaço à direita e libera uma posição para PC no anexo."},
  {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Aumenta o espaço atrás do balcão e libera uma posição para PC no anexo. A entrada fica no mesmo lugar."},
@@ -31,6 +32,7 @@ export const SHOP_CATALOG=[
 export function shopPrice(s:GameState,id:string):number{
  if(id==="disc-copier")return DISC_COPIER_COST;
  if(id==="printer")return PRINTER_COST;
+ if(id==="ps1")return 560;
  if(id==="wall")return WALL_COST;
  if(id==="door")return 80;
  if(id==="computer-annex")return ANNEX_PC_COST;
@@ -156,6 +158,7 @@ export function furnitureSlots(s:GameState):PlacementSlot[]{
 
 export function occupiedFurnitureSlots(s:GameState):Set<string>{
  const occupied=new Set((s.furniturePlacements??[]).map(p=>p.slotId));
+ for(const station of s.ps1Stations??[])occupied.add(station.slotId);
  for(const kind of ["poster","plant","table"] as const){
   const positioned=(s.furniturePlacements??[]).filter(p=>p.kind===kind).length;
   const legacy=Math.max(0,(s.furniture?.[kind]??0)-positioned);
