@@ -872,3 +872,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Informar pausa por perda de GPU ou Windows, sem corromper o progresso salvo.
 - [x] Atualizar porcentagens e medidores no lugar, sem desmontar o catálogo a cada minuto.
 - [x] Refino visual sutil da barra no salão, com indicação de pausa.
+
+## Clareza dos saldos no painel administrativo
+- [x] Renomear "Saldo acumulado" para "Resultado acumulado" sem mudar a fórmula receita − despesa.
+- [x] Painel discreto abaixo dos indicadores explicando caixa disponível e resultado negativo.
+- [x] Demonstrativo expansível: capital inicial + entradas − saídas = dinheiro atual.
+- [x] Informar que "Contas por mês" é uma estimativa para a cobrança de 30 dias, não segunda dívida já paga.
+- [x] Destacar divergências de caixa em salvamentos antigos sem alterar dados ou inventar receitas.
+- [x] Testes Node e Chromium desktop/414/360 px, incluindo cenário real de R$ 386,49 e −R$ 463,51.

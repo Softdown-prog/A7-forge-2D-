@@ -2,6 +2,7 @@ import {validateObjectPlacements} from "./editableObjects.js";
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
 import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
+import {INITIAL_CASH} from "./financialClarity.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
@@ -46,7 +47,7 @@ export function createGame(seed=72421,economyMode:"classic"|"historical"="classi
   return {
     version: 1, totalMinutes: 0, leftoverMinutes: 0, rng: seed >>> 0,
     mailScheduleSeed:seed>>>0,mailStartDay:1,mailSeenIds:[],
-    cash: 850, revenue: 0, expenses: 0, reputation: 75,
+    cash: INITIAL_CASH, revenue: 0, expenses: 0, reputation: 75,
     monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
     pricePerHour:economyMode==="historical"?2.5:12,
     ...(economyMode==="historical"?{economyVersion:2 as const}:{retailPrices:{soda:8,candy:5,snacks:9}}),

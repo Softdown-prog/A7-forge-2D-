@@ -15,6 +15,7 @@ import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
+import {financialSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
@@ -864,8 +865,23 @@ function renderUI(liveOnly=false):void {
   const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
   const monthlyMaintenance=Math.round((75+game.expansionLevel*35)*(historical?monetaryIndex:1));
    const wages=game.employeePayrollAccrued??0;
+  const statement=financialSnapshot(game);
+  const inCurrency=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   setText("admin-cash",money(game.cash));
-  setText("admin-profit",money(game.revenue-game.expenses));
+  setText("admin-profit",money(statement.netResult));
+  const resultFigure=document.getElementById("admin-profit");
+  if(resultFigure)resultFigure.classList.toggle("balance-negative",statement.netResult<0);
+  setText("balance-opening",inCurrency(statement.openingCash));
+  setText("balance-income",inCurrency(statement.income));
+  setText("balance-outgoing",inCurrency(statement.outgoing));
+  setText("balance-available",inCurrency(statement.availableCash));
+  const unexplained=document.getElementById("balance-reconciliation");
+  if(unexplained){
+   unexplained.hidden=statement.differenceCents===0;
+   if(statement.differenceCents!==0)unexplained.textContent="Atenção: o caixa deste salvamento difere em "+
+    inCurrency(statement.differenceCents/100)+
+    " do cálculo pelo capital inicial e pelos lançamentos. Confira o histórico em Finanças.";
+  }
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");

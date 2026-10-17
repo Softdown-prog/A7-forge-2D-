@@ -83,10 +83,25 @@
       <div class="admin-title"><div><span class="window-eyebrow">CENTRAL DE ADMINISTRAÇÃO</span><h2 id="admin-title">Seu negócio, nas suas mãos</h2></div><button id="close-admin" class="slice" aria-label="Fechar painel" data-icon="close">Fechar</button></div>
       <div class="admin-summary" aria-label="Resumo da administração">
         <div><span>Caixa disponível</span><strong id="admin-cash">R$ 850</strong></div>
-        <div><span>Saldo acumulado</span><strong id="admin-profit">R$ 0</strong></div>
+        <div><span>Resultado acumulado</span><strong id="admin-profit">R$ 0</strong></div>
         <div><span>Contas por mês</span><strong id="admin-bills">R$ 540</strong></div>
         <div><span>Clientes atendidos</span><strong id="admin-served">0</strong></div>
       </div>
+      <section class="balance-guide" aria-label="Explicação do caixa e do resultado">
+        <div class="balance-guide-intro"><strong>Entenda os valores</strong>
+          <p><b>Caixa</b> é o dinheiro disponível agora. <b>Resultado acumulado</b> é tudo que entrou menos tudo que já foi gasto desde o início. Se estiver negativo, houve mais gastos que entradas.</p></div>
+        <details id="balance-details">
+          <summary>Ver como o caixa foi calculado</summary>
+          <dl class="balance-breakdown">
+            <div><dt>Dinheiro inicial</dt><dd id="balance-opening">R$ 850,00</dd></div>
+            <div><dt>+ Entradas recebidas</dt><dd id="balance-income">R$ 0,00</dd></div>
+            <div><dt>− Saídas já pagas</dt><dd id="balance-outgoing">R$ 0,00</dd></div>
+            <div class="balance-breakdown-total"><dt>= Caixa disponível</dt><dd id="balance-available">R$ 850,00</dd></div>
+          </dl>
+          <p id="balance-reconciliation" class="balance-reconciliation" hidden></p>
+          <p class="balance-guide-note">O resultado não é um segundo dinheiro guardado: entradas menos saídas. As contas por mês são uma previsão do próximo fechamento; elas só saem do caixa quando são cobradas.</p>
+        </details>
+      </section>
       <nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
         <button type="button" class="admin-tab active" data-admin-tab="prices" role="tab" aria-controls="section-prices" aria-selected="true">Preços</button>
         <button type="button" class="admin-tab" data-admin-tab="computers" role="tab" aria-controls="section-computers" aria-selected="false">Computadores</button>

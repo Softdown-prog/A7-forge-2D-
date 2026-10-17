@@ -618,3 +618,32 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 #gpu-game-catalog [data-gpu-download-status]{font-variant-numeric:tabular-nums}
 @media(max-width:380px){.gpu-download-entry{grid-template-columns:1fr}
  .gpu-download-entry>button{grid-column:1;grid-row:auto;max-width:none}}
+
+/* Leitura do caixa: dica compacta sempre visível e demonstrativo opcional. */
+.balance-guide{margin:-9px 0 16px;border:1px solid #c3d0b6;border-radius:10px;background:#e8eedb;
+ padding:11px 14px;min-width:0;color:#314d3f}
+.balance-guide-intro{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px}
+.balance-guide-intro>strong{font-size:12px;white-space:nowrap}
+.balance-guide-intro>p{font-size:11px;line-height:1.5;margin:0;flex:1 1 280px;color:#4f6453}
+.balance-guide details{margin-top:7px}
+.balance-guide summary{cursor:pointer;display:list-item;list-style-position:inside;
+ font-size:11px;font-weight:700;min-height:28px;line-height:28px;color:#426c50}
+.balance-guide summary:focus-visible{outline:2px solid #567d61;outline-offset:3px;border-radius:3px}
+.balance-breakdown{display:grid;gap:0;margin:8px 0 0;background:#f7f7eb;
+ border:1px solid #d4dcc8;border-radius:8px;padding:2px 12px}
+.balance-breakdown>div{display:flex;justify-content:space-between;gap:14px;
+ align-items:baseline;min-width:0;padding:9px 0;border-bottom:1px solid #e0e5d6}
+.balance-breakdown>div:last-child{border-bottom:0}
+.balance-breakdown dt{font-size:11px;color:#5b6c5d}
+.balance-breakdown dd{margin:0;text-align:right;font-size:12px;font-weight:700;
+ white-space:nowrap;font-variant-numeric:tabular-nums}
+.balance-breakdown-total{color:#264c38}
+.balance-breakdown .balance-breakdown-total dd{font-size:15px}
+.balance-guide .balance-guide-note,.balance-guide .balance-reconciliation{
+ font-size:11px;line-height:1.5;margin:9px 0 0;color:#546b58}
+.balance-guide .balance-reconciliation{color:#8c442a;font-weight:650}
+#admin-profit.balance-negative{color:#9a493d}
+@media(max-width:700px){.balance-guide{margin:-8px 0 12px;padding:10px 12px}
+ .balance-guide-intro{display:block}.balance-guide-intro>p{margin-top:4px;font-size:10px}
+ .balance-breakdown{padding:2px 9px}.balance-breakdown dt{font-size:10px}
+ .balance-breakdown dd{font-size:11px}}
