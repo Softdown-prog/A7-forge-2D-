@@ -91,5 +91,5 @@ export function validPaidMonthlyBill(value:unknown,s:Partial<GameState>):boolean
   Math.abs(Math.round(v*100)-v*100)<1e-4;
  if(!parts.every(cents)||!cents(receipt.total)||typeof receipt.cashAfterPayment!=="number"||
     !Number.isFinite(receipt.cashAfterPayment)||Math.abs(receipt.cashAfterPayment)>1e9)return false;
- return Math.abs((parts.reduce((sum,n)=>sum+(n??0),0)-receipt.total!)*100)<1e-4;
+ return Math.abs((parts.reduce<number>((sum,n)=>sum+(n??0),0)-receipt.total!)*100)<1e-4;
 }
