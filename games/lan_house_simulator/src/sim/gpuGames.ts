@@ -52,16 +52,29 @@ export function validGpuGameInstallJobs(value:unknown,s:Partial<GameState>):bool
    Number.isInteger(job.elapsedMinutes)&&job.elapsedMinutes>=0&&job.elapsedMinutes<job.durationMinutes;
  });
 }
-/** Um minuto de simulação, sem temporizadores externos nem RNG. */
+/** Cada geração de internet suporta 1, 2 ou 3 PCs transferindo por
+ * minuto do jogo. Não há custo extra, sorteio nem campo novo no save. */
+export function gpuGameDownloadSlots(s:GameState):number{
+ return Math.max(1,Math.min(3,Math.trunc(s.internetTier||1)));
+}
+/** Agendamento por rodízio: PCs pausados não ocupam a banda. O índice
+ * do minuto absoluto garante o mesmo progresso após importar a partida. */
 export function tickGpuGameInstallations(s:GameState):Array<{pc:number;id:GpuGameId}>{
  const completed:Array<{pc:number;id:GpuGameId}>=[];
  if(!s.gpuGameInstallJobs?.length)return completed;
+ const active=s.gpuGameInstallJobs.filter(job=>{
+  const spec=gpuGameSpec(job.id);
+  return !!spec&&!gpuGameInstallPausedReason(s,job.pc)&&gpuGameCompatible(s,job.pc,spec);
+ });
+ const selected=new Set<GpuGameInstallJob>();
+ if(active.length){
+  const count=Math.min(active.length,gpuGameDownloadSlots(s));
+  const start=s.totalMinutes%active.length;
+  for(let slot=0;slot<count;slot++)selected.add(active[(start+slot)%active.length]!);
+ }
  const pending:GpuGameInstallJob[]=[];
  for(const job of s.gpuGameInstallJobs){
-  const spec=gpuGameSpec(job.id);
-  if(gpuGameInstallPausedReason(s,job.pc)||!spec||!gpuGameCompatible(s,job.pc,spec)){
-   pending.push(job);continue;
-  }
+  if(!selected.has(job)){pending.push(job);continue;}
   job.elapsedMinutes++;
   if(job.elapsedMinutes>=job.durationMinutes){
    const installed=s.gpuGameInstalls?.[job.pc];

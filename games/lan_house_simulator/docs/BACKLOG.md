@@ -865,7 +865,7 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Pausar/reiniciar por energia ou internet, e não oferecer PC para sessões enquanto baixa.
 - [x] Progresso visível em Administração e no salão, com cancelamento gratuito.
 - [x] Persistência e validação dos downloads, inclusive após inserir PCs originais antes de anexos.
-- [ ] Opcional futuro: limitar velocidade conforme banda compartilhada entre vários downloads simultâneos.
+- [x] Compartilhar a capacidade de transferência da conexão (1/2/3 PCs por minuto), com rodízio justo e sem RNG.
 
 ## Acessibilidade e diagnóstico dos downloads de jogos
 - [x] Mostrar downloads ativos em resumo independente de compatibilidade, sempre com opção de cancelar.

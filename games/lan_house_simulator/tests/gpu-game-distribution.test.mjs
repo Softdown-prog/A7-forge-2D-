@@ -9,12 +9,15 @@ import {buyGpu} from "../dist/js/sim/gpu.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {withStationOff} from "./station-power-fixture.mjs";
-import {licenseGpuGame,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstalledOnPc,gpuGamePlayableOnPc,gpuGameInstallJob,tickGpuGameInstallations} from "../dist/js/sim/gpuGames.js";
+import {licenseGpuGame,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstalledOnPc,gpuGamePlayableOnPc,gpuGameInstallJob,tickGpuGameInstallations,gpuGameDownloadSlots} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 const ok=r=>assert.equal(r.ok,true,r.message);
 function finish(s){
- for(let n=0;n<41;n++){s.totalMinutes++;tickGpuGameInstallations(s);}
+ for(let n=0;s.gpuGameInstallJobs?.length&&n<180;n++){
+  s.totalMinutes++;tickGpuGameInstallations(s);
+ }
+ assert.equal(s.gpuGameInstallJobs?.length??0,0,"downloads concluem dentro do limite da simulação");
 }
 function setup(){
  const s=createGame(219,"historical");s.totalMinutes=7*360*DAY_MINUTES;s.cash=35000;
@@ -81,4 +84,55 @@ test("não aceitar distribuição de jogo inexistente, não licenciado ou antes 
   assert.equal(installGpuGameOnAvailablePcs(s,id).ok,false);
  }
  assert.equal(JSON.stringify(s),before);
+});
+
+test("banda compartilhada usa rodízio justo e não altera caixa nem sorteios",()=>{
+ const s=setup();
+ for(const i of [0,1,2])ok(toggleGpuGameInstallation(s,i,"neon-rush"));
+ ok(installGpuGameOnAvailablePcs(s,"neon-rush"));
+ assert.equal(gpuGameDownloadSlots(s),1);
+ const balance=[s.cash,s.expenses,s.rng];
+ const advance=(n)=>{
+  for(let step=0;step<n;step++){s.totalMinutes++;tickGpuGameInstallations(s);}
+ };
+ advance(9);
+ assert.deepEqual(s.gpuGameInstallJobs.map(x=>x.elapsedMinutes),[3,3,3],
+  "três PCs revezam uma conexão discada sem favorecer sempre o primeiro");
+ const persisted=parseImportedSave(serializeSave(s));
+ assert.deepEqual(persisted.gpuGameInstallJobs,s.gpuGameInstallJobs);
+ const before=s.gpuGameInstallJobs.reduce((sum,job)=>sum+job.elapsedMinutes,0);
+ s.internetTier=2;
+ assert.equal(gpuGameDownloadSlots(s),2);
+ advance(6);
+ assert.equal(s.gpuGameInstallJobs.reduce((sum,job)=>sum+job.elapsedMinutes,0),before+12,
+  "nível 2 permite exatamente duas transferências por minuto");
+ const saved=JSON.parse(serializeSave(s));
+ assert.deepEqual(parseImportedSave(JSON.stringify(saved)).gpuGameInstallJobs,s.gpuGameInstallJobs);
+ s.internetTier=3;
+ assert.equal(gpuGameDownloadSlots(s),3);
+ const prior=s.gpuGameInstallJobs.reduce((sum,job)=>sum+job.elapsedMinutes,0);
+ advance(2);
+ assert.equal(s.gpuGameInstallJobs.reduce((sum,job)=>sum+job.elapsedMinutes,0),prior+6);
+ assert.deepEqual([s.cash,s.expenses,s.rng],balance);
+ finish(s);
+ assert.deepEqual(s.gpuGameInstalls,[["neon-rush"],["neon-rush"],["neon-rush"]]);
+});
+test("downloads pausados liberam a banda; reconexão continua do mesmo progresso",()=>{
+ const s=setup();
+ for(const i of [0,1,2])ok(toggleGpuGameInstallation(s,i,"neon-rush"));
+ ok(installGpuGameOnAvailablePcs(s,"neon-rush"));
+ ok(toggleStationPower(s,1));
+ const advance=(n)=>{for(let i=0;i<n;i++){s.totalMinutes++;tickGpuGameInstallations(s);}};
+ advance(8);
+ assert.equal(s.gpuGameInstallJobs[1].elapsedMinutes,0);
+ assert.equal(s.gpuGameInstallJobs[0].elapsedMinutes+s.gpuGameInstallJobs[2].elapsedMinutes,8);
+ const before=s.gpuGameInstallJobs.map(j=>j.elapsedMinutes);
+ s.offlineUntil=s.totalMinutes+6;
+ advance(4);
+ assert.deepEqual(s.gpuGameInstallJobs.map(j=>j.elapsedMinutes),before);
+ s.offlineUntil=s.totalMinutes;
+ ok(toggleStationPower(s,1));
+ advance(9);
+ assert.deepEqual(s.gpuGameInstallJobs.map(j=>j.elapsedMinutes-before[j.pc]),[3,3,3]);
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });

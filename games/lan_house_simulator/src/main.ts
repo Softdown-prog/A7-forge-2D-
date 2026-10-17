@@ -36,7 +36,7 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,cancelGpuGameInstallation} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
@@ -758,13 +758,20 @@ function renderShop(force=true):void{
  * posição de rolagem no painel mobile. */
 function refreshGpuDownloadMeters():void{
  if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses")return;
+ const slots=gpuGameDownloadSlots(game);
+ const running=game.gpuGameInstallJobs?.filter(job=>!gpuGameInstallPausedReason(game,job.pc)).length??0;
+ const bandwidth=gpuGamePanel.querySelector<HTMLElement>("[data-gpu-bandwidth]");
+ if(bandwidth)bandwidth.textContent="Internet nível "+game.internetTier+": até "+slots+
+  " PC(s) transferindo por minuto do jogo. "+running+" download(s) apto(s) a avançar"+
+  (running>slots?"; a conexão divide a banda por rodízio.":".");
  for(const label of Array.from(gpuGamePanel.querySelectorAll<HTMLElement>("[data-gpu-download-status]"))){
   const pc=Number(label.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
   if(!job||job.id!==label.dataset.gpuDownloadStatus)continue;
   const reason=gpuGameInstallPausedReason(game,pc);
   const remaining=job.durationMinutes-job.elapsedMinutes;
   label.textContent="PC "+(pc+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
-   (reason?" · Pausado: "+reason:" · "+remaining+" min do jogo restantes");
+   (reason?" · Pausado: "+reason:" · "+remaining+" min de transferência pendentes"+
+    (running>slots?" · banda compartilhada":""));
  }
  for(const meter of Array.from(gpuGamePanel.querySelectorAll<HTMLProgressElement>("[data-gpu-download-progress]"))){
   const pc=Number(meter.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
@@ -1222,7 +1229,9 @@ function renderUI(liveOnly=false):void {
       title.textContent="Downloads em andamento · "+game.gpuGameInstallJobs.length;
       const intro=document.createElement("p");
       intro.textContent="O progresso continua com o painel fechado. Cancele aqui mesmo se a GPU ou o Windows deixar de ser compatível.";
-      overview.append(title,intro);
+      const bandwidth=document.createElement("p");
+      bandwidth.dataset.gpuBandwidth="";
+      overview.append(title,intro,bandwidth);
       for(const job of [...game.gpuGameInstallJobs].sort((a,b)=>a.pc-b.pc)){
        const record=document.createElement("div");record.className="gpu-download-entry";
        const spec=GPU_GAME_CATALOG.find(x=>x.id===job.id);

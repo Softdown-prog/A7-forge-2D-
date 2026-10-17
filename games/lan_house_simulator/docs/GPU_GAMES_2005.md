@@ -267,3 +267,22 @@ A tela também atualiza barras e percentuais sem reconstruir todo o
 catálogo a cada minuto, evitando roubar foco e rolagem em celulares.
 O indicador do salão recebeu um pequeno brilho de movimento
 apenas enquanto está transferindo dados (respeita a pausa).
+
+## Banda compartilhada em instalações simultâneas
+
+Downloads de jogos avançados usam a conexão que a lan house já contratou.
+A rede discada (nível 1) transfere para **um PC por minuto do jogo**;
+o segundo nível, para **dois PCs**; e o terceiro, para **três PCs**.
+Se houver mais downloads aptos que vagas, o motor alterna de forma
+determinística entre os PCs, sem privilegiar sempre o primeiro.
+Downloads pausados por falta de energia, internet ou incompatibilidade
+não consomem vagas. Uma instalação solitária mantém a duração original.
+
+O rodízio usa o minuto absoluto da partida, não sorteios nem relógios
+externos: salvar/importar a partida preserva o mesmo comportamento.
+A duração de transferência em cada PC continua fixa no começo
+do trabalho; subir o plano de internet libera mais transferências
+paralelas imediatamente, mas não modifica os minutos já concluídos.
+O painel mostra o número de transferências simultâneas e avisa quando
+a banda está sendo dividida. Não há novas despesas, recursos pagos,
+sorteios de clientes ou mudança nos títulos licenciados.

@@ -86,6 +86,7 @@ try{
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Pausado: sem internet/);
   assert.equal(await page.locator(".gpu-download-overview").count(),1);
   assert.equal(await page.locator(".gpu-download-entry").count(),1);
+  assert.match(await page.locator(".gpu-download-overview").innerText(),/Internet nível 1/);
   assert.equal(await page.locator('[aria-label="Resumo do download no PC 2"]').count(),1);
   const progress=page.locator('[aria-label="Download de Neon Rush Online no PC 2"]');
   assert.equal(await progress.count(),1);
@@ -94,7 +95,7 @@ try{
   await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
   const restored=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
-  const cancel=page.locator('[data-gpu-game-cancel="neon-rush"][data-gpu-game-pc="1"]');
+  const cancel=page.locator('.gpu-download-overview [data-gpu-game-cancel="neon-rush"][data-gpu-game-pc="1"]');
   await (mobile?cancel.tap():cancel.click());
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Instalar no PC 2/);
   const retry=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
