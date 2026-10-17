@@ -753,6 +753,24 @@ function renderShop(force=true):void{
   shopCatalog.append(card);
  }
 }
+/** Atualiza apenas o texto e o medidor dos downloads a cada minuto do jogo.
+ * Não reconstruir o catálogo inteiro ao mudar 1%: preserva foco, toque e
+ * posição de rolagem no painel mobile. */
+function refreshGpuDownloadMeters():void{
+ if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses")return;
+ for(const label of gpuGamePanel.querySelectorAll<HTMLElement>("[data-gpu-download-status]")){
+  const pc=Number(label.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
+  if(!job||job.id!==label.dataset.gpuDownloadStatus)continue;
+  const reason=gpuGameInstallPausedReason(game,pc);
+  const remaining=job.durationMinutes-job.elapsedMinutes;
+  label.textContent="PC "+(pc+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
+   (reason?" · Pausado: "+reason:" · "+remaining+" min do jogo restantes");
+ }
+ for(const meter of gpuGamePanel.querySelectorAll<HTMLProgressElement>("[data-gpu-download-progress]")){
+  const pc=Number(meter.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
+  if(job&&job.id===meter.dataset.gpuDownloadProgress)meter.value=job.elapsedMinutes;
+ }
+}
 function renderUI(liveOnly=false):void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
@@ -830,7 +848,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.elapsedMinutes,j.durationMinutes]),game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -1196,6 +1214,39 @@ function renderUI(liveOnly=false):void {
   }
   if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
     gpuGamePanel.replaceChildren();
+    if(game.gpuGameInstallJobs?.length){
+      const overview=document.createElement("section");
+      overview.className="gpu-download-overview";
+      overview.setAttribute("aria-label","Downloads de jogos em andamento");
+      const title=document.createElement("strong");
+      title.textContent="Downloads em andamento · "+game.gpuGameInstallJobs.length;
+      const intro=document.createElement("p");
+      intro.textContent="O progresso continua com o painel fechado. Cancele aqui mesmo se a GPU ou o Windows deixar de ser compatível.";
+      overview.append(title,intro);
+      for(const job of [...game.gpuGameInstallJobs].sort((a,b)=>a.pc-b.pc)){
+       const record=document.createElement("div");record.className="gpu-download-entry";
+       const spec=GPU_GAME_CATALOG.find(x=>x.id===job.id);
+       const heading=document.createElement("span");
+       heading.textContent="PC "+(job.pc+1)+" · "+(spec?.name??"Jogo avançado");
+       const label=document.createElement("small");
+       label.className="catalog-game-note";
+       label.dataset.gpuDownloadStatus=job.id;
+       label.dataset.gpuGamePc=String(job.pc);
+       const meter=document.createElement("progress");
+       meter.max=job.durationMinutes;meter.value=job.elapsedMinutes;
+       meter.dataset.gpuDownloadProgress=job.id;
+       meter.dataset.gpuGamePc=String(job.pc);
+       meter.setAttribute("aria-label","Resumo do download no PC "+(job.pc+1));
+       const cancel=document.createElement("button");
+       cancel.type="button";cancel.className="slice";
+       cancel.dataset.gpuGameCancel=job.id;
+       cancel.dataset.gpuGamePc=String(job.pc);
+       cancel.textContent="Cancelar · PC "+(job.pc+1);
+       record.append(heading,label,meter,cancel);
+       overview.append(record);
+      }
+      gpuGamePanel.append(overview);
+    }
     if(game.economyVersion!==2||year<2005){
       const note=document.createElement("p");
       note.textContent=game.economyVersion!==2
@@ -1279,12 +1330,12 @@ function renderUI(liveOnly=false):void {
         stations.append(control);
         if(downloading){
          const status=document.createElement("span");status.className="catalog-game-note";
-         const paused=gpuGameInstallPausedReason(game,i);
-         const remain=job.durationMinutes-job.elapsedMinutes;
-         status.textContent="PC "+(i+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
-          (paused?" · Pausado: "+paused:" · "+remain+" min do jogo restantes");
+         status.dataset.gpuDownloadStatus=title.id;
+         status.dataset.gpuGamePc=String(i);
          const bar=document.createElement("progress");
          bar.max=job.durationMinutes;bar.value=job.elapsedMinutes;
+         bar.dataset.gpuDownloadProgress=title.id;
+         bar.dataset.gpuGamePc=String(i);
          bar.setAttribute("aria-label","Download de "+title.name+" no PC "+(i+1));
          stations.append(status,bar);
         }
@@ -1306,6 +1357,7 @@ function renderUI(liveOnly=false):void {
       gpuGamePanel.append(card);
     }
   }
+  refreshGpuDownloadMeters();
   const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
    for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
     const el=document.querySelector<HTMLButtonElement>("#"+id);

@@ -29,6 +29,11 @@ export function gpuGameInstallPausedReason(s:GameState,pc:number):string|null{
  if(s.totalMinutes<s.offlineUntil)return "sem internet";
  if(stationHasCustomer(s,pc))return "PC ocupado";
  if(s.repairJobs?.some(j=>j.pc===pc&&j.phase!=="leaving"))return "em manutenção";
+ // O download permanece em pausa quando a GPU ou a licença Windows muda.
+ // Sem esse diagnóstico ele ficava retido sem motivo visível ao jogador.
+ const job=gpuGameInstallJob(s,pc);
+ const title=job&&gpuGameSpec(job.id);
+ if(title&&!gpuGameCompatible(s,pc,title))return "GPU ou Windows incompatível";
  return null;
 }
 export function validGpuGameInstallJobs(value:unknown,s:Partial<GameState>):boolean{

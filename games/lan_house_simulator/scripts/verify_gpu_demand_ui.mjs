@@ -84,6 +84,9 @@ try{
   await (mobile?bulk.tap():bulk.click());
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Pausado: sem internet/);
+  assert.equal(await page.locator(".gpu-download-overview").count(),1);
+  assert.equal(await page.locator(".gpu-download-entry").count(),1);
+  assert.equal(await page.locator('[aria-label="Resumo do download no PC 2"]').count(),1);
   const progress=page.locator('[aria-label="Download de Neon Rush Online no PC 2"]');
   assert.equal(await progress.count(),1);
   // Download em progresso persistente em desktop e mobile.

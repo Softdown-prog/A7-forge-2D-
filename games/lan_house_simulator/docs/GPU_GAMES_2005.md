@@ -256,3 +256,14 @@ compra inicial de licenças mantém o funcionamento existente de
 instalação automática em PCs elegíveis; as ações **manuais** passam
 a exigir download, para não modificar retroativamente saves antigos
 nem a economia das campanhas já existentes.
+
+## Aperfeiçoamento do painel de downloads
+
+O resumo **Downloads em andamento** reúne, em ordem de PC, cada jogo que
+ainda está baixando, com porcentagem, tempo restante, motivo de pausa
+e cancelamento. Ele permanece acessível mesmo se a estação perder a
+GPU/Windows necessários durante o processo (o download é pausado).
+A tela também atualiza barras e percentuais sem reconstruir todo o
+catálogo a cada minuto, evitando roubar foco e rolagem em celulares.
+O indicador do salão recebeu um pequeno brilho de movimento
+apenas enquanto está transferindo dados (respeita a pausa).

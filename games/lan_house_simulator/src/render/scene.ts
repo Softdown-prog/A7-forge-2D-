@@ -107,12 +107,12 @@ export class SceneRenderer {
     }
     entries.sort((a,b)=>a.depth-b.depth);
     for (const e of entries) e.paint();
-    this.drawGpuInstallMarkers(s,camera);
+    this.drawGpuInstallMarkers(s,camera,elapsedSeconds);
     this.sign(camera,roomW);
     this.hudInside(ctx,s);
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */
-  private drawGpuInstallMarkers(s:GameState,camera:Projection):void{
+  private drawGpuInstallMarkers(s:GameState,camera:Projection,elapsedSeconds:number):void{
     if(!s.gpuGameInstallJobs?.length)return;
     const ctx=this.ctx;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
     for(const job of s.gpuGameInstallJobs){
@@ -127,6 +127,12 @@ export class SceneRenderer {
       ctx.fillText(paused?"PAUSA":Math.floor(pct*100)+"%",at.x,y-8*camera.zoom);
       ctx.fillStyle="#4c5a60";ctx.fillRect(x,y,w,h);
       ctx.fillStyle=paused?"#dd9754":"#69d5a4";ctx.fillRect(x,y,w*pct,h);
+      if(!paused&&pct>0){
+        ctx.save();ctx.beginPath();ctx.rect(x,y,w*pct,h);ctx.clip();
+        const shine=x+(elapsedSeconds*15%(w+12))-12;
+        ctx.fillStyle="rgba(244,255,252,.5)";ctx.fillRect(shine,y,5,h);
+        ctx.restore();
+      }
     }
     ctx.restore();
   }

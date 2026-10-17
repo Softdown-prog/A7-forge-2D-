@@ -603,3 +603,18 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 
 /* Backup visual leve: se o Canvas do menu falhar, não mostrar um CRT vazio. */
 #menu-scene{background-image:url("./assets/ui/salon-preview.webp");background-size:cover;background-position:center}
+
+/* Downloads: resumo persistente acima do catálogo, sem empurrar a tela no celular. */
+.gpu-download-overview{display:grid;gap:10px;padding:12px;margin:8px 0 14px;
+ border:1px solid #b9cdbb;border-radius:12px;background:#ecf2e6;min-width:0}
+.gpu-download-overview>strong{font-size:13px;color:#335749}
+.gpu-download-overview>p{margin:0;font-size:11px;line-height:1.5;color:#516b5d}
+.gpu-download-entry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 10px;
+ padding:10px;background:#fafbf4;border:1px solid #d7e2cf;border-radius:8px;min-width:0}
+.gpu-download-entry>span{font-size:12px;font-weight:700;overflow-wrap:anywhere}
+.gpu-download-entry>small{font-size:11px;grid-column:1;color:#556a58}
+.gpu-download-entry>progress{grid-column:1;align-self:center;height:9px}
+.gpu-download-entry>button{grid-column:2;grid-row:1/4;align-self:center;white-space:normal;max-width:135px}
+#gpu-game-catalog [data-gpu-download-status]{font-variant-numeric:tabular-nums}
+@media(max-width:380px){.gpu-download-entry{grid-template-columns:1fr}
+ .gpu-download-entry>button{grid-column:1;grid-row:auto;max-width:none}}
