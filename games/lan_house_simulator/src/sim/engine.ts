@@ -174,6 +174,7 @@ function moveRoute(s:GameState,c: Customer): boolean {
         ?ps1Seat(s,c.ps1StationIndex):null;
       const side=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
         ?ps1SeatApproach(s,c.ps1StationIndex):null;
+      if(seat&&side&&!canTraverseLocalStep(s,side,seat))return false;
       const destination=seat&&side?side:(c.route?.at(-1)??c.target);
       const path=crowdRoute(s,c,destination);
       if(path?.length){
