@@ -42,7 +42,7 @@ export function validGpuGameInstalls(value:unknown,s:Partial<GameState>):boolean
  if(!isHistorical(s as GameState)||!Array.isArray(value)||value.length>stationPowerCount(s as GameState))return false;
  return value.every(row=>Array.isArray(row)&&row.length<=GPU_GAME_CATALOG.length&&
   new Set(row).size===row.length&&row.every(id=>typeof id==="string"&&
-   s.licensedGpuGames?.includes(id)&&!!gpuGameSpec(id)));
+   s.licensedGpuGames?.some(owned=>owned===id)&&!!gpuGameSpec(id)));
 }
 /** A licença já foi paga. A instalação exige PC ligado, livre e sem manutenção. */
 export function toggleGpuGameInstallation(s:GameState,index:number,id:GpuGameId):Result{
