@@ -1,3 +1,4 @@
+import {ps1ControllerAnchor,ps1ControllerPort} from "../dist/js/render/ps1Art.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -142,4 +143,19 @@ test("desvio por aglomeração preserva entrada lateral na cadeira PS1",()=>{
  const last=c.route?.at(-1)??c.target;
  assert.ok(Math.hypot(last.x-seat.x,last.y-seat.y)<.001,
   "a rota recalculada deve continuar terminando na cadeira do console");
+});
+
+test("controle de PS1 permanece à frente do personagem e conectado ao console",()=>{
+ const s=setup(),seat=ps1Seat(s,0);
+ assert.ok(seat);
+ const pad=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat);
+ assert.ok(pad.point.y<seat.y&&pad.point.y>seat.y-.5,
+  "controle deve ficar diante do colo, voltado à TV");
+ assert.ok(pad.height>=20&&pad.height<=35,
+  "controle deve estar na altura das mãos, não do pescoço");
+ assert.ok(port.point.y<pad.point.y&&port.point.x>pad.point.x,
+  "cabo termina na frente do console sobre a bancada");
+ for(const n of [pad.point.x,pad.point.y,pad.height,port.point.x,port.point.y,port.height])
+  assert.ok(Number.isFinite(n));
+ assert.deepEqual(ps1ControllerAnchor(seat),pad,"âncora estável entre frames");
 });
