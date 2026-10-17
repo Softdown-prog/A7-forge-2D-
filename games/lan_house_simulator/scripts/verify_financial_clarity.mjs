@@ -70,7 +70,7 @@ try{
   await click("#last-bill-details summary");
   assert.equal(await page.locator("#last-bill-details").evaluate(el=>el.open),true);
   for(const id of ["rent","internet","energy","maintenance","wages","total"])
-   assert.match(await page.locator("#last-bill-"+id).innerText(),/R\\$/);
+   assert.match(await page.locator("#last-bill-"+id).innerText(),/R\$/);
   assert.deepEqual(errors,[]);
   const settledOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(settledOverflow<=3,"comprovante rompe a largura em "+width+"px: "+settledOverflow);
