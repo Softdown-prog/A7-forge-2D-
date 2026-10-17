@@ -387,7 +387,7 @@ function tryServe(s: GameState, c: Customer): void {
     if(!ps1StationAvailable(s,i))return false;
     const side=ps1SeatApproach(s,i),seat=ps1Seat(s,i);
     return !!side&&!!seat&&!!navigableRoute(s,{x:c.x,y:c.y},side)&&
-      !!navigableRoute(s,side,seat);
+      (canTraverseLocalStep(s,side,seat)||!!navigableRoute(s,side,seat));
   }): -1;
   const consoleSeat=consoleIndex>=0?ps1Seat(s,consoleIndex):null;
   const consoleSide=consoleIndex>=0?ps1SeatApproach(s,consoleIndex):null;
@@ -398,7 +398,10 @@ function tryServe(s: GameState, c: Customer): void {
     if(c.sessionMinutes>remaining)c.sessionMinutes=
       ([240,180,120,90,60,45,30] as number[]).find(n=>n<=remaining)??30;
     if(leaveCounterForPc(s,c,consoleSide)){
-      const tail=navigableRoute(s,consoleSide,consoleSeat)!;
+      // Já na lateral da bancada, entrar pela frente da cadeira em linha
+      // direta. A rota padrão pelo corredor faria o ator voltar e atravessar a TV.
+      const tail=canTraverseLocalStep(s,consoleSide,consoleSeat)
+       ?[consoleSeat]:navigableRoute(s,consoleSide,consoleSeat)!;
       c.route=[...(c.route??[]),...tail];
       const paid=ps1SessionPrice(s,c.sessionMinutes);
       c.pcIndex=null;c.ps1StationIndex=consoleIndex;
