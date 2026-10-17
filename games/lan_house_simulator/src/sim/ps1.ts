@@ -57,7 +57,7 @@ export function setPs1HourlyPrice(s:GameState,price:number):Result{
  s.ps1HourlyPrice=price;
  return {ok:true,message:"PlayStation: R$ "+price.toFixed(2)+" por hora."};
 }
-export function ps1AvailableStation(s:GameState):number|undefined{
+export function ps1AvailableStation(s:GameState):number{
  return s.ps1Stations?.findIndex((station,i)=>station.wear<PS1_WEAR_LIMIT&&
   !s.customers.some(c=>c.ps1StationIndex===i&&
    ["to_pc","sitting","using","standing"].includes(c.stage))) ?? -1
