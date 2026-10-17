@@ -167,8 +167,19 @@ function moveRoute(s:GameState,c: Customer): boolean {
     // Replanejar até o destino final permite contornar também o waypoint ocupado.
     if(after>=before-.005&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
       c.nextCrowdRetryMinute=s.totalMinutes+4;
-      const path=crowdRoute(s,c,c.route?.at(-1)??c.target);
-      if(path?.length){c.target=path[0]!;c.route=path.slice(1);}
+      // Uma sessão de console sempre termina pela lateral da cadeira.
+      // Replanejar diretamente até o assento poderia mandar o visitante
+      // atravessar novamente a bancada/TV após encontrar outra pessoa.
+      const seat=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
+        ?ps1Seat(s,c.ps1StationIndex):null;
+      const side=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
+        ?ps1SeatApproach(s,c.ps1StationIndex):null;
+      const destination=seat&&side?side:(c.route?.at(-1)??c.target);
+      const path=crowdRoute(s,c,destination);
+      if(path?.length){
+        c.target=path[0]!;
+        c.route=[...path.slice(1),...(seat&&side&&canTraverseLocalStep(s,side,seat)?[seat]:[])];
+      }
     }
     return false;
   }
