@@ -63,7 +63,22 @@ function campaign(config,seed,pcs,withLicense){
  }
  assert.ok(isValidSave(s));
  assert.ok(Math.abs(s.cash-(ENDOWMENT+s.revenue-s.expenses))<.02,"caixa conservado");
- const copy=parseImportedSave(serializeSave(s));
+ let copy;
+ try{copy=parseImportedSave(serializeSave(s));}
+ catch(error){
+  const cents=x=>Math.abs(x*100-Math.round(x*100));
+  console.log("GPU_SAVE_DIAGNOSTIC "+JSON.stringify({
+   year:config.year,seed,pcs,withLicense,dayCount:DAYS,
+   cash:s.cash,cashCentError:cents(s.cash),price:s.pricePerHour,priceCentError:cents(s.pricePerHour),
+   revenue:s.revenue,expenses:s.expenses,rng:s.rng,totalMinutes:s.totalMinutes,
+   internetTier:s.internetTier,expansionLevel:s.expansionLevel,
+   customers:s.customers.length,eventLogCount:s.eventLog.length,
+   eventLong:s.eventLog.filter(x=>typeof x!=="string"||x.length>=1000).slice(0,2),
+   inventory:s.inventory,promotionDay:s.promotionDay,
+   err:String(error)
+  }));
+  throw error;
+ }
  assert.equal(isValidSave(copy),true);
  const observed=gpuDemandReport(s).find(x=>x.id===config.id);
  const coverage=gpuLicenseCoverage(s,config.id);
@@ -87,7 +102,10 @@ function campaign(config,seed,pcs,withLicense){
 }
 test("comparativo controlado 2005/2009/2013: licenças e 1 ou 2 GPUs com transações reais",()=>{
  const results=[];
- for(const config of candidates)for(const seed of [23,137])for(const pcs of [1,2]){
+ const configs=process.env.LHS_GPU_DIAG==="1"?[candidates[0]]:candidates;
+ const seeds=process.env.LHS_GPU_DIAG==="1"?[23]:[23,137];
+ const pcChoices=process.env.LHS_GPU_DIAG==="1"?[1]:[1,2];
+ for(const config of configs)for(const seed of seeds)for(const pcs of pcChoices){
   const no=campaign(config,seed,pcs,false),yes=campaign(config,seed,pcs,true);
   assert.equal(yes.initialExpenses-no.initialExpenses,
    GPU_GAME_CATALOG.find(g=>g.id===config.id).cost);
@@ -97,13 +115,13 @@ test("comparativo controlado 2005/2009/2013: licenças e 1 ou 2 GPUs com transa�
   assert.ok(no.played===0&&no.addedRevenue===0,"sem licença não vende títulos");
   results.push(no,yes);
  }
- assert.equal(results.length,24);
+ assert.equal(results.length,configs.length*seeds.length*pcChoices.length*2);
  for(const row of results)console.log("GPU_LICENSE_AUDIT "+JSON.stringify(row));
  const summaries=[];
- for(const year of [2005,2009,2013])for(const pcs of [1,2]){
+ for(const year of configs.map(x=>x.year))for(const pcs of pcChoices){
   const both=results.filter(r=>r.year===year&&r.pcs===pcs);
   const avg=(licensed,key)=>+(both.filter(r=>r.withLicense===licensed)
-   .reduce((sum,r)=>sum+r[key],0)/2).toFixed(2);
+   .reduce((sum,r)=>sum+r[key],0)/seeds.length).toFixed(2);
   summaries.push({year,pcs,periodDays:DAYS,meanAddedRevenue:avg(true,"addedRevenue"),
    meanServedWith:avg(true,"served"),meanServedWithout:avg(false,"served"),
    meanNetWith:avg(true,"net"),meanNetWithout:avg(false,"net"),
