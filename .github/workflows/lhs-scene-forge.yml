@@ -5,6 +5,8 @@ on:
     paths:
       - 'games/lan_house_simulator/scripts/render_ps1_scene.mjs'
       - 'games/lan_house_simulator/src/render/ps1Art.ts'
+      - 'games/lan_house_simulator/src/render/actorArt.ts'
+      - 'games/lan_house_simulator/src/render/scene.ts'
       - '.github/workflows/lhs-scene-forge.yml'
 permissions:
   contents: read
@@ -45,6 +47,6 @@ jobs:
           name: lhs-scene-forge-ps1-video
           path: |
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_ciclo.mp4
-            games/lan_house_simulator/out/forge-ps1/ps1_cliente_jogando.png
+            games/lan_house_simulator/out/forge-ps1/ps1_cliente_*.png
           if-no-files-found: error
           retention-days: 14
