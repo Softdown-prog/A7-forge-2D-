@@ -843,4 +843,5 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Cobrir os anos 2005/2009/2013, 1/2 PCs, duas sementes, com/sem licença, sem alterar jogo.
 - [x] Validar salvar/importar e conservação econômica em cada cenário, sem receita fictícia.
 - [x] Publicar arquivo JSON de 90 dias como artefato independente do CI e documentar limitações.
+- [x] Concluir as 72 campanhas de 90 dias no CI, com relatório de preços efetivos, receita premium e saldo incremental.
 - [ ] Investigar progressão orgânica partindo de R$ 850 e comparar preços após avanços reais.
