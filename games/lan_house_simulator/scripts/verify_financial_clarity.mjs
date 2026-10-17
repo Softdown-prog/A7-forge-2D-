@@ -37,7 +37,7 @@ try{
   assert.equal(await page.locator("#balance-details").evaluate(el=>el.open),true);
   assert.match(await page.locator("#balance-opening").innerText(),/850,00/);
   assert.match(await page.locator("#balance-income").innerText(),/900,00/);
-  assert.match(await page.locator("#balance-outgoing").innerText(),/1\\.363,51/);
+  assert.match(await page.locator("#balance-outgoing").innerText(),/1\.363,51/);
   assert.match(await page.locator("#balance-available").innerText(),/386,49/);
   assert.equal(await page.locator("#balance-reconciliation").isVisible(),false);
   assert.match(await page.locator(".balance-guide").innerText(),/As contas por mês são uma previsão/);
