@@ -91,3 +91,22 @@ test("importação rejeita downloads duplicados, títulos não licenciados e pro
  s.gpuGameInstallJobs=[job];
  assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });
+
+test("download com hardware incompatível informa pausa e pode ser cancelado",()=>{
+ const state=ready();
+ ok(toggleGpuGameInstallation(state,0,"neon-rush"));
+ const job=gpuGameInstallJob(state,0);
+ const cost=state.cash,paid=state.expenses,rng=state.rng;
+ // Se o jogador trocar/remover a GPU enquanto o download está ativo,
+ // não pode virar instalação concluída por acidente.
+ state.pcGpus[0]=null;
+ assert.equal(gpuGameInstallPausedReason(state,0),"GPU ou Windows incompatível");
+ for(let i=0;i<5;i++){state.totalMinutes++;tickGpuGameInstallations(state);}
+ assert.equal(gpuGameInstallJob(state,0).elapsedMinutes,0);
+ assert.equal(gpuGamePlayableOnPc(state,0,"neon-rush"),false);
+ // A ação de cancelamento não exige compatibilidade nem internet.
+ ok(cancelGpuGameInstallation(state,0,"neon-rush"));
+ assert.equal(gpuGameInstallJob(state,0),undefined);
+ assert.equal(state.licensedGpuGames.includes("neon-rush"),true);
+ assert.deepEqual([state.cash,state.expenses,state.rng],[cost,paid,rng]);
+});
