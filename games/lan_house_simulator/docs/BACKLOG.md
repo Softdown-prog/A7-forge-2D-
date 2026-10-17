@@ -800,7 +800,8 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Não penalizar a escolha gratuita de acompanhar pesquisa; respeitar os eventos e saves existentes.
 - [x] Ajustar requisitos do título de 2009 na documentação para Windows 7, conforme implementação e testes.
 - [x] Cobrir licenciamento inexistente, GPU sem licença, oferta compatível, decisões de retorno e reload em testes Node.
-\n## Clientes gamers: preferência pelo título desejado
+
+## Clientes gamers: preferência pelo título desejado
 - [x] Atribuir título desejado por ID e ano, sem novos sorteios, apenas entre jogos lançados.
 - [x] Selecionar primeiro estação alcançável que rode o título pedido, com licenças e hardware válidos.
 - [x] Cobrar somente bônus do título atendido; fallback em atendimento normal sem bônus por outros jogos.

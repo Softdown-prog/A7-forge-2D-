@@ -110,7 +110,8 @@ inalterado.
 O texto de conclusão também diferencia a pesquisa/espera sem novos prejuízos de
 um plano de divulgação efetivamente concluído; não afirma perdas genéricas para
 quem escolheu não investir.
-\n## Preferências por título (primeira etapa)
+
+## Preferências por título (primeira etapa)
 
 A partir de 2005, cerca de um quarto dos visitantes deseja um jogo GPU
 específico, escolhido deterministicamente pelo ID do cliente entre os

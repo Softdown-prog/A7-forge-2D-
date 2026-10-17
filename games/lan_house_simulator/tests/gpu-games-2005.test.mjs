@@ -2,7 +2,7 @@ import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {createGame,stepGame,isValidSave,chooseAvailablePc} from "../dist/js/sim/engine.js";
+import {createGame,stepGame,isValidSave,chooseAvailablePc,entrance} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,sessionRevenue} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
@@ -205,4 +205,29 @@ test("cliente com preferência nova persiste no save e recusa ID inventado",()=>
  assert.equal(isValidSave(s),false);
  c.preferredGpuGame=undefined;
  assert.equal(isValidSave(s),true,"saves anteriores podem omitir o campo");
+});
+
+test("NPC procura sua licença específica, mesmo quando outro PC roda título diferente",()=>{
+ const s=setup(2005,1);
+ accept(licenseGpuGame(s,"neon-rush"),"neon");
+ year(s,2009);
+ accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"plataforma circuito");
+ accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU circuito");
+ accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows circuito");
+ accept(licenseGpuGame(s,"circuito-competitivo"),"circuito");
+ assert.equal(gpuGamePlayableOnPc(s,0,"neon-rush"),true,
+  "PC moderno também consegue executar jogo antigo");
+ assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),false);
+ const origin=entrance(s);
+ const pick=(title)=>chooseAvailablePc(s,{id:4,x:origin.x,y:origin.y,vip:false,
+  gpuGamer:true,preferredGpuGame:title});
+ assert.equal(pick("circuito-competitivo"),0);
+ // Ocupado o PC 1 (índice zero), o fã de Circuito usa fallback comum
+ // e não se apropria do bônus do jogo Neon Rush instalado no PC 2.
+ s.customers=[{id:31,stage:"using",pcIndex:0}];
+ assert.equal(pick("circuito-competitivo"),1);
+ assert.equal(gpuGameSessionPrice(s,1,60,true,"circuito-competitivo"),
+  sessionRevenue(s.pricePerHour,60,true));
+ assert.equal(gpuGameSessionPrice(s,1,60,true,"neon-rush")>
+  sessionRevenue(s.pricePerHour,60,true),true);
 });
