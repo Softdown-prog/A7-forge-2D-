@@ -156,3 +156,19 @@ test("licença avançada + estação compatível liberam divulgação sem vender
  assert.equal(hasPlayableGpuGame(restored),true);
  assert.equal(isValidSave(restored),true);
 });
+
+// A carta final não pode inventar perda econômica para uma escolha gratuita.
+test("o relatório da pesquisa gratuita confirma ausência de punições indevidas",()=>{
+ const s=deliver(994);s.cash=0;
+ assert.equal(chooseDecision(s,id,"gpu-defer").ok,true);
+ let rec=s.storyRecords.find(r=>r.id===id);
+ s.totalMinutes=(rec.dueDay-1)*DAY_MINUTES;processStoryFollowups(s);
+ assert.equal(chooseDecision(s,id+":followup","story-let-go").ok,true);
+ rec=s.storyRecords.find(r=>r.id===id);
+ s.totalMinutes=(rec.dueDay-1)*DAY_MINUTES;processStoryFollowups(s);
+ const report=s.notices.find(n=>n.id===id+":report");
+ assert.match(report.body,/sem novas penalidades ou gastos indiretos/);
+ assert.doesNotMatch(report.body,/o episódio terminou com pendências/i);
+ assert.equal(s.cash,0);
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+});

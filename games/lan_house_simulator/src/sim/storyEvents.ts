@@ -165,10 +165,10 @@ export const STORIES:Record<StoryId,StoryDefinition>={
  "gpu-games-2005":story("2005: jogos avançados pedem placa de vídeo",
   "Alguns lançamentos já exigem placa de vídeo dedicada e um Windows compatível e licenciado. Tony percebeu que pode atrair um novo público, mas anunciar esses jogos não os instala: para licenciar um título avançado, a lan house precisa ter ao menos um computador com GPU e Windows adequados. Como se preparar?", "opportunity",[
   choice("gpu-plan", "Preparar divulgação para a nova geração", 90,
-   "Planeja a comunicação sem comprar placas nem licenças automaticamente","good",
+   "Divulgação só atrai público se houver jogo licenciado e PC compatível; não compra equipamentos","good",
    {reputation:1,visitors:1.06,visitorDays:8}),
   choice("gpu-survey", "Pesquisar interesse dos clientes", 20,
-   "Escuta os jogadores antes de investir em máquinas e contratos","mixed",
+   "Pesquisa a procura, sem inventar clientes nem comprar licenças ou GPUs","mixed",
    {reputation:1,visitors:1.02,visitorDays:5}),
   choice("gpu-defer", "Adiar a entrada nos jogos avançados", 0,
    "Mantém o catálogo atual, sem cobrança nem punição por esperar","bad",{})
@@ -410,8 +410,13 @@ export function processStoryFollowups(s:GameState):void{
    };
    const gpuNote=record.id==="gpu-games-2005"
     ?" Os jogos avançados continuam sujeitos à compra de licença e à compatibilidade de GPU/Windows em cada estação.":"";
+   const conclusion=record.id==="gpu-games-2005"
+    ?record.finalOutcome==="good"
+      ?"Tony concluiu a etapa de pesquisa ou divulgação. A decisão não instalou equipamentos nem gerou licenças automaticamente."
+      :"Tony continuou pesquisando ou decidiu aguardar, sem novas penalidades ou gastos indiretos."
+    :outcomes[record.finalOutcome??"mixed"];
    send(s,`${record.id}:report`,"Conclusão: "+def.title,
-    "Sua primeira decisão: "+(record.choiceLabel??record.choice)+". Depois: "+(record.followupLabel??record.followupChoice??"sem resposta")+". "+outcomes[record.finalOutcome??"mixed"]+gpuNote,
+    "Sua primeira decisão: "+(record.choiceLabel??record.choice)+". Depois: "+(record.followupLabel??record.followupChoice??"sem resposta")+". "+conclusion+gpuNote,
     record.finalOutcome==="bad"?"warning":"info");
    const n=s.notices?.find(x=>x.id===`${record.id}:report`);
    if(n)n.resolved="summary";

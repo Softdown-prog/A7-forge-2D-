@@ -107,3 +107,6 @@ O acompanhamento gratuito de uma pesquisa não provoca desgaste, penalidade de
 procura ou reputação. A compatibilidade é recalculada na decisão; não é gravada
 como uma flag nova no save. O mecanismo normal de cobrança por sessão segue
 inalterado.
+O texto de conclusão também diferencia a pesquisa/espera sem novos prejuízos de
+um plano de divulgação efetivamente concluído; não afirma perdas genéricas para
+quem escolheu não investir.
