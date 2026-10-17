@@ -21,7 +21,7 @@ import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
-import { type GameState, type Item } from "./sim/types.js";
+import { DAY_MINUTES, type GameState, type Item } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
