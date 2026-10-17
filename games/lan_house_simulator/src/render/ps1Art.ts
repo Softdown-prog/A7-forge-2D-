@@ -1,6 +1,14 @@
 import type {Point} from "../sim/types.js";
 import {cuboid,iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 
+/** Movimento determinístico para a telinha minúscula do CRT.
+ * Os valores são normalizados e não dependem de FPS ou da partida. */
+export function ps1ScreenFrame(seconds:number):{heroX:number;heroY:number;sparkle:boolean}{
+ const tick=Math.floor(Math.max(0,Number.isFinite(seconds)?seconds:0)*6);
+ const phase=tick%12;
+ return {heroX:.08+phase*.053,heroY:phase>=4&&phase<=7?.39:.47,sparkle:phase%3===0};
+}
+
 /** Isometric CRT videogame kit: banco de madeira, TV de tubo,
  * console, controle e cadeira. Tudo geométrico, sem sprites externos. */
 export function drawPs1Station(
@@ -17,17 +25,33 @@ export function drawPs1Station(
  raisedCuboid(ctx,cam,x,y,1.12,.57,24,7,["#cfa476","#77543a","#aa7a52"]);
  // Gabinete CRT: corpo escuro com volume real.
  raisedCuboid(ctx,cam,x+.15,y+.045,.50,.31,31,35,["#67696c","#32383d","#44484a"]);
- // Vidro na frente, borda, brilho e luz do jogo.
+ // Vidro CRT: moldura e jogo procedural original, sempre contido no visor.
  const a=iso({x:x+.21,y:y+.355},cam,61),b=iso({x:x+.59,y:y+.355},cam,61);
  const c=iso({x:x+.59,y:y+.355},cam,40),d=iso({x:x+.21,y:y+.355},cam,40);
  polygon(ctx,[a,b,c,d],"#121c1b","#abb8a7");
- const pulse=active?.12*Math.sin(t*4):0;
- polygon(ctx,[iso({x:x+.245,y:y+.357},cam,58),iso({x:x+.55,y:y+.357},cam,58),
-  iso({x:x+.55,y:y+.357},cam,43),iso({x:x+.245,y:y+.357},cam,43)],
-  active?"#24664a":"#2d3940");
- ctx.fillStyle=active?"#91e5ab":"#7b8d8c";
- const target=iso({x:x+.4,y:y+.363},cam,50+pulse);
- ctx.fillRect(target.x-3*z,target.y-2*z,6*z,4*z);
+ const screen=(u:number,v:number)=>iso({x:x+.245+.305*u,y:y+.357},cam,58-15*v);
+ const pixel=(u:number,v:number,w:number,h:number,color:string)=>{
+  polygon(ctx,[screen(u,v),screen(u+w,v),screen(u+w,v+h),screen(u,v+h)],color);
+ };
+ pixel(0,0,1,1,active?"#285d65":"#2d3940");
+ if(active){
+  // Mini plataforma fictícia: o jogo se move, não é um PNG nem um vídeo externo.
+  const frame=ps1ScreenFrame(t);
+  pixel(0,.66,1,.34,"#264434");
+  pixel(0,.67,1,.12,"#70a77a");
+  pixel(.20,.42,.22,.07,"#93b77c");
+  pixel(.63,.30,.27,.07,"#93b77c");
+  pixel(frame.heroX,frame.heroY,.12,.20,"#f6c87b");
+  pixel(frame.heroX+.028,frame.heroY+.04,.029,.038,"#344a51");
+  pixel(.85,.12,.064,.10,frame.sparkle?"#ffeaa7":"#f3c65a");
+  pixel(.86,.82,.08,.045,"#e2e6bc");
+  // Duas linhas de varredura discretas mantêm o aspecto do tubo.
+  for(const scanline of [.25,.52]){
+   pixel(0,scanline,1,.025,"rgba(12,30,40,.12)");
+  }
+ } else {
+  pixel(.43,.42,.14,.16,"#718d91");
+ }
  // Console retangular cinza, leitor de CD circular sobre a tampa.
  raisedCuboid(ctx,cam,x+.75,y+.13,.30,.28,31,7,["#b8b6af","#777975","#989993"]);
  const disc=iso({x:x+.89,y:y+.25},cam,39);
@@ -48,7 +72,7 @@ export function drawPs1Station(
  * do tronco, na altura do colo, e não flutuar atrás da cabeça.
  * Deslocamento em direção à TV (norte) respeita a projeção isométrica. */
 export function ps1ControllerAnchor(seat:Point):{point:Point;height:number}{
- return {point:{x:seat.x+.04,y:seat.y-.14},height:22};
+ return {point:{x:seat.x-.08,y:seat.y-.08},height:22};
 }
 /** Ponto onde o cabo encontra a frente do console, na bancada. */
 export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
