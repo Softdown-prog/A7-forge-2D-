@@ -895,3 +895,12 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Exibir comprovante recolhível na aba Finanças, preservando o caixa após pagamento.
 - [x] Persistir apenas o último comprovante, validar seus campos e aceitar salvamentos anteriores sem ele.
 - [x] Testar fechamento real, integridade contábil, segundo fechamento e rejeição de campos adulterados.
+
+## Chegada do PlayStation 1 — 2002 (primeira etapa)
+- [x] Desbloquear em 2002 a compra de bancada com TV CRT, PS1 e cadeira por posição física livre.
+- [x] Integrar consoles à loja, ao salão isométrico e à aba Videogames da administração.
+- [x] Atendimento de um cliente por bancada: fila no caixa, caminhada, sentar, usar controle e sair.
+- [x] Tarifa e receita separadas das sessões de PCs, desgaste e manutenção dos controles.
+- [x] Preservar saves antigos sem PS1; limitar a três bancadas e recusar instalação em espaços ocupados.
+- [ ] Segunda cadeira e modo para dois jogadores, depois de validar a experiência individual.
+- [ ] Catálogo de jogos de console e licenciamento por título, com pesquisa histórica e balanceamento posterior.

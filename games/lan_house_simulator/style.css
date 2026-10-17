@@ -680,3 +680,13 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .paid-bill-note{font-size:10px;color:#66766a;line-height:1.5}
 @media(max-width:700px){.paid-bill-panel{padding:10px}.paid-bill-rows dt{font-size:10px}
  .paid-bill-rows dd{font-size:11px}}
+
+/* Bancadas de videogame: painel responsivo para desgaste e revisão dos controles. */
+#ps1-stations{display:grid;gap:8px;margin-top:10px}
+.ps1-station-summary{display:flex;justify-content:space-between;align-items:center;gap:10px;
+ padding:10px 12px;border:1px solid #c9d5c2;border-radius:9px;background:#f5f7ed}
+.ps1-station-summary>span{font-size:11px;line-height:1.5;color:#3a5141}
+.ps1-station-summary>button{flex-shrink:0}
+#ps1-placement{width:100%;min-width:0;max-width:100%;margin:6px 0}
+@media(max-width:640px){.ps1-station-summary{flex-direction:column;align-items:stretch}
+ .ps1-station-summary>button{align-self:flex-start}}

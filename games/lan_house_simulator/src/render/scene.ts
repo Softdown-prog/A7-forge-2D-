@@ -20,6 +20,8 @@ import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
+import {ps1StationPoint,ps1Seat} from "../sim/ps1.js";
+import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
@@ -90,6 +92,14 @@ export class SceneRenderer {
       const p=pcPosition(i,s);
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
     }
+    for(let i=0;i<(s.ps1Stations?.length??0);i++){
+      const point=ps1StationPoint(s,i);
+      if(point){
+       const inUse=s.customers.some(c=>c.ps1StationIndex===i&&c.stage==="using");
+       entries.push({depth:point.x+point.y+.3,paint:()=>drawPs1Station(ctx,camera,point,
+        s.ps1Stations![i]!.wear,inUse,elapsedSeconds)});
+      }
+    }
     for(let i=0;i<BIN_SPOTS.length;i++){
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
@@ -102,7 +112,8 @@ export class SceneRenderer {
       entries.push({depth:door.x+door.y+0.5,paint:()=>this.drawInteriorDoor(camera,door)});
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
-      const location=seated && c.pcIndex!==null ? pcPosition(c.pcIndex,s) : c;
+      const location=seated&&c.ps1StationIndex!==undefined
+        ?ps1Seat(s,c.ps1StationIndex)??c:seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
       entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s)});
     }
     entries.sort((a,b)=>a.depth-b.depth);
@@ -621,20 +632,28 @@ export class SceneRenderer {
       c.stage==="shopping" || c.stage==="leaving";
     let pose:ActorPose=moving&&Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001?"walking":"idle";
     let transition=1;
-    if(seated && c.pcIndex!==null){
+    if(seated && c.ps1StationIndex!==undefined){
+      const seat=ps1Seat(s,c.ps1StationIndex);
+      if(seat){x=seat.x;y=seat.y;pose=c.stage==="standing"?"standing-up":"sitting";
+       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
+        c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;}
+    }else if(seated && c.pcIndex!==null){
       const p=pcPosition(c.pcIndex,s);
       const seat=computerSeat(p);x=seat.x;y=seat.y;
       pose=c.stage==="standing"?"standing-up":"sitting";
       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
     }
-    const direction=seated?(["north","east","south","west"] as const)[pcPosition(c.pcIndex!,s).rotation??0]:
+    const direction=seated&&c.ps1StationIndex!==undefined?"north":
+      seated&&c.pcIndex!==null?(["north","east","south","west"] as const)[pcPosition(c.pcIndex,s).rotation??0]:
       moving?movementDirection({x:c.x,y:c.y},c.target,c.facing??"south"):
       (c.facing??"south");
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition
     });
+    if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
+      drawPs1Controller(this.ctx,camera,{x,y},t);
     if(seated && c.pcIndex!==null){
       const style=actorStyleFor(c.costume,c.id);
       const weight=c.stage==="using"?1:
