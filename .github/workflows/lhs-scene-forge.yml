@@ -28,6 +28,10 @@ jobs:
       - name: Capture PS1 scene without campaign or checkout
         working-directory: games/lan_house_simulator
         run: node scripts/render_ps1_scene.mjs out/forge-ps1
+      - name: Install ffmpeg
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
       - name: Encode mobile-friendly MP4
         working-directory: games/lan_house_simulator
         run: |
