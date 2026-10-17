@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/scripts/render_ps1_scene.mjs'
+      - 'games/lan_house_simulator/src/render/ps1Art.ts'
       - '.github/workflows/lhs-scene-forge.yml'
 permissions:
   contents: read
