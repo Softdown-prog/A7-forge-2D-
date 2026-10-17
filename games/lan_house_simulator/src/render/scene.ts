@@ -650,7 +650,8 @@ export class SceneRenderer {
       (c.facing??"south");
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
-      pose,direction,transition
+      pose,direction,transition,
+      gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using"
     });
     if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
       drawPs1Controller(this.ctx,camera,{x,y},t);
