@@ -902,5 +902,6 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Atendimento de um cliente por bancada: fila no caixa, caminhada, sentar, usar controle e sair.
 - [x] Tarifa e receita separadas das sessões de PCs, desgaste e manutenção dos controles.
 - [x] Preservar saves antigos sem PS1; limitar a três bancadas e recusar instalação em espaços ocupados.
+- [x] Criar validação real em Chromium (desktop/414/360 px), compra na loja, aba de preços e cena com jogador sentado.
 - [ ] Segunda cadeira e modo para dois jogadores, depois de validar a experiência individual.
 - [ ] Catálogo de jogos de console e licenciamento por título, com pesquisa histórica e balanceamento posterior.

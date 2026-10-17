@@ -128,6 +128,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+      - name: Verify 2002 PlayStation shop, bench and admin on desktop/mobile
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_ps1_2002.mjs out/validation
       - name: Verify cash and net-result explanation on desktop and mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
