@@ -72,7 +72,7 @@ export function drawPs1Station(
  * do tronco, na altura do colo, e não flutuar atrás da cabeça.
  * Deslocamento em direção à TV (norte) respeita a projeção isométrica. */
 export function ps1ControllerAnchor(seat:Point):{point:Point;height:number}{
- return {point:{x:seat.x-.08,y:seat.y-.08},height:22};
+ return {point:{x:seat.x+.12,y:seat.y-.08},height:24};
 }
 /** Ponto onde o cabo encontra a frente do console, na bancada. */
 export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
