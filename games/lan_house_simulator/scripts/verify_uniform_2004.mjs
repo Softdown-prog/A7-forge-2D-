@@ -31,7 +31,9 @@ try{
  for(const width of [1280,414,360]){
   const context=await browser.newContext({viewport:{width,height:850},isMobile:width<700,hasTouch:width<700});
   await context.addInitScript(({key,state})=>{
-    localStorage.setItem(key,JSON.stringify(state));
+    // AddInitScript executa novamente no reload: nunca substituir um save
+    // já gravado pelo jogo durante o teste de persistência.
+    if(localStorage.getItem(key)===null)localStorage.setItem(key,JSON.stringify(state));
     localStorage.setItem("lhs.sound","off");
   },{key:GAME_SAVE_KEY,state:s});
   const page=await context.newPage(),errors=[];
