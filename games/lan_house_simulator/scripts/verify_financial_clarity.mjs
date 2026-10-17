@@ -4,7 +4,7 @@ import {spawn} from "node:child_process";
 import {mkdir,writeFile} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
-import {createGame} from "../dist/js/sim/engine.js";
+import {createGame,stepGame} from "../dist/js/sim/engine.js";
 import {GAME_SAVE_KEY,DAY_MINUTES} from "../dist/js/sim/types.js";
 
 const out=resolve(process.argv[2]??"out/balance-panel");
@@ -50,8 +50,33 @@ try{
   assert.ok(scrollOverflow<=3,"painel rompe a largura em "+width+"px: "+scrollOverflow);
   await page.locator(".balance-guide").screenshot({path:resolve(out,"balance_guide_"+width+".png")});
   await page.locator("#bill-watch").screenshot({path:resolve(out,"bill_watch_"+width+".png")});
+  // Segundo cenário: pagar uma conta REAL na simulação e abrir o comprovante
+  // após salvar e carregar a partida no navegador.
+  const paid=createGame(width+10,"historical");
+  paid.totalMinutes=30*DAY_MINUTES-1;
+  paid.cash=1850;
+  paid.energyAccrued=72.5;
+  paid.employeePayrollAccrued=19.75;
+  stepGame(paid,1);
+  assert.equal(paid.lastPaidMonthlyBill.endDay,30);
+  await page.evaluate(({key,state})=>localStorage.setItem(key,JSON.stringify(state)),
+   {key:GAME_SAVE_KEY,state:paid});
+  await page.reload({waitUntil:"networkidle"});
+  await click("#menu-continue");await click("#open-admin");
+  await click('[data-admin-tab="finance"]');
+  assert.match(await page.locator("#last-bill-info").innerText(),/Último fechamento: mês 01\/1998/);
+  assert.match(await page.locator("#last-bill-info").innerText(),/caixa após pagamento/);
+  assert.equal(await page.locator("#last-bill-details").isVisible(),true);
+  await click("#last-bill-details summary");
+  assert.equal(await page.locator("#last-bill-details").evaluate(el=>el.open),true);
+  for(const id of ["rent","internet","energy","maintenance","wages","total"])
+   assert.match(await page.locator("#last-bill-"+id).innerText(),/R\\$/);
   assert.deepEqual(errors,[]);
-  reports.push({width,cash:386.49,netResult:-463.51,daysUntilBills:1,warning:true,opened:true,scrollOverflow});
+  const settledOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+  assert.ok(settledOverflow<=3,"comprovante rompe a largura em "+width+"px: "+settledOverflow);
+  await page.locator(".paid-bill-panel").screenshot({path:resolve(out,"paid_bill_"+width+".png")});
+  reports.push({width,cash:386.49,netResult:-463.51,daysUntilBills:1,
+   receiptTotal:paid.lastPaidMonthlyBill.total,warning:true,opened:true,scrollOverflow,settledOverflow});
   await context.close();
  }
  await writeFile(resolve(out,"balance_guide.json"),JSON.stringify({reports,passed:true},null,2));
