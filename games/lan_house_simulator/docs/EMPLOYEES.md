@@ -75,3 +75,9 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - O técnico mantém o gesto da chave e ganha um reflexo metálico pequeno no contato do equipamento, sincronizado com `workerMotion("repairing")`, sem solda/raios chamativos.
 - O efeito é calculado em `src/render/workEffects.ts` com a posição física real da lixeira ou PC, renderizado no `SceneRenderer` após o personagem. Não usa RNG nem altera tempo, cobrança, rota, funcionários ou saves.
 - Nova suíte `tests/work-effects.test.mjs` verifica sincronia, ausência de flash permanente, determinismo e integridade do estado. `scripts/verify_worker_motion.mjs` agora captura `worker_contact_small_zoom.png` em sala ampliada, além das quatro direções e do vídeo.
+
+
+## Próxima etapa de jogabilidade — evento de 2004
+- Após o acabamento dos serviços dos funcionários, o correio recebe um acontecimento de 2004 relacionado à presença de alunos uniformizados durante as aulas. O assunto é tratado como **pedido da escola local**, não regra nacional.
+- O evento usa `school-uniform-policy` no sistema de histórias já existente, com consequências, retorno e encerramento. Não interfere no caminho, salário ou renderização de funcionários.
+- Testes `school-uniform-2004.test.mjs` e `verify_uniform_2004.mjs` cobrem calendário, economia, decisões, save e apresentação na caixa de correio do jogo.

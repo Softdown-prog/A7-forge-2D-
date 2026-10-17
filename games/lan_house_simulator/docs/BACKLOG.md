@@ -768,3 +768,13 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Manter efeitos só no Canvas, sem alterar IA, saves, RNG, custos ou duração dos serviços.
 - [x] Incluir validação determinística e captura Chromium com sala ampliada/zoom menor.
 - [ ] Confirmar no aparelho físico a intensidade dos efeitos e ajustar sem exagerar no brilho.
+
+
+## Evento histórico de 2004 — estudantes em uniforme
+- [x] Inserir carta contextual no ano de 2004, entre os dias 121 e 150 do calendário de 360 dias, sem antecipar para 1998 nem enviar atrasada em 2005.
+- [x] Situar a preocupação na escola do bairro e no horário de aula, **sem apresentar proibição nacional inexistente**.
+- [x] Três alternativas: regra com comunicação às famílias, orientação verbal e omissão, com consequências proporcionais sobre reputação e movimento.
+- [x] Reaproveitar o ciclo de história do correio: decisão única, retorno com duas alternativas condicionais e carta de conclusão, persistidos no save.
+- [x] Não consumir RNG de visitantes, não duplicar cobranças nem reeditar a carta após compactação das correspondências.
+- [x] Cobrir ano fixo, orçamento insuficiente, importação, retorno e UI desktop/mobile em testes Node e Chromium.
+- [ ] Ajustar impacto econômico desse evento depois de campanhas completas com regras e outros compromissos escolares.

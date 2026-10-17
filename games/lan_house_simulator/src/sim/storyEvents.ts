@@ -10,7 +10,8 @@ import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 export const STORY_IDS=[
  "roof-leak","neighbor-noise","damaged-keyboard","malware-incident",
  "missing-stock","unexpected-power-bill","late-supplier","lost-document",
- "local-network","neighborhood-paper","privacy-exposure","community-drive"
+ "local-network","neighborhood-paper","privacy-exposure","community-drive",
+ "school-uniform-policy"
 ] as const;
 export type StoryId=typeof STORY_IDS[number];
 export const LEGACY_CHAIN_IDS=["supplier-offer","school-booking","gaming-tournament","equipment-fault"] as const;
@@ -147,6 +148,19 @@ export const STORIES:Record<StoryId,StoryDefinition>={
  ],"O cliente foi informado das medidas tomadas e a confiança começou a voltar.",
  "A limpeza removeu arquivos antigos, mas outra estação apresentou configuração parecida.",
  "Outro cliente encontrou arquivos esquecidos e a notícia afetou a reputação do salão."),
+ "school-uniform-policy":story("2004: alunos de uniforme durante as aulas",
+  "A escola do bairro procurou Tony: estudantes estão frequentando a lan house de uniforme durante o horário de aula. A direção pede colaboração para orientar os jovens. É um acordo local, não uma proibição nacional. Como sua lan house vai lidar com a situação?","problem",[
+  choice("uniform-post-rule","Estabelecer regra e avisar famílias",65,
+   "Explica os horários, orienta os estudantes e registra um acordo com a escola","good",
+   {reputation:2,visitors:.98,visitorDays:6}),
+  choice("uniform-talk","Conversar com os alunos",0,
+   "Orientação sem cartazes nem procedimento fixo; pode precisar de reforço","mixed",{reputation:1}),
+  choice("uniform-ignore","Não interferir na frequência",0,
+   "A escola pode apresentar uma nova reclamação e famílias podem evitar o local","bad",
+   {reputation:-3,visitors:.93,visitorDays:10})
+ ],"A escola agradeceu a colaboração. Os alunos receberam orientações sobre os horários de aula.",
+ "Alguns estudantes passaram a respeitar os horários, mas a direção ainda recebeu relatos de faltas.",
+ "A escola voltou a procurar Tony: responsáveis reclamaram que estudantes seguem faltando às aulas."),
  "community-drive":story("Associação pede computadores para uma ação social",
   "Uma associação do bairro quer utilizar algumas horas de computador para ajudar moradores.","opportunity",[
   choice("community-donate","Ceder horas gratuitas",65,"Apoio comunitário fortalece os laços do bairro","good",{reputation:3,visitors:1.07,visitorDays:10}),
@@ -188,7 +202,8 @@ const FOLLOWUP_LABELS:Record<StoryId,readonly string[]>={
  "local-network":["Testar cabos e portas","Manter rede revisada","Refazer conexões instáveis","Manter ajustes provisórios","Reorganizar a rede com técnico","Continuar com quedas"],
  "neighborhood-paper":["Manter contato com jornal","Deixar matéria repercutir","Divulgar matéria no bairro","Manter divulgação discreta","Retomar contato com redação","Não participar da publicação"],
  "privacy-exposure":["Auditar todos os perfis","Manter limpeza de dados","Revisar demais máquinas","Limpar só após reclamação","Contratar limpeza completa","Ignorar outra exposição de dados"],
- "community-drive":["Organizar nova ação","Manter parceria","Reservar horários adicionais","Limitar colaboração","Procurar a associação","Não participar da iniciativa"]
+ "community-drive":["Organizar nova ação","Manter parceria","Reservar horários adicionais","Limitar colaboração","Procurar a associação","Não participar da iniciativa"],
+ "school-uniform-policy":["Reunir escola e responsáveis","Manter avisos de horários","Formalizar orientação por escrito","Continuar conversas informais","Adotar regra com apoio da escola","Ignorar nova reclamação"]
 };
 const FOLLOWUP_KEYS=["consolidate","observe","complete","maintain","recover","persist"];
 const PERSISTENT_ESCALATIONS:Partial<Record<StoryChainId,StoryImpact>>={
@@ -196,7 +211,8 @@ const PERSISTENT_ESCALATIONS:Partial<Record<StoryChainId,StoryImpact>>={
  "missing-stock":{stock:{soda:-5,snacks:-3}},"late-supplier":{stock:{soda:-5,snacks:-5}},
  "local-network":{offlineMinutes:70},"unexpected-power-bill":{energyBill:90},
  "equipment-fault":{wear:18},"privacy-exposure":{visitors:.76,visitorDays:22},
- "neighbor-noise":{visitors:.74,visitorDays:18},"lost-document":{visitors:.80,visitorDays:18}
+ "neighbor-noise":{visitors:.74,visitorDays:18},"lost-document":{visitors:.80,visitorDays:18},
+ "school-uniform-policy":{visitors:.78,visitorDays:16}
 };
 const chainDefinition=(id:StoryChainId)=>isStoryId(id)?STORIES[id]:LEGACY_STORIES[id];
 export const isChainId=(id:string):id is StoryChainId=>(CHAIN_IDS as readonly string[]).includes(id);

@@ -2,7 +2,7 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
-import {sporadicMailDue,recordMailDelivery,sporadicMailSchedule,additionalMailSchedule} from "./mailCalendar.js";
+import {sporadicMailDue,recordMailDelivery,sporadicMailSchedule,additionalMailSchedule,fixedYearMailWindowDue} from "./mailCalendar.js";
 import {STORY_IDS,STORIES,isStoryId,isStoryNoticeId,storyOptions,chooseStory,processStoryFollowups,storySeen,registerLegacyStory,type StoryId} from "./storyEvents.js";
 
 export type DecisionId="supplier-offer"|"school-booking"|"gaming-tournament"|"equipment-fault"|"electrical-inspection";
@@ -83,11 +83,15 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
 export function scheduleDecisions(s:GameState):void{
  processStoryFollowups(s);
  const today=Math.floor(s.totalMinutes/DAY_MINUTES)+1;
- const storyDates=additionalMailSchedule(s,STORY_IDS);
+ // A carta de uniforme tem ano fixo; não participa do sorteio esporádico 1998–2030.
+ const randomStories=STORY_IDS.filter(id=>id!=="school-uniform-policy");
+ const storyDates=additionalMailSchedule(s,randomStories);
  const ids:Array<DecisionId|StoryId>=["supplier-offer","school-booking","gaming-tournament","equipment-fault","electrical-inspection",...STORY_IDS];
  const candidates=ids.filter(id=>
   (isStoryId(id)
-   ?storyDates[id]!==undefined&&today>=storyDates[id]!&&today<storyDates[id]!+45&&!storySeen(s,id)
+   ?(id==="school-uniform-policy"
+     ?fixedYearMailWindowDue(s,2004,121,150)
+     :storyDates[id]!==undefined&&today>=storyDates[id]!&&today<storyDates[id]!+45)&&!storySeen(s,id)
    :sporadicMailDue(s,id))&&
   !(s.storyRecords??[]).some(r=>r.id===id)&&
   (id!=="electrical-inspection"||!s.electricalInspectionSeen)&&
@@ -96,7 +100,10 @@ export function scheduleDecisions(s:GameState):void{
   (id!=="equipment-fault"||(s.pcWear??[]).some(x=>x>15))
  );
  if(!candidates.length)return;
- const dates:Partial<Record<string,number>>={...sporadicMailSchedule(s),...storyDates};
+ const dates:Partial<Record<string,number>>={
+  ...sporadicMailSchedule(s),...storyDates,
+  "school-uniform-policy":(2004-1998)*360+121
+ };
  // Nunca escolher uma mensagem aleatória extra em dias adjacentes.
  const id=candidates.sort((a,b)=>(dates[a]??0)-(dates[b]??0))[0]!;
  const spec=isStoryId(id)?STORIES[id]:DECISIONS[id];

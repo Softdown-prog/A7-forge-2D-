@@ -112,6 +112,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_staff_phases.mjs out/validation
+      - name: Verify 2004 school uniform letter, branching decisions and mobile saves
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_uniform_2004.mjs out/validation
       - name: Verify service access warnings and map overlays on desktop and mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
