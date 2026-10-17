@@ -70,7 +70,7 @@ test("importar partida de 2005 sem as novas cartas não altera hardware ou dinhe
   gpus:JSON.stringify(old.stationGpus),licenses:JSON.stringify(old.licensedGpuGames)};
  const migrated=roundTrip(old);
  scheduleDecisions(migrated);
- assert.equal(migrated.notices.some(n=>n.id===uniform||n.id===gpu),false,
+ assert.equal((migrated.notices??[]).some(n=>n.id===uniform||n.id===gpu),false,
   "importação fora das janelas não injeta cartas retroativas");
  assert.equal(migrated.cash,original.cash);
  assert.equal(JSON.stringify(migrated.windowsLicenses),original.windows);
