@@ -18,7 +18,7 @@ test("three real female outfits and hairstyles replace ID-based tint masks",()=>
  assert.equal(hair.size,3);
 });
 test("legacy female customer remains valid in saves and new models use the same lifecycle",()=>{
- const s=createGame(13);s.reputation=100;s.pricePerHour=1;
+ const s=createGame(13);s.reputation=100;s.pricePerHour=4;
  let found=false;
  for(let i=0;i<650&&!found;i++){
   stepGame(s,1);
