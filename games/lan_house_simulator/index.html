@@ -20,6 +20,7 @@
       <div class="menu-actions">
         <button id="menu-new" type="button" class="primary" data-icon="play">Abrir minha lan house<span class="button-arrow" aria-hidden="true">→</span></button>
         <button id="menu-continue" type="button" data-icon="continue">Continuar partida</button>
+        <button id="menu-account" type="button" data-icon="users" aria-controls="player-account">Minha Conta · 🍪</button>
         <button id="menu-options" type="button" data-icon="settings" aria-expanded="false" aria-controls="menu-settings">Opções</button>
       </div>
       <div class="save-actions" aria-label="Transferir progresso">
@@ -44,7 +45,7 @@
   <div class="app" id="game-app" hidden>
     <header class="topbar">
       <div class="brand"><img class="logo" src="./assets/ui/brand.svg" alt="" width="44" height="44"/><div><h1>LAN HOUSE<span>SIMULATOR</span></h1><p>Seu bairro. Seu negócio. Sua história.</p></div></div>
-      <div class="topbar-actions"><button id="open-menu" class="slice" type="button" data-icon="pause">Menu<span class="keyboard-hint">ESC</span></button><button id="open-shop" class="slice" type="button" data-icon="cart" aria-controls="shop" aria-expanded="false">Compras</button><button id="open-notices" class="slice notices-trigger" type="button" data-icon="mail" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><span class="notice-label">Correio</span><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" data-icon="settings" aria-controls="admin" aria-expanded="false">Administrar</button></div>
+      <div class="topbar-actions"><button id="open-account" class="slice" type="button" aria-controls="player-account">🍪 Minha Conta</button><button id="open-menu" class="slice" type="button" data-icon="pause">Menu<span class="keyboard-hint">ESC</span></button><button id="open-shop" class="slice" type="button" data-icon="cart" aria-controls="shop" aria-expanded="false">Compras</button><button id="open-notices" class="slice notices-trigger" type="button" data-icon="mail" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><span class="notice-label">Correio</span><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" data-icon="settings" aria-controls="admin" aria-expanded="false">Administrar</button></div>
     </header>
     <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">Tempo firme</div><span id="promotion-hud" class="hud-promotion" data-icon="megaphone" hidden>Divulgação ativa</span><span class="hud-autosave" data-icon="save"><span id="autosave-state" role="status" aria-live="polite">Salvamento automático</span></span></div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
