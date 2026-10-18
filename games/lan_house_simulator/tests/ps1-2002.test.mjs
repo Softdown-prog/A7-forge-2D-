@@ -10,7 +10,8 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {shopPrice,placeFurniture,availablePlacementSlots} from "../dist/js/sim/shop.js";
 import {ps1PlacementSlots,buyPs1Station,ps1StationPoint,ps1Seat,ps1HourPrice,
  setPs1HourlyPrice,ps1SessionPrice,repairPs1Controls,ps1AvailableStation,
- ps1EnergyCostPerMinute,validPs1State,PS1_UNLOCK_YEAR} from "../dist/js/sim/ps1.js";
+ ps1EnergyCostPerMinute,validPs1State,PS1_UNLOCK_YEAR,
+ PS1_CD_CATALOG,ps1DiscPrice,buyPs1Disc,ps1DiscCopies,ps1PlayableDisc,setPs1StationDisc} from "../dist/js/sim/ps1.js";
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
 function inYear(year=2002){
@@ -21,6 +22,7 @@ function setup(){
  const s=inYear(),slot=ps1PlacementSlots(s)[0];
  assert.ok(slot,"2002 has a usable place for console and chair");
  ok(buyPs1Station(s,slot.id));
+ ok(buyPs1Disc(s,"turbo-circuito"));
  return s;
 }
 test("2002 unlock, paid TV-console-bench-chair, limit and floor occupancy",()=>{
@@ -245,4 +247,58 @@ test("dois clientes jogam PS1 em bancadas diferentes sem colisão nem fila trava
  }
  const overlapping=scene.history.filter(f=>f.customers.every(c=>c&&c.stage==="using"));
  assert.ok(overlapping.length>0,"os dois consoles devem operar ao mesmo tempo");
+});
+
+test("2002: bancada sem CD não recebe clientes, compra física ativa primeiro PS1",()=>{
+ const s=inYear(),slot=ps1PlacementSlots(s)[0];
+ ok(buyPs1Station(s,slot.id));
+ assert.equal(ps1PlayableDisc(s,0),null);
+ assert.equal(ps1AvailableStation(s),-1);
+ s.pcPoweredOff=[true,true,true];
+ assert.equal(visitorArrivalChance(s,0),0,"sem jogos físicos não há serviço PS1");
+ const before=s.cash;
+ ok(buyPs1Disc(s,"turbo-circuito"));
+ assert.equal(Math.round((before-s.cash)*100),Math.round(ps1DiscPrice(s,"turbo-circuito")*100));
+ assert.equal(ps1DiscCopies(s,"turbo-circuito"),1);
+ assert.equal(ps1PlayableDisc(s,0),"turbo-circuito");
+ assert.equal(ps1AvailableStation(s),0);
+ assert.ok(visitorArrivalChance(s,0)>0);
+ assert.equal(isValidSave(s),true);
+ assert.deepEqual(parseImportedSave(serializeSave(s)).ps1Discs,s.ps1Discs);
+});
+
+test("CDs PS1: troca, cópias físicas exclusivas, dinheiro e saves legados",()=>{
+ const s=setup();
+ const slot=ps1PlacementSlots(s)[0];
+ ok(buyPs1Station(s,slot.id));
+ assert.equal(ps1AvailableStation(s),0,"primeiro PS1 já contém jogo");
+ assert.equal(ps1PlayableDisc(s,1),null,"segunda bancada sem CD");
+ assert.equal(setPs1StationDisc(s,1,"turbo-circuito").ok,false,
+  "um CD não pode ocupar duas bancadas");
+ ok(buyPs1Disc(s,"turbo-circuito"));
+ assert.equal(ps1PlayableDisc(s,1),"turbo-circuito");
+ ok(buyPs1Disc(s,"ilha-dos-cristais"));
+ ok(setPs1StationDisc(s,1,"ilha-dos-cristais"));
+ assert.equal(ps1PlayableDisc(s,1),"ilha-dos-cristais");
+ assert.equal(setPs1StationDisc(s,0,"ilha-dos-cristais").ok,false,
+  "CD único não pode equipar duas bancadas");
+ const busy={id:5,stage:"using",ps1StationIndex:1,pcIndex:null};
+ s.customers=[busy];
+ assert.equal(setPs1StationDisc(s,1,null).ok,false);
+ s.customers=[];
+ ok(setPs1StationDisc(s,1,null));
+ assert.equal(ps1AvailableStation(s),0);
+ const saved=serializeSave(s);
+ assert.deepEqual(parseImportedSave(saved).ps1Stations,s.ps1Stations);
+ s.ps1Stations[1].discId="turbo-circuito";
+ assert.equal(isValidSave({...s,ps1Discs:{"turbo-circuito":1}}),false,
+  "inventário adulterado que duplica CDs é inválido");
+ delete s.ps1Stations[1].discId;
+ const legacy=setup();
+ delete legacy.ps1Discs;
+ delete legacy.ps1Stations[0].discId;
+ assert.equal(isValidSave(legacy),true,"save antigo carrega sem CD gratuito");
+ assert.equal(ps1AvailableStation(legacy),-1,"save antigo precisa comprar CD");
+ for(const title of PS1_CD_CATALOG)assert.ok(ps1DiscPrice(s,title.id)>0);
+ assert.equal(buyPs1Disc(inYear(),"turbo-circuito").ok,false);
 });
