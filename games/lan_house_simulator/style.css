@@ -959,7 +959,6 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  padding:9px 13px;border:1px solid #8ab9a6;border-radius:8px;
  background:#d9eee1;color:#18362e;font:600 13px system-ui,sans-serif}
 .privacy-actions #privacy-reject{background:#244a40;color:#f1f7ed}
- min-height:32px;padding:5px 10px;opacity:.83;font-size:11px}
 @media(max-width:650px){.privacy-banner{display:block;max-height:65dvh;
  overflow:auto;bottom:8px;left:8px;right:8px;padding:12px}
  .privacy-actions{margin-top:10px}
