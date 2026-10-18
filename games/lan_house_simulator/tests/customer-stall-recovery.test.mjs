@@ -57,5 +57,6 @@ test("dense arrivals and departures still respect collisions and recover without
  assert.ok(Math.abs(s.cash-old-s.revenue+s.expenses)<1e-6);
  const resumed=parseImportedSave(serializeSave(s));
  for(let i=0;i<12;i++){stepGame(s,1);stepGame(resumed,1);}
- assert.deepEqual(snapshotGameState(resumed),snapshotGameState(s));
+ // Exportação JSON não preserva propriedades explicitamente undefined (ex.: queueIndex).
+ assert.deepEqual(snapshotGameState(resumed),JSON.parse(JSON.stringify(snapshotGameState(s))));
 });
