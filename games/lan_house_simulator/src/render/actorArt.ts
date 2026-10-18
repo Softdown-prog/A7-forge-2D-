@@ -19,24 +19,13 @@ const casual: readonly ActorStyle[] = [
 ];
 export function actorStyleFor(kind: ActorKind, id: number): ActorStyle {
   const style = casual[(Math.abs(Math.trunc(id)) || 0)%casual.length]!;
-  if(kind==="female"){
-    // Identity-based palette masks: independent clothes/hair hues, stable across frames and saves.
-    const clothes=[
-      ["#B56C92","#794C7D","#E6B3D1","#394A69","#D9C29B"],
-      ["#478B83","#28665F","#8CD0BD","#3B4566","#E5D29D"],
-      ["#CF894F","#965D43","#F0B879","#48566C","#EAD29E"],
-      ["#617EB4","#374F88","#A1B8E3","#38445E","#D9CB99"],
-      ["#9B6BA6","#634676","#CFACDB","#394F55","#E6C99E"],
-      ["#B54F63","#833B50","#ECA0A4","#464762","#EAD49E"]
-    ] as const;
-    const hairColors=["#382A3B","#6A4030","#282C39","#9C704A","#573629","#C29A63"];
-    // Two coprime index mixes avoid a single repeating uniform/hair pairing.
-    const n=Math.abs(Math.trunc(Number.isFinite(id)?id:0));
-    const outfit=clothes[n%clothes.length]!;
-    const hair=hairColors[(Math.floor(n/2)+n*3)%hairColors.length]!;
-    return {shirt:outfit[0],dark:outfit[1],highlight:outfit[2],
-      pants:outfit[3],hair,skin:style.skin,trim:outfit[4]};
-  }
+  // Three hand-authored costumes: no per-ID hue shifts, tint masks or recoloring.
+  if(kind==="female")return {shirt:"#B87998",dark:"#744968",highlight:"#E7B9CF",
+    pants:"#394A69",hair:"#382A3B",skin:"#DB9D80",trim:"#F0D7B7"};
+  if(kind==="female-bob")return {shirt:"#4F9189",dark:"#285A62",highlight:"#9AD3C1",
+    pants:"#4B536A",hair:"#9E6745",skin:"#EDB596",trim:"#F5D7A1"};
+  if(kind==="female-ponytail")return {shirt:"#D28A50",dark:"#915A45",highlight:"#F1BA79",
+    pants:"#354866",hair:"#222C42",skin:"#BF866B",trim:"#E7C89A"};
   if(kind==="cleaner")return {shirt:"#368DAD",dark:"#225E7A",highlight:"#8BCBDD",pants:"#345475",hair:"#3D3130",skin:"#DDA57F",trim:"#F0D680"};
   if(kind==="technician")return {shirt:"#41876E",dark:"#245D57",highlight:"#92BE96",pants:"#344D60",hair:"#4B342D",skin:"#DFAC85",trim:"#E6C67D"};
   if(kind==="owner") return {shirt:"#428f79",dark:"#234f48",highlight:"#93c4a0",pants:"#344c54",hair:"#49342c",skin:"#E4AE86",trim:"#e5c18a"};
@@ -132,6 +121,143 @@ function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean):v
  ell(ctx,-3,-47,11,2,"rgba(255,241,208,.17)");
  ctx.restore();
 }
+/** Discrete character artwork; all three reuse only rig anchors and movement,
+ * never a color mask applied over the same costume. */
+export const FEMALE_COSTUMES=["female","female-bob","female-ponytail"] as const;
+type FemaleCostume=typeof FEMALE_COSTUMES[number];
+function isFemaleCostume(kind:ActorKind):kind is FemaleCostume{
+ return kind==="female"||kind==="female-bob"||kind==="female-ponytail";
+}
+/** Three bespoke upper-body silhouettes: cardigan, tailored jacket and hoodie. */
+function femaleTorso(ctx:ActorContext,style:ActorStyle,shift:number,
+ profile:boolean,back:boolean,kind:FemaleCostume):void{
+ ctx.save();ctx.translate(0,shift);
+ if(kind==="female"){
+  // Long-haired character: soft blouse with layered cardigan and folded hem.
+  shape(ctx,profile?[[-8,-52],[-13,-48],[-15,-37],[-10,-24],[11,-23],[15,-30],[14,-46],[7,-53]]:
+   [[-9,-53],[-17,-50],[-18,-37],[-14,-24],[15,-24],[18,-39],[15,-50],[7,-53]],style.shirt);
+  shape(ctx,[[8,-50],[14,-45],[12,-30],[8,-24],[3,-24],[7,-41]],style.dark,style.dark);
+  if(!back){
+   shape(ctx,[[-5,-52],[2,-45],[-1,-29],[-6,-26],[-8,-32]],style.highlight,style.dark);
+   shape(ctx,[[7,-52],[2,-45],[1,-29],[5,-27],[9,-39]],style.dark,style.dark);
+   segment(ctx,-13,-24,13,-24,2.6,style.trim);
+   ell(ctx,0,-36,1.2,1.5,style.trim);
+  }
+ }else if(kind==="female-bob"){
+  // Cropped teal jacket, contrasting inner shirt, seams and angular lapels.
+  shape(ctx,profile?[[-9,-53],[-16,-46],[-14,-25],[12,-24],[17,-41],[9,-54]]:
+   [[-10,-53],[-19,-46],[-16,-23],[16,-23],[18,-47],[10,-53]],style.dark);
+  shape(ctx,[[-11,-49],[-5,-52],[4,-51],[10,-48],[9,-27],[-9,-27]],style.highlight,style.dark);
+  if(!back){
+   shape(ctx,[[-12,-52],[-2,-47],[-6,-39],[-3,-27],[-13,-27]],style.shirt,style.dark);
+   shape(ctx,[[10,-52],[2,-47],[6,-39],[3,-27],[13,-27]],style.shirt,style.dark);
+   segment(ctx,0,-47,0,-27,1.6,style.trim);
+   ell(ctx,5,-32,1.7,1.7,style.trim);
+  }else{
+   segment(ctx,-11,-29,11,-29,2,style.shirt);
+   segment(ctx,-9,-45,9,-45,1.1,style.highlight);
+  }
+ }else{
+  // Orange sports hoodie, attached hood, drawstrings and kangaroo pocket.
+  shape(ctx,profile?[[-8,-54],[-16,-48],[-16,-29],[-11,-23],[11,-23],[16,-30],[14,-48],[8,-55]]:
+   [[-9,-54],[-20,-47],[-17,-28],[-12,-23],[12,-23],[18,-29],[19,-47],[8,-54]],style.shirt);
+  shape(ctx,[[-8,-52],[0,-56],[8,-52],[7,-46],[0,-43],[-7,-46]],style.dark,style.dark);
+  shape(ctx,[[8,-48],[15,-45],[14,-29],[8,-25],[5,-27],[9,-40]],style.dark,style.dark);
+  if(!back){
+   segment(ctx,-4,-46,-3,-35,1.3,style.trim);
+   segment(ctx,4,-46,5,-35,1.3,style.trim);
+   shape(ctx,[[-8,-35],[8,-35],[10,-27],[-10,-27]],style.dark,style.dark);
+   segment(ctx,-7,-34,7,-34,1.2,style.highlight);
+  }else{
+   shape(ctx,[[-10,-51],[0,-55],[10,-51],[9,-43],[0,-40],[-9,-43]],style.dark,style.trim);
+  }
+  segment(ctx,-11,-24,11,-24,3,style.trim);
+ }
+ ctx.restore();
+}
+/** Individual rear-hair shapes, drawn behind neck and clothing. */
+function femaleHairBehind(ctx:ActorContext,style:ActorStyle,kind:FemaleCostume,
+ shift:number,lean:number,sideways:boolean):void{
+ ctx.save();ctx.translate(lean,shift);
+ if(kind==="female"){
+  shape(ctx,[[-12,-78],[-16,-70],[-18,-47],[-14,-39],
+    [-6,-43],[6,-43],[13,-40],[18,-47],[16,-70],[10,-79]],style.hair,"#292839");
+  segment(ctx,-13,-71,-14,-47,1.7,"#765468");
+ }else if(kind==="female-bob"){
+  shape(ctx,[[-12,-77],[-16,-70],[-18,-60],[-13,-55],[-6,-58],
+    [6,-58],[14,-55],[18,-61],[15,-73],[9,-80]],style.hair,"#654534");
+  ell(ctx,-12,-62,5.2,7,style.hair);
+  ell(ctx,12,-62,5.2,7,style.hair);
+ }else{
+  // Raised ponytail, tied high and swinging gently with movement direction.
+  const tailX=sideways?-15:-19;
+  shape(ctx,[[9,-83],[17,-79],[23,-72],[24,-60],
+    [20,-44],[13,-49],[15,-66],[7,-74]],style.hair,"#1C2535");
+  ell(ctx,17,-77,4,4,"#D8B67F");
+  segment(ctx,tailX+32,-62,tailX+36,-48,2,"#35465F");
+ }
+ ctx.restore();
+}
+/** Individual fringe shapes, not the generic short hairstyle tinted differently. */
+function femaleHairFront(ctx:ActorContext,style:ActorStyle,kind:FemaleCostume,
+ shift:number,lean:number,sideways:boolean):void{
+ ctx.save();ctx.translate(lean,shift);
+ if(kind==="female"){
+  ell(ctx,0,-79,14.4,7,style.hair);
+  shape(ctx,[[-13,-79],[9,-83],[13,-76],[7,-72],[-7,-70],[-13,-72]],style.hair,style.hair);
+  const sides=sideways?[-1]:[-1,1];
+  for(const side of sides){
+   shape(ctx,[[side*9,-76],[side*15,-71],[side*14,-56],
+     [side*11,-49],[side*8,-58],[side*9,-68]],style.hair,style.hair);
+  }
+ }else if(kind==="female-bob"){
+  // Rounded bob cap, blunt-cut side locks and swept bangs.
+  ell(ctx,0,-79,14.8,8,style.hair);
+  for(const side of (sideways?[-1]:[-1,1])){
+   shape(ctx,[[side*8,-79],[side*15,-76],[side*16,-62],
+     [side*17,-57],[side*9,-58],[side*10,-71]],style.hair,"#654534");
+  }
+  shape(ctx,[[-13,-80],[12,-82],[12,-74],[6,-72],[-4,-75],[-11,-71]],
+   style.hair,style.hair);
+  segment(ctx,-9,-79,5,-79,1.8,"#D99E65");
+ }else{
+  // Swept short fringe at the front, with a raised tie at the rear.
+  ell(ctx,0,-79,13.8,6.9,style.hair);
+  shape(ctx,[[-13,-78],[0,-84],[11,-79],[12,-74],[5,-70],
+    [-3,-74],[-11,-71]],style.hair,style.hair);
+  ell(ctx,11,-82,4.2,3.8,style.hair);
+  segment(ctx,-8,-79,-2,-81,1.5,"#647188");
+ }
+ ctx.restore();
+}
+/** Back view must show whole hairstyle instead of the generic cropped skull. */
+function femaleHairBack(ctx:ActorContext,style:ActorStyle,kind:FemaleCostume,
+ shift:number,lean:number):void{
+ ctx.save();ctx.translate(lean,shift);
+ if(kind==="female"){
+  shape(ctx,[[-13,-75],[-15,-86],[-7,-90],[5,-90],[15,-83],[16,-68],
+    [18,-43],[12,-40],[5,-44],[-5,-44],[-12,-40],[-18,-43],[-17,-67]],
+    style.hair,"#27293A");
+  segment(ctx,-8,-82,-11,-52,1.7,"#765468");
+  segment(ctx,8,-84,11,-53,1.2,"#765468");
+ }else if(kind==="female-bob"){
+  shape(ctx,[[-14,-75],[-10,-87],[0,-90],[11,-86],[16,-73],
+    [17,-58],[11,-55],[0,-59],[-10,-55],[-17,-59]],style.hair,"#654534");
+  segment(ctx,-9,-81,-13,-63,1.6,"#D39D71");
+  segment(ctx,8,-82,13,-63,1.4,"#D39D71");
+ }else{
+  ell(ctx,0,-76,14,14,style.hair,"#1C2535");
+  shape(ctx,[[-12,-81],[-5,-89],[8,-89],[13,-82],[12,-72],
+    [4,-68],[-9,-72]],style.hair,style.hair);
+  // Ponytail hangs behind the shoulders (not a different-tinted short bob).
+  shape(ctx,[[8,-79],[17,-78],[21,-63],[20,-47],[16,-38],
+    [11,-44],[12,-66]],style.hair,"#1C2535");
+  ell(ctx,13,-79,4,3.5,"#D8B67F");
+  segment(ctx,18,-63,18,-48,2,"#56617A");
+ }
+ ctx.restore();
+}
+
 export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void {
   const base=iso({x:a.x,y:a.y},camera);
   const z=camera.zoom,cyber=a.kind==="owner"&&!!a.premiumCyber;
@@ -178,13 +304,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
 
   // Silhuetas de costas, perfil e frente são distintas: não apenas um flip.
   // Capa e acessórios que ficam atrás do corpo.
-  if(a.kind==="female"){
-    // Long hair and a tied strand are behind the shoulders in all four views.
-    shape(ctx,[[-11,-74+headShift],[-16,-68+headShift],[-17,-44+headShift],
-      [-10,-39+headShift],[9,-40+headShift],[16,-48+headShift],
-      [15,-69+headShift],[10,-78+headShift]],style.hair,"#252638");
-    ell(ctx,sideways?-9:0,-48+headShift,7,11,style.hair);
-  }
+  if(isFemaleCostume(a.kind))femaleHairBehind(ctx,style,a.kind,headShift,lean,sideways);
   if(a.kind==="vampire"){
     shape(ctx,[[-14,-56+headShift],[13,-56+headShift],[24,-6],[-24,-5]],"#433451","#2C2840");
     shape(ctx,[[-12,-51+headShift],[11,-50+headShift],[17,-18],[-16,-15]],"#7E4A68","#4F3556");
@@ -244,16 +364,17 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   };
   arm(-1);if(!sideways)arm(1);
 
-  torso(ctx,style,headShift,sideways);
-  // Barra da roupa amarra a cintura e separa visualmente torso e calça.
-  segment(ctx,-11,-24+headShift,10,-24+headShift,2,style.dark);
-  if(!back)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
-    [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
-  // Gola e botões têm leitura em resolução baixa.
-  if(!back){
-    shape(ctx,[[-8,-50+headShift],[0,-46+headShift],[6,-51+headShift],
-      [3,-53+headShift],[-5,-53+headShift]],style.trim);
-    ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
+  if(isFemaleCostume(a.kind))femaleTorso(ctx,style,headShift,sideways,back,a.kind);
+  else{
+    torso(ctx,style,headShift,sideways);
+    segment(ctx,-11,-24+headShift,10,-24+headShift,2,style.dark);
+    if(!back)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
+      [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
+    if(!back){
+      shape(ctx,[[-8,-50+headShift],[0,-46+headShift],[6,-51+headShift],
+        [3,-53+headShift],[-5,-53+headShift]],style.trim);
+      ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
+    }
   }
 
   if(!back && a.kind==="owner"&&!cyber){
@@ -327,7 +448,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   }
 
   // Penteado/silhueta específica. Formas grandes, sem texturas micro-pixel.
-  if(a.kind==="rabbit"){
+  if(isFemaleCostume(a.kind)){
+    if(!back)femaleHairFront(ctx,style,a.kind,headShift,lean,sideways);
+  }else if(a.kind==="rabbit"){
     shape(ctx,[[-9,-75+headShift],[-12,-98+headShift],[-6,-100+headShift],
       [-2,-78+headShift]],"#F1E7E7","#A998A9");
     shape(ctx,[[4,-77+headShift],[6,-102+headShift],[12,-102+headShift],
@@ -366,19 +489,6 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     }
   }
 
-  if(a.kind==="female"&&!back){
-    // Side locks frame the face without covering the eyes, including profile.
-    const sides=sideways?[-1]:[-1,1];
-    for(const side of sides){
-      shape(ctx,[[side*9+lean,-78+headShift],[side*14+lean,-72+headShift],
-        [side*13+lean,-55+headShift],[side*9+lean,-50+headShift],
-        [side*8+lean,-65+headShift]],style.hair,style.hair);
-    }
-    // Asymmetric sweeping fringe distinguishes her from casual male silhouettes.
-    shape(ctx,[[-12+lean,-78+headShift],[7+lean,-81+headShift],
-      [11+lean,-75+headShift],[3+lean,-72+headShift],
-      [-8+lean,-70+headShift]],style.hair,style.hair);
-  }
   if(back){
     // Nuca e cabelo cobrem a face. Ao usar PC, vemos as costas e não olhos na câmera.
     ctx.save();ctx.translate(lean,headShift);
@@ -390,32 +500,13 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,9,-66,6,13,"rgba(17,24,36,.25)");
     ell(ctx,-6,-74,3.8,7,"rgba(255,241,208,.14)");
     ctx.restore();
-    if(a.kind==="female"){
-      // Full crown and thick rear curtain cover the scalp, nape and shoulders.
-      // Drawn AFTER the common rear skull so its short-hair contour cannot show through.
-      ctx.save();ctx.translate(lean,headShift);
-      ctx.beginPath();ctx.moveTo(-13,-75);
-      ctx.bezierCurveTo(-16,-88,-8,-89,0,-89);
-      ctx.bezierCurveTo(10,-89,16,-84,14,-74);
-      ctx.bezierCurveTo(17,-65,18,-53,16,-41);
-      ctx.quadraticCurveTo(10,-37,6,-43);
-      ctx.quadraticCurveTo(0,-40,-6,-43);
-      ctx.quadraticCurveTo(-12,-38,-17,-43);
-      ctx.bezierCurveTo(-19,-56,-17,-68,-13,-75);
-      ctx.closePath();ctx.fillStyle=style.hair;ctx.fill();
-      ctx.lineWidth=1.5;ctx.strokeStyle="#292A39";ctx.stroke();
-      // Highlight follows the growth direction, leaving the neck covered.
-      ctx.save();ctx.globalAlpha=.25;
-      segment(ctx,-8,-81,-11,-54,2.3,style.highlight);
-      segment(ctx,7,-82,10,-52,1.6,style.highlight);
-      ctx.restore();ctx.restore();
-    }
+    if(isFemaleCostume(a.kind))femaleHairBack(ctx,style,a.kind,headShift,lean);
     if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
       ell(ctx,0,-61+headShift,5,3,style.highlight);
     }
     // Costura e dobra nas costas: sem rosto aparecendo na vista do monitor.
     ctx.save();ctx.globalAlpha=.68;
-    segment(ctx,0,-48+headShift,0,-30+headShift,1.5,style.highlight);
+    if(!isFemaleCostume(a.kind))segment(ctx,0,-48+headShift,0,-30+headShift,1.5,style.highlight);
     segment(ctx,-6,-32+headShift,-3,-27+headShift,1.1,style.dark);
     ctx.restore();
     if(a.kind==="owner"){
