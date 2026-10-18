@@ -45,7 +45,7 @@ jobs:
         run: |
           node scripts/profile_stutter.mjs out/stutter candidate --cpu-profile
           node scripts/verify_actor_sprites.mjs out/actor-sprites
-          node --test tests/scene-motion.test.mjs tests/customer-congestion.test.mjs tests/cookie-cosmetics.test.mjs
+          node --test tests/render-motion.test.mjs tests/customer-congestion.test.mjs tests/cookie-cosmetics.test.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

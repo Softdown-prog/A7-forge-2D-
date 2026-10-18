@@ -26,13 +26,14 @@ try{
   }
   stepGame(state,12);
   const context=await browser.newContext({viewport:{width:414,height:920},isMobile:true,hasTouch:true}),page=await context.newPage(),errors=[];
+  await context.route('**/online-config.json',route=>route.fulfill({json:{enabled:false,apiUrl:'',firebaseApiKey:''}}));
   // Test-only counters distinguish cache churn from simulation/drawing work.
   await context.route('**/js/render/actorSprites.js',async route=>{
    const response=await route.fetch();let source=await response.text();
    source=source.replace(/(export function drawActorSprite\([^\n]+\{)/,'$1\n const stats=globalThis.__spriteStats??={calls:0,hits:0,misses:0,evictions:0};stats.calls++;');
    source=source.replace(/if \(!sprite\) \{/,'if (!sprite) { stats.misses++;');
-   source=source.replace(/(cache\.frames\.delete\(key\);\s*cache\.frames\.set\(key, sprite\);)/,'stats.hits++;$1');
-   source=source.replace(/(const oldest = cache\.frames\.keys\(\)\.next\(\)\.value;)/,'if(globalThis.__spriteStats)globalThis.__spriteStats.evictions++;$1');
+   source=source.replace(/(cache\.frames\.delete\(key\);\s*cache\.frames\.set\(key, sprite\);)/,'stats.hits++;stats.pixelBytes=cache.bytes;$1');
+   source=source.replace(/(const oldest = cache\.frames\.keys\(\)\.next\(\)\.value)/,'if(globalThis.__spriteStats)globalThis.__spriteStats.evictions++;$1');
    await route.fulfill({response,body:source});
   });
   page.on('pageerror',e=>errors.push(String(e)));
