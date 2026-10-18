@@ -104,8 +104,13 @@ try{
   };
   paint(0);
  },simulation);
+ // A captura de gameplay deve mostrar realmente os DOIS clientes jogando.
+ const bothPlayingAt=simulation.history.findIndex(frame=>
+  frame.customers.every(c=>c?.stage==="using"));
+ if(bothPlayingAt<0)throw Error("Não houve sessão simultânea dos dois clientes");
+ const playingPortion=bothPlayingAt/(simulation.history.length-1);
  for(const [portion,name] of [[.25,"ps1_dois_clientes_chegando.png"],
-  [.52,"ps1_dois_clientes_jogando.png"],[.76,"ps1_dois_clientes_saindo.png"]]){
+  [playingPortion,"ps1_dois_clientes_jogando.png"],[.76,"ps1_dois_clientes_saindo.png"]]){
   await page.evaluate(frac=>window.__lhsCrowdPaint(frac),portion);
   await page.locator("canvas").screenshot({path:resolve(output,name)});
  }
