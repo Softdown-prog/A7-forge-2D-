@@ -419,7 +419,7 @@ shopCatalog?.addEventListener("click",event=>{
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("ps1-open-shop",()=>{
  adminOpen=false;shopOpen=true;renderUI();
- document.getElementById("shop-catalog")?.scrollIntoView({block:"nearest",behavior:"instant"});
+ (document.querySelector(".ps1-shop-heading")??document.getElementById("shop-catalog"))?.scrollIntoView({block:"start",behavior:"instant"});
 });
 for(const [id,delta] of [["ps1-price-down",-.25],["ps1-price-up",.25]] as const)
  button(id,()=>{applyResult(game,setPs1HourlyPrice(game,Math.round((ps1HourPrice(game)+delta)*100)/100));renderUI();save();});
@@ -853,6 +853,15 @@ function renderShop(force=true):void{
     "Comprar CD · "+price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
    card.append(art,category,title,description,button);
    shopCatalog.append(card);
+  }
+  // CDs perto do console, e não escondidos após todas as decorações/expansões.
+  const consoleCard=shopCatalog.querySelector('button[data-buy="ps1"]')?.closest(".shop-card");
+  if(consoleCard){
+   let previous=consoleCard;
+   for(const child of Array.from(shopCatalog.querySelectorAll(".ps1-shop-heading, .ps1-shop-note, .ps1-cd-shop-card"))){
+    previous.after(child);
+    previous=child;
+   }
   }
  }
 }
