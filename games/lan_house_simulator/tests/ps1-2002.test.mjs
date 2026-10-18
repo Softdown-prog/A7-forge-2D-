@@ -9,7 +9,7 @@ import {simulatePs1CrowdedCycle} from "../scripts/ps1_crowded_cycle.mjs";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {shopPrice,placeFurniture,availablePlacementSlots} from "../dist/js/sim/shop.js";
-import {ps1PlacementSlots,buyPs1Station,ps1StationPoint,ps1Seat,ps1HourPrice,
+import {ps1PlacementSlots,ps1PlacementLabel,buyPs1Station,ps1StationPoint,ps1Seat,ps1HourPrice,
  setPs1HourlyPrice,ps1SessionPrice,repairPs1Controls,ps1AvailableStation,
  ps1EnergyCostPerMinute,validPs1State,PS1_UNLOCK_YEAR,
  PS1_CD_CATALOG,ps1DiscPrice,buyPs1Disc,ps1DiscCopies,ps1PlayableDisc,setPs1StationDisc} from "../dist/js/sim/ps1.js";
@@ -26,6 +26,34 @@ function setup(){
  ok(buyPs1Disc(s,"turbo-circuito"));
  return s;
 }
+test("seleção de bancada utiliza nomes humanos, nunca coordenadas nem IDs técnicos",()=>{
+ const s=inYear(),slots=ps1PlacementSlots(s);
+ const base=slots.filter(x=>/^floor-[1-4]$/.test(x.id));
+ assert.deepEqual(base.map(ps1PlacementLabel),[
+  "Entrada (sul) · lado esquerdo",
+  "Entrada (sul) · centro-esquerda",
+  "Entrada (sul) · centro-direita",
+  "Entrada (sul) · lado direito"
+ ]);
+ for(const slot of slots){
+  const label=ps1PlacementLabel(slot);
+  assert.ok(label.length>10,label);
+  assert.doesNotMatch(label,/\\d+[,.]\\d+|floor-|posição \\d+|x:|y:/i);
+ }
+ // As alas novas devem manter rótulos únicos e estáveis ao comprar uma bancada.
+ s.roomExtensions={west:2,east:2,north:2,south:0};
+ const expanded=ps1PlacementSlots(s),labels=expanded.map(ps1PlacementLabel);
+ assert.equal(new Set(labels).size,labels.length,"cada posição precisa de nome único");
+ assert.ok(labels.some(label=>label.includes("oeste")));
+ assert.ok(labels.some(label=>label.includes("leste")));
+ assert.ok(labels.some(label=>label.includes("norte")));
+ const chosen=expanded.find(x=>x.id==="floor-west-1");
+ assert.ok(chosen);
+ const label=ps1PlacementLabel(chosen);
+ ok(buyPs1Station(s,chosen.id));
+ assert.equal(s.ps1Stations[0].slotId,chosen.id,"o save continua usando o ID técnico");
+ assert.equal(ps1PlacementLabel(chosen),label,"o texto é independente de outras compras");
+});
 test("2002 unlock, paid TV-console-bench-chair, limit and floor occupancy",()=>{
  const s=inYear(2001),slot=ps1PlacementSlots(s)[0];
  const before=JSON.stringify(s);
