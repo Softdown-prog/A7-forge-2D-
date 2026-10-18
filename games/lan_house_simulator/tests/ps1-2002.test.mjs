@@ -2,7 +2,8 @@ import {ps1ControllerAnchor,ps1ControllerPort,ps1ScreenFrame} from "../dist/js/r
 import {seatTransitionWeight} from "../dist/js/render/actorArt.js";
 import test from "node:test";
 import assert from "node:assert/strict";
-import {createGame,stepGame,isValidSave} from "../dist/js/sim/engine.js";
+import {createGame,stepGame,isValidSave,visitorArrivalChance} from "../dist/js/sim/engine.js";
+import {simulatePs1RealCycle} from "../scripts/ps1_real_cycle.mjs";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {shopPrice,placeFurniture,availablePlacementSlots} from "../dist/js/sim/shop.js";
@@ -188,4 +189,43 @@ test("PS1: microjogo do CRT anima de forma determinística dentro do visor",()=>
  }
  assert.deepEqual(ps1ScreenFrame(-1),first);
  assert.deepEqual(ps1ScreenFrame(Number.NaN),first);
+});
+
+test("console PS1 continua recebendo clientes com todos os PCs desligados",()=>{
+ const s=setup();
+ s.pcPoweredOff=[true,true,true];
+ s.offlineUntil=s.totalMinutes+300;
+ assert.ok(visitorArrivalChance(s,0)>0,
+  "console livre deve atrair clientes mesmo sem PCs e sem internet");
+ const c={id:1,x:1.55,y:2.56,target:{x:1.55,y:2.56},stage:"waiting",
+  queueIndex:0,pcIndex:null,costume:"regular",usedMinutes:0,waitingMinutes:0,
+  offlineWait:0,happy:true,sessionMinutes:45,wallet:20};
+ s.customers.push(c);
+ stepGame(s,1);
+ assert.equal(c.ps1StationIndex,0,
+  "cliente comum pode escolher console se não houver PCs ligados");
+ assert.equal(c.stage,"to_pc");
+ assert.equal(c.pcIndex,null);
+ assert.equal(visitorArrivalChance(s,1),0,
+  "não anunciar sessão quando a única cadeira está reservada");
+ const empty=inYear();
+ empty.pcPoweredOff=[true,true,true];
+ assert.equal(visitorArrivalChance(empty,0),0,
+  "sem PCs nem PS1 não há sessões abertas");
+});
+
+test("Scene Forge PS1 executa rota real, senta, joga, levanta e sai",()=>{
+ const result=simulatePs1RealCycle();
+ assert.equal(result.exited,true);
+ assert.ok(result.minutes>12&&result.minutes<240);
+ assert.ok(result.wear>0);
+ assert.equal(result.stationCount,1);
+ for(const stage of ["to_pc","sitting","using","standing","leaving"])
+  assert.ok(result.stages.includes(stage),stage+" ausente na simulação");
+ const playing=result.timeline.filter(f=>f.stage==="using");
+ assert.ok(playing.length>=4,"jogabilidade deve durar vários minutos reais");
+ assert.ok(playing.every(f=>f.ps1StationIndex===0));
+ assert.ok(result.timeline.some(f=>f.stage==="to_pc"&&
+  Math.hypot(f.x-result.side.x,f.y-result.side.y)<.4),
+  "rota real deve alcançar a lateral da cadeira");
 });
