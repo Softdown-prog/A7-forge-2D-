@@ -78,6 +78,35 @@ export function ps1PlacementSlots(s:GameState){
  return furnitureSlots(s).filter(p=>p.surface==="floor"&&
   p.id.startsWith("floor-")&&!p.id.startsWith("floor-grid-")&&free.has(p.id));
 }
+/** Nome amigável para a escolha da bancada. Mantém o ID original do
+ * encaixe no <select> (saves e pathfinding permanecem iguais).
+ * Norte = fundos do salão; sul = porta/entrada; oeste = esquerda.
+ * Evite expor X/Y do motor isométrico para o jogador. */
+export function ps1PlacementLabel(slot:{id:string;x:number;y:number}):string{
+ const base:Record<string,string>={
+  "floor-1":"Entrada (sul) · lado esquerdo",
+  "floor-2":"Entrada (sul) · centro-esquerda",
+  "floor-3":"Entrada (sul) · centro-direita",
+  "floor-4":"Entrada (sul) · lado direito"
+ };
+ if(base[slot.id])return base[slot.id];
+ const wing=slot.id.match(/^floor-(west|east)-(\\d+)$/);
+ if(wing){
+  const side=wing[1]==="west"?"Ala esquerda (oeste)":"Ala direita (leste)";
+  return side+" · espaço "+wing[2];
+ }
+ const funds=slot.id.match(/^floor-north-(\\d+)-([ab])$/);
+ if(funds)return "Fundos (norte) · "+(funds[2]==="a"?"lado esquerdo":"lado direito")+
+  " · setor "+funds[1];
+ const entrance=slot.id.match(/^floor-south-(\\d+)-([ab])$/);
+ if(entrance)return "Entrada (sul) · "+(entrance[2]==="a"?"lado esquerdo":"lado direito")+
+  " · setor "+entrance[1];
+ // Encaixes futuros: descrever orientação sem mostrar dados técnicos.
+ const side=slot.x<2?"lado esquerdo":slot.x>5?"lado direito":"centro";
+ const depth=slot.y<2?"fundos (norte)":slot.y>4?"entrada (sul)":"meio do salão";
+ return depth+" · "+side;
+}
+
 export function ps1StationPoint(s:GameState,index:number):Point|null{
  const id=s.ps1Stations?.[index]?.slotId;
  const slot=id&&furnitureSlots(s).find(p=>p.id===id&&p.surface==="floor");
