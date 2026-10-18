@@ -61,6 +61,19 @@ try{
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await selectTask(page,"consoles","discs");await page.locator("#ps1-open-shop").click();
   await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
+  // O comprador não deve encontrar coordenadas do Canvas em nenhum seletor.
+  // Os valores de option continuam sendo os IDs técnicos, apenas o texto muda.
+  const placements=await page.locator('#ps1-placement option').evaluateAll(options=>
+   options.map(o=>({label:o.textContent??'',id:o.value})));
+  if(!placements.length)throw Error("Faltam locais de instalação de PS1");
+  for(const {label,id} of placements){
+   if(!label.includes('Entrada')&&!label.includes('Ala')&&!label.includes('Fundos'))
+    throw Error("Rótulo não orienta o jogador: "+label);
+   if(/[0-9]+[,.][0-9]+|floor-/.test(label))
+    throw Error("Coordenações técnicas expostas: "+label);
+   if(!id.startsWith('floor-'))throw Error("ID de save perdido: "+id);
+  }
+
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
    const images=[...document.querySelectorAll(".ps1-cd-cover")];
