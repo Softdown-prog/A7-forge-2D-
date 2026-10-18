@@ -18,6 +18,8 @@ test('API startup, auth boundary, CORS, body limits and disabled payments',async
  assert.equal(publicConfig.items['neon-open-sign'].cookies,30);
  assert.equal(publicConfig.items['arcade-checker-floor'].cookies,25);
  assert.equal(publicConfig.items['exclusive-arcade-posters'].cookies,12);
+ assert.equal(publicConfig.items['tony-cyber'].cookies,60);
+ assert.equal(publicConfig.items['aquarium-rgb'].cookies,45);
  assert.equal((await fetch(base+'/v1/items/headset-rgb-neon/purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/account')).status,401);
  assert.equal((await fetch(base+'/v1/auth/verification-email',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
