@@ -27,13 +27,13 @@ try{
  page.on('pageerror',e=>errors.push(String(e)));
  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
  await page.evaluate(async()=>{
-  const [{createGame},{pcPosition},{computerSeat},{drawRetroComputer,drawSeatedKeyboardOverlay},
+  const [{createGame,pcPosition},{computerSeat},{drawRetroComputer,drawSeatedKeyboardOverlay},
     {drawActor,actorStyleFor},{setVerifiedCosmetics,headsetOnSession},
-    {DAY_MINUTES},{iso}]=await Promise.all([
-    import('./js/sim/engine.js'),import('./js/sim/layout.js'),
+    {DAY_MINUTES}]=await Promise.all([
+    import('./js/sim/engine.js'),
     import('./js/sim/route.js'),import('./js/render/retroComputer.js'),
     import('./js/render/actorArt.js'),import('./js/sim/premiumCosmetics.js'),
-    import('./js/sim/types.js'),import('./js/render/isometric.js')]);
+    import('./js/sim/types.js')]);
   document.body.replaceChildren();document.body.style.cssText='margin:0;background:#0a111d;overflow:hidden';
   const canvas=document.createElement('canvas');canvas.width=1470;canvas.height=840;
   canvas.style.cssText='display:block;width:1470px;height:840px';document.body.append(canvas);
