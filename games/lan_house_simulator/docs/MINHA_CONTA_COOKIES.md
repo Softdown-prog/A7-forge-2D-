@@ -11,20 +11,21 @@
 - O menu pode ser aberto sem conexão. Neste caso, o saldo mostra **—** e o resgate é bloqueado;
   não mostra '0 Cookies' sem consultar o servidor.
 
-## Por que a conta ainda aparece desconectada no deploy
-O arquivo `online-config.json` distribuído neste repositório está explicitamente com
-`enabled:false` e `firebaseApiKey:""`. Não inserir uma chave fictícia e não iniciar
-uma sessão sem autenticação. As credenciais de publicação e o registro da aplicação no
-Firebase pertencem ao operador do serviço; não foram criados automaticamente neste PR.
+## Integração com o site e o backend
+`online-config.json` habilita a aplicação Firebase já usada em `/conta/` e aponta
+para `lhs-backend` no projeto `loyal-road-395203`, região `us-central1`.
+Contém somente a chave Web pública restrita; segredos MP e Resend permanecem no servidor.
+O build copia `website/account-client.mjs` para o jogo, sem manter outra implementação
+de autenticação. Site, Donate e jogo compartilham a sessão da mesma aba por até oito horas;
+ao entrar no jogo a identidade é renovada e verificada antes de consultar a carteira.
+Logout remove a sessão e os direitos visuais. Email não confirmado não acessa a carteira.
 
-Para habilitar, configurar o cliente com a **chave pública Web API do Firebase**,
-`enabled:true` e URL HTTPS do Cloud Run no `online-config.json`.
-A URL da API já consta no arquivo como referência, mas ainda é necessário verificar
-se o backend foi implantado e se o projeto Firebase correspondente está ativo.
-Não colocar credenciais privadas de servidor, tokens, senha ou segredo MP nesse JSON.
-Configurar `ALLOWED_ORIGINS` no backend para o domínio do site real e testar CORS.
-Após configurar, executar a suíte e publicar primeiro em staging; ativar cobranças
-reais somente após revisão de pagamentos, estornos, regras e atendimento.
+Criar conta e recuperar senha levam ao painel do site, com os mesmos termos e fluxo
+de confirmação Resend. Adquirir Cookies leva aos dois cards de Donate na mesma aba,
+preservando o login. O jogo não mantém um segundo checkout nem confirma pagamentos por URL.
+`PAYMENTS_ENABLED=true` e modo `production` já foram autorizados pelo proprietário para
+pagamentos únicos de R$ 5/50 Cookies e R$ 10/100 Cookies; esta integração preserva essa configuração.
+O catálogo e os novos campos da conta precisam estar publicados no Cloud Run antes do frontend.
 
 ## Endpoints e fonte de verdade
 - GET `/v1/config`: catálogo de 6 itens, preços determinados pelo servidor, status de pagamentos.
@@ -36,6 +37,8 @@ reais somente após revisão de pagamentos, estornos, regras e atendimento.
   poderá criar um direito premium.
 - O painel não carrega o ledger a cada frame. Refresca somente no login, ao reabrir
   uma sessão autenticada, ao atualizar manualmente e após resgate.
+- Saldo negativo decorrente de ajuste/estorno é exibido como recebido, sem esconder a conta;
+  nenhum resgate é liberado sem saldo suficiente confirmado pelo servidor.
 
 ## Casos já automatizados
 - Desktop e celular: botão e 5 abas, catálogo de 6 itens, aviso offline, saldo '—',
@@ -49,6 +52,6 @@ reais somente após revisão de pagamentos, estornos, regras e atendimento.
 ## Limitação atual
 As imagens dos produtos dentro do catálogo são ícones de identificação; os
 cosméticos procedurais detalhados estão implementados no renderizador do salão
-(e podem ser avaliados nos vídeos e capturas de arte separados). A integração com
-conta online REAL ainda depende da configuração pública Firebase/Cloud Run e de
-validar o servidor implantado. Não tratar os testes simulados como compras reais.
+(e podem ser avaliados nos vídeos e capturas de arte separados).
+Não tratar os testes simulados como pagamentos reais: a verificação de integração
+usa contas descartáveis e Cookies artificiais, sem cobrar ninguém.

@@ -22,6 +22,7 @@ try{
  for(const width of [1280,390]){
   const context=await browser.newContext({viewport:{width,height:width===390?840:800},deviceScaleFactor:1,isMobile:width===390,hasTouch:width===390});
   const page=await context.newPage(),errors=[];
+  await page.route('**/online-config.json',route=>route.fulfill({json:{enabled:false,apiUrl:'https://offline.example',firebaseApiKey:''}}));
   page.on('pageerror',e=>errors.push(String(e)));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#menu-account').click();
@@ -72,6 +73,8 @@ try{
  await page.route('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?**',route=>route.fulfill({
   contentType:'application/json',body:JSON.stringify({idToken:'verified-test-token',refreshToken:'refresh',localId:'local-123'})
  }));
+ await page.route('https://identitytoolkit.googleapis.com/v1/accounts:lookup?**',route=>route.fulfill({json:{users:[{email:'tester@example.com',emailVerified:true}]}}));
+ await page.route('https://securetoken.googleapis.com/**',route=>route.fulfill({json:{id_token:'verified-test-token',refresh_token:'refresh'}}));
  await page.route('https://wallet-test.example/v1/account',route=>route.fulfill({
   contentType:'application/json',body:JSON.stringify({
    uid:'local-123',cookiesBalance:wallet,cookiesSpentTotal:spent,entitlements,transactions:activity,historyLimit:40

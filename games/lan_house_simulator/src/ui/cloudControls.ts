@@ -2,9 +2,9 @@ import type {GameState} from "../sim/types.js";
 import {parseImportedSave,serializeSave} from "../sim/saveTransfer.js";
 import {COOKIE_COSMETICS,cosmeticsOwned,setVerifiedCosmetics,toggleVerifiedCosmetic,type CookieCosmeticId} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
+import {createAccountClient,type AccountClient,type AccountProfile} from "./accountClient.js";
 
 interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
-interface AuthSession {idToken:string;refreshToken:string;localId:string}
 interface WalletEntry {id:string;type:string;delta:number;itemId:string|null;at:string|null;mode?:string}
 interface Account {
  uid:string;cookiesBalance:number;cookiesSpentTotal:number;
@@ -17,7 +17,7 @@ interface StoreConfig {
  items?:Record<string,ServerItem>
 }
 type Tab="summary"|"catalog"|"inventory"|"history"|"cloud";
-const cookiesText=(amount:number)=>Math.max(0,amount).toLocaleString("pt-BR")+" Cookies";
+const cookiesText=(amount:number)=>amount.toLocaleString("pt-BR")+" Cookies";
 const brl=(cents:number)=>(cents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const priceToBrl=(cookies:number)=>brl(cookies*10);
 function button(text:string,className="slice"):HTMLButtonElement{
@@ -105,7 +105,7 @@ export function mountCloudControls(
  const email=find<HTMLInputElement>("#account-email"),password=find<HTMLInputElement>("#account-password");
  const catalog=find("#account-catalog"),inventory=find("#account-inventory"),history=find("#account-transactions");
  const donate=find("#account-donate"),cloudState=find("#account-cloud-state");
- let config:CloudConfig|null=null,store:StoreConfig|null=null,session:AuthSession|null=null;
+ let config:CloudConfig|null=null,store:StoreConfig|null=null,client:AccountClient|null=null;
  let account:Account|null=null,revision:string|null|undefined;
  let tab:Tab="summary",loading=false,openOfflineReason="A conexão de conta ainda não está disponível nesta versão.";
  const unequipped=new Set<CookieCosmeticId>();
@@ -131,11 +131,11 @@ export function mountCloudControls(
   if(loading)return;
   setBusy(true);
   try{await fn();}
-  catch(e){status(e instanceof Error?e.message:"Não foi possível concluir. A partida local permanece salva.","error");}
+  catch(e){if((e as {status?:number})?.status===401)clearAccount();status(e instanceof Error?e.message:"Não foi possível concluir. A partida local permanece salva.","error");}
   finally{setBusy(false);render();}
  }
  function clearAccount(){
-  session=null;account=null;revision=undefined;
+  client?.signOut();account=null;revision=undefined;
   setVerifiedCosmetics([]);unequipped.clear();
  }
  function synchronizeAccount(next:Account){
@@ -145,42 +145,19 @@ export function mountCloudControls(
   render();
  }
  const refresh=async()=>{
-  if(!session)throw Error("Entre na conta para consultar seu saldo.");
+  if(!client?.hasSession())throw Error("Entre na conta para consultar seu saldo.");
   const data=await api("/v1/account") as Account;
-  if(!Number.isSafeInteger(data.cookiesBalance)||data.cookiesBalance<0)throw Error("Saldo da conta inválido.");
+  if(!Number.isSafeInteger(data.cookiesBalance)||!Number.isSafeInteger(data.cookiesSpentTotal)||!Array.isArray(data.entitlements)||!Array.isArray(data.transactions))throw Error("Dados da conta indisponíveis. Tente atualizar novamente.");
   synchronizeAccount(data);
   status("Saldo, itens e movimentações atualizados.","success");
  };
- async function identity(method:string,data:object):Promise<AuthSession>{
-  if(!isConfigured())throw Error(openOfflineReason);
-  const response=await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:${method}?key=${encodeURIComponent(config!.firebaseApiKey)}`,{
-   method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify(data),signal:AbortSignal.timeout(20_000)
-  });
-  if(!response.ok)throw Error("Não foi possível autenticar. Confira e-mail, senha e verificação do e-mail.");
-  return response.json() as Promise<AuthSession>;
+ async function connected(profile:AccountProfile){
+  if(!profile.emailVerified){account=null;setVerifiedCosmetics([]);throw Error("Confirme seu email para acessar os Cookies. Use Minha conta no site para reenviar a confirmação.");}
+  revision=undefined;unequipped.clear();await refresh();authBox.open=false;
  }
- async function api(path:string,body?:object,retried=false):Promise<unknown>{
-  if(!session||!isConfigured())throw Error("Entre na conta primeiro.");
-  const response=await fetch(config!.apiUrl+path,{
-   method:body?"POST":"GET",
-   headers:{Authorization:`Bearer ${session.idToken}`,...(body?{"Content-Type":"application/json"}:{})},
-   body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(30_000)
-  });
-  if(response.status===401&&!retried){
-   const refreshed=await fetch(`https://securetoken.googleapis.com/v1/token?key=${encodeURIComponent(config!.firebaseApiKey)}`,{
-    method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},
-    body:new URLSearchParams({grant_type:"refresh_token",refresh_token:session.refreshToken}),
-    signal:AbortSignal.timeout(20_000)
-   });
-   if(!refreshed.ok){clearAccount();throw Error("Sessão expirada. Entre novamente.");}
-   const token=await refreshed.json() as {id_token:string;refresh_token:string};
-   session={...session,idToken:token.id_token,refreshToken:token.refresh_token};
-   return api(path,body,true);
-  }
-  const result=await response.json().catch(()=>({error:"Resposta inválida da nuvem."})) as {error?:string};
-  if(!response.ok)throw Error(result.error??"Serviço indisponível. Seu save local foi preservado.");
-  return result;
+ async function api(path:string,body?:object):Promise<unknown>{
+  if(!client||!isConfigured())throw Error("Entre na conta primeiro.");
+  return client.api(path,body);
  }
  function createCosmeticCard(item:typeof COOKIE_COSMETICS[number],isOwned:boolean){
   const el=document.createElement("article");el.className="account-item";
@@ -215,15 +192,15 @@ export function mountCloudControls(
   }else{
    const buy=button("Resgatar · "+item.cookies+" Cookies");
    const server=store?.items?.[item.id];
-   const enabled=!!(session&&account&&server?.cookies===item.cookies&&
+   const enabled=!!(!loading&&client?.hasSession()&&account&&server?.cookies===item.cookies&&
     account.cookiesBalance>=item.cookies&&isConfigured());
    buy.disabled=!enabled;
-   buy.title=!session?"Entre na conta para resgatar":
+   buy.title=!client?.hasSession()?"Entre na conta para resgatar":
     !server?"Catálogo do servidor ainda não está habilitado":
     server.cookies!==item.cookies?"Preço não confirmado pelo servidor":
     account&&account.cookiesBalance<item.cookies?"Cookies insuficientes":"";
    buy.addEventListener("click",()=>void action(async()=>{
-    if(!session||!account||store?.items?.[item.id]?.cookies!==item.cookies)
+    if(!client?.hasSession()||!account||store?.items?.[item.id]?.cookies!==item.cookies)
      throw Error("Este item não está liberado no servidor.");
     if(!window.confirm(`Resgatar ${item.name} por ${item.cookies} Cookies? O desconto é permanente.`))return;
     await api("/v1/items/"+encodeURIComponent(item.id)+"/purchase",{});
@@ -238,21 +215,21 @@ export function mountCloudControls(
   balance.textContent=account?cookiesText(account.cookiesBalance):"—";
   spent.textContent=account?cookiesText(account.cookiesSpentTotal):"—";
   owned.textContent=account?String(account.entitlements.filter(id=>COOKIE_COSMETICS.some(i=>i.id===id)).length):"—";
-  connection.textContent=session?"Conta conectada. Saldo e resgates verificados pelo servidor.":
+  connection.textContent=client?.hasSession()&&account?"Conta conectada. Saldo e resgates verificados pelo servidor.":
    isConfigured()?"Faça login para ver os seus Cookies. Nenhum saldo é estimado pelo jogo.":openOfflineReason;
   authBox.hidden=!isConfigured();
-  find<HTMLButtonElement>("#account-refresh").disabled=!session||loading;
-  find<HTMLButtonElement>("#account-logout").disabled=!session||loading;
+  find<HTMLButtonElement>("#account-refresh").disabled=!client?.hasSession()||loading;
+  find<HTMLButtonElement>("#account-logout").disabled=!client?.hasSession()||loading;
   catalog.replaceChildren();
   const ownedIds=new Set(account?.entitlements??[]);
   for(const item of COOKIE_COSMETICS)catalog.append(createCosmeticCard(item,ownedIds.has(item.id)));
   inventory.replaceChildren();
   const acquired=COOKIE_COSMETICS.filter(item=>ownedIds.has(item.id));
-  if(!session)inventory.append(line("Entre na sua conta para consultar os itens adquiridos.","account-empty"));
+  if(!client?.hasSession())inventory.append(line("Entre na sua conta para consultar os itens adquiridos.","account-empty"));
   else if(!acquired.length)inventory.append(line("Nenhum cosmético adquirido ainda.","account-empty"));
   else for(const item of acquired)inventory.append(createCosmeticCard(item,true));
   history.replaceChildren();
-  if(!session)history.append(line("Entre na sua conta para ver seu histórico.","account-empty"));
+  if(!client?.hasSession())history.append(line("Entre na sua conta para ver seu histórico.","account-empty"));
   else if(!account?.transactions?.length)history.append(line("Nenhuma movimentação registrada.","account-empty"));
   else{
    for(const move of account.transactions){
@@ -276,41 +253,16 @@ export function mountCloudControls(
  function renderDonate(){
   donate.replaceChildren();
   const title=document.createElement("strong");title.textContent="Apoiar o desenvolvimento";
-  donate.append(title,line("Pacotes previstos: R$ 5 = 50 Cookies · R$ 10 = 100 Cookies.","account-subtext"));
+  donate.append(title,line("R$ 5 = 50 Cookies · R$ 10 = 100 Cookies. Pagamento único.","account-subtext"));
   if(!store?.paymentsEnabled||!store?.packages){
    donate.append(line("Compra de Cookies ainda não disponível neste ambiente.","account-subtext"));return;
   }
-  const select=document.createElement("select");select.setAttribute("aria-label","Pacote de Cookies");
-  for(const [id,p] of Object.entries(store.packages)){
-   const option=document.createElement("option");option.value=id;option.textContent=`${p.cookies} Cookies — ${brl(p.priceCents)}`;select.append(option);
-  }
-  const agree=document.createElement("label");agree.className="account-terms";
-  const accepted=document.createElement("input");accepted.type="checkbox";
-  agree.append(accepted,document.createTextNode(" Li e aceito os termos de apoio/doação."));
-  const buy=button("Adquirir Cookies");buy.disabled=!session;
-  let pending:{id:string;key:string}|null=null;
-  buy.addEventListener("click",()=>void action(async()=>{
-   if(!session||!accepted.checked)throw Error("Entre na conta e aceite os termos.");
-   if(!pending||pending.id!==select.value)pending={id:select.value,key:crypto.randomUUID()};
-   const response=await fetch(config!.apiUrl+"/v1/orders",{
-    method:"POST",headers:{Authorization:`Bearer ${session.idToken}`,"Content-Type":"application/json","Idempotency-Key":pending.key},
-    body:JSON.stringify({packageId:pending.id,acceptedTerms:true}),signal:AbortSignal.timeout(30_000)
-   });
-   const result=await response.json() as {error?:string;url?:string};
-   if(!response.ok)throw Error(result.error??"Falha ao criar pedido.");
-   const checkout=new URL(result.url??"");
-   if(checkout.protocol!=="https:"||!/(^|\\.)mercadopago\\.(com|com\\.br)$/.test(checkout.hostname))
-    throw Error("Endereço de checkout não autorizado.");
-   pending=null;
-   const link=document.createElement("a");link.href=checkout.href;link.target="_blank";
-   link.rel="noopener noreferrer";link.textContent="Abrir checkout seguro";
-   donate.append(link);status("Pedido gerado; saldo será atualizado somente após confirmação do pagamento.");
-  }));
-  const row=document.createElement("div");row.className="account-actions";row.append(select,buy);
-  donate.append(row,agree);
+  const link=document.createElement("a");link.href="/donate/";link.target="_top";
+  link.className="slice";link.textContent="Adquirir Cookies no Donate";
+  donate.append(link,line("Sua conta acompanha a navegação nesta aba. Depois do pagamento, volte e atualize o saldo.","account-subtext"));
  }
  async function cloudRead(backup=false,restoreGame=false){
-  if(!session)throw Error("Entre na conta primeiro.");
+  if(!client?.hasSession())throw Error("Entre na conta primeiro.");
   const result=await api("/v1/saves/main"+(backup?"?backup=true":"")) as {save?:object;revision:string|null};
   revision=result.revision;
   if(!result.save){cloudState.textContent="Não há save nesta posição da nuvem.";return;}
@@ -328,25 +280,17 @@ export function mountCloudControls(
  for(const id of ["menu-account","open-account"]){
   document.getElementById(id)?.addEventListener("click",()=>{
    if(!dialog.open)dialog.showModal();switchTab("summary");
-   render();if(session)void action(refresh);
+   render();if(client?.hasSession())void action(refresh);
   });
  }
  find("#account-refresh").addEventListener("click",()=>void action(refresh));
  find("#account-signin").addEventListener("click",()=>void action(async()=>{
-  session=await identity("signInWithPassword",{email:email.value,password:password.value,returnSecureToken:true});
-  password.value="";revision=undefined;unequipped.clear();await refresh();
-  authBox.open=false;
+  if(!client)throw Error(openOfflineReason);
+  const entered=password.value;password.value="";
+  clearAccount();await connected(await client.signIn(email.value.trim(),entered));
  }));
- find("#account-signup").addEventListener("click",()=>void action(async()=>{
-  const created=await identity("signUp",{email:email.value,password:password.value,returnSecureToken:true});
-  password.value="";
-  await identity("sendOobCode",{requestType:"VERIFY_EMAIL",idToken:created.idToken});
-  status("Conta criada. Confirme o e-mail recebido e depois entre.","success");
- }));
- find("#account-recovery").addEventListener("click",()=>void action(async()=>{
-  await identity("sendOobCode",{requestType:"PASSWORD_RESET",email:email.value});
-  status("Se a conta existir, as instruções serão enviadas ao e-mail.","success");
- }));
+ find("#account-signup").addEventListener("click",()=>window.open("/conta/?modo=cadastro","_top"));
+ find("#account-recovery").addEventListener("click",()=>window.open("/conta/?modo=recuperar","_top"));
  find("#account-logout").addEventListener("click",()=>void action(async()=>{
   clearAccount();password.value="";authBox.open=true;
   status("Conta desconectada. Seu progresso local permanece salvo.");
@@ -372,10 +316,12 @@ export function mountCloudControls(
     openOfflineReason="Minha Conta está pronta, mas a conexão online deste deploy está desativada. O saldo só aparecerá depois da configuração do login.";
     status(openOfflineReason);render();return;
    }
+   client=createAccountClient(config!);
    const res=await fetch(config!.apiUrl+"/v1/config",{signal:AbortSignal.timeout(20_000)});
    if(!res.ok)throw Error("Configuração do servidor indisponível.");
    store=await res.json() as StoreConfig;
-   status("Entre na conta para consultar seus Cookies e cosméticos.");
+   if(client.hasSession())await action(async()=>{const profile=await client!.restore();if(profile)await connected(profile);});
+   else status("Entre na conta para consultar seus Cookies e cosméticos.");
   }catch{
    openOfflineReason="Não foi possível conectar à conta neste momento. Nenhum saldo foi alterado.";
    status(openOfflineReason,"error");

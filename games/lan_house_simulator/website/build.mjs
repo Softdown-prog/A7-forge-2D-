@@ -40,9 +40,9 @@ export function buildSite(){
  }
  // Versionar o grafo inteiro: main novo com renderizadores antigos em cache
  // pode quebrar imports ou exibir a arte anterior, mesmo após atualizar a página.
- for(const file of moduleFiles(resolve(output,"game/js")).filter(file=>file.endsWith(".js"))){
+ for(const file of moduleFiles(resolve(output,"game/js")).filter(file=>/\.m?js$/.test(file))){
   const source=readFileSync(file,"utf8");
-  writeFileSync(file,source.replace(/(\b(?:from\s*|import\s*\(\s*|import\s*)["'])(\.\.?\/[^"']+\.js)(["'])/g,
+  writeFileSync(file,source.replace(/(\b(?:from\s*|import\s*\(\s*|import\s*)["'])(\.\.?\/[^"']+\.m?js)(["'])/g,
    (_,prefix,path,quote)=>prefix+path+"?v="+revision+quote));
  }
  const gameStyle=resolve(output,"game/style.css");

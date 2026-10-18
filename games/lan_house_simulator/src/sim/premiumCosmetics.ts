@@ -1,7 +1,7 @@
 /**
  * Cookies: protótipos de cosméticos. Nenhum direito é concedido pelo save.
  * A única origem de entitlements é GET /v1/account autenticado.
- * A configuração online continua desativada até auditoria comercial.
+ * A propriedade é validada pelo backend; o save local não concede itens.
  */
 export const COOKIE_COSMETICS=[
  {id:"headset-rgb-neon",name:"Fone Gamer RGB Neon",cookies:40,unlockYear:2012,

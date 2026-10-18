@@ -10,8 +10,8 @@ function page(){
  const doc={location:{href:'https://site.example/donate/?status=approved&collection_status=approved'},getElementById(id){if(!nodes.has(id))nodes.set(id,element());return nodes.get(id);},querySelectorAll:()=>buttons,createElement:element};
  return {doc,nodes,buttons};
 }
-test('Donate explains amounts, account requirement and future cosmetics without internal details',()=>{
- const html=donatePage();for(const text of ['Doar R$ 5','Doar R$ 10','50','100','R$ 0,10','confirme seu email','ainda não está disponível','exclusivamente a melhorias'])assert.ok(html.includes(text),text);
+test('Donate explains amounts, account requirement and in-game cosmetic store without internal details',()=>{
+ const html=donatePage();for(const text of ['Doar R$ 5','Doar R$ 10','50','100','R$ 0,10','confirme seu email','A Loja Cookies fica em Minha Conta','exclusivamente a melhorias'])assert.ok(html.includes(text),text);
  for(const internal of [/Cloud Run/i,/Firestore/i,/webhook/i,/access.token/i,/Mercado Pago/i,/\bAPI\b/])assert.doesNotMatch(html,internal);
  assert.equal((html.match(/Pagamento único · sem renovação automática/g)||[]).length,2);
  for(const id of ['donate-5','donate-10'])assert.ok(html.includes('id="donate-link-'+id+'"'));

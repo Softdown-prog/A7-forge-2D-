@@ -3,12 +3,20 @@ on:
   pull_request:
     paths:
       - 'games/lan_house_simulator/website/**'
+      - 'games/lan_house_simulator/src/ui/cloudControls.ts'
+      - 'games/lan_house_simulator/src/ui/accountClient.d.ts'
+      - 'games/lan_house_simulator/online-config.json'
+      - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
       - '.github/workflows/lhs-account-navigation.yml'
   push:
     branches: [main]
     paths:
       - 'games/lan_house_simulator/website/**'
+      - 'games/lan_house_simulator/src/ui/cloudControls.ts'
+      - 'games/lan_house_simulator/src/ui/accountClient.d.ts'
+      - 'games/lan_house_simulator/online-config.json'
+      - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
       - '.github/workflows/lhs-account-navigation.yml'
 permissions:
@@ -30,3 +38,4 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify_account_navigation.mjs
+      - run: node scripts/verify_account_panel.mjs

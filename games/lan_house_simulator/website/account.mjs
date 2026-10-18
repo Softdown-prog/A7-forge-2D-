@@ -46,6 +46,8 @@ async function mount(){
   donations?.setConnected(true);
  }
  $('auth-fields').disabled=false;status.textContent='Conta opcional. Entre ou crie seu acesso.';
+ const entryMode=new URLSearchParams(location.search).get('modo');
+ if(entryMode==='cadastro')setMode('signup');else if(entryMode==='recuperar')setMode('reset');
  for(const tab of root.querySelectorAll('[data-auth-mode]'))tab.addEventListener('click',()=>setMode(tab.dataset.authMode));
  $('forgot-password').addEventListener('click',()=>setMode('reset'));
  $('show-password').addEventListener('click',()=>{const visible=$('account-password').type==='password';$('account-password').type=visible?'text':'password';$('show-password').textContent=visible?'Ocultar':'Mostrar';$('show-password').setAttribute('aria-label',visible?'Ocultar senha':'Mostrar senha');$('show-password').setAttribute('aria-pressed',String(visible));});
