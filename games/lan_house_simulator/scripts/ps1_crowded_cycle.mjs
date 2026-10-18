@@ -2,7 +2,7 @@
 // NPCs andam simultaneamente no mesmo salão e saem pela porta original.
 import {createGame,pcCount,stepGame,canCustomerOccupy,entrance} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {buyPs1Station,ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach} from "../dist/js/sim/ps1.js";
+import {buyPs1Station,buyPs1Disc,ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach} from "../dist/js/sim/ps1.js";
 import {navigableRoute,canTraverseLocalStep} from "../dist/js/sim/navigation.js";
 import {CUSTOMER_COLLISION_RADIUS} from "../dist/js/sim/checkoutQueue.js";
 
@@ -30,6 +30,10 @@ export function simulatePs1CrowdedCycle(){
  for(const slot of [first,second]){
   const purchase=buyPs1Station(s,slot.id);
   if(!purchase.ok)throw Error(purchase.message);
+ }
+ for(const id of ["gol-de-rua","luta-neon"]){
+  const disc=buyPs1Disc(s,id);
+  if(!disc.ok)throw Error(disc.message);
  }
  const stations=[0,1].map(i=>({
   point:ps1StationPoint(s,i),seat:ps1Seat(s,i),side:ps1SeatApproach(s,i)
