@@ -38,7 +38,7 @@ try{
    }
    throw Error('Unexpected account request');
   });
-  await context.route('https://www.mercadopago.com.br/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Checkout de teste</title><h1>Checkout de teste — sem cobrança</h1>'}));
+  await context.route('https://www.mercadopago.com.br/**',route=>route.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><title>Checkout de teste</title><h1>Checkout de teste — sem cobrança</h1>'}));
   const page=await context.newPage();page.on('pageerror',error=>errors.push(String(error)));
   await page.goto(origin+'/conta/');await page.locator('#auth-fields').waitFor({state:'visible'});
   await page.locator('#account-email').fill('test-player@example.invalid');await page.locator('#account-password').fill('fixture-password');await page.locator('#auth-submit').click();
