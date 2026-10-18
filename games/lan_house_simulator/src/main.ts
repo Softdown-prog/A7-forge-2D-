@@ -1744,10 +1744,11 @@ function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
   const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
   lastFrame=timestamp;elapsed+=dt;
-  const simulating=isPlaying&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const accountOpen=document.getElementById("player-account")?.hasAttribute("open")===true;
+  const simulating=isPlaying&&!accountOpen&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
-  if(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
+  if(isPlaying&&!accountOpen&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
   // Detect new mail from every delivery path, not from opening the envelope.
   const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
   if(arrivedMail>0&&!document.hidden)soundscape.mail();
@@ -1783,12 +1784,12 @@ function frame(timestamp:number):void {
     if(speechPopups.length>8)speechPopups.shift();
   }
   const sceneInterval=coarsePointer.matches?1000/30:0;
-  const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastSceneFrame>=sceneInterval;
+  const paintScene=isPlaying&&!accountOpen&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastSceneFrame>=sceneInterval;
   if(paintScene)lastSceneFrame=sceneInterval?timestamp-((timestamp-lastSceneFrame)%sceneInterval):timestamp;
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
   if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
   if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
-  if(!isPlaying&&menuRenderer&&menuPreviewAvailable&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>90){
+  if(!isPlaying&&!accountOpen&&menuRenderer&&menuPreviewAvailable&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>90){
      try{menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
      catch{menuPreviewAvailable=false;}
    }
@@ -1801,7 +1802,7 @@ function frame(timestamp:number):void {
     else renderer.drawWallPreview(game,pendingWall??hoveredWall,wallMode==="remove");
   }
   if(paintScene&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
-  if(isPlaying&&timestamp-lastUI>450&&timestamp-lastScroll>160&&!uiPointerHeld&&timestamp-lastInput>120){lastUI=timestamp;renderUI(true);}
+  if(isPlaying&&!accountOpen&&timestamp-lastUI>450&&timestamp-lastScroll>160&&!uiPointerHeld&&timestamp-lastInput>120){lastUI=timestamp;renderUI(true);}
   requestAnimationFrame(frame);
 }
 setInterval(save,8000);
