@@ -63,7 +63,9 @@ try{
   "keyboard-rainbow-rgb":{cookies:25,name:"Teclado Rainbow RGB"},
   "neon-open-sign":{cookies:30,name:"Placa Neon ABERTO"},
   "arcade-checker-floor":{cookies:25,name:"Piso Arcade Xadrez"},
-  "exclusive-arcade-posters":{cookies:12,name:"Pôsteres Exclusivos"}
+  "exclusive-arcade-posters":{cookies:12,name:"Pôsteres Exclusivos"},
+  "tony-cyber":{cookies:60,name:"Tony Cyber"},
+  "aquarium-rgb":{cookies:45,name:"Aquário Iluminado RGB"}
  };
  await page.route('**/online-config.json',route=>route.fulfill({
   contentType:'application/json',body:JSON.stringify({enabled:true,apiUrl:'https://wallet-test.example',firebaseApiKey:'fake-public-key'})

@@ -117,3 +117,23 @@ test('Revestimento premium usa geometria projetada, preserva toda a superfície'
  assert.ok(paths>=10);
  assert.ok(points.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)));
 });
+
+test('últimos dois cosméticos VIP só aparecem com direito de conta e no ano correto',()=>{
+ setVerifiedCosmetics([]);
+ const save=createGame(567,'historical');
+ const before=serializeSave(save),cash=save.cash;
+ assert.equal(cosmeticAvailable('tony-cyber',2030),false);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2030),false);
+ setVerifiedCosmetics(['tony-cyber','aquarium-rgb']);
+ assert.equal(cosmeticAvailable('tony-cyber',2009),false);
+ assert.equal(cosmeticAvailable('tony-cyber',2010),true);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2007),false);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2008),true);
+ assert.equal(toggleVerifiedCosmetic('aquarium-rgb',false),true);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2015),false);
+ assert.equal(cosmeticAvailable('tony-cyber',2015),true);
+ assert.equal(serializeSave(save),before);
+ assert.equal(save.cash,cash);
+ setVerifiedCosmetics([]);
+ assert.equal(cosmeticAvailable('tony-cyber',2020),false);
+});
