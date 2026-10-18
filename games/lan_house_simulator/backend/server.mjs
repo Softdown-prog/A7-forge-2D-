@@ -1,11 +1,13 @@
 import express from 'express';
-import {randomUUID,createHash} from 'node:crypto';
+import {randomUUID} from 'node:crypto';
 import {initializeApp,applicationDefault} from 'firebase-admin/app';
 import {getAuth} from 'firebase-admin/auth';
 import {getFirestore,FieldValue} from 'firebase-admin/firestore';
 import {Storage} from '@google-cloud/storage';
 import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
-import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook,paymentCredit} from './domain.mjs';
+import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
+import {DONATE_PACKAGES} from '../donate-packages.mjs';
+import {createPayments} from './payments.mjs';
 
 const projectId=process.env.GOOGLE_CLOUD_PROJECT;
 initializeApp({credential:applicationDefault(),projectId});
@@ -14,11 +16,11 @@ const bucket=new Storage({projectId}).bucket(process.env.SAVES_BUCKET);
 const auth=getAuth();
 const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
 const origins=new Set((process.env.ALLOWED_ORIGINS||'').split(',').filter(Boolean));
-const packages=JSON.parse(process.env.COOKIE_PACKAGES_JSON||'{}');
+const packages=DONATE_PACKAGES;
 const catalogue=JSON.parse(process.env.COOKIE_ITEMS_JSON||'{}');
 const paymentsEnabled=process.env.PAYMENTS_ENABLED==='true';
 const sandbox=process.env.PAYMENTS_MODE!=='production';
-if(paymentsEnabled&&(!process.env.MP_ACCESS_TOKEN||!process.env.MP_WEBHOOK_SECRET||!process.env.PUBLIC_API_URL||!Object.keys(packages).length))throw Error('Configuração de pagamento incompleta.');
+if(paymentsEnabled&&(!process.env.MP_ACCESS_TOKEN||!process.env.MP_WEBHOOK_SECRET||!process.env.PUBLIC_API_URL||!process.env.PUBLIC_SITE_URL||!process.env.MP_APPLICATION_ID))throw Error('Configuração de pagamento incompleta.');
 for(const p of Object.values(packages))if(!Number.isSafeInteger(p.priceCents)||p.priceCents<=0||!Number.isSafeInteger(p.cookies)||p.cookies<=0)throw Error('Pacote inválido.');
 app.use((req,res,next)=>{
  res.set({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
@@ -28,7 +30,7 @@ app.use((req,res,next)=>{
 app.use(express.json({limit:MAX_SAVE_BYTES,strict:true}));
 app.use((req,res,next)=>{if(req.body===undefined)req.body={};next();});
 app.get(['/health','/healthz'],(req,res)=>res.json({ok:true,service:'lhs-backend',paymentsEnabled}));
-app.get('/v1/config',(req,res)=>res.json({paymentsEnabled,paymentsMode:sandbox?'sandbox':'production',packages:paymentsEnabled?packages:{},items:catalogue}));
+app.get('/v1/config',(req,res)=>res.json({paymentsEnabled,paymentsMode:sandbox?'sandbox':'production',packages,items:catalogue}));
 
 // UID-wide quota survives multiple instances and cold starts. Public signup is handled by Firebase.
 app.use('/v1',async(req,res,next)=>{try{
@@ -43,7 +45,7 @@ app.use('/v1',async(req,res,next)=>{try{
 app.get('/v1/account',async(req,res)=>{
  await db.runTransaction(async tx=>{const a=await tx.get(req.userRef);if(!a.exists)tx.create(req.userRef,{cookiesBalance:0,createdAt:FieldValue.serverTimestamp()});});
  const [a,items]=await Promise.all([req.userRef.get(),req.userRef.collection('items').get()]);
- res.json({uid:req.uid,cookiesBalance:a.data().cookiesBalance,entitlements:items.docs.map(d=>d.id)});
+ res.json({uid:req.uid,cookiesBalance:a.data().cookiesBalance||0,entitlements:items.docs.map(d=>d.id)});
 });
 const slotRef=req=>req.userRef.collection('slots').doc('main');
 app.get('/v1/saves/main',async(req,res)=>{
@@ -84,32 +86,22 @@ async function mp(path,options={}){
  const response=await fetch(`https://api.mercadopago.com${path}`,{...options,signal:AbortSignal.timeout(15_000),headers:{Authorization:`Bearer ${process.env.MP_ACCESS_TOKEN}`,'Content-Type':'application/json',...options.headers}});
  if(!response.ok)throw fault(502,'Provedor de pagamento indisponível.');return response.json();
 }
+let payments;
 app.post('/v1/orders',async(req,res)=>{
- if(!paymentsEnabled)throw fault(503,'Pagamentos ainda não disponíveis.');
- const packageId=id(req.body.packageId);const pack=packages[packageId];if(!pack)throw fault(400,'Pacote indisponível.');
- const key=id(req.headers['idempotency-key']);const orderId=createHash('sha256').update(`${req.uid}:${key}`).digest('hex');const ref=db.collection('orders').doc(orderId);
- const order={id:orderId,uid:req.uid,packageId,...pack,mode:sandbox?'sandbox':'production'};
- await db.runTransaction(async tx=>{const prior=await tx.get(ref);if(prior.exists){if(prior.data().packageId!==packageId)throw fault(409,'Chave já usada para outro pacote.');return;}tx.create(ref,{...order,status:'created',createdAt:FieldValue.serverTimestamp()});});
- const existing=(await ref.get()).data();if(existing.checkoutUrl)return res.json({id:orderId,url:existing.checkoutUrl});
- const preference=await mp('/checkout/preferences',{method:'POST',headers:{'X-Idempotency-Key':orderId},body:JSON.stringify({items:[{id:packageId,title:`LHS — ${pack.cookies} Cookies`,quantity:1,currency_id:'BRL',unit_price:pack.priceCents/100}],external_reference:orderId,notification_url:`${process.env.PUBLIC_API_URL}/webhooks/mercadopago`,metadata:{lhs_order:orderId}})});
- const url=sandbox?preference.sandbox_init_point:preference.init_point;if(typeof url!=='string'||!/^https:\/\/[a-z0-9.-]*mercadopago\.(com|com\.br)\//.test(url))throw fault(502,'Checkout inválido.');
- await ref.update({checkoutUrl:url,preferenceId:preference.id});res.json({id:orderId,url});
+ if(!paymentsEnabled)throw fault(503,'Doações ainda não disponíveis.');
+ if(req.body.acceptedTerms!==true)throw fault(400,'Confirme os termos de Donate antes de continuar.');
+ res.json(await payments.createOrder(req.uid,req.body.packageId,req.headers['idempotency-key']));
 });
-app.get('/v1/orders/:orderId',async(req,res)=>{const order=(await db.collection('orders').doc(id(req.params.orderId)).get()).data();if(!order||order.uid!==req.uid)throw fault(404,'Pedido não encontrado.');res.json({id:order.id,status:order.status});});
+app.get('/v1/orders',async(req,res)=>res.json({orders:paymentsEnabled?await payments.listOrders(req.uid):[]}));
+app.get('/v1/orders/:orderId',async(req,res)=>{if(!paymentsEnabled)throw fault(503,'Doações ainda não disponíveis.');res.json(await payments.readOrder(req.uid,req.params.orderId));});
 app.post('/webhooks/mercadopago',async(req,res)=>{
  if(!paymentsEnabled)throw fault(503,'Pagamentos desativados.');
  const paymentId=String(req.query['data.id']||'');if(!verifyWebhook(paymentId,req.headers['x-request-id'],req.headers['x-signature'],process.env.MP_WEBHOOK_SECRET))throw fault(401,'Notificação inválida.');
- const payment=await mp(`/v1/payments/${paymentId}`);if(String(payment.id)!==paymentId||payment.live_mode!==!sandbox)throw fault(400,'Ambiente de pagamento incompatível.');
- const ref=db.collection('orders').doc(id(payment.external_reference));const event=db.collection('payments').doc(paymentId);
- await db.runTransaction(async tx=>{
-  const [o,prior]=await tx.getAll(ref,event);if(!o.exists)throw fault(404,'Pedido não encontrado.');const order=o.data();if(order.mode!==(sandbox?'sandbox':'production'))throw fault(400,'Ambiente do pedido incompatível.');
-  const desired=paymentCredit(payment,order);const timestamp=Date.parse(payment.date_last_updated);if(!Number.isFinite(timestamp))throw fault(400,'Data inválida.');
-  if(prior.exists&&prior.data().updated>=timestamp)return;
-  if(order.paymentId&&order.paymentId!==paymentId)throw fault(409,'Pedido já associado a outro pagamento; requer reconciliação.');
-  const account=db.collection('accounts').doc(order.uid);const a=await tx.get(account);const previous=prior.data()?.credited||0;const credited=desired??previous;const delta=credited-previous;
-  if(delta){tx.set(account,{cookiesBalance:(a.data()?.cookiesBalance||0)+delta},{merge:true});tx.create(account.collection('ledger').doc(`${paymentId}-${timestamp}`),{delta,type:delta>0?'payment':'reversal',paymentId,orderId:order.id,at:FieldValue.serverTimestamp()});}
-  tx.set(event,{orderId:order.id,credited,updated:timestamp,status:payment.status});tx.update(ref,{status:payment.status,...(desired!==null?{paymentId}:{})});
- });res.sendStatus(204);
+ if(req.body.type&&req.body.type!=='payment')return res.sendStatus(200);
+ if(req.body.data?.id&&String(req.body.data.id)!==paymentId)throw fault(400,'Notificação incompatível.');
+ const payment=await mp(`/v1/payments/${paymentId}`);if(String(payment.id)!==paymentId)throw fault(400,'Pagamento incompatível.');
+ await payments.applyPayment(payment);res.sendStatus(200);
 });
 app.use((err,req,res,next)=>{const status=err.status||500;if(status>=500)console.error(JSON.stringify({event:'request_failed',status,path:req.path}));res.status(status).json({error:status>=500?'Serviço temporariamente indisponível.':err.message});});
+if(paymentsEnabled){const seller=await mp('/users/me');payments=createPayments({db,FieldValue,mp,packages,sandbox,apiUrl:process.env.PUBLIC_API_URL,siteUrl:process.env.PUBLIC_SITE_URL,sellerId:seller.id,applicationId:process.env.MP_APPLICATION_ID});}
 app.listen(Number(process.env.PORT||8080),'0.0.0.0');

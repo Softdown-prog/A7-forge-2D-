@@ -13,7 +13,7 @@ test('API startup, auth boundary, CORS, body limits and disabled payments',async
  assert.equal((await fetch(base+'/v1/account')).status,401);
  assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/config',{headers:{Origin:'https://evil.example'}})).status,403);
- const allowed=await fetch(base+'/v1/config',{headers:{Origin:'https://lhs.example'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'https://lhs.example');assert.deepEqual((await allowed.json()).packages,{});
+ const allowed=await fetch(base+'/v1/config',{headers:{Origin:'https://lhs.example'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'https://lhs.example');assert.deepEqual((await allowed.json()).packages,{'donate-5':{priceCents:500,cookies:50},'donate-10':{priceCents:1000,cookies:100}});
  assert.equal((await fetch(base+'/v1/account',{headers:{Authorization:'Bearer forged-token'}})).status,401);
  assert.equal((await fetch(base+'/v1/config',{method:'OPTIONS',headers:{Origin:'https://lhs.example'}})).status,204);
  assert.equal((await fetch(base+'/webhooks/mercadopago',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,503);

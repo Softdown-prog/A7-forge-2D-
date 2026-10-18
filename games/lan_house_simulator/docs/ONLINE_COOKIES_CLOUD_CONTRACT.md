@@ -14,7 +14,7 @@
 2. Conta **opcional para jogar**; criar conta apenas para benefícios online (salvar/recuperar pela nuvem e comprar/usar itens premium vinculados à identidade).
 3. **Cookies** servem para **itens premium opcionais**: pôsteres, decoração, pisos, paredes, temas, aparência de bancadas, modelos visuais de computadores e outros itens especiais. Priorizar personalização; nenhum item pode ser requisito de avanço da campanha ou impedir o funcionamento de uma lan house gratuita. Itens com efeitos funcionais exigem discussão e balanceamento antes de qualquer implementação.
 4. Sem anúncios obrigatórios nem mensalidade como pressuposto do modelo. Novas fontes de receita não mudam esta política sem decisão expressa.
-5. Valores e pacotes de Cookies, assim como taxas de pagamento, **não estão aprovados**: preços levantados em conversas são exemplos, não tabelas para produção.
+5. **Donate aprovado pelo proprietário em 17/10/2026:** R$ 5 = 50 Cookies e R$ 10 = 100 Cookies (R$ 0,10 por Cookie). Conta e email confirmado são obrigatórios. Créditos para futuros cosméticos especiais; a loja ainda não está disponível. Apoio único, opcional, destinado exclusivamente a melhorias no LHS. Taxas são as aplicadas pelo provedor, sem inventar condições ou isenções. Ver [DONATE.md](DONATE.md) para implementação e estado de ativação.
 6. Cookies não podem ser sacados nem convertidos em dinheiro real; não planejar mercado de apostas, sorteios pagos ou compra/venda entre jogadores.
 
 ## 2. Arquitetura-alvo e limites do backend

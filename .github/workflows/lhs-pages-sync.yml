@@ -38,7 +38,7 @@ jobs:
           npm ci
           npm run build:site
           npm run check:site
-          node --test tests/website.test.mjs tests/account-client.test.mjs
+          node --test tests/website.test.mjs tests/account-client.test.mjs tests/donate.test.mjs
 
       - name: Conferir abertura real antes de publicar
         working-directory: source/games/lan_house_simulator

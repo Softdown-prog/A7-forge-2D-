@@ -41,7 +41,15 @@ try {
  else{throw "Não foi possível verificar as regras: HTTP $($existing.StatusCode)"}
  @("GOOGLE_CLOUD_PROJECT: $Project","FIRESTORE_DATABASE_ID: $Database","SAVES_BUCKET: $Bucket",('ALLOWED_ORIGINS: '+(($AllowedOrigins -join ',') | ConvertTo-Json -Compress)),"PAYMENTS_ENABLED: 'false'","PAYMENTS_MODE: sandbox") | Set-Content $envFile -Encoding utf8
  $source=Resolve-Path (Join-Path $PSScriptRoot '../..')
- Cloud run deploy lhs-backend --project=$Project --region=$Region --source=$source --service-account=$sa --cpu=1 --memory=512Mi --min=0 --min-instances=0 --max=3 --max-instances=3 --concurrency=20 --timeout=30 --cpu-throttling --no-cpu-boost --allow-unauthenticated --env-vars-file=$envFile --quiet
+ $services=Cloud run services list --project=$Project --region=$Region --format='value(metadata.name)'
+ # Never replace payment variables or secret references on an existing service.
+ if('lhs-backend' -in @($services)){
+  $updates="^|^GOOGLE_CLOUD_PROJECT=$Project|FIRESTORE_DATABASE_ID=$Database|SAVES_BUCKET=$Bucket"
+  if($AllowedOrigins.Count){$updates+='|ALLOWED_ORIGINS='+($AllowedOrigins -join ',')}
+  Cloud run deploy lhs-backend --project=$Project --region=$Region --source=$source --service-account=$sa --cpu=1 --memory=512Mi --min=0 --min-instances=0 --max=3 --max-instances=3 --concurrency=20 --timeout=30 --cpu-throttling --no-cpu-boost --allow-unauthenticated --update-env-vars=$updates --quiet
+ }else{
+  Cloud run deploy lhs-backend --project=$Project --region=$Region --source=$source --service-account=$sa --cpu=1 --memory=512Mi --min=0 --min-instances=0 --max=3 --max-instances=3 --concurrency=20 --timeout=30 --cpu-throttling --no-cpu-boost --allow-unauthenticated --env-vars-file=$envFile --quiet
+ }
  Cloud run services describe lhs-backend --project=$Project --region=$Region --format='yaml(status.url,status.conditions,spec.template.spec.containers.resources,spec.template.metadata.annotations)'
 } finally {
  foreach($path in @($conditionFile,$envFile)){if(Test-Path -LiteralPath $path){Remove-Item -LiteralPath $path}}
