@@ -8,6 +8,7 @@ import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
 import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
 import {DONATE_PACKAGES} from '../donate-packages.mjs';
 import {createPayments} from './payments.mjs';
+import {createVerificationEmail,authenticateAccount} from './verification-email.mjs';
 
 const projectId=process.env.GOOGLE_CLOUD_PROJECT;
 initializeApp({credential:applicationDefault(),projectId});
@@ -20,6 +21,9 @@ const packages=DONATE_PACKAGES;
 const catalogue=JSON.parse(process.env.COOKIE_ITEMS_JSON||'{}');
 const paymentsEnabled=process.env.PAYMENTS_ENABLED==='true';
 const sandbox=process.env.PAYMENTS_MODE!=='production';
+const verificationEmailProvider=process.env.VERIFICATION_EMAIL_PROVIDER||'firebase';
+if(!['firebase','resend'].includes(verificationEmailProvider))throw Error('Provedor de confirmação inválido.');
+const sendVerification=verificationEmailProvider==='resend'?createVerificationEmail({auth,db,apiKey:process.env.RESEND_API_KEY,siteUrl:process.env.PUBLIC_SITE_URL,dailyLimit:Number(process.env.VERIFICATION_EMAIL_DAILY_LIMIT||100)}):null;
 if(paymentsEnabled&&(!process.env.MP_ACCESS_TOKEN||!process.env.MP_WEBHOOK_SECRET||!process.env.PUBLIC_API_URL||!process.env.PUBLIC_SITE_URL||!process.env.MP_APPLICATION_ID))throw Error('Configuração de pagamento incompleta.');
 for(const p of Object.values(packages))if(!Number.isSafeInteger(p.priceCents)||p.priceCents<=0||!Number.isSafeInteger(p.cookies)||p.cookies<=0)throw Error('Pacote inválido.');
 app.use((req,res,next)=>{
@@ -30,15 +34,20 @@ app.use((req,res,next)=>{
 app.use(express.json({limit:MAX_SAVE_BYTES,strict:true}));
 app.use((req,res,next)=>{if(req.body===undefined)req.body={};next();});
 app.get(['/health','/healthz'],(req,res)=>res.json({ok:true,service:'lhs-backend',paymentsEnabled}));
-app.get('/v1/config',(req,res)=>res.json({paymentsEnabled,paymentsMode:sandbox?'sandbox':'production',packages,items:catalogue}));
+app.get('/v1/config',(req,res)=>res.json({paymentsEnabled,paymentsMode:sandbox?'sandbox':'production',packages,items:catalogue,verificationEmailProvider}));
+
+app.use('/v1',authenticateAccount(auth));
+// Unverified accounts can request only their own confirmation email.
+app.post('/v1/auth/verification-email',async(req,res)=>{
+ if(!sendVerification)throw fault(503,'Confirmação por email temporariamente indisponível.');
+ res.json(await sendVerification(req.uid));
+});
 
 // UID-wide quota survives multiple instances and cold starts. Public signup is handled by Firebase.
 app.use('/v1',async(req,res,next)=>{try{
- const match=/^Bearer (\S+)$/.exec(req.headers.authorization||'');if(!match)throw fault(401,'Entre na conta para usar a nuvem.');
- let token;try{token=await auth.verifyIdToken(match[1],true);}catch{throw fault(401,'Sessão inválida ou expirada.');}
- if(!token.email_verified)throw fault(403,'Confirme seu email antes de usar a nuvem.');
- req.uid=token.uid;req.userRef=db.collection('accounts').doc(token.uid);
- const limit=db.collection('rateLimits').doc(token.uid);const window=Math.floor(Date.now()/60_000);
+ if(!req.authToken.email_verified)throw fault(403,'Confirme seu email antes de usar a nuvem.');
+ req.userRef=db.collection('accounts').doc(req.uid);
+ const limit=db.collection('rateLimits').doc(req.uid);const window=Math.floor(Date.now()/60_000);
  await db.runTransaction(async tx=>{const snap=await tx.get(limit);const data=snap.data();const count=data?.window===window?data.count:0;if(count>=30)throw fault(429,'Muitas solicitações. Tente novamente em um minuto.');tx.set(limit,{window,count:count+1,expiresAt:new Date(Date.now()+120_000)});});
  next();
 }catch(e){next(e);}});

@@ -69,7 +69,14 @@ export function createAccountClient(config,{request=fetch}={}){
    if(current!==epoch)throw new AccountError('Sessão encerrada.',401);return data;
   }catch(error){if(error.status===401&&!retried&&current===epoch){await refresh();return api(path,body,true,extraHeaders);}throw error;}
  }
- async function sendVerification(){if(!session)throw new AccountError('Entre na conta.',401);await identity('sendOobCode',{requestType:'VERIFY_EMAIL',idToken:session.idToken});}
+ async function sendVerification(){
+  if(!session)throw new AccountError('Entre na conta.',401);
+  const current=epoch;
+  const provider=config.verificationEmailProvider==='auto'?(await json(url.origin+'/v1/config',{method:'GET'})).verificationEmailProvider:'firebase';
+  if(current!==epoch||!session)throw new AccountError('Sessão encerrada.',401);
+  if(provider==='resend')await api('/v1/auth/verification-email',{});
+  else await identity('sendOobCode',{requestType:'VERIFY_EMAIL',idToken:session.idToken});
+ }
  async function resetPassword(email){try{await identity('sendOobCode',{requestType:'PASSWORD_RESET',email});}catch(error){if(error.code!=='EMAIL_NOT_FOUND')throw error;}}
  return {signIn,signUp,signOut,profile,refresh,api,sendVerification,hasSession:()=>session!==null,resetPassword};
 }

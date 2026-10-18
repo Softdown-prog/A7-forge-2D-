@@ -51,3 +51,16 @@ test('password reset does not reveal nonexistent accounts; network failures rema
 test('configuration cannot send credentials to an insecure backend',()=>{
  for(const apiUrl of ['http://api.example','https://user:pass@api.example','https://api.example/path','https://api.example/?token=x'])assert.throws(()=>createAccountClient({...config,apiUrl}));
 });
+
+test('Resend confirmation uses an authenticated backend request without a supplied recipient',async()=>{
+ const calls=[];const client=createAccountClient({...config,verificationEmailProvider:'auto'},{request:async(url,options)=>{
+  calls.push({url,options});return url.includes('signUp')?response(loginData):url.endsWith('/v1/config')?response({verificationEmailProvider:'resend'}):response({sent:true});
+ }});
+ await client.signUp(loginData.email,'strong-test-password');
+ assert.equal(calls.at(-1).url,'https://api.example/v1/auth/verification-email');assert.equal(calls.at(-1).options.headers.Authorization,'Bearer temporary-id-token');assert.equal(calls.at(-1).options.body,'{}');
+ assert.equal(calls.some(c=>c.url.includes('sendOobCode')),false);
+});
+test('automatic provider selection keeps existing Firebase delivery until Resend is enabled',async()=>{
+ const calls=[];const client=createAccountClient({...config,verificationEmailProvider:'auto'},{request:async(url,options)=>{calls.push({url,options});return url.includes('signUp')?response(loginData):url.endsWith('/v1/config')?response({verificationEmailProvider:'firebase'}):response({});}});
+ await client.signUp(loginData.email,'strong-test-password');assert.equal(calls.at(-1).url.includes('sendOobCode'),true);
+});
