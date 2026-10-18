@@ -4,6 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,isValidSave,visitorArrivalChance} from "../dist/js/sim/engine.js";
 import {simulatePs1RealCycle} from "../scripts/ps1_real_cycle.mjs";
+import {simulatePs1CrowdedCycle} from "../scripts/ps1_crowded_cycle.mjs";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {shopPrice,placeFurniture,availablePlacementSlots} from "../dist/js/sim/shop.js";
@@ -228,4 +229,20 @@ test("Scene Forge PS1 executa rota real, senta, joga, levanta e sai",()=>{
  assert.ok(result.timeline.some(f=>f.stage==="to_pc"&&
   Math.hypot(f.x-result.side.x,f.y-result.side.y)<.4),
   "rota real deve alcançar a lateral da cadeira");
+});
+
+test("dois clientes jogam PS1 em bancadas diferentes sem colisão nem fila travada",()=>{
+ const scene=simulatePs1CrowdedCycle();
+ assert.equal(scene.stations.length,2);
+ assert.equal(scene.ids.length,2);
+ assert.equal(Object.keys(scene.exits).length,2);
+ assert.ok(scene.minutes<220,"duas sessões encerradas até 220 minutos");
+ assert.ok(scene.minGap>=.405,"clientes não atravessam os corpos");
+ assert.ok(scene.wear.every(n=>n>0),"ambos consoles sofreram desgaste");
+ for(const id of scene.ids){
+  for(const stage of ["to_pc","sitting","using","standing","leaving"])
+   assert.ok(scene.stages[id].includes(stage),"cliente "+id+" sem "+stage);
+ }
+ const overlapping=scene.history.filter(f=>f.customers.every(c=>c&&c.stage==="using"));
+ assert.ok(overlapping.length>0,"os dois consoles devem operar ao mesmo tempo");
 });
