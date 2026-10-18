@@ -35,9 +35,9 @@ try{
   await click('[data-buy="ps1"]');
   // A primeira compra abre Administração → Videogames automaticamente.
   // A loja fechada não recalcula o texto de saldo; reabrimos pelo atalho.
-  assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\\/3/);
+  assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\/3/);
   await click("#ps1-open-shop");
-  assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\\$ 5440/);
+  assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\$ 5440/);
   await click('[data-buy-ps1-disc="turbo-circuito"]');
   assert.match(await page.locator(".ps1-cd-shop-card").filter({hasText:"Turbo Circuito"}).innerText(),/Cópias no acervo: 1/);
   await page.screenshot({path:resolve(out,"ps1_shop_"+width+".png")});
