@@ -835,9 +835,14 @@ function renderShop(force=true):void{
    const card=document.createElement("article");card.className="shop-card ps1-cd-shop-card";
    const art=document.createElement("div");art.className="ps1-cd-art";
    art.setAttribute("aria-hidden","true");
-   const discShape=document.createElement("span");discShape.className="ps1-cd-shape";
-   const caseShape=document.createElement("span");caseShape.className="ps1-cd-case";
-   art.append(caseShape,discShape);
+   const jewel=document.createElement("div");jewel.className="ps1-cd-jewel";
+   const cover=document.createElement("img");cover.className="ps1-cd-cover";
+   cover.src="assets/ps1/covers/"+disc.id+".svg";
+   cover.alt="";cover.loading="lazy";cover.decoding="async";
+   cover.width=420;cover.height=560;
+   const spine=document.createElement("span");spine.className="ps1-cd-spine";
+   jewel.append(cover,spine);
+   art.append(jewel);
    const category=document.createElement("small");category.textContent="CD de PS1 · "+disc.genre;
    const title=document.createElement("h3");title.textContent=disc.title;
    const description=document.createElement("p");
