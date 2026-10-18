@@ -32,6 +32,9 @@ jobs:
       - name: Build real LHS renderer
         working-directory: games/lan_house_simulator
         run: npm run build
+      - name: Check PS1 real routes, seating, video games and console-only business
+        working-directory: games/lan_house_simulator
+        run: node --test tests/ps1-2002.test.mjs
       - name: Capture PS1 scene without campaign or checkout
         working-directory: games/lan_house_simulator
         run: node scripts/render_ps1_scene.mjs out/forge-ps1
