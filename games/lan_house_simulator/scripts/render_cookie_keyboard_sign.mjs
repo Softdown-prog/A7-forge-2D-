@@ -74,12 +74,12 @@ try{
    txt('ZOOM DO PERIFÉRICO — TECLAS ILUMINADAS',56,724,12,'#bcd7e6');
    // A placa pendurada, e duas renderizações idênticas sob luz ligada/desligada.
    for(let i=0;i<2;i++){
-    const x=737+i*305,cy=428;
+    const x=737+i*305;
     box(x,255,286,330,12,'#152533');
     c.fillStyle=i?'#16202e':'#2e4b57';c.fillRect(x+12,267,262,306);
-    const signCam={zoom:2.0,originX:x+143,originY:cy+20+230};
+    const signCam={zoom:1.5,originX:x+143,originY:570};
     drawNeonOpenSign(c,signCam,{x:0,y:0},t,i===0);
-    txt(i?'21:00 · LUZES APAGADAS':'20:59 · LUZES ACESAS',x+14,550,12,i?'#879ba9':'#83efda');
+    txt(i?'21:00 · LUZES APAGADAS':'20:59 · LUZES ACESAS',x+14,287,12,i?'#879ba9':'#83efda');
    }
    txt('ARMAÇÃO METÁLICA · VIDRO NEON · LIGA/DESLIGA',732,627,15,'#e4cbd9');
    txt('POSICIONADA SOBRE A PORTA NO SALÃO REAL',732,654,13,'#b4c8d3',false);
