@@ -151,7 +151,7 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
  * espuma anatômica, apoio lombar, costuras e fitas de LED RGB.
  * Sem nova colisão, arquivo de sprite nem mudança em conforto/receita.
  */
-function drawNeonChair(c:CanvasRenderingContext2D,cam:Projection,p:Point,
+export function drawNeonChair(c:CanvasRenderingContext2D,cam:Projection,p:Point,
  occupied:boolean,pulse:number):void{
  const z=cam.zoom, cx=.35,cy=.87,at=(x:number,y:number,h:number)=>iso({x:p.x+x,y:p.y+y},cam,h);
  const base=at(cx,cy,4),seat=at(cx,cy,25);
@@ -167,6 +167,19 @@ function drawNeonChair(c:CanvasRenderingContext2D,cam:Projection,p:Point,
  path(c,[base,seat],"#a8c5cc",1.35*z);
  const spine=at(cx,cy+.19,31),neck=at(cx,cy+.19,55);
  path(c,[spine,neck],"#182a34",4*z);
+ // Em câmera girada, garantir estrutura aparente mesmo nos dois ângulos
+ // em que o helper de plano original não desenha a superfície.
+ if(cam.rotation===1||cam.rotation===2){
+  const upperLeft=at(cx-.28,cy+.18,63),upperRight=at(cx+.28,cy+.18,63);
+  const lowerLeft=at(cx-.28,cy+.18,28),lowerRight=at(cx+.28,cy+.18,28);
+  polygon(c,[upperLeft,upperRight,lowerRight,lowerLeft],"#1e3143","#647c8d");
+  const upMid=at(cx,cy+.18,60),lowMid=at(cx,cy+.18,31);
+  path(c,[upperLeft,lowerLeft],led,3*z);
+  path(c,[upperRight,lowerRight],led,3*z);
+  path(c,[upMid,lowMid],"#3f5768",8*z);
+  path(c,[upMid,lowMid],"#7f9dad",1.1*z);
+  c.fillStyle=led;c.beginPath();c.ellipse(upMid.x,upMid.y+9*z,4.2*z,3.2*z,0,0,Math.PI*2);c.fill();
+ }
  // Encosto curvado em um plano isométrico ortográfico.
  plane(c,cam,p.x+cx-.28,p.y+cy+.18,.56,28,35,()=>{
   c.save();
