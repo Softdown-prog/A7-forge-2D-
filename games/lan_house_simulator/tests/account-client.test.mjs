@@ -64,3 +64,40 @@ test('automatic provider selection keeps existing Firebase delivery until Resend
  const calls=[];const client=createAccountClient({...config,verificationEmailProvider:'auto'},{request:async(url,options)=>{calls.push({url,options});return url.includes('signUp')?response(loginData):url.endsWith('/v1/config')?response({verificationEmailProvider:'firebase'}):response({});}});
  await client.signUp(loginData.email,'strong-test-password');assert.equal(calls.at(-1).url.includes('sendOobCode'),true);
 });
+
+function tabStorage(){const values=new Map([['lhs-save-v1','local-save']]);return {values,getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};}
+test('login survives navigation to Donate and is revalidated before checkout without storing the password',async()=>{
+ const storage=tabStorage(),calls=[];const request=async(url,options)=>{
+  calls.push({url,options});if(url.includes('signInWithPassword'))return response(loginData);
+  if(url.includes('securetoken'))return response({id_token:'restored-token',refresh_token:'rotated-refresh'});
+  if(url.includes('lookup'))return response({users:[{email:loginData.email,emailVerified:true}]});
+  return response({id:'order',url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=test'});
+ };
+ const account=createAccountClient(config,{request,storage});await account.signIn(loginData.email,'must-not-be-stored');
+ assert.doesNotMatch(JSON.stringify([...storage.values]),/must-not-be-stored/);
+ const donate=createAccountClient(config,{request,storage});assert.equal(donate.hasSession(),true);assert.equal((await donate.restore()).emailVerified,true);
+ await donate.api('/v1/orders',{packageId:'donate-5',acceptedTerms:true});assert.equal(calls.at(-1).options.headers.Authorization,'Bearer restored-token');
+ assert.equal(calls.filter(c=>c.url.includes('signInWithPassword')).length,1);
+ donate.signOut();assert.equal(createAccountClient(config,{storage}).hasSession(),false);assert.equal(storage.values.get('lhs-save-v1'),'local-save');
+});
+test('expired, malformed and wrong-project sessions cannot resume',async()=>{
+ const storage=tabStorage();let clock=1000;const request=async url=>url.includes('signInWithPassword')?response(loginData):response({users:[{emailVerified:true}]});
+ const c=createAccountClient(config,{storage,request,now:()=>clock});await c.signIn(loginData.email,'test');
+ const stored=storage.values.get('lhs.account.session.v1');clock+=8*60*60*1000;
+ await assert.rejects(c.api('/v1/orders',{}),error=>error.status===401);assert.equal(c.hasSession(),false);
+ storage.setItem('lhs.account.session.v1',stored);assert.equal(createAccountClient(config,{storage,now:()=>clock}).hasSession(),false);
+ storage.setItem('lhs.account.session.v1',stored);assert.equal(createAccountClient({...config,firebaseApiKey:'another-project'},{storage,now:()=>1000}).hasSession(),false);
+ storage.setItem('lhs.account.session.v1','{invalid');assert.equal(createAccountClient(config,{storage}).hasSession(),false);
+ assert.equal(storage.values.get('lhs-save-v1'),'local-save');
+});
+test('revoked saved sessions clear on restore; blocked browser storage still permits login in the current page',async()=>{
+ const storage=tabStorage();const request=async url=>url.includes('signInWithPassword')?response(loginData):url.includes('securetoken')?response({error:{message:'INVALID_REFRESH_TOKEN'}},400):response({users:[{emailVerified:true}]});
+ await createAccountClient(config,{storage,request}).signIn(loginData.email,'test');const next=createAccountClient(config,{storage,request});await assert.rejects(next.restore(),error=>error.status===401);assert.equal(next.hasSession(),false);assert.equal(storage.values.has('lhs.account.session.v1'),false);
+ const blocked={getItem(){throw Error('blocked');},setItem(){throw Error('blocked');},removeItem(){throw Error('blocked');}};
+ const c=createAccountClient(config,{storage:blocked,request});await c.signIn(loginData.email,'test');assert.equal(c.hasSession(),true);c.signOut();assert.equal(c.hasSession(),false);
+});
+test('signout during saved-session restore cannot persist late refresh credentials',async()=>{
+ const storage=tabStorage();let complete;
+ const request=async url=>url.includes('signInWithPassword')?response(loginData):url.includes('securetoken')?new Promise(resolve=>complete=()=>resolve(response({id_token:'late-token',refresh_token:'late-refresh'}))):response({users:[{emailVerified:true}]});
+ await createAccountClient(config,{storage,request}).signIn(loginData.email,'test');const c=createAccountClient(config,{storage,request});const pending=c.restore();c.signOut();complete();await assert.rejects(pending);assert.equal(c.hasSession(),false);assert.equal(storage.values.has('lhs.account.session.v1'),false);
+});

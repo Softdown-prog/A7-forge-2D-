@@ -46,6 +46,7 @@ jobs:
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
           node scripts/verify_live_site_preview.mjs
+          node scripts/verify_account_navigation.mjs
           node scripts/verify_hardware_scroll.mjs
           node scripts/verify_management_panels.mjs
 
