@@ -10,6 +10,9 @@ on:
       - 'games/lan_house_simulator/src/render/neonOpenArt.ts'
       - 'games/lan_house_simulator/src/render/premiumRoomArt.ts'
       - 'games/lan_house_simulator/src/render/aquariumArt.ts'
+      - 'games/lan_house_simulator/src/render/pixelClockArt.ts'
+      - 'games/lan_house_simulator/tests/pixel-clock.test.mjs'
+      - 'games/lan_house_simulator/scripts/render_cookie_pixel_clock.mjs'
       - 'games/lan_house_simulator/src/ui/vipProductArt.ts'
       - 'games/lan_house_simulator/src/ui/cloudControls.ts'
       - 'games/lan_house_simulator/tests/cookie-cosmetics.test.mjs'
@@ -41,7 +44,7 @@ jobs:
         run: npm run build
       - name: Check premium ownership, financial isolation and headset decisions
         working-directory: games/lan_house_simulator
-        run: node --test tests/cookie-cosmetics.test.mjs
+        run: node --test tests/cookie-cosmetics.test.mjs tests/pixel-clock.test.mjs
       - name: Install browser
         working-directory: games/lan_house_simulator
         run: |
@@ -62,6 +65,9 @@ jobs:
       - name: Render real Tony Cyber and wall aquarium before/after, 4 directions and motion
         working-directory: games/lan_house_simulator
         run: node scripts/render_cookie_tony_aquarium.mjs out/cookie-art
+      - name: Render Pixel LED clock in real room, open, closed and year locked
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_cookie_pixel_clock.mjs out/cookie-art
       - name: Encode premium art preview video
         working-directory: games/lan_house_simulator
         run: |
@@ -79,6 +85,13 @@ jobs:
           ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_tony_cyber_aquario_preview.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_pixel_clock_preview.webm \\
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \\
+            -movflags +faststart out/cookie-art/cookies_pixel_clock_preview.mp4
+          test -s out/cookie-art/cookies_pixel_clock_preview.mp4
+          test -s out/cookie-art/cookies_pixel_clock_aberto.png
+          test -s out/cookie-art/cookies_pixel_clock_fechamento.png
+          test -s out/cookie-art/cookies_pixel_clock_bloqueado_1999.png
           test -s out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
           test -s out/cookie-art/cookies_tony_cyber_aquario_comparacao.png
           test -s out/cookie-art/cookies_vip_salao_depois.png
@@ -111,6 +124,10 @@ jobs:
             games/lan_house_simulator/out/cookie-art/cookies_vip_salao_antes.png
             games/lan_house_simulator/out/cookie-art/cookies_vip_salao_depois.png
             games/lan_house_simulator/out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
+            games/lan_house_simulator/out/cookie-art/cookies_pixel_clock_aberto.png
+            games/lan_house_simulator/out/cookie-art/cookies_pixel_clock_fechamento.png
+            games/lan_house_simulator/out/cookie-art/cookies_pixel_clock_bloqueado_1999.png
+            games/lan_house_simulator/out/cookie-art/cookies_pixel_clock_preview.mp4
             games/lan_house_simulator/out/account-panel/*.png
           retention-days: 30
           if-no-files-found: error
