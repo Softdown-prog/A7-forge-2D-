@@ -1,0 +1,43 @@
+name: LHS - Calendar and Weather HUD
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/index.html'
+      - 'games/lan_house_simulator/style.css'
+      - 'games/lan_house_simulator/src/main.ts'
+      - 'games/lan_house_simulator/src/ui/timeWeatherPanel.ts'
+      - 'games/lan_house_simulator/tests/time-weather-hud.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_time_weather_hud.mjs'
+      - '.github/workflows/lhs-time-weather-hud.yml'
+permissions:
+  contents: read
+jobs:
+  calendar-weather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build game and verify time/date consistency
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/time-weather-hud.test.mjs
+      - name: Install browser
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify expanded and compact calendar on mobile and desktop
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_time_weather_hud.mjs out/time-weather
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-calendar-weather-mobile-desktop
+          path: games/lan_house_simulator/out/time-weather/*.png
+          retention-days: 30
+          if-no-files-found: error
