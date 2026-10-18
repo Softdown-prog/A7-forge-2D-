@@ -99,7 +99,7 @@ try{
    document.body.append(temp);
    s.totalMinutes=(2015-1998)*360*DAY_MINUTES+minute;
    new SceneRenderer(temp.getContext('2d')).draw(s,1.2);
-   if(!neonOpenLit(s.totalMinutes)===(minute<660))throw Error('Falha de horário');
+   if(neonOpenLit(s.totalMinutes)!==(minute<660))throw Error('Falha de horário');
    return true;
   };
   draw(.7);
