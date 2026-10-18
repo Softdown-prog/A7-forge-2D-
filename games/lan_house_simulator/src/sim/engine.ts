@@ -541,10 +541,14 @@ function advanceCustomer(s: GameState, c: Customer): void {
       else if(c.pcIndex!==null)(s.pcWear??=[])[c.pcIndex]=
         Math.min(100,pcWear(s,c.pcIndex)+(0.045 / (s.pcTiers?.[c.pcIndex]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
-        const bonus=c.ps1StationIndex!==undefined?0:hardwareSatisfactionBonus(s,c.pcIndex??-1);
-        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(normalizedHourlyPrice(s,s.pricePerHour),c.waitingMinutes,c.offlineWait)+
-          bonus+vipReputationAdjustment(c,bonus,normalizedHourlyPrice(s,s.pricePerHour))));
-        const impact=c.happy?serviceReputationImpact(s.reputation,normalizedHourlyPrice(s,s.pricePerHour),bonus,rating):Math.min(0,rating);
+        const consoleSession=c.ps1StationIndex!==undefined;
+        const bonus=consoleSession?0:hardwareSatisfactionBonus(s,c.pcIndex??-1);
+        // Consoles e computadores têm tabelas de preço independentes.
+        // A satisfação do cliente PS1 usa a tarifa que ele realmente pagou.
+        const paidHourly=normalizedHourlyPrice(s,consoleSession?ps1HourPrice(s):s.pricePerHour);
+        const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(paidHourly,c.waitingMinutes,c.offlineWait)+
+          bonus+vipReputationAdjustment(c,bonus,paidHourly)));
+        const impact=c.happy?serviceReputationImpact(s.reputation,paidHourly,bonus,rating):Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
@@ -619,7 +623,7 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
   if(localMinute(s)>=LAST_ADMISSION_MINUTE||
     (localMinute(s)<10&&s.customers.some(c=>c.stage==="leaving")))return 0;
   const consoleOnly=poweredPcs===0;
-  const rate=consoleOnly?ps1HourPrice(s):normalizedHourlyPrice(s,s.pricePerHour);
+  const rate=normalizedHourlyPrice(s,consoleOnly?ps1HourPrice(s):s.pricePerHour);
   const factor=demandFactor(rate,s.reputation,consoleOnly||online(s),s.weather==="rain");
   const congestion=occupied>=poweredPcs+(s.ps1Stations?.length??0)?0.38:1;
   return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*congestion;
