@@ -51,7 +51,8 @@ stepGame=function(s,delta){const result=observedStep(s,delta);globalThis.__doorw
    const s=globalThis.__doorwayState;
    return {minute:s.totalMinutes,served:s.served,cash:s.cash,revenue:s.revenue,expenses:s.expenses,customer:s.customers.find(c=>c.id===17),zoom:document.querySelector('#scene-zoom')?.value};
   });
-  assert.equal(result.served,1);assert.equal(result.customer.stage,'using');
+  // Normal arrivals continue while this application runtime is recovering.
+  assert.ok(result.served>=1);assert.equal(result.customer.stage,'using');
   assert.equal(result.cash,state.cash+result.revenue-result.expenses);
   assert.ok(result.minute>state.totalMinutes);assert.deepEqual(errors,[]);
   await page.screenshot({path:resolve(out,'doorway_after_'+width+'.png')});
