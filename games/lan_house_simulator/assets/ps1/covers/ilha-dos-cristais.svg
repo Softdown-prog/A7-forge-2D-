@@ -17,6 +17,19 @@
 <circle cx="309" cy="165" r="112" fill="#5ca6da" opacity=".25" filter="url(#glow)"/>
 <circle cx="316" cy="163" r="78" fill="#d4f6ff" opacity=".82"/>
 <circle cx="304" cy="149" r="74" fill="#92bedb" opacity=".62"/>
+
+<!-- Desfiladeiro em camadas e ruínas antigas na ilha suspensa. -->
+<path d="M0 325L55 257L83 286L139 232L173 265L221 216L258 247L302 204L347 258L420 214L420 385H0Z" fill="#2b5677" opacity=".42"/>
+<g fill="#142f46" stroke="#5f9da3" stroke-width="3" opacity=".78">
+ <path d="M326 237L342 154L383 155L398 251Z"/>
+ <path d="M316 170H401M336 189H390" fill="none"/>
+ <path d="M339 177v-19m19 34v-36m23 37v-39" stroke="#a1cccb" stroke-width="4"/>
+ <path d="M320 236L329 215L345 222L357 210L375 220L390 214" fill="none"/>
+</g>
+<path d="M348 155l13 -22l13 22" stroke="#b5e4e5" stroke-width="4" fill="none"/>
+<g opacity=".34" stroke="#c8faff" stroke-width="3">
+ <path d="M12 212L89 185M29 225L104 193M276 105L310 87"/>
+</g>
 <path d="M0 383L90 336L172 364L230 315L309 355L420 290V450H0Z" fill="#0d3958" opacity=".7"/>
 <path d="M46 299L93 185L146 295L206 211L247 302L277 242L341 329L400 250L420 404L0 412Z" fill="#214a69"/>
 <path d="M93 185L111 267L93 250L73 265Z" fill="#89d9f3"/>
@@ -31,13 +44,42 @@
  <path d="M204 314L252 135L294 311Z" fill="#9f8aff"/>
  <path d="M262 323L309 232L337 320Z" fill="#52daff"/>
 </g>
+
+<!-- Pequenos fragmentos nas margens da rocha. -->
+<path d="M63 321L78 287L101 314Z" fill="#9de9ff" stroke="#f2ffff" stroke-width="2"/>
+<path d="M332 324L350 284L370 329Z" fill="#d8a9ff" stroke="#f8eeff" stroke-width="2"/>
+<path d="M62 323L78 287L79 318Z" fill="#4996b5" opacity=".7"/>
+<path d="M350 284L353 320L370 329Z" fill="#78539c" opacity=".65"/>
 <path d="M94 317L132 171L188 317Z" fill="#73f0e0" stroke="#edfffd" stroke-width="4"/>
 <path d="M132 171L142 297L188 317Z" fill="#2d85a7" opacity=".85"/>
 <path d="M204 314L252 135L294 311Z" fill="#baa2ff" stroke="#ecdbff" stroke-width="4"/>
 <path d="M252 135L253 308L294 311Z" fill="#6658b9"/>
 <path d="M262 323L309 232L337 320Z" fill="#89ddff" stroke="#ebfaff" stroke-width="4"/>
+
+<!-- Faces translúcidas e fissuras em cada cristal. -->
+<path d="M132 171L110 291L143 267L132 171M143 267L170 305" stroke="#edfff7" stroke-width="3" fill="none" opacity=".82"/>
+<path d="M252 135L232 267L254 286L274 305M252 135L270 257L254 286" fill="none" stroke="#f2d9ff" stroke-width="3" opacity=".81"/>
+<path d="M309 232L296 305L319 294M309 232L319 294L330 311" stroke="#f1ffff" stroke-width="2.7" fill="none" opacity=".84"/>
+<path d="M117 217L125 191M236 221L247 179M297 268L307 248" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".67"/>
+<circle cx="132" cy="171" r="9" fill="#fff" opacity=".92"/>
+<circle cx="252" cy="135" r="8" fill="#fff" opacity=".93"/>
+<circle cx="309" cy="232" r="6" fill="#fff" opacity=".93"/>
+<path d="M132 146v-28m-15 52h30M252 112V88m-14 47h28" stroke="#e6fffa" stroke-width="3" opacity=".84"/>
 <path d="M308 369L307 418L291 463L274 450L291 369" fill="#95f8e9" opacity=".82"/>
 <path d="M116 377L107 405L106 456L89 431L92 366" fill="#72d9ff" opacity=".8"/>
+
+<!-- Explorador em primeiro plano: escala e contexto narrativo. -->
+<g transform="translate(79 333)">
+ <ellipse cx="3" cy="31" rx="31" ry="10" fill="#08192c" opacity=".5"/>
+ <path d="M-8 -13L1 -30L15 -23L21 9L8 28L-6 27L-21 1Z" fill="#15273a" stroke="#9ac4c2" stroke-width="2"/>
+ <circle cx="5" cy="-42" r="12" fill="#c7a07a" stroke="#182839" stroke-width="3"/>
+ <path d="M-11 -47L19 -47L11 -59L-4 -59Z" fill="#374a40" stroke="#d6cc96" stroke-width="2"/>
+ <path d="M-8 -14L-22 6M17 -12L28 2M-1 23L-14 37M12 23L20 36" stroke="#23344a" stroke-width="9" stroke-linecap="round"/>
+ <path d="M-23 7l-2 22m53 -25l18 -33" stroke="#f6d68d" stroke-width="3" stroke-linecap="round"/>
+ <circle cx="46" cy="-30" r="6" fill="#f9f0bf" filter="url(#soft)"/>
+</g>
+<path d="M72 369L91 375M145 369L180 367" stroke="#d7eed6" stroke-width="3" opacity=".53"/>
+<text x="27" y="86" fill="#d6f7ff" font-family="Arial,sans-serif" font-size="10" font-weight="bold" letter-spacing="3">UM MUNDO ALÉM DAS NUVENS</text>
 <text x="22" y="433" fill="#f9f8ff" font-family="Arial Black,Arial,sans-serif" font-size="47" font-weight="900" letter-spacing="-2" stroke="#122944" stroke-width="6" paint-order="stroke">ILHA DOS</text>
 <text x="23" y="478" fill="#c5fff8" font-family="Arial Black,Arial,sans-serif" font-size="50" font-weight="900" letter-spacing="-3" stroke="#122944" stroke-width="6" paint-order="stroke">CRISTAIS</text>
 <rect x="11" y="11" width="398" height="538" fill="url(#scan)" opacity=".26"/>
