@@ -48,7 +48,7 @@ try{
   await page.getByText('Conta conectada. Saldo e resgates verificados pelo servidor.',{exact:true}).waitFor();
   assert.equal(await page.locator('#account-balance').innerText(),'0 Cookies');
   await page.locator('[data-account-tab="catalog"]').click();
-  assert.equal(await page.locator('#account-catalog .account-item').count(),6);
+  assert.equal(await page.locator('#account-catalog .account-item').count(),8,'A coleção VIP contém oito cosméticos');
   assert.equal(await page.locator('#account-catalog button:enabled').count(),0,'Zero balance cannot buy cosmetics');
   await page.locator('[data-account-tab="summary"]').click();
   await page.getByRole('link',{name:'Adquirir Cookies no Donate',exact:true}).click();
