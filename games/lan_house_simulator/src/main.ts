@@ -225,6 +225,12 @@ document.getElementById("menu-options")?.addEventListener("click",()=>{
  document.getElementById("menu-options")?.setAttribute("aria-expanded",String(!settingsPanel!.hidden));
 });
 soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
+// Populate the expanded view immediately on touch or keyboard, rather than
+// waiting for the next throttled HUD refresh.
+document.getElementById("time-weather-panel")?.addEventListener("toggle",()=>{
+ const panel=document.getElementById("time-weather-panel");
+ if(panel?.hasAttribute("open"))renderTimeWeatherPanel(game,iconMarkup);
+});
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
