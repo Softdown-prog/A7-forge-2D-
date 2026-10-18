@@ -6,7 +6,9 @@ export const COOKIE_ITEMS=Object.freeze({
  "keyboard-rainbow-rgb":Object.freeze({name:"Teclado Rainbow RGB",cookies:25,unlockYear:2012}),
  "neon-open-sign":Object.freeze({name:"Placa Neon ABERTO",cookies:30,unlockYear:1998}),
  "arcade-checker-floor":Object.freeze({name:"Piso Arcade Xadrez",cookies:25,unlockYear:1998}),
- "exclusive-arcade-posters":Object.freeze({name:"Pôsteres Exclusivos",cookies:12,unlockYear:1998})
+ "exclusive-arcade-posters":Object.freeze({name:"Pôsteres Exclusivos",cookies:12,unlockYear:1998}),
+ "tony-cyber":Object.freeze({name:"Tony Cyber",cookies:60,unlockYear:2010}),
+ "aquarium-rgb":Object.freeze({name:"Aquário Iluminado RGB",cookies:45,unlockYear:2008})
 });
 export function summarizeLedger(docs){
  const events=docs.map(e=>({
