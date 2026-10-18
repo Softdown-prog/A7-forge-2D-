@@ -7,7 +7,16 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 test("female visitor has a separate, stable visual identity",()=>{
  const female=actorStyleFor("female",3);
  assert.notDeepEqual(female,actorStyleFor("regular",3));
- assert.equal(female.hair,actorStyleFor("female",210).hair);
+ assert.deepEqual(female,actorStyleFor("female",3),"same client must keep the same clothes and hair");
+ const outfits=new Set(),hair=new Set(),pairs=new Set();
+ for(let id=1;id<=48;id++){
+  const style=actorStyleFor("female",id);
+  outfits.add(style.shirt);hair.add(style.hair);pairs.add(style.shirt+style.hair);
+ }
+ assert.ok(outfits.size>=5,"outfit masks need noticeable variety");
+ assert.ok(hair.size>=4,"hair masks need noticeable variety");
+ assert.ok(pairs.size>8,"outfits and hair must not be locked to one pair");
+ assert.notEqual(actorStyleFor("female",3).shirt,actorStyleFor("regular",3).shirt);
 });
 test("female visitors enter the original customer flow and survive saving",()=>{
  const s=createGame(13);s.reputation=100;s.pricePerHour=1;

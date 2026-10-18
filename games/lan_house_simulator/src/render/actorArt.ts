@@ -19,7 +19,24 @@ const casual: readonly ActorStyle[] = [
 ];
 export function actorStyleFor(kind: ActorKind, id: number): ActorStyle {
   const style = casual[(Math.abs(Math.trunc(id)) || 0)%casual.length]!;
-  if(kind==="female")return {shirt:"#B56C92",dark:"#794C7D",highlight:"#E6B3D1",pants:"#394A69",hair:"#382A3B",skin:"#DB9D80",trim:"#D9C29B"};
+  if(kind==="female"){
+    // Identity-based palette masks: independent clothes/hair hues, stable across frames and saves.
+    const clothes=[
+      ["#B56C92","#794C7D","#E6B3D1","#394A69","#D9C29B"],
+      ["#478B83","#28665F","#8CD0BD","#3B4566","#E5D29D"],
+      ["#CF894F","#965D43","#F0B879","#48566C","#EAD29E"],
+      ["#617EB4","#374F88","#A1B8E3","#38445E","#D9CB99"],
+      ["#9B6BA6","#634676","#CFACDB","#394F55","#E6C99E"],
+      ["#B54F63","#833B50","#ECA0A4","#464762","#EAD49E"]
+    ] as const;
+    const hairColors=["#382A3B","#6A4030","#282C39","#9C704A","#573629","#C29A63"];
+    // Two coprime index mixes avoid a single repeating uniform/hair pairing.
+    const n=Math.abs(Math.trunc(Number.isFinite(id)?id:0));
+    const outfit=clothes[n%clothes.length]!;
+    const hair=hairColors[(Math.floor(n/2)+n*3)%hairColors.length]!;
+    return {shirt:outfit[0],dark:outfit[1],highlight:outfit[2],
+      pants:outfit[3],hair,skin:style.skin,trim:outfit[4]};
+  }
   if(kind==="cleaner")return {shirt:"#368DAD",dark:"#225E7A",highlight:"#8BCBDD",pants:"#345475",hair:"#3D3130",skin:"#DDA57F",trim:"#F0D680"};
   if(kind==="technician")return {shirt:"#41876E",dark:"#245D57",highlight:"#92BE96",pants:"#344D60",hair:"#4B342D",skin:"#DFAC85",trim:"#E6C67D"};
   if(kind==="owner") return {shirt:"#428f79",dark:"#234f48",highlight:"#93c4a0",pants:"#344c54",hair:"#49342c",skin:"#E4AE86",trim:"#e5c18a"};
@@ -373,6 +390,26 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,9,-66,6,13,"rgba(17,24,36,.25)");
     ell(ctx,-6,-74,3.8,7,"rgba(255,241,208,.14)");
     ctx.restore();
+    if(a.kind==="female"){
+      // Full crown and thick rear curtain cover the scalp, nape and shoulders.
+      // Drawn AFTER the common rear skull so its short-hair contour cannot show through.
+      ctx.save();ctx.translate(lean,headShift);
+      ctx.beginPath();ctx.moveTo(-13,-75);
+      ctx.bezierCurveTo(-16,-88,-8,-89,0,-89);
+      ctx.bezierCurveTo(10,-89,16,-84,14,-74);
+      ctx.bezierCurveTo(17,-65,18,-53,16,-41);
+      ctx.quadraticCurveTo(10,-37,6,-43);
+      ctx.quadraticCurveTo(0,-40,-6,-43);
+      ctx.quadraticCurveTo(-12,-38,-17,-43);
+      ctx.bezierCurveTo(-19,-56,-17,-68,-13,-75);
+      ctx.closePath();ctx.fillStyle=style.hair;ctx.fill();
+      ctx.lineWidth=1.5;ctx.strokeStyle="#292A39";ctx.stroke();
+      // Highlight follows the growth direction, leaving the neck covered.
+      ctx.save();ctx.globalAlpha=.25;
+      segment(ctx,-8,-81,-11,-54,2.3,style.highlight);
+      segment(ctx,7,-82,10,-52,1.6,style.highlight);
+      ctx.restore();ctx.restore();
+    }
     if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
       ell(ctx,0,-61+headShift,5,3,style.highlight);
     }
