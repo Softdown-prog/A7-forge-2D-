@@ -2,9 +2,11 @@ import type {GameState,Item,Point} from "./types.js";
 import {purchaseApproach,vendingMachines,placedObject} from "./layout.js";
 import {roomBounds} from "./room.js";
 import {editableObjects,objectRect} from "./editableObjects.js";
-import {counterQueueSlot,MAX_COUNTER_QUEUE} from "./checkoutQueue.js";
+import {counterQueueSlot,MAX_COUNTER_QUEUE,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute} from "./navigation.js";
 import {layoutGoals} from "./editableObjects.js";
+import {AISLE_Y} from "./route.js";
+import {entrance} from "./engine.js";
 
 const cache=new WeakMap<GameState,{key:string;slots:Map<Item,Point[]>}>();
 /** Encaixes separados para cada atendimento, sem tomar assentos ou lugares do caixa. */
@@ -19,8 +21,13 @@ export function retailQueueSlots(s:GameState,item:Item):Point[]{
  const candidates:Point[]=[];
  for(let n=1;n<14;n++)candidates.push({x:goal.x+normal.x*n*.72,y:goal.y+normal.y*n*.72});
  for(let radius=1;radius<=5;radius++)for(let i=0;i<8;i++){const angle=i*Math.PI/4;candidates.push({x:goal.x+Math.cos(angle)*radius*.72,y:goal.y+Math.sin(angle)*radius*.72});}
- const slots=[goal];
+ const slots=[goal],exit=entrance(s),laneRadius=CUSTOMER_COLLISION_RADIUS+.13;
+ // Waiting shoppers must not form a solid wall across the shared aisle or
+ // the final approach to the door. The service point itself is transient.
+ const blocksExitLane=(p:Point)=>Math.abs(p.y-AISLE_Y)<laneRadius||
+  (p.y>AISLE_Y&&p.y<exit.y+laneRadius&&Math.abs(p.x-exit.x)<laneRadius);
  for(const p of candidates){
+  if(blocksExitLane(p))continue;
   if(p.x<b.minX+.2||p.x>b.maxX-.2||p.y<b.minY+.2||p.y>b.maxY-.2||slots.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<.64)||reserved.some(q=>Math.hypot(p.x-q.x,p.y-q.y)<.55)||objects.some(r=>p.x>r.minX-.13&&p.x<r.maxX+.13&&p.y>r.minY-.13&&p.y<r.maxY+.13))continue;
   if(navigableRoute(s,goal,p)){slots.push(p);if(slots.length>=14)break;}
  }

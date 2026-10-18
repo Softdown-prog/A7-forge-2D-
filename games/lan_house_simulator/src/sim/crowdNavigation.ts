@@ -31,9 +31,11 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
   for(let i=1;i<=n;i++)if(!clear({x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n}))return false;
   return true;
  };
+ const start={x:c.x,y:c.y};
+ if(segmentClear(start,destination))return [{...destination}];
  const cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
  const point=(key:number):Point=>({x:b.minX+step/2+(key%cols)*step,y:b.minY+step/2+Math.floor(key/cols)*step});
- const start={x:c.x,y:c.y},queue:number[]=[],prev=new Map<number,number>();
+ const queue:number[]=[],prev=new Map<number,number>();
  // Não saltar para a célula mais próxima através de uma parede ou de um corpo.
  for(let y=Math.max(0,Math.floor((c.y-b.minY)/step)-1);y<Math.min(rows,Math.floor((c.y-b.minY)/step)+2);y++)
   for(let x=Math.max(0,Math.floor((c.x-b.minX)/step)-1);x<Math.min(cols,Math.floor((c.x-b.minX)/step)+2);x++){
