@@ -43,6 +43,8 @@ export interface ActorRender {
   consoleSeat?: boolean;
   /** Só passa true com entitlement verificado no backend; exclusivo de sessão PC. */
   premiumHeadset?: boolean;
+  /** Aplicado ao dono somente com direito VIP verificado. */
+  premiumCyber?: boolean;
 }
 function ell(ctx: ActorContext,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
@@ -114,7 +116,10 @@ function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean):v
 }
 export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void {
   const base=iso({x:a.x,y:a.y},camera);
-  const z=camera.zoom, style=actorStyleFor(a.kind,a.id);
+  const z=camera.zoom,cyber=a.kind==="owner"&&!!a.premiumCyber;
+  const baseStyle=actorStyleFor(a.kind,a.id);
+  const style=cyber?{...baseStyle,shirt:"#293950",dark:"#15243c",
+    highlight:"#67e2d8",pants:"#25334a",hair:"#283247",trim:"#e5a1df"}:baseStyle;
   const pose=a.pose??"idle";
   const walking=pose==="walking";
   const work=a.kind==="cleaner"&&pose==="sweeping"?workerMotion("sweeping",a.time):
@@ -226,7 +231,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
   }
 
-  if(!back && a.kind==="owner"){
+  if(!back && a.kind==="owner"&&!cyber){
     // Tailored service apron: curved bib, seam, folded pocket and terminal badge.
     segment(ctx,-6,-50+headShift,-7,-44+headShift,2.0,style.trim);
     segment(ctx,6,-50+headShift,7,-44+headShift,2.0,style.trim);
@@ -240,6 +245,18 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.fillStyle="#e8c88c";ctx.beginPath();ctx.roundRect(-3,-42+headShift,7,5,1);ctx.fill();
     ctx.fillStyle="#34584a";ctx.fillRect(-1,-41+headShift,3,2);ctx.fillRect(0,-38.5+headShift,1,1);
     segment(ctx,8,-33+headShift,9,-28+headShift,1.3,"#dbc999");
+  } else if(!back && cyber){
+    // Couraça dupla, cintura e circuitos desenhados na mesma silhueta do Tony.
+    shape(ctx,[[-12,-48+headShift],[11,-48+headShift],[12,-24+headShift],[-12,-24+headShift]],"#192e49","#71889c");
+    shape(ctx,[[-10,-45+headShift],[-1,-40+headShift],[-2,-29+headShift],[-9,-27+headShift]],"#395675","#244159");
+    shape(ctx,[[10,-45+headShift],[1,-40+headShift],[2,-29+headShift],[9,-27+headShift]],"#304964","#244159");
+    segment(ctx,-10,-43+headShift,-8,-29+headShift,1.8,"#65f2e2");
+    segment(ctx,10,-43+headShift,8,-29+headShift,1.8,"#f4a2df");
+    ctx.fillStyle=Math.sin(a.time*2)>.2?"#a4fff3":"#63bdbd";
+    ctx.beginPath();ctx.roundRect(-4,-42+headShift,8,8,1.3);ctx.fill();
+    shape(ctx,[[-3,-39+headShift],[0,-43+headShift],[3,-39+headShift],[0,-35+headShift]],"#1b3b52","#8bc6d2");
+    segment(ctx,-12,-24+headShift,11,-24+headShift,3,"#1a263b");
+    for(const x of [-7,0,7])ell(ctx,x,-28+headShift,1.15,1.15,"#ebd3ef");
   } else if(!back && a.kind==="clown"){
     ell(ctx,-8,-40+headShift,3.5,3.5,"#E65A61");
     ell(ctx,8,-31+headShift,3.3,3.3,"#76C4B4");
@@ -255,6 +272,21 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // The near arm overlaps the profile's chest: actual depth, not an X squash.
   if(sideways)arm(1);
   else if(a.kind==="owner"&&!back){arm(-1);arm(1);}
+  if(cyber){
+    // Ombreiras facetadas nas quatro orientações.
+    for(const side of [-1,1]){
+      shape(ctx,[[side*11,-49+headShift],[side*19,-46+headShift],
+        [side*19,-40+headShift],[side*12,-39+headShift]],"#344a65","#162638");
+      segment(ctx,side*13,-46+headShift,side*18,-43+headShift,1.4,
+        side===1?"#ee96d5":"#70f0e3");
+    }
+    if(back){
+      shape(ctx,[[-10,-46+headShift],[0,-42+headShift],[10,-46+headShift],
+        [9,-29+headShift],[-9,-29+headShift]],"#19334e","#597c91");
+      segment(ctx,-8,-37+headShift,8,-37+headShift,2,"#69e8e0");
+      segment(ctx,-4,-32+headShift,4,-32+headShift,1.5,"#e99dda");
+    }
+  }
   // Neck and chin cast a contact shadow onto the collar.
   ell(ctx,0,-52+headShift,8,3,"rgba(23,32,43,.24)");
   segment(ctx,-1,-53+headShift,0,-57+headShift,7.5,style.skin);
@@ -391,7 +423,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   if(a.premiumHeadset && a.kind!=="owner" && pose==="sitting" && seated>.97 && !consoleSeat){
     drawNeonHeadset(ctx,lean,-67+headShift,back,sideways,a.time);
   }
-  if(a.kind==="owner"&&!back){
+  if(a.kind==="owner"&&!back&&!cyber){
     // Thin warm frames distinguish the manager without changing head/foot anchors.
     ctx.strokeStyle="#524c3b";ctx.lineWidth=1.0;
     for(const x of (sideways?[4]:[-4.3,5.2])){ctx.beginPath();ctx.roundRect(x-3.4+lean,-70+headShift,6.8,6.0,1.6);ctx.stroke();}
@@ -399,6 +431,29 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.save();ctx.globalAlpha=.17;
     ell(ctx,sideways?7+lean:1+lean,-58.6+headShift,sideways?3.2:5.4,2.0,style.hair);
     ctx.restore();
+  }
+  if(cyber){
+    // Visor semiespelhado e headset translúcido não exigem sprites extras.
+    if(!back){
+      shape(ctx,sideways?
+        [[2+lean,-73+headShift],[13+lean,-73+headShift],[14+lean,-66+headShift],[3+lean,-65+headShift]]:
+        [[-13+lean,-73+headShift],[12+lean,-73+headShift],[13+lean,-66+headShift],[-12+lean,-66+headShift]],
+        "#1d4964","#67b1c9");
+      segment(ctx,sideways?5+lean:-9+lean,-69+headShift,
+        sideways?12+lean:9+lean,-69+headShift,1.6,
+        Math.sin(a.time*2.2)>.25?"#a2fff0":"#5cc7c9");
+      segment(ctx,sideways?5+lean:-7+lean,-67+headShift,
+        sideways?11+lean:8+lean,-67+headShift,1,"#afcde1");
+      ell(ctx,sideways?11+lean:12+lean,-68+headShift,2.5,3.2,"#eea6dd");
+    }else{
+      segment(ctx,-10,-74+headShift,10,-74+headShift,2,"#6ee6de");
+      ell(ctx,0,-77+headShift,2.5,1.6,"#f5b1e6");
+    }
+    if(!back){
+      segment(ctx,sideways?11+lean:13+lean,-67+headShift,
+        sideways?14+lean:16+lean,-61+headShift,1.3,"#87ede5");
+      ell(ctx,sideways?14+lean:16+lean,-61+headShift,2,2,"#edaadd");
+    }
   }
   ctx.restore();
 }
