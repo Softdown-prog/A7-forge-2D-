@@ -74,9 +74,25 @@ try{
    if(!id.startsWith('floor-'))throw Error("ID de save perdido: "+id);
   }
 
-  // Imagem focada no cartão que motivou a correção: seleção sem números X/Y.
-  await page.locator('#ps1-placement').scrollIntoViewIfNeeded();
-  await page.locator('#ps1-placement').locator('xpath=..').screenshot({
+  // O Android deve usar setas em vez do picker nativo que toma toda a tela.
+  const location=page.locator('#ps1-location-name');
+  await location.waitFor({state:'visible'});
+  if(await page.locator('#ps1-placement').isVisible())
+   throw Error("Seletor técnico não deve abrir o popup do Android");
+  const original=(await location.innerText()).trim();
+  if(!original||/[0-9]+[,.][0-9]+/.test(original))
+   throw Error("Texto de localização inválido: "+original);
+  const originalSlot=await page.locator('#ps1-placement').inputValue();
+  await page.getByRole('button',{name:'Escolher o próximo local para a bancada'}).click();
+  const nextSlot=await page.locator('#ps1-placement').inputValue();
+  const nextLocation=(await location.innerText()).trim();
+  if(nextSlot===originalSlot||nextLocation===original)
+   throw Error("Botão de direção não alternou o local da bancada");
+  await page.getByRole('button',{name:'Escolher o local anterior para a bancada'}).click();
+  if((await page.locator('#ps1-placement').inputValue())!==originalSlot)
+   throw Error("Setas não retornam ao local original");
+  await page.locator('.ps1-location-selector').scrollIntoViewIfNeeded();
+  await page.locator('.ps1-location-selector').locator('xpath=..').screenshot({
    path:resolve(output,"ps1_posicoes_"+tag+".png"),animations:"disabled"
   });
   // Imagens locais, originais e decodificadas, sem dependências externas.
