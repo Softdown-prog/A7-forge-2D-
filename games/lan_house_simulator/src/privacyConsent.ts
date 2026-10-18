@@ -22,6 +22,10 @@ export function optionalPrivacyAllowed():boolean{
  return typeof localStorage!=="undefined"&&readPrivacyChoice(localStorage)==="accepted";
 }
 export function mountPrivacyBanner():void{
+ // O site carrega o jogo num iframe alto: posicionar o aviso no topo
+ // visível evita que aceitar/recusar fiquem fora da área tocável.
+ if(typeof window!=="undefined"&&window.self!==window.top)
+  document.documentElement.classList.add("lhs-embedded-game");
  const banner=document.getElementById("privacy-banner");
  const accept=document.getElementById("privacy-accept");
  const reject=document.getElementById("privacy-reject");

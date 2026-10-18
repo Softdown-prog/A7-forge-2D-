@@ -1019,3 +1019,6 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .time-weather-outlook{font-size:11px}
  .hud-line>.hud-promotion,.hud-line>.hud-autosave{font-size:11px}
 }
+
+/* Consentimento no iframe do site: manter os botões alcançáveis sem rolar o site. */
+.lhs-embedded-game .privacy-banner{top:12px;bottom:auto;max-height:min(65dvh,500px);overflow-y:auto}
