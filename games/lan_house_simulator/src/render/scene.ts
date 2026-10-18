@@ -20,7 +20,7 @@ import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
-import {ps1StationPoint,ps1Seat} from "../sim/ps1.js";
+import {ps1StationPoint,ps1Seat,ps1PlayableDisc} from "../sim/ps1.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
@@ -97,7 +97,7 @@ export class SceneRenderer {
       if(point){
        const inUse=s.customers.some(c=>c.ps1StationIndex===i&&c.stage==="using");
        entries.push({depth:point.x+point.y+.3,paint:()=>drawPs1Station(ctx,camera,point,
-        s.ps1Stations![i]!.wear,inUse,elapsedSeconds)});
+        s.ps1Stations![i]!.wear,inUse,elapsedSeconds,ps1PlayableDisc(s,i))});
       }
     }
     for(let i=0;i<BIN_SPOTS.length;i++){
