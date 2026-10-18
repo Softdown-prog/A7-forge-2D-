@@ -66,9 +66,9 @@ export function mountCloudControls(
      <button id="account-signin" type="button">Entrar</button>
      <button id="account-signup" type="button">Criar conta</button>
      <button id="account-recovery" type="button">Recuperar senha</button>
-     <button id="account-logout" type="button">Sair</button>
     </div>
    </details>
+   <div class="account-actions"><button id="account-logout" type="button">Sair da conta</button></div>
    <div id="account-donate"></div>
    <p class="account-footnote">Cookies são separados dos R$ fictícios da lan house.
    Não podem ser sacados. Os itens são opcionais e não dão vantagem econômica.</p>
@@ -242,6 +242,7 @@ export function mountCloudControls(
    isConfigured()?"Faça login para ver os seus Cookies. Nenhum saldo é estimado pelo jogo.":openOfflineReason;
   authBox.hidden=!isConfigured();
   find<HTMLButtonElement>("#account-refresh").disabled=!session||loading;
+  find<HTMLButtonElement>("#account-logout").disabled=!session||loading;
   catalog.replaceChildren();
   const ownedIds=new Set(account?.entitlements??[]);
   for(const item of COOKIE_COSMETICS)catalog.append(createCosmeticCard(item,ownedIds.has(item.id)));
