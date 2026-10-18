@@ -8,6 +8,7 @@
   <title>Lan House Simulator · Softdown</title>
   <link rel="icon" type="image/svg+xml" href="./assets/ui/brand.svg"/>
   <link rel="stylesheet" href="./style.css"/>
+  <script type="module" src="./js/privacyConsent.js"></script>
   <script type="module" src="./js/main.js"></script>
 </head>
 <body>
@@ -194,5 +195,16 @@
 
     <footer class="game-footer"><span><span class="tiny-pixel"></span> UM JOGO SOFTDOWN</span><span>Um pequeno negócio. Um futuro enorme.</span></footer>
   </div>
+  <aside id="privacy-banner" class="privacy-banner" role="region" aria-label="Preferências de privacidade" hidden>
+    <div class="privacy-copy"><strong>Privacidade e armazenamento</strong>
+      <p>Usamos armazenamento local necessário para salvar sua partida e preferências. Tecnologias opcionais, se ativadas, exigem sua escolha. Você pode recusar sem perder o jogo. A decisão vale por 30 dias.</p>
+      <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Política de privacidade</a>
+    </div>
+    <div class="privacy-actions">
+      <button id="privacy-reject" type="button">Recusar opcionais</button>
+      <button id="privacy-accept" type="button">Aceitar opcionais</button>
+    </div>
+  </aside>
+  <button id="privacy-settings" class="privacy-settings" type="button">Privacidade</button>
 </body>
 </html>
