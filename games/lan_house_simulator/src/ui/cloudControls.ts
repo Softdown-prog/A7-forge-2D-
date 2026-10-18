@@ -1,6 +1,7 @@
 import type {GameState} from "../sim/types.js";
 import {parseImportedSave,serializeSave} from "../sim/saveTransfer.js";
 import {COOKIE_COSMETICS,cosmeticsOwned,setVerifiedCosmetics,toggleVerifiedCosmetic,type CookieCosmeticId} from "../sim/premiumCosmetics.js";
+import {vipProductThumbnail} from "./vipProductArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import {createAccountClient,type AccountClient,type AccountProfile} from "./accountClient.js";
 
@@ -165,8 +166,14 @@ export function mountCloudControls(
   icon.className="account-item-art";
   icon.dataset.cosmetic=item.id;
   icon.setAttribute("aria-hidden","true");
-  icon.textContent=({"headset-rgb-neon":"🎧","chair-gamer-neon":"💺","keyboard-rainbow-rgb":"⌨",
-   "neon-open-sign":"✦","arcade-checker-floor":"▦","exclusive-arcade-posters":"▣"} as Record<string,string>)[item.id]??"✧";
+  const premiumArt=vipProductThumbnail(item.id);
+  if(premiumArt){
+   const img=document.createElement("img");img.src=premiumArt;
+   img.alt="";img.loading="lazy";icon.append(img);
+  }else{
+   icon.textContent=({"headset-rgb-neon":"🎧","chair-gamer-neon":"💺","keyboard-rainbow-rgb":"⌨",
+    "neon-open-sign":"✦","arcade-checker-floor":"▦","exclusive-arcade-posters":"▣"} as Record<string,string>)[item.id]??"✧";
+  }
   const info=document.createElement("div");info.className="account-item-info";
   const name=document.createElement("strong");name.textContent=item.name;
   const detail=line(`${item.cookies} Cookies · ${priceToBrl(item.cookies)} · desde ${item.unlockYear}`,"account-item-price");
