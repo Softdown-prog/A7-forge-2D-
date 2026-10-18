@@ -90,15 +90,15 @@ export function ps1PlacementLabel(slot:{id:string;x:number;y:number}):string{
   "floor-4":"Entrada (sul) · lado direito"
  };
  if(base[slot.id])return base[slot.id];
- const wing=slot.id.match(/^floor-(west|east)-(\\d+)$/);
+ const wing=slot.id.match(/^floor-(west|east)-(\d+)$/);
  if(wing){
   const side=wing[1]==="west"?"Ala esquerda (oeste)":"Ala direita (leste)";
   return side+" · espaço "+wing[2];
  }
- const funds=slot.id.match(/^floor-north-(\\d+)-([ab])$/);
+ const funds=slot.id.match(/^floor-north-(\d+)-([ab])$/);
  if(funds)return "Fundos (norte) · "+(funds[2]==="a"?"lado esquerdo":"lado direito")+
   " · setor "+funds[1];
- const entrance=slot.id.match(/^floor-south-(\\d+)-([ab])$/);
+ const entrance=slot.id.match(/^floor-south-(\d+)-([ab])$/);
  if(entrance)return "Entrada (sul) · "+(entrance[2]==="a"?"lado esquerdo":"lado direito")+
   " · setor "+entrance[1];
  // Encaixes futuros: descrever orientação sem mostrar dados técnicos.
