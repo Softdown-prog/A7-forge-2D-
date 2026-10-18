@@ -31,7 +31,7 @@ try{
   if((await dialog.locator('#account-balance').innerText()).trim()!=='—')throw Error('Saldo offline não pode ser inventado');
   if(!(await dialog.locator('#account-connection').innerText()).includes('desativada'))throw Error('Explicação offline ausente');
   await dialog.locator('[data-account-tab="catalog"]').click();
-  if(await dialog.locator('#account-catalog .account-item').count()!==6)throw Error('Catálogo incompleto');
+  if(await dialog.locator('#account-catalog .account-item').count()!==8)throw Error('Catálogo incompleto');
   const prices=await dialog.locator('.account-item-price').allInnerTexts();
   if(!prices.some(x=>x.includes('40 Cookies'))||!prices.some(x=>x.includes('12 Cookies')))throw Error('Preços ausentes');
   if(await dialog.locator('#account-catalog button:enabled').count())throw Error('Resgate deve ficar indisponível offline');
@@ -48,7 +48,7 @@ try{
   await page.locator('#open-account').click();
   await dialog.waitFor({state:'visible'});
   await dialog.locator('[data-account-tab="catalog"]').click();
-  if(await dialog.locator('.account-item').count()!==6)throw Error('Catálogo inacessível durante jogo');
+  if(await dialog.locator('.account-item').count()!==8)throw Error('Catálogo inacessível durante jogo');
   if(errors.length)throw Error('JS: '+errors.join(' / '));
   await context.close();
  }
@@ -62,7 +62,9 @@ try{
   "keyboard-rainbow-rgb":{cookies:25,name:"Teclado Rainbow RGB"},
   "neon-open-sign":{cookies:30,name:"Placa Neon ABERTO"},
   "arcade-checker-floor":{cookies:25,name:"Piso Arcade Xadrez"},
-  "exclusive-arcade-posters":{cookies:12,name:"Pôsteres Exclusivos"}
+  "exclusive-arcade-posters":{cookies:12,name:"Pôsteres Exclusivos"},
+  "tony-cyber":{cookies:60,name:"Tony Cyber"},
+  "aquarium-rgb":{cookies:45,name:"Aquário Iluminado RGB"}
  };
  await page.route('**/online-config.json',route=>route.fulfill({
   contentType:'application/json',body:JSON.stringify({enabled:true,apiUrl:'https://wallet-test.example',firebaseApiKey:'fake-public-key'})
