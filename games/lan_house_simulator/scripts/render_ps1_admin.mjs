@@ -58,6 +58,45 @@ try{
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await page.locator("#ps1-open-shop").click();
   await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
+  // Imagens locais, originais e decodificadas, sem dependências externas.
+  await page.evaluate(async()=>{
+   const images=[...document.querySelectorAll(".ps1-cd-cover")];
+   if(images.length!==5)throw Error("Faltam capas de PS1 na loja");
+   for(const img of images)img.loading="eager";
+   await Promise.all(images.map(img=>img.decode()));
+   if(images.some(img=>img.naturalWidth!==420||img.naturalHeight!==560))
+    throw Error("Capas sem dimensão esperada de 420×560");
+   if(new Set(images.map(img=>img.src)).size!==5)
+    throw Error("As cinco capas precisam de imagens diferentes");
+  });
+  if(tag==="desktop"){
+   // Contato com cinco capas em resolução alta, usado na revisão de arte.
+   await page.evaluate(()=>{
+    const imgs=[...document.querySelectorAll(".ps1-cd-cover")];
+    const cnv=document.createElement("canvas");
+    cnv.id="ps1-cover-montage";cnv.width=1330;cnv.height=465;
+    cnv.style.cssText="display:block;width:1330px;height:465px";
+    const ctx=cnv.getContext("2d");
+    ctx.fillStyle="#0b1821";ctx.fillRect(0,0,1330,465);
+    ctx.fillStyle="#b8edcf";ctx.font="bold 17px Arial";
+    ctx.fillText("SOFTDOWN INTERACTIVE   /   ACERVO DE CDs   /   2002",28,38);
+    for(let i=0;i<imgs.length;i++){
+     const x=24+i*263,y=65;
+     ctx.fillStyle="#213847";ctx.fillRect(x-7,y-7,232,373);
+     ctx.fillStyle="#d8e5f1";ctx.fillRect(x,y,218,292);
+     ctx.drawImage(imgs[i],3+x,3+y,212,286);
+     ctx.fillStyle="#9ae5d0";ctx.font="bold 14px Arial";
+     ctx.fillText(imgs[i].closest(".ps1-cd-shop-card").querySelector("h3").textContent.toUpperCase(),x,y+324,230);
+     ctx.fillStyle="#b7c4d1";ctx.font="11px Arial";
+     ctx.fillText("CD ORIGINAL  •  ARTE EXCLUSIVA",x,y+349);
+    }
+    cnv.style.position="fixed";cnv.style.zIndex="2147483646";cnv.style.left="0";cnv.style.top="0";
+    document.body.append(cnv);
+   });
+   await page.locator("#ps1-cover-montage").screenshot({
+    path:resolve(output,"ps1_cinco_capas_catalogo.png")});
+   await page.locator("#ps1-cover-montage").evaluate(el=>el.remove());
+  }
   // Capturar o que o jogador vê após seguir o atalho, não o catálogo inteiro
   // (que pode ser muito alto e estar dentro de um painel com rolagem própria).
   await page.locator(".ps1-shop-heading").scrollIntoViewIfNeeded();
