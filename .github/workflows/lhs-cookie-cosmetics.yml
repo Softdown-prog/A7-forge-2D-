@@ -14,6 +14,9 @@ on:
       - 'games/lan_house_simulator/scripts/render_cookie_cosmetics.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_keyboard_sign.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_floor_posters.mjs'
+      - 'games/lan_house_simulator/scripts/verify_account_panel.mjs'
+      - 'games/lan_house_simulator/index.html'
+      - 'games/lan_house_simulator/style.css'
       - '.github/workflows/lhs-cookie-cosmetics.yml'
 permissions:
   contents: read
@@ -40,6 +43,9 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
+      - name: Verify Minha Conta in browser on desktop and mobile
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_account_panel.mjs out/account-panel
       - name: Render actual game furniture, actor and animated headset
         working-directory: games/lan_house_simulator
         run: node scripts/render_cookie_cosmetics.mjs out/cookie-art
@@ -88,5 +94,6 @@ jobs:
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao.png
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao_antes.png
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_apresentacao.mp4
+            games/lan_house_simulator/out/account-panel/*.png
           retention-days: 30
           if-no-files-found: error
