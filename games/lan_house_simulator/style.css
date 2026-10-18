@@ -690,3 +690,27 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 #ps1-placement{width:100%;min-width:0;max-width:100%;margin:6px 0}
 @media(max-width:640px){.ps1-station-summary{flex-direction:column;align-items:stretch}
  .ps1-station-summary>button{align-self:flex-start}}
+
+/* PlayStation 1: acervo físico de CDs e seletor de bancada. */
+.ps1-shop-heading{grid-column:1/-1;margin:18px 0 0;font-size:16px;color:#203b31}
+.ps1-shop-note{grid-column:1/-1;margin:0 0 8px}
+.ps1-cd-shop-card{border-color:#b9c8b4}
+.ps1-cd-art{height:116px;border-radius:12px;display:grid;place-items:center;
+ background:linear-gradient(140deg,#d7e0d5,#8da69c);position:relative;overflow:hidden}
+.ps1-cd-case{width:104px;height:92px;border:5px solid #edf1e9;border-radius:5px;
+ background:linear-gradient(125deg,#233849 30%,#546a83 53%,#b65d40 54%,#dfad6a);
+ box-shadow:5px 7px 12px #1a332a3b;transform:rotate(-9deg)}
+.ps1-cd-shape{position:absolute;left:calc(50% + 12px);top:24px;width:68px;height:68px;border-radius:50%;
+ background:radial-gradient(circle,#233e43 0 8px,#d6dfdd 9px 13px,#618799 14px 29px,#a7d2cc 30px 35px);
+ border:2px solid #e2e9e2;box-shadow:0 4px 7px #183b324d}
+.ps1-disc-admin{padding:12px;border:1px solid #c3d1bd;border-radius:9px;background:#f1f5eb;margin:10px 0}
+.ps1-disc-admin h4{margin:0 0 8px}.ps1-disc-admin p{margin:5px 0 10px}
+.ps1-station-summary{flex-wrap:wrap}
+.ps1-station-summary>span{flex:1 1 180px}
+.ps1-station-cd-label{display:flex;flex:1 1 150px;flex-direction:column;gap:5px;font-size:11px;color:#294436}
+.ps1-station-cd-label select{min-width:0;width:100%;max-width:100%}
+@media(max-width:640px){
+ .ps1-cd-art{height:100px}
+ .ps1-station-summary{align-items:stretch}
+ .ps1-station-summary>button{max-width:100%}
+}
