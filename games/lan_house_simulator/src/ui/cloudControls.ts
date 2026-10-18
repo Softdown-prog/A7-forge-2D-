@@ -2,7 +2,7 @@ import type {GameState} from "../sim/types.js";
 import {parseImportedSave,serializeSave} from "../sim/saveTransfer.js";
 import {COOKIE_COSMETICS,cosmeticsOwned,setVerifiedCosmetics,toggleVerifiedCosmetic,type CookieCosmeticId} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import {createAccountClient,type AccountClient,type AccountProfile} from "./accountClient.mjs";
+import {createAccountClient,type AccountClient,type AccountProfile} from "./accountClient.js";
 
 interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
 interface WalletEntry {id:string;type:string;delta:number;itemId:string|null;at:string|null;mode?:string}

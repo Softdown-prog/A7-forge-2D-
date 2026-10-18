@@ -4,7 +4,7 @@ on:
     paths:
       - 'games/lan_house_simulator/website/**'
       - 'games/lan_house_simulator/src/ui/cloudControls.ts'
-      - 'games/lan_house_simulator/src/ui/accountClient.d.mts'
+      - 'games/lan_house_simulator/src/ui/accountClient.d.ts'
       - 'games/lan_house_simulator/online-config.json'
       - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
@@ -14,7 +14,7 @@ on:
     paths:
       - 'games/lan_house_simulator/website/**'
       - 'games/lan_house_simulator/src/ui/cloudControls.ts'
-      - 'games/lan_house_simulator/src/ui/accountClient.d.mts'
+      - 'games/lan_house_simulator/src/ui/accountClient.d.ts'
       - 'games/lan_house_simulator/online-config.json'
       - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
