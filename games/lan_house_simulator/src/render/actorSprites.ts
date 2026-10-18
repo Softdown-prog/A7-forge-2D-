@@ -4,12 +4,13 @@ import {iso,type Projection} from "./isometric.js";
 const FRAMES=32,TAU=Math.PI*2;
 export const ACTOR_SPRITE_WIDTH=72,ACTOR_SPRITE_HEIGHT=120;
 export const ACTOR_SPRITE_LEFT=36,ACTOR_SPRITE_TOP=110;
-const LIMIT=Math.floor(16*1024*1024/(ACTOR_SPRITE_WIDTH*ACTOR_SPRITE_HEIGHT*4));
-interface SpriteCache{frames:Map<string,ImageBitmap>;pending:Set<string>;worker:Worker|null}
+const PIXEL_BUDGET=16*1024*1024;
+interface SpriteFrame{bitmap:ImageBitmap;left:number;top:number;bytes:number}
+interface SpriteCache{frames:Map<string,SpriteFrame>;pending:Set<string>;worker:Worker|null;bytes:number}
 // Frames can be shared by the menu preview and the live room.
 let sharedCache:SpriteCache|undefined;
 function createCache():SpriteCache{
- const cache:SpriteCache={frames:new Map(),pending:new Set(),worker:null};
+ const cache:SpriteCache={frames:new Map(),pending:new Set(),worker:null,bytes:0};
  if(typeof Worker==="undefined"||typeof OffscreenCanvas==="undefined")return cache;
  try{
   const url=new URL("./actorSpriteWorker.js",import.meta.url);
@@ -18,10 +19,16 @@ function createCache():SpriteCache{
   url.search=new URL(import.meta.url).search;
   const worker=new Worker(url,{type:"module"});
   cache.worker=worker;
-  worker.onmessage=(event:MessageEvent<{key:string;bitmap:ImageBitmap}>)=>{
-   const {key,bitmap}=event.data;cache.pending.delete(key);
-   cache.frames.get(key)?.close();cache.frames.delete(key);cache.frames.set(key,bitmap);
-   if(cache.frames.size>LIMIT){const oldest=cache.frames.keys().next().value!;cache.frames.get(oldest)!.close();cache.frames.delete(oldest);}
+  worker.onmessage=(event:MessageEvent<{key:string;bitmap:ImageBitmap;left:number;top:number}>)=>{
+   const {key,bitmap,left,top}=event.data;cache.pending.delete(key);
+   const previous=cache.frames.get(key);
+   if(previous){cache.bytes-=previous.bytes;previous.bitmap.close();cache.frames.delete(key);}
+   const bytes=bitmap.width*bitmap.height*4;
+   cache.frames.set(key,{bitmap,left,top,bytes});cache.bytes+=bytes;
+   while(cache.bytes>PIXEL_BUDGET){
+    const oldest=cache.frames.keys().next().value!,frame=cache.frames.get(oldest)!;
+    cache.bytes-=frame.bytes;frame.bitmap.close();cache.frames.delete(oldest);
+   }
   };
   worker.onerror=event=>{event.preventDefault();worker.terminate();cache.worker=null;cache.pending.clear();};
  }catch{/* Original vector renderer remains available without worker support. */}
@@ -55,6 +62,6 @@ export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a
  }
  cache.frames.delete(key);cache.frames.set(key,sprite);
  const p=iso(a,camera),z=camera.zoom;
- // 1x source retains detail for room cameras (<= .86x), independently of zoom.
- ctx.drawImage(sprite,p.x-ACTOR_SPRITE_LEFT*z,p.y-ACTOR_SPRITE_TOP*z,ACTOR_SPRITE_WIDTH*z,ACTOR_SPRITE_HEIGHT*z);
+ // Cropping removes transparent margins only; the anchor and 1x art are retained.
+ ctx.drawImage(sprite.bitmap,p.x-sprite.left*z,p.y-sprite.top*z,sprite.bitmap.width*z,sprite.bitmap.height*z);
 }

@@ -18,6 +18,8 @@ export interface Customer {
   retailQueueIndex?: number;
   /** Limita buscas de desvio; salvo para conservar retomadas de partidas. */
   nextCrowdRetryMinute?: number;
+  /** Incoming visitor waits off the doorstep while departing visitors pass. */
+  doorwayYielding?: boolean;
   /** Waypoints seguintes ao target, serializáveis e opcionais para saves anteriores. */
   route?: Point[];
   /** Minutos de transição sentando/levantando. */

@@ -259,6 +259,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 }
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.queueIndex=undefined;
+  delete c.doorwayYielding;
   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
@@ -270,6 +271,7 @@ function refreshCounterQueue(s:GameState):void {
     if(previousIndex===index)continue;
     const dest=counterQueueSlot(index,s);
     c.queueIndex=index;
+    if(c.doorwayYielding)continue;
     // Saves antigos: a pessoa já estava parada no ponto de atendimento.
     if(c.stage==="waiting"&&previousIndex===undefined&&index===0)continue;
     if(Math.hypot(c.x-dest.x,c.y-dest.y)<0.05){
@@ -298,13 +300,45 @@ function leaveCounterForPc(s:GameState,c:Customer,destination:Point):boolean {
   c.target=outside;c.route=[aisle,...onward];
   return true;
 }
+function entranceAvailable(s:GameState,entry:Point):boolean{
+ return !s.customers.some(c=>Math.hypot(c.x-entry.x,c.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.1);
+}
+/** Recover old saves as well as preventing a new arrival from sealing the exit.
+ * A short, collision-tested walk moves the newcomer off the shared doorstep.
+ * It remains in its FIFO position and resumes its real counter route afterward. */
+function yieldDoorway(s:GameState,c:Customer):boolean{
+ const entry=entrance(s),near=Math.hypot(c.x-entry.x,c.y-entry.y)<=(c.doorwayYielding ? .8 : .45);
+ const outgoing=s.customers.some(other=>other.id!==c.id&&other.stage==="leaving"&&
+  Math.hypot(other.x-entry.x,other.y-entry.y)<(c.doorwayYielding?1.5:.8));
+ if(c.doorwayYielding&&(!near||!outgoing)){
+  const index=counterQueueCustomers(s).findIndex(other=>other.id===c.id);
+  if(index>=0&&!setTravel(s,c,counterQueueSlot(index,s)))return true;
+  delete c.doorwayYielding;
+  if(index>=0)c.queueIndex=index;
+  return false;
+ }
+ if(!near||!outgoing)return false;
+ if(!c.doorwayYielding){
+  const b=roomBounds(s);
+  refuge:for(const side of [1,-1])for(const dy of [.375,.625,-.375]){
+   const goal={x:Math.max(b.minX+.125,Math.min(b.maxX-.125,entry.x+side*.375)),
+    y:Math.max(b.minY+.125,Math.min(b.maxY-.125,entry.y+dy))};
+   if(Math.hypot(goal.x-entry.x,goal.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.08)continue;
+   const path=crowdRoute(s,c,goal,.25);
+   if(!path?.length)continue;
+   c.target=path[0]!;c.route=path.slice(1);c.doorwayYielding=true;break refuge;
+  }
+ }
+ if(!c.doorwayYielding)return false;
+ moveRoute(s,c);return true;
+}
 function spawn(s: GameState): void {
   const queueIndex=counterQueueCustomers(s).length;
   if(queueIndex>=MAX_COUNTER_QUEUE)return;
   const e = entrance(s);
   // Entrada e saída compartilham a soleira: não materializar um novo corpo
   // em cima de quem está atravessando a porta.
-  if(s.customers.some(c=>Math.hypot(c.x-e.x,c.y-e.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
+  if(!entranceAvailable(s,e))return;
   const costume = COSTUMES[Math.floor(random(s) * COSTUMES.length)] ?? "regular";
   const c: Customer = {
     id: s.nextCustomerId++, x: e.x, y: e.y, facing:"north",
@@ -327,7 +361,7 @@ function spawnPrintWalkIn(s:GameState):void {
  const queueIndex=counterQueueCustomers(s).length;
  if(queueIndex>=MAX_COUNTER_QUEUE)return;
  const entry=entrance(s);
- if(s.customers.some(c=>Math.hypot(c.x-entry.x,c.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
+ if(!entranceAvailable(s,entry))return;
  const id=s.nextCustomerId;
  const seed=(Math.imul(id,2654435761)^(s.totalMinutes>>>0))>>>0;
  const reference=printReferencePrice(s);
@@ -347,7 +381,7 @@ function spawnDiscWalkIn(s:GameState):void {
  const queueIndex=counterQueueCustomers(s).length;
  if(queueIndex>=MAX_COUNTER_QUEUE)return;
  const entry=entrance(s);
- if(s.customers.some(c=>Math.hypot(c.x-entry.x,c.y-entry.y)<CUSTOMER_COLLISION_RADIUS+.1))return;
+ if(!entranceAvailable(s,entry))return;
  const id=s.nextCustomerId,kind=discWalkInKind(id),copier=s.discCopier;
  if(!copier)return;
  const seed=(Math.imul(id,2246822519)^s.totalMinutes)>>>0;
@@ -508,9 +542,14 @@ function resolvePurchase(s: GameState, c: Customer): void {
 }
 function advanceCustomer(s: GameState, c: Customer): void {
   switch (c.stage) {
-    case "arriving":
-      if(localMinute(s)<CLOSING_START_MINUTE&&moveRoute(s,c))c.stage="waiting";
+    case "arriving":{
+      if(c.doorwayYielding&&yieldDoorway(s,c))return;
+      if(localMinute(s)>=CLOSING_START_MINUTE)return;
+      const before={x:c.x,y:c.y};
+      if(moveRoute(s,c))c.stage="waiting";
+      else if(Math.hypot(c.x-before.x,c.y-before.y)<.005)yieldDoorway(s,c);
       return;
+    }
     case "waiting": if(localMinute(s)<CLOSING_START_MINUTE)tryServe(s, c);return;
     case "to_pc":
       if (moveRoute(s,c)) { c.stage = "sitting"; c.poseMinutes = 0; }
@@ -724,7 +763,7 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&

@@ -1,5 +1,15 @@
 # Fluidez do jogo — 14/10/2026
 
+## Fila parada com computadores livres — 18/10/2026
+
+Uma campanha histórica gerada com seed 51 reproduziu um bloqueio na entrada, no minuto 372. Um visitante recém-chegado ocupava o centro da soleira; onze visitantes tentavam sair. A separação mínima entre corpos (0,43 tile) impedia as saídas de atingir o raio da porta (0,32). O recém-chegado também estava cercado. Após mais 240 minutos, as mesmas pessoas continuavam paradas e o total de atendimentos não avançava.
+
+Quando um visitante realmente não consegue dar um passo perto do centro da entrada e há alguém saindo, ele busca um pequeno refúgio lateral. A rota usa uma grade de 0,25 tile, pois a grade normal de 0,5 não alcança o espaço junto à borda. Cada passo continua respeitando paredes e corpos. Depois de liberar as saídas, o visitante retoma sua posição por ordem de chegada. O comportamento só intervém quando o deslocamento normal está bloqueado; a admissão, o RNG e os preços mantêm suas regras.
+
+Saves existentes são recuperados pelo próprio motor. A espera lateral também é persistida para permitir salvar/recarregar durante a manobra. Não remover clientes presos, ampliar o raio da saída, cobrar antecipadamente ou alterar o saldo para liberar circulação.
+
+`tests/doorway-recovery.test.mjs` reproduz as posições do bloqueio, confere recuperação até o PC, saída pela soleira, separação, paredes, contabilidade e save/reload determinístico. `scripts/verify_doorway_recovery.mjs` carrega a mesma fixture em contextos isolados Chromium desktop e toque móvel e observa o RAF real até a retomada, sem reposicionar personagens ou acelerar o relógio. O workflow de publicação executa essa verificação antes de sincronizar o Pages.
+
 O Canvas desenhava a 60 FPS no desktop, mas as posições só mudavam a cada minuto da simulação: quatro vezes por segundo. Isso produzia saltos de aproximadamente 250 ms. A interface também reconstruía listas de painéis fechados a cada 450 ms; piso, paredes externas e decoração fixa eram desenhados em todos os frames.
 
 ## Mudanças integradas

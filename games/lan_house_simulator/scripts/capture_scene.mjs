@@ -1,4 +1,4 @@
-import {selectAdminArea} from './management_navigation.mjs';
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Captura genuína do Canvas em Chromium para revisão visual, sem aprovar arte.
 import { chromium } from "playwright";
 import { createServer } from "node:http";
@@ -353,6 +353,7 @@ try{
     // Nova funcionalidade: conferir o painel real e o débito após a campanha.
     await page.locator("#open-admin").click();
     await selectAdminArea(page,'finance');
+    await selectTask(page,'finance','promotion');
     const cashBefore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
     await page.locator("#launch-promotion").click();
     await page.locator("#launch-promotion").waitFor({state:"visible"});
