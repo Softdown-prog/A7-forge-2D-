@@ -38,7 +38,8 @@ try{
   await details.locator("summary").click();
   await page.waitForFunction(()=>document.getElementById("time-weather-date")?.textContent==="01/01/1998");
   assert.equal(await details.evaluate(el=>el.open),true);
-  assert.equal(await page.locator("#time-weather-hour").innerText(),"10:00");
+  assert.match(await page.locator("#time-weather-hour").innerText(),/^10:[0-5][0-9]$/,
+   "The in-game minute is advancing while the player opens the panel");
   assert.match(await page.locator("#time-weather-outlook").innerText(),/amanhã|próximo dia/);
   const geometry=await page.evaluate(()=>{
     const panel=document.getElementById("time-weather-panel").getBoundingClientRect();
