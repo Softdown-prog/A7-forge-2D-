@@ -7,6 +7,7 @@ import { cameraForGame, cuboid, iso, polygon, type Projection,objectCamera } fro
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
 import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
+import {drawVipAquarium} from "./aquariumArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import { actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import {drawActorSprite as drawActor} from "./actorSprites.js";
@@ -93,6 +94,13 @@ export class SceneRenderer {
       }},
       {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
     ];
+    // Aquário VIP preso à parede norte, sem ocupar espaço de circulação.
+    if(cosmeticAvailable("aquarium-rgb",yearFromMinutes(s.totalMinutes))){
+      const point={x:Math.min(bounds.maxX-1.42,Math.max(bounds.minX+.8,3.15)),
+        y:bounds.minY+.13};
+      entries.push({depth:point.x+point.y+.25,
+        paint:()=>drawVipAquarium(ctx,camera,point,elapsedSeconds)});
+    }
     for (let i=0;i<pcCount(s);i++){
       const p=pcPosition(i,s);
       entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
@@ -643,7 +651,9 @@ export class SceneRenderer {
     // Prioridade ao serviço pago mais recente; ambos os equipamentos animam independente.
     const pose=s&&copyingAnimationActive(s)&&copyAt>=printAt?"copying":
       s&&printingAnimationActive(s)?"printing":"idle";
-    drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,direction:(["south","west","north","east"] as const)[r]});
+    drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,
+      direction:(["south","west","north","east"] as const)[r],
+      premiumCyber:!!s&&cosmeticAvailable("tony-cyber",yearFromMinutes(s.totalMinutes))});
     this.heroHitbox=actorHitbox(camera,position.x,position.y);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {
