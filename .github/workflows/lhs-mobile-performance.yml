@@ -1,0 +1,56 @@
+name: LHS mobile performance
+on:
+  workflow_dispatch:
+  push:
+    branches: [fix/lhs-mobile-stutter]
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/src/render/**'
+      - 'games/lan_house_simulator/src/main.ts'
+      - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
+      - '.github/workflows/lhs-mobile-performance.yml'
+permissions:
+  contents: read
+jobs:
+  profile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: candidate
+      - uses: actions/checkout@v4
+        with:
+          ref: 52d56c62d345fcdfd35d670100c0580749af19c9
+          path: baseline
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare comparison
+        run: |
+          for tree in baseline candidate; do
+            cd "$GITHUB_WORKSPACE/$tree/games/lan_house_simulator"
+            npm ci
+            npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+            npm run build
+          done
+          npx playwright install --with-deps chromium
+      - name: Profile current production code
+        working-directory: baseline/games/lan_house_simulator
+        run: |
+          cp "$GITHUB_WORKSPACE/candidate/games/lan_house_simulator/scripts/profile_stutter.mjs" scripts/profile_stutter.mjs
+          node scripts/profile_stutter.mjs out/stutter baseline --cpu-profile
+      - name: Profile candidate and verify art
+        working-directory: candidate/games/lan_house_simulator
+        run: |
+          node scripts/profile_stutter.mjs out/stutter candidate --cpu-profile
+          node scripts/verify_actor_sprites.mjs out/actor-sprites
+          node --test tests/scene-motion.test.mjs tests/customer-congestion.test.mjs tests/cookie-cosmetics.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs-mobile-performance
+          path: |
+            baseline/games/lan_house_simulator/out/stutter
+            candidate/games/lan_house_simulator/out/stutter
+            candidate/games/lan_house_simulator/out/actor-sprites

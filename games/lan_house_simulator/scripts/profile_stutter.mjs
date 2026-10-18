@@ -6,19 +6,35 @@ import {resolve} from 'node:path';
 import {createGame,stepGame} from '../dist/js/sim/engine.js';
 import {moveLayoutObject} from '../dist/js/sim/editableObjects.js';
 import {circulationScenario} from './circulation_scenario.mjs';
+import {counterQueueSlot} from '../dist/js/sim/checkoutQueue.js';
 const cpuProfile=process.argv.includes('--cpu-profile');
 const output=resolve(process.argv[2]??'out/stutter'),label=process.argv[3]??'current';await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,'serve.mjs')],{stdio:['ignore','pipe','inherit']});let browser;
 try{
  await new Promise((ok,fail)=>{server.stdout.once('data',ok);server.once('error',fail);});
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});const reports=[];
- for(const layout of ['classic','furnished']){
+ for(const layout of ['classic','furnished','crowded']){
   const state=layout==='classic'?circulationScenario():Object.assign(createGame(1998),{cash:10000,reputation:95,licensedGames:true,customers:circulationScenario().customers,nextCustomerId:9});
   if(layout==='furnished'){
    const result=moveLayoutObject(state,'pc:0',{x:2.5,y:3},1);if(!result.ok)throw Error(result.message);
   }
+  if(layout==='crowded'){
+   const costumes=['regular','rabbit','mouse-mascot','clown','vampire','stitched-monster'];
+   state.inventory={soda:60,candy:60,snacks:60};
+   state.customers=Array.from({length:10},(_,i)=>({...state.customers[i%8],id:i+1,queueIndex:i,...counterQueueSlot(i),target:counterQueueSlot(i),route:[],costume:costumes[i%costumes.length]}));
+   state.nextCustomerId=11;
+  }
   stepGame(state,12);
   const context=await browser.newContext({viewport:{width:414,height:920},isMobile:true,hasTouch:true}),page=await context.newPage(),errors=[];
+  // Test-only counters distinguish cache churn from simulation/drawing work.
+  await context.route('**/js/render/actorSprites.js',async route=>{
+   const response=await route.fetch();let source=await response.text();
+   source=source.replace(/(export function drawActorSprite\([^\n]+\{)/,'$1\n const stats=globalThis.__spriteStats??={calls:0,hits:0,misses:0,evictions:0};stats.calls++;');
+   source=source.replace(/if \(!sprite\) \{/,'if (!sprite) { stats.misses++;');
+   source=source.replace(/(cache\.frames\.delete\(key\);\s*cache\.frames\.set\(key, sprite\);)/,'stats.hits++;$1');
+   source=source.replace(/(const oldest = cache\.frames\.keys\(\)\.next\(\)\.value;)/,'if(globalThis.__spriteStats)globalThis.__spriteStats.evictions++;$1');
+   await route.fulfill({response,body:source});
+  });
   page.on('pageerror',e=>errors.push(String(e)));
   await page.addInitScript(state=>{localStorage.setItem('lhs-save-v1',JSON.stringify(state));localStorage.setItem('lhs.sound','off');},state);
   const cdp=await context.newCDPSession(page);await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
@@ -42,7 +58,7 @@ try{
   if(cpuProfile){await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:500});await cdp.send('Profiler.start');}
   await page.waitForTimeout(12000);const profile=cpuProfile?(await cdp.send('Profiler.stop')).profile:{nodes:[],samples:[],timeDeltas:[]};
   const metrics=await page.evaluate(()=>{const d=window.costs;cancelAnimationFrame(d.raf);const pct=(v,p)=>[...v].sort((a,b)=>a-b)[Math.min(v.length-1,Math.floor(v.length*p))]??0;
-   return {durationSeconds:(performance.now()-d.start)/1000,touch:d.scroll,rafCount:d.frames.length,frameP95:pct(d.frames,.95),frameMax:Math.max(...d.frames),longTasks:d.longTasks,timings:Object.fromEntries(Object.entries(d.timings).map(([k,v])=>[k,{calls:v.length,total:v.reduce((a,b)=>a+b,0),p95:pct(v,.95),max:Math.max(...v)}]))};});
+   return {durationSeconds:(performance.now()-d.start)/1000,touch:d.scroll,zoom:document.querySelector('#scene-zoom')?.value,sprites:globalThis.__spriteStats,rafCount:d.frames.length,frameP95:pct(d.frames,.95),frameMax:Math.max(...d.frames),longTasks:d.longTasks,timings:Object.fromEntries(Object.entries(d.timings).map(([k,v])=>[k,{calls:v.length,total:v.reduce((a,b)=>a+b,0),p95:pct(v,.95),max:Math.max(...v)}]))};});
   const nodes=new Map(profile.nodes.map(n=>[n.id,n])),cost=new Map();
   for(let i=0;i<profile.samples.length;i++){const n=nodes.get(profile.samples[i]);const key=n.callFrame.functionName+' @ '+n.callFrame.url.split('/').slice(-1)[0];cost.set(key,(cost.get(key)??0)+(profile.timeDeltas[i]??0)/1000);}
   const report={layout,errors,...metrics,hotspots:[...cost].sort((a,b)=>b[1]-a[1]).slice(0,22)};reports.push(report);console.log(JSON.stringify(report));await context.close();
