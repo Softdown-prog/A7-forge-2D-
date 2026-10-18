@@ -63,15 +63,9 @@ try{
     checks[2]===checks[3]||checks[0]!==checks[4])throw Error("Visual/caching: "+checks.join("/"));
   setVerifiedCosmetics([]);
   window.__checks=checks;
-  const scene=(name,canvas)=>{
-   const frame=document.createElement("canvas");
-   frame.id=name;frame.width=1000;frame.height=610;
-   frame.style.cssText="position:fixed;left:0;top:0;z-index:10001";
-   frame.getContext("2d").drawImage(canvas,0,0);
-   document.body.append(frame);
-  };
-  scene("cookie-scene-standard",baseline);
-  scene("cookie-scene-premium",premium);
+  // Renderizações reais permanecem fora do DOM até a captura individual.
+  // Assim não cobrem a prancha de comparação na captura do navegador.
+  window.__sceneCanvas={standard:baseline,premium};
   const board=document.createElement("canvas");board.id="cookie-floor-board";
   board.width=1480;board.height=950;board.style.cssText="display:block;width:1480px;height:950px";
   document.body.append(board);
@@ -123,10 +117,19 @@ try{
   };
  });
  await page.locator("#cookie-floor-board").screenshot({path:resolve(out,"cookies_piso_posters_comparacao.png")});
- await page.locator("#cookie-scene-premium").screenshot({path:resolve(out,"cookies_piso_posters_salao.png")});
- await page.locator("#cookie-scene-standard").screenshot({path:resolve(out,"cookies_piso_posters_salao_antes.png")});
- await page.locator("#cookie-scene-standard").evaluate(el=>el.remove());
- await page.locator("#cookie-scene-premium").evaluate(el=>el.remove());
+ // Montagem temporária e exclusiva de cada render, sem sobreposição.
+ for(const [kind,file] of [["premium","cookies_piso_posters_salao.png"],
+   ["standard","cookies_piso_posters_salao_antes.png"]]){
+  await page.evaluate(kind=>{
+   const frame=document.createElement("canvas");
+   frame.id="cookie-scene-capture";frame.width=1000;frame.height=610;
+   frame.style.cssText="position:fixed;left:0;top:0;z-index:10001";
+   frame.getContext("2d").drawImage(window.__sceneCanvas[kind],0,0);
+   document.body.append(frame);
+  },kind);
+  await page.locator("#cookie-scene-capture").screenshot({path:resolve(out,file)});
+  await page.locator("#cookie-scene-capture").evaluate(el=>el.remove());
+ }
  await page.evaluate(()=>window.__cookieFloorStart());
  await page.waitForFunction(()=>window.__cookieFloorDone===true,null,{timeout:20000});
  if(errors.length)throw Error("Canvas: "+errors.join(" | "));
