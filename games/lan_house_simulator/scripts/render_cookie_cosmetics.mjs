@@ -149,7 +149,7 @@ try{
   }
   title('CADEIRA GAMER NEON',64,193,24);
   title('50 COOKIES · DETALHES EM RGB',64,219,15,'#6aeadd');
-  const cam={originX:513,originY:502,zoom:5.25};
+  const cam={originX:493,originY:418,zoom:4.85};
   drawNeonChair(c,cam,{x:0,y:0},false,0);
   title('BASE 5 RODÍZIOS · CARBONO · ALMOFADAS',64,635,13,'#a9c7d4');
   title('HEADSET RGB + MICROFONE',705,193,24);
