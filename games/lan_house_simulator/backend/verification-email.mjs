@@ -5,7 +5,7 @@ const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 
 // The recipient comes exclusively from Firebase, never from the request body.
 // Quotas are reserved atomically before contacting either external provider.
-export function createVerificationEmail({auth,db,apiKey,siteUrl,from='LHS <contas@analysepro.com>',replyTo='softloady@gmail.com',dailyLimit=100,request=fetch,now=Date.now}){
+export function createVerificationEmail({auth,db,apiKey,siteUrl,from='LHS <contas@lhs.analysepro.com>',replyTo='softloady@gmail.com',dailyLimit=100,request=fetch,now=Date.now}){
  const site=new URL(siteUrl);
  if(site.protocol!=='https:'||site.username||site.password||site.search||site.hash||site.pathname!=='/')throw Error('URL de confirmação inválida.');
  if(!apiKey||!Number.isSafeInteger(dailyLimit)||dailyLimit<1)throw Error('Configuração de email inválida.');

@@ -18,7 +18,7 @@ test('only the authenticated account receives the message; action codes stay in 
  const f=fixture();assert.deepEqual(await f.send('player'),{sent:true});
  const {url,options}=f.calls[0],body=JSON.parse(options.body);
  assert.equal(url,'https://api.resend.com/emails');assert.deepEqual(body.to,['owner@example.invalid']);
- assert.equal(body.from,'LHS <contas@analysepro.com>');assert.match(body.html,/Confirmar meu email/);assert.match(body.html,/&amp;mode=verifyEmail/);
+ assert.equal(body.from,'LHS <contas@lhs.analysepro.com>');assert.match(body.html,/Confirmar meu email/);assert.match(body.html,/&amp;mode=verifyEmail/);
  assert.match(body.text,/private-code/);assert.equal(options.headers.Authorization,'Bearer test-secret');
  assert.doesNotMatch(JSON.stringify([...f.rows]),/owner@|private-code|test-secret/);
 });
