@@ -5,6 +5,8 @@ import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, cuboid, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
+import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
+import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { movementDirection } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,availablePlacementSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
@@ -652,7 +654,10 @@ export class SceneRenderer {
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,
       gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using",
-      consoleSeat:seated&&c.ps1StationIndex!==undefined
+      consoleSeat:seated&&c.ps1StationIndex!==undefined,
+      premiumHeadset:seated&&c.pcIndex!==null&&c.ps1StationIndex===undefined&&
+       cosmeticAvailable("headset-rgb-neon",yearFromMinutes(s.totalMinutes))&&
+       headsetOnSession(c.id,c.pcIndex)
     });
     if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
       drawPs1Controller(this.ctx,camera,{x,y},t);
