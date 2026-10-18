@@ -20,7 +20,7 @@ Depois de confirmar que esses valores estão no DNS público, clique em **Verify
 
 ## Fluxo e segurança
 
-1. O cliente mantém a sessão apenas na memória e consulta `/v1/config` para escolher o provedor.
+1. O cliente mantém a sessão no sessionStorage da aba, com duração máxima de 8 horas, renova e valida a identidade ao retomar a navegação e consulta `/v1/config` para escolher o provedor.
 2. Para Resend, chama `POST /v1/auth/verification-email` com seu token Firebase. Senha, email de destino e UID não são enviados no corpo.
 3. O servidor valida a sessão com checagem de revogação, consulta o endereço da própria conta e reserva as cotas em uma transação Firestore.
 4. Firebase Admin gera o código de confirmação. O email contém somente o endereço do LHS em `/conta/confirmar/#codigo=...`, sem domínio do provedor, API key ou URL técnica no texto HTML. O código não é devolvido pela API de envio, gravado em Firestore ou registrado nos logs.

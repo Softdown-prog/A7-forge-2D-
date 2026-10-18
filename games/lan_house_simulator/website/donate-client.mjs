@@ -5,18 +5,19 @@ export function checkoutUrl(value){
  if(url.protocol!=='https:'||url.username||url.password||!['www.mercadopago.com.br','www.mercadopago.com','sandbox.mercadopago.com.br','sandbox.mercadopago.com'].includes(url.hostname))throw Error('Não foi possível abrir o pagamento. Tente novamente.');
  return url.href;
 }
-export function createDonateController(client,{document:doc=document,request=fetch,uuid=()=>crypto.randomUUID()}={}){
+export function createDonateController(client,{document:doc=document,request=fetch,uuid=()=>crypto.randomUUID(),navigate=url=>globalThis.location.assign(url)}={}){
  const $=id=>doc.getElementById(id),buttons=[...doc.querySelectorAll('[data-donate-package]')];
- let connected=false,available=false,busy=false,keys=new Map(),prepared=new Map();
+ let connected=false,available=false,busy=false,restoring=false,connectionVersion=0,keys=new Map(),prepared=new Map();
  const status=$('donate-status'),orderState=$('donate-order-state');
- function paint(){buttons.forEach(button=>{button.disabled=busy||!available;button.textContent=(connected?'Doar R$ ':'Entrar para doar R$ ')+(button.dataset.donatePackage==='donate-5'?'5':'10');});}
+ function paint(){buttons.forEach(button=>{button.disabled=busy||restoring||!available;button.textContent=restoring?'Conectando sua conta…':(connected?'Doar R$ ':'Entrar para doar R$ ')+(button.dataset.donatePackage==='donate-5'?'5':'10');});}
+ function setRestoring(value){restoring=value;paint();}
  async function initialize(apiUrl){
   try{const response=await request(new URL('/v1/config',apiUrl),{cache:'no-store',signal:AbortSignal.timeout(30_000)});if(!response.ok)throw Error();const config=await response.json();available=config.paymentsEnabled===true&&config.paymentsMode==='production';
-   status.textContent=available?'Pagamento único: entre na sua conta e confirme seu email para receber Cookies. Escolha R$ 5 ou R$ 10.':'As doações ainda não foram liberadas. Os valores exibidos são dos dois pagamentos únicos previstos; nenhum pagamento será iniciado.';
+   status.textContent=available?(connected?'Conta conectada. Confirme os termos de Donate e escolha R$ 5 ou R$ 10.':'Pagamento único: entre na sua conta e confirme seu email para receber Cookies. Escolha R$ 5 ou R$ 10.'):'As doações ainda não foram liberadas. Os valores exibidos são dos dois pagamentos únicos previstos; nenhum pagamento será iniciado.';
   }catch{status.textContent='Não foi possível consultar as doações. Tente recarregar a página.';}paint();
  }
  function hideLink(packageId){const link=$('donate-link-'+packageId);link.hidden=true;link.href='/donate/';}
- function setConnected(value){connected=value;if(!value){keys.clear();prepared.clear();for(const button of buttons)hideLink(button.dataset.donatePackage);$('donate-checkout').hidden=true;$('donate-checkout').href='/donate/';orderState.textContent='';$('donate-history').replaceChildren();$('donate-terms').checked=false;}paint();}
+ function setConnected(value){connectionVersion++;connected=value;if(!value){keys.clear();prepared.clear();for(const button of buttons)hideLink(button.dataset.donatePackage);$('donate-checkout').hidden=true;$('donate-checkout').href='/donate/';orderState.textContent='';$('donate-history').replaceChildren();$('donate-terms').checked=false;}else if(available)status.textContent='Conta conectada. Confirme os termos de Donate e escolha R$ 5 ou R$ 10.';paint();}
  async function history(){
   const {orders}=await client.api('/v1/orders');const list=$('donate-history');list.replaceChildren();
   if(!orders.length)return;
@@ -30,14 +31,14 @@ export function createDonateController(client,{document:doc=document,request=fet
   }catch(error){orderState.textContent=error.message||'Não foi possível conferir. Tente novamente.';}finally{busy=false;paint();}
  }
  for(const button of buttons)button.addEventListener('click',async()=>{
-  if(busy||!available)return;
+  if(busy||restoring||!available)return;
   if(!connected){doc.getElementById('account-app').scrollIntoView({behavior:'smooth',block:'start'});$('account-email').focus({preventScroll:true});status.textContent='Entre ou crie sua conta abaixo. Confirme seu email para receber os Cookies.';return;}
-  if(!$('donate-terms').checked){$('donate-terms').focus();status.textContent='Leia e confirme os termos de Donate na sua conta antes de continuar.';return;}
+  if(!$('donate-terms').checked){$('donate-terms').scrollIntoView({behavior:'smooth',block:'center'});$('donate-terms').focus({preventScroll:true});status.textContent='Sua conta está conectada. Confirme os termos de Donate abaixo e escolha o valor para abrir o pagamento.';return;}
   busy=true;paint();status.textContent='Preparando seu apoio…';
-  const packageId=button.dataset.donatePackage;if(!keys.has(packageId))keys.set(packageId,uuid());
-  try{const order=await client.api('/v1/orders',{packageId,acceptedTerms:true},false,{'Idempotency-Key':keys.get(packageId)});const url=checkoutUrl(order.url);prepared.set(packageId,order.id);const panelLink=$('donate-checkout');panelLink.href=url;panelLink.hidden=false;const cardLink=$('donate-link-'+packageId);cardLink.href=url;cardLink.hidden=false;orderState.textContent='Pagamento único preparado. Use o link no card escolhido ou “Continuar pagamento” para abrir a página segura em outra aba.';status.textContent='Seu link está pronto no card escolhido. O pagamento é único, sem renovação automática.';cardLink.scrollIntoView({behavior:'smooth',block:'center'});cardLink.focus({preventScroll:true});await history();
+  const packageId=button.dataset.donatePackage,owner=connectionVersion;if(!keys.has(packageId))keys.set(packageId,uuid());
+  try{const order=await client.api('/v1/orders',{packageId,acceptedTerms:true},false,{'Idempotency-Key':keys.get(packageId)});if(!connected||owner!==connectionVersion)return;const url=checkoutUrl(order.url);prepared.set(packageId,order.id);const panelLink=$('donate-checkout');panelLink.href=url;panelLink.hidden=false;const cardLink=$('donate-link-'+packageId);cardLink.href=url;cardLink.hidden=false;orderState.textContent='Pagamento único preparado. Se a página não abrir, use o link do card escolhido.';status.textContent='Abrindo o pagamento seguro. Seus Cookies serão adicionados após a confirmação.';navigate(url);
   }catch(error){status.textContent=error.message||'Não foi possível iniciar o pagamento. Tente novamente.';if(error.status===410)keys.delete(packageId);}finally{busy=false;paint();}
  });
  $('donate-refresh').addEventListener('click',()=>void check(new URL(doc.location.href).searchParams.get('order')||undefined));
- return {initialize,setConnected,history};
+ return {initialize,setConnected,setRestoring,history};
 }

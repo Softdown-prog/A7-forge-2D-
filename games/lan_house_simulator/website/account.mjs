@@ -1,6 +1,8 @@
 import {createAccountClient} from './account-client.mjs';
 import {createDonateController} from './donate-client.mjs';
 const root=document.querySelector('#account-app');
+// Revalidate persisted navigation after the browser restores an older page.
+if(root)window.addEventListener('pageshow',event=>{if(event.persisted)window.location.reload();});
 if(root)void mount().catch(()=>{document.querySelector('#account-status').textContent='Conta temporariamente indisponível. Você pode continuar jogando sem login.';});
 async function mount(){
  const $=id=>document.getElementById(id),status=$('account-status');
@@ -9,7 +11,7 @@ async function mount(){
  const client=createAccountClient(config);let mode='login',revision,hasSave=false,busy=false;
  const donate=root.dataset.purpose==='donate';
  const donations=donate?createDonateController(client):null;
- if(donations)void donations.initialize(config.apiUrl);
+ if(donations){donations.setRestoring(client.hasSession());void donations.initialize(config.apiUrl);}
  function view(name){for(const key of ['auth','verify','dashboard'])$(key+'-view').hidden=key!==name;}
  function setMode(value){
   mode=value;const signup=mode==='signup',reset=mode==='reset';
@@ -57,6 +59,7 @@ async function mount(){
  $('check-email').addEventListener('click',()=>void run(async()=>{await client.refresh();await connected(await client.profile());}));
  $('resend-email').addEventListener('click',()=>void run(async()=>{await client.sendVerification();status.textContent='Email de confirmação reenviado. Confira a caixa de spam.';}));
  for(const button of root.querySelectorAll('[data-signout]'))button.addEventListener('click',()=>{client.signOut();donations?.setConnected(false);revision=undefined;hasSave=false;if(!donate){$('save-file').value='';$('save-state').textContent='Consultando…';$('save-date').textContent='';}$('player-email').textContent='';$('cookies-balance').textContent='—';view('auth');setMode('login');status.textContent='Você saiu da conta. Seus saves locais foram preservados.';});
+ if(client.hasSession())await run(async()=>{try{const profile=await client.restore();if(profile)await connected(profile);}finally{donations?.setRestoring(false);}});
  if(donate)return;
  $('refresh-account').addEventListener('click',()=>void run(async()=>{await update();status.textContent='Conta e save conferidos. Nenhum arquivo foi enviado.';}));
  async function download(backup){

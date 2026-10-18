@@ -28,7 +28,7 @@ test('disabled and sandbox configurations cannot initiate public payments',async
  }
 });
 test('login and terms are required; retries reuse the idempotency key and return URL never grants credit',async()=>{
- const p=page(),calls=[];let ids=0;const c=createDonateController({api:async(path,body,retry,headers)=>{calls.push({path,body,headers});return path==='/v1/orders'&&body?{id:'order',url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=x'}:{orders:[]};}},{document:p.doc,uuid:()=>`key-${++ids}`,request:async()=>new Response(JSON.stringify({paymentsEnabled:true,paymentsMode:'production'}))});
+ const p=page(),calls=[],navigations=[];let ids=0;const c=createDonateController({api:async(path,body,retry,headers)=>{calls.push({path,body,headers});return path==='/v1/orders'&&body?{id:'order',url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=x'}:{orders:[]};}},{document:p.doc,navigate:url=>navigations.push(url),uuid:()=>`key-${++ids}`,request:async()=>new Response(JSON.stringify({paymentsEnabled:true,paymentsMode:'production'}))});
  await c.initialize('https://api.example');await p.buttons[0].listeners.click();assert.equal(calls.length,0);assert.equal(p.nodes.get('account-email').focused,true);
  c.setConnected(true);await p.buttons[0].listeners.click();assert.equal(calls.length,0);
  p.doc.getElementById('donate-terms').checked=true;await p.buttons[0].listeners.click();await p.buttons[0].listeners.click();
@@ -36,7 +36,22 @@ test('login and terms are required; retries reuse the idempotency key and return
  assert.equal(calls.some(c=>c.path.includes('approved')),false);assert.equal(p.doc.getElementById('cookies-balance').textContent,'');
  assert.equal(p.doc.getElementById('donate-link-donate-5').hidden,false);
  assert.equal(p.doc.getElementById('donate-link-donate-5').href,p.doc.getElementById('donate-checkout').href);
+ assert.equal(navigations.length,2);assert.equal(navigations[0],p.doc.getElementById('donate-checkout').href);
  c.setConnected(false);assert.equal(p.doc.getElementById('donate-checkout').hidden,true);assert.equal(p.doc.getElementById('donate-link-donate-5').hidden,true);assert.equal(p.doc.getElementById('donate-link-donate-5').href,'/donate/');
+});
+
+test('restored login waits for authorization and then opens either amount without focusing login',async()=>{
+ const p=page(),navigations=[],orders=[];const c=createDonateController({api:async(path,body)=>{orders.push(body.packageId);return {id:body.packageId,url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id='+body.packageId};}},{document:p.doc,navigate:url=>navigations.push(url),request:async()=>new Response(JSON.stringify({paymentsEnabled:true,paymentsMode:'production'}))});
+ c.setRestoring(true);await c.initialize('https://api.example');await p.buttons[0].listeners.click();assert.equal(orders.length,0);assert.equal(p.buttons[0].disabled,true);
+ c.setConnected(true);c.setRestoring(false);p.doc.getElementById('donate-terms').checked=true;
+ for(const button of p.buttons)await button.listeners.click();
+ assert.deepEqual(orders,['donate-5','donate-10']);assert.equal(navigations.length,2);assert.ok(navigations.every(url=>new URL(url).hostname==='www.mercadopago.com.br'));assert.notEqual(p.doc.getElementById('account-email').focused,true);
+});
+test('a pending checkout cannot navigate or expose its link after logout',async()=>{
+ const p=page(),navigations=[];let finish;
+ const c=createDonateController({api:()=>new Promise(resolve=>finish=()=>resolve({id:'old-user-order',url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=old'}))},{document:p.doc,navigate:url=>navigations.push(url),request:async()=>new Response(JSON.stringify({paymentsEnabled:true,paymentsMode:'production'}))});
+ await c.initialize('https://api.example');c.setConnected(true);p.doc.getElementById('donate-terms').checked=true;const pending=p.buttons[0].listeners.click();c.setConnected(false);finish();await pending;
+ assert.equal(navigations.length,0);assert.equal(p.doc.getElementById('donate-link-donate-5').hidden,true);
 });
 test('token refresh preserves the same order idempotency header',async()=>{
  const headers=[];let attempts=0;const json=(data,status=200)=>new Response(JSON.stringify(data),{status});

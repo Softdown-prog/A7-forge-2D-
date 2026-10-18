@@ -7,14 +7,14 @@ Página `/donate/`, vinculada à carteira Cookies existente, com dois apoios ún
 | R$ 5 | 50 |
 | R$ 10 | 100 |
 
-Ofertas canônicas em `donate-packages.mjs`: o cliente não define valor nem quantidade. Conta com email confirmado obrigatória. A página inclui cadastro/login na mesma tela, preservando a sessão somente em memória. Jogo gratuito, cosméticos futuros explicitamente indisponíveis; nenhuma vantagem de campanha. Nenhum catálogo ou item fictício foi publicado.
+Ofertas canônicas em `donate-packages.mjs`: o cliente não define valor nem quantidade. Conta com email confirmado obrigatória. A página inclui cadastro/login na mesma tela, preservando a sessão no sessionStorage da mesma aba por até 8 horas, sem guardar a senha. Jogo gratuito, cosméticos futuros explicitamente indisponíveis; nenhuma vantagem de campanha. Nenhum catálogo ou item fictício foi publicado.
 
 ## Fluxo
 
 1. `/v1/config` informa disponibilidade e modo. A interface pública só inicia pagamentos em `production` habilitada.
 2. Jogador confirma os termos e solicita `POST /v1/orders` com `packageId`, `acceptedTerms: true` e cabeçalho `Idempotency-Key` UUID.
 3. API valida identidade/email, cria pedido imutável por UID/modo/chave e preferência Checkout Pro. Lock transacional bloqueia criações simultâneas. Link hospedado é validado por hostname exato e vence em 24h. Os dados do cartão não passam pelo LHS.
-4. Jogador abre o link explicitamente em outra aba. As URLs de retorno levam a `/donate/?order=...`; parâmetros do navegador nunca concedem créditos.
+4. Após confirmar os termos, o card abre o checkout na mesma aba. O link continua disponível como alternativa. A sessão é recuperada ao retornar ao LHS. As URLs de retorno levam a `/donate/?order=...`; parâmetros do navegador nunca concedem créditos.
 5. Webhook `payment`: HMAC, janela temporal, consulta autenticada do pagamento, recebedor, aplicação (quando fornecida), ambiente, referência, BRL e valor do pedido. Transação atômica altera carteira, lançamento, status e resumo por conta. Duplicatas ou notificações antigas não creditam novamente. Estorno parcial é proporcional, completo/chargeback reverte. Saldo pode ficar negativo se créditos estornados já foram gastos, bloqueando novas compras.
 6. `GET /v1/orders/:id` exige dono e reconcilia com consulta autenticada ao provedor caso a notificação atrase. `/v1/orders` lista os últimos apoios da conta, sem dados de outra identidade. Botão “Conferir” atualiza pedido e saldo. Não há polling contínuo.
 
