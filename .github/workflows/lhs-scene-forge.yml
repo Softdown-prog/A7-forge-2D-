@@ -4,6 +4,10 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/scripts/render_ps1_scene.mjs'
+      - 'games/lan_house_simulator/scripts/render_ps1_navigation.mjs'
+      - 'games/lan_house_simulator/scripts/ps1_real_cycle.mjs'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/ps1.ts'
       - 'games/lan_house_simulator/src/render/ps1Art.ts'
       - 'games/lan_house_simulator/src/render/actorArt.ts'
       - 'games/lan_house_simulator/src/render/scene.ts'
@@ -31,6 +35,9 @@ jobs:
       - name: Capture PS1 scene without campaign or checkout
         working-directory: games/lan_house_simulator
         run: node scripts/render_ps1_scene.mjs out/forge-ps1
+      - name: Capture actual PS1 NPC route and session without checkout UI
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_ps1_navigation.mjs out/forge-ps1
       - name: Install ffmpeg
         run: |
           sudo apt-get update -qq
@@ -42,11 +49,18 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/forge-ps1/ps1_cliente_ciclo.mp4
           test -s out/forge-ps1/ps1_cliente_ciclo.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/forge-ps1/ps1_cliente_navegacao_real.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/forge-ps1/ps1_cliente_navegacao_real.mp4
+          test -s out/forge-ps1/ps1_cliente_navegacao_real.mp4
       - uses: actions/upload-artifact@v4
         with:
           name: lhs-scene-forge-ps1-video
           path: |
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_ciclo.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_cliente_navegacao_real.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_real_*.png
+            games/lan_house_simulator/out/forge-ps1/ps1_navegacao_trace.json
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_*.png
           if-no-files-found: error
           retention-days: 14
