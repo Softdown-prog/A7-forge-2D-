@@ -695,14 +695,31 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .ps1-shop-heading{grid-column:1/-1;margin:18px 0 0;font-size:16px;color:#203b31}
 .ps1-shop-note{grid-column:1/-1;margin:0 0 8px}
 .ps1-cd-shop-card{border-color:#b9c8b4}
-.ps1-cd-art{height:116px;border-radius:12px;display:grid;place-items:center;
- background:linear-gradient(140deg,#d7e0d5,#8da69c);position:relative;overflow:hidden}
-.ps1-cd-case{width:104px;height:92px;border:5px solid #edf1e9;border-radius:5px;
- background:linear-gradient(125deg,#233849 30%,#546a83 53%,#b65d40 54%,#dfad6a);
- box-shadow:5px 7px 12px #1a332a3b;transform:rotate(-9deg)}
-.ps1-cd-shape{position:absolute;left:calc(50% + 12px);top:24px;width:68px;height:68px;border-radius:50%;
- background:radial-gradient(circle,#233e43 0 8px,#d6dfdd 9px 13px,#618799 14px 29px,#a7d2cc 30px 35px);
- border:2px solid #e2e9e2;box-shadow:0 4px 7px #183b324d}
+.ps1-cd-art{
+ height:224px;margin:0 -15px 6px;display:grid;place-items:center;
+ background:radial-gradient(ellipse at 40% 95%,#b7d1c4,transparent 64%),
+ linear-gradient(135deg,#e7ebdf,#c8d5d0 58%,#aebfbb);
+ position:relative;overflow:hidden;border-bottom:1px solid #becbc4
+}
+.ps1-cd-art:before{content:"";position:absolute;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(135deg,transparent 0 18px,#fff4 19px 20px,transparent 21px 34px);
+ opacity:.4}
+.ps1-cd-jewel{width:143px;height:190px;position:relative;z-index:1;
+ border:2px solid #dfe8ec;border-left:7px solid #edf3f3;
+ box-shadow:5px 8px 13px #19342e54,1px 1px 0 #fff inset;
+ background:#142433;transform:rotate(-3deg);transition:transform .2s ease}
+.ps1-cd-jewel:before{content:"";position:absolute;z-index:2;inset:0;
+ background:linear-gradient(110deg,#fff5 0%,transparent 27%,transparent 66%,#fff3 72%,transparent 87%);
+ pointer-events:none}
+.ps1-cd-jewel:after{content:"";position:absolute;z-index:2;inset:0;
+ border:1px solid #fff6;box-shadow:inset 0 0 0 2px #080e1740;pointer-events:none}
+.ps1-cd-cover{display:block;width:100%;height:100%;object-fit:fill}
+.ps1-cd-spine{position:absolute;z-index:2;top:0;bottom:0;left:-5px;width:4px;
+ background:linear-gradient(90deg,#74818d,#eff8fa 46%,#8c9fab);box-shadow:1px 0 2px #1019237f}
+@media(hover:hover){
+ .ps1-cd-shop-card:hover .ps1-cd-jewel{transform:rotate(0) translateY(-5px) scale(1.04)}
+}
+@media(prefers-reduced-motion:reduce){.ps1-cd-jewel{transition:none}}
 .ps1-disc-admin{padding:12px;border:1px solid #c3d1bd;border-radius:9px;background:#f1f5eb;margin:10px 0}
 .ps1-disc-admin h4{margin:0 0 8px}.ps1-disc-admin p{margin:5px 0 10px}
 .ps1-station-summary{flex-wrap:wrap}
@@ -710,7 +727,8 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .ps1-station-cd-label{display:flex;flex:1 1 150px;flex-direction:column;gap:5px;font-size:11px;color:#294436}
 .ps1-station-cd-label select{min-width:0;width:100%;max-width:100%}
 @media(max-width:640px){
- .ps1-cd-art{height:100px}
+ .ps1-cd-art{height:200px}
+ .ps1-cd-jewel{width:127px;height:169px}
  .ps1-station-summary{align-items:stretch}
  .ps1-station-summary>button{max-width:100%}
 }
