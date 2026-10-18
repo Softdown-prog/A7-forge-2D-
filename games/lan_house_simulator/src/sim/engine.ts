@@ -27,7 +27,7 @@ import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
 import {recordPaidSession,recordStationMinute,validStationLedger} from "./stationAccounting.js";
-import {crowdRoute} from "./crowdNavigation.js";
+import {crowdRoute,crowdSideStep} from "./crowdNavigation.js";
 import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
@@ -175,6 +175,8 @@ function moveRoute(s:GameState,c: Customer): boolean {
     const after=Math.hypot(c.x-c.target.x,c.y-c.target.y);
     // Um desvio local pode ficar oscilando diante de uma fila compacta.
     // Replanejar até o destino final permite contornar também o waypoint ocupado.
+    if(after>=before-.005)c.stalledMinutes=Math.min(120,(c.stalledMinutes??0)+1);
+    else c.stalledMinutes=0;
     if(after>=before-.005&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
       c.nextCrowdRetryMinute=s.totalMinutes+4;
       // Uma sessão de console sempre termina pela lateral da cadeira.
@@ -187,14 +189,31 @@ function moveRoute(s:GameState,c: Customer): boolean {
       if(seat&&side&&!canTraverseLocalStep(s,side,seat))return false;
       const destination=seat&&side?side:(c.route?.at(-1)??c.target);
       // Narrow gaps between visitors may not contain a half-tile grid point.
-      const path=crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25);
+      // Malha mais precisa depois de vários minutos sem avanço.
+      const path=(c.stalledMinutes??0)>=5
+        ?crowdRoute(s,c,destination,.25)??crowdRoute(s,c,destination)
+        :crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25);
       if(path?.length){
         c.target=path[0]!;
         c.route=[...path.slice(1),...(seat&&side&&canTraverseLocalStep(s,side,seat)?[seat]:[])];
+      }else if((c.stalledMinutes??0)>=8&&
+        (c.stage==="arriving"||c.stage==="shopping"||c.stage==="leaving")&&
+        !c.doorwayYielding&&
+        s.customers.some(other=>other.id!==c.id&&Math.hypot(other.x-c.x,other.y-c.y)<1.2)){
+        // Ceder passagem sem perder o destino reservado, o lugar da fila ou
+        // o caminho do PS1: um desvio lateral apenas quando há corpo por perto.
+        const original=c.target,tail=c.route??[];
+        const relief=crowdSideStep(s,c,original);
+        if(relief?.length){
+          c.target=relief[0]!;
+          c.route=[...relief.slice(1),original,...tail];
+          c.stalledMinutes=0;
+        }
       }
     }
     return false;
   }
+  c.stalledMinutes=0;
   const next = c.route?.shift();
   if (next) { c.target = next; return false; }
   return true;
@@ -271,6 +290,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.queueIndex=undefined;
   delete c.doorwayYielding;
+  c.stalledMinutes=0;
   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
 }
@@ -780,6 +800,7 @@ export function isValidSave(value: unknown): value is GameState {
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&
         c.ps1StationIndex<(v.ps1Stations?.length??0)&&c.pcIndex===null))&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
+      (c.stalledMinutes===undefined||(Number.isInteger(c.stalledMinutes)&&c.stalledMinutes>=0&&c.stalledMinutes<=120))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&
       (c.retailQueueIndex===undefined||(Number.isInteger(c.retailQueueIndex)&&c.retailQueueIndex>=0&&c.retailQueueIndex<14))) && Array.isArray(v.eventLog) &&
     Number.isInteger(v.internetTier) && Number.isInteger(v.expansionLevel) &&

@@ -65,3 +65,21 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  }
  return null;
 }
+
+/** Último recurso para uma fila móvel que travou: procurar um ponto seguro
+ * LATERAL e retornar ao destino original. Nunca mover/teletransportar aqui.
+ * Só calcula waypoints; colisões e velocidade continuam sob o motor. */
+export function crowdSideStep(s:GameState,c:Customer,goal:Point):Point[]|null{
+ const dx=goal.x-c.x,dy=goal.y-c.y,length=Math.hypot(dx,dy);
+ if(length<.08)return null;
+ const nx=dx/length,ny=dy/length,side=c.id%2===0?1:-1;
+ for(const sign of [side,-side])for(const lateral of [.70,1.05]){
+  const refuge={x:c.x-ny*sign*lateral+nx*.08,y:c.y+nx*sign*lateral+ny*.08};
+  // O planejamento usa exatamente os mesmos limites de sala,
+  // objetos, móveis, portas e corpos já aplicados por crowdRoute.
+  const path=crowdRoute(s,c,refuge,.25);
+  if(path?.length&&Math.hypot(path[0]!.x-c.x,path[0]!.y-c.y)>.06)
+   return path;
+ }
+ return null;
+}
