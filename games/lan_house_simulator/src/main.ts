@@ -7,7 +7,7 @@ import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,buyPs1Station,
  ps1HourPrice,ps1AllowedHourlyCeiling,setPs1HourlyPrice,repairPs1Controls,ps1StationPoint,
- PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc} from "./sim/ps1.js";
+ PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc,ps1PlacementLabel} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
@@ -819,14 +819,17 @@ function renderShop(force=true):void{
     placement.setAttribute("aria-label","Escolha a posição da bancada de PlayStation");
     for(const spot of free){
      const option=document.createElement("option");option.value=spot.id;
-     option.textContent="Posição "+spot.x.toLocaleString("pt-BR")+", "+spot.y.toLocaleString("pt-BR");
+     option.textContent=ps1PlacementLabel(spot);
      placement.append(option);
     }
     button.disabled=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR||full||game.cash<price;
     button.textContent=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR?
      "🔒 Disponível em 2002":full?"Sem espaço livre":
      game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar conjunto · R$ "+price;
-    card.append(art,category,title,description,placement,button);
+    const locationHelp=document.createElement("small");
+    locationHelp.className="ps1-placement-help";
+    locationHelp.textContent="Escolha um local no salão: norte é o fundo, sul é a entrada, oeste é a esquerda e leste é a direita.";
+    card.append(art,category,title,description,placement,locationHelp,button);
   }else card.append(art,category,title,description,button);
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
