@@ -34,9 +34,9 @@ export function drawVipAquarium(
  // Rochas facetadas e jardins de algas com sombra colorida.
  const rock=(x:number,y:number,rr:number,color:string)=>{
   const center=at(x,y,bottom+2);
-  polygon(c,[[center.x-rr*z,center.y],[center.x-rr*.55*z,center.y-rr*.8*z],
-   [center.x+rr*.4*z,center.y-rr*1.06*z],[center.x+rr*z,center.y-rr*.2*z],
-   [center.x+rr*.5*z,center.y+rr*.2*z]],color,"#34516b");
+  polygon(c,[{x:center.x-rr*z,y:center.y},{x:center.x-rr*.55*z,y:center.y-rr*.8*z},
+   {x:center.x+rr*.4*z,y:center.y-rr*1.06*z},{x:center.x+rr*z,y:center.y-rr*.2*z},
+   {x:center.x+rr*.5*z,y:center.y+rr*.2*z}],color,"#34516b");
  };
  rock(.16,.24,7.8,"#56627f");rock(.61,.2,6,"#d0a3a1");rock(1.06,.24,6.5,"#4d717d");
  for(const x of [.24,.38,.91,1.09]){
