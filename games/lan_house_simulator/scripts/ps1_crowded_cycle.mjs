@@ -19,6 +19,9 @@ export function simulatePs1CrowdedCycle(){
  s.pcPoweredOff=Array.from({length:pcCount(s)},()=>true);
  s.offlineUntil=s.totalMinutes+300;
  s.inventory={soda:0,candy:0,snacks:0};
+ // Obstáculo fixo no corredor frontal: desvio tem que respeitar parede.
+ // A bancada continua acessível pelo lado, sem atravessar o segmento.
+ s.interiorWalls=[{axis:"x",x:1,y:5}];
  const slots=ps1PlacementSlots(s);
  if(slots.length<2)throw Error("PS1: salão sem duas posições disponíveis");
  const first=slots[0];
@@ -93,5 +96,5 @@ export function simulatePs1CrowdedCycle(){
  return {stations,history,ids,exits:Object.fromEntries(exits),
   stages:Object.fromEntries([...stages].map(([id,v])=>[id,[...v]])),
   minGap:minGap.value,minutes:history.at(-1).minute,
-  wear:s.ps1Stations.map(p=>p.wear),exit:entrance(s)};
+  wear:s.ps1Stations.map(p=>p.wear),exit:entrance(s),walls:s.interiorWalls};
 }
