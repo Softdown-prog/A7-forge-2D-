@@ -48,12 +48,14 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 21 \
             -movflags +faststart out/cookie-art/cookies_cadeira_fone_preview.mp4
           test -s out/cookie-art/cookies_cadeira_fone_preview.png
+          test -s out/cookie-art/cookies_cadeira_fone_detalhes.png
           test -s out/cookie-art/cookies_cadeira_fone_preview.mp4
       - uses: actions/upload-artifact@v4
         with:
           name: lhs-cookies-premium-art-prototype
           path: |
             games/lan_house_simulator/out/cookie-art/cookies_cadeira_fone_preview.png
+            games/lan_house_simulator/out/cookie-art/cookies_cadeira_fone_detalhes.png
             games/lan_house_simulator/out/cookie-art/cookies_cadeira_fone_preview.mp4
           retention-days: 30
           if-no-files-found: error
