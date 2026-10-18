@@ -10,6 +10,15 @@ test('API startup, auth boundary, CORS, body limits and disabled payments',async
  t.after(()=>child.kill());const base=`http://127.0.0.1:${port}`;
  let ready=false;for(let attempt=0;attempt<600;attempt++){if(child.exitCode!==null)throw Error(output);try{const r=await fetch(base+'/health');if(r.ok){ready=true;break;}}catch{}await delay(50);}assert.ok(ready,output);
  assert.deepEqual(await fetch(base+'/health').then(r=>r.json()),{ok:true,service:'lhs-backend',paymentsEnabled:false});
+ const publicConfig=await fetch(base+'/v1/config').then(r=>r.json());
+ assert.equal(publicConfig.paymentsEnabled,false);
+ assert.equal(publicConfig.items['headset-rgb-neon'].cookies,40);
+ assert.equal(publicConfig.items['chair-gamer-neon'].cookies,50);
+ assert.equal(publicConfig.items['keyboard-rainbow-rgb'].cookies,25);
+ assert.equal(publicConfig.items['neon-open-sign'].cookies,30);
+ assert.equal(publicConfig.items['arcade-checker-floor'].cookies,25);
+ assert.equal(publicConfig.items['exclusive-arcade-posters'].cookies,12);
+ assert.equal((await fetch(base+'/v1/items/headset-rgb-neon/purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/account')).status,401);
  assert.equal((await fetch(base+'/v1/auth/verification-email',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
