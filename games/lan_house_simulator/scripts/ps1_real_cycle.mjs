@@ -2,7 +2,7 @@
 // O Scene Forge usa o resultado; nenhuma animação do caminho é inventada.
 import {createGame,stepGame,pcCount} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {buyPs1Station,ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach} from "../dist/js/sim/ps1.js";
+import {buyPs1Station,buyPs1Disc,ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach} from "../dist/js/sim/ps1.js";
 import {navigableRoute,canTraverseLocalStep} from "../dist/js/sim/navigation.js";
 
 const clonePoint=p=>({x:p.x,y:p.y});
@@ -26,6 +26,8 @@ export function simulatePs1RealCycle(){
  if(!slot)throw Error("Sem slot PS1 no salão real");
  const purchase=buyPs1Station(s,slot.id);
  if(!purchase.ok)throw Error(purchase.message);
+ const disc=buyPs1Disc(s,"turbo-circuito");
+ if(!disc.ok)throw Error(disc.message);
  const point=ps1StationPoint(s,0),seat=ps1Seat(s,0),side=ps1SeatApproach(s,0);
  if(!point||!seat||!side)throw Error("Bancada PS1 sem geometria");
  const path=navigableRoute(s,{x:1.55,y:2.56},side);
