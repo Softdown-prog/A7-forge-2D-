@@ -1,11 +1,12 @@
 import {drawActor} from "../render/actorArt.js";
 import {drawVipAquarium} from "../render/aquariumArt.js";
+import {drawPixelClock} from "../render/pixelClockArt.js";
 
 /** Miniaturas reais, feitas uma vez com o renderizador procedural.
  * São bitmaps pequenos e não iniciam animações nem repintura da UI a cada frame. */
 const thumbnails=new Map<string,string>();
 export function vipProductThumbnail(id:string):string|null{
- if(id!=="tony-cyber"&&id!=="aquarium-rgb")return null;
+ if(id!=="tony-cyber"&&id!=="aquarium-rgb"&&id!=="pixel-led-clock")return null;
  const cached=thumbnails.get(id);if(cached)return cached;
  if(typeof document==="undefined")return null;
  const canvas=document.createElement("canvas");
@@ -20,8 +21,10 @@ export function vipProductThumbnail(id:string):string|null{
   const cam={originX:103,originY:155,zoom:1.73};
   drawActor(c,cam,{kind:"owner",id:0,time:2.1,pose:"idle",
     direction:"south",x:0,y:0,premiumCyber:true});
- }else{
+ }else if(id==="aquarium-rgb"){
   drawVipAquarium(c,{originX:50,originY:161,zoom:1.14},{x:0,y:0},2.4);
+ }else{
+  drawPixelClock(c,{originX:19,originY:335,zoom:2},{x:0,y:0},154,1.1);
  }
  const url=canvas.toDataURL("image/png");thumbnails.set(id,url);return url;
 }
