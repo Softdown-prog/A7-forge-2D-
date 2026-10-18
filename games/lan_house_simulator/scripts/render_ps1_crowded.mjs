@@ -62,7 +62,8 @@ try{
    const staticObjects=data.stations.map((station,i)=>({
     depth:station.point.x+station.point.y+.3,
     paint:()=>drawPs1Station(ctx,cam,station.point,0,
-     a.customers.some(c=>c?.stage==="using"&&c.ps1StationIndex===i),t)
+     a.customers.some(c=>c?.stage==="using"&&c.ps1StationIndex===i),t,
+      i===0?"gol-de-rua":"luta-neon")
    }));
    for(const wall of data.walls??[]){
     staticObjects.push({depth:wall.x+wall.y+.5,
