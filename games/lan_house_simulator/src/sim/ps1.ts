@@ -1,7 +1,7 @@
 import type {GameState,Point,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import {availablePlacementSlots,furnitureSlots,shopPrice} from "./shop.js";
-import {annualHourlyCeiling,isHistorical,yearFromMinutes} from "./historicalEconomy.js";
+import {annualHourlyCeiling,isHistorical,yearFromMinutes,priceIndex} from "./historicalEconomy.js";
 import {roomBounds} from "./room.js";
 
 /** Marco de design: mistura das antigas locadoras de console com lan houses. */
@@ -9,7 +9,67 @@ export const PS1_UNLOCK_YEAR=2002;
 export const PS1_MAX_STATIONS=3;
 export const PS1_REPAIR_COST=45;
 export const PS1_WEAR_LIMIT=100;
-export type Ps1Station={slotId:string;wear:number};
+export const PS1_CD_CATALOG=[
+ {id:"turbo-circuito",title:"Turbo Circuito",genre:"Corrida",basePrice:44},
+ {id:"gol-de-rua",title:"Gol de Rua",genre:"Futebol",basePrice:39},
+ {id:"ilha-dos-cristais",title:"Ilha dos Cristais",genre:"Aventura",basePrice:49},
+ {id:"luta-neon",title:"Luta Neon",genre:"Luta",basePrice:54},
+ {id:"cosmo-blocos",title:"Cosmo Blocos",genre:"Quebra-cabeça",basePrice:29}
+] as const;
+export type Ps1DiscId=typeof PS1_CD_CATALOG[number]["id"];
+export type Ps1Station={slotId:string;wear:number;discId?:Ps1DiscId};
+/** O jogador compra CDs físicos, não licenças. Cada cópia atende uma bancada por vez. */
+export function ps1DiscCopies(s:Pick<GameState,"ps1Discs">,id:Ps1DiscId):number{
+ return s.ps1Discs?.[id]??0;
+}
+export function ps1DiscPrice(s:GameState,id:Ps1DiscId):number{
+ const title=PS1_CD_CATALOG.find(x=>x.id===id);
+ if(!title)return 0;
+ const factor=priceIndex(yearFromMinutes(s.totalMinutes))/priceIndex(PS1_UNLOCK_YEAR);
+ return Math.round(title.basePrice*factor*100)/100;
+}
+export function ps1ActiveCopies(s:GameState,id:Ps1DiscId,excludeIndex=-1):number{
+ return (s.ps1Stations??[]).filter((st,i)=>i!==excludeIndex&&st.discId===id).length;
+}
+export function ps1PlayableDisc(s:GameState,index:number):Ps1DiscId|null{
+ const id=s.ps1Stations?.[index]?.discId;
+ return id&&ps1DiscCopies(s,id)>0&&ps1ActiveCopies(s,id)<=ps1DiscCopies(s,id)?id:null;
+}
+/** Compra definitiva: ao adquirir o primeiro CD, ativa automaticamente uma cadeira vazia. */
+export function buyPs1Disc(s:GameState,id:Ps1DiscId):Result{
+ const title=PS1_CD_CATALOG.find(t=>t.id===id);
+ if(!title)return {ok:false,message:"CD de PlayStation desconhecido."};
+ if(!in2002(s)||!(s.ps1Stations?.length))
+  return {ok:false,message:"Instale primeiro uma bancada de PlayStation em 2002."};
+ if(ps1DiscCopies(s,id)>=PS1_MAX_STATIONS)
+  return {ok:false,message:"Já existem cópias suficientes deste CD para todas as bancadas."};
+ const price=ps1DiscPrice(s,id);
+ if(s.cash<price)return {ok:false,message:"Caixa insuficiente para comprar o CD "+title.title+"."};
+ s.cash=coin(s.cash-price);s.expenses=coin(s.expenses+price);
+ const inventory=s.ps1Discs??(s.ps1Discs={});
+ inventory[id]=ps1DiscCopies(s,id)+1;
+ const empty=s.ps1Stations.findIndex(st=>!st.discId);
+ if(empty>=0)s.ps1Stations[empty]!.discId=id;
+ return {ok:true,message:"CD original "+title.title+" comprado: -R$ "+price.toFixed(2)+
+  (empty>=0?" · colocado automaticamente na bancada "+(empty+1)+".":".")};
+}
+export function setPs1StationDisc(s:GameState,index:number,id:Ps1DiscId|null):Result{
+ const station=s.ps1Stations?.[index];
+ if(!station)return {ok:false,message:"Bancada de PlayStation inexistente."};
+ if(s.customers.some(c=>c.ps1StationIndex===index&&
+  ["to_pc","sitting","using","standing"].includes(c.stage)))
+  return {ok:false,message:"Aguarde o cliente terminar para trocar o CD."};
+ if(id!==null){
+  const title=PS1_CD_CATALOG.find(t=>t.id===id);
+  if(!title)return {ok:false,message:"CD desconhecido."};
+  if(ps1ActiveCopies(s,id,index)>=ps1DiscCopies(s,id))
+   return {ok:false,message:"Todas as cópias de "+title.title+" já estão em outras bancadas."};
+ }
+ if(id===null)delete station.discId;else station.discId=id;
+ return {ok:true,message:id===null?"Bancada "+(index+1)+" sem CD. Serviço pausado.":
+  "CD "+PS1_CD_CATALOG.find(t=>t.id===id)!.title+" inserido na bancada "+(index+1)+"."};
+}
+
 const in2002=(s:GameState):boolean=>isHistorical(s)&&yearFromMinutes(s.totalMinutes)>=PS1_UNLOCK_YEAR;
 const coin=(v:number):number=>Math.round(v*100)/100;
 /** Bancadas usam os pontos largos do salão, não as casas miúdas da decoração. */
@@ -38,7 +98,7 @@ export function ps1SeatApproach(s:GameState,index:number):Point|null{
 }
 export function ps1StationAvailable(s:GameState,index:number):boolean{
  const station=s.ps1Stations?.[index];
- return !!station&&station.wear<PS1_WEAR_LIMIT&&!s.customers.some(c=>
+ return !!station&&ps1PlayableDisc(s,index)!==null&&station.wear<PS1_WEAR_LIMIT&&!s.customers.some(c=>
   c.ps1StationIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage));
 }
 export function ps1HourPrice(s:GameState):number{
@@ -95,9 +155,18 @@ export function repairPs1Controls(s:GameState,index:number):Result{
 }
 export function validPs1State(s:Partial<GameState>):boolean{
  const allowed=s.ps1Stations;
- if(allowed===undefined)return s.ps1HourlyPrice===undefined&&s.ps1Sessions===undefined&&s.ps1Revenue===undefined;
+ if(allowed===undefined)return s.ps1HourlyPrice===undefined&&s.ps1Sessions===undefined&&s.ps1Revenue===undefined&&s.ps1Discs===undefined;
  if(!Array.isArray(allowed)||allowed.length>PS1_MAX_STATIONS||!isHistorical(s as GameState))return false;
  if(allowed.length&&yearFromMinutes(s.totalMinutes??0)<PS1_UNLOCK_YEAR)return false;
+ const stock=s.ps1Discs;
+ if(stock!==undefined){
+  if(!stock||typeof stock!=="object"||Array.isArray(stock))return false;
+  for(const [id,copies] of Object.entries(stock)){
+   if(!PS1_CD_CATALOG.some(t=>t.id===id)||!Number.isInteger(copies)||
+      (copies as number)<1||(copies as number)>PS1_MAX_STATIONS)return false;
+  }
+ }
+ const inserted=new Map<Ps1DiscId,number>();
  const used=new Set<string>();
  const slots=new Set(furnitureSlots(s as GameState).filter(p=>p.surface==="floor"&&
   p.id.startsWith("floor-")&&!p.id.startsWith("floor-grid-")).map(p=>p.id));
@@ -105,7 +174,12 @@ export function validPs1State(s:Partial<GameState>):boolean{
   if(!st||typeof st.slotId!=="string"||!slots.has(st.slotId)||used.has(st.slotId)||
      !Number.isFinite(st.wear)||st.wear<0||st.wear>PS1_WEAR_LIMIT)return false;
   used.add(st.slotId);
+  if(st.discId!==undefined){
+   if(!PS1_CD_CATALOG.some(t=>t.id===st.discId))return false;
+   inserted.set(st.discId,(inserted.get(st.discId)??0)+1);
+  }
  }
+ for(const [id,count] of inserted)if(count>ps1DiscCopies(s as GameState,id))return false;
  if((s.furniturePlacements??[]).some(p=>used.has(p.slotId)))return false;
  const cents=(n:number)=>Number.isFinite(n)&&Math.abs(n*100-Math.round(n*100))<1e-4;
  if(s.ps1HourlyPrice!==undefined&&(!cents(s.ps1HourlyPrice)||s.ps1HourlyPrice<.5||
