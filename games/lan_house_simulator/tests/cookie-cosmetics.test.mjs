@@ -4,6 +4,7 @@ import {createGame,isValidSave} from '../dist/js/sim/engine.js';
 import {serializeSave,parseImportedSave} from '../dist/js/sim/saveTransfer.js';
 import {yearFromMinutes} from '../dist/js/sim/historicalEconomy.js';
 import {neonOpenLit} from '../dist/js/render/neonOpenArt.js';
+import {EXCLUSIVE_POSTER_TITLES,premiumCheckerPatch} from '../dist/js/render/premiumRoomArt.js';
 import {DAY_MINUTES} from '../dist/js/sim/types.js';
 import {COOKIE_COSMETICS,setVerifiedCosmetics,cosmeticsOwned,hasVerifiedCosmetic,
  cosmeticAvailable,headsetOnSession,toggleVerifiedCosmetic} from '../dist/js/sim/premiumCosmetics.js';
@@ -11,8 +12,9 @@ import {COOKIE_COSMETICS,setVerifiedCosmetics,cosmeticsOwned,hasVerifiedCosmetic
 test('catálogo inicial mantém preços fixos e anos corretos, sem vantagem econômica',()=>{
  assert.deepEqual(COOKIE_COSMETICS.map(({id,cookies,unlockYear})=>[id,cookies,unlockYear]),[
   ['headset-rgb-neon',40,2012],['chair-gamer-neon',50,2012],
-  ['keyboard-rainbow-rgb',25,2012],['neon-open-sign',30,1998]]);
- assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,4);
+  ['keyboard-rainbow-rgb',25,2012],['neon-open-sign',30,1998],
+  ['arcade-checker-floor',25,1998],['exclusive-arcade-posters',12,1998]]);
+ assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,6);
 });
 test('o save não concede propriedade premium, mesmo com IDs injetados',()=>{
  setVerifiedCosmetics([]);
@@ -77,4 +79,40 @@ test('placa desliga na preparação do fechamento e liga no dia seguinte',()=>{
  assert.equal(neonOpenLit(DAY_MINUTES),true); // dia seguinte
  assert.equal(neonOpenLit(-1),false);
  assert.equal(neonOpenLit(Number.NaN),false);
+});
+
+test('Piso e três pôsteres premium não podem ser liberados por save ou por ano',()=>{
+ setVerifiedCosmetics([]);
+ const game=createGame(1298,'historical');
+ const cash=game.cash,initialLayout=JSON.stringify(game.objectPlacements??[]),
+  initialFurniture=JSON.stringify(game.furniture??{});
+ assert.equal(cosmeticAvailable('arcade-checker-floor',2030),false);
+ assert.equal(cosmeticAvailable('exclusive-arcade-posters',2030),false);
+ const tampered={...game,premiumFloor:true,ownedPremiumPosters:99};
+ assert.equal(cosmeticAvailable('arcade-checker-floor',2020),false);
+ assert.equal(tampered.cash,cash);
+ assert.deepEqual(EXCLUSIVE_POSTER_TITLES,
+  ['NOITE PIXEL','CORRIDA LUNAR','CASTELO DIGITAL']);
+ setVerifiedCosmetics(['arcade-checker-floor','exclusive-arcade-posters']);
+ assert.equal(cosmeticAvailable('arcade-checker-floor',1998),true);
+ assert.equal(cosmeticAvailable('exclusive-arcade-posters',1998),true);
+ assert.equal(game.cash,cash);
+ assert.equal(JSON.stringify(game.objectPlacements??[]),initialLayout);
+ assert.equal(JSON.stringify(game.furniture??{}),initialFurniture);
+ assert.equal(isValidSave(game),true);
+ setVerifiedCosmetics([]);
+ assert.equal(cosmeticAvailable('exclusive-arcade-posters',2030),false);
+});
+test('Revestimento premium usa geometria projetada, preserva toda a superfície',()=>{
+ let paths=0,painted=0;
+ const points=[];
+ const ctx={
+  beginPath(){paths++;},moveTo(x,y){points.push([x,y]);},lineTo(x,y){points.push([x,y]);},
+  closePath(){},fill(){painted++;},stroke(){},set fillStyle(v){this.color=v;},
+  set strokeStyle(v){this.outline=v;},set lineWidth(v){}
+ };
+ premiumCheckerPatch(ctx,{originX:400,originY:180,zoom:.86},2,1);
+ assert.equal(painted,10);
+ assert.ok(paths>=10);
+ assert.ok(points.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)));
 });
