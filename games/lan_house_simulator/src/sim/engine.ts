@@ -395,7 +395,11 @@ function tryServe(s: GameState, c: Customer): void {
   // Em 2002 as bancadas de videogame passam a dividir o público com PCs.
   // Um em cada cinco visitantes não gamers prefere console; nunca há
   // reservas extras nem sorteio novo. Só cobra quando a rota existe.
-  const consoleIndex=!c.gpuGamer&&c.id%5===0?(s.ps1Stations??[]).findIndex((_,i)=>{
+  // Quando todos os PCs estão desligados, o console continua sendo
+  // um serviço independente: qualquer visitante pode escolhê-lo.
+  // Com PCs ligados, manter a preferência histórica de 1 em 5.
+  const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).some(i=>stationPoweredOn(s,i));
+  const consoleIndex=((!c.gpuGamer&&c.id%5===0)||!poweredPcs)?(s.ps1Stations??[]).findIndex((_,i)=>{
     if(!ps1StationAvailable(s,i))return false;
     const side=ps1SeatApproach(s,i),seat=ps1Seat(s,i);
     return !!side&&!!seat&&!!navigableRoute(s,{x:c.x,y:c.y},side)&&
@@ -607,12 +611,17 @@ function nextDay(s: GameState): void {
   if (s.cash < 0) addLog(s, "Atenção: caixa negativo. Reorganize a operação!");
 }
 export function visitorArrivalChance(s:GameState,occupied:number):number {
-  // Quando todas as máquinas estão desligadas, o salão não aceita novas sessões.
-  if(Array.from({length:pcCount(s)},(_,i)=>i).every(i=>!stationPoweredOn(s,i)))return 0;
+  // Não bloquear o público de console quando todos os PCs estão apagados.
+  // O serviço PS1 não depende da internet e só admite clientes se há cadeira livre.
+  const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).filter(i=>stationPoweredOn(s,i)).length;
+  const consoleCapacity=(s.ps1Stations??[]).filter((_,i)=>ps1StationAvailable(s,i)).length;
+  if(!poweredPcs&&!consoleCapacity)return 0;
   if(localMinute(s)>=LAST_ADMISSION_MINUTE||
     (localMinute(s)<10&&s.customers.some(c=>c.stage==="leaving")))return 0;
-  const factor=demandFactor(normalizedHourlyPrice(s,s.pricePerHour),s.reputation,online(s),s.weather==="rain");
-  const congestion=occupied>=pcCount(s)?0.38:1;
+  const consoleOnly=poweredPcs===0;
+  const rate=consoleOnly?ps1HourPrice(s):normalizedHourlyPrice(s,s.pricePerHour);
+  const factor=demandFactor(rate,s.reputation,consoleOnly||online(s),s.weather==="rain");
+  const congestion=occupied>=poweredPcs+(s.ps1Stations?.length??0)?0.38:1;
   return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*congestion;
 }
 /** Dispensa em pequenos grupos: fila e compras primeiro, sessões até 21h30. */
