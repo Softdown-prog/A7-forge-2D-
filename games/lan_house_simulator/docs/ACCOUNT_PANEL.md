@@ -1,5 +1,10 @@
 # Conta opcional e painel do jogador
 
+Atualização de 18/10/2026: site, Donate e Minha Conta dentro do jogo compartilham a sessão
+da aba. O catálogo de seis cosméticos e resgates autenticados está descrito em
+[MINHA_CONTA_COOKIES.md](MINHA_CONTA_COOKIES.md). Os pagamentos únicos de R$ 5 e R$ 10
+foram ativados com autorização do proprietário; os registros de 14/10 abaixo são históricos.
+
 Publicado em 14/10/2026: https://lhs.analysepro.com/conta/ . A publicação mantém o motor do jogo no commit `8c26f0aa7c99a7ca4ef86ecedf43b71b23f0ce53` solicitado pelo usuário; as alterações são na camada do site. Código da continuação no branch `feat/lhs-cloud-backend` / PR #22.
 
 ## Funcionamento

@@ -27,9 +27,9 @@ try{
   await context.route('https://securetoken.googleapis.com/**',route=>route.fulfill({json:{id_token:'refreshed-fixture-token',refresh_token:'fixture-refresh'}}));
   await context.route('https://lhs-backend-1010038095056.us-central1.run.app/**',async route=>{
    const request=route.request(),path=new URL(request.url()).pathname;
-   if(path==='/v1/config')return route.fulfill({json:{paymentsEnabled:true,paymentsMode:'production',verificationEmailProvider:'resend'}});
+   if(path==='/v1/config')return route.fulfill({json:{paymentsEnabled:true,paymentsMode:'production',verificationEmailProvider:'resend',packages:{'donate-5':{cookies:50,priceCents:500},'donate-10':{cookies:100,priceCents:1000}},items:{'neon-open-sign':{cookies:30,unlockYear:1998}}}});
    assert.ok(request.headers().authorization?.startsWith('Bearer '),'Account requests must remain authenticated');
-   if(path==='/v1/account')return route.fulfill({json:{cookiesBalance:0,entitlements:[]}});
+   if(path==='/v1/account')return route.fulfill({json:{uid:'test-player',cookiesBalance:0,cookiesSpentTotal:0,entitlements:[],transactions:[],historyLimit:40}});
    if(path==='/v1/saves/main')return route.fulfill({json:{revision:null,save:null}});
    if(path==='/v1/orders'&&request.method()==='GET')return route.fulfill({json:{orders:[]}});
    if(path==='/v1/orders'&&request.method()==='POST'){
@@ -43,6 +43,18 @@ try{
   await page.goto(origin+'/conta/');await page.locator('#auth-fields').waitFor({state:'visible'});
   await page.locator('#account-email').fill('test-player@example.invalid');await page.locator('#account-password').fill('fixture-password');await page.locator('#auth-submit').click();
   await page.locator('#dashboard-view').waitFor({state:'visible'});
+  // The game restores the exact same tab session without a second login.
+  await page.goto(origin+'/game/');await page.locator('#menu-account').click();
+  await page.getByText('Conta conectada. Saldo e resgates verificados pelo servidor.',{exact:true}).waitFor();
+  assert.equal(await page.locator('#account-balance').innerText(),'0 Cookies');
+  await page.locator('[data-account-tab="catalog"]').click();
+  assert.equal(await page.locator('#account-catalog .account-item').count(),6);
+  assert.equal(await page.locator('#account-catalog button:enabled').count(),0,'Zero balance cannot buy cosmetics');
+  await page.locator('[data-account-tab="summary"]').click();
+  await page.getByRole('link',{name:'Adquirir Cookies no Donate',exact:true}).click();
+  await page.locator('#dashboard-view').waitFor({state:'visible'});
+  assert.equal(logins,1,'Game and Donate must share the same validated session');
+  await page.goto(origin+'/conta/');await page.locator('#dashboard-view').waitFor({state:'visible'});
   await page.getByRole('link',{name:'Apoiar o LHS · Donate →',exact:true}).click();await page.locator('#dashboard-view').waitFor({state:'visible'});
   assert.equal(await page.locator('#auth-view').isVisible(),false);assert.equal(logins,1,'Navigation must not ask for another password');
   for(const packageId of ['donate-5','donate-10']){

@@ -7,7 +7,7 @@ Página `/donate/`, vinculada à carteira Cookies existente, com dois apoios ún
 | R$ 5 | 50 |
 | R$ 10 | 100 |
 
-Ofertas canônicas em `donate-packages.mjs`: o cliente não define valor nem quantidade. Conta com email confirmado obrigatória. A página inclui cadastro/login na mesma tela, preservando a sessão no sessionStorage da mesma aba por até 8 horas, sem guardar a senha. Jogo gratuito, cosméticos futuros explicitamente indisponíveis; nenhuma vantagem de campanha. Nenhum catálogo ou item fictício foi publicado.
+Ofertas canônicas em `donate-packages.mjs`: o cliente não define valor nem quantidade. Conta com email confirmado obrigatória. Site, Donate e jogo compartilham a sessão no sessionStorage da mesma aba por até 8 horas, sem guardar a senha. Jogo gratuito; o catálogo de seis cosméticos opcionais está em Minha Conta → Loja Cookies, dentro do jogo. Preços e resgates são confirmados pelo Cloud Run; alguns visuais dependem do ano da partida. Nenhuma vantagem de campanha.
 
 ## Fluxo
 
