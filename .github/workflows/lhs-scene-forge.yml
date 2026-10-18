@@ -8,6 +8,8 @@ on:
       - 'games/lan_house_simulator/scripts/ps1_real_cycle.mjs'
       - 'games/lan_house_simulator/scripts/ps1_crowded_cycle.mjs'
       - 'games/lan_house_simulator/scripts/render_ps1_crowded.mjs'
+      - 'games/lan_house_simulator/scripts/render_ps1_disc_games.mjs'
+      - 'games/lan_house_simulator/src/render/ps1MiniGames.ts'
       - 'games/lan_house_simulator/scripts/render_ps1_admin.mjs'
       - 'games/lan_house_simulator/scripts/render_ps1_tv_showcase.mjs'
       - 'games/lan_house_simulator/src/render/ps1MiniGames.ts'
@@ -59,6 +61,9 @@ jobs:
       - name: Film five CD-specific CRT minigames with the game renderer
         working-directory: games/lan_house_simulator
         run: node scripts/render_ps1_tv_showcase.mjs out/forge-ps1
+      - name: Validate five different animated discs on real CRTs
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_ps1_disc_games.mjs out/forge-ps1
       - name: Install ffmpeg
         run: |
           sudo apt-get update -qq
@@ -78,6 +83,10 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/forge-ps1/ps1_dois_clientes.mp4
           test -s out/forge-ps1/ps1_dois_clientes.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/forge-ps1/ps1_cinco_jogos_crt.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/forge-ps1/ps1_cinco_jogos_crt.mp4
+          test -s out/forge-ps1/ps1_cinco_jogos_crt.mp4
           ffmpeg -hide_banner -loglevel error -y -i out/forge-ps1/ps1_cinco_jogos_tv.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/forge-ps1/ps1_cinco_jogos_tv.mp4
@@ -89,6 +98,8 @@ jobs:
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_ciclo.mp4
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_navegacao_real.mp4
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_cinco_jogos_crt.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_cinco_jogos_crt*.png
             games/lan_house_simulator/out/forge-ps1/ps1_cinco_jogos_tv.mp4
             games/lan_house_simulator/out/forge-ps1/ps1_tv_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes_*.png
