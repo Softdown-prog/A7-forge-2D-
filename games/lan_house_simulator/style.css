@@ -870,3 +870,24 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .account-item-info strong{font-size:13px}
  .account-actions button{flex:1 1 130px}
 }
+
+
+/* Escolha de local do PlayStation sem o seletor gigante nativo do Android. */
+.ps1-location-selector{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;
+ gap:7px;align-items:stretch;margin:3px 0 0;min-width:0}
+.ps1-location-selector .ps1-location-arrow{
+ min-height:48px;width:44px;padding:0;border:1px solid #40675a;border-radius:7px;
+ background:#28493e;color:#f4faef;font-size:18px
+}
+.ps1-location-selector .ps1-location-arrow:disabled{opacity:.4}
+.ps1-location-name{
+ display:grid;align-items:center;text-align:center;
+ min-height:48px;min-width:0;padding:6px 9px;border:1px solid #b6cbb8;
+ border-radius:7px;background:#e1ebdb;color:#254b3e;
+ font-size:12px;line-height:1.4;font-weight:750;overflow-wrap:anywhere
+}
+.ps1-placement-help{display:block;line-height:1.5;color:#627b6d;font-size:10px!important}
+@media(max-width:640px){
+ .ps1-location-selector{grid-template-columns:44px minmax(0,1fr) 44px;gap:5px}
+ .ps1-location-name{font-size:11px}
+}
