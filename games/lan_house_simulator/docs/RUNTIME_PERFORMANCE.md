@@ -1,5 +1,15 @@
 # Fluidez do jogo — 14/10/2026
 
+## Clientes presos no corredor junto à lixeira — 18/10/2026
+
+O bloqueio da soleira não era o único ponto de retenção. Os lugares de espera das máquinas podiam ocupar o corredor `y=4.48`, formando uma barreira contínua de corpos entre os PCs e a saída, junto à lixeira frontal. Uma busca em grade de 0,5 tile também podia não enxergar passagens estreitas reais. Depois de um desvio, o cliente continuava seguindo todos os pontos antigos mesmo quando o corredor já havia aberto.
+
+Os lugares de espera agora preservam uma faixa livre no corredor e na aproximação da porta. Filas retomadas de saves antigos recalculam os destinos existentes e caminham até os novos lugares, sem reposicionar personagens. A navegação usa a grade de 0,25 tile apenas se a busca normal falhar; segmentos diretos passam pelas mesmas verificações de corpos, móveis e paredes. Quem está saindo reavalia desvios longos a cada quatro minutos, adotando um caminho novo somente quando ele for pelo menos 0,5 tile mais curto.
+
+Dois snapshots gerados pelo simulador reproduzem o problema sem acessar contas reais. No caso da lixeira (seed 13, minuto 417), a saída do cliente 22 levava mais 70 minutos no código publicado e passa a terminar em 21. No cruzamento com a compra de lanche (seed 44, minuto 533), quatro compradores permaneciam presos até o fechamento; os quatro agora concluem as compras e saem até o minuto 591, antes do fechamento no minuto 660. São minutos do jogo, não tempos de carregamento ou benchmarks de telefone.
+
+`tests/exit-circulation.test.mjs` verifica a recuperação, separação física, limites por passo, saída pela porta, contabilidade e save/reload determinístico. `verify_doorway_recovery.mjs out/corridor --corridor` observa a aplicação real em desktop e toque móvel a 160%; o workflow do Pages executa esse caso antes de publicar.
+
 ## Fila parada com computadores livres — 18/10/2026
 
 Uma campanha histórica gerada com seed 51 reproduziu um bloqueio na entrada, no minuto 372. Um visitante recém-chegado ocupava o centro da soleira; onze visitantes tentavam sair. A separação mínima entre corpos (0,43 tile) impedia as saídas de atingir o raio da porta (0,32). O recém-chegado também estava cercado. Após mais 240 minutos, as mesmas pessoas continuavam paradas e o total de atendimentos não avançava.

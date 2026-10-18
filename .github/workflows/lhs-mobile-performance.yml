@@ -2,7 +2,7 @@ name: LHS mobile performance
 on:
   workflow_dispatch:
   push:
-    branches: [fix/lhs-mobile-stutter]
+    branches: [fix/lhs-mobile-stutter, fix/lhs-exit-route]
   pull_request:
     paths:
       - 'games/lan_house_simulator/src/render/**'
@@ -49,7 +49,8 @@ jobs:
           node scripts/profile_stutter.mjs out/stutter candidate --cpu-profile
           node scripts/verify_actor_sprites.mjs out/actor-sprites
           node scripts/verify_doorway_recovery.mjs out/doorway
-          node --test tests/render-motion.test.mjs tests/customer-congestion.test.mjs tests/cookie-cosmetics.test.mjs tests/doorway-recovery.test.mjs tests/multiroom-collision.test.mjs
+          node scripts/verify_doorway_recovery.mjs out/corridor --corridor
+          node --test tests/render-motion.test.mjs tests/customer-congestion.test.mjs tests/cookie-cosmetics.test.mjs tests/doorway-recovery.test.mjs tests/exit-circulation.test.mjs tests/multiroom-collision.test.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -59,3 +60,4 @@ jobs:
             candidate/games/lan_house_simulator/out/stutter
             candidate/games/lan_house_simulator/out/actor-sprites
             candidate/games/lan_house_simulator/out/doorway
+            candidate/games/lan_house_simulator/out/corridor

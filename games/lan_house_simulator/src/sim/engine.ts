@@ -160,6 +160,16 @@ function setTravel(s:GameState,c:Customer,destination:Point):boolean{
 }
 export const EXIT_REACH_DISTANCE=.32;
 function moveRoute(s:GameState,c: Customer): boolean {
+  // A temporary crowd detour can outlive the obstacle that caused it. Keep
+  // departures from following a long stale loop after the aisle opens again.
+  if(c.stage==="leaving"&&(c.route?.length??0)>3&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
+    c.nextCrowdRetryMinute=s.totalMinutes+4;
+    const destination=c.route!.at(-1)!,path=crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25);
+    const length=(points:Point[])=>points.reduce((sum,p,i)=>sum+Math.hypot(p.x-(i?points[i-1]!.x:c.x),p.y-(i?points[i-1]!.y:c.y)),0);
+    if(path?.length&&length(path)+.5<length([c.target,...c.route!])){
+      c.target=path[0]!;c.route=path.slice(1);
+    }
+  }
   const before=Math.hypot(c.x-c.target.x,c.y-c.target.y);
   if (!move(s,c)) {
     const after=Math.hypot(c.x-c.target.x,c.y-c.target.y);
@@ -176,7 +186,8 @@ function moveRoute(s:GameState,c: Customer): boolean {
         ?ps1SeatApproach(s,c.ps1StationIndex):null;
       if(seat&&side&&!canTraverseLocalStep(s,side,seat))return false;
       const destination=seat&&side?side:(c.route?.at(-1)??c.target);
-      const path=crowdRoute(s,c,destination);
+      // Narrow gaps between visitors may not contain a half-tile grid point.
+      const path=crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25);
       if(path?.length){
         c.target=path[0]!;
         c.route=[...path.slice(1),...(seat&&side&&canTraverseLocalStep(s,side,seat)?[seat]:[])];

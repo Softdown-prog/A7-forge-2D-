@@ -1,0 +1,545 @@
+{
+  "version": 1,
+  "totalMinutes": 533,
+  "leftoverMinutes": 0,
+  "rng": 1964799279,
+  "mailScheduleSeed": 44,
+  "mailStartDay": 1,
+  "mailSeenIds": [],
+  "cash": 908.16,
+  "revenue": 58.160000000000004,
+  "expenses": 0,
+  "reputation": 75.68999999999997,
+  "monthPcUsedMinutes": 675,
+  "monthPcCapacityMinutes": 1599,
+  "monthRevenueBase": 0,
+  "monthExpensesBase": 0,
+  "pricePerHour": 2.5,
+  "economyVersion": 2,
+  "pcTiers": [
+    1,
+    1,
+    1
+  ],
+  "pcGpus": [
+    null,
+    null,
+    null
+  ],
+  "internetTier": 1,
+  "offlineUntil": 0,
+  "licensedGames": false,
+  "expansionLevel": 0,
+  "roomExtensions": {
+    "west": 0,
+    "east": 0,
+    "south": 0,
+    "north": 0
+  },
+  "installedPcs": 3,
+  "furniture": {
+    "poster": 0,
+    "plant": 0,
+    "table": 0
+  },
+  "pcWear": [
+    11.474999999999985,
+    8.09999999999999,
+    10.799999999999986
+  ],
+  "inventory": {
+    "soda": 0,
+    "candy": 15,
+    "snacks": 4
+  },
+  "customers": [
+    {
+      "id": 12,
+      "x": 2.032781285591017,
+      "y": 3.360475927459911,
+      "facing": "west",
+      "stage": "shopping",
+      "target": {
+        "x": 2,
+        "y": 3.53
+      },
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 60,
+      "waitingMinutes": 2,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 93.4800000000011,
+        "hunger": 100,
+        "energy": 34.2
+      },
+      "wallet": 9.5,
+      "route": [],
+      "nextCrowdRetryMinute": 536,
+      "sessionMinutes": 60,
+      "gpuGameCharged": false,
+      "poseMinutes": 3,
+      "desiredItem": "snacks",
+      "wantsSnack": true,
+      "retailQueueItem": "snacks",
+      "retailQueueIndex": 0,
+      "purchasedDrink": true
+    },
+    {
+      "id": 13,
+      "x": 2.7199999999999998,
+      "y": 3.53,
+      "facing": "north",
+      "stage": "shopping",
+      "target": {
+        "x": 2.7199999999999998,
+        "y": 3.53
+      },
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 45,
+      "waitingMinutes": 0,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 93.62000000000049,
+        "hunger": 100,
+        "energy": 50.100000000000215
+      },
+      "wallet": 6.5,
+      "route": [],
+      "sessionMinutes": 45,
+      "gpuGameCharged": false,
+      "poseMinutes": 3,
+      "desiredItem": "snacks",
+      "wantsSnack": true,
+      "retailQueueItem": "snacks",
+      "retailQueueIndex": 1,
+      "nextCrowdRetryMinute": 378,
+      "purchasedDrink": true
+    },
+    {
+      "id": 14,
+      "x": 3.44,
+      "y": 3.53,
+      "facing": "north",
+      "stage": "shopping",
+      "target": {
+        "x": 3.44,
+        "y": 3.53
+      },
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 45,
+      "waitingMinutes": 0,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 67.3800000000008,
+        "hunger": 90.40000000000073,
+        "energy": 27.09999999999979
+      },
+      "wallet": 11.5,
+      "route": [],
+      "sessionMinutes": 45,
+      "gpuGameCharged": false,
+      "nextCrowdRetryMinute": 393,
+      "poseMinutes": 3,
+      "desiredItem": "snacks",
+      "wantsSnack": true,
+      "retailQueueItem": "snacks",
+      "retailQueueIndex": 2,
+      "purchasedDrink": true
+    },
+    {
+      "id": 16,
+      "x": 4.16,
+      "y": 3.53,
+      "facing": "north",
+      "stage": "shopping",
+      "target": {
+        "x": 4.16,
+        "y": 3.53
+      },
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 60,
+      "waitingMinutes": 7,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 55.90000000000075,
+        "hunger": 89.00000000000067,
+        "energy": 48.89999999999997
+      },
+      "wallet": 14.5,
+      "route": [],
+      "nextCrowdRetryMinute": 429,
+      "sessionMinutes": 60,
+      "gpuGameCharged": false,
+      "poseMinutes": 3,
+      "desiredItem": "snacks",
+      "wantsSnack": true,
+      "retailQueueItem": "snacks",
+      "retailQueueIndex": 3,
+      "purchasedDrink": true
+    },
+    {
+      "id": 17,
+      "x": 1.655,
+      "y": 3.75,
+      "facing": "west",
+      "stage": "arriving",
+      "target": {
+        "x": 1.25,
+        "y": 3.75
+      },
+      "queueIndex": 0,
+      "costume": "rabbit",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 0,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 100,
+        "hunger": 62.00000000000039,
+        "energy": 73.00000000000114
+      },
+      "wallet": 16,
+      "route": [
+        {
+          "x": 0.75,
+          "y": 3.75
+        },
+        {
+          "x": 0.75,
+          "y": 3.25
+        },
+        {
+          "x": 0.75,
+          "y": 2.75
+        },
+        {
+          "x": 1.25,
+          "y": 2.75
+        },
+        {
+          "x": 1.55,
+          "y": 2.56
+        }
+      ],
+      "nextCrowdRetryMinute": 535
+    },
+    {
+      "id": 18,
+      "x": 1.55,
+      "y": 3.22,
+      "facing": "north",
+      "stage": "waiting",
+      "target": {
+        "x": 1.55,
+        "y": 3.22
+      },
+      "queueIndex": 1,
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 152,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 86.84000000000054,
+        "hunger": 80.2000000000005,
+        "energy": 48.39999999999989
+      },
+      "wallet": 16,
+      "route": []
+    },
+    {
+      "id": 19,
+      "x": 1.354612224826004,
+      "y": 4.065263691020737,
+      "facing": "east",
+      "stage": "arriving",
+      "target": {
+        "x": 1.55,
+        "y": 3.88
+      },
+      "queueIndex": 2,
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 0,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 97.72000000000054,
+        "hunger": 56.60000000000032,
+        "energy": 61.2000000000007
+      },
+      "wallet": 17,
+      "route": [],
+      "nextCrowdRetryMinute": 536
+    },
+    {
+      "id": 20,
+      "x": 1.55,
+      "y": 4.54,
+      "facing": "south",
+      "stage": "waiting",
+      "target": {
+        "x": 1.55,
+        "y": 4.54
+      },
+      "queueIndex": 3,
+      "costume": "vampire",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 132,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 100,
+        "hunger": 78.80000000000044,
+        "energy": 72.60000000000088
+      },
+      "wallet": 11,
+      "route": []
+    },
+    {
+      "id": 21,
+      "x": 1.55,
+      "y": 5.2,
+      "facing": "west",
+      "stage": "waiting",
+      "target": {
+        "x": 1.55,
+        "y": 5.2
+      },
+      "queueIndex": 4,
+      "costume": "regular",
+      "vip": true,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 99,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 83.18000000000043,
+        "hunger": 53.40000000000029,
+        "energy": 48.29999999999982
+      },
+      "wallet": 17,
+      "route": [],
+      "nextCrowdRetryMinute": 430
+    },
+    {
+      "id": 22,
+      "x": 2.21,
+      "y": 5.2,
+      "facing": "west",
+      "stage": "waiting",
+      "target": {
+        "x": 2.21,
+        "y": 5.2
+      },
+      "queueIndex": 5,
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 93,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 97.4600000000004,
+        "hunger": 74.80000000000034,
+        "energy": 60.1000000000004
+      },
+      "wallet": 7,
+      "route": [],
+      "nextCrowdRetryMinute": 427
+    },
+    {
+      "id": 23,
+      "x": 2.87,
+      "y": 5.2,
+      "facing": "south",
+      "stage": "waiting",
+      "target": {
+        "x": 2.87,
+        "y": 5.2
+      },
+      "queueIndex": 6,
+      "costume": "regular",
+      "vip": true,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 89,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 72.38000000000036,
+        "hunger": 52.40000000000028,
+        "energy": 72.30000000000061
+      },
+      "wallet": 8,
+      "route": []
+    },
+    {
+      "id": 24,
+      "x": 3.5300000000000002,
+      "y": 5.2,
+      "facing": "south",
+      "stage": "waiting",
+      "target": {
+        "x": 3.5300000000000002,
+        "y": 5.2
+      },
+      "queueIndex": 7,
+      "costume": "vampire",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 59,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 78.50000000000026,
+        "hunger": 69.00000000000021,
+        "energy": 86.50000000000043
+      },
+      "wallet": 13,
+      "route": []
+    },
+    {
+      "id": 25,
+      "x": 4.19,
+      "y": 5.2,
+      "facing": "south",
+      "stage": "waiting",
+      "target": {
+        "x": 4.19,
+        "y": 5.2
+      },
+      "queueIndex": 8,
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 53,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 54.78000000000023,
+        "hunger": 47.40000000000019,
+        "energy": 60.30000000000012
+      },
+      "wallet": 10,
+      "route": []
+    },
+    {
+      "id": 26,
+      "x": 4.8500000000000005,
+      "y": 5.2,
+      "facing": "south",
+      "stage": "waiting",
+      "target": {
+        "x": 4.8500000000000005,
+        "y": 5.2
+      },
+      "queueIndex": 9,
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 0,
+      "waitingMinutes": 30,
+      "offlineWait": 0,
+      "happy": true,
+      "needs": {
+        "thirst": 63.28000000000014,
+        "hunger": 65.40000000000012,
+        "energy": 73.80000000000024
+      },
+      "wallet": 10,
+      "route": []
+    }
+  ],
+  "nextCustomerId": 27,
+  "served": 12,
+  "lostCustomers": 4,
+  "purchases": 18,
+  "weather": "sun",
+  "eventLog": [
+    "D1 17:32 · Venda de soda: +R$ 1.5.",
+    "D1 17:15 · Venda de soda: +R$ 1.5.",
+    "D1 16:58 · Cliente elogiou a experiência na lan house.",
+    "D1 16:49 · Venda de soda: +R$ 1.5.",
+    "D1 16:30 · Venda de soda: +R$ 1.5.",
+    "D1 16:18 · Cliente elogiou a experiência na lan house.",
+    "D1 16:07 · Venda de soda: +R$ 1.5.",
+    "D1 15:46 · Venda de snacks: +R$ 2.",
+    "D1 15:36 · Cliente pagou R$ 2.5 por 60 minutos.",
+    "D1 15:35 · Venda de snacks: +R$ 2.",
+    "D1 15:33 · Cliente pagou R$ 1.88 por 45 minutos.",
+    "D1 15:31 · Cliente elogiou a experiência na lan house.",
+    "D1 15:30 · Cliente elogiou a experiência na lan house.",
+    "D1 15:22 · Venda de soda: +R$ 1.5."
+  ],
+  "energyAccrued": 4.748235185185197,
+  "stationLedger": [
+    {
+      "sessions": 5,
+      "vipSessions": 0,
+      "sessionRevenue": 10.64,
+      "vipRevenue": 0,
+      "occupiedMinutes": 255,
+      "energyShare": 1.5827450617283976
+    },
+    {
+      "sessions": 3,
+      "vipSessions": 0,
+      "sessionRevenue": 7.51,
+      "vipRevenue": 0,
+      "occupiedMinutes": 180,
+      "energyShare": 1.5827450617283976
+    },
+    {
+      "sessions": 4,
+      "vipSessions": 0,
+      "sessionRevenue": 10.009999999999998,
+      "vipRevenue": 0,
+      "occupiedMinutes": 240,
+      "energyShare": 1.5827450617283976
+    }
+  ],
+  "counterBusyUntil": 339,
+  "binFill": [
+    46,
+    46
+  ]
+}

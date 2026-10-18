@@ -50,6 +50,7 @@ jobs:
           node scripts/verify_hardware_scroll.mjs
           node scripts/verify_management_panels.mjs
           node scripts/verify_doorway_recovery.mjs
+          node scripts/verify_doorway_recovery.mjs out/corridor --corridor
 
       - name: Conferir credencial dedicada do espelho
         env:
