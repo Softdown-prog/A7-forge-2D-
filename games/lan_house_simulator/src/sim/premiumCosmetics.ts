@@ -15,7 +15,11 @@ export const COOKIE_COSMETICS=[
  {id:"arcade-checker-floor",name:"Piso Arcade Xadrez",cookies:25,unlockYear:1998,
   description:"Piso modular grafite e marfim com acabamento acetinado e juntas ciano; mantém navegação."},
  {id:"exclusive-arcade-posters",name:"Pôsteres Exclusivos",cookies:12,unlockYear:1998,
-  description:"Três ilustrações originais retrô-futuristas nas posições de pôsteres existentes."}
+  description:"Três ilustrações originais retrô-futuristas nas posições de pôsteres existentes."},
+ {id:"tony-cyber",name:"Tony Cyber",cookies:60,unlockYear:2010,
+  description:"Uniforme cyberpunk para Tony: colete tecnológico, detalhes ciano e visor iluminado."},
+ {id:"aquarium-rgb",name:"Aquário Iluminado RGB",cookies:45,unlockYear:2008,
+  description:"Aquário mural com peixes animados, bolhas e iluminação colorida, sem ocupar passagens."}
 ] as const;
 export type CookieCosmeticId=typeof COOKIE_COSMETICS[number]["id"];
 const knownIds=new Set<string>(COOKIE_COSMETICS.map(item=>item.id));
