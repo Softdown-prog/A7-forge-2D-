@@ -8,7 +8,8 @@ import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js
 import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
 import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
+import { actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
+import {drawActorSprite as drawActor} from "./actorSprites.js";
 import { movementDirection } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,availablePlacementSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../sim/layout.js";

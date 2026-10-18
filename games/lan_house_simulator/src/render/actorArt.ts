@@ -3,6 +3,8 @@ import { iso, type Projection } from "./isometric.js";
 import type { ActorDirection } from "./direction.js";
 import {workerMotion} from "./workerMotion.js";
 
+type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
+
 export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing";
 export type ActorKind = Costume | "owner" | "cleaner" | "technician";
 export interface ActorStyle {
@@ -42,18 +44,18 @@ export interface ActorRender {
   /** Só passa true com entitlement verificado no backend; exclusivo de sessão PC. */
   premiumHeadset?: boolean;
 }
-function ell(ctx: CanvasRenderingContext2D,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
+function ell(ctx: ActorContext,x:number,y:number,rx:number,ry:number,color:string,outline?:string):void {
   ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
   ctx.fillStyle=color;ctx.fill();
   if(outline){ctx.strokeStyle=outline;ctx.lineWidth=1.35;ctx.stroke();}
 }
-function shape(ctx:CanvasRenderingContext2D,pts:readonly [number,number][],fill:string,stroke="#283449"):void{
+function shape(ctx:ActorContext,pts:readonly [number,number][],fill:string,stroke="#283449"):void{
   ctx.beginPath();ctx.moveTo(pts[0]![0],pts[0]![1]);
   for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);
   ctx.closePath();ctx.fillStyle=fill;ctx.fill();
   ctx.strokeStyle=stroke;ctx.lineWidth=1.8;ctx.stroke();
 }
-function segment(ctx:CanvasRenderingContext2D,
+function segment(ctx:ActorContext,
   x1:number,y1:number,x2:number,y2:number,width:number,fill:string):void {
   ctx.lineWidth=width+1.8;ctx.strokeStyle="#293449";ctx.lineCap="round";
   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
@@ -67,7 +69,7 @@ export function seatTransitionWeight(progress:number):number{
  return t*t*(3-2*t);
 }
 /** Broad light and a shaded edge describe a cylinder without textures or 3D. */
-function limb(ctx:CanvasRenderingContext2D,x1:number,y1:number,x2:number,y2:number,
+function limb(ctx:ActorContext,x1:number,y1:number,x2:number,y2:number,
  width:number,fill:string):void{
  segment(ctx,x1,y1,x2,y2,width,fill);
  const length=Math.hypot(x2-x1,y2-y1);if(length<.01)return;
@@ -77,7 +79,7 @@ function limb(ctx:CanvasRenderingContext2D,x1:number,y1:number,x2:number,y2:numb
  ctx.beginPath();ctx.moveTo(x1-nx*width*.22,y1-ny*width*.22);
  ctx.lineTo(x2-nx*width*.22,y2-ny*width*.22);ctx.stroke();ctx.restore();
 }
-function torso(ctx:CanvasRenderingContext2D,style:ActorStyle,shift:number,profile:boolean):void{
+function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean):void{
  ctx.save();ctx.translate(0,shift);
  // Curved shoulders, ribcage, belly and hips; profiles have their own outline.
  ctx.beginPath();
@@ -110,7 +112,7 @@ function torso(ctx:CanvasRenderingContext2D,style:ActorStyle,shift:number,profil
  ell(ctx,-3,-47,11,2,"rgba(255,241,208,.17)");
  ctx.restore();
 }
-export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:ActorRender):void {
+export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void {
   const base=iso({x:a.x,y:a.y},camera);
   const z=camera.zoom, style=actorStyleFor(a.kind,a.id);
   const pose=a.pose??"idle";
@@ -403,7 +405,7 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
 
 /** Fone com arco anatômico, conchas separadas e microfone articulado.
  * Em perspectiva de costas e perfil preserva os mesmos pontos de ancoragem. */
-function drawNeonHeadset(ctx:CanvasRenderingContext2D,headX:number,
+function drawNeonHeadset(ctx:ActorContext,headX:number,
  headY:number,back:boolean,sideways:boolean,time:number):void{
  ctx.save();ctx.translate(headX,headY);
  // Proporções calibradas para não engolir a cabeça de um ator em zoom alto.

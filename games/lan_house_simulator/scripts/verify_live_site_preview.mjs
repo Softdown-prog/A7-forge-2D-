@@ -5,6 +5,9 @@ import {resolve,extname,sep} from "node:path";
 import {chromium} from "playwright";
 
 const root=resolve(import.meta.dirname,"../out/site"),port=4287;
+const policy=(await readFile(resolve(root,"_headers"),"utf8"))
+ .split("\n").find(line=>line.trim().startsWith("Content-Security-Policy:"))
+ ?.trim().slice("Content-Security-Policy:".length).trim();
 const mime={".html":"text/html; charset=utf-8",".js":"text/javascript; charset=utf-8",
  ".mjs":"text/javascript; charset=utf-8",".css":"text/css; charset=utf-8",
  ".svg":"image/svg+xml",".webp":"image/webp",".json":"application/json"};
@@ -17,7 +20,8 @@ const server=createServer(async(req,res)=>{
   const target=resolve(root,"."+path,path.endsWith("/")?"index.html":"");
   if(!target.startsWith(root+sep))throw Error("fora do diretório");
   if(!(await stat(target)).isFile())throw Error("arquivo inexistente");
-  res.writeHead(200,{"Content-Type":mime[extname(target)]??"application/octet-stream"});
+  res.writeHead(200,{"Content-Type":mime[extname(target)]??"application/octet-stream",
+   ...(policy?{"Content-Security-Policy":policy}:{})});
   res.end(await readFile(target));
  }catch{res.writeHead(404);res.end("Arquivo não encontrado");}
 });
@@ -64,6 +68,22 @@ try{
    const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
    return data.some((value,i)=>i%4===3&&value>0);
   });
+  const spriteReady=await frame.locator("#game").evaluate(async()=>{
+   const entry=new URL(document.querySelector('script[type="module"][src*="main.js"]').src);
+   const url=new URL("./render/actorSprites.js",entry);url.search=entry.search;
+   const {drawActorSprite}=await import(url.href);
+   const ctx=document.createElement("canvas").getContext("2d");
+   let blits=0;const original=ctx.drawImage;
+   ctx.drawImage=function(...args){blits++;return original.apply(this,args);};
+   const actor={x:0,y:0,kind:"regular",id:1,pose:"walking",time:1.2};
+   const start=performance.now();
+   while(!blits&&performance.now()-start<5000){
+    drawActorSprite(ctx,{originX:80,originY:130,zoom:.86},actor);
+    await new Promise(ok=>setTimeout(ok,50));
+   }
+   return blits>0;
+  });
+  assert.equal(spriteReady,true,"Worker deve carregar com a revisão do jogo em /game/");
   assert.deepEqual(errors,[],"O jogo deve iniciar sem erros de JavaScript");
   await context.close();
  }
