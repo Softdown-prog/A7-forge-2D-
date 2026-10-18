@@ -11,6 +11,7 @@
 </defs>
 <rect width="420" height="560" rx="7" fill="url(#back)"/>
 <rect x="9" y="8" width="402" height="542" rx="4" fill="none" stroke="#ffffff" stroke-opacity=".4" stroke-width="1.7"/>
+<rect x="11" y="11" width="398" height="538" fill="url(#shade)"/>
 
 <circle cx="302" cy="172" r="132" fill="#fcd348" filter="url(#glow)" opacity=".27"/>
 <path d="M0 50H420V374H0Z" fill="#082533" opacity=".5"/>
@@ -36,7 +37,6 @@
 <text x="22" y="429" fill="#fdfbdd" font-family="Arial Black,Arial,sans-serif" font-size="78" font-weight="900" letter-spacing="-5" stroke="#122a29" stroke-width="6" paint-order="stroke">GOL</text>
 <text x="26" y="479" fill="#81f9ce" font-family="Arial Black,Arial,sans-serif" font-size="52" font-weight="900" letter-spacing="-2" stroke="#122a29" stroke-width="6" paint-order="stroke">DE RUA</text>
 <rect x="11" y="11" width="398" height="538" fill="url(#scan)" opacity=".26"/>
-<rect x="11" y="11" width="398" height="538" fill="url(#shade)"/>
 <rect x="0" y="0" width="420" height="42" fill="#07101b" fill-opacity=".83"/>
 <rect x="10" y="8" width="33" height="26" rx="4" fill="#d6e4ee"/><text x="26.5" y="27" fill="#0b1728" font-family="Arial,sans-serif" font-size="18" font-weight="900" text-anchor="middle">S</text>
 <text x="53" y="18" fill="#f0f7ff" font-family="Arial,sans-serif" font-weight="900" font-size="11" letter-spacing="2.8">SOFTDOWN</text>
