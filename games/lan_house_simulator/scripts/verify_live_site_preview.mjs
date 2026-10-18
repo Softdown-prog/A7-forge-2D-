@@ -58,6 +58,13 @@ try{
    return colors.size;
   });
   assert.ok(pixels>12,"Canvas do menu ficou vazio: apenas "+pixels+" cores");
+  // The cookie notice is intentionally visible for new visitors. Simulate
+  // declining optional cookies before interacting with the game below it.
+  const consent=frame.locator("#privacy-banner");
+  if(await consent.isVisible()){
+   await frame.locator("#privacy-reject").click();
+   await consent.waitFor({state:"hidden"});
+  }
   await frame.locator("#menu-new").click();
   await frame.locator("#game-app").waitFor({state:"visible",timeout:15000});
   await frame.locator("#game").waitFor({state:"visible"});
