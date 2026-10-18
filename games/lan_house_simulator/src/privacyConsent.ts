@@ -23,20 +23,26 @@ export function optionalPrivacyAllowed():boolean{
 }
 export function mountPrivacyBanner():void{
  const banner=document.getElementById("privacy-banner");
- const settings=document.getElementById("privacy-settings");
  const accept=document.getElementById("privacy-accept");
  const reject=document.getElementById("privacy-reject");
- if(!banner||!settings||!accept||!reject)return;
- const show=()=>{banner.hidden=false;settings.hidden=true;};
- const hide=()=>{banner.hidden=true;settings.hidden=false;};
+ if(!banner||!accept||!reject)return;
+ // A decisão vale tanto para aceite quanto para recusa; não deixar nenhum
+ // botão flutuante após a escolha. Reabrir apenas após expirar ou limpar dados.
+ const refresh=()=>{banner.hidden=readPrivacyChoice(localStorage)!==null;};
  const decide=(choice:PrivacyChoice)=>{
-  savePrivacyChoice(localStorage,choice);hide();
+  savePrivacyChoice(localStorage,choice);
+  refresh();
   document.dispatchEvent(new CustomEvent("lhs:privacy-choice",{detail:{choice}}));
  };
  accept.addEventListener("click",()=>decide("accepted"));
  reject.addEventListener("click",()=>decide("rejected"));
- settings.addEventListener("click",show);
- if(readPrivacyChoice(localStorage))hide();else show();
+ // Volta a conferir o prazo quando a aba retorna ao primeiro plano e quando
+ // outra aba modifica ou remove a escolha no armazenamento local.
+ document.addEventListener("visibilitychange",()=>{if(!document.hidden)refresh();});
+ if(typeof window!=="undefined")window.addEventListener("storage",event=>{
+  if(event.key===null||event.key===PRIVACY_KEY)refresh();
+ });
+ refresh();
 }
 if(typeof document!=="undefined"){
  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",mountPrivacyBanner,{once:true});
