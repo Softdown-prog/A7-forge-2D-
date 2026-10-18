@@ -11,7 +11,11 @@ export const COOKIE_COSMETICS=[
  {id:"keyboard-rainbow-rgb",name:"Teclado Rainbow RGB",cookies:25,unlockYear:2012,
   description:"Teclas com iluminação individual e efeito de onda, sem modificar digitação."},
  {id:"neon-open-sign",name:"Placa Neon ABERTO",cookies:30,unlockYear:1998,
-  description:"Placa sobre a entrada; acende durante o expediente e apaga no fechamento."}
+  description:"Placa sobre a entrada; acende durante o expediente e apaga no fechamento."},
+ {id:"arcade-checker-floor",name:"Piso Arcade Xadrez",cookies:25,unlockYear:1998,
+  description:"Piso modular grafite e marfim com acabamento acetinado e juntas ciano; mantém navegação."},
+ {id:"exclusive-arcade-posters",name:"Pôsteres Exclusivos",cookies:12,unlockYear:1998,
+  description:"Três ilustrações originais retrô-futuristas nas posições de pôsteres existentes."}
 ] as const;
 export type CookieCosmeticId=typeof COOKIE_COSMETICS[number]["id"];
 const knownIds=new Set<string>(COOKIE_COSMETICS.map(item=>item.id));
