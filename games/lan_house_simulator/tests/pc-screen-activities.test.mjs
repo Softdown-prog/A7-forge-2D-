@@ -17,9 +17,13 @@ test("browser and online video respect the year and never consume simulation RNG
   assert.notEqual(pcActivityForSession(id,0,1998),"video");
   assert.ok(kinds.includes(pcActivityForSession(id,0,2020)));
  }
- const s=createGame(1007,"historical"),before=serializeSave(s);
+ const s=createGame(1007,"historical");
+ // O envelope de exportação contém exportedAt, que varia a cada chamada.
+ // Comparar somente o estado preserva a garantia contra mutação/RNG.
+ const before=JSON.parse(serializeSave(s)).state;
  for(let i=0;i<1000;i++)pcActivityForSession(i,i%3,2025);
- assert.equal(serializeSave(s),before,"screen choice must not modify or randomize save");
+ const after=JSON.parse(serializeSave(s)).state;
+ assert.deepEqual(after,before,"screen choice must not modify or randomize save");
 });
 test("2.5Hz discretization ensures time stability and no per-frame redraw",()=>{
  assert.equal(pcScreenFrame(0),0);assert.equal(pcScreenFrame(.30),0);
