@@ -11,6 +11,7 @@ test('API startup, auth boundary, CORS, body limits and disabled payments',async
  let ready=false;for(let attempt=0;attempt<600;attempt++){if(child.exitCode!==null)throw Error(output);try{const r=await fetch(base+'/health');if(r.ok){ready=true;break;}}catch{}await delay(50);}assert.ok(ready,output);
  assert.deepEqual(await fetch(base+'/health').then(r=>r.json()),{ok:true,service:'lhs-backend',paymentsEnabled:false});
  assert.equal((await fetch(base+'/v1/account')).status,401);
+ assert.equal((await fetch(base+'/v1/auth/verification-email',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/saves/main',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
  assert.equal((await fetch(base+'/v1/config',{headers:{Origin:'https://evil.example'}})).status,403);
  const allowed=await fetch(base+'/v1/config',{headers:{Origin:'https://lhs.example'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'https://lhs.example');assert.deepEqual((await allowed.json()).packages,{'donate-5':{priceCents:500,cookies:50},'donate-10':{priceCents:1000,cookies:100}});
