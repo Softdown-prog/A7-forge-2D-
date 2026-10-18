@@ -23,13 +23,14 @@ Depois de confirmar que esses valores estão no DNS público, clique em **Verify
 1. O cliente mantém a sessão apenas na memória e consulta `/v1/config` para escolher o provedor.
 2. Para Resend, chama `POST /v1/auth/verification-email` com seu token Firebase. Senha, email de destino e UID não são enviados no corpo.
 3. O servidor valida a sessão com checagem de revogação, consulta o endereço da própria conta e reserva as cotas em uma transação Firestore.
-4. Firebase Admin gera o link de confirmação, enviado somente ao destinatário via Resend. O código não é devolvido ao cliente, gravado em Firestore ou registrado nos logs.
-5. O jogador confirma pelo link e usa “Já confirmei meu email” para atualizar o token. Saves, saldo e compras continuam exigindo email confirmado.
+4. Firebase Admin gera o código de confirmação. O email contém somente o endereço do LHS em `/conta/confirmar/#codigo=...`, sem domínio do provedor, API key ou URL técnica no texto HTML. O código não é devolvido pela API de envio, gravado em Firestore ou registrado nos logs.
+5. A página remove o fragmento imediatamente da barra de endereço e mantém o código só na memória. O jogador clica para confirmar; leitores automáticos de links não consomem o código ao abrir a página. O POST usa a chave pública da configuração confiável do site e envia somente a origem como Referer. Não usa chave ou redirecionamento recebidos na URL.
+6. O jogador volta ao painel e usa “Já confirmei meu email” para atualizar o token. Saves, saldo e compras continuam exigindo email confirmado. Links antigos do Firebase continuam válidos conforme sua validade original; emails já entregues não são alterados.
 
 `online-config.json` mantém o painel experimental de nuvem dentro do jogo desativado. O cadastro público acontece nas páginas Conta e Donate. A recuperação de senha continua usando Firebase.
 
 ## Validação
 
-Execute `node --test backend/tests/*.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/website.test.mjs` após compilar o jogo e `npm run build:site && npm run check:site`. Os testes cobrem proprietário do destinatário, limites concorrentes, cotas, falhas do provedor e sessão revogada. Um envio real só deve ser declarado validado após configurar a chave e verificar o domínio Resend.
+Execute `node --test backend/tests/*.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/website.test.mjs tests/email-confirmation.test.mjs` após compilar o jogo e `npm run build:site && npm run check:site`. Os testes cobrem proprietário do destinatário, limites concorrentes, cotas, falhas do provedor, sessão revogada, código no fragmento e confirmação pelo domínio do LHS. Um envio real só deve ser declarado validado após configurar a chave e verificar o domínio Resend. Publique a página do site antes de promover um backend que emita os novos links.
 
 Referências: [DNS Cloudflare no Resend](https://resend.com/docs/guides/dns/cloudflare), [envio de email](https://resend.com/docs/api-reference/emails/send-email), [links de confirmação Firebase](https://firebase.google.com/docs/auth/admin/email-action-links).

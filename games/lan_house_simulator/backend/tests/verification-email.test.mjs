@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import express from 'express';
 import {createVerificationEmail,authenticateAccount} from '../verification-email.mjs';
+import {brandedVerificationLink,verificationEmailTemplate} from '../verification-email-template.mjs';
 
 function fixture({request=async()=>new Response('{}'),dailyLimit=100}={}){
  let clock=1_800_000_000_000,queue=Promise.resolve();const rows=new Map(),calls=[];
@@ -9,7 +10,7 @@ function fixture({request=async()=>new Response('{}'),dailyLimit=100}={}){
   const pending=queue.then(async()=>{const writes=[];const result=await fn({getAll:async(...refs)=>refs.map(r=>({data:()=>rows.get(r.path)})),set:(r,data)=>writes.push([r.path,data])});for(const [key,data] of writes)rows.set(key,data);return result;});queue=pending.catch(()=>{});return pending;
  }};
  const user={uid:'player',email:'owner@example.invalid',emailVerified:false,disabled:false,providerData:[{providerId:'password'}]};
- const auth={getUser:async uid=>{assert.equal(uid,'player');return user;},generateEmailVerificationLink:async(email,settings)=>{assert.equal(email,user.email);assert.equal(settings.url,'https://lhs.example/conta/');return 'https://auth.example/action?oobCode=private-code&mode=verifyEmail';}};
+ const auth={getUser:async uid=>{assert.equal(uid,'player');return user;},generateEmailVerificationLink:async(email,settings)=>{assert.equal(email,user.email);assert.equal(settings.url,'https://lhs.example/conta/');return 'https://auth.example/action?oobCode=private-code-for-testing&mode=verifyEmail&apiKey=public-provider-key';}};
  const send=createVerificationEmail({auth,db,apiKey:'test-secret',siteUrl:'https://lhs.example',dailyLimit,now:()=>clock,request:async(url,options)=>{calls.push({url,options});return request(url,options);}});
  return {send,user,rows,calls,advance:ms=>clock+=ms};
 }
@@ -18,9 +19,21 @@ test('only the authenticated account receives the message; action codes stay in 
  const f=fixture();assert.deepEqual(await f.send('player'),{sent:true});
  const {url,options}=f.calls[0],body=JSON.parse(options.body);
  assert.equal(url,'https://api.resend.com/emails');assert.deepEqual(body.to,['owner@example.invalid']);
- assert.equal(body.from,'LHS <contas@lhs.analysepro.com>');assert.match(body.html,/Confirmar meu email/);assert.match(body.html,/&amp;mode=verifyEmail/);
+ assert.equal(body.from,'LHS <contas@lhs.analysepro.com>');assert.match(body.html,/Confirmar meu email/);assert.match(body.html,/https:\/\/lhs.example\/conta\/confirmar\/#codigo=private-code-for-testing/);
+ assert.doesNotMatch(body.html+body.text,/auth\.example|public-provider-key|apiKey|oobCode|continueUrl/);
  assert.match(body.text,/private-code/);assert.equal(options.headers.Authorization,'Bearer test-secret');
  assert.doesNotMatch(JSON.stringify([...f.rows]),/owner@|private-code|test-secret/);
+});
+test('branded links retain only the verification code in a fragment, never provider keys or redirects',()=>{
+ const link=new URL(brandedVerificationLink('https://provider.example/action?mode=verifyEmail&oobCode=test-code-123456789&apiKey=provider-key&continueUrl=https://untrusted.example','https://lhs.example'));
+ assert.equal(link.origin,'https://lhs.example');assert.equal(link.pathname,'/conta/confirmar/');assert.equal(link.search,'');assert.equal(link.hash,'#codigo=test-code-123456789');
+ for(const value of ['https://provider.example/?mode=resetPassword&oobCode=test-code-123456789','https://provider.example/?mode=verifyEmail','https://provider.example/?mode=verifyEmail&oobCode=%22%3E%3Cscript%3E'])assert.throws(()=>brandedVerificationLink(value,'https://lhs.example'));
+});
+test('email HTML uses labeled links, responsive table layout and no raw URL in visible text',()=>{
+ const {html,text,subject}=verificationEmailTemplate('https://lhs.example/conta/confirmar/#codigo=test-code-123456789','https://lhs.example');
+ assert.match(subject,/LHS/);assert.match(html,/<html lang="pt-BR"/);assert.match(html,/role="presentation"/);assert.match(html,/@media/);assert.match(html,/Use este link para confirmar/);
+ const visible=html.replace(/<[^>]*>/g,'');assert.doesNotMatch(visible,/test-code-123456789|https:\/\//);assert.match(text,/https:\/\/lhs.example\/conta\/confirmar\//);
+ assert.doesNotMatch(html,/<(?:script|img|iframe)\b/);
 });
 test('concurrent requests, hourly and daily quotas work across instances',async()=>{
  const f=fixture();const attempts=await Promise.allSettled([f.send('player'),f.send('player')]);
