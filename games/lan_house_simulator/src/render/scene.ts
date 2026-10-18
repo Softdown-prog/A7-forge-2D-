@@ -26,6 +26,7 @@ import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
 import {ps1StationPoint,ps1Seat,ps1PlayableDisc} from "../sim/ps1.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
+import {premiumCheckerPatch,drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
@@ -185,7 +186,9 @@ export class SceneRenderer {
   private drawBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
     const live=this.ctx;
     const key=JSON.stringify([w,h,camera,bounds,s.furniture?.poster??0,
-      s.furniturePlacements?.filter(p=>p.kind==="poster")??[],s.objectPlacements?.filter(p=>p.id.startsWith("built-poster:"))??[],s.removedBuiltPosters??[]]);
+      s.furniturePlacements?.filter(p=>p.kind==="poster")??[],s.objectPlacements?.filter(p=>p.id.startsWith("built-poster:"))??[],s.removedBuiltPosters??[],
+      cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)),
+      cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes))]);
     if(typeof document!=="undefined"){
       if(!this.background){this.background=document.createElement("canvas");this.background.width=w;this.background.height=h;}
       const buffer=this.background.getContext("2d");
@@ -204,7 +207,8 @@ export class SceneRenderer {
     const ctx=this.ctx,sky=ctx.createLinearGradient(0,0,0,h);
     sky.addColorStop(0,theme.backgroundTop);sky.addColorStop(1,theme.backgroundBottom);
     ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-    this.floor(camera,bounds);this.walls(camera,bounds);this.decor(camera,bounds,s);this.extraPosters(camera,s);
+    this.floor(camera,bounds,cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)));
+    this.walls(camera,bounds);this.decor(camera,bounds,s);this.extraPosters(camera,s);
   }
   /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
   private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
@@ -322,9 +326,11 @@ export class SceneRenderer {
       ?iso({x:slot.x+(slot.axis==="y"?0:.33),y:slot.y+(slot.axis==="y"?.33:0)},camera,137)
       :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   }
-  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0,posterKind:PosterKind="city",axis:"x"|"y"="x"):void{
+  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0,posterKind:PosterKind="city",axis:"x"|"y"="x",premiumIndex?:PremiumPosterIndex):void{
     if(kind==="poster"){
-      drawWallPoster(this.ctx,camera,{x,y,axis,span:.65,top:156,height:39},posterKind);
+      const placement={x,y,axis,span:.65,top:156,height:39};
+      if(premiumIndex!==undefined)drawPremiumWallPoster(this.ctx,camera,placement,premiumIndex);
+      else drawWallPoster(this.ctx,camera,placement,posterKind);
     }else if(kind==="plant"){
       cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
       const center=iso({x:x+0.16,y:y+0.16},camera,42);
@@ -344,15 +350,16 @@ export class SceneRenderer {
     }
   }
   private extraPosters(camera:Projection,s:GameState):void{
+    const premium=cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes));
     const positioned=(s.furniturePlacements??[]).filter(p=>p.kind==="poster");
     for(let i=0;i<Math.min(2,Math.max(0,(s.furniture?.poster??0)-positioned.length));i++){
       const x=2.1+i*2.25;
       const y=roomBounds(s).minY+0.01;
-      this.renderPurchasedFurniture(camera,"poster",x,y,0,purchasedPosterKind(i));
+      this.renderPurchasedFurniture(camera,"poster",x,y,0,purchasedPosterKind(i),"x",premium?(i%3 as PremiumPosterIndex):undefined);
     }
     for(const [index,placed] of positioned.entries()){
       const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="wall");
-      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y,0,purchasedPosterKind(index),slot.axis);
+      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y,0,purchasedPosterKind(index),slot.axis,premium?(index%3 as PremiumPosterIndex):undefined);
     }
   }
     /* Saved placement coordinates are always resolved from vetted slots. */
@@ -375,7 +382,7 @@ export class SceneRenderer {
       if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y,placed.rotation??0);
     }
   }
-  private floor(camera:Projection,bounds:RoomBounds):void {
+  private floor(camera:Projection,bounds:RoomBounds,premium=false):void {
     const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
     // O cenário é uma plataforma suspensa: sem exterior, sem base ligada a um terreno.
     const rearRight=iso({x:w,y:north},camera);
@@ -398,8 +405,11 @@ export class SceneRenderer {
       {x:rearRight.x,y:rearRight.y+bottom}],theme.baseSide,theme.ink);
     for(let y=north;y<south;y++) for(let x=minX;x<w;x++) {
       const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
-      const tone=(x+y)%2===0?theme.floorLight:theme.floorDark;
-      polygon(ctx,ps,tone,theme.floorLine);
+      if(premium)premiumCheckerPatch(ctx,camera,x,y);
+      else {
+        const tone=(x+y)%2===0?theme.floorLight:theme.floorDark;
+        polygon(ctx,ps,tone,theme.floorLine);
+      }
       if(y===4 && x>0 && x<w-1) {
         const c=iso({x:x+0.5,y:y+0.5},camera);
         ctx.fillStyle="rgba(100,83,77,0.10)";
@@ -452,8 +462,14 @@ export class SceneRenderer {
       iso({x:minX+0.02,y:north},camera,9),iso({x:minX+0.02,y:south},camera,9),
       iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:north},camera,2)
     ],"#817A84");
-    // Original illustrations share the wall plane, including typography.
-    for(const p of builtPosters(s))drawWallPoster(ctx,camera,{x:p.x,y:p.y,axis:p.axis!,span:p.span!,top:p.id.endsWith(":0")||p.id.endsWith(":1")?128:133,height:p.id.endsWith(":0")||p.id.endsWith(":1")?49:59},p.posterKind!);
+    // Pôsteres premium usam as molduras e pontos existentes; nunca bloqueiam paredes.
+    const premium=cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes));
+    for(const p of builtPosters(s)){
+      const placement={x:p.x,y:p.y,axis:p.axis!,span:p.span!,top:p.id.endsWith(":0")||p.id.endsWith(":1")?128:133,height:p.id.endsWith(":0")||p.id.endsWith(":1")?49:59};
+      const index=Number(p.id.slice("built-poster:".length));
+      if(premium&&index>=0&&index<3)drawPremiumWallPoster(ctx,camera,placement,index as PremiumPosterIndex);
+      else drawWallPoster(ctx,camera,placement,p.posterKind!);
+    }
     // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
     for(const x of [1.7,3.9,Math.max(5.4,w-1.2)]){
       const p=iso({x,y:north},camera,146),z=camera.zoom;
