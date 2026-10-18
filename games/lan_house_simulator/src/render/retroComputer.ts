@@ -6,9 +6,10 @@ import {installedGpu} from "../sim/gpu.js";
 import {installedLcd,type LcdId} from "../sim/computerModels.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
+import {drawPcScreenActivity,pcActivityForSession,pcScreenFrame,type PcScreenActivity} from "./pcScreenActivities.js";
 
 type ComputerMode="ready"|"busy"|"offline"|"maintenance"|"powered-off";
-interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number}
+interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number;activity:PcScreenActivity|null;activityFrame:number}
 const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:string}>={
  lcd05:{top:"#d4dcd9",front:"#a5b6b5",side:"#71888a",accent:"#75a5a8"},
  lcd08:{top:"#535d60",front:"#39474b",side:"#26383d",accent:"#98b9b7"},
@@ -68,6 +69,12 @@ function lcdMonitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:Computer
    round(c,30,32,36,25,2,"#879e9c");
    path(c,[{x:37,y:64},{x:59,y:64}],"#c7ac76",3);
    path(c,[{x:41,y:40},{x:55,y:51}],"#896d52",3);
+  }else if(a.mode==="busy"&&a.activity){
+   const x0=edge+1,y0=edge+1;
+   const w=94-edge*2,h=98-edge-foot;
+   drawPcScreenActivity((x,y,ww,hh,color)=>{
+     c.fillStyle=color;c.fillRect(x0+x*w,y0+y*h,ww*w,hh*h);
+   },a.activity,a.activityFrame);
   }else if(n===4){
    c.fillStyle="#193a4e";c.fillRect(0,0,96,100);
    polygon(c,[{x:0,y:72},{x:47,y:24},{x:96,y:73},{x:96,y:94},{x:0,y:94}],"#275870");
@@ -128,6 +135,10 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
    c.fillStyle="#263c3c";c.fillRect(15,16,67,60);
    path(c,[{x:34,y:34},{x:49,y:49},{x:59,y:38}],"#d7ae65",5);
    c.fillStyle="#d7ae65";c.fillRect(33,56,30,4);
+  }else if(mode==="busy"&&a.activity){
+   drawPcScreenActivity((x,y,w,h,color)=>{
+     c.fillStyle=color;c.fillRect(15+x*67,16+y*60,w*67,h*60);
+   },a.activity,a.activityFrame);
   }else{
    c.fillStyle=mode==="offline"?"#284249":"#3a7c7c";c.fillRect(15,16,67,60);
    polygon(c,[{x:15,y:63},{x:47,y:30},{x:82,y:55},{x:82,y:76},{x:15,y:76}],"#32716a");
@@ -379,9 +390,15 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  const premiumChair=cosmeticAvailable("chair-gamer-neon",yearFromMinutes(s.totalMinutes));
  const premiumKeyboard=cosmeticAvailable("keyboard-rainbow-rgb",yearFromMinutes(s.totalMinutes));
  const keyboardPhase=premiumKeyboard?Math.floor(t*3+index)%8:0;
+ // O visitante define o conteúdo, jamais o quadro: alternar de atividade
+ // só ocorre entre sessões. Nenhuma alteração do RNG ou do save.
+ const visitor=mode==="busy"?s.customers.find(c=>c.pcIndex===index&&c.stage==="using"):undefined;
+ const activity=visitor?pcActivityForSession(visitor.id,index,yearFromMinutes(s.totalMinutes)):null;
+ const activityFrame=activity?pcScreenFrame(t):0;
  const appearance:ComputerAppearance={tier,occupied,mode,
   pulse:mode==="busy"||premiumChair?Math.floor(t*1.7+index)%2:0,
-  gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair,premiumKeyboard,keyboardPhase};
+  gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair,premiumKeyboard,keyboardPhase,
+  activity,activityFrame};
  if(!useCache||typeof document==="undefined"||ctx.globalAlpha!==1){paintComputer(ctx,camera,p,index,appearance);return;}
  const base=iso(p,camera),ix=Math.floor(base.x),iy=Math.floor(base.y),z=camera.zoom;
  const fx=base.x-ix,fy=base.y-iy;
