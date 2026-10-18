@@ -58,10 +58,17 @@ try{
    const k=index-Math.floor(index);
    const t=fraction*14;
    renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
-   for(let i=0;i<data.stations.length;i++){
-    const active=a.customers.some(c=>c?.stage==="using"&&c.ps1StationIndex===i);
-    drawPs1Station(ctx,cam,data.stations[i].point,0,active,t);
+   // Igual ao jogo: divisórias e bancadas entram na ordem de profundidade.
+   const staticObjects=data.stations.map((station,i)=>({
+    depth:station.point.x+station.point.y+.3,
+    paint:()=>drawPs1Station(ctx,cam,station.point,0,
+     a.customers.some(c=>c?.stage==="using"&&c.ps1StationIndex===i),t)
+   }));
+   for(const wall of data.walls??[]){
+    staticObjects.push({depth:wall.x+wall.y+.5,
+      paint:()=>renderer.drawInteriorWall(cam,wall)});
    }
+   for(const item of staticObjects.sort((x,y)=>x.depth-y.depth))item.paint();
    for(const id of data.ids){
     const i=data.ids.indexOf(id);
     const prev=a.customers[i],next=b.customers[i];
