@@ -6,6 +6,7 @@ import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, cuboid, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
 import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
+import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import { drawActor, actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import { movementDirection } from "./direction.js";
@@ -699,6 +700,9 @@ export class SceneRenderer {
     const mid=iso({x,y:y-0.45},camera);
     polygon(ctx,[{x:mid.x-10,y:mid.y+5},{x:mid.x+10,y:mid.y+5},
       {x:mid.x,y:mid.y-6}],"#F1D49B");
+    // Placa premium montada sobre a entrada: nenhuma colisão ou espaço extra.
+    if(cosmeticAvailable("neon-open-sign",yearFromMinutes(s.totalMinutes)))
+      drawNeonOpenSign(ctx,camera,{x,y:y-.37},s.totalMinutes*.1,neonOpenLit(s.totalMinutes));
   }
   private sign(camera:Projection,w:number):void {
     // Plaqueta de marca na área vazia do fundo: não cobre quadros nem clientes.
