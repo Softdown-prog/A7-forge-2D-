@@ -8,7 +8,7 @@ import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 
 type ComputerMode="ready"|"busy"|"offline"|"maintenance"|"powered-off";
-interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean}
+interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number}
 const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:string}>={
  lcd05:{top:"#d4dcd9",front:"#a5b6b5",side:"#71888a",accent:"#75a5a8"},
  lcd08:{top:"#535d60",front:"#39474b",side:"#26383d",accent:"#98b9b7"},
@@ -281,13 +281,48 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
  });
  if(gpu){const label=at(.108,.22,44);c.fillStyle=gpuColors[gpu];c.beginPath();c.ellipse(label.x,label.y,3*z,4*z,-.3,0,Math.PI*2);c.fill();}
  if(lcd)lcdMonitor(c,cam,p,a);else monitor(c,cam,p,a);
- // Keyboard stays at its existing anchor so seated hands remain aligned.
+ // O mesmo teclado físico, tecla a tecla, com identidade premium RGB.
+ // Posição do objeto e da digitação preservada para todos os modelos de PC.
  const keyX=p.x+.15,keyY=p.y+.38;
- raisedBox(c,cam,keyX,keyY,.42,.12,34.7,1.1,kit?.top??"#e1d8be",kit?.side??"#aba68e",kit?.front??"#b9b59e");
- for(let row=0;row<3;row++)for(let col=0;col<7;col++){
-  const x=keyX+.025+col*.05,y=keyY+.013+row*.028;
-  polygon(c,[iso({x,y},cam,36),iso({x:x+.036,y},cam,36),
-   iso({x:x+.036,y:y+.017},cam,36),iso({x,y:y+.017},cam,36)],kit?kit.front:"#f0e8d2",kit?kit.accent:"#a49f8b");
+ if(a.premiumKeyboard){
+  raisedBox(c,cam,keyX-.027,keyY-.022,.485,.174,34.35,2.2,
+   "#253545","#0e1828","#131f31");
+  const frame=[
+   at(.121,.358,36.8),at(.608,.358,36.8),
+   at(.608,.533,36.8),at(.121,.533,36.8)
+  ];
+  polygon(c,frame,"#1b2a3a","#5c7387");
+  // Contorno de brilho discreto, legível até no zoom normal do jogo.
+  const neonColors=["#65eafa","#80a4ff","#de88f7","#fb84b6",
+   "#ffa97a","#f6d46d","#99e9ab","#72e6dd"];
+  for(let row=0;row<3;row++)for(let col=0;col<7;col++){
+   const x=keyX+.025+col*.055,y=keyY+.012+row*.035;
+   const color=neonColors[(col+row*2+a.keyboardPhase)%neonColors.length]!;
+   polygon(c,[iso({x,y},cam,37.25),iso({x:x+.044,y},cam,37.25),
+    iso({x:x+.044,y:y+.023},cam,37.25),iso({x,y:y+.023},cam,37.25)],
+    color,"#17202f");
+   // Pequenos grafismos que lembram letras sem depender de fonte.
+   const dot=iso({x:x+.019,y:y+.009},cam,37.45);
+   c.fillStyle="rgba(255,255,255,.72)";
+   c.beginPath();c.ellipse(dot.x,dot.y,Math.max(.55,z*.85),Math.max(.5,z*.58),0,0,Math.PI*2);c.fill();
+  }
+  // Barra de espaço de perfil baixo, keycaps Esc e setas.
+  polygon(c,[at(.25,.499,37.4),at(.47,.499,37.4),
+   at(.47,.513,37.4),at(.25,.513,37.4)],
+   "#b6eefa","#507b8d");
+  const left=at(.15,.366,37.3),right=at(.60,.366,37.3);
+  path(c,[left,right],neonColors[a.keyboardPhase%neonColors.length]!,1.8*z);
+  // Apoio de punho de carbono texturizado: não atrapalha as mãos dos NPCs.
+  raisedBox(c,cam,keyX+.032,keyY+.137,.36,.060,34.85,.85,
+   "#263748","#172535","#213449");
+ }else{
+  raisedBox(c,cam,keyX,keyY,.42,.12,34.7,1.1,kit?.top??"#e1d8be",kit?.side??"#aba68e",kit?.front??"#b9b59e");
+  for(let row=0;row<3;row++)for(let col=0;col<7;col++){
+   const x=keyX+.025+col*.05,y=keyY+.013+row*.028;
+   polygon(c,[iso({x,y},cam,36),iso({x:x+.036,y},cam,36),
+    iso({x:x+.036,y:y+.017},cam,36),iso({x,y:y+.017},cam,36)],
+    kit?kit.front:"#f0e8d2",kit?kit.accent:"#a49f8b");
+  }
  }
  polygon(c,[at(.24,.48,36),at(.44,.48,36),at(.44,.494,36),at(.24,.494,36)],"#e3dac2","#9b9884");
  polygon(c,[at(.61,.38,35),at(.77,.38,35),at(.77,.56,35),at(.61,.56,35)],"#657e72","#50695f");
@@ -342,7 +377,11 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  const occupied=s.customers.some(c=>c.pcIndex===index&&["sitting","using","standing"].includes(c.stage));
  const mode:ComputerMode=!stationPoweredOn(s,index)?"powered-off":pcBroken(s,index)?"maintenance":!isOnline?"offline":occupied?"busy":"ready";
  const premiumChair=cosmeticAvailable("chair-gamer-neon",yearFromMinutes(s.totalMinutes));
- const appearance:ComputerAppearance={tier,occupied,mode,pulse:mode==="busy"||premiumChair?Math.floor(t*1.7+index)%2:0,gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair};
+ const premiumKeyboard=cosmeticAvailable("keyboard-rainbow-rgb",yearFromMinutes(s.totalMinutes));
+ const keyboardPhase=premiumKeyboard?Math.floor(t*3+index)%8:0;
+ const appearance:ComputerAppearance={tier,occupied,mode,
+  pulse:mode==="busy"||premiumChair?Math.floor(t*1.7+index)%2:0,
+  gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair,premiumKeyboard,keyboardPhase};
  if(!useCache||typeof document==="undefined"||ctx.globalAlpha!==1){paintComputer(ctx,camera,p,index,appearance);return;}
  const base=iso(p,camera),ix=Math.floor(base.x),iy=Math.floor(base.y),z=camera.zoom;
  const fx=base.x-ix,fy=base.y-iy;
