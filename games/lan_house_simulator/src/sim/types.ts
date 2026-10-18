@@ -126,7 +126,9 @@ export interface GameState {
   offlineUntil: number;
   licensedGames: boolean;
   /** Estações físicas compradas em 2002+: TV CRT, console, bancada e uma cadeira. */
-  ps1Stations?: Array<{slotId:string;wear:number}>;
+  ps1Stations?: Array<{slotId:string;wear:number;discId?:import("./ps1.js").Ps1DiscId}>;
+  /** Cópias físicas compradas na loja, sem licenças e sem custo recorrente. */
+  ps1Discs?: Partial<Record<import("./ps1.js").Ps1DiscId,number>>;
   ps1HourlyPrice?:number;
   ps1Sessions?:number;
   ps1Revenue?:number;
