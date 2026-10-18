@@ -1010,6 +1010,7 @@ function renderUI(liveOnly=false):void {
   renderShop(!liveOnly);
   activateAdminTab(activeAdminTab);
   renderTimeWeatherPanel(game,iconMarkup);
+  const year=gameYear(game);
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&!node.closest(".admin-section[hidden],.management-page[hidden]")&&node.textContent!==value)node.textContent=value;};
   if(adminOpen){
   const stationRevision=[year,game.cash,game.economyVersion,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)])];
