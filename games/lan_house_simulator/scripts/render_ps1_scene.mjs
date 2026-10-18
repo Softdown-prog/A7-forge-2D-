@@ -81,7 +81,7 @@ try{
    // Fundo original do salão, sem PCs, caixa, menus nem personagens extras.
    // drawBackground é método interno do SceneRenderer, sem alteração no runtime.
    renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
-   drawPs1Station(ctx,cam,point,0,playing,t);
+   drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
    // Desenhar a pessoa por cima da cadeira permite inspecionar mãos, sentar e levantar.
    drawActor(ctx,cam,{x:at.x,y:at.y,kind:"regular",id:5,time:t,
     pose,direction,transition,gamepad:playing,
