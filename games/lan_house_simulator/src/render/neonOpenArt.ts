@@ -17,6 +17,20 @@ export function drawNeonOpenSign(
  const at=iso(world,cam,115),z=cam.zoom;
  const w=108*z,h=45*z,x=at.x-w/2,y=at.y-h/2;
  ctx.save();ctx.lineJoin="round";ctx.lineCap="round";
+ // Dois montantes em aço escovado prendem a placa à base próxima do
+ // limiar da porta. Nada fica flutuando sobre o piso.
+ for(const side of [-1,1]){
+  const top={x:at.x+side*w*.34,y:y+h*.15};
+  const foot=iso({x:world.x+side*.57,y:world.y},cam,1.5);
+  ctx.fillStyle="rgba(16,29,40,.27)";
+  ctx.beginPath();ctx.ellipse(foot.x,foot.y+3*z,9*z,3.7*z,0,0,Math.PI*2);ctx.fill();
+  ctx.lineWidth=5*z;ctx.strokeStyle="#1a2c3c";
+  ctx.beginPath();ctx.moveTo(top.x,top.y);ctx.lineTo(foot.x,foot.y);ctx.stroke();
+  ctx.lineWidth=1.25*z;ctx.strokeStyle="#849bab";
+  ctx.beginPath();ctx.moveTo(top.x-1.3*z,top.y);ctx.lineTo(foot.x-1.3*z,foot.y);ctx.stroke();
+  ctx.fillStyle="#465c6e";ctx.beginPath();
+  ctx.ellipse(foot.x,foot.y,6.5*z,2.2*z,0,0,Math.PI*2);ctx.fill();
+ }
  // Cantoneiras metálicas e dois olhais suspensos.
  for(const dx of [-w*.34,w*.34]){
   ctx.strokeStyle="#3e4d5e";ctx.lineWidth=4*z;
