@@ -14,6 +14,7 @@ COPY --from=build /app/dist/js/sim /app/dist/js/sim
 COPY --from=build /app/dist/js/render/direction.js /app/dist/js/render/direction.js
 COPY package.json /app/package.json
 COPY donate-packages.mjs /app/donate-packages.mjs
+COPY cookie-items.mjs /app/cookie-items.mjs
 USER node
 EXPOSE 8080
 CMD ["node", "server.mjs"]
