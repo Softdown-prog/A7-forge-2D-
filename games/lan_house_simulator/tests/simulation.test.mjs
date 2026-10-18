@@ -471,9 +471,9 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/if\(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/if\(isPlaying&&!accountOpen&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame\(game,dt\*4\.0\)/);
  assert.match(source,/if\(!isPlaying\)return;/);
- assert.match(source,/showMenu\(\);\nrequestAnimationFrame\(frame\);/);
+ assert.match(source,/showMenu\(\);\r?\nrequestAnimationFrame\(frame\);/);
 });
 
 test("exportação e importação preservam a partida e rejeitam JSON inválido",async()=>{
@@ -584,7 +584,7 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
  assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
- assert.match(main,/if\(isPlaying&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
+ assert.match(main,/if\(isPlaying&&!accountOpen&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
 });
 
 test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
