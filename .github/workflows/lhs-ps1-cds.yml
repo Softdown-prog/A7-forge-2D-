@@ -3,6 +3,7 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/sim/ps1.ts'
+      - 'games/lan_house_simulator/assets/ps1/covers/**'
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/sim/engine.ts'
       - 'games/lan_house_simulator/src/main.ts'
