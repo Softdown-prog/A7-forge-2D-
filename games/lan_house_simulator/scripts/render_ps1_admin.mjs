@@ -74,6 +74,11 @@ try{
    if(!id.startsWith('floor-'))throw Error("ID de save perdido: "+id);
   }
 
+  // Imagem focada no cartão que motivou a correção: seleção sem números X/Y.
+  await page.locator('#ps1-placement').scrollIntoViewIfNeeded();
+  await page.locator('#ps1-placement').locator('xpath=..').screenshot({
+   path:resolve(output,"ps1_posicoes_"+tag+".png"),animations:"disabled"
+  });
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
    const images=[...document.querySelectorAll(".ps1-cd-cover")];
