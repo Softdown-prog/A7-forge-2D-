@@ -237,6 +237,7 @@ let relocationFrom:string|null=null;
 let hoveredPlacement:string|null=null;
 let placementNotice="";
 let purchaseRotation:0|1|2|3=0;
+let selectedPs1PlacementId:string|null=null; // escolha estável entre atualizações do painel
 let pendingWall:WallSegment|null=null;
 const layoutEditor=createLayoutEditor(canvas,()=>game,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
 installGameViewport(canvas);
@@ -815,13 +816,43 @@ function renderShop(force=true):void{
   }
   if(item.id==="ps1"){
     const free=ps1PlacementSlots(game),placement=document.createElement("select");
-    placement.id="ps1-placement";placement.className="slice";
-    placement.setAttribute("aria-label","Escolha a posição da bancada de PlayStation");
+    placement.id="ps1-placement";
+    placement.hidden=true; // valor técnico apenas para a compra, nunca exibido ao jogador
+    if(!free.some(spot=>spot.id===selectedPs1PlacementId))
+      selectedPs1PlacementId=free[0]?.id??null;
     for(const spot of free){
      const option=document.createElement("option");option.value=spot.id;
      option.textContent=ps1PlacementLabel(spot);
      placement.append(option);
     }
+    placement.value=selectedPs1PlacementId??"";
+    const locationSelector=document.createElement("div");
+    locationSelector.className="ps1-location-selector";
+    const locationName=document.createElement("output");
+    locationName.id="ps1-location-name";
+    locationName.className="ps1-location-name";
+    locationName.setAttribute("aria-live","polite");
+    const previous=document.createElement("button");
+    previous.type="button";previous.className="slice ps1-location-arrow";
+    previous.textContent="◀";
+    previous.setAttribute("aria-label","Escolher o local anterior para a bancada");
+    const next=document.createElement("button");
+    next.type="button";next.className="slice ps1-location-arrow";
+    next.textContent="▶";
+    next.setAttribute("aria-label","Escolher o próximo local para a bancada");
+    const updateLocation=(offset:number):void=>{
+      if(!free.length)return;
+      const index=Math.max(0,free.findIndex(spot=>spot.id===selectedPs1PlacementId));
+      const spot=free[(index+offset+free.length)%free.length]!;
+      selectedPs1PlacementId=spot.id;
+      placement.value=spot.id;
+      locationName.textContent=ps1PlacementLabel(spot);
+    };
+    previous.disabled=free.length<2;next.disabled=free.length<2;
+    previous.addEventListener("click",()=>updateLocation(-1));
+    next.addEventListener("click",()=>updateLocation(1));
+    updateLocation(0);
+    locationSelector.append(previous,locationName,next);
     button.disabled=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR||full||game.cash<price;
     button.textContent=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR?
      "🔒 Disponível em 2002":full?"Sem espaço livre":
@@ -829,7 +860,7 @@ function renderShop(force=true):void{
     const locationHelp=document.createElement("small");
     locationHelp.className="ps1-placement-help";
     locationHelp.textContent="Escolha um local no salão: norte é o fundo, sul é a entrada, oeste é a esquerda e leste é a direita.";
-    card.append(art,category,title,description,placement,locationHelp,button);
+    card.append(art,category,title,description,placement,locationSelector,locationHelp,button);
   }else card.append(art,category,title,description,button);
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
