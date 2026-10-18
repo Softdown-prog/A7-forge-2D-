@@ -8,7 +8,7 @@ Publicado em 14/10/2026: https://lhs.analysepro.com/conta/ . A publicação mant
 - Painel com email da conta, saldo de Cookies informado pelo backend e data do save principal. Pagamentos continuam desativados.
 - Save manual: exportar JSON pelo menu do jogo, selecionar no painel e confirmar o envio. O arquivo passa pelo validador do jogo antes de ser enviado e é validado novamente pela API. Principal anterior vira backup. Limite de 2 MB; revisão esperada evita sobrescrita concorrente. HTTP 409 exige conferir a nuvem antes de decidir repetir.
 - Download do principal ou backup pelo painel; para restaurar, importar o JSON pelo menu do jogo. Não há alteração automática da partida em execução nem envio periódico à nuvem.
-- A sessão vive somente na memória da página. Recarregar, sair ou navegar para o jogo exige novo login ao voltar. Senhas e tokens não são gravados no localStorage, sessionStorage ou arquivos do site. Firebase recebe a senha; Cloud Run recebe apenas o token.
+- A sessão acompanha a navegação e recargas na mesma aba, usando sessionStorage por até oito horas. Ao retomar, o cliente renova o token e valida a identidade e o acesso ao backend. Sair da conta remove a sessão. A senha não é armazenada pelo site; Firebase recebe a senha e Cloud Run recebe apenas o token.
 - Jogar continua gratuito e disponível sem conta. Nenhuma alteração no motor, economia ou saves locais foi incluída na versão publicada.
 
 ## Configuração e contato
