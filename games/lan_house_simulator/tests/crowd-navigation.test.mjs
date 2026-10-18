@@ -33,3 +33,33 @@ test("saída lateral do caixa é preservada com divisória distante",()=>{
  s.customers=[c];stepGame(s,1);
  assert.equal(c.stage,"to_pc");assert.deepEqual(c.target,{x:2.46,y:2.56});
 });
+
+
+test("destino ocupado temporariamente permite esperar perto sem atravessar o bloqueador",()=>{
+ const s=createGame(),client={id:1,x:3.25,y:4.48},blocker={id:2,x:5.25,y:4.48};
+ s.customers=[client,blocker];
+ const destination={x:blocker.x,y:blocker.y};
+ const route=crowdRoute(s,client,destination);
+ assert.ok(route?.length,"encontrar ponto de espera em vez de desistir");
+ assert.deepEqual(route.at(-1),destination,"não substituir destino final por posição improvisada");
+ assert.ok(route.length>=2,"preservar ao menos um ponto intermediário livre");
+ let previous=client;
+ for(const point of route.slice(0,-1)){
+  assert.equal(canTraverseLocalStep(s,previous,point),true);
+  assert.ok(Math.hypot(point.x-blocker.x,point.y-blocker.y)>=.43,
+   "pontos de espera não invadem espaço ocupado");
+  previous=point;
+ }
+ assert.equal(canTraverseLocalStep(s,previous,destination),true);
+ s.customers=[client];
+ const released=crowdRoute(s,client,destination);
+ assert.ok(released?.length,"continuar navegável após saída do bloqueador");
+});
+
+test("destino bloqueado por divisória continua inacessível apesar da espera",()=>{
+ const s=createGame(),client={id:1,x:3.25,y:3.25},blocker={id:2,x:5.25,y:3.25};
+ s.customers=[client,blocker];
+ s.interiorWalls=Array.from({length:6},(_,y)=>({axis:"y",x:4,y}));
+ assert.equal(crowdRoute(s,client,{x:blocker.x,y:blocker.y}),null,
+  "um corpo no objetivo não pode criar um atalho através da parede");
+});

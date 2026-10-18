@@ -18,17 +18,24 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  const furniture=furnitureLocations(s).filter(p=>p.kind!=="poster").map(item=>{
   const p=slots.get(item.slotId);return p?{...p,r:item.kind==="table"?.4:.28}:null;
  }).filter((p):p is NonNullable<typeof p>=>!!p&&p.surface==="floor");
- const clear=(p:Point)=>p.x>b.minX+.1&&p.x<b.maxX-.1&&p.y>b.minY+.1&&p.y<b.maxY-.1&&
-  bodies.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>=CUSTOMER_COLLISION_RADIUS+.00001)&&
+ // Móveis e paredes permanecem sólidos; um cliente no destino é
+ // temporário. Alcançar um ponto seguro próximo evita espera circular.
+ const staticClear=(p:Point)=>p.x>b.minX+.1&&p.x<b.maxX-.1&&p.y>b.minY+.1&&p.y<b.maxY-.1&&
   (!custom||Math.hypot(p.x-destination.x,p.y-destination.y)<.22||objects.every(r=>!(p.x>r.minX-.03&&p.x<r.maxX+.03&&p.y>r.minY-.03&&p.y<r.maxY+.03)))&&
   (custom||desks.every(d=>!(p.x>d.x-.08&&p.x<d.x+1.05&&p.y>d.y-.08&&p.y<d.y+.60)))&&
   (custom||vendingMachines(s).every(d=>!(p.x>d.x-.08&&p.x<d.x+VENDING_WIDTH+.08&&p.y>d.y-.08&&p.y<d.y+VENDING_DEPTH+.08)))&&
   furniture.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>o.r);
- if(!clear(destination))return null; // Não disputar um assento/atendimento ocupado.
- const segmentClear=(a:Point,d:Point)=>{
+ const clear=(p:Point)=>staticClear(p)&&
+  bodies.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>=CUSTOMER_COLLISION_RADIUS+.00001);
+ if(!staticClear(destination))return null; // Nunca rotear para dentro de um móvel.
+ const destinationOccupied=!clear(destination);
+ const segmentClear=(a:Point,d:Point,allowOccupiedGoal=false)=>{
   if(!canTraverseLocalStep(s,a,d))return false;
   const n=Math.max(1,Math.ceil(Math.hypot(d.x-a.x,d.y-a.y)/.08));
-  for(let i=1;i<=n;i++)if(!clear({x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n}))return false;
+  for(let i=1;i<=n;i++){
+   const p={x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n};
+   if(!(allowOccupiedGoal?staticClear(p):clear(p)))return false;
+  }
   return true;
  };
  const cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
@@ -43,7 +50,7 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  queue.sort((a,d)=>Math.hypot(point(a).x-c.x,point(a).y-c.y)-Math.hypot(point(d).x-c.x,point(d).y-c.y));
  for(let index=0;index<queue.length;index++){
   const key=queue[index]!,at=point(key);
-  if(Math.hypot(at.x-destination.x,at.y-destination.y)<=.75&&segmentClear(at,destination)){
+  if(Math.hypot(at.x-destination.x,at.y-destination.y)<=.75&&segmentClear(at,destination,destinationOccupied)){
    const result:Point[]=[{...destination}];let current=key;
    while(current!==-1){result.push(point(current));current=prev.get(current)!;}
    return result.reverse();
