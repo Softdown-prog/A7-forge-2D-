@@ -1,3 +1,4 @@
+import {selectAdminArea} from './management_navigation.mjs';
 // Gravação contínua da execução REAL do jogo em Chromium via Playwright.
 // Diferente das pranchas PNG: um frame de vídeo é capturado a cada instante da partida.
 import {chromium} from "playwright";
@@ -51,7 +52,7 @@ try{
  await page.waitForTimeout(1200);
  // PC já desgastado: contratação real pela interface do painel administrativo.
  await page.locator("#open-admin").click();
- await page.locator('[data-admin-tab="computers"]').click();
+ await selectAdminArea(page,'computers');
  const repair=page.locator('button').filter({hasText:/Chamar técnico/}).first();
  if(await repair.count()&&await repair.isEnabled())await repair.click();
  await page.locator("#close-admin").click();

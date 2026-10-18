@@ -128,6 +128,11 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/validation
+
+      - name: Verify management task pages and drawing during scroll
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_management_panels.mjs out/validation
       - name: Verify 2002 PlayStation shop, bench and admin on desktop/mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

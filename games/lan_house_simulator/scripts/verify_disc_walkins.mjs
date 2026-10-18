@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Valida um cliente real que entra apenas para fazer cópias de CD/DVD.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -42,9 +43,11 @@ try {
   await press(page.locator("#menu-continue"));
   await page.waitForFunction(()=>document.querySelector("#events")?.textContent?.includes("Cliente avulso copiou"),null,{timeout:9000});
   await press(page.locator("#open-admin"));
+  if(!await page.locator(".management-summary").evaluate(node=>node.open))await page.locator(".management-summary > summary").click();
   assert.equal(await page.locator("#admin-served").innerText(),"1");
+  await selectAdminArea(page,"prices");await selectTask(page,"prices","discs");
   await page.waitForFunction(()=>document.querySelector("#disc-copy-summary")?.textContent?.includes("1 cliente atendido exclusivamente para cópias"),null,{timeout:2500});
-  await press(page.locator('[data-admin-tab="finance"]'));
+  await selectAdminArea(page,'finance');await page.locator('.management-summary').evaluate(node=>node.open=true);
   assert.match(await page.locator("#finance").innerText(),/PCs 0 · Impressões avulsas 0 · Cópias avulsas 1/);
   await page.evaluate(()=>window.dispatchEvent(new Event("beforeunload")));
   const state=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));

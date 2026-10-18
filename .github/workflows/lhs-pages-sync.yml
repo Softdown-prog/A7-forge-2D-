@@ -47,6 +47,7 @@ jobs:
           npx playwright install --with-deps chromium
           node scripts/verify_live_site_preview.mjs
           node scripts/verify_hardware_scroll.mjs
+          node scripts/verify_management_panels.mjs
 
       - name: Conferir credencial dedicada do espelho
         env:

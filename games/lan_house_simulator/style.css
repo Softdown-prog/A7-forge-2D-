@@ -732,3 +732,44 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .ps1-station-summary{align-items:stretch}
  .ps1-station-summary>button{max-width:100%}
 }
+
+/* Management task pages: one short subject at a time, with native touch scroll. */
+.management-pages{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 18px}
+.management-pages button{flex:1 1 140px;min-height:44px;font-size:12px;white-space:normal}
+.management-pages [aria-pressed="true"]{background:var(--ink);color:var(--mint);border-color:var(--ink)}
+.management-page{min-width:0;overflow-wrap:anywhere}
+.management-page[hidden]{display:none!important}
+.management-page>.management-empty{display:none}
+.management-page>.disc-copy-panel[hidden]+.management-empty{display:block;padding:18px;border:1px dashed #91a185;border-radius:8px}
+.management-area{display:none}
+.machine-sheet>summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+#admin .admin-section>h3{font-size:19px;margin-bottom:8px}
+@media(max-width:700px){
+ #admin .admin-tabs{display:none}
+ .management-area{display:grid;gap:6px;font-size:12px;font-weight:700;margin:12px 0}
+ .management-area select{width:100%;min-height:46px;border:1px solid #839578;border-radius:7px;padding:9px;background:#f3f5ea;color:#19352a;font:inherit;font-size:15px}
+ #admin .admin-summary{gap:7px;margin-bottom:14px}
+ #admin .admin-summary>div{padding:10px}
+ #admin .admin-summary strong{font-size:17px}
+ .management-pages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 16px}
+ .management-pages button{font-size:12px;padding:8px;min-height:44px}
+ #admin .admin-grid>.stat{padding:12px}
+ #shop .shop-grid{grid-template-columns:1fr}
+ .shop-categories{display:flex;gap:6px;overflow-x:auto;padding:4px 0 12px;touch-action:pan-x}
+ .shop-categories button{flex:0 0 auto;min-height:44px}
+}
+.shop-categories{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+.shop-categories [aria-pressed="true"]{background:var(--ink);color:var(--mint)}
+.management-summary{margin:0 0 14px;border:1px solid #c7cfb6;border-radius:8px;background:#e6ebda}
+.management-summary>summary{min-height:44px;padding:12px;cursor:pointer;font-size:12px;font-weight:700}
+.management-summary .admin-summary{margin:0;padding:8px}
+.admin .management-pages button[aria-pressed="true"],.admin .shop-categories button[aria-pressed="true"]{background:#233e32;color:#f3f6dc;border-color:#233e32}
+.admin .management-pages button[aria-pressed="false"]{background:#f1f0e0;color:#19352a}
+.shop-guide{margin:10px 0}.shop-guide>summary{min-height:44px;line-height:44px;cursor:pointer}
+.shop-art>img{width:100%;height:100%;object-fit:contain;position:relative;z-index:1}
+.shop-art[data-item="printer"]:before,.shop-art[data-item="ps1"]:before{display:none}
+.machine-sheet>summary{padding:10px 14px}
+.admin .management-pages button[aria-pressed="true"]:hover:not(:disabled){background:#233e32;color:#f3f6dc;border-color:#233e32}
+.machine-sheet>summary::before{content:'▸';margin-right:8px}
+.machine-sheet[open]>summary::before{content:'▾'}
+@media(max-width:700px){.admin .management-pages button{font-size:12px!important}}

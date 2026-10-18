@@ -34,6 +34,8 @@ import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
+import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
+import {installManagementPanels} from "./ui/managementPanels.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
@@ -355,8 +357,8 @@ noticesList?.addEventListener("click",event=>{
  if(target.dataset.decision&&target.dataset.choice){applyResult(game,chooseDecision(game,target.dataset.decision,target.dataset.choice));renderUI();save();}
  else if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
  else if(target.dataset.noticeAction==="programmer"){applyResult(game,hireContentProgrammer(game));renderUI();save();}
- else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");renderUI();}
- else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");renderUI();}
+ else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");managementPanels.select("licenses","windows");renderUI();}
+ else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");managementPanels.select("services","network");renderUI();}
 });
 button("open-admin",()=>{if(layoutEditor.active)layoutEditor.close();adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("open-shop",()=>{if(layoutEditor.active)layoutEditor.close();shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
@@ -412,13 +414,13 @@ shopCatalog?.addEventListener("click",event=>{
  // Na primeira compra, apresentar imediatamente o novo painel do console.
  // O atalho do próprio painel leva à loja para comprar o primeiro CD.
  if(result.ok&&id==="ps1"&&(game.ps1Stations?.length??0)===1){
-  shopOpen=false;adminOpen=true;activateAdminTab("consoles");
+  shopOpen=false;adminOpen=true;activateAdminTab("consoles");managementPanels.select("consoles","stations");
  }
  renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("ps1-open-shop",()=>{
- adminOpen=false;shopOpen=true;renderUI();
+ adminOpen=false;shopOpen=true;shopPanels?.select("consoles");renderUI();
  (document.querySelector(".ps1-shop-heading")??document.getElementById("shop-catalog"))?.scrollIntoView({block:"start",behavior:"instant"});
 });
 for(const [id,delta] of [["ps1-price-down",-.25],["ps1-price-up",.25]] as const)
@@ -577,14 +579,18 @@ maintenancePanel.addEventListener("click",event=>{
  applyResult(game,target.dataset.pcRepair!==undefined?repairComputer(game,index):upgradeComputer(game,index));
  renderUI();save();
 });
+const shopPanels=shop?installShopPanels(shop,()=>renderUI()):null;
+const shopArtwork=new Map<string,string>();
+const managementPanels=installManagementPanels(admin,()=>renderUI());
 const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]"));
 const adminSections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
 function activateAdminTab(tab:string):void{
  activeAdminTab=tab;
+ managementPanels.syncArea(tab);
  for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));button.tabIndex=active?0:-1;}
  for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
-for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");renderUI();});
+for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");admin.scrollTop=0;renderUI();});
 const retailControls=document.getElementById("retail-price-controls");
 const discControls=document.getElementById("disc-copy-price-controls");
 const printControls=document.getElementById("print-price-controls");
@@ -746,7 +752,7 @@ function panelChanged(name:string,revision:unknown,force:boolean):boolean{
 function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
- if(!panelChanged("shop",[game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
+ if(!panelChanged("shop",[shopPanels?.current(),game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
@@ -760,10 +766,13 @@ function renderShop(force=true):void{
  }
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
+  if(shopCategory(item.id)!==shopPanels?.current())continue;
   const card=document.createElement("article");card.className="shop-card";
   const art=document.createElement("div");art.className="shop-art";art.dataset.item=item.id;art.setAttribute("aria-hidden","true");art.innerHTML=iconMarkup(catalogueIcon(item.id));
   if(item.id==="disc-copier"||item.id==="printer"||item.id==="ps1"){
-   art.replaceChildren();const preview=document.createElement("canvas");
+   art.replaceChildren();
+   if(shopArtwork.has(item.id)){const image=document.createElement("img");image.src=shopArtwork.get(item.id)!;image.alt="";art.append(image);}
+   else{const preview=document.createElement("canvas");
    preview.width=640;preview.height=360;
    const ctx=preview.getContext("2d");
    if(ctx){
@@ -775,7 +784,9 @@ function renderShop(force=true):void{
      drawPs1Station(ctx,preview,{x:0,y:0},0,true,0);
     }
    }
-   art.append(preview);
+   shopArtwork.set(item.id,preview.toDataURL());
+   const image=document.createElement("img");image.src=shopArtwork.get(item.id)!;image.alt="";art.append(image);
+   }
   }
   const title=document.createElement("h3");title.textContent=item.label;
   const category=document.createElement("small");category.textContent=item.category;
@@ -822,7 +833,7 @@ function renderShop(force=true):void{
  }
  // CDs físicos do PS1: não são licenças nem são vendidos ao cliente final.
  // Uma cópia pode alimentar apenas uma bancada por vez.
- if(game.economyVersion===2&&gameYear(game)>=PS1_UNLOCK_YEAR){
+ if(shopPanels?.current()==="consoles"&&game.economyVersion===2&&gameYear(game)>=PS1_UNLOCK_YEAR){
   const label=document.createElement("h3");label.className="ps1-shop-heading";
   label.textContent="Jogos de PlayStation 1 · CDs físicos";
   shopCatalog.append(label);
@@ -874,7 +885,7 @@ function renderShop(force=true):void{
  * Não reconstruir o catálogo inteiro ao mudar 1%: preserva foco, toque e
  * posição de rolagem no painel mobile. */
 function refreshGpuDownloadMeters():void{
- if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses")return;
+ if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses"||!managementPanels.active("licenses","gpu"))return;
  const slots=gpuGameDownloadSlots(game);
  const running=game.gpuGameInstallJobs?.filter(job=>!gpuGameInstallPausedReason(game,job.pc)).length??0;
  const bandwidth=gpuGamePanel.querySelector<HTMLElement>("[data-gpu-bandwidth]");
@@ -971,8 +982,9 @@ function renderUI(liveOnly=false):void {
   if(calendar){const html=iconMarkup("calendar")+(game.totalMinutes>=GAME_LAST_MINUTE?"Fim do calendário · ":"")+"Dia "+dayNumber(game)+" · "+String(monthDay).padStart(2,"0")+"/"+String(month).padStart(2,"0")+"/"+year+" · "+displayTime(game);if(calendar.innerHTML!==html)calendar.innerHTML=html;}
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
-  const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.ps1Stations,game.ps1Discs,game.ps1HourlyPrice,game.ps1Sessions,game.ps1Revenue,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,Math.floor(game.totalMinutes/DAY_MINUTES),activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&!node.closest(".admin-section[hidden],.management-page[hidden]")&&node.textContent!==value)node.textContent=value;};
+  if(adminOpen){
+  const stationRevision=[year,game.cash,game.economyVersion,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)])];
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -984,6 +996,7 @@ function renderUI(liveOnly=false):void {
   const statement=financialSnapshot(game);
   const inCurrency=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   setText("admin-cash",money(game.cash));
+  setText("management-summary-value","Caixa "+money(game.cash)+" · contas/mês "+money(monthlyBills(game)));
   setText("admin-profit",money(statement.netResult));
   const resultFigure=document.getElementById("admin-profit");
   if(resultFigure)resultFigure.classList.toggle("balance-negative",statement.netResult<0);
@@ -998,6 +1011,7 @@ function renderUI(liveOnly=false):void {
     inCurrency(statement.differenceCents/100)+
     " do cálculo pelo capital inicial e pelos lançamentos. Confira o histórico em Finanças.";
   }
+  if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
   const closing=monthlyClosingSnapshot(game);
   const dueLabel=document.getElementById("bill-watch-title");
   const dueStatus=document.getElementById("bill-watch-status");
@@ -1014,6 +1028,7 @@ function renderUI(liveOnly=false):void {
   }
   if(dueBox)dueBox.classList.toggle("bill-watch-warning",
    !closing.campaignEnding&&!closing.coversProvision&&closing.daysRemaining<=7);
+  }
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");
@@ -1037,7 +1052,7 @@ function renderUI(liveOnly=false):void {
     " · variação do ano anterior "+ipcaLastYear(year)!.toFixed(2)+"%.":" · último ano sem dado oficial: congelado."):
     "Partida clássica: inflação antiga de energia (+3% ao ano); sem indexação do IPCA.");
   const durations=document.getElementById("session-package-prices");
-  if(durations&&adminOpen&&activeAdminTab==="prices"){
+  if(durations&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","hourly")&&panelChanged("durations",[game.pricePerHour,historical],!liveOnly)){
    durations.replaceChildren();
    for(const min of (historical?SESSION_PACKAGES:[30,45,60,90])){
     const li=document.createElement("li");
@@ -1049,6 +1064,7 @@ function renderUI(liveOnly=false):void {
   const priceDown=document.getElementById("price-down"),priceUp=document.getElementById("price-up");
   if(priceDown instanceof HTMLButtonElement)priceDown.disabled=game.pricePerHour-(historical?.5:2)<(historical?MIN_HOURLY_PRICE:4);
   if(priceUp instanceof HTMLButtonElement)priceUp.disabled=game.pricePerHour+(historical?.5:2)>max;
+  if(activeAdminTab==="prices"&&managementPanels.active("prices","insights")){
   const priceInsight=hourlyPriceInsight(game);
   const priceDemandLabel=priceInsight.relativeDemandPercent===0?"menos de 1%":priceInsight.relativeDemandPercent+"%";
   setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
@@ -1064,6 +1080,7 @@ function renderUI(liveOnly=false):void {
   setText("price-scenario-lower",historical?scenarioLine(-.5,"Reduzir R$ 0,50"):scenarioLine(-2,"Reduzir R$ 2"));
   setText("price-scenario-current",scenarioLine(0,"Manter"));
   setText("price-scenario-higher",historical?scenarioLine(.5,"Aumentar R$ 0,50"):scenarioLine(2,"Aumentar R$ 2"));
+  }
   const nextEnergy=energyYearOutlook(game);
   setText("energy-year-outlook",historical?
     "IPCA na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
@@ -1072,8 +1089,8 @@ function renderUI(liveOnly=false):void {
     "Energia na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
     ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
     "% de tarifa, mantendo os mesmos PCs e a carga ociosa. Demais contas fixas não recebem inflação automática.");
-  if(retailControls&&adminOpen&&activeAdminTab==="prices"){
-   retailControls.replaceChildren();
+  if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
+   const nextRetail=document.createElement("div");
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
     const line=document.createElement("div");line.className="price-control";
     const name=document.createElement("span");name.textContent=label;name.insertAdjacentHTML("afterbegin",iconMarkup(item));
@@ -1089,13 +1106,14 @@ function renderUI(liveOnly=false):void {
       }
       actions.append(button);
     }
-    line.append(name,actions);retailControls.append(line);
+    line.append(name,actions);nextRetail.append(line);
    }
+   syncPanelChildren(retailControls,nextRetail);
   }
   const discPanel=document.getElementById("disc-copy-panel");
   if(discPanel)discPanel.hidden=!game.discCopier;
-  if(discControls&&game.discCopier&&activeAdminTab==="prices"){
-   discControls.replaceChildren();
+  if(discControls&&game.discCopier&&activeAdminTab==="prices"&&managementPanels.active("prices","discs")){
+   const nextDiscs=document.createElement("div");
    for(const kind of ["cd","dvd"] as const){
     const row=document.createElement("div");row.className="price-control";
     const name=document.createElement("span");name.innerHTML=iconMarkup("disc");name.append("Cópia de "+kind.toUpperCase());
@@ -1108,8 +1126,9 @@ function renderUI(liveOnly=false):void {
     }
     const cost=document.createElement("small");cost.className="disc-copy-cost";const margin=game.discCopier.prices[kind]-discMediaCost(game,kind);
     cost.textContent="Mídia: "+inReais(discMediaCost(game,kind))+" · resultado por cópia: "+inReais(margin)+(margin<0?" · este preço dá prejuízo":"");
-    row.append(name,actions,cost);discControls.append(row);
+    row.append(name,actions,cost);nextDiscs.append(row);
    }
+   syncPanelChildren(discControls,nextDiscs);
    const copier=game.discCopier,report=discEconomy(game)!;
    setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado operacional "+inReais(report.operatingResult)+" · "+
      (copier.walkIns??0)+(copier.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para cópias.");
@@ -1119,8 +1138,8 @@ function renderUI(liveOnly=false):void {
   }
   const printPanel=document.getElementById("print-service-panel");
   if(printPanel)printPanel.hidden=!game.printer;
-  if(printControls&&game.printer&&activeAdminTab==="prices"){
-   printControls.replaceChildren();
+  if(printControls&&game.printer&&activeAdminTab==="prices"&&managementPanels.active("prices","printing")){
+   const nextPrint=document.createElement("div");
    const row=document.createElement("div");row.className="price-control";
    const label=document.createElement("span");label.textContent="Preço por página";
    const actions=document.createElement("div");actions.className="price-actions";
@@ -1137,7 +1156,7 @@ function renderUI(liveOnly=false):void {
    const printMargin=game.printer.price-printPaperInkCost(game);
    expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(printMargin)+
      (printMargin<0?" · atenção: este preço dá prejuízo":printMargin===0?" · sem margem para recuperar a máquina":"");
-   row.append(label,actions,expense);printControls.append(row);
+   row.append(label,actions,expense);nextPrint.append(row);syncPanelChildren(printControls,nextPrint);
    const report=printEconomy(game)!;
    setText("print-service-summary",game.printer.pages+" páginas realizadas · faturamento "+inReais(game.printer.revenue)+
      " · materiais "+inReais(game.printer.expenses)+" · resultado operacional "+inReais(report.operatingResult)+
@@ -1146,7 +1165,6 @@ function renderUI(liveOnly=false):void {
      (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 320 da impressora.")+
      " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
   }
-  setText("stock", "Bebidas "+game.inventory.soda+" · Doces "+game.inventory.candy+" · Salgadinhos "+game.inventory.snacks);
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
   const supplierButton=document.querySelector<HTMLButtonElement>("#supplier-up");
   if(supplierButton)supplierButton.disabled=supplierLevel(game)===2;
@@ -1166,7 +1184,7 @@ function renderUI(liveOnly=false):void {
   const poweredOff=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>!stationPoweredOn(game,i)).length;
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+poweredOff+" desligados · "+broken+" em manutenção");
   const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
-  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"){
+  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"&&managementPanels.active("computers","ledger")){
     const rows:HTMLTableRowElement[]=[];
     const currency=(value:number):string=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
     for(let i=0;i<pcCount(game);i++){
@@ -1186,10 +1204,11 @@ function renderUI(liveOnly=false):void {
       }
       rows.push(row);
     }
-    stationLedgerRows.replaceChildren(...rows);
+    const next=document.createElement("tbody");next.append(...rows);syncPanelChildren(stationLedgerRows,next);
   }
   const liveMaintenance=document.getElementById("pc-maintenance");
-  if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"){
+  if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"&&!managementPanels.active("computers","ledger")&&panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly)){
+    const page=managementPanels.current("computers");
     // Build offscreen; update the existing controls without collapsing the panel
     // or disconnecting the focused category on every sale/wear refresh.
     const maintenance=document.createElement("div");
@@ -1197,6 +1216,7 @@ function renderUI(liveOnly=false):void {
     const lcdFocus=focused instanceof HTMLButtonElement&&liveMaintenance.contains(focused)
       ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
       :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
+    if(page==="operations"){
     const header=document.createElement("strong");header.textContent="Operação e manutenção por computador";maintenance.replaceChildren(header);
     const powerHint=document.createElement("p");powerHint.className="station-power-hint";
     powerHint.textContent="Desligue uma estação livre para economizar energia e instalar melhorias. Religue para receber clientes.";
@@ -1222,13 +1242,15 @@ function renderUI(liveOnly=false):void {
       const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
       const tier=game.pcTiers?.[i]??1;
       const hardwareYear=tier===1?2000:2003;
-      upgrade.textContent=tier>=3?"Peças no catálogo abaixo":("Kit CRT "+hardwareYear+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
+      upgrade.textContent=tier>=3?"Ver Peças e configuração":("Kit CRT "+hardwareYear+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
       upgrade.disabled=tier>=3||year<hardwareYear||game.cash<tier*240||isOn||busy||!!job;
       label.textContent+=" · hardware nível "+tier;
       line.append(label,power,repair,upgrade);maintenance.appendChild(line);
     }
+    }
     selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
-    maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab));
+    if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
+    if(page==="monitors"){
     const kits=document.createElement("section");kits.className="lcd-upgrades";
     const title=document.createElement("h3");title.textContent="Da era CRT aos LCDs";
     const hint=document.createElement("p");hint.className="lcd-note";
@@ -1263,6 +1285,7 @@ function renderUI(liveOnly=false):void {
       info.append(name,description,benefit,buy);card.append(art,info);catalog.append(card);
     }
     kits.append(title,hint,choices,installed,catalog);maintenance.append(kits);
+    }
     presentComputerOperations(game,maintenance);
     decorateControls(maintenance);
     syncPanelChildren(liveMaintenance,maintenance);
@@ -1272,16 +1295,16 @@ function renderUI(liveOnly=false):void {
       (restored&&!restored.disabled?restored:fallback)?.focus({preventScroll:true});
     }
   }
-  if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"){
+  if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"&&panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly)){
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
-    gpuPcChoice.replaceChildren();gpuList.replaceChildren();
+    const nextGpuChoice=document.createElement("div");const nextGpuList=document.createElement("div");
     for(let i=0;i<pcCount(game);i++){
       const control=document.createElement("button");control.type="button";
       control.dataset.gpuSelect=String(i);
       control.className="gpu-station"+(selectedGpuPc===i?" selected":"");
       control.textContent="PC "+(i+1)+(stationPoweredOn(game,i)?" · ligado":" · desligado")+(installedGpu(game,i)?" · GPU":" · sem GPU");
       control.setAttribute("aria-pressed",String(selectedGpuPc===i));
-      gpuPcChoice.append(control);
+      nextGpuChoice.append(control);
     }
     const current=gpuSpec(installedGpu(game,selectedGpuPc));
     setText("gpu-replacement-note",current
@@ -1306,12 +1329,14 @@ function renderUI(liveOnly=false):void {
       button.dataset.gpuBuy=model.id;
       button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":!powerOk?"Requer fonte de "+neededPsu+" W":"Comprar · R$ "+model.cost;
       button.disabled=locked||owned||obsolete||!powerOk||stationPoweredOn(game,selectedGpuPc)||stationOccupied(game,selectedGpuPc)||!!game.repairJobs?.some(j=>j.pc===selectedGpuPc)||game.cash<model.cost;
-      info.append(title,details,button);card.append(art,info);gpuList.append(card);
+      info.append(title,details,button);card.append(art,info);nextGpuList.append(card);
     }
+   syncPanelChildren(gpuPcChoice,nextGpuChoice);
+   syncPanelChildren(gpuList,nextGpuList);
   }
   setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
-  if(licensePanel&&adminOpen&&activeAdminTab==="licenses"){
-    licensePanel.replaceChildren();
+  if(licensePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","windows")&&panelChanged("licensePanel",[stationRevision],!liveOnly)){
+    const nextWindows=document.createElement("div");
     for(let i=0;i<pcCount(game);i++){
       const line=document.createElement("div");line.className="price-control";
       const title=document.createElement("strong");
@@ -1329,15 +1354,16 @@ function renderUI(liveOnly=false):void {
         btn.title=reasons.join(" ");
         choices.appendChild(btn);
       }
-      line.append(title,choices);licensePanel.appendChild(line);
+      line.append(title,choices);nextWindows.appendChild(line);
     }
+   syncPanelChildren(licensePanel,nextWindows);
   }
-  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"){
-    eraGamePanel.replaceChildren();
+  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[stationRevision,game.licensedGames,game.licensedEraGames],!liveOnly)){
+    const nextEraGames=document.createElement("div");
     const owned=game.licensedEraGames??[];
     const summary=document.createElement("p");summary.className="era-game-summary";
     summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · variedade amplia a procura em "+Math.round((eraGameVisitorMultiplier(game)-1)*1000)/10+"%, até 15%.";
-    eraGamePanel.append(summary);
+    nextEraGames.append(summary);
     for(const releaseYear of [1998,1999]){
       const section=document.createElement("section");section.className="era-game-section";
       const groupTitle=document.createElement("h4");
@@ -1364,11 +1390,12 @@ function renderUI(liveOnly=false):void {
         button.disabled=!quote.ok;button.title=quote.message;
         details.append(name,info,meta,status,button);card.append(cover,details);grid.append(card);
       }
-      section.append(groupTitle,grid);eraGamePanel.append(section);
+      section.append(groupTitle,grid);nextEraGames.append(section);
     }
+   syncPanelChildren(eraGamePanel,nextEraGames);
   }
-  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"){
-    gpuGamePanel.replaceChildren();
+  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[stationRevision,game.licensedGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
+    const nextGpuGames=document.createElement("div");
     if(game.gpuGameInstallJobs?.length){
       const overview=document.createElement("section");
       overview.className="gpu-download-overview";
@@ -1402,14 +1429,14 @@ function renderUI(liveOnly=false):void {
        record.append(heading,label,meter,cancel);
        overview.append(record);
       }
-      gpuGamePanel.append(overview);
+      nextGpuGames.append(overview);
     }
     if(game.economyVersion!==2||year<2005){
       const note=document.createElement("p");
       note.textContent=game.economyVersion!==2
        ?"Os jogos com GPU são um recurso do modo histórico."
        :"Novos jogos que exigem placa de vídeo chegam em 2005.";
-      gpuGamePanel.append(note);
+      nextGpuGames.append(note);
     }else for(const title of GPU_GAME_CATALOG){
       const card=document.createElement("div");card.className="price-control";
       const heading=document.createElement("strong");
@@ -1511,10 +1538,12 @@ function renderUI(liveOnly=false):void {
        }
        card.append(stations);
       }
-      gpuGamePanel.append(card);
+      nextGpuGames.append(card);
     }
+   syncPanelChildren(gpuGamePanel,nextGpuGames);
   }
   refreshGpuDownloadMeters();
+  if(activeAdminTab==="consoles"){
   const ps1Area=document.getElementById("ps1-stations");
   const consoleReady=game.economyVersion===2&&year>=PS1_UNLOCK_YEAR;
   setText("ps1-overview",!consoleReady?
@@ -1537,8 +1566,9 @@ function renderUI(liveOnly=false):void {
     (id==="ps1-price-down"?ps1HourPrice(game)<=.5:
      ps1HourPrice(game)>=ps1AllowedHourlyCeiling(game));
   }
-  if(ps1Area&&adminOpen&&activeAdminTab==="consoles"){
+  if(ps1Area&&adminOpen&&activeAdminTab==="consoles"&&managementPanels.active("consoles","stations")){
    ps1Area.replaceChildren();
+   if(!(game.ps1Stations?.length)){const empty=document.createElement("p");empty.textContent=consoleReady?"Compre a primeira bancada na loja para receber clientes de videogame.":"As bancadas de PlayStation chegam em 2002.";ps1Area.append(empty);}
    for(const [index,station] of (game.ps1Stations??[]).entries()){
     const card=document.createElement("div");card.className="ps1-station-summary";
     const text=document.createElement("span");
@@ -1574,6 +1604,8 @@ function renderUI(liveOnly=false):void {
     card.append(text,cdLabel,button);ps1Area.append(card);
    }
   }
+  }
+  if(activeAdminTab==="services"){
   const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
    for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
     const el=document.querySelector<HTMLButtonElement>("#"+id);
@@ -1602,7 +1634,7 @@ function renderUI(liveOnly=false):void {
     return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
   }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
   " · faxineiro "+(game.cleaningJob?workPhaseLabel("cleaner",game.cleaningJob).toLowerCase():cleanerHired?"contratado":"sem contrato"));
-  if(adminOpen&&activeAdminTab==="services"){
+  if(adminOpen&&activeAdminTab==="services"&&managementPanels.active("services","access")){
    const issues=inspectServiceAccess(!liveOnly);
    const summary=issues.length
     ?issues.length+" destino(s) sem passagem para atendimento."
@@ -1622,6 +1654,7 @@ function renderUI(liveOnly=false):void {
     cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||
       (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
    }
+  }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
     " · Atendimentos "+(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0))+
     " (PCs "+(game.served-(game.ps1Sessions??0))+
@@ -1629,6 +1662,7 @@ function renderUI(liveOnly=false):void {
      " · PlayStation "+(game.ps1Sessions??0):"")+
     " · Impressões avulsas "+(game.printer?.walkIns??0)+
     " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
+  if(activeAdminTab==="finance"){
   const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
   const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
   setText("pc-utilization","Ocupação neste mês: "+monthPct.toLocaleString("pt-BR")+"% dos minutos-PC disponíveis ("+monthUsed.toLocaleString("pt-BR")+"/"+monthCapacity.toLocaleString("pt-BR")+").");
@@ -1672,6 +1706,7 @@ function renderUI(liveOnly=false):void {
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   }
+  }
   // Independente do painel administrativo: as marcações continuam visíveis
   // depois de fechar Administração para inspecionar o salão no Canvas.
   const inspectToolbar=document.getElementById("service-access-toolbar");
@@ -1696,13 +1731,14 @@ function renderUI(liveOnly=false):void {
   controls.setAttribute("aria-expanded",String(adminOpen));
   presentLiveState(game,internetName(),adminOpen?activeAdminTab:null);
 }
-let lastFrame=0,lastUI=0,lastMenuFrame=0,elapsed=0,lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
+let lastFrame=0,lastUI=0,lastMenuFrame=0,lastSceneFrame=0,elapsed=0,lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
 new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
 document.addEventListener("scroll",()=>{lastScroll=performance.now();},{capture:true,passive:true});
 document.addEventListener("pointerdown",()=>{uiPointerHeld=true;lastInput=performance.now();},{capture:true,passive:true});
 for(const type of ["pointerup","pointercancel"])document.addEventListener(type,()=>{uiPointerHeld=false;lastInput=performance.now();},{capture:true,passive:true});
 window.addEventListener("blur",()=>{uiPointerHeld=false;});
 let wasSimulating=false;
+const coarsePointer=window.matchMedia("(pointer:coarse)");
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   if(lastFrame===0) lastFrame=timestamp;
@@ -1746,7 +1782,9 @@ function frame(timestamp:number):void {
     speechPopups.push({...speech,age:0});
     if(speechPopups.length>8)speechPopups.shift();
   }
-  const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastScroll>120;
+  const sceneInterval=coarsePointer.matches?1000/30:0;
+  const paintScene=isPlaying&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastSceneFrame>=sceneInterval;
+  if(paintScene)lastSceneFrame=sceneInterval?timestamp-((timestamp-lastSceneFrame)%sceneInterval):timestamp;
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
   if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
   if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);

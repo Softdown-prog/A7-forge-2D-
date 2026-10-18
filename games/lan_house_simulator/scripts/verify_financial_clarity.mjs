@@ -1,3 +1,4 @@
+import {selectAdminArea} from './management_navigation.mjs';
 // Regressão visual do painel de caixa (desktop e celulares).
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -29,7 +30,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const click=async selector=>mobile?await page.locator(selector).tap():await page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
-  await click("#menu-continue");await click("#open-admin");
+  await click("#menu-continue");await click("#open-admin");await selectAdminArea(page,"finance");await page.locator(".management-summary").evaluate(node=>node.open=true);
   assert.equal((await page.locator(".admin-summary").innerText()).includes("Saldo acumulado"),false);
   assert.match(await page.locator(".admin-summary").innerText(),/Resultado acumulado/);
   assert.match(await page.locator("#admin-cash").innerText(),/386,49/);
@@ -69,7 +70,7 @@ try{
   const paidClick=async selector=>mobile?await paidPage.locator(selector).tap():
    await paidPage.locator(selector).click();
   await paidClick("#menu-continue");await paidClick("#open-admin");
-  await paidClick('[data-admin-tab="finance"]');
+  await selectAdminArea(paidPage,'finance');await paidPage.locator('.management-summary').evaluate(node=>node.open=true);
   assert.match(await paidPage.locator("#last-bill-info").innerText(),/Último fechamento: mês 01\/1998/);
   assert.match(await paidPage.locator("#last-bill-info").innerText(),/caixa após pagamento/);
   assert.equal(await paidPage.locator("#last-bill-details").isVisible(),true);

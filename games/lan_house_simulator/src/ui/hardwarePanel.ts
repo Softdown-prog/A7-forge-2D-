@@ -12,9 +12,9 @@ export type HardwareTab=HardwareKind|"platform";
 const element=<K extends keyof HTMLElementTagNameMap>(tag:K,className="",text=""):HTMLElementTagNameMap[K]=>{
  const node=document.createElement(tag);node.className=className;if(text)node.textContent=text;return node;
 };
-export function renderHardwarePanel(s:GameState,index:number,year:number,tab:HardwareTab):HTMLElement{
+export function renderHardwarePanel(s:GameState,index:number,year:number,tab:HardwareTab,page:"hardware"|"windows"="hardware"):HTMLElement{
  const root=element("section","hardware-workbench");root.id="hardware-workbench";
- root.append(element("h3","","Configuração e peças por estação"));
+ root.append(element("h3","",page==="windows"?"Windows da estação":"Configuração e peças por estação"));
  const stations=element("nav","gpu-stations");stations.setAttribute("aria-label","Computador para configurar");
  for(let i=0;i<pcCount(s);i++){
   const button=element("button","gpu-station"+(i===index?" selected":""),"PC "+String(i+1).padStart(2,"0"));
@@ -22,14 +22,18 @@ export function renderHardwarePanel(s:GameState,index:number,year:number,tab:Har
   button.setAttribute("aria-pressed",String(i===index));stations.append(button);
  }
  root.append(stations);
- const build=hardwareFor(s,index),parts=buildParts(build),sheet=element("article","machine-sheet");
- sheet.dataset.hardwarePc=String(index);
+ const powerToggle=element("button","slice",stationPoweredOn(s,index)?"Desligar estação selecionada":"Ligar estação selecionada");
+ powerToggle.type="button";powerToggle.dataset.pcPower=String(index);powerToggle.id="hardware-power-"+index;
+ powerToggle.disabled=stationOccupied(s,index)||!!s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving");root.append(powerToggle);
+ const build=hardwareFor(s,index),parts=buildParts(build),sheet=element("details","machine-sheet");
+ sheet.dataset.hardwarePc=String(index);sheet.dataset.preserveOpen="";
+ sheet.append(element("summary","","Ver configuração instalada"));
  const edition=WINDOWS_ERAS.find(e=>e.id===installedWindows(s,index))!,licensed=s.pcWindowsLicenses?.[index]===true;
  const heading=element("div","machine-heading");heading.insertAdjacentHTML("afterbegin",iconMarkup("computer"));
  const headingText=element("div"),title=element("strong","","PC "+String(index+1).padStart(2,"0")+" · "+edition.name);
  title.dataset.configWindows="";headingText.append(title,element("small","",(licensed?"Windows licenciado":"Windows preinstalado · sem licença adquirida")+" · "+stationModelName(s,index)));
  heading.append(headingText);sheet.append(heading);
-  sheet.append(element("p","hardware-note",stationPoweredOn(s,index)?"PC ligado. Desligue na lista acima para instalar peças.":"PC desligado. Pode atualizar quando estiver livre."));
+  sheet.append(element("p","hardware-note",stationPoweredOn(s,index)?"PC ligado. Desligue a estação selecionada para instalar peças.":"PC desligado. Pode atualizar quando estiver livre."));
  const stats=element("dl","machine-specs");
  for(const kind of ["cpu","ram","storage","motherboard","psu"] as const){
   const item=element("div","machine-spec");item.dataset.config=kind;
@@ -39,6 +43,7 @@ export function renderHardwarePanel(s:GameState,index:number,year:number,tab:Har
  gpu.append(element("dt","","Placa de vídeo"),element("dd","",gpuSpec(installedGpu(s,index))?.name??"Vídeo integrado"));stats.append(gpu);
  const power=element("p","machine-power","Fonte instalada: "+parts.psu.watts+" W · capacidade recomendada para as peças atuais: "+requiredPsuWatts(build,s.pcGpus?.[index])+" W (margem de 25%). Uma fonte maior oferece reserva; não consome sua potência máxima o tempo todo.");
  sheet.append(stats,power);root.append(sheet);
+ if(page==="windows"){
  const os=element("section","machine-windows");os.setAttribute("aria-label","Windows da estação selecionada");
  os.append(element("h4","","Sistema operacional"),element("p","hardware-note","A licença e a instalação valem somente para este PC. O Windows permanece instalado quando você troca peças ou um kit."));
  const osChoices=element("div","machine-os-choices");
@@ -57,7 +62,8 @@ export function renderHardwarePanel(s:GameState,index:number,year:number,tab:Har
  if(currentIssue.length)os.append(element("p","part-status",edition.name+": "+currentIssue.join(" ")));
  const nextWindows=WINDOWS_ERAS.find(w=>w.year<=year&&w.year>edition.year&&windowsHardwareIssues(s,index,w.id).length>0);
  if(nextWindows)os.append(element("p","hardware-note","Para "+nextWindows.name+": "+windowsHardwareIssues(s,index,nextWindows.id).join(" ")));
- root.append(os);
+ root.append(os);return root;
+ }
  const controls=element("nav","hardware-tabs");controls.setAttribute("aria-label","Categoria de peças");
  for(const [kind,label] of [["platform","Kits de plataforma"],...Object.entries(HARDWARE_LABELS)]){
   const button=element("button","gpu-station"+(kind===tab?" selected":""),label);

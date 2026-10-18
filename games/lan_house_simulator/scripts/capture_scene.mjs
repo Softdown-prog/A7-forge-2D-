@@ -1,3 +1,4 @@
+import {selectAdminArea} from './management_navigation.mjs';
 // Captura genuína do Canvas em Chromium para revisão visual, sem aprovar arte.
 import { chromium } from "playwright";
 import { createServer } from "node:http";
@@ -241,7 +242,7 @@ try{
         Buffer.from(lifecycle,"base64"));
     }
     await page.locator("#open-shop").click();
-    await page.locator('[data-buy="plant"]').click();
+    await page.locator('[data-shop-category="decoration"]').click();await page.locator('[data-buy="plant"]').click();
     await page.locator("#placement-toolbar").waitFor({state:"visible"});
     await writeFile(resolve(output,"lhs_furniture_placement_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
@@ -265,7 +266,7 @@ try{
       await page.mouse.click(point.x,point.y);
     }
     await page.locator("#open-shop").click();
-    await page.locator('[data-buy="plant"]').click();
+    await page.locator('[data-shop-category="decoration"]').click();await page.locator('[data-buy="plant"]').click();
     await clickFurnitureSlot("floor-1");
     await page.locator("#open-shop").click();
     await page.locator("#organize-furniture").click();
@@ -351,7 +352,7 @@ try{
     await page.screenshot({path:resolve(output,"lhs_page_"+config.name+".png"),fullPage:true});
     // Nova funcionalidade: conferir o painel real e o débito após a campanha.
     await page.locator("#open-admin").click();
-    await page.locator('[data-admin-tab="finance"]').click();
+    await selectAdminArea(page,'finance');
     const cashBefore=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
     await page.locator("#launch-promotion").click();
     await page.locator("#launch-promotion").waitFor({state:"visible"});

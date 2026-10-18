@@ -1,3 +1,4 @@
+import {selectAdminArea} from './management_navigation.mjs';
 // Exercita contratos mensais com diária somente de serviço em navegador desktop e mobile.
 import assert from "node:assert/strict";
 import {chromium} from "playwright";
@@ -38,7 +39,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const press=async sel=>mobile?await page.locator(sel).tap():await page.locator(sel).click();
-  await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="services"]');
+  await press("#menu-continue");await press("#open-admin");await selectAdminArea(page,'services');
   const summary=await page.locator("#staff-summary").innerText();
   const clean=await page.locator("#clean-bins").innerText(),tech=await page.locator("#hire-technician").innerText();
   assert.match(summary,/Contratos mensais sem diária ociosa/);

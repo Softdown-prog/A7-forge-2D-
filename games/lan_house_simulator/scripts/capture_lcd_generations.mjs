@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Native Canvas contact sheet and real UI purchase/cache validation.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -78,8 +79,8 @@ try{
   await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");},{key:GAME_SAVE_KEY,state:s});
   const ui=await context.newPage();ui.on("pageerror",e=>errors.push(String(e)));
   await ui.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});await ui.locator("#menu-continue").click();
-  await ui.locator("#open-admin").click();await ui.locator('[data-admin-tab="computers"]').click();
-  await ui.locator('[data-pc-power="1"]').click();
+  await ui.locator("#open-admin").click();await selectAdminArea(ui,'computers');await selectTask(ui,'computers','operations');
+  await ui.locator('[data-pc-power="1"]').click();await selectTask(ui,'computers','monitors');
   assert.equal(await ui.locator(".lcd-card").count(),5);
   await ui.locator('[data-lcd-select="1"]').focus();await ui.waitForTimeout(650);
   assert.equal(await ui.evaluate(()=>document.activeElement?.dataset.lcdSelect),"1","Atualização periódica conserva foco do teclado");
@@ -91,15 +92,15 @@ try{
   assert.match(await ui.locator('[data-lcd-current]').textContent(),/PC 2.*Arena 27/);
   const bounds=await ui.evaluate(()=>({page:document.documentElement.scrollWidth,width:innerWidth,panel:document.querySelector("#admin").scrollWidth,client:document.querySelector("#admin").clientWidth}));
   assert.ok(bounds.page<=bounds.width+3&&bounds.panel<=bounds.client+3,JSON.stringify(bounds));
-  await ui.reload({waitUntil:"networkidle"});await ui.locator("#menu-continue").click();await ui.locator("#open-admin").click();await ui.locator('[data-admin-tab="computers"]').click();
+  await ui.reload({waitUntil:"networkidle"});await ui.locator("#menu-continue").click();await ui.locator("#open-admin").click();await selectAdminArea(ui,'computers');await selectTask(ui,'computers','monitors');
   await dispatch('[data-lcd-select="1"] .ui-icon');assert.match(await ui.locator('[data-lcd-current]').textContent(),/Arena 27/);
   checks.push({width,purchase:true,reload:true,noOverflow:true});await context.close();
  }
  const lockedContext=await browser.newContext(),early=createGame();early.cash=10000;early.pcTiers=[3,3,3];early.totalMinutes=(2005-1998)*360*DAY_MINUTES;
  await lockedContext.addInitScript(({key,state})=>localStorage.setItem(key,JSON.stringify(state)),{key:GAME_SAVE_KEY,state:early});
  const earlyPage=await lockedContext.newPage();await earlyPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
- await earlyPage.locator("#menu-continue").click();await earlyPage.locator("#open-admin").click();await earlyPage.locator('[data-admin-tab="computers"]').click();
- await earlyPage.locator('[data-pc-power="0"]').click();
+ await earlyPage.locator("#menu-continue").click();await earlyPage.locator("#open-admin").click();await selectAdminArea(earlyPage,'computers');await selectTask(earlyPage,'computers','operations');
+ await earlyPage.locator('[data-pc-power="0"]').click();await selectTask(earlyPage,'computers','monitors');
  assert.equal(await earlyPage.locator('[data-lcd-buy="lcd05"]').isEnabled(),true);
  for(const id of ["lcd08","lcd12","lcd17","lcd24"])assert.equal(await earlyPage.locator('[data-lcd-buy="'+id+'"]').isDisabled(),true);
  await lockedContext.close();assert.deepEqual(errors,[]);

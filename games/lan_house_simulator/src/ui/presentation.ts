@@ -57,16 +57,20 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
  const html=cards.map(c=>'<div class="hud-card '+c.className+'"><span>'+iconMarkup(c.icon)+'</span><div><small>'+c.label+'</small><strong>'+c.value+'</strong></div></div>').join("");
  if(status&&status.innerHTML!==html)status.innerHTML=html;
  const stock=document.getElementById("stock");
- if(stock&&section==="stock"){stock.className="stock-metrics";stock.innerHTML=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");}
+ if(stock&&section==="stock"){stock.className="stock-metrics";const stockHtml=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");if(stock.innerHTML!==stockHtml)stock.innerHTML=stockHtml;}
  const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!isPromotionActive(s);
  const usage=document.querySelector(".finance-usage"),capacity=s.monthPcCapacityMinutes??0;
- if(usage&&section==="finance"){
+ if(usage&&section==="finance"&&!usage.closest(".management-page[hidden]")){
   let meter=usage.querySelector<HTMLElement>(".occupancy-meter");
   if(!meter){meter=document.createElement("div");meter.className="occupancy-meter";meter.setAttribute("role","progressbar");meter.setAttribute("aria-label","Ocupação real neste mês");meter.setAttribute("aria-valuemin","0");meter.setAttribute("aria-valuemax","100");usage.querySelector("h4")?.after(meter);}
   const pct=computerOccupancyPercent(s.monthPcUsedMinutes??0,capacity);
-  meter.setAttribute("aria-valuenow",String(pct));meter.innerHTML='<span style="width:'+pct+'%"></span>';
+  meter.setAttribute("aria-valuenow",String(pct));
+  let fill=meter.querySelector("span");if(!fill){fill=document.createElement("span");meter.append(fill);}fill.style.width=pct+"%";
  }
- const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel)decorateControls(panel);syncWindowChrome();
+ const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel){
+  const active=section?panel.querySelector<HTMLElement>('[data-section="'+section+'"]'):panel;
+  if(active)decorateControls(active.querySelector(".management-page:not([hidden])")??active);
+ }syncWindowChrome();
 }
 
 export function presentComputerOperations(s:GameState,root:ParentNode):void{
@@ -102,7 +106,7 @@ export function installWindowNavigation():void{
    event.preventDefault();tabs[next]?.focus();tabs[next]?.click();return;
   }
   if(event.key!=="Tab")return;
-  const items=Array.from(currentPanel.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),[tabindex="0"]')).filter(n=>n.tabIndex>=0&&n.getClientRects().length);
+  const items=Array.from(currentPanel.querySelectorAll<HTMLElement>('button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,[tabindex="0"]')).filter(n=>n.tabIndex>=0&&n.getClientRects().length);
   const first=items[0],last=items.at(-1);if(!first||!last)return;
   if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
   else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}

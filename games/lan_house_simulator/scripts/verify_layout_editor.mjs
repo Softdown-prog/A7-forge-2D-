@@ -58,7 +58,7 @@ try{
   saved=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));assert.deepEqual(saved.objectPlacements.find(p=>p.id==="pc:0"),placed);
   const bounds=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,viewport:document.querySelector("#scene-viewport").clientWidth,canvas:document.querySelector("#game").getBoundingClientRect().width}));assert.ok(bounds.scroll<=bounds.width+3);assert.ok(bounds.canvas>=bounds.viewport);
   await page.screenshot({path:resolve(output,"layout_"+width+".png")});
-  await press(page.locator("#layout-close"));await press(page.locator("#open-shop"));await press(page.locator('[data-buy="wall"]'));
+  await press(page.locator("#layout-close"));await press(page.locator("#open-shop"));await press(page.locator('[data-shop-category="building"]'));await press(page.locator('[data-buy="wall"]'));
   const beforeWall=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));
   await page.evaluate(async()=>{const {cameraForGame,iso}=await import("./js/render/isometric.js"),s=JSON.parse(localStorage.getItem("lhs-save-v1")),p=iso({x:5.5,y:4},cameraForGame(s)),c=document.querySelector("#game"),v=document.querySelector("#scene-viewport"),scale=c.getBoundingClientRect().width/c.width;v.scrollLeft=Math.max(0,p.x*scale-v.clientWidth/2);v.scrollTop=Math.max(0,p.y*scale-v.clientHeight/2);});
   await page.evaluate(()=>new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok))));

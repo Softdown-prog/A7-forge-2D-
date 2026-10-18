@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Real-browser review of every workspace and of the new SVG click targets.
 import {chromium} from "playwright";
 import {spawn,execFileSync} from "node:child_process";
@@ -61,22 +62,26 @@ try{
   await page.keyboard.press("Escape");assert.equal(await page.locator("#admin").isVisible(),false);
   assert.equal(await page.locator("#game-app").isVisible(),true);
   await page.locator("#open-admin").click();
-  await page.locator('[data-admin-tab="prices"]').focus();await page.keyboard.press("ArrowRight");
+  if(await page.locator("#admin-area").isVisible())await selectAdminArea(page,"computers");
+  else {await page.locator('[data-admin-tab="prices"]').focus();await page.keyboard.press("ArrowRight");}
   assert.equal(await page.locator('[data-admin-tab="computers"]').getAttribute("aria-selected"),"true");
   for(const tab of ["prices","computers","gpus","licenses","stock","services","finance"]){
-   await page.locator('[data-admin-tab="'+tab+'"]').click();
+   await selectAdminArea(page,tab);
    assert.equal(await page.locator('[data-section="'+tab+'"]').isVisible(),true);
    await shot("admin-"+tab,"#admin");
   }
   // Fluxo real de compra em 1998: regularização, Windows e título individual.
-  await page.locator('[data-admin-tab="services"]').click();
+  await selectAdminArea(page,'services');await selectTask(page,'services','network');
   await page.locator("#license").click();
-  await page.locator('[data-admin-tab="computers"]').click();
+  await selectAdminArea(page,'computers');await selectTask(page,'computers','operations');
   await page.locator('[data-pc-power="0"]').click(); // Desligar para licenciar o Windows.
-  await page.locator('[data-admin-tab="licenses"]').click();
+  await selectAdminArea(page,'licenses');
+  await selectTask(page,"licenses","classic");
   assert.equal(await page.locator('[data-era-game-buy]').count(),10);
+  await selectTask(page,"licenses","windows");
   assert.equal(await page.locator('[data-era-game-buy="asfalto-noturno"]').isDisabled(),true);
   await page.locator('#windows-license-list [data-win-pc="0"][data-win-edition="win98"]').click();
+  await selectTask(page,"licenses","classic");
   await page.locator('[data-era-game-buy="turbo-98"]').click();
   const licensed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   assert.ok(licensed.licensedEraGames?.includes("turbo-98"),"O jogo comprado deve persistir no save.");
@@ -84,7 +89,8 @@ try{
   await shot("licensed-games-1998","#admin");
   // O indicador de procura acompanha o preço no Chromium real em todas
   // as resoluções, sem salvar receita fictícia nem perder o foco da aba.
-  await page.locator('[data-admin-tab="prices"]').click();
+  await selectAdminArea(page,'prices');
+  await selectTask(page,"prices","insights");
   const priceText=page.locator("#price-demand-insight");
   const pricePercent=async()=>Number((await priceText.textContent())?.match(/modelo: (\d+)%/)?.[1]);
   assert.equal(await pricePercent(),100);
@@ -92,14 +98,16 @@ try{
   assert.ok((await page.locator("#price-scenario-lower").textContent())?.includes("R$ 10/h"));
   assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 12/h"));
   assert.ok((await page.locator("#price-scenario-higher").textContent())?.includes("R$ 14/h"));
+  await selectAdminArea(page,"finance");
   assert.ok((await page.locator("#energy-year-outlook").textContent())?.includes("1998 → 1999"));
-  await page.locator("#price-up").click();
+  await selectAdminArea(page,"prices");
+  await selectTask(page,"prices","hourly");await page.locator("#price-up").click();await selectTask(page,"prices","insights");
   assert.ok((await page.locator("#price-scenario-current").textContent())?.includes("R$ 14/h"));
   const raised=await pricePercent();
   assert.ok(Number.isFinite(raised)&&raised<100&&raised>0,"preço maior reduz o primeiro percentual, não a legenda fixa");
-  await page.locator("#price-down").click();
+  await selectTask(page,"prices","hourly");await page.locator("#price-down").click();await selectTask(page,"prices","insights");
   assert.equal(await pricePercent(),100);
-  await page.locator('[data-admin-tab="stock"]').click();
+  await selectAdminArea(page,'stock');
   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   // Dispatch directly on the SVG child to cover event delegation too.
   await clickSvg("#stock-soda .ui-icon");
@@ -111,13 +119,14 @@ try{
     "compra de refrigerante deve constar no diário real da partida");
   assert.ok(after.expenses>before.expenses,"reposição deve debitar a despesa real");
   assert.equal(after.cash,before.cash+(after.revenue-before.revenue)-(after.expenses-before.expenses));
-  await page.locator('[data-admin-tab="computers"]').click();
+  await selectAdminArea(page,'computers');await selectTask(page,'computers','operations');
   await clickSvg('[data-pc-repair="0"] .ui-icon');
   const repaired=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   assert.equal(repaired.repairJobs?.some(j=>j.pc===0),true);
   await page.keyboard.press("Escape");
   await page.locator("#open-shop").click();await shot("shop","#shop");
-  assert.equal(await page.locator("#shop-catalog .shop-art").count(),SHOP_CATALOG.length);
+  assert.ok((await page.locator("#shop-catalog .shop-art").count())<SHOP_CATALOG.length);
+  await page.locator('[data-shop-category="decoration"]').click();
   await clickSvg('[data-buy="plant"] .ui-icon');
   assert.equal(await page.locator("#placement-toolbar").isVisible(),true);
   assert.equal(await page.locator("#panel-backdrop").isVisible(),false);

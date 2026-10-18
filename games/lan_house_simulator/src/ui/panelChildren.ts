@@ -13,7 +13,7 @@ export function syncPanelChildren(current:Element,next:Element):void{
    else{current.insertBefore(desired,cursor);continue;}
   }
   if(retained instanceof Element&&desired instanceof Element){
-   for(const attribute of Array.from(retained.attributes))if(!desired.hasAttribute(attribute.name))retained.removeAttribute(attribute.name);
+   for(const attribute of Array.from(retained.attributes))if(!desired.hasAttribute(attribute.name)&&!(attribute.name==="open"&&retained.hasAttribute("data-preserve-open")))retained.removeAttribute(attribute.name);
    for(const attribute of Array.from(desired.attributes))if(retained.getAttribute(attribute.name)!==attribute.value)retained.setAttribute(attribute.name,attribute.value);
    syncPanelChildren(retained,desired);
   }else if(retained.nodeValue!==desired.nodeValue)retained.nodeValue=desired.nodeValue;

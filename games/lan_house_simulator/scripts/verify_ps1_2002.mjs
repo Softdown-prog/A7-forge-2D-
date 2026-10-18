@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
 import {mkdir,writeFile} from "node:fs/promises";
@@ -29,6 +30,7 @@ try{
   const click=async selector=>mobile?await page.locator(selector).tap():await page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   await click("#menu-continue");await click("#open-shop");
+  await page.locator('[data-shop-category="consoles"]').click();
   const buy=page.locator('[data-buy="ps1"]');
   assert.equal(await buy.isEnabled(),true,"PS1 purchasable in 2002");
   assert.ok(await page.locator("#ps1-placement option").count()>0,"bench placement slots");
@@ -36,15 +38,15 @@ try{
   // A primeira compra abre Administração → Videogames automaticamente.
   // A loja fechada não recalcula o texto de saldo; reabrimos pelo atalho.
   assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\/3/);
-  await click("#ps1-open-shop");
+  await selectTask(page,"consoles","discs");await click("#ps1-open-shop");
   assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\$ 5440/);
   await click('[data-buy-ps1-disc="turbo-circuito"]');
   assert.match(await page.locator(".ps1-cd-shop-card").filter({hasText:"Turbo Circuito"}).innerText(),/Cópias no acervo: 1/);
   await page.screenshot({path:resolve(out,"ps1_shop_"+width+".png")});
   await click("#close-shop");
-  await click("#open-admin");await click('[data-admin-tab="consoles"]');
+  await click("#open-admin");await selectAdminArea(page,'consoles');
   assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\/3/);
-  await click("#ps1-price-up");
+  await selectTask(page,"consoles","pricing");await click("#ps1-price-up");
   assert.match(await page.locator("#ps1-hourly").innerText(),/2,75/);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(overflow<=3,"console panel overflow "+width+": "+overflow);

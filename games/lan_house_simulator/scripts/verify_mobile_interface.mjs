@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Real game regression: stable controls, native touch scrolling and approved audio.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
@@ -15,7 +16,7 @@ try{
   const mobile=width<700,context=await browser.newContext({viewport:{width,height:920},isMobile:mobile,hasTouch:mobile}),page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e)));const press=loc=>mobile?loc.tap():loc.click();
   const cdp=await context.newCDPSession(page);if(mobile)await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
-  await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});await press(page.locator('#menu-new'));await press(page.locator('#open-admin'));await press(page.locator('[data-admin-tab="computers"]'));
+  await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});await press(page.locator('#menu-new'));await press(page.locator('#open-admin'));await selectAdminArea(page,'computers');await selectTask(page,'computers','hardware');
   await page.evaluate(async()=>{
    const {SceneRenderer}=await import('./js/render/scene.js');const old=SceneRenderer.prototype.draw;
    window.report={hiddenDraws:0,added:0,longTasks:[]};SceneRenderer.prototype.draw=function(...args){if(this.ctx.canvas.id==='menu-scene')window.report.hiddenDraws++;return old.apply(this,args);};

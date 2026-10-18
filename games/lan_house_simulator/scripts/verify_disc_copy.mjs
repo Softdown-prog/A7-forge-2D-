@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Actual purchase/pricing controls plus scene-pixel validation: the purchased machine now appears on the counter.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
@@ -19,13 +20,13 @@ try{
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
   const click=async selector=>{const node=page.locator(selector);if(width<700)await node.tap();else await node.click();};
   await click('#menu-continue');await click('#open-shop');const buy=page.locator('[data-buy="disc-copier"]');
-  assert.equal(await buy.isDisabled(),year<2001);assert.equal(await page.locator('.shop-art[data-item="disc-copier"] canvas').count(),1);
+  assert.equal(await buy.isDisabled(),year<2001);assert.equal(await page.locator('.shop-art[data-item="disc-copier"] img').count(),1);
   if(year===2000){assert.match(await buy.textContent(),/2001/);await click('#close-shop');await click('#open-admin');assert.equal(await page.locator('#disc-copy-panel').isHidden(),true);}
   else{
    await click('[data-buy="disc-copier"]');assert.equal(await buy.isDisabled(),true);
    const bought=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.ok(bought.discCopier);assert.equal(bought.expenses,900);assert.equal(bought.discCopier.prices.cd,3);assert.equal(bought.discCopier.prices.dvd,6);
-   await page.locator('.shop-art[data-item="disc-copier"] canvas').screenshot({path:resolve(output,'copier_'+width+'.png')});
-   await click('#close-shop');await click('#open-admin');await click('[data-admin-tab="prices"]');assert.equal(await page.locator('#disc-copy-panel').isVisible(),true);
+   await page.locator('.shop-art[data-item="disc-copier"] img').screenshot({path:resolve(output,'copier_'+width+'.png')});
+   await click('#close-shop');await click('#open-admin');await selectAdminArea(page,'prices');await selectTask(page,'prices','discs');assert.equal(await page.locator('#disc-copy-panel').isVisible(),true);
    await click('[data-disc-kind="cd"][data-delta="1"]');await click('[data-disc-kind="dvd"][data-delta="-1"]');
    const changed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.deepEqual(changed.discCopier.prices,{cd:4,dvd:5});
    await page.locator('[data-disc-kind="cd"][data-delta="1"]').focus();await page.waitForTimeout(650);
@@ -33,7 +34,7 @@ try{
    await page.locator('#disc-copy-panel').screenshot({path:resolve(output,'service_'+width+'.png')});
    const bounds=await page.evaluate(()=>({width:innerWidth,page:document.documentElement.scrollWidth,admin:document.querySelector('#admin').scrollWidth,client:document.querySelector('#admin').clientWidth}));
    assert.ok(bounds.page<=bounds.width+3&&bounds.admin<=bounds.client+3,JSON.stringify(bounds));
-   await page.reload({waitUntil:'networkidle'});await click('#menu-continue');await click('#open-admin');await click('[data-admin-tab="prices"]');assert.match(await page.locator('#disc-copy-price-controls').textContent(),/4,00/);
+   await page.reload({waitUntil:'networkidle'});await click('#menu-continue');await click('#open-admin');await selectAdminArea(page,'prices');await selectTask(page,'prices','discs');assert.match(await page.locator('#disc-copy-price-controls').textContent(),/4,00/);
   }
   checks.push({width,year,locked:year<2001});await context.close();
  }

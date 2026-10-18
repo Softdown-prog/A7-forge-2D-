@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Purchase through actual application controls; no direct state mutation after load.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -20,9 +21,10 @@ try{
   const page=await context.newPage();page.on("pageerror",e=>errors.push(String(e)));
   page.on("response",r=>{if(r.status()>=400)errors.push(r.status()+" "+r.url());});
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
-  const open=async()=>{await page.locator("#menu-continue").click();await page.locator("#open-admin").click();await page.locator('[data-admin-tab="computers"]').click();};
+  const open=async()=>{await page.locator("#menu-continue").click();await page.locator("#open-admin").click();await selectAdminArea(page,'computers');};
   await open();
   await page.locator('[data-pc-power="1"]').click(); // Desligar PC 02 antes dos upgrades.
+  await selectTask(page,"computers","hardware");
   // Resolve the live node and dispatch in one browser task across UI refreshes.
   const click=selector=>page.evaluate(selector=>{const node=document.querySelector(selector);if(!node||node.closest("button")?.disabled)throw Error("Controle indisponível: "+selector);node.dispatchEvent(new MouseEvent("click",{bubbles:true}));},selector);
   const bounds=async()=>{
@@ -39,7 +41,9 @@ try{
   await page.locator('#hardware-select-1').focus();await page.waitForTimeout(650);
   assert.equal(await page.evaluate(()=>document.activeElement?.id),"hardware-select-1");
   if(year===2000){
+   await selectTask(page,"computers","windows");
    assert.equal(await page.locator('[data-win-pc="1"][data-win-edition="winxp"]').isDisabled(),true);
+   await selectTask(page,"computers","hardware");
    assert.equal(await page.locator('[data-hardware-kit="platform03"]').isDisabled(),true);
    await click('[data-hardware-tab="ram"] .ui-icon');assert.equal(await page.locator('[data-hardware-part="ram512d"]').isDisabled(),true);
    await click('[data-hardware-part="ram128"] .ui-icon');
@@ -50,10 +54,14 @@ try{
    assert.match(await page.locator('[data-config-windows]').textContent(),/Windows 98/);
    assert.match(await page.locator('[data-config="ram"]').textContent(),/128 MB/);
   }else{
+   await selectTask(page,"computers","windows");
    assert.equal(await page.locator('[data-win-pc="1"][data-win-edition="win11"]').isDisabled(),true);
+   await selectTask(page,"computers","hardware");
    await click('[data-hardware-kit="platform24"] .ui-icon');
+   await selectTask(page,"computers","windows");
    assert.equal(await page.locator('[data-win-pc="1"][data-win-edition="win11"]').isEnabled(),true);
    await click('[data-win-pc="1"][data-win-edition="win11"] .ui-icon');
+   await selectTask(page,"computers","hardware");
    await click('[data-hardware-tab="ram"] .ui-icon');await click('[data-hardware-part="ram64d5"] .ui-icon');
    await click('[data-hardware-tab="storage"] .ui-icon');await click('[data-hardware-part="nvme4000"] .ui-icon');
    const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
@@ -67,16 +75,16 @@ try{
    assert.equal(await page.locator('[data-hardware-part="cpu24"]').isDisabled(),true);
    assert.equal(await page.locator('[data-hardware-part="cpu98"]').isDisabled(),true);
   }
-  await page.locator('[data-admin-tab="gpus"]').click();
+  await selectAdminArea(page,'gpus');
   assert.equal(await page.locator('[data-gpu-select="1"]').getAttribute("aria-pressed"),"true","A estação acompanha a troca de abas");
-  await page.locator('[data-admin-tab="computers"]').click();await bounds();
+  await selectAdminArea(page,'computers');await bounds();
   // QA screenshots are internal diagnostics, never the delivered artwork.
   await page.evaluate(()=>{
    const panel=document.getElementById("admin"),sheet=document.querySelector(".machine-sheet");
    if(panel&&sheet)panel.scrollTop+=sheet.getBoundingClientRect().top-panel.getBoundingClientRect().top-110;
   });
   await page.screenshot({path:resolve(output,`hardware_qa_${year}_${width}.png`)});
-  await page.reload({waitUntil:"networkidle"});await open();await click('[data-hardware-select="1"] .ui-icon');
+  await page.reload({waitUntil:"networkidle"});await open();await selectTask(page,"computers","hardware");await click('[data-hardware-select="1"] .ui-icon');
   assert.match(await page.locator('[data-config-windows]').textContent(),year===2000?/Windows 98/:/Windows 11/);
   assert.match(await page.locator('[data-config="ram"]').textContent(),year===2000?/128 MB/:/64 GB/);
   await click('[data-hardware-select="0"] .ui-icon');assert.match(await page.locator('[data-config-windows]').textContent(),/Windows 98/);

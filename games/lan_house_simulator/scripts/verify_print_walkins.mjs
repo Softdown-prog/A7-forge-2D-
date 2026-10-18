@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // E2: real game walk-in printing checkout, accounting and responsive interface.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -38,9 +39,11 @@ try {
   await press("#menu-continue");
   await page.waitForFunction(()=>document.querySelector("#events")?.textContent?.includes("Cliente avulso imprimiu"),null,{timeout:9000});
   await press("#open-admin");
+  if(!await page.locator(".management-summary").evaluate(node=>node.open))await page.locator(".management-summary > summary").click();
   assert.equal(await page.locator("#admin-served").innerText(),"1");
+  await selectAdminArea(page,"prices");await selectTask(page,"prices","printing");
   assert.match(await page.locator("#print-service-summary").innerText(),/1 cliente atendido exclusivamente para imprimir/);
-  await press('[data-admin-tab="finance"]');
+  await selectAdminArea(page,'finance');await page.locator('.management-summary').evaluate(node=>node.open=true);
   assert.match(await page.locator("#finance").innerText(),/PCs 0 · Impressões avulsas 1/);
   await page.evaluate(()=>window.dispatchEvent(new Event("beforeunload")));
   const state=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));

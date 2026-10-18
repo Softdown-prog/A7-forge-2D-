@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Cenários históricos reais nos painéis: amortização, preços, demanda potencial e mobile.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -31,17 +32,19 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const click=async sel=>mobile?await page.locator(sel).tap():await page.locator(sel).click();
-  await click("#menu-continue");await click("#open-admin");await click('[data-admin-tab="prices"]');
+  await click("#menu-continue");await click("#open-admin");await selectAdminArea(page,'prices');await selectTask(page,'prices','printing');
   const printer=page.locator("#print-service-panel"),disc=page.locator("#disc-copy-panel");
   assert.equal(await printer.isVisible(),true);
-  assert.equal(await disc.isVisible(),year>=2001);
+  assert.equal(await disc.isVisible(),false,"Other service is in a separate task page");
   const pText=await page.locator("#print-service-capacity").innerText();
   assert.match(pText,/Faltam/);assert.match(pText,/320,00/);assert.match(pText,/Procura avulsa potencial/);
   let dText="";
   if(year>=2001){
+   await selectTask(page,"prices","discs");assert.equal(await disc.isVisible(),true);
    dText=await page.locator("#disc-copy-capacity").innerText();
    assert.match(dText,/Faltam/);assert.match(dText,/900,00/);assert.match(dText,/Procura avulsa potencial/);
   }
+  await selectTask(page,"prices","printing");
   if(year===2025){
    const cost=printPaperInkCost(s);
    assert.ok(cost>.5);

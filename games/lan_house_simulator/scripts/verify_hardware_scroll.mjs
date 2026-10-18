@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Exercise real category taps, keyboard focus and native scrolling while PCs run.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
@@ -21,12 +22,11 @@ try{
   await page.addInitScript(({key,s})=>{localStorage.setItem(key,JSON.stringify(s));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,s});
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
   const press=locator=>mobile?locator.tap():locator.click();
-  await press(page.locator('#menu-continue'));await press(page.locator('#open-admin'));await press(page.locator('[data-admin-tab="computers"]'));
+  await press(page.locator('#menu-continue'));await press(page.locator('#open-admin'));await selectAdminArea(page,'computers');await selectTask(page,'computers','hardware');
   await page.evaluate(()=>{
    window.categoryControls=[...document.querySelectorAll('[data-hardware-tab]')];
    window.stationControl=document.querySelector('#hardware-select-0');
-   window.windowsControl=document.querySelector('#hardware-windows-win98');
-   window.monitorImage=document.querySelector('.lcd-card img');
+   window.powerControl=document.querySelector('#hardware-power-0');
   });
   let largestJump=0;
   for(const tab of ['ram','storage','motherboard','psu','cpu','platform']){
@@ -55,12 +55,12 @@ try{
   }else{await page.mouse.move(width/2,400);await page.mouse.wheel(0,-450);}
   await page.waitForTimeout(800);
   const up=await page.locator('#admin').evaluate(node=>node.scrollTop);assert.ok(up<before-150,'Permite subir após escolher peças');
-  await page.evaluate(()=>{window.wearBefore=document.querySelector('.pc-label').textContent;window.scrollSamples=[];window.scrollTimer=setInterval(()=>window.scrollSamples.push(document.querySelector('#admin').scrollTop),50);});
+  await page.evaluate(()=>{window.minuteBefore=document.querySelector('#calendar-hud').textContent;window.scrollSamples=[];window.scrollTimer=setInterval(()=>window.scrollSamples.push(document.querySelector('#admin').scrollTop),50);});
   // A running PC changes rounded wear and triggers the ordinary live refresh.
-  await page.waitForFunction(()=>document.querySelector('.pc-label').textContent!==window.wearBefore,{},{timeout:9000});
+  await page.waitForFunction(()=>document.querySelector('#calendar-hud').textContent!==window.minuteBefore,{},{timeout:9000});
   await page.waitForTimeout(600);
-  const live=await page.evaluate(()=>{clearInterval(window.scrollTimer);return {drift:Math.max(...window.scrollSamples)-Math.min(...window.scrollSamples),retained:window.stationControl===document.querySelector('#hardware-select-0')&&window.windowsControl===document.querySelector('#hardware-windows-win98')&&window.monitorImage===document.querySelector('.lcd-card img'),focus:document.activeElement?.id};});
-  assert.ok(live.drift<=3,`Atualização em tempo real puxou a tela ${live.drift}px`);assert.equal(live.retained,true,'Estação, Windows e imagens não devem ser recriados');
+  const live=await page.evaluate(()=>{clearInterval(window.scrollTimer);return {drift:Math.max(...window.scrollSamples)-Math.min(...window.scrollSamples),retained:window.stationControl===document.querySelector('#hardware-select-0')&&window.powerControl===document.querySelector('#hardware-power-0'),focus:document.activeElement?.id};});
+  assert.ok(live.drift<=3,`Atualização em tempo real puxou a tela ${live.drift}px`);assert.equal(live.retained,true,'Controles da tarefa consultada não devem ser recriados');
   await page.locator('#admin').evaluate(node=>node.scrollTop=0);await page.waitForTimeout(1000);
   assert.equal(await page.locator('#admin').evaluate(node=>node.scrollTop),0,'Topo continua acessível com uma categoria focada');
   assert.deepEqual(errors,[]);reports.push({width,year,largestJump,liveDrift:live.drift,nativeScrollUp:true,stableControls:true,keyboard:!mobile});await context.close();

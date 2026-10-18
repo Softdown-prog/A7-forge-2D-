@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Verifica avisos de passagem e mapa de inspeção no Canvas com Chromium real.
 import assert from "node:assert/strict";
 import {chromium} from "playwright";
@@ -51,7 +52,7 @@ try{
      :await page.locator(css).click();
    await tap("#menu-continue");
    await tap("#open-admin");
-   await tap('[data-admin-tab="services"]');
+   await selectAdminArea(page,'services');await selectTask(page,'services','access');
    const summary=await page.locator("#service-access-summary").innerText();
    const view=page.locator("#show-service-access");
    const disabled=await view.isDisabled();

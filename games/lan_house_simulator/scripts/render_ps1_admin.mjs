@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Screenshot e smoke test do painel REAL do PS1 / CDs (sem mexer em saves).
 // Cria uma partida temporária em 2002 exclusivamente no navegador headless.
 import {chromium} from "playwright";
@@ -47,16 +48,18 @@ try{
   await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
   await page.locator("#menu-continue").click();
   await page.locator("#open-admin").click();
-  await page.locator('[data-admin-tab="consoles"]').click();
+  await selectAdminArea(page,'consoles');
   await page.waitForFunction(()=>document.querySelectorAll('#ps1-stations select[data-ps1-slot]').length===2);
+  await selectTask(page,"consoles","discs");
   const summary=await page.locator("#ps1-disc-summary").innerText();
   if(!summary.includes("2")||!summary.includes("CD"))throw Error("Acervo PS1 ausente: "+summary);
+  await selectTask(page,"consoles","pricing");
   const oldPrice=await page.locator("#ps1-hourly").innerText();
   await page.locator("#ps1-price-up").click();
   const nextPrice=await page.locator("#ps1-hourly").innerText();
   if(oldPrice===nextPrice)throw Error("Preço da hora PS1 não muda ao clicar");
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
-  await page.locator("#ps1-open-shop").click();
+  await selectTask(page,"consoles","discs");await page.locator("#ps1-open-shop").click();
   await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{

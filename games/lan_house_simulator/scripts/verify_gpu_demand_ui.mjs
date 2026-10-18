@@ -1,3 +1,4 @@
+import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Integração real da aba Licenças e do histórico persistente de procura.
 import assert from "node:assert/strict";
 import {spawn} from "node:child_process";
@@ -55,7 +56,7 @@ try{
   const press=async selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
   const check=async()=>{
    await press("#menu-continue");await press("#open-admin");
-   await press('[data-admin-tab="licenses"]');
+   await selectAdminArea(page,'licenses');await selectTask(page,'licenses','gpu');
    const catalog=page.locator("#gpu-game-catalog");
    const all=await catalog.innerText();
    assert.match(all,/Neon Rush Online/);
@@ -92,7 +93,7 @@ try{
   assert.equal(await progress.count(),1);
   // Download em progresso persistente em desktop e mobile.
   await page.reload({waitUntil:"networkidle"});
-  await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
+  await press("#menu-continue");await press("#open-admin");await selectAdminArea(page,'licenses');await selectTask(page,'licenses','gpu');
   const restored=page.locator('[data-gpu-game-install="neon-rush"][data-gpu-game-pc="1"]');
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
   const cancel=page.locator('.gpu-download-overview [data-gpu-game-cancel="neon-rush"][data-gpu-game-pc="1"]');
@@ -102,7 +103,7 @@ try{
   await (mobile?retry.tap():retry.click());
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
   await page.reload({waitUntil:"networkidle"});
-  await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="licenses"]');
+  await press("#menu-continue");await press("#open-admin");await selectAdminArea(page,'licenses');await selectTask(page,'licenses','gpu');
   assert.match(await page.locator("#gpu-game-catalog").innerText(),/Cancelar download PC 2/);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(overflow<=3,"Download causou rolagem horizontal em "+width);

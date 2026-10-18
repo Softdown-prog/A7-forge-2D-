@@ -21,10 +21,11 @@ try{
   await press(page.locator("#menu-new"));
   await press(page.locator("#open-shop"));
   const printerCard=page.locator("#shop-catalog .shop-card").filter({has:page.locator('button[data-buy="printer"]')});
-  const img=printerCard.locator('.shop-art canvas');
-  assert.equal(await img.count(),1,"printer needs its own catalog Canvas");
-  const artwork=await img.evaluate(canvas=>{
-   const c=canvas.getContext("2d"),p=c.getImageData(0,0,canvas.width,canvas.height).data;
+  const img=printerCard.locator('.shop-art img');
+  assert.equal(await img.count(),1,"printer keeps its own rendered artwork");
+  const artwork=await img.evaluate(async image=>{
+   await image.decode();const canvas=document.createElement("canvas");canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+   const c=canvas.getContext("2d");c.drawImage(image,0,0);const p=c.getImageData(0,0,canvas.width,canvas.height).data;
    const colors=new Set();
    for(let i=0;i<p.length;i+=80)colors.add((p[i]<<16)|(p[i+1]<<8)|p[i+2]);
    return {colors:colors.size,width:canvas.width,height:canvas.height};

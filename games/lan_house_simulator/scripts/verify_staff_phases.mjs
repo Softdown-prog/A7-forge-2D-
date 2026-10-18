@@ -1,3 +1,4 @@
+import {selectAdminArea} from './management_navigation.mjs';
 // Verifica mensagens de fases e Canvas com equipes realmente renderizadas, desktop/mobile.
 import assert from "node:assert/strict";
 import {chromium} from "playwright";
@@ -42,7 +43,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const press=async sel=>mobile?await page.locator(sel).tap():await page.locator(sel).click();
-  await press("#menu-continue");await press("#open-admin");await press('[data-admin-tab="services"]');
+  await press("#menu-continue");await press("#open-admin");await selectAdminArea(page,'services');
   const cleaner=await page.locator("#cleaner-activity").innerText();
   const tech=await page.locator("#technician-activity").innerText();
   const cp=page.locator("#cleaner-progress"),tp=page.locator("#technician-progress");
