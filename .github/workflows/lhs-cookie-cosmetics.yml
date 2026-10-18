@@ -9,11 +9,15 @@ on:
       - 'games/lan_house_simulator/src/render/scene.ts'
       - 'games/lan_house_simulator/src/render/neonOpenArt.ts'
       - 'games/lan_house_simulator/src/render/premiumRoomArt.ts'
+      - 'games/lan_house_simulator/src/render/aquariumArt.ts'
+      - 'games/lan_house_simulator/src/ui/vipProductArt.ts'
       - 'games/lan_house_simulator/src/ui/cloudControls.ts'
       - 'games/lan_house_simulator/tests/cookie-cosmetics.test.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_cosmetics.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_keyboard_sign.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_floor_posters.mjs'
+      - 'games/lan_house_simulator/scripts/render_cookie_tony_aquarium.mjs'
+      - 'games/lan_house_simulator/cookie-items.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_panel.mjs'
       - 'games/lan_house_simulator/index.html'
       - 'games/lan_house_simulator/style.css'
@@ -55,6 +59,9 @@ jobs:
       - name: Compare premium room cosmetics and revocation in real game scene
         working-directory: games/lan_house_simulator
         run: node scripts/render_cookie_floor_posters.mjs out/cookie-art
+      - name: Render real Tony Cyber and wall aquarium before/after, 4 directions and motion
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_cookie_tony_aquarium.mjs out/cookie-art
       - name: Encode premium art preview video
         working-directory: games/lan_house_simulator
         run: |
@@ -69,6 +76,12 @@ jobs:
           ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_piso_posters_apresentacao.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/cookie-art/cookies_piso_posters_apresentacao.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_tony_cyber_aquario_preview.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
+          test -s out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
+          test -s out/cookie-art/cookies_tony_cyber_aquario_comparacao.png
+          test -s out/cookie-art/cookies_vip_salao_depois.png
           test -s out/cookie-art/cookies_piso_posters_comparacao.png
           test -s out/cookie-art/cookies_piso_posters_salao.png
           test -s out/cookie-art/cookies_piso_posters_apresentacao.mp4
@@ -94,6 +107,10 @@ jobs:
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao.png
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao_antes.png
             games/lan_house_simulator/out/cookie-art/cookies_piso_posters_apresentacao.mp4
+            games/lan_house_simulator/out/cookie-art/cookies_tony_cyber_aquario_comparacao.png
+            games/lan_house_simulator/out/cookie-art/cookies_vip_salao_antes.png
+            games/lan_house_simulator/out/cookie-art/cookies_vip_salao_depois.png
+            games/lan_house_simulator/out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
             games/lan_house_simulator/out/account-panel/*.png
           retention-days: 30
           if-no-files-found: error
