@@ -124,6 +124,49 @@ try{
   draw(.4);
  });
  await page.locator('canvas').screenshot({path:resolve(out,'cookies_cadeira_fone_preview.png')});
+ // Detalhe de produto desenhado exclusivamente pelos MESMOS artistas de runtime.
+ await page.evaluate(async()=>{
+  const [{drawNeonChair},{drawActor}]=await Promise.all([
+   import('./js/render/retroComputer.js'),import('./js/render/actorArt.js')
+  ]);
+  const product=document.createElement('canvas');
+  product.id='cookies-product-details';product.width=1320;product.height=730;
+  product.style.cssText='position:fixed;left:0;top:0;z-index:9999';
+  document.body.append(product);
+  const c=product.getContext('2d');
+  const grad=c.createLinearGradient(0,0,1320,730);
+  grad.addColorStop(0,'#0e1d2c');grad.addColorStop(1,'#0a1421');
+  c.fillStyle=grad;c.fillRect(0,0,1320,730);
+  function title(str,x,y,size,color='#e5f2fa'){
+   c.fillStyle=color;c.font='bold '+size+'px Arial';c.fillText(str,x,y);}
+  c.fillStyle='#68e9de';c.fillRect(40,38,7,60);
+  title('COOKIES   /   DETALHE DO PRODUTO',64,60,18,'#75e9dc');
+  title('ARTE PROCEDURAL — MESMO RENDERIZADOR DO JOGO',64,96,27);
+  const cols=[{x:32,w:618,color:'#75ebdd'},{x:672,w:617,color:'#ee91dd'}];
+  for(const item of cols){
+   c.beginPath();c.roundRect(item.x,132,item.w,540,16);c.fillStyle='#1a2d3d';c.fill();
+   c.fillStyle=item.color;c.fillRect(item.x+14,147,item.w-28,4);
+  }
+  title('CADEIRA GAMER NEON',64,193,24);
+  title('50 COOKIES · DETALHES EM RGB',64,219,15,'#6aeadd');
+  const cam={originX:513,originY:502,zoom:5.25};
+  drawNeonChair(c,cam,{x:0,y:0},false,0);
+  title('BASE 5 RODÍZIOS · CARBONO · ALMOFADAS',64,635,13,'#a9c7d4');
+  title('HEADSET RGB + MICROFONE',705,193,24);
+  title('40 COOKIES · CONTATO ANATÔMICO',705,219,15,'#ee91dd');
+  c.save();c.beginPath();c.rect(685,245,590,370);c.clip();
+  drawActor(c,{originX:981,originY:836,zoom:7.0},
+   {x:0,y:0,kind:'regular',id:1,time:1.8,pose:'sitting',direction:'north',
+    premiumHeadset:true});
+  c.restore();
+  title('ARCOS DUPLOS · CONCHAS · HASTE ARTICULADA',705,635,13,'#a9c7d4');
+  c.fillStyle='#799eac';c.fillRect(35,703,1250,1);
+  title('DESENHOS EXPERIMENTAIS: SEM SALDO, COBRANÇA OU ITENS CONCEDIDOS',45,722,12,'#b6cbd5');
+ });
+ await page.locator('#cookies-product-details').screenshot({
+  path:resolve(out,'cookies_cadeira_fone_detalhes.png')});
+ await page.locator('#cookies-product-details').evaluate(el=>el.remove());
+
  const sampleBefore=await page.evaluate(()=>{const c=document.querySelector('canvas').getContext('2d');return c.getImageData(24,250,425,408).data.reduce((a,v,i)=>a+(i%67===0?v:0),0)});
  const sampleAfter=await page.evaluate(()=>{window.__drawCookiePreview(2.7);const c=document.querySelector('canvas').getContext('2d');return c.getImageData(24,250,425,408).data.reduce((a,v,i)=>a+(i%67===0?v:0),0)});
  if(!Number.isFinite(sampleBefore)||!Number.isFinite(sampleAfter))throw Error('Canvas inválido');
