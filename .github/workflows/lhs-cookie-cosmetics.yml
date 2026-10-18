@@ -85,8 +85,8 @@ jobs:
           ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_tony_cyber_aquario_preview.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/cookie-art/cookies_tony_cyber_aquario_preview.mp4
-          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_pixel_clock_preview.webm \\
-            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \\
+          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_pixel_clock_preview.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/cookie-art/cookies_pixel_clock_preview.mp4
           test -s out/cookie-art/cookies_pixel_clock_preview.mp4
           test -s out/cookie-art/cookies_pixel_clock_aberto.png
