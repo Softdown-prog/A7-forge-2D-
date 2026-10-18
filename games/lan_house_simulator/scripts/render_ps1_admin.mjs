@@ -58,7 +58,10 @@ try{
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await page.locator("#ps1-open-shop").click();
   await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
-  await page.locator("#shop-catalog").screenshot({path:resolve(output,"ps1_loja_cds_"+tag+".png")});
+  // Capturar o que o jogador vê após seguir o atalho, não o catálogo inteiro
+  // (que pode ser muito alto e estar dentro de um painel com rolagem própria).
+  await page.locator(".ps1-shop-heading").scrollIntoViewIfNeeded();
+  await page.screenshot({path:resolve(output,"ps1_loja_cds_"+tag+".png"),animations:"disabled"});
   const before=await page.locator('#shop-catalog .ps1-cd-shop-card button[data-buy-ps1-disc="gol-de-rua"]').innerText();
   await page.locator('#shop-catalog .ps1-cd-shop-card button[data-buy-ps1-disc="gol-de-rua"]').click();
   const after=await page.locator('#shop-catalog .ps1-cd-shop-card').filter({hasText:"Gol de Rua"}).innerText();
