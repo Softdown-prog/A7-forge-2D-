@@ -9,6 +9,8 @@ on:
       - 'games/lan_house_simulator/scripts/ps1_crowded_cycle.mjs'
       - 'games/lan_house_simulator/scripts/render_ps1_crowded.mjs'
       - 'games/lan_house_simulator/scripts/render_ps1_admin.mjs'
+      - 'games/lan_house_simulator/scripts/render_ps1_tv_showcase.mjs'
+      - 'games/lan_house_simulator/src/render/ps1MiniGames.ts'
       - 'games/lan_house_simulator/index.html'
       - 'games/lan_house_simulator/src/main.ts'
       - 'games/lan_house_simulator/tests/ps1-2002.test.mjs'
@@ -54,6 +56,9 @@ jobs:
       - name: Validate PlayStation administration and physical CDs on desktop and mobile
         working-directory: games/lan_house_simulator
         run: node scripts/render_ps1_admin.mjs out/forge-ps1
+      - name: Film five CD-specific CRT minigames with the game renderer
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_ps1_tv_showcase.mjs out/forge-ps1
       - name: Install ffmpeg
         run: |
           sudo apt-get update -qq
@@ -73,6 +78,10 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
             -movflags +faststart out/forge-ps1/ps1_dois_clientes.mp4
           test -s out/forge-ps1/ps1_dois_clientes.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/forge-ps1/ps1_cinco_jogos_tv.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/forge-ps1/ps1_cinco_jogos_tv.mp4
+          test -s out/forge-ps1/ps1_cinco_jogos_tv.mp4
       - uses: actions/upload-artifact@v4
         with:
           name: lhs-scene-forge-ps1-video
@@ -80,6 +89,8 @@ jobs:
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_ciclo.mp4
             games/lan_house_simulator/out/forge-ps1/ps1_cliente_navegacao_real.mp4
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_cinco_jogos_tv.mp4
+            games/lan_house_simulator/out/forge-ps1/ps1_tv_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_painel_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_loja_cds_*.png
