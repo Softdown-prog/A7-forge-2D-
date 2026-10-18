@@ -32,7 +32,7 @@ try{
  page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
-  const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach},
+  const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach,buyPs1Disc},
     {drawPs1Station,drawPs1Controller},{drawActor},{SceneRenderer}]=await Promise.all([
    import("./js/sim/engine.js"),import("./js/sim/types.js"),import("./js/sim/ps1.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js"),
@@ -51,6 +51,7 @@ try{
   const slot=ps1PlacementSlots(game)[0];
   if(!slot)throw Error("Nenhuma posição disponível para PS1");
   game.ps1Stations=[{slotId:slot.id,wear:0}];
+  if(!buyPs1Disc(game,"turbo-circuito").ok)throw Error("CD PS1 não comprado no Scene Forge");
   const point=ps1StationPoint(game,0),seat=ps1Seat(game,0),side=ps1SeatApproach(game,0);
   if(!point||!seat||!side)throw Error("PS1 sem bancada, cadeira ou corredor lateral");
   // Enquadra somente o trecho do salão necessário à validação.
