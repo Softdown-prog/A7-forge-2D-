@@ -1,0 +1,53 @@
+name: LHS - Crowd Movement Recovery
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
+      - 'games/lan_house_simulator/tests/customer-stall-recovery.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_doorway_recovery.mjs'
+      - '.github/workflows/lhs-crowd-recovery.yml'
+permissions:
+  contents: read
+jobs:
+  crowd-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and deterministic regression tests
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/customer-stall-recovery.test.mjs tests/crowd-navigation.test.mjs tests/doorway-recovery.test.mjs
+      - name: Install real Chromium
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Record actual game recovery (entrance and corridor)
+        working-directory: games/lan_house_simulator
+        run: |
+          node scripts/verify_doorway_recovery.mjs out/crowd-entrance --record-video
+          node scripts/verify_doorway_recovery.mjs out/crowd-corridor --corridor --record-video
+          for source in out/crowd-entrance/*.webm out/crowd-corridor/*.webm; do
+            ffmpeg -v error -y -i "$source" -an -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${source%.webm}.mp4"
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-real-customer-route-recovery-videos
+          path: |
+            games/lan_house_simulator/out/crowd-entrance/*.mp4
+            games/lan_house_simulator/out/crowd-corridor/*.mp4
+            games/lan_house_simulator/out/crowd-entrance/*.png
+            games/lan_house_simulator/out/crowd-corridor/*.png
+            games/lan_house_simulator/out/crowd-entrance/*.json
+            games/lan_house_simulator/out/crowd-corridor/*.json
+          retention-days: 30
+          if-no-files-found: error

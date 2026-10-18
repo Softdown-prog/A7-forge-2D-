@@ -10,6 +10,7 @@ import {exitNearBinScenario} from './corridor_scenarios.mjs';
 import {GAME_SAVE_KEY} from '../dist/js/sim/types.js';
 const root=resolve(import.meta.dirname,'../dist'),out=resolve(process.argv[2]??'out/doorway');
 const corridor=process.argv.includes('--corridor');
+const recordVideo=process.argv.includes('--record-video');
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{
@@ -26,7 +27,8 @@ try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
  const results=[];
  for(const width of [1280,390]){
-  const context=await browser.newContext({viewport:{width,height:width===390?840:850},deviceScaleFactor:1,isMobile:width===390,hasTouch:width===390});
+  const context=await browser.newContext({viewport:{width,height:width===390?840:850},deviceScaleFactor:1,isMobile:width===390,hasTouch:width===390,
+   ...(recordVideo?{recordVideo:{dir:out,size:{width,height:width===390?840:850}}}:{})});
   await context.route('**/online-config.json',route=>route.fulfill({json:{enabled:false,apiUrl:'',firebaseApiKey:''}}));
   await context.route('**/js/sim/engine.js',async route=>{
    const response=await route.fetch();
@@ -62,7 +64,10 @@ stepGame=function(s,delta){const result=observedStep(s,delta);globalThis.__doorw
   assert.ok(Math.abs(result.cash-state.cash-(result.revenue-state.revenue)+(result.expenses-state.expenses))<1e-6);
   assert.ok(result.minute>state.totalMinutes);assert.deepEqual(errors,[]);
   await page.screenshot({path:resolve(out,'doorway_after_'+width+'.png')});
-  results.push({width,...result,errors});await context.close();
+  results.push({width,...result,errors});
+  const video=recordVideo?await page.video():null;
+  await context.close();
+  if(video)await video.saveAs(resolve(out,(corridor?'corredor_':'entrada_')+width+'.webm'));
  }
  await writeFile(resolve(out,'doorway-runtime.json'),JSON.stringify(results,null,2)+'\n');
  console.log((corridor?'Exit corridor':'Doorway')+' recovery: real runtime resumes on desktop and touch mobile.');
