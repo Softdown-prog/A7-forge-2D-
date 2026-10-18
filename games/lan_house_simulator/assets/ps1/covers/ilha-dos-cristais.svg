@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 560" role="img" aria-labelledby="title desc">
+<title id="title">Ilha dos Cristais — arte original do jogo</title><desc id="desc">AVENTURA · MUNDO MÍSTICO</desc>
+<defs>
+ <linearGradient id="back" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#171b46"/><stop offset=".52" stop-color="#286281"/><stop offset="1" stop-color="#070d19"/></linearGradient>
+ <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#080d15" stop-opacity=".15"/><stop offset=".4" stop-color="#0d1220" stop-opacity="0"/><stop offset=".67" stop-color="#06101a" stop-opacity=".24"/><stop offset="1" stop-color="#030712" stop-opacity=".97"/></linearGradient>
+ <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff" stop-opacity=".86"/><stop offset=".37" stop-color="#b3faff"/><stop offset=".7" stop-color="#fff"/><stop offset="1" stop-color="#e3eefa"/></linearGradient>
+ <pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 3.5H4" stroke="#000" stroke-opacity=".11" stroke-width="1"/></pattern>
+ <filter id="glow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="8"/></filter>
+ <filter id="soft" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="3"/></filter>
+ 
+</defs>
+<rect width="420" height="560" rx="7" fill="url(#back)"/>
+<rect x="9" y="8" width="402" height="542" rx="4" fill="none" stroke="#ffffff" stroke-opacity=".4" stroke-width="1.7"/>
+
+<circle cx="182" cy="442" r="1.8" fill="#b6f6ff" opacity="0.22"/><circle cx="108" cy="115" r="1.9" fill="#b6f6ff" opacity="0.55"/><circle cx="264" cy="106" r="1.7" fill="#b6f6ff" opacity="0.53"/><circle cx="49" cy="177" r="1.8" fill="#b6f6ff" opacity="0.61"/><circle cx="125" cy="284" r="0.5" fill="#b6f6ff" opacity="0.20"/><circle cx="221" cy="254" r="0.6" fill="#b6f6ff" opacity="0.21"/><circle cx="205" cy="210" r="0.9" fill="#b6f6ff" opacity="0.24"/><circle cx="283" cy="351" r="1.5" fill="#b6f6ff" opacity="0.52"/><circle cx="194" cy="83" r="0.8" fill="#b6f6ff" opacity="0.36"/><circle cx="275" cy="427" r="0.8" fill="#b6f6ff" opacity="0.19"/><circle cx="383" cy="77" r="1.2" fill="#b6f6ff" opacity="0.23"/><circle cx="174" cy="104" r="1.2" fill="#b6f6ff" opacity="0.50"/><circle cx="64" cy="428" r="1.0" fill="#b6f6ff" opacity="0.34"/><circle cx="373" cy="288" r="1.6" fill="#b6f6ff" opacity="0.19"/><circle cx="224" cy="153" r="1.4" fill="#b6f6ff" opacity="0.41"/><circle cx="185" cy="395" r="2.0" fill="#b6f6ff" opacity="0.58"/><circle cx="144" cy="76" r="1.3" fill="#b6f6ff" opacity="0.50"/><circle cx="119" cy="439" r="1.9" fill="#b6f6ff" opacity="0.39"/><circle cx="107" cy="181" r="1.2" fill="#b6f6ff" opacity="0.25"/><circle cx="27" cy="191" r="1.2" fill="#b6f6ff" opacity="0.24"/><circle cx="65" cy="102" r="1.0" fill="#b6f6ff" opacity="0.30"/><circle cx="266" cy="314" r="0.6" fill="#b6f6ff" opacity="0.28"/><circle cx="99" cy="103" r="0.9" fill="#b6f6ff" opacity="0.16"/><circle cx="302" cy="313" r="1.0" fill="#b6f6ff" opacity="0.16"/><circle cx="268" cy="248" r="1.3" fill="#b6f6ff" opacity="0.51"/><circle cx="276" cy="183" r="1.4" fill="#b6f6ff" opacity="0.32"/><circle cx="99" cy="140" r="1.2" fill="#b6f6ff" opacity="0.29"/><circle cx="49" cy="237" r="1.2" fill="#b6f6ff" opacity="0.59"/><circle cx="35" cy="317" r="1.6" fill="#b6f6ff" opacity="0.28"/><circle cx="389" cy="170" r="0.6" fill="#b6f6ff" opacity="0.38"/><circle cx="148" cy="163" r="2.0" fill="#b6f6ff" opacity="0.52"/><circle cx="28" cy="362" r="2.0" fill="#b6f6ff" opacity="0.25"/><circle cx="300" cy="414" r="1.8" fill="#b6f6ff" opacity="0.25"/><circle cx="352" cy="128" r="1.4" fill="#b6f6ff" opacity="0.61"/><circle cx="250" cy="114" r="1.2" fill="#b6f6ff" opacity="0.19"/><circle cx="293" cy="95" r="1.2" fill="#b6f6ff" opacity="0.50"/><circle cx="94" cy="388" r="1.6" fill="#b6f6ff" opacity="0.17"/><circle cx="35" cy="367" r="0.6" fill="#b6f6ff" opacity="0.24"/><circle cx="298" cy="201" r="2.0" fill="#b6f6ff" opacity="0.16"/><circle cx="272" cy="323" r="1.0" fill="#b6f6ff" opacity="0.34"/><circle cx="99" cy="251" r="1.8" fill="#b6f6ff" opacity="0.47"/><circle cx="189" cy="98" r="1.4" fill="#b6f6ff" opacity="0.18"/><circle cx="336" cy="326" r="0.6" fill="#b6f6ff" opacity="0.29"/><circle cx="239" cy="308" r="0.7" fill="#b6f6ff" opacity="0.42"/><circle cx="67" cy="377" r="0.5" fill="#b6f6ff" opacity="0.51"/><circle cx="272" cy="245" r="1.6" fill="#b6f6ff" opacity="0.38"/><circle cx="160" cy="297" r="0.9" fill="#b6f6ff" opacity="0.48"/><circle cx="335" cy="322" r="2.0" fill="#b6f6ff" opacity="0.42"/><circle cx="108" cy="167" r="1.3" fill="#b6f6ff" opacity="0.27"/><circle cx="369" cy="304" r="1.4" fill="#b6f6ff" opacity="0.32"/><circle cx="203" cy="334" r="1.2" fill="#b6f6ff" opacity="0.35"/><circle cx="236" cy="228" r="1.8" fill="#b6f6ff" opacity="0.48"/><circle cx="218" cy="154" r="1.6" fill="#b6f6ff" opacity="0.31"/><circle cx="307" cy="229" r="0.6" fill="#b6f6ff" opacity="0.28"/><circle cx="359" cy="309" r="0.9" fill="#b6f6ff" opacity="0.27"/><circle cx="338" cy="351" r="2.0" fill="#b6f6ff" opacity="0.19"/><circle cx="67" cy="367" r="1.8" fill="#b6f6ff" opacity="0.43"/><circle cx="296" cy="396" r="0.8" fill="#b6f6ff" opacity="0.56"/><circle cx="293" cy="442" r="1.2" fill="#b6f6ff" opacity="0.36"/><circle cx="136" cy="164" r="1.2" fill="#b6f6ff" opacity="0.39"/>
+<circle cx="309" cy="165" r="112" fill="#5ca6da" opacity=".25" filter="url(#glow)"/>
+<circle cx="316" cy="163" r="78" fill="#d4f6ff" opacity=".82"/>
+<circle cx="304" cy="149" r="74" fill="#92bedb" opacity=".62"/>
+<path d="M0 383L90 336L172 364L230 315L309 355L420 290V450H0Z" fill="#0d3958" opacity=".7"/>
+<path d="M46 299L93 185L146 295L206 211L247 302L277 242L341 329L400 250L420 404L0 412Z" fill="#214a69"/>
+<path d="M93 185L111 267L93 250L73 265Z" fill="#89d9f3"/>
+<path d="M206 211L224 267L197 256L184 268Z" fill="#7bc2de"/>
+<ellipse cx="220" cy="395" rx="172" ry="42" fill="#9ceef0" opacity=".32" filter="url(#glow)"/>
+<path d="M51 333L135 286L283 275L365 320L329 373L245 420L151 410L78 385Z" fill="#163f50" stroke="#9eeecf" stroke-width="5"/>
+<path d="M51 333L135 286L283 275L365 320L247 357L151 363Z" fill="#326b63"/>
+<path d="M151 363L247 357L245 420L151 410Z" fill="#122f42"/>
+<path d="M246 357L365 320L329 373L245 420Z" fill="#1c4653"/>
+<g filter="url(#glow)" opacity=".7">
+ <path d="M94 317L132 171L188 317Z" fill="#5cfbe7"/>
+ <path d="M204 314L252 135L294 311Z" fill="#9f8aff"/>
+ <path d="M262 323L309 232L337 320Z" fill="#52daff"/>
+</g>
+<path d="M94 317L132 171L188 317Z" fill="#73f0e0" stroke="#edfffd" stroke-width="4"/>
+<path d="M132 171L142 297L188 317Z" fill="#2d85a7" opacity=".85"/>
+<path d="M204 314L252 135L294 311Z" fill="#baa2ff" stroke="#ecdbff" stroke-width="4"/>
+<path d="M252 135L253 308L294 311Z" fill="#6658b9"/>
+<path d="M262 323L309 232L337 320Z" fill="#89ddff" stroke="#ebfaff" stroke-width="4"/>
+<path d="M308 369L307 418L291 463L274 450L291 369" fill="#95f8e9" opacity=".82"/>
+<path d="M116 377L107 405L106 456L89 431L92 366" fill="#72d9ff" opacity=".8"/>
+<text x="22" y="433" fill="#f9f8ff" font-family="Arial Black,Arial,sans-serif" font-size="47" font-weight="900" letter-spacing="-2" stroke="#122944" stroke-width="6" paint-order="stroke">ILHA DOS</text>
+<text x="23" y="478" fill="#c5fff8" font-family="Arial Black,Arial,sans-serif" font-size="50" font-weight="900" letter-spacing="-3" stroke="#122944" stroke-width="6" paint-order="stroke">CRISTAIS</text>
+<rect x="11" y="11" width="398" height="538" fill="url(#scan)" opacity=".26"/>
+<rect x="11" y="11" width="398" height="538" fill="url(#shade)"/>
+<rect x="0" y="0" width="420" height="42" fill="#07101b" fill-opacity=".83"/>
+<rect x="10" y="8" width="33" height="26" rx="4" fill="#d6e4ee"/><text x="26.5" y="27" fill="#0b1728" font-family="Arial,sans-serif" font-size="18" font-weight="900" text-anchor="middle">S</text>
+<text x="53" y="18" fill="#f0f7ff" font-family="Arial,sans-serif" font-weight="900" font-size="11" letter-spacing="2.8">SOFTDOWN</text>
+<text x="53" y="31" fill="#a6b8c7" font-family="Arial,sans-serif" font-size="8" letter-spacing="2.6">INTERACTIVE · CD-ROM</text>
+<text x="391" y="26" fill="#d6e1eb" font-family="Arial,sans-serif" font-size="10" font-weight="700" text-anchor="end">2002</text>
+<path d="M19 499H401" stroke="#b3faff" opacity=".65"/>
+<text x="22" y="521" fill="#e8f2fa" font-size="10" font-family="Arial,sans-serif" font-weight="700" letter-spacing="1.5">AVENTURA · MUNDO MÍSTICO</text>
+<text x="398" y="523" text-anchor="end" fill="#b3faff" font-size="9" font-family="Arial,sans-serif" letter-spacing="1.3">EDIÇÃO ORIGINAL</text>
+<rect x="5" y="5" width="410" height="550" rx="7" fill="none" stroke="#08101f" stroke-width="6"/>
+</svg>
