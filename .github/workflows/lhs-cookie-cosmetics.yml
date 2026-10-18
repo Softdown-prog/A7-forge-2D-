@@ -8,10 +8,12 @@ on:
       - 'games/lan_house_simulator/src/render/actorArt.ts'
       - 'games/lan_house_simulator/src/render/scene.ts'
       - 'games/lan_house_simulator/src/render/neonOpenArt.ts'
+      - 'games/lan_house_simulator/src/render/premiumRoomArt.ts'
       - 'games/lan_house_simulator/src/ui/cloudControls.ts'
       - 'games/lan_house_simulator/tests/cookie-cosmetics.test.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_cosmetics.mjs'
       - 'games/lan_house_simulator/scripts/render_cookie_keyboard_sign.mjs'
+      - 'games/lan_house_simulator/scripts/render_cookie_floor_posters.mjs'
       - '.github/workflows/lhs-cookie-cosmetics.yml'
 permissions:
   contents: read
@@ -44,6 +46,9 @@ jobs:
       - name: Render Rainbow RGB keyboard and open neon sign in actual room
         working-directory: games/lan_house_simulator
         run: node scripts/render_cookie_keyboard_sign.mjs out/cookie-art
+      - name: Compare premium room cosmetics and revocation in real game scene
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_cookie_floor_posters.mjs out/cookie-art
       - name: Encode premium art preview video
         working-directory: games/lan_house_simulator
         run: |
@@ -55,6 +60,12 @@ jobs:
           ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_teclado_placa_preview.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 21 \
             -movflags +faststart out/cookie-art/cookies_teclado_placa_preview.mp4
+          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_piso_posters_apresentacao.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/cookie-art/cookies_piso_posters_apresentacao.mp4
+          test -s out/cookie-art/cookies_piso_posters_comparacao.png
+          test -s out/cookie-art/cookies_piso_posters_salao.png
+          test -s out/cookie-art/cookies_piso_posters_apresentacao.mp4
           test -s out/cookie-art/cookies_teclado_placa_preview.png
           test -s out/cookie-art/cookies_neon_porta_aberta.png
           test -s out/cookie-art/cookies_neon_porta_fechando.png
@@ -73,5 +84,9 @@ jobs:
             games/lan_house_simulator/out/cookie-art/cookies_neon_porta_aberta.png
             games/lan_house_simulator/out/cookie-art/cookies_neon_porta_fechando.png
             games/lan_house_simulator/out/cookie-art/cookies_teclado_placa_preview.mp4
+            games/lan_house_simulator/out/cookie-art/cookies_piso_posters_comparacao.png
+            games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao.png
+            games/lan_house_simulator/out/cookie-art/cookies_piso_posters_salao_antes.png
+            games/lan_house_simulator/out/cookie-art/cookies_piso_posters_apresentacao.mp4
           retention-days: 30
           if-no-files-found: error
