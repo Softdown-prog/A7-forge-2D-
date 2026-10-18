@@ -16,23 +16,59 @@
 <circle cx="302" cy="172" r="132" fill="#fcd348" filter="url(#glow)" opacity=".27"/>
 <path d="M0 50H420V374H0Z" fill="#082533" opacity=".5"/>
 <rect x="-10" y="210" width="28" height="170" fill="#081e2d" opacity="0.45"/><rect x="0" y="226" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="29" y="191" width="28" height="189" fill="#081e2d" opacity="0.55"/><rect x="39" y="207" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="68" y="172" width="28" height="208" fill="#081e2d" opacity="0.65"/><rect x="78" y="188" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="107" y="153" width="28" height="227" fill="#081e2d" opacity="0.45"/><rect x="117" y="169" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="146" y="134" width="28" height="246" fill="#081e2d" opacity="0.55"/><rect x="156" y="150" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="185" y="115" width="28" height="265" fill="#081e2d" opacity="0.65"/><rect x="195" y="131" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="224" y="96" width="28" height="284" fill="#081e2d" opacity="0.45"/><rect x="234" y="112" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="263" y="195" width="28" height="185" fill="#081e2d" opacity="0.55"/><rect x="273" y="211" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="302" y="176" width="28" height="204" fill="#081e2d" opacity="0.65"/><rect x="312" y="192" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="341" y="157" width="28" height="223" fill="#081e2d" opacity="0.45"/><rect x="351" y="173" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="380" y="138" width="28" height="242" fill="#081e2d" opacity="0.55"/><rect x="390" y="154" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="419" y="119" width="28" height="261" fill="#081e2d" opacity="0.65"/><rect x="429" y="135" width="4" height="12" fill="#edce54" opacity=".46"/><rect x="458" y="100" width="28" height="280" fill="#081e2d" opacity="0.45"/><rect x="468" y="116" width="4" height="12" fill="#edce54" opacity=".46"/>
+
+<!-- Trave do campinho de bairro e rede na perspectiva da quadra. -->
+<g opacity=".88" fill="none" stroke-linejoin="round">
+ <path d="M39 184L173 161L193 283L37 310Z" stroke="#e2ece1" stroke-width="9"/>
+ <path d="M39 184L14 201L15 319L37 310M173 161L190 180L207 303L193 283" stroke="#83a7ae" stroke-width="5"/>
+ <path d="M14 201L190 180L207 303L15 319Z" stroke="#a5d8d2" stroke-width="1.8" opacity=".68"/>
+ <path d="M40 198L51 316M69 194L77 314M98 191L105 309M126 187L133 307M156 184L167 303M183 181L197 302" stroke="#9ef1d8" stroke-width="1" opacity=".6"/>
+ <path d="M17 222L196 204M17 248L199 229M16 276L202 252M15 302L206 278" stroke="#a9eee6" stroke-width="1" opacity=".65"/>
+</g>
+<path d="M312 246L407 231L407 277L301 292Z" fill="#0d3d38" stroke="#5db9b0" stroke-width="3"/>
+<text x="354" y="270" font-size="18" font-family="Arial,sans-serif" font-weight="900" fill="#b7f7bf" text-anchor="middle" transform="rotate(-9 354 270)">É GOL!</text>
+<g fill="#fee8a7"><circle cx="24" cy="108" r="6"/><circle cx="49" cy="106" r="6"/><circle cx="71" cy="104" r="6"/></g>
 <path d="M0 347L420 286V474L0 502Z" fill="#1f5d55" stroke="#a0e7bd" stroke-width="5"/>
 <path d="M0 400L420 330M0 476L420 385M110 329L290 478" stroke="#f3d797" stroke-width="4" opacity=".5"/>
 <path d="M8 374L420 307" stroke="#74edbe" stroke-width="3"/>
 <path d="M296 102L401 116M290 111L406 135" stroke="#fcead1" stroke-width="6" opacity=".5"/>
 <g transform="translate(180 291)">
   <path d="M-10 -96L9 -119L40 -92L15 -52L6 -3L60 63L33 82L-19 18L-43 75L-78 64L-55 -15L-34 -53Z" fill="#f4bb3a" stroke="#131d2b" stroke-width="7"/>
+
+  <!-- Camisa de time fictício: faixas, costuras e número 10. -->
+  <path d="M-23 -98L20 -83L-3 -37L-27 -47Z" fill="#eaa343" opacity=".68"/>
+  <path d="M-10 -94L9 -90L20 -61L4 -64Z" fill="#fbef9c"/>
+  <path d="M-22 -72L14 -56" stroke="#fff0ac" stroke-width="4"/>
+  <path d="M-25 -11L2 12M-44 6L-58 30" stroke="#25324b" stroke-width="4" opacity=".54"/>
   <circle cx="16" cy="-134" r="24" fill="#212536" stroke="#fdd08b" stroke-width="5"/>
+
+  <!-- Rosto e cabelo em silhueta com contorno iluminado. -->
+  <path d="M-9 -149Q-17 -175 12 -180Q34 -180 38 -154L28 -162L5 -163Z" fill="#122a37"/>
+  <path d="M9 -132L17 -129L17 -120L11 -117" fill="none" stroke="#ffd88d" stroke-width="3"/>
+  <path d="M31 -132L33 -127" stroke="#b47e52" stroke-width="3" stroke-linecap="round"/>
+  <path d="M-13 -90L4 -94" stroke="#f7f4c8" stroke-width="5"/>
   <path d="M15 -118L-9 -93M35 -97L69 -63L114 -71" stroke="#f4bb3a" stroke-width="17" stroke-linecap="round"/>
   <path d="M-41 75L-52 96L-86 88M49 77L71 93L94 82" stroke="#162839" stroke-width="14" stroke-linecap="round"/>
+
+  <path d="M-61 64L-44 71L-57 96L-75 92Z" fill="#fff6de" stroke="#142738" stroke-width="2"/>
+  <path d="M36 76L52 89L70 93" fill="none" stroke="#f9e9a8" stroke-width="5"/>
   <path d="M-29 -16L-55 7" stroke="#172135" stroke-width="11"/>
 </g>
 <g transform="translate(318 348)">
 <circle r="52" fill="#f3eee0" stroke="#0a1826" stroke-width="7"/>
 <path d="M0 -18L17 -6L11 13H-11L-20 -6Z" fill="#142737"/>
 <path d="M0 -18L-14 -41M17 -6L43 -16M11 13L19 42M-11 13L-32 39M-20 -6L-44 -20" stroke="#152839" stroke-width="11"/>
+
+<ellipse cx="-10" cy="34" rx="24" ry="12" fill="#c4b8a8" opacity=".32"/>
+<path d="M-43 -18Q-48 -38 -26 -46M37 19Q51 18 47 0" stroke="#fffdf8" stroke-width="4" fill="none" opacity=".7"/>
+<circle cx="31" cy="-27" r="5" fill="#e9dfd1"/><circle cx="-37" cy="21" r="4" fill="#e9dfd1"/>
 <ellipse cx="-20" cy="-24" rx="12" ry="6" fill="#fff" opacity=".7"/>
 </g>
+
+<!-- O lance ganha faíscas e linhas de movimento tipo pôster de arcade. -->
+<path d="M237 290Q286 272 331 293M246 310Q289 293 342 313" fill="none" stroke="#fff1bf" stroke-width="5" opacity=".75" stroke-linecap="round"/>
+<path d="M369 338l22 -21m-4 39l28 -6" stroke="#b6fff1" stroke-width="4" stroke-linecap="round"/>
+<text x="30" y="82" font-family="Arial,sans-serif" font-size="11" font-weight="900" letter-spacing="2" fill="#f1fcae">FUTEBOL DE BAIRRO</text>
 <path d="M17 400L398 400" stroke="#ffffab" stroke-width="3" opacity=".5"/>
 <text x="22" y="429" fill="#fdfbdd" font-family="Arial Black,Arial,sans-serif" font-size="78" font-weight="900" letter-spacing="-5" stroke="#122a29" stroke-width="6" paint-order="stroke">GOL</text>
 <text x="26" y="479" fill="#81f9ce" font-family="Arial Black,Arial,sans-serif" font-size="52" font-weight="900" letter-spacing="-2" stroke="#122a29" stroke-width="6" paint-order="stroke">DE RUA</text>
