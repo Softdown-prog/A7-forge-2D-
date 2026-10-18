@@ -1,4 +1,5 @@
 import {ps1ControllerAnchor,ps1ControllerPort,ps1ScreenFrame} from "../dist/js/render/ps1Art.js";
+import {drawPs1MiniGame,ps1MiniGameFrame} from "../dist/js/render/ps1MiniGames.js";
 import {seatTransitionWeight} from "../dist/js/render/actorArt.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -301,4 +302,46 @@ test("CDs PS1: troca, cópias físicas exclusivas, dinheiro e saves legados",()=
  assert.equal(ps1AvailableStation(legacy),-1,"save antigo precisa comprar CD");
  for(const title of PS1_CD_CATALOG)assert.ok(ps1DiscPrice(s,title.id)>0);
  assert.equal(buyPs1Disc(inYear(),"turbo-circuito").ok,false);
+});
+
+test("cinco CDs têm minijogos CRT exclusivos, determinísticos e animados",()=>{
+ const snapshots=new Set();
+ for(const disc of PS1_CD_CATALOG){
+  const data=ps1MiniGameFrame(disc.id,1.25);
+  assert.equal(data.disc,disc.id);
+  assert.equal(data.tick,10);
+  assert.deepEqual(ps1MiniGameFrame(disc.id,1.25),data);
+  assert.equal(ps1MiniGameFrame(disc.id,Number.NaN).tick,0);
+  let image=[];
+  const collect=(x,y,w,h,color)=>{
+   for(const v of [x,y,w,h])assert.ok(Number.isFinite(v));
+   assert.ok(x>=0&&x<=1&&y>=0&&y<=1);
+   assert.ok(w>0&&h>0&&x+w<=1.000001&&y+h<=1.000001);
+   image.push([x,y,w,h,color]);
+  };
+  drawPs1MiniGame(collect,disc.id,1.25);
+  assert.ok(image.length>12,disc.title+" precisa ter detalhes próprios");
+  const serialized=JSON.stringify(image);
+  assert.ok(!snapshots.has(serialized),disc.title+" repetiu outro jogo");
+  snapshots.add(serialized);
+  image=[];
+  drawPs1MiniGame(collect,disc.id,2.25);
+  assert.notEqual(serialized,JSON.stringify(image),disc.title+" deve animar no tempo");
+ }
+ assert.equal(snapshots.size,5);
+});
+
+test("a seleção física por bancada muda o jogo da TV sem tocar no preço",()=>{
+ const s=setup();
+ const first=ps1PlayableDisc(s,0);
+ assert.equal(first,"turbo-circuito");
+ const initialRate=ps1HourPrice(s),beforeCash=s.cash;
+ ok(buyPs1Disc(s,"gol-de-rua"));
+ ok(setPs1StationDisc(s,0,"gol-de-rua"));
+ assert.equal(ps1PlayableDisc(s,0),"gol-de-rua");
+ assert.notEqual(ps1MiniGameFrame(first,1).accent,ps1MiniGameFrame(ps1PlayableDisc(s,0),1).accent);
+ assert.equal(ps1HourPrice(s),initialRate);
+ assert.equal(beforeCash-s.cash,ps1DiscPrice(s,"gol-de-rua"));
+ assert.equal(isValidSave(s),true);
+ assert.equal(parseImportedSave(serializeSave(s)).ps1Stations[0].discId,"gol-de-rua");
 });
