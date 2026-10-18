@@ -106,6 +106,7 @@ jobs:
             games/lan_house_simulator/out/forge-ps1/ps1_painel_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_loja_cds_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_posicoes_*.png
+            games/lan_house_simulator/out/forge-ps1/loja_*_arte_ajustada_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_cinco_capas_catalogo.png
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes_trace.json
             games/lan_house_simulator/out/forge-ps1/ps1_real_*.png
