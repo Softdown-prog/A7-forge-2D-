@@ -13,8 +13,9 @@ test('catálogo inicial mantém preços fixos e anos corretos, sem vantagem econ
  assert.deepEqual(COOKIE_COSMETICS.map(({id,cookies,unlockYear})=>[id,cookies,unlockYear]),[
   ['headset-rgb-neon',40,2012],['chair-gamer-neon',50,2012],
   ['keyboard-rainbow-rgb',25,2012],['neon-open-sign',30,1998],
-  ['arcade-checker-floor',25,1998],['exclusive-arcade-posters',12,1998]]);
- assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,6);
+  ['arcade-checker-floor',25,1998],['exclusive-arcade-posters',12,1998],
+  ['tony-cyber',60,2010],['aquarium-rgb',45,2008]]);
+ assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,8);
 });
 test('o save não concede propriedade premium, mesmo com IDs injetados',()=>{
  setVerifiedCosmetics([]);
@@ -115,4 +116,24 @@ test('Revestimento premium usa geometria projetada, preserva toda a superfície'
  assert.equal(painted,10);
  assert.ok(paths>=10);
  assert.ok(points.every(([x,y])=>Number.isFinite(x)&&Number.isFinite(y)));
+});
+
+test('últimos dois cosméticos VIP só aparecem com direito de conta e no ano correto',()=>{
+ setVerifiedCosmetics([]);
+ const save=createGame(567,'historical');
+ const before=serializeSave(save),cash=save.cash;
+ assert.equal(cosmeticAvailable('tony-cyber',2030),false);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2030),false);
+ setVerifiedCosmetics(['tony-cyber','aquarium-rgb']);
+ assert.equal(cosmeticAvailable('tony-cyber',2009),false);
+ assert.equal(cosmeticAvailable('tony-cyber',2010),true);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2007),false);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2008),true);
+ assert.equal(toggleVerifiedCosmetic('aquarium-rgb',false),true);
+ assert.equal(cosmeticAvailable('aquarium-rgb',2015),false);
+ assert.equal(cosmeticAvailable('tony-cyber',2015),true);
+ assert.equal(serializeSave(save),before);
+ assert.equal(save.cash,cash);
+ setVerifiedCosmetics([]);
+ assert.equal(cosmeticAvailable('tony-cyber',2020),false);
 });
