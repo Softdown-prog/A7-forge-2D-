@@ -7,6 +7,7 @@ import {Storage} from '@google-cloud/storage';
 import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
 import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
 import {DONATE_PACKAGES} from '../donate-packages.mjs';
+import {COOKIE_ITEMS,summarizeLedger,totalItemSpending} from '../cookie-items.mjs';
 import {createPayments} from './payments.mjs';
 import {createVerificationEmail,authenticateAccount} from './verification-email.mjs';
 
@@ -18,7 +19,7 @@ const auth=getAuth();
 const app=express();app.disable('x-powered-by');app.set('trust proxy',1);
 const origins=new Set((process.env.ALLOWED_ORIGINS||'').split(',').filter(Boolean));
 const packages=DONATE_PACKAGES;
-const catalogue=JSON.parse(process.env.COOKIE_ITEMS_JSON||'{}');
+const catalogue=Object.freeze({...COOKIE_ITEMS,...JSON.parse(process.env.COOKIE_ITEMS_JSON||'{}')});
 const paymentsEnabled=process.env.PAYMENTS_ENABLED==='true';
 const sandbox=process.env.PAYMENTS_MODE!=='production';
 const verificationEmailProvider=process.env.VERIFICATION_EMAIL_PROVIDER||'firebase';
@@ -53,8 +54,23 @@ app.use('/v1',async(req,res,next)=>{try{
 }catch(e){next(e);}});
 app.get('/v1/account',async(req,res)=>{
  await db.runTransaction(async tx=>{const a=await tx.get(req.userRef);if(!a.exists)tx.create(req.userRef,{cookiesBalance:0,createdAt:FieldValue.serverTimestamp()});});
- const [a,items]=await Promise.all([req.userRef.get(),req.userRef.collection('items').get()]);
- res.json({uid:req.uid,cookiesBalance:a.data().cookiesBalance||0,entitlements:items.docs.map(d=>d.id)});
+ const [a,items,recent,spent]=await Promise.all([
+  req.userRef.get(),
+  req.userRef.collection('items').get(),
+  req.userRef.collection('ledger').orderBy('at','desc').limit(40).get(),
+  req.userRef.collection('ledger').where('type','==','item').get()
+ ]);
+ const history=summarizeLedger(recent.docs.map(d=>({id:d.id,...d.data()})));
+ const allSpending=summarizeLedger(spent.docs.map(d=>({id:d.id,...d.data()})));
+ const balance=a.data()?.cookiesBalance??0;
+ res.json({
+  uid:req.uid,cookiesBalance:balance,
+  cookiesSpentTotal:totalItemSpending(allSpending),
+  entitlements:items.docs.map(d=>d.id),
+  transactions:history,
+  // As transações são somente as 40 mais recentes; o gasto total contempla todas.
+  historyLimit:40
+ });
 });
 const slotRef=req=>req.userRef.collection('slots').doc('main');
 app.get('/v1/saves/main',async(req,res)=>{
@@ -88,7 +104,7 @@ app.post('/v1/saves/main',async(req,res)=>{
 app.post('/v1/items/:itemId/purchase',async(req,res)=>{
  const itemId=id(req.params.itemId);const item=catalogue[itemId];if(!item||!Number.isSafeInteger(item.cookies)||item.cookies<=0)throw fault(404,'Item indisponível.');
  const owned=req.userRef.collection('items').doc(itemId);
- await db.runTransaction(async tx=>{const [account,entitlement]=await tx.getAll(req.userRef,owned);if(entitlement.exists)return;const balance=account.data()?.cookiesBalance||0;if(balance<item.cookies)throw fault(409,'Cookies insuficientes.');tx.set(req.userRef,{cookiesBalance:balance-item.cookies},{merge:true});tx.create(owned,{acquiredAt:FieldValue.serverTimestamp()});tx.create(req.userRef.collection('ledger').doc(`item-${itemId}`),{delta:-item.cookies,type:'item',itemId,at:FieldValue.serverTimestamp()});});
+ await db.runTransaction(async tx=>{const [account,entitlement]=await tx.getAll(req.userRef,owned);if(entitlement.exists)return;const balance=account.data()?.cookiesBalance||0;if(balance<item.cookies)throw fault(409,'Cookies insuficientes.');tx.set(req.userRef,{cookiesBalance:balance-item.cookies},{merge:true});tx.create(owned,{acquiredAt:FieldValue.serverTimestamp(),cookiesPaid:item.cookies});tx.create(req.userRef.collection('ledger').doc(`item-${itemId}`),{delta:-item.cookies,type:'item',itemId,at:FieldValue.serverTimestamp()});});
  res.json({owned:true,itemId});
 });
 async function mp(path,options={}){
