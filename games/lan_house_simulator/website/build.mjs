@@ -49,8 +49,10 @@ export function buildSite(){
  writeFileSync(gameStyle,readFileSync(gameStyle,"utf8").replace("./assets/ui/salon-preview.webp","./assets/ui/salon-preview.webp?v="+revision));
  const gameFile=resolve(output,"game/index.html");let game=readFileSync(gameFile,"utf8");
  game=game.replace('<span class="edition-label">','<a class="edition-label" href="/jogar/" target="_top">← Voltar ao site</a><span class="edition-label">');
- game=game.replace('<script type="module" src="./js/main.js"></script>',
-  '<script type="module" src="./js/main.js?v='+revision+'"></script>');
+ // All game entry scripts must use the same revision as their transitive
+ // imports. Otherwise the preview checker (and a real browser cache) rejects them.
+ game=game.replace(/(<script type="module" src="\.\/js\/[^"?]+\.js)(?:\?v=[^"]+)?(">)/g,
+  (_match,prefix,suffix)=>prefix+"?v="+revision+suffix);
  game=game.replace("<title>",'<meta name="robots" content="noindex"/><title>');
  game=game.replace('href="./style.css"','href="./style.css?v='+revision+'"');writeFileSync(gameFile,game);
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
