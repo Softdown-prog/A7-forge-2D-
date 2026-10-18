@@ -53,8 +53,17 @@ try{
   }
   await page.locator('#admin').evaluate(el=>el.scrollTop=0);
   if(mobile){
-   const x=Math.round(width/2);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y:700}]});
-   for(let i=1;i<=10;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:700-i*40}]});await page.waitForTimeout(22);}
+   // Gesture must start over the modal's padding, not an inner hardware
+   // scroll area/button that can capture the pan on a touch screen.
+   const target=await page.locator('#admin').evaluate(el=>{
+    const b=el.getBoundingClientRect(),x=Math.ceil(b.left+8),y=Math.round(Math.min(b.bottom-48,700));
+    const node=document.elementFromPoint(x,y);
+    return {x,y,hit:node?.id||node?.className||node?.tagName};
+   });
+   console.log(JSON.stringify({touchTarget:{width,year,...target}}));
+   const {x,y}=target;
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+   for(let i=1;i<=10;i++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:y-i*40}]});await page.waitForTimeout(28);}
    await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   }else{await page.mouse.move(width/2,650);await page.mouse.wheel(0,400);}
   await page.waitForTimeout(500);
