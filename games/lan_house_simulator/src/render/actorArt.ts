@@ -406,6 +406,8 @@ export function drawActor(ctx:CanvasRenderingContext2D,camera:Projection,a:Actor
 function drawNeonHeadset(ctx:CanvasRenderingContext2D,headX:number,
  headY:number,back:boolean,sideways:boolean,time:number):void{
  ctx.save();ctx.translate(headX,headY);
+ // Proporções calibradas para não engolir a cabeça de um ator em zoom alto.
+ ctx.scale(.80,.82);
  const glow=.55+.45*Math.sin(time*2.5),cyan="#63f4ef",pink="#f18be3";
  const cup=(x:number,y:number,width=7.2,height=11.4)=>{
   ctx.save();ctx.shadowColor=cyan;ctx.shadowBlur=4*glow;
