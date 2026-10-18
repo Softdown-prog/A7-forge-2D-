@@ -39,7 +39,7 @@ import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGp
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 
-const COSTUMES: Costume[] = ["regular", "regular", "regular", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
+const COSTUMES: Costume[] = ["regular", "regular", "female", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 /** Encerrar de forma gradual: últimos visitantes até 20h30, início da saída às 21h. */
 export const LAST_ADMISSION_MINUTE = DAY_MINUTES-90;
 export const CLOSING_START_MINUTE = DAY_MINUTES-60;

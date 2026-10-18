@@ -1,5 +1,5 @@
 export type CustomerStage = "arriving" | "waiting" | "to_pc" | "sitting" | "using" | "standing" | "shopping" | "leaving";
-export type Costume = "regular" | "clown" | "vampire" | "stitched-monster" | "rabbit" | "mouse-mascot";
+export type Costume = "regular" | "female" | "clown" | "vampire" | "stitched-monster" | "rabbit" | "mouse-mascot";
 export type Item = "soda" | "candy" | "snacks";
 
 export interface Point { x: number; y: number }

@@ -19,6 +19,7 @@ const casual: readonly ActorStyle[] = [
 ];
 export function actorStyleFor(kind: ActorKind, id: number): ActorStyle {
   const style = casual[(Math.abs(Math.trunc(id)) || 0)%casual.length]!;
+  if(kind==="female")return {shirt:"#B56C92",dark:"#794C7D",highlight:"#E6B3D1",pants:"#394A69",hair:"#382A3B",skin:"#DB9D80",trim:"#D9C29B"};
   if(kind==="cleaner")return {shirt:"#368DAD",dark:"#225E7A",highlight:"#8BCBDD",pants:"#345475",hair:"#3D3130",skin:"#DDA57F",trim:"#F0D680"};
   if(kind==="technician")return {shirt:"#41876E",dark:"#245D57",highlight:"#92BE96",pants:"#344D60",hair:"#4B342D",skin:"#DFAC85",trim:"#E6C67D"};
   if(kind==="owner") return {shirt:"#428f79",dark:"#234f48",highlight:"#93c4a0",pants:"#344c54",hair:"#49342c",skin:"#E4AE86",trim:"#e5c18a"};
@@ -160,6 +161,13 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
 
   // Silhuetas de costas, perfil e frente são distintas: não apenas um flip.
   // Capa e acessórios que ficam atrás do corpo.
+  if(a.kind==="female"){
+    // Long hair and a tied strand are behind the shoulders in all four views.
+    shape(ctx,[[-11,-74+headShift],[-16,-68+headShift],[-17,-44+headShift],
+      [-10,-39+headShift],[9,-40+headShift],[16,-48+headShift],
+      [15,-69+headShift],[10,-78+headShift]],style.hair,"#252638");
+    ell(ctx,sideways?-9:0,-48+headShift,7,11,style.hair);
+  }
   if(a.kind==="vampire"){
     shape(ctx,[[-14,-56+headShift],[13,-56+headShift],[24,-6],[-24,-5]],"#433451","#2C2840");
     shape(ctx,[[-12,-51+headShift],[11,-50+headShift],[17,-18],[-16,-15]],"#7E4A68","#4F3556");
@@ -341,6 +349,19 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     }
   }
 
+  if(a.kind==="female"&&!back){
+    // Side locks frame the face without covering the eyes, including profile.
+    const sides=sideways?[-1]:[-1,1];
+    for(const side of sides){
+      shape(ctx,[[side*9+lean,-78+headShift],[side*14+lean,-72+headShift],
+        [side*13+lean,-55+headShift],[side*9+lean,-50+headShift],
+        [side*8+lean,-65+headShift]],style.hair,style.hair);
+    }
+    // Asymmetric sweeping fringe distinguishes her from casual male silhouettes.
+    shape(ctx,[[-12+lean,-78+headShift],[7+lean,-81+headShift],
+      [11+lean,-75+headShift],[3+lean,-72+headShift],
+      [-8+lean,-70+headShift]],style.hair,style.hair);
+  }
   if(back){
     // Nuca e cabelo cobrem a face. Ao usar PC, vemos as costas e não olhos na câmera.
     ctx.save();ctx.translate(lean,headShift);
