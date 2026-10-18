@@ -408,7 +408,13 @@ shopCatalog?.addEventListener("click",event=>{
    id==="disc-copier"?buyDiscCopier(game):
    id==="printer"?buyPrinter(game):
    id.startsWith("extend-")?expandDirection(game,id.slice(7) as ExtensionDirection):{ok:false,message:"Compra desconhecida."};
- applyResult(game,result);renderUI();save();
+ applyResult(game,result);
+ // Na primeira compra, apresentar imediatamente o novo painel do console.
+ // O atalho do próprio painel leva à loja para comprar o primeiro CD.
+ if(result.ok&&id==="ps1"&&(game.ps1Stations?.length??0)===1){
+  shopOpen=false;adminOpen=true;activateAdminTab("consoles");
+ }
+ renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("ps1-open-shop",()=>{
