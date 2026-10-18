@@ -19,7 +19,7 @@ export const SHOP_CATALOG=[
  {id:"computer-annex",label:"PC no anexo",category:"Computadores",description:"Escolha uma posição livre nas áreas ampliadas para instalar uma estação."},
  {id:"disc-copier",label:"Copiadora de CDs e DVDs",category:"Serviços · 2001",description:"Ativa cópias no balcão. Você define o preço por CD e DVD; cada venda inclui o custo da mídia. Não ocupa espaço no salão."},
  {id:"printer",label:"Impressora de documentos",category:"Serviços",description:"Ofereça impressão de documentos no balcão. Você define o preço por página; papel e tinta são descontados por pedido. Não ocupa espaço no salão nesta etapa."},
- {id:"ps1",label:"Bancada de PlayStation 1",category:"Videogames · 2002",description:"TV de tubo, PS1, bancada e uma cadeira. Escolha uma posição livre no salão. Uma sessão por vez, com tarifa própria e desgaste dos controles."},
+ {id:"ps1",label:"Bancada de PlayStation 1",category:"Videogames · 2002",description:"TV de tubo, PS1, bancada e uma cadeira. Escolha uma posição livre no salão. Uma sessão por vez. Compre CDs de jogo separadamente para começar a atender; cada cópia equipa uma bancada."},
  {id:"extend-west",label:"Ampliar à esquerda",category:"Construção",description:"Aumenta o espaço à esquerda e libera uma posição para PC no anexo."},
  {id:"extend-east",label:"Ampliar à direita",category:"Construção",description:"Aumenta o espaço à direita e libera uma posição para PC no anexo."},
  {id:"extend-north",label:"Ampliar os fundos",category:"Construção",description:"Aumenta o espaço atrás do balcão e libera uma posição para PC no anexo. A entrada fica no mesmo lugar."},
