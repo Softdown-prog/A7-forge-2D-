@@ -6,7 +6,8 @@ import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,buyPs1Station,
- ps1HourPrice,ps1AllowedHourlyCeiling,setPs1HourlyPrice,repairPs1Controls,ps1StationPoint} from "./sim/ps1.js";
+ ps1HourPrice,ps1AllowedHourlyCeiling,setPs1HourlyPrice,repairPs1Controls,ps1StationPoint,
+ PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
@@ -375,7 +376,15 @@ button("organize-furniture",()=>layoutEditor.open());
 
 shopCatalog?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
- if(!(target instanceof HTMLButtonElement)||target.disabled||!target.dataset.buy)return;
+ if(!(target instanceof HTMLButtonElement)||target.disabled)return;
+ const discId=target.dataset.buyPs1Disc;
+ if(discId){
+  const title=PS1_CD_CATALOG.find(x=>x.id===discId);
+  if(!title)return;
+  applyResult(game,buyPs1Disc(game,title.id));
+  renderUI();save();return;
+ }
+ if(!target.dataset.buy)return;
  const id=target.dataset.buy;
  if(id==="computer-annex"){
    installingAnnexPc=true;wallMode=null;placingKind=null;relocating=false;hoveredAnnexPc=null;placementNotice="";
@@ -404,6 +413,18 @@ shopCatalog?.addEventListener("click",event=>{
 button("close-admin",()=>{adminOpen=false;renderUI();});
 for(const [id,delta] of [["ps1-price-down",-.25],["ps1-price-up",.25]] as const)
  button(id,()=>{applyResult(game,setPs1HourlyPrice(game,Math.round((ps1HourPrice(game)+delta)*100)/100));renderUI();save();});
+document.getElementById("ps1-stations")?.addEventListener("change",event=>{
+ const input=event.target;
+ if(!(input instanceof HTMLSelectElement)||input.dataset.ps1Slot===undefined)return;
+ const index=Number(input.dataset.ps1Slot);
+ if(!Number.isInteger(index)||!game.ps1Stations?.[index])return;
+ const id=input.value;
+ const title=PS1_CD_CATALOG.find(x=>x.id===id);
+ const result=setPs1StationDisc(game,index,id===""?null:title?.id??null);
+ applyResult(game,result);
+ if(!result.ok)input.value=game.ps1Stations[index]?.discId??"";
+ renderUI();if(result.ok)save();
+});
 document.getElementById("ps1-stations")?.addEventListener("click",event=>{
  const button=event.target instanceof Element?event.target.closest("button[data-ps1-repair]"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
@@ -715,7 +736,7 @@ function panelChanged(name:string,revision:unknown,force:boolean):boolean{
 function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
- if(!panelChanged("shop",[game.cash,game.discCopier,game.printer,game.ps1Stations,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
+ if(!panelChanged("shop",[game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
  if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
@@ -788,6 +809,41 @@ function renderShop(force=true):void{
   }else card.append(art,category,title,description,button);
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
+ }
+ // CDs físicos do PS1: não são licenças nem são vendidos ao cliente final.
+ // Uma cópia pode alimentar apenas uma bancada por vez.
+ if(game.economyVersion===2&&gameYear(game)>=PS1_UNLOCK_YEAR){
+  const label=document.createElement("h3");label.className="ps1-shop-heading";
+  label.textContent="Jogos de PlayStation 1 · CDs físicos";
+  shopCatalog.append(label);
+  const note=document.createElement("p");note.className="catalog-game-note ps1-shop-note";
+  note.textContent="Compre um CD definitivo para começar a atender. Cada cópia equipa apenas uma bancada por vez; os títulos são fictícios e não exigem licenciamento por PC.";
+  shopCatalog.append(note);
+  for(const disc of PS1_CD_CATALOG){
+   const price=ps1DiscPrice(game,disc.id);
+   const copies=ps1DiscCopies(game,disc.id);
+   const card=document.createElement("article");card.className="shop-card ps1-cd-shop-card";
+   const art=document.createElement("div");art.className="ps1-cd-art";
+   art.setAttribute("aria-hidden","true");
+   const discShape=document.createElement("span");discShape.className="ps1-cd-shape";
+   const caseShape=document.createElement("span");caseShape.className="ps1-cd-case";
+   art.append(caseShape,discShape);
+   const category=document.createElement("small");category.textContent="CD de PS1 · "+disc.genre;
+   const title=document.createElement("h3");title.textContent=disc.title;
+   const description=document.createElement("p");
+   description.textContent="Cópias no acervo: "+copies+
+    " · compra definitiva, sem renovação.";
+   const button=document.createElement("button");button.type="button";
+   button.dataset.buyPs1Disc=disc.id;
+   const unavailable=!(game.ps1Stations?.length);
+   const full=copies>=PS1_MAX_STATIONS;
+   button.disabled=unavailable||full||game.cash<price;
+   button.textContent=unavailable?"Instale uma bancada primeiro":full?
+    "Acervo completo":game.cash<price?"Caixa insuficiente · "+price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):
+    "Comprar CD · "+price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+   card.append(art,category,title,description,button);
+   shopCatalog.append(card);
+  }
  }
 }
 /** Atualiza apenas o texto e o medidor dos downloads a cada minuto do jogo.
@@ -892,7 +948,7 @@ function renderUI(liveOnly=false):void {
   const weather=document.getElementById("weather-hud");
   if(weather){const html=iconMarkup(game.weather==="rain"?"rain":"sun")+(game.weather==="rain"?"Chuva":"Tempo firme");if(weather.innerHTML!==html)weather.innerHTML=html;}
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&node.textContent!==value)node.textContent=value;};
-  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.ps1Stations,game.ps1HourlyPrice,game.ps1Sessions,game.ps1Revenue,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,Math.floor(game.totalMinutes/DAY_MINUTES),activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
+  if(adminOpen&&panelChanged("admin",[activeAdminTab,year,game.cash,game.revenue,game.expenses,game.served,game.inventory,game.internetTier,online(game),game.pricePerHour,game.economyVersion,game.supplierTier,game.expansionLevel,game.roomExtensions,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,game.licensedGames,game.licensedEraGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,game.ps1Stations,game.ps1Discs,game.ps1HourlyPrice,game.ps1Sessions,game.ps1Revenue,game.discCopier,discCopiesToday(game),game.printer,pagesPrintedToday(game),Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.pcWear?.map(w=>Math.ceil(w)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)]),game.binFill?.map(Math.round),game.overflowWaste??0,game.cleaningJob?[game.cleaningJob.phase,Math.floor(game.cleaningJob.progress/3)]:null,game.employees,game.employeePayrollAccrued,game.employeeWorkedDays,game.promotionDay,selectedLcdPc,selectedGpuPc,selectedHardwareTab,Math.floor(game.totalMinutes/DAY_MINUTES),activeAdminTab==="finance"?Math.floor(game.totalMinutes/4):null],!liveOnly)){
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
   const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
@@ -1443,7 +1499,14 @@ function renderUI(liveOnly=false):void {
     " · sessões atendidas: "+(game.ps1Sessions??0)+
     " · receita acumulada: "+money(game.ps1Revenue??0)+
     ". Uma cadeira por bancada. Internet não é necessária para jogar.");
-  setText("ps1-hourly",money(ps1HourPrice(game))+"/h");
+  setText("ps1-hourly",ps1HourPrice(game).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})+"/h");
+  const ownedDiscs=PS1_CD_CATALOG.reduce((sum,disc)=>sum+ps1DiscCopies(game,disc.id),0);
+  const readyStations=(game.ps1Stations??[]).filter((_,i)=>ps1PlayableDisc(game,i)!==null).length;
+  setText("ps1-disc-summary",(game.ps1Stations?.length??0)===0?
+    "Compre a primeira bancada na loja. Depois, adquira os CDs físicos.":
+    ownedDiscs===0?"Sem CDs no acervo: as bancadas não recebem clientes até você comprar pelo menos um jogo.":
+    "CDs no acervo: "+ownedDiscs+" · Bancadas com jogo: "+readyStations+"/"+
+    (game.ps1Stations?.length??0)+". Cada CD comprado atende uma bancada por vez.");
   for(const id of ["ps1-price-down","ps1-price-up"]){
    const button=document.getElementById(id) as HTMLButtonElement|null;
    if(button)button.disabled=!consoleReady||!(game.ps1Stations?.length)||
@@ -1457,13 +1520,34 @@ function renderUI(liveOnly=false):void {
     const text=document.createElement("span");
     const occupied=game.customers.some(c=>c.ps1StationIndex===index&&
       ["to_pc","sitting","using","standing"].includes(c.stage));
+    const cdId=ps1PlayableDisc(game,index);
+    const cdName=PS1_CD_CATALOG.find(x=>x.id===cdId)?.title??"Nenhum CD";
     text.textContent="Bancada "+(index+1)+" · controle: "+Math.round(station.wear)+"% de desgaste"+
-     (station.wear>=100?" · Precisa de manutenção":occupied?" · Em uso":" · Livre");
+     (station.wear>=100?" · Precisa de manutenção":occupied?" · Em uso":
+      cdId?" · Livre":" · Sem jogo")+
+     " · Disco: "+cdName;
     const button=document.createElement("button");button.className="slice";
     button.dataset.ps1Repair=String(index);button.type="button";
     button.textContent="Revisar controles · R$ 45";
     button.disabled=occupied||station.wear<10||game.cash<45;
-    card.append(text,button);ps1Area.append(card);
+    const cdLabel=document.createElement("label");cdLabel.className="ps1-station-cd-label";
+    cdLabel.textContent="CD inserido";
+    const selector=document.createElement("select");selector.className="slice";
+    selector.dataset.ps1Slot=String(index);selector.disabled=occupied;
+    const empty=document.createElement("option");empty.value="";empty.textContent="Sem CD";
+    selector.append(empty);
+    for(const disc of PS1_CD_CATALOG){
+     const copies=ps1DiscCopies(game,disc.id);
+     if(!copies)continue;
+     const used=(game.ps1Stations??[]).filter((st,i)=>i!==index&&st.discId===disc.id).length;
+     if(used>=copies&&station.discId!==disc.id)continue;
+     const option=document.createElement("option");option.value=disc.id;
+     option.textContent=disc.title+" ("+copies+" cópia"+(copies===1?"":"s")+")";
+     selector.append(option);
+    }
+    selector.value=station.discId??"";
+    cdLabel.append(selector);
+    card.append(text,cdLabel,button);ps1Area.append(card);
    }
   }
   const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
