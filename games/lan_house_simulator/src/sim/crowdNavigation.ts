@@ -9,8 +9,8 @@ import {furnitureLocations,furnitureSlots} from "./shop.js";
 
 /** Desvio temporário quando o corredor fica congestionado. Os corpos atuais
  * entram como obstáculos; os passos continuam sendo executados pelo motor. */
-export function crowdRoute(s:GameState,c:Customer,destination:Point):Point[]|null{
- const b=roomBounds(s),step=.5;
+export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=.5):Point[]|null{
+ const b=roomBounds(s);
  const custom=s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:")),objects=custom?editableObjects(s).filter(o=>o.surface==="floor").map(objectRect):[];
  const bodies=s.customers.filter(other=>other.id!==c.id);
  const desks=Array.from({length:pcCount(s)},(_,i)=>pcPosition(i,s));
@@ -32,7 +32,7 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point):Point[]|nul
   return true;
  };
  const cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
- const point=(key:number):Point=>({x:b.minX+.25+(key%cols)*step,y:b.minY+.25+Math.floor(key/cols)*step});
+ const point=(key:number):Point=>({x:b.minX+step/2+(key%cols)*step,y:b.minY+step/2+Math.floor(key/cols)*step});
  const start={x:c.x,y:c.y},queue:number[]=[],prev=new Map<number,number>();
  // Não saltar para a célula mais próxima através de uma parede ou de um corpo.
  for(let y=Math.max(0,Math.floor((c.y-b.minY)/step)-1);y<Math.min(rows,Math.floor((c.y-b.minY)/step)+2);y++)

@@ -49,6 +49,7 @@ jobs:
           node scripts/verify_account_navigation.mjs
           node scripts/verify_hardware_scroll.mjs
           node scripts/verify_management_panels.mjs
+          node scripts/verify_doorway_recovery.mjs
 
       - name: Conferir credencial dedicada do espelho
         env:
