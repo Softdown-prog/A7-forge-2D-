@@ -11,6 +11,7 @@
 </defs>
 <rect width="420" height="560" rx="7" fill="url(#back)"/>
 <rect x="9" y="8" width="402" height="542" rx="4" fill="none" stroke="#ffffff" stroke-opacity=".4" stroke-width="1.7"/>
+<rect x="11" y="11" width="398" height="538" fill="url(#shade)"/>
 
 <path d="M-23 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M6 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M35 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M64 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M93 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M122 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M151 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M180 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M209 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M238 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M267 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M296 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M325 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M354 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/><path d="M383 58l-42 320" stroke="#29d9ff" stroke-width="2" opacity=".18"/><path d="M412 58l84 320" stroke="#ed398f" stroke-width="2" opacity=".18"/>
 <circle cx="205" cy="251" r="142" fill="#f51da5" opacity=".24" filter="url(#glow)"/>
@@ -37,7 +38,6 @@
 <text x="22" y="419" fill="#ffebff" font-family="Arial Black,Arial,sans-serif" font-size="77" font-weight="900" letter-spacing="-5" stroke="#1a1032" stroke-width="7" paint-order="stroke">LUTA</text>
 <text x="22" y="478" fill="#ff80cd" font-family="Arial Black,Arial,sans-serif" font-size="75" font-weight="900" letter-spacing="-6" stroke="#1a1032" stroke-width="7" paint-order="stroke">NEON</text>
 <rect x="11" y="11" width="398" height="538" fill="url(#scan)" opacity=".26"/>
-<rect x="11" y="11" width="398" height="538" fill="url(#shade)"/>
 <rect x="0" y="0" width="420" height="42" fill="#07101b" fill-opacity=".83"/>
 <rect x="10" y="8" width="33" height="26" rx="4" fill="#d6e4ee"/><text x="26.5" y="27" fill="#0b1728" font-family="Arial,sans-serif" font-size="18" font-weight="900" text-anchor="middle">S</text>
 <text x="53" y="18" fill="#f0f7ff" font-family="Arial,sans-serif" font-weight="900" font-size="11" letter-spacing="2.8">SOFTDOWN</text>
