@@ -13,8 +13,9 @@ test('catálogo inicial mantém preços fixos e anos corretos, sem vantagem econ
  assert.deepEqual(COOKIE_COSMETICS.map(({id,cookies,unlockYear})=>[id,cookies,unlockYear]),[
   ['headset-rgb-neon',40,2012],['chair-gamer-neon',50,2012],
   ['keyboard-rainbow-rgb',25,2012],['neon-open-sign',30,1998],
-  ['arcade-checker-floor',25,1998],['exclusive-arcade-posters',12,1998]]);
- assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,6);
+  ['arcade-checker-floor',25,1998],['exclusive-arcade-posters',12,1998],
+  ['tony-cyber',60,2010],['aquarium-rgb',45,2008]]);
+ assert.equal(new Set(COOKIE_COSMETICS.map(x=>x.id)).size,8);
 });
 test('o save não concede propriedade premium, mesmo com IDs injetados',()=>{
  setVerifiedCosmetics([]);
