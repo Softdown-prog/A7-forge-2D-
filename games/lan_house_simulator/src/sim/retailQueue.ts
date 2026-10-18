@@ -21,6 +21,12 @@ export function retailQueueSlots(s:GameState,item:Item):Point[]{
  const candidates:Point[]=[];
  for(let n=1;n<14;n++)candidates.push({x:goal.x+normal.x*n*.72,y:goal.y+normal.y*n*.72});
  for(let radius=1;radius<=5;radius++)for(let i=0;i<8;i++){const angle=i*Math.PI/4;candidates.push({x:goal.x+Math.cos(angle)*radius*.72,y:goal.y+Math.sin(angle)*radius*.72});}
+ // Keep room for all 14 visitors even when the aisle excludes ray/ring slots.
+ // These extra candidates are considered only after the established slots.
+ const fallback:Point[]=[];
+ for(let y=b.minY+.25;y<b.maxY;y+=.5)for(let x=b.minX+.25;x<b.maxX;x+=.5)fallback.push({x,y});
+ fallback.sort((a,d)=>Math.hypot(a.x-goal.x,a.y-goal.y)-Math.hypot(d.x-goal.x,d.y-goal.y));
+ candidates.push(...fallback);
  const slots=[goal],exit=entrance(s),laneRadius=CUSTOMER_COLLISION_RADIUS+.13;
  // Waiting shoppers must not form a solid wall across the shared aisle or
  // the final approach to the door. The service point itself is transient.

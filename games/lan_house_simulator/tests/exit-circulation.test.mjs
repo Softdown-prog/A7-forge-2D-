@@ -1,11 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {stepGame,entrance,EXIT_REACH_DISTANCE,CLOSING_START_MINUTE} from '../dist/js/sim/engine.js';
+import {createGame,stepGame,entrance,EXIT_REACH_DISTANCE,CLOSING_START_MINUTE} from '../dist/js/sim/engine.js';
 import {canTraverseLocalStep} from '../dist/js/sim/navigation.js';
 import {CUSTOMER_COLLISION_RADIUS} from '../dist/js/sim/checkoutQueue.js';
 import {binSpots} from '../dist/js/sim/services.js';
+import {retailQueueSlots} from '../dist/js/sim/retailQueue.js';
+import {AISLE_Y} from '../dist/js/sim/route.js';
 import {serializeSave,parseImportedSave,snapshotGameState} from '../dist/js/sim/saveTransfer.js';
 import {exitNearBinScenario,shoppingCrossingScenario} from '../scripts/corridor_scenarios.mjs';
+
+test('a full product queue retains all 14 places while leaving the exit aisle walkable',()=>{
+ const s=createGame(),exit=entrance(s);
+ for(const item of ['soda','candy','snacks']){
+  const slots=retailQueueSlots(s,item);assert.equal(slots.length,14);
+  for(const at of slots.slice(1)){
+   assert.ok(Math.abs(at.y-AISLE_Y)>CUSTOMER_COLLISION_RADIUS);
+   if(at.y>AISLE_Y&&at.y<exit.y+CUSTOMER_COLLISION_RADIUS)assert.ok(Math.abs(at.x-exit.x)>CUSTOMER_COLLISION_RADIUS);
+  }
+ }
+});
 
 function advanceSafely(s){
  const before=new Map(s.customers.map(c=>[c.id,{ref:c,x:c.x,y:c.y}]));
