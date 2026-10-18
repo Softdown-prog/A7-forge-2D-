@@ -151,7 +151,7 @@ try{
   title('50 COOKIES · DETALHES EM RGB',64,219,15,'#6aeadd');
   const cam={originX:493,originY:418,zoom:4.85};
   drawNeonChair(c,cam,{x:0,y:0},false,0);
-  title('BASE 5 RODÍZIOS · CARBONO · ALMOFADAS',64,635,13,'#a9c7d4');
+  title('BASE 5 RODÍZIOS · CARBONO · ALMOFADAS',64,265,13,'#a9c7d4');
   title('HEADSET RGB + MICROFONE',705,193,24);
   title('40 COOKIES · CONTATO ANATÔMICO',705,219,15,'#ee91dd');
   c.save();c.beginPath();c.rect(685,245,590,370);c.clip();
@@ -159,7 +159,7 @@ try{
    {x:0,y:0,kind:'regular',id:1,time:1.8,pose:'sitting',direction:'north',
     premiumHeadset:true});
   c.restore();
-  title('ARCOS DUPLOS · CONCHAS · HASTE ARTICULADA',705,635,13,'#a9c7d4');
+  title('ARCOS DUPLOS · CONCHAS · HASTE ARTICULADA',705,265,13,'#a9c7d4');
   c.fillStyle='#799eac';c.fillRect(35,703,1250,1);
   title('DESENHOS EXPERIMENTAIS: SEM SALDO, COBRANÇA OU ITENS CONCEDIDOS',45,722,12,'#b6cbd5');
  });
