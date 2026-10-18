@@ -21,7 +21,7 @@ export function simulatePs1CrowdedCycle(){
  s.inventory={soda:0,candy:0,snacks:0};
  // Obstáculo fixo no corredor frontal: desvio tem que respeitar parede.
  // A bancada continua acessível pelo lado, sem atravessar o segmento.
- s.interiorWalls=[{axis:"x",x:1,y:5}];
+ s.interiorWalls=[{axis:"x",x:1,y:4}];
  const slots=ps1PlacementSlots(s);
  if(slots.length<2)throw Error("PS1: salão sem duas posições disponíveis");
  const first=slots[0];
@@ -39,7 +39,7 @@ export function simulatePs1CrowdedCycle(){
  // Ambos entram já no salão, de lugares diferentes. Nenhum teletransporte.
  // Um cliente chega da esquerda, outro da direita, com circulação sobreposta.
  const customers=stations.map((o,i)=>{
-  const from={x:o.side.x+(i===0?-.35:.35),y:o.side.y-1.15};
+  const from={x:o.side.x+(i===0?-.35:.35),y:o.side.y-(i===0?2.4:1.15)};
   const approach=navigableRoute(s,from,o.side);
   const tail=canTraverseLocalStep(s,o.side,o.seat)
    ?[o.seat]:navigableRoute(s,o.side,o.seat);
