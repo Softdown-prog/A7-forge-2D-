@@ -51,5 +51,73 @@ try{
   if(errors.length)throw Error('JS: '+errors.join(' / '));
   await context.close();
  }
- console.log('Minha Conta OK: desktop/mobile, menu/topbar, catalog 6, sem saldo fake, sem resgate offline.');
+ // Contrato de interface autenticada em servidor simulado; sem cobranças reais.
+ const context=await browser.newContext({viewport:{width:1280,height:830}});
+ const page=await context.newPage();
+ let wallet=100,spent=0,entitlements=[],activity=[],redemptions=0;
+ const products={
+  "headset-rgb-neon":{cookies:40,name:"Fone Gamer RGB Neon"},
+  "chair-gamer-neon":{cookies:50,name:"Cadeira Gamer Neon"},
+  "keyboard-rainbow-rgb":{cookies:25,name:"Teclado Rainbow RGB"},
+  "neon-open-sign":{cookies:30,name:"Placa Neon ABERTO"},
+  "arcade-checker-floor":{cookies:25,name:"Piso Arcade Xadrez"},
+  "exclusive-arcade-posters":{cookies:12,name:"Pôsteres Exclusivos"}
+ };
+ await page.route('**/online-config.json',route=>route.fulfill({
+  contentType:'application/json',body:JSON.stringify({enabled:true,apiUrl:'https://wallet-test.example',firebaseApiKey:'fake-public-key'})
+ }));
+ await page.route('https://wallet-test.example/v1/config',route=>route.fulfill({
+  contentType:'application/json',body:JSON.stringify({paymentsEnabled:false,items:products})
+ }));
+ await page.route('https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?**',route=>route.fulfill({
+  contentType:'application/json',body:JSON.stringify({idToken:'verified-test-token',refreshToken:'refresh',localId:'local-123'})
+ }));
+ await page.route('https://wallet-test.example/v1/account',route=>route.fulfill({
+  contentType:'application/json',body:JSON.stringify({
+   uid:'local-123',cookiesBalance:wallet,cookiesSpentTotal:spent,entitlements,transactions:activity,historyLimit:40
+  })
+ }));
+ await page.route('https://wallet-test.example/v1/items/*/purchase',async route=>{
+  const id=new URL(route.request().url()).pathname.split('/').at(-2);
+  const price=products[id]?.cookies;
+  if(!price||wallet<price)return route.fulfill({status:409,contentType:'application/json',body:'{"error":"Cookies insuficientes."}'});
+  if(!entitlements.includes(id)){
+   entitlements.push(id);wallet-=price;spent+=price;redemptions++;
+   activity=[{id:'item-'+id,type:'item',delta:-price,itemId:id,at:'2026-10-18T14:00:00-03:00'},...activity];
+  }
+  return route.fulfill({contentType:'application/json',body:JSON.stringify({owned:true,itemId:id})});
+ });
+ await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ await page.locator('#menu-account').click();
+ const panel=page.locator('#player-account');
+ await panel.locator('#account-email').fill('tester@example.com');
+ await panel.locator('#account-password').fill('not-a-real-password');
+ await panel.locator('#account-signin').click();
+ await page.waitForFunction(()=>document.querySelector('#account-balance')?.textContent==='100 Cookies');
+ if((await panel.locator('#account-spent').innerText())!=='0 Cookies')throw Error('Histórico não iniciou zerado');
+ await panel.locator('[data-account-tab="catalog"]').click();
+ page.once('dialog',dialog=>dialog.accept());
+ await panel.locator('#account-catalog .account-item').filter({hasText:'Fone Gamer RGB Neon'}).getByRole('button',{name:'Resgatar'}).click();
+ await page.waitForFunction(()=>document.querySelector('#account-balance')?.textContent==='60 Cookies');
+ if((await panel.locator('#account-spent').innerText())!=='40 Cookies')throw Error('Despesas totais incorretas');
+ if((await panel.locator('#account-owned').innerText())!=='1')throw Error('Item não adquirido');
+ if(redemptions!==1)throw Error('Resgate deve ser único');
+ await panel.locator('[data-account-tab="inventory"]').click();
+ const input=panel.locator('#account-inventory [data-premium-cosmetic="headset-rgb-neon"]');
+ if(!await input.isChecked())throw Error('Entitlement não aplicado');
+ await input.uncheck();
+ if(await input.isChecked())throw Error('Controle de equipar não alterou');
+ await input.check();
+ await panel.locator('[data-account-tab="history"]').click();
+ if(!((await panel.locator('#account-transactions').innerText()).includes('Resgate: Fone Gamer RGB Neon')))
+  throw Error('Histórico não registrou o resgate');
+ await page.screenshot({path:resolve(out,'minha_conta_historico_teste.png')});
+ await panel.locator('[data-account-tab="summary"]').click();
+ await page.screenshot({path:resolve(out,'minha_conta_saldo_teste.png')});
+ await panel.locator('#account-logout').click();
+ await page.waitForFunction(()=>document.querySelector('#account-balance')?.textContent==='—');
+ if(redemptions!==1)throw Error('Logout causou novo resgate');
+ await context.close();
+ console.log('Minha Conta OK: desktop/mobile + autenticação de teste + resgate idempotente + débito + inventário + histórico.');
+
 }finally{await browser.close();await new Promise(done=>server.close(done));}
