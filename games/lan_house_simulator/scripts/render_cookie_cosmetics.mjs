@@ -155,7 +155,7 @@ try{
   title('HEADSET RGB + MICROFONE',705,193,24);
   title('40 COOKIES · CONTATO ANATÔMICO',705,219,15,'#ee91dd');
   c.save();c.beginPath();c.rect(685,245,590,370);c.clip();
-  drawActor(c,{originX:981,originY:836,zoom:7.0},
+  drawActor(c,{originX:981,originY:900,zoom:7.0},
    {x:0,y:0,kind:'regular',id:1,time:1.8,pose:'sitting',direction:'north',
     premiumHeadset:true});
   c.restore();
