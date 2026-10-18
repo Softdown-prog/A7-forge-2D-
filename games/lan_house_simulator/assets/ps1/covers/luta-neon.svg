@@ -17,22 +17,65 @@
 <circle cx="205" cy="251" r="142" fill="#f51da5" opacity=".24" filter="url(#glow)"/>
 <path d="M35 103L391 410M391 108L28 395" stroke="#25e8ff" stroke-width="24" opacity=".25" filter="url(#soft)"/>
 <path d="M35 103L391 410M391 108L28 395" stroke="#a2f6fb" stroke-width="5" opacity=".9"/>
+
+<!-- Arena subterrânea: arquibancadas, telões e lasers. -->
+<path d="M0 254L420 216V344H0Z" fill="#0b1130" opacity=".63"/>
+<g fill="#2b1745" stroke="#7a369f" stroke-width="2" opacity=".85">
+ <path d="M9 231L122 207L122 259L9 284Z"/>
+ <path d="M302 174L410 157L410 225L302 241Z"/>
+</g>
+<g stroke="#e53aa6" stroke-width="2" opacity=".75">
+ <path d="M18 245l96 -22M18 257l96 -21M18 268l96 -21"/>
+ <path d="M310 189l90 -16m-90 27l90 -16m-90 27l90 -16"/>
+</g>
+<path d="M-10 170L201 264L437 137" fill="none" stroke="#be6dff" stroke-width="11" filter="url(#glow)" opacity=".4"/>
+<circle cx="206" cy="241" r="109" stroke="#9039ff" stroke-width="3" stroke-dasharray="4 13" fill="none" opacity=".62"/>
+<text x="26" y="78" fill="#95eefd" font-family="Arial,sans-serif" font-weight="900" font-size="10" letter-spacing="3">DUELISTAS DO FUTURO</text>
 <path d="M0 339L420 291V447H0Z" fill="#111834" opacity=".83"/>
 <path d="M0 347L420 301M0 380L420 335M0 419L420 390" stroke="#ae4be4" stroke-width="3" opacity=".55"/>
 <g transform="translate(128 284)">
  <path d="M-44 -119L-7 -145L31 -119L19 -70L47 -13L8 30L-59 -10L-69 -65Z" fill="#21283b" stroke="#46ecff" stroke-width="6"/>
  <circle cx="-1" cy="-167" r="35" fill="#202436" stroke="#49dfff" stroke-width="6"/>
- <path d="M-36 -91L-75 -43L-9 0M30 -94L87 -67L114 -109" fill="none" stroke="#1c2439" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+ 
+ <!-- Lutador azul: máscara facetada e armadura iluminada. -->
+ <path d="M-24 -181L-5 -207L24 -186L31 -160L12 -143L-14 -150Z" fill="#153049" stroke="#45d9ef" stroke-width="4"/>
+ <path d="M-23 -166L-6 -174L15 -173L28 -162L10 -155L-8 -156Z" fill="#79faff" opacity=".9"/>
+ <path d="M-13 -157L15 -156L-1 -146Z" fill="#0a2336"/>
+ <path d="M-34 -111L-10 -134L23 -118L10 -82L-11 -65Z" fill="#164760" stroke="#69edfa" stroke-width="3"/>
+ <path d="M-23 -111L6 -112L-6 -87L-25 -91Z" fill="#49e1f0" opacity=".58"/>
+ <path d="M8 -78L35 -98L45 -63L19 -40L-5 -45Z" fill="#123549" stroke="#54dbe9" stroke-width="3"/>
+ <circle cx="16" cy="-93" r="9" fill="#9cfbff" opacity=".85"/>
+ <path d="M-33 -21L10 -12L-4 13L-43 -1Z" fill="#123343" stroke="#39b4d1" stroke-width="3"/>
+<path d="M-36 -91L-75 -43L-9 0M30 -94L87 -67L114 -109" fill="none" stroke="#1c2439" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
  <path d="M-31 12L-63 109L-92 142M17 25L57 112L82 151" fill="none" stroke="#1d2336" stroke-width="33" stroke-linecap="round"/>
  <path d="M-36 -93L-75 -43L-9 0M30 -94L87 -67L114 -109" fill="none" stroke="#42d9f4" stroke-width="5" opacity=".75" stroke-linecap="round"/>
 </g>
 <g transform="translate(294 284)">
  <path d="M-36 -117L1 -146L39 -107L62 -30L38 36L-35 29L-53 -42Z" fill="#1b2035" stroke="#fd63b2" stroke-width="6"/>
  <circle cx="4" cy="-167" r="35" fill="#1b1e35" stroke="#f872c9" stroke-width="6"/>
- <path d="M-31 -93L-77 -63L-108 -110M40 -95L88 -52L54 -2" fill="none" stroke="#1b2035" stroke-width="28" stroke-linecap="round"/>
+ 
+ <!-- Lutadora magenta: elmo angular, viseira e placas assimétricas. -->
+ <path d="M-28 -182L-8 -201L31 -185L40 -155L20 -141L-17 -153Z" fill="#45204e" stroke="#ff78d5" stroke-width="4"/>
+ <path d="M-19 -167L18 -175L31 -162L15 -151L-10 -151Z" fill="#ff98e3" opacity=".95"/>
+ <path d="M-15 -152L12 -149L6 -144L-6 -144Z" fill="#351638"/>
+ <path d="M-39 -110L-5 -133L25 -106L15 -71L-25 -68Z" fill="#632757" stroke="#ff81ce" stroke-width="3"/>
+ <path d="M-29 -102L-9 -113L-13 -78L-32 -86Z" fill="#fc5cb7" opacity=".59"/>
+ <path d="M20 -80L41 -93L54 -57L20 -44Z" fill="#452044" stroke="#ff86d5" stroke-width="3"/>
+ <path d="M-29 -20L33 -25L31 12L-32 12Z" fill="#3c1c48" stroke="#a843b2" stroke-width="3"/>
+ <circle cx="6" cy="-88" r="9" fill="#ffd1f0" opacity=".88"/>
+<path d="M-31 -93L-77 -63L-108 -110M40 -95L88 -52L54 -2" fill="none" stroke="#1b2035" stroke-width="28" stroke-linecap="round"/>
  <path d="M-30 31L-60 111L-88 142M34 31L79 114L96 148" fill="none" stroke="#1b2035" stroke-width="33" stroke-linecap="round"/>
  <path d="M-31 -93L-77 -63L-108 -110M40 -95L88 -52L54 -2" fill="none" stroke="#ff54b7" stroke-width="5" stroke-linecap="round" opacity=".75"/>
 </g>
+
+<!-- Explosão de energia no choque dos golpes, sem esconder os dois rivais. -->
+<g opacity=".85" stroke-linecap="round">
+ <path d="M203 200L182 147M222 210L254 159M169 234L116 223M250 246L295 238M200 273L187 328M234 274L269 315" stroke="#e5ffff" stroke-width="5"/>
+ <path d="M172 186L149 163M247 185L268 168M164 272L144 292M255 284L278 305" stroke="#ff8cef" stroke-width="4"/>
+</g>
+<path d="M203 208L220 220L239 209L231 233L246 249L222 255L211 276L199 257L179 261L189 238L177 221L199 220Z"
+ fill="#faffff" opacity=".87" filter="url(#soft)"/>
+<circle cx="208" cy="235" r="31" fill="#fff" opacity=".14" filter="url(#glow)"/>
 <path d="M166 171L199 198L178 219L218 247L191 272L240 306" stroke="#fff" stroke-width="8" stroke-linejoin="round" fill="none" opacity=".85"/>
 <circle cx="209" cy="243" r="61" stroke="#dafaff" stroke-width="7" fill="none" opacity=".6" stroke-dasharray="18 8"/>
 <text x="22" y="419" fill="#ffebff" font-family="Arial Black,Arial,sans-serif" font-size="77" font-weight="900" letter-spacing="-5" stroke="#1a1032" stroke-width="7" paint-order="stroke">LUTA</text>
