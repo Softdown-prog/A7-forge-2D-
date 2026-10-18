@@ -14,6 +14,7 @@ on:
       - 'games/lan_house_simulator/tests/ps1-2002.test.mjs'
       - 'games/lan_house_simulator/src/sim/engine.ts'
       - 'games/lan_house_simulator/src/sim/ps1.ts'
+      - 'games/lan_house_simulator/assets/ps1/covers/**'
       - 'games/lan_house_simulator/src/render/ps1Art.ts'
       - 'games/lan_house_simulator/src/render/actorArt.ts'
       - 'games/lan_house_simulator/src/render/scene.ts'
@@ -82,6 +83,7 @@ jobs:
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_painel_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_loja_cds_*.png
+            games/lan_house_simulator/out/forge-ps1/ps1_cinco_capas_catalogo.png
             games/lan_house_simulator/out/forge-ps1/ps1_dois_clientes_trace.json
             games/lan_house_simulator/out/forge-ps1/ps1_real_*.png
             games/lan_house_simulator/out/forge-ps1/ps1_navegacao_trace.json
