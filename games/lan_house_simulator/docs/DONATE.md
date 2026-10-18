@@ -20,6 +20,8 @@ Ofertas canônicas em `donate-packages.mjs`: o cliente não define valor nem qua
 
 Sandbox escreve `cookiesBalanceSandbox`, nunca o saldo real `cookiesBalance`. Pedidos e lançamentos são separados por modo. Doações de teste não são disponibilizadas aos visitantes pela interface pública.
 
+As contas oficiais `test_user`, identificadas pela consulta autenticada `/users/me`, podem retornar `live_mode=true`. Nesse caso, o sandbox utiliza `init_point`, valida o recebedor de teste e mantém os créditos exclusivamente na carteira sandbox. Credenciais legadas com `live_mode=false` utilizam `sandbox_init_point`. Uma conta marcada como `test_user` é recusada quando o backend está em produção. A interface tem dois cards de pagamento único, cada um com seu botão e link de checkout autenticado, sem plano ou cobrança recorrente.
+
 ## Cloud Run
 
 Preservar serviço `lhs-backend`, projeto `loyal-road-395203`, região `us-central1`, 1 vCPU/512 MiB, mín. 0/máx. 3. Implantar imagem sem `--env-vars-file` para não apagar configurações existentes.

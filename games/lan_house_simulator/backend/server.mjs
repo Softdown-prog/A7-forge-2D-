@@ -103,5 +103,5 @@ app.post('/webhooks/mercadopago',async(req,res)=>{
  await payments.applyPayment(payment);res.sendStatus(200);
 });
 app.use((err,req,res,next)=>{const status=err.status||500;if(status>=500)console.error(JSON.stringify({event:'request_failed',status,path:req.path}));res.status(status).json({error:status>=500?'Serviço temporariamente indisponível.':err.message});});
-if(paymentsEnabled){const seller=await mp('/users/me');payments=createPayments({db,FieldValue,mp,packages,sandbox,apiUrl:process.env.PUBLIC_API_URL,siteUrl:process.env.PUBLIC_SITE_URL,sellerId:seller.id,applicationId:process.env.MP_APPLICATION_ID});}
+if(paymentsEnabled){const seller=await mp('/users/me');payments=createPayments({db,FieldValue,mp,packages,sandbox,apiUrl:process.env.PUBLIC_API_URL,siteUrl:process.env.PUBLIC_SITE_URL,sellerId:seller.id,applicationId:process.env.MP_APPLICATION_ID,sellerIsTest:seller.tags?.includes('test_user')===true});}
 app.listen(Number(process.env.PORT||8080),'0.0.0.0');

@@ -13,6 +13,8 @@ function page(){
 test('Donate explains amounts, account requirement and future cosmetics without internal details',()=>{
  const html=donatePage();for(const text of ['Doar R$ 5','Doar R$ 10','50','100','R$ 0,10','confirme seu email','ainda não está disponível','exclusivamente a melhorias'])assert.ok(html.includes(text),text);
  for(const internal of [/Cloud Run/i,/Firestore/i,/webhook/i,/access.token/i,/Mercado Pago/i,/\bAPI\b/])assert.doesNotMatch(html,internal);
+ assert.equal((html.match(/Pagamento único · sem renovação automática/g)||[]).length,2);
+ for(const id of ['donate-5','donate-10'])assert.ok(html.includes('id="donate-link-'+id+'"'));
  assert.equal((html.match(/<h1>/g)||[]).length,1);assert.equal((html.match(/id="account-app"/g)||[]).length,1);
 });
 test('only exact secure checkout hosts are accepted',()=>{
@@ -32,7 +34,9 @@ test('login and terms are required; retries reuse the idempotency key and return
  p.doc.getElementById('donate-terms').checked=true;await p.buttons[0].listeners.click();await p.buttons[0].listeners.click();
  const orders=calls.filter(c=>c.body);assert.equal(orders.length,2);assert.equal(ids,1);assert.deepEqual(orders[0].body,{packageId:'donate-5',acceptedTerms:true});assert.equal(orders[0].headers['Idempotency-Key'],orders[1].headers['Idempotency-Key']);assert.equal(p.doc.getElementById('donate-checkout').hidden,false);
  assert.equal(calls.some(c=>c.path.includes('approved')),false);assert.equal(p.doc.getElementById('cookies-balance').textContent,'');
- c.setConnected(false);assert.equal(p.doc.getElementById('donate-checkout').hidden,true);
+ assert.equal(p.doc.getElementById('donate-link-donate-5').hidden,false);
+ assert.equal(p.doc.getElementById('donate-link-donate-5').href,p.doc.getElementById('donate-checkout').href);
+ c.setConnected(false);assert.equal(p.doc.getElementById('donate-checkout').hidden,true);assert.equal(p.doc.getElementById('donate-link-donate-5').hidden,true);assert.equal(p.doc.getElementById('donate-link-donate-5').href,'/donate/');
 });
 test('token refresh preserves the same order idempotency header',async()=>{
  const headers=[];let attempts=0;const json=(data,status=200)=>new Response(JSON.stringify(data),{status});

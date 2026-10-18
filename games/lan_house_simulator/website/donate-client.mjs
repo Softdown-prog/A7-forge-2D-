@@ -12,10 +12,11 @@ export function createDonateController(client,{document:doc=document,request=fet
  function paint(){buttons.forEach(button=>{button.disabled=busy||!available;button.textContent=(connected?'Doar R$ ':'Entrar para doar R$ ')+(button.dataset.donatePackage==='donate-5'?'5':'10');});}
  async function initialize(apiUrl){
   try{const response=await request(new URL('/v1/config',apiUrl),{cache:'no-store',signal:AbortSignal.timeout(30_000)});if(!response.ok)throw Error();const config=await response.json();available=config.paymentsEnabled===true&&config.paymentsMode==='production';
-   status.textContent=available?'Para receber Cookies, entre na sua conta e confirme seu email antes de doar.':'As doações ainda não foram liberadas. As opções abaixo mostram os valores previstos; nenhum pagamento será iniciado.';
+   status.textContent=available?'Pagamento único: entre na sua conta e confirme seu email para receber Cookies. Escolha R$ 5 ou R$ 10.':'As doações ainda não foram liberadas. Os valores exibidos são dos dois pagamentos únicos previstos; nenhum pagamento será iniciado.';
   }catch{status.textContent='Não foi possível consultar as doações. Tente recarregar a página.';}paint();
  }
- function setConnected(value){connected=value;if(!value){keys.clear();prepared.clear();$('donate-checkout').hidden=true;orderState.textContent='';$('donate-history').replaceChildren();$('donate-terms').checked=false;}paint();}
+ function hideLink(packageId){const link=$('donate-link-'+packageId);link.hidden=true;link.href='/donate/';}
+ function setConnected(value){connected=value;if(!value){keys.clear();prepared.clear();for(const button of buttons)hideLink(button.dataset.donatePackage);$('donate-checkout').hidden=true;$('donate-checkout').href='/donate/';orderState.textContent='';$('donate-history').replaceChildren();$('donate-terms').checked=false;}paint();}
  async function history(){
   const {orders}=await client.api('/v1/orders');const list=$('donate-history');list.replaceChildren();
   if(!orders.length)return;
@@ -24,7 +25,7 @@ export function createDonateController(client,{document:doc=document,request=fet
    const button=doc.createElement('button');button.className='account-link';button.type='button';button.textContent='Conferir';button.addEventListener('click',()=>void check(order.id));p.append(' ',button);list.append(p);}
  }
  async function check(orderId){if(busy||!connected)return;busy=true;paint();orderState.textContent='Conferindo pagamento…';
-  try{const target=orderId||[...prepared.values()].at(-1);if(target){const order=await client.api('/v1/orders/'+encodeURIComponent(target));orderState.textContent=orderLabels[order.status]||'Aguardando confirmação';if(['approved','refunded','charged_back','cancelled'].includes(order.status)){for(const [pack,id] of prepared)if(id===target){prepared.delete(pack);keys.delete(pack);}$('donate-checkout').hidden=true;}}else orderState.textContent='Saldo e apoios atualizados. Se o pagamento estiver pendente, confira novamente mais tarde.';
+  try{const target=orderId||[...prepared.values()].at(-1);if(target){const order=await client.api('/v1/orders/'+encodeURIComponent(target));orderState.textContent=orderLabels[order.status]||'Aguardando confirmação';if(['approved','refunded','charged_back','cancelled'].includes(order.status)){for(const [pack,id] of prepared)if(id===target){prepared.delete(pack);keys.delete(pack);hideLink(pack);}$('donate-checkout').hidden=true;}}else orderState.textContent='Saldo e apoios atualizados. Se o pagamento estiver pendente, confira novamente mais tarde.';
    const account=await client.api('/v1/account');$('cookies-balance').textContent=Number(account.cookiesBalance).toLocaleString('pt-BR');await history();
   }catch(error){orderState.textContent=error.message||'Não foi possível conferir. Tente novamente.';}finally{busy=false;paint();}
  }
@@ -34,7 +35,7 @@ export function createDonateController(client,{document:doc=document,request=fet
   if(!$('donate-terms').checked){$('donate-terms').focus();status.textContent='Leia e confirme os termos de Donate na sua conta antes de continuar.';return;}
   busy=true;paint();status.textContent='Preparando seu apoio…';
   const packageId=button.dataset.donatePackage;if(!keys.has(packageId))keys.set(packageId,uuid());
-  try{const order=await client.api('/v1/orders',{packageId,acceptedTerms:true},false,{'Idempotency-Key':keys.get(packageId)});const url=checkoutUrl(order.url);prepared.set(packageId,order.id);const link=$('donate-checkout');link.href=url;link.hidden=false;orderState.textContent='Pagamento preparado. Use “Continuar pagamento” para abrir a página segura em outra aba.';status.textContent='Seu apoio está pronto. Continue o pagamento no painel da sua conta abaixo.';link.scrollIntoView({behavior:'smooth',block:'center'});link.focus({preventScroll:true});await history();
+  try{const order=await client.api('/v1/orders',{packageId,acceptedTerms:true},false,{'Idempotency-Key':keys.get(packageId)});const url=checkoutUrl(order.url);prepared.set(packageId,order.id);const panelLink=$('donate-checkout');panelLink.href=url;panelLink.hidden=false;const cardLink=$('donate-link-'+packageId);cardLink.href=url;cardLink.hidden=false;orderState.textContent='Pagamento único preparado. Use o link no card escolhido ou “Continuar pagamento” para abrir a página segura em outra aba.';status.textContent='Seu link está pronto no card escolhido. O pagamento é único, sem renovação automática.';cardLink.scrollIntoView({behavior:'smooth',block:'center'});cardLink.focus({preventScroll:true});await history();
   }catch(error){status.textContent=error.message||'Não foi possível iniciar o pagamento. Tente novamente.';if(error.status===410)keys.delete(packageId);}finally{busy=false;paint();}
  });
  $('donate-refresh').addEventListener('click',()=>void check(new URL(doc.location.href).searchParams.get('order')||undefined));
