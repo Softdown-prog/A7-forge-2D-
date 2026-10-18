@@ -1,0 +1,56 @@
+name: LHS - Animated PC Screens
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/render/pcScreenActivities.ts'
+      - 'games/lan_house_simulator/src/render/retroComputer.ts'
+      - 'games/lan_house_simulator/tests/pc-screen-activities.test.mjs'
+      - 'games/lan_house_simulator/scripts/render_pc_screen_activities.mjs'
+      - '.github/workflows/lhs-pc-screen-activities.yml'
+permissions:
+  contents: read
+jobs:
+  animated-pc-screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install project
+        working-directory: games/lan_house_simulator
+        run: npm ci --no-audit --no-fund
+      - name: Compile game
+        working-directory: games/lan_house_simulator
+        run: npm run build
+      - name: Test stable screen selection, animations and performance limits
+        working-directory: games/lan_house_simulator
+        run: node --test tests/pc-screen-activities.test.mjs
+      - name: Install headless browser
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Capture six monitor screens with actual game renderer
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_pc_screen_activities.mjs out/pc-screen-art
+      - name: Encode preview MP4
+        working-directory: games/lan_house_simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -hide_banner -loglevel error -y -i out/pc-screen-art/pc_seis_atividades_crt_lcd.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/pc-screen-art/pc_seis_atividades_crt_lcd.mp4
+          test -s out/pc-screen-art/pc_seis_atividades_crt_lcd.png
+          test -s out/pc-screen-art/pc_seis_atividades_crt_lcd.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-animated-crt-lcd-screens
+          path: |
+            games/lan_house_simulator/out/pc-screen-art/pc_seis_atividades_crt_lcd.png
+            games/lan_house_simulator/out/pc-screen-art/pc_seis_atividades_crt_lcd.mp4
+          retention-days: 30
+          if-no-files-found: error
