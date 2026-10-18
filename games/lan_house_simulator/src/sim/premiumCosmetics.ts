@@ -19,7 +19,9 @@ export const COOKIE_COSMETICS=[
  {id:"tony-cyber",name:"Tony Cyber",cookies:60,unlockYear:2010,
   description:"Uniforme cyberpunk para Tony: colete tecnológico, detalhes ciano e visor iluminado."},
  {id:"aquarium-rgb",name:"Aquário Iluminado RGB",cookies:45,unlockYear:2008,
-  description:"Aquário mural com peixes animados, bolhas e iluminação colorida, sem ocupar passagens."}
+  description:"Aquário mural com peixes animados, bolhas e iluminação colorida, sem ocupar passagens."},
+ {id:"pixel-led-clock",name:"Relógio Pixel LED",cookies:30,unlockYear:2000,
+  description:"Relógio digital de parede com hora do jogo e LEDs pulsantes, sem mudar a economia."}
 ] as const;
 export type CookieCosmeticId=typeof COOKIE_COSMETICS[number]["id"];
 const knownIds=new Set<string>(COOKIE_COSMETICS.map(item=>item.id));
