@@ -17,6 +17,14 @@ try{
   const state=createGame();state.totalMinutes=(year-1998)*360*DAY_MINUTES;state.cash=10000;
   await page.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,state});
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
+  // This test concerns admin scrolling, not cookie consent. A real visitor
+  // must first choose a privacy option; otherwise the fixed consent banner
+  // correctly intercepts the touch gesture and the admin never receives it.
+  const consent=page.locator('#privacy-banner');
+  if(await consent.isVisible()){
+   await page.locator('#privacy-reject').click();
+   await consent.waitFor({state:'hidden'});
+  }
   const cdp=await context.newCDPSession(page);if(mobile)await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
   const press=locator=>mobile?locator.tap():locator.click();
   await press(page.locator('#menu-continue'));await press(page.locator('#open-admin'));
