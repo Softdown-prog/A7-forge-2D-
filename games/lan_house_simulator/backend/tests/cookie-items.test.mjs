@@ -1,12 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {COOKIE_ITEMS,summarizeLedger,totalItemSpending} from "../../cookie-items.mjs";
-test("catálogo de seis cosméticos tem preços aprovados em Cookies",()=>{
- assert.equal(Object.keys(COOKIE_ITEMS).length,6);
+test("catálogo de oito cosméticos tem preços aprovados em Cookies",()=>{
+ assert.equal(Object.keys(COOKIE_ITEMS).length,8);
  assert.deepEqual(Object.fromEntries(Object.entries(COOKIE_ITEMS).map(([id,p])=>[id,p.cookies])),{
   "headset-rgb-neon":40,"chair-gamer-neon":50,
   "keyboard-rainbow-rgb":25,"neon-open-sign":30,
-  "arcade-checker-floor":25,"exclusive-arcade-posters":12
+  "arcade-checker-floor":25,"exclusive-arcade-posters":12,
+  "tony-cyber":60,"aquarium-rgb":45
  });
  assert.ok(Object.values(COOKIE_ITEMS).every(p=>Number.isSafeInteger(p.cookies)&&p.cookies>0));
 });
