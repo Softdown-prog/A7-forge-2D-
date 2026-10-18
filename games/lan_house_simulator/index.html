@@ -48,7 +48,35 @@
       <div class="brand"><img class="logo" src="./assets/ui/brand.svg" alt="" width="44" height="44"/><div><h1>LAN HOUSE<span>SIMULATOR</span></h1><p>Seu bairro. Seu negócio. Sua história.</p></div></div>
       <div class="topbar-actions"><button id="open-account" class="slice" type="button" aria-controls="player-account">🍪 Minha Conta</button><button id="open-menu" class="slice" type="button" data-icon="pause">Menu<span class="keyboard-hint">ESC</span></button><button id="open-shop" class="slice" type="button" data-icon="cart" aria-controls="shop" aria-expanded="false">Compras</button><button id="open-notices" class="slice notices-trigger" type="button" data-icon="mail" aria-controls="notices" aria-expanded="false" aria-label="Mensagens da lan house"><span class="notice-label">Correio</span><span class="notices-count" id="notices-count" hidden>0</span></button><button id="open-admin" class="slice primary" data-icon="settings" aria-controls="admin" aria-expanded="false">Administrar</button></div>
     </header>
-    <div class="hud-line"><div id="calendar-hud" class="hud-date" aria-live="polite">Dia 1 · 1998</div><div id="weather-hud" class="hud-weather">Tempo firme</div><span id="promotion-hud" class="hud-promotion" data-icon="megaphone" hidden>Divulgação ativa</span><span class="hud-autosave" data-icon="save"><span id="autosave-state" role="status" aria-live="polite">Salvamento automático</span></span></div>
+    <div class="hud-line">
+      <details class="time-weather-panel" id="time-weather-panel">
+        <summary class="time-weather-trigger" aria-label="Abrir ou fechar calendário e clima da partida">
+          <span class="time-weather-summary-date" id="calendar-hud">Dia 1 · 01/01/1998 · 10:00</span>
+          <span class="time-weather-summary-condition" id="weather-hud">Tempo firme</span>
+          <span class="time-weather-summary-action">Calendário e clima <span aria-hidden="true">⌄</span></span>
+        </summary>
+        <div class="time-weather-content" aria-label="Detalhes do calendário e das condições do salão">
+          <section class="time-weather-tile" aria-label="Data da partida">
+            <span class="time-weather-eyebrow">CALENDÁRIO DO JOGO</span>
+            <strong id="time-weather-date">01/01/1998</strong>
+            <span id="time-weather-day">Dia 1 da campanha</span>
+          </section>
+          <section class="time-weather-tile" aria-label="Hora da partida">
+            <span class="time-weather-eyebrow">HORÁRIO DO SALÃO</span>
+            <strong id="time-weather-hour" class="time-weather-clock">10:00</strong>
+            <span>O expediente vai das 10h às 22h.</span>
+          </section>
+          <section class="time-weather-tile" aria-label="Clima do dia">
+            <span class="time-weather-eyebrow">CONDIÇÃO DO DIA</span>
+            <strong id="time-weather-condition">Tempo firme</strong>
+            <span id="time-weather-effect">Sem penalidade de chuva na procura.</span>
+          </section>
+          <p class="time-weather-outlook" id="time-weather-outlook">O clima de amanhã será definido quando o próximo dia começar.</p>
+        </div>
+      </details>
+      <span id="promotion-hud" class="hud-promotion" data-icon="megaphone" hidden>Divulgação ativa</span>
+      <span class="hud-autosave" data-icon="save"><span id="autosave-state" role="status" aria-live="polite">Salvamento automático</span></span>
+    </div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
