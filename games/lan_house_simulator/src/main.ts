@@ -411,6 +411,10 @@ shopCatalog?.addEventListener("click",event=>{
  applyResult(game,result);renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
+button("ps1-open-shop",()=>{
+ adminOpen=false;shopOpen=true;renderUI();
+ document.getElementById("shop-catalog")?.scrollIntoView({block:"nearest",behavior:"instant"});
+});
 for(const [id,delta] of [["ps1-price-down",-.25],["ps1-price-up",.25]] as const)
  button(id,()=>{applyResult(game,setPs1HourlyPrice(game,Math.round((ps1HourPrice(game)+delta)*100)/100));renderUI();save();});
 document.getElementById("ps1-stations")?.addEventListener("change",event=>{
