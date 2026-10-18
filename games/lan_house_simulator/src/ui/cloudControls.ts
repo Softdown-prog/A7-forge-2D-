@@ -117,9 +117,9 @@ export function mountCloudControls(
  };
  function switchTab(next:Tab){
   tab=next;
-  for(const section of dialog.querySelectorAll<HTMLElement>("[data-account-page]"))
+  for(const section of Array.from(dialog.querySelectorAll<HTMLElement>("[data-account-page]")))
    section.hidden=section.dataset.accountPage!==next;
-  for(const btn of dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]"))
+  for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
    btn.setAttribute("aria-selected",String(btn.dataset.accountTab===next));
  }
  function setBusy(active:boolean){
@@ -320,7 +320,7 @@ export function mountCloudControls(
   }
   cloudState.textContent=restoreGame?"Consulta concluída.":"Save encontrado na nuvem; revisão consultada. Restauração não foi automática.";
  }
- for(const btn of dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]"))
+ for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
   btn.addEventListener("click",()=>switchTab(btn.dataset.accountTab as Tab));
  find("#account-close").addEventListener("click",()=>dialog.close());
  dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
