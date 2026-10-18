@@ -95,6 +95,42 @@ try{
   await page.locator('.ps1-location-selector').locator('xpath=..').screenshot({
    path:resolve(output,"ps1_posicoes_"+tag+".png"),animations:"disabled"
   });
+  // Prova que a imagem do PS1 não se sobrepõe ao seletor ou ao botão.
+  // A categoria 'equipment' percorre copiadora/impressora usando o mesmo CSS.
+  const assertArtFits=async(item)=>{
+   const dims=await page.locator('.shop-art[data-item="'+item+'"]').evaluate(art=>{
+    const card=art.closest('.shop-card'),img=art.querySelector('img');
+    const button=card?.querySelector('button[data-buy]');
+    if(!card||!img||!button)throw Error('Card incompleto');
+    const a=art.getBoundingClientRect(),i=img.getBoundingClientRect();
+    const b=button.getBoundingClientRect(),c=card.getBoundingClientRect();
+    const point=document.elementFromPoint(b.x+b.width/2,b.y+Math.min(b.height/2,15));
+    return {art:{x:a.x,y:a.y,width:a.width,height:a.height,bottom:a.bottom},
+      img:{x:i.x,y:i.y,width:i.width,height:i.height,bottom:i.bottom},
+      button:{top:b.top,bottom:b.bottom,height:b.height},
+      card:{top:c.top,bottom:c.bottom},
+      buttonHit:!!point?.closest('button[data-buy]')};
+   });
+   const {art,img,button,card}=dims;
+   if(art.height<85||img.height<=0||img.width<=0||
+      img.bottom>art.bottom+1||img.y<art.y-1||
+      art.bottom>button.top-4||button.bottom>card.bottom+1)
+      throw Error('Arte sobrepôs controles em '+item+': '+JSON.stringify(dims));
+  };
+  await assertArtFits('ps1');
+  await page.locator('[data-shop-category="equipment"]').click();
+  await page.locator('.shop-art[data-item="disc-copier"] img').waitFor({state:'visible'});
+  for(const id of ['disc-copier','printer'])await assertArtFits(id);
+  await page.locator('.shop-art[data-item="disc-copier"]').locator('xpath=..').screenshot({
+   path:resolve(output,'loja_copiadora_arte_ajustada_'+tag+'.png'),animations:'disabled'
+  });
+  await page.locator('[data-shop-category="consoles"]').click();
+  await page.locator('#ps1-location-name').waitFor({state:'visible'});
+  await assertArtFits('ps1');
+  // Captura o conjunto completo, não apenas a área verde das setas.
+  await page.locator('.shop-art[data-item="ps1"]').locator('xpath=..').screenshot({
+   path:resolve(output,'loja_ps1_arte_ajustada_'+tag+'.png'),animations:'disabled'
+  });
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
    const images=[...document.querySelectorAll(".ps1-cd-cover")];
