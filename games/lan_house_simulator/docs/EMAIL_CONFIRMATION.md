@@ -30,6 +30,6 @@ Depois de confirmar que esses valores estão no DNS público, clique em **Verify
 
 ## Validação
 
-Execute `node --test backend/tests/*.test.mjs tests/account-client.test.mjs tests/donate-client.test.mjs` após compilar o jogo e `npm run build:site && npm run check:site`. Os testes cobrem proprietário do destinatário, limites concorrentes, cotas, falhas do provedor e sessão revogada. Um envio real só deve ser declarado validado após configurar a chave e verificar o domínio Resend.
+Execute `node --test backend/tests/*.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/website.test.mjs` após compilar o jogo e `npm run build:site && npm run check:site`. Os testes cobrem proprietário do destinatário, limites concorrentes, cotas, falhas do provedor e sessão revogada. Um envio real só deve ser declarado validado após configurar a chave e verificar o domínio Resend.
 
 Referências: [DNS Cloudflare no Resend](https://resend.com/docs/guides/dns/cloudflare), [envio de email](https://resend.com/docs/api-reference/emails/send-email), [links de confirmação Firebase](https://firebase.google.com/docs/auth/admin/email-action-links).
