@@ -1,4 +1,6 @@
 import type {Point} from "../sim/types.js";
+import type {Ps1DiscId} from "../sim/ps1.js";
+import {drawPs1MiniGame} from "./ps1MiniGames.js";
 import {cuboid,iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 
 /** Movimento determinístico para a telinha minúscula do CRT.
@@ -12,7 +14,8 @@ export function ps1ScreenFrame(seconds:number):{heroX:number;heroY:number;sparkl
 /** Isometric CRT videogame kit: banco de madeira, TV de tubo,
  * console, controle e cadeira. Tudo geométrico, sem sprites externos. */
 export function drawPs1Station(
- ctx:CanvasRenderingContext2D,cam:Projection,p:Point,wear:number,active:boolean,t:number
+ ctx:CanvasRenderingContext2D,cam:Projection,p:Point,wear:number,active:boolean,t:number,
+ discId:Ps1DiscId|null=null
 ):void{
  const {x,y}=p,z=cam.zoom;
  const ground=iso({x:x+.58,y:y+.58},cam,0);
@@ -33,24 +36,17 @@ export function drawPs1Station(
  const pixel=(u:number,v:number,w:number,h:number,color:string)=>{
   polygon(ctx,[screen(u,v),screen(u+w,v),screen(u+w,v+h),screen(u,v+h)],color);
  };
- pixel(0,0,1,1,active?"#285d65":"#2d3940");
- if(active){
-  // Mini plataforma fictícia: o jogo se move, não é um PNG nem um vídeo externo.
-  const frame=ps1ScreenFrame(t);
-  pixel(0,.66,1,.34,"#264434");
-  pixel(0,.67,1,.12,"#70a77a");
-  pixel(.20,.42,.22,.07,"#93b77c");
-  pixel(.63,.30,.27,.07,"#93b77c");
-  pixel(frame.heroX,frame.heroY,.12,.20,"#f6c87b");
-  pixel(frame.heroX+.028,frame.heroY+.04,.029,.038,"#344a51");
-  pixel(.85,.12,.064,.10,frame.sparkle?"#ffeaa7":"#f3c65a");
-  pixel(.86,.82,.08,.045,"#e2e6bc");
-  // Duas linhas de varredura discretas mantêm o aspecto do tubo.
-  for(const scanline of [.25,.52]){
-   pixel(0,scanline,1,.025,"rgba(12,30,40,.12)");
-  }
- } else {
-  pixel(.43,.42,.14,.16,"#718d91");
+ pixel(0,0,1,1,active&&discId?"#20384b":"#2d3940");
+ if(active&&discId){
+  // A imagem vem do CD físico inserido NESTA bancada.
+  // Nenhum sprite, request, textura ou vídeo é criado por frame.
+  drawPs1MiniGame(pixel,discId,t);
+ }else{
+  // Sem CD ou sem cliente: tela em espera, sem jogo falso em execução.
+  pixel(.13,.24,.74,.52,"#253d48");
+  pixel(.21,.30,.58,.08,"#56757a");
+  pixel(.30,.49,.40,.09,"#718d91");
+  pixel(.40,.62,.20,.055,"#426570");
  }
  // Console retangular cinza, leitor de CD circular sobre a tampa.
  raisedCuboid(ctx,cam,x+.75,y+.13,.30,.28,31,7,["#b8b6af","#777975","#989993"]);
