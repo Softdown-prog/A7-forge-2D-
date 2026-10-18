@@ -12,7 +12,7 @@ await mkdir(output,{recursive:true});
 const simulation=simulatePs1CrowdedCycle();
 await writeFile(resolve(output,"ps1_dois_clientes_trace.json"),
  JSON.stringify({ids:simulation.ids,minutes:simulation.minutes,minGap:simulation.minGap,
- wear:simulation.wear,exits:simulation.exits,stages:simulation.stages,history:simulation.history},null,2));
+ wear:simulation.wear,exits:simulation.exits,stages:simulation.stages,walls:simulation.walls,history:simulation.history},null,2));
 const mime={".html":"text/html",".js":"text/javascript",".css":"text/css",".svg":"image/svg+xml",".png":"image/png",".webp":"image/webp"};
 const server=createServer(async(req,res)=>{
  try{
@@ -42,6 +42,7 @@ try{
   const canvas=document.createElement("canvas");canvas.width=1000;canvas.height=610;
   canvas.style.cssText="width:1000px;height:610px;display:block";document.body.append(canvas);
   const ctx=canvas.getContext("2d"),game=createGame(291,"historical");
+  game.interiorWalls=data.walls;
   if(!ctx)throw Error("Canvas ausente");
   const midway={x:(data.stations[0].point.x+data.stations[1].point.x)/2+.65,
    y:(data.stations[0].point.y+data.stations[1].point.y)/2+.7};
