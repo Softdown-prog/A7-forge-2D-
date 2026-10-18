@@ -1,0 +1,54 @@
+name: LHS - Three Female Character Variants
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/render/actorArt.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/tests/female-customer.test.mjs'
+      - 'games/lan_house_simulator/scripts/render_female_variants.mjs'
+      - '.github/workflows/lhs-female-variants.yml'
+permissions:
+  contents: read
+jobs:
+  female-variants:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install, compile, test compatibility and three unique costumes
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/female-customer.test.mjs
+      - name: Install Playwright Chromium
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Capture 3 models in 4 directions and record walking/seating
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_female_variants.mjs out/female-variants
+      - name: Convert preview to MP4
+        working-directory: games/lan_house_simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -hide_banner -loglevel error -y -i out/female-variants/lhs_tres_clientes_femininas.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 22 \
+            -movflags +faststart out/female-variants/lhs_tres_clientes_femininas.mp4
+          test -s out/female-variants/lhs_tres_clientes_femininas.png
+          test -s out/female-variants/lhs_tres_clientes_femininas.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-three-female-variants
+          path: |
+            games/lan_house_simulator/out/female-variants/lhs_tres_clientes_femininas.png
+            games/lan_house_simulator/out/female-variants/lhs_tres_clientes_femininas.mp4
+          retention-days: 30
+          if-no-files-found: error
