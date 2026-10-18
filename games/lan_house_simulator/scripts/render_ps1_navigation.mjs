@@ -68,7 +68,7 @@ try{
   function paint(f,t){
    renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    const playing=f.stage==="using",seated=["sitting","using","standing"].includes(f.stage);
-   drawPs1Station(ctx,cam,point,0,playing,t);
+   drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
    const pose=f.stage==="sitting"||f.stage==="using"?"sitting":
     f.stage==="standing"?"standing-up":"walking";
    drawActor(ctx,cam,{
