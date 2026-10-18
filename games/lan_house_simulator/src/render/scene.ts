@@ -8,6 +8,7 @@ import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js
 import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
 import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {drawVipAquarium} from "./aquariumArt.js";
+import {drawPixelClock} from "./pixelClockArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import { actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import {drawActorSprite as drawActor} from "./actorSprites.js";
@@ -100,6 +101,12 @@ export class SceneRenderer {
         y:bounds.minY+.13};
       entries.push({depth:point.x+point.y+.25,
         paint:()=>drawVipAquarium(ctx,camera,point,elapsedSeconds)});
+    }
+    // Fixed north-wall mount, away from the aquarium; no new navigation obstacle.
+    if(cosmeticAvailable("pixel-led-clock",yearFromMinutes(s.totalMinutes))){
+      const point={x:Math.max(bounds.minX+.25,bounds.maxX-1.62),y:bounds.minY+.016};
+      entries.push({depth:point.x+point.y+.2,
+        paint:()=>drawPixelClock(ctx,camera,point,s.totalMinutes,elapsedSeconds)});
     }
     for (let i=0;i<pcCount(s);i++){
       const p=pcPosition(i,s);
