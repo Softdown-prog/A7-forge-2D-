@@ -38,7 +38,7 @@ test("seleção de bancada utiliza nomes humanos, nunca coordenadas nem IDs téc
  for(const slot of slots){
   const label=ps1PlacementLabel(slot);
   assert.ok(label.length>10,label);
-  assert.doesNotMatch(label,/\\d+[,.]\\d+|floor-|posição \\d+|x:|y:/i);
+  assert.doesNotMatch(label,/\d+[,.]\d+|floor-|posição \d+|x:|y:/i);
  }
  // As alas novas devem manter rótulos únicos e estáveis ao comprar uma bancada.
  s.roomExtensions={west:2,east:2,north:2,south:0};
