@@ -1,4 +1,5 @@
 import {createAccountClient} from './account-client.mjs';
+import {createDonateController} from './donate-client.mjs';
 const root=document.querySelector('#account-app');
 if(root)void mount().catch(()=>{document.querySelector('#account-status').textContent='Conta temporariamente indisponível. Você pode continuar jogando sem login.';});
 async function mount(){
@@ -6,6 +7,9 @@ async function mount(){
  const config=await fetch('/account-config.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();});
  if(!config.enabled){status.textContent='O terminal da conta está em preparação. Cadastro e login ainda não foram liberados. Seu jogo continua disponível sem conta.';return;}
  const client=createAccountClient(config);let mode='login',revision,hasSave=false,busy=false;
+ const donate=root.dataset.purpose==='donate';
+ const donations=donate?createDonateController(client):null;
+ if(donations)void donations.initialize(config.apiUrl);
  function view(name){for(const key of ['auth','verify','dashboard'])$(key+'-view').hidden=key!==name;}
  function setMode(value){
   mode=value;const signup=mode==='signup',reset=mode==='reset';
@@ -23,11 +27,12 @@ async function mount(){
    status.textContent=error.message||'Não foi possível concluir. Seu progresso local foi preservado.';
    if(error.status===409){revision=undefined;status.textContent+=' Use “Atualizar conta e conferir save” antes de decidir enviar novamente.';}
    if(error.status===401){client.signOut();revision=undefined;view('auth');}
-  }finally{controls.forEach((el,i)=>el.disabled=states[i]);$('download-main').disabled=!hasSave;$('upload-save').disabled=revision===undefined;root.removeAttribute('aria-busy');busy=false;}
+  }finally{controls.forEach((el,i)=>el.disabled=states[i]);if(!donate){$('download-main').disabled=!hasSave;$('upload-save').disabled=revision===undefined;}root.removeAttribute('aria-busy');busy=false;}
  }
  async function update(){
-  const [account,save]=await Promise.all([client.api('/v1/account'),client.api('/v1/saves/main')]);
+  const [account,save]=await Promise.all([client.api('/v1/account'),donate?Promise.resolve(null):client.api('/v1/saves/main')]);
   $('cookies-balance').textContent=Number(account.cookiesBalance).toLocaleString('pt-BR');
+  if(donate){await donations.history();return;}
   revision=save.revision;hasSave=!!save.save;$('save-state').textContent=hasSave?'Salvo na nuvem':'Seu primeiro save';
   $('save-date').textContent=save.updatedAt?'Confirmado em '+new Date(save.updatedAt).toLocaleString('pt-BR'):'Nenhuma partida enviada ainda';
  }
@@ -36,6 +41,7 @@ async function mount(){
   if(!profile.emailVerified){view('verify');status.textContent='Confirme seu email para acessar o painel.';return;}
   // Only expose the connected dashboard after the backend authorizes this UID.
   await update();view('dashboard');status.textContent='Conta conectada. Seu progresso local foi preservado.';
+  donations?.setConnected(true);
  }
  $('auth-fields').disabled=false;status.textContent='Conta opcional. Entre ou crie seu acesso.';
  for(const tab of root.querySelectorAll('[data-auth-mode]'))tab.addEventListener('click',()=>setMode(tab.dataset.authMode));
@@ -50,7 +56,8 @@ async function mount(){
  });});
  $('check-email').addEventListener('click',()=>void run(async()=>{await client.refresh();await connected(await client.profile());}));
  $('resend-email').addEventListener('click',()=>void run(async()=>{await client.sendVerification();status.textContent='Email de confirmação reenviado. Confira a caixa de spam.';}));
- for(const button of root.querySelectorAll('[data-signout]'))button.addEventListener('click',()=>{client.signOut();revision=undefined;hasSave=false;$('save-file').value='';$('player-email').textContent='';$('cookies-balance').textContent='—';$('save-state').textContent='Consultando…';$('save-date').textContent='';view('auth');setMode('login');status.textContent='Você saiu da conta. Seus saves locais foram preservados.';});
+ for(const button of root.querySelectorAll('[data-signout]'))button.addEventListener('click',()=>{client.signOut();donations?.setConnected(false);revision=undefined;hasSave=false;if(!donate){$('save-file').value='';$('save-state').textContent='Consultando…';$('save-date').textContent='';}$('player-email').textContent='';$('cookies-balance').textContent='—';view('auth');setMode('login');status.textContent='Você saiu da conta. Seus saves locais foram preservados.';});
+ if(donate)return;
  $('refresh-account').addEventListener('click',()=>void run(async()=>{await update();status.textContent='Conta e save conferidos. Nenhum arquivo foi enviado.';}));
  async function download(backup){
   const result=await client.api('/v1/saves/main'+(backup?'?backup=true':''));

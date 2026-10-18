@@ -60,14 +60,14 @@ export function createAccountClient(config,{request=fetch}={}){
   if(!user)throw new AccountError('Sessão inválida. Entre novamente.',401);
   return {email:user.email,emailVerified:user.emailVerified===true};
  }
- async function api(path,body,retried=false){
+ async function api(path,body,retried=false,extraHeaders={}){
   if(!session)throw new AccountError('Entre na sua conta.',401);
   if(!/^\/v1\//.test(path))throw Error('Caminho inválido.');
   const current=epoch;
   try{
-   const data=await json(url.origin+path,{method:body?'POST':'GET',headers:{Authorization:`Bearer ${session.idToken}`,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+   const data=await json(url.origin+path,{method:body?'POST':'GET',headers:{...extraHeaders,Authorization:`Bearer ${session.idToken}`,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
    if(current!==epoch)throw new AccountError('Sessão encerrada.',401);return data;
-  }catch(error){if(error.status===401&&!retried&&current===epoch){await refresh();return api(path,body,true);}throw error;}
+  }catch(error){if(error.status===401&&!retried&&current===epoch){await refresh();return api(path,body,true,extraHeaders);}throw error;}
  }
  async function sendVerification(){if(!session)throw new AccountError('Entre na conta.',401);await identity('sendOobCode',{requestType:'VERIFY_EMAIL',idToken:session.idToken});}
  async function resetPassword(email){try{await identity('sendOobCode',{requestType:'PASSWORD_RESET',email});}catch(error){if(error.code!=='EMAIL_NOT_FOUND')throw error;}}

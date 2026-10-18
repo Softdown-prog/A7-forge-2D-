@@ -7,5 +7,5 @@ export const siteConfig = {
   origin: "https://lhs.analysepro.com",
   mode: "preview", // "public" exige os três campos acima.
   hosting: null, // Público: {provider, retention, countries, legalBasis}, ver README.
-  updated: "14 de outubro de 2026",
+  updated: "17 de outubro de 2026",
 };
