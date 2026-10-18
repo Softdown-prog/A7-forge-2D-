@@ -1,0 +1,59 @@
+name: LHS - Cookies premium art validation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/premiumCosmetics.ts'
+      - 'games/lan_house_simulator/src/render/retroComputer.ts'
+      - 'games/lan_house_simulator/src/render/actorArt.ts'
+      - 'games/lan_house_simulator/src/render/scene.ts'
+      - 'games/lan_house_simulator/src/ui/cloudControls.ts'
+      - 'games/lan_house_simulator/tests/cookie-cosmetics.test.mjs'
+      - 'games/lan_house_simulator/scripts/render_cookie_cosmetics.mjs'
+      - '.github/workflows/lhs-cookie-cosmetics.yml'
+permissions:
+  contents: read
+jobs:
+  cookie-prototype:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install npm dependencies
+        working-directory: games/lan_house_simulator
+        run: npm ci --no-audit --no-fund
+      - name: Compile gameplay and renderer
+        working-directory: games/lan_house_simulator
+        run: npm run build
+      - name: Check premium ownership, financial isolation and headset decisions
+        working-directory: games/lan_house_simulator
+        run: node --test tests/cookie-cosmetics.test.mjs
+      - name: Install browser
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Render actual game furniture, actor and animated headset
+        working-directory: games/lan_house_simulator
+        run: node scripts/render_cookie_cosmetics.mjs out/cookie-art
+      - name: Encode premium art preview video
+        working-directory: games/lan_house_simulator
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          ffmpeg -hide_banner -loglevel error -y -i out/cookie-art/cookies_cadeira_fone_preview.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 21 \
+            -movflags +faststart out/cookie-art/cookies_cadeira_fone_preview.mp4
+          test -s out/cookie-art/cookies_cadeira_fone_preview.png
+          test -s out/cookie-art/cookies_cadeira_fone_preview.mp4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lhs-cookies-premium-art-prototype
+          path: |
+            games/lan_house_simulator/out/cookie-art/cookies_cadeira_fone_preview.png
+            games/lan_house_simulator/out/cookie-art/cookies_cadeira_fone_preview.mp4
+          retention-days: 30
+          if-no-files-found: error
