@@ -8,6 +8,15 @@ import {createGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 import {buyPs1Station,buyPs1Disc,ps1PlacementSlots,ps1Seat} from "../dist/js/sim/ps1.js";
 
+// Interagir com o aviso legítimo antes de testar botões do jogo.
+async function dismissPrivacy(page,mobile){
+ const banner=page.locator("#privacy-banner");
+ if(await banner.isVisible()){
+  if(mobile)await page.locator("#privacy-reject").tap();
+  else await page.locator("#privacy-reject").click();
+  await banner.waitFor({state:"hidden"});
+ }
+}
 const out=resolve(process.argv[2]??"out/ps1");
 await mkdir(out,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,"serve.mjs")],{stdio:["ignore","pipe","inherit"]});
@@ -29,6 +38,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const click=async selector=>mobile?await page.locator(selector).tap():await page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  await dismissPrivacy(page,mobile);
   await click("#menu-continue");await click("#open-shop");
   await page.locator('[data-shop-category="consoles"]').click();
   const buy=page.locator('[data-buy="ps1"]');
@@ -71,6 +81,7 @@ try{
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
   await playPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  await dismissPrivacy(playPage,mobile);
   if(mobile)await playPage.locator("#menu-continue").tap();
   else await playPage.locator("#menu-continue").click();
   await playPage.screenshot({path:resolve(out,"ps1_playing_"+width+".png")});
