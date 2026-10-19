@@ -46,6 +46,12 @@ try{
   await context.addInitScript(({key,data})=>localStorage.setItem(key,JSON.stringify(data)),
    {key:GAME_SAVE_KEY,data:game});
   await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
+   // Responder ao aviso legítimo antes de interagir com a loja e o painel.
+   const cookieNotice=page.locator("#privacy-banner");
+   if(await cookieNotice.isVisible()){
+    await page.locator("#privacy-reject").click();
+    await cookieNotice.waitFor({state:"hidden"});
+   }
   await page.locator("#menu-continue").click();
   await page.locator("#open-admin").click();
   await selectAdminArea(page,'consoles');
