@@ -50,6 +50,9 @@ jobs:
           node scripts/verify_account_navigation.mjs
           node scripts/verify_hardware_scroll.mjs
           node scripts/verify_management_panels.mjs
+          node scripts/verify_ps1_2002.mjs out/release-ps1
+          node scripts/verify_financial_clarity.mjs out/release-finance
+          node scripts/verify_save_on_menu.mjs out/release-save
           node scripts/verify_doorway_recovery.mjs
           node scripts/verify_doorway_recovery.mjs out/corridor --corridor
 
