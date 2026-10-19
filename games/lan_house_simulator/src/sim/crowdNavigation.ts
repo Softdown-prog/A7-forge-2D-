@@ -7,6 +7,8 @@ import {pcCount,pcPosition} from "./engine.js";
 import {vendingMachines,VENDING_WIDTH,VENDING_DEPTH} from "./layout.js";
 import {furnitureLocations,furnitureSlots} from "./shop.js";
 
+const NEIGHBOR_STEPS=[[1,0],[-1,0],[0,1],[0,-1]] as const;
+
 /** Desvio temporário quando o corredor fica congestionado. Os corpos atuais
  * entram como obstáculos; os passos continuam sendo executados pelo motor. */
 export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=.5):Point[]|null{
@@ -14,6 +16,9 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  const custom=s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:")),objects=custom?editableObjects(s).filter(o=>o.surface==="floor").map(objectRect):[];
  const bodies=s.customers.filter(other=>other.id!==c.id);
  const desks=Array.from({length:pcCount(s)},(_,i)=>pcPosition(i,s));
+ // Catálogo de máquinas é estático durante esta busca: não recriá-lo
+ // para cada amostra de cada aresta da grade (milhares em salão cheio).
+ const vendors=custom?[]:vendingMachines(s);
  const slots=new Map(furnitureSlots(s).map(p=>[p.id,p]));
  const furniture=furnitureLocations(s).filter(p=>p.kind!=="poster").map(item=>{
   const p=slots.get(item.slotId);return p?{...p,r:item.kind==="table"?.4:.28}:null;
@@ -23,7 +28,7 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  const staticClear=(p:Point)=>p.x>b.minX+.1&&p.x<b.maxX-.1&&p.y>b.minY+.1&&p.y<b.maxY-.1&&
   (!custom||Math.hypot(p.x-destination.x,p.y-destination.y)<.22||objects.every(r=>!(p.x>r.minX-.03&&p.x<r.maxX+.03&&p.y>r.minY-.03&&p.y<r.maxY+.03)))&&
   (custom||desks.every(d=>!(p.x>d.x-.08&&p.x<d.x+1.05&&p.y>d.y-.08&&p.y<d.y+.60)))&&
-  (custom||vendingMachines(s).every(d=>!(p.x>d.x-.08&&p.x<d.x+VENDING_WIDTH+.08&&p.y>d.y-.08&&p.y<d.y+VENDING_DEPTH+.08)))&&
+  (custom||vendors.every(d=>!(p.x>d.x-.08&&p.x<d.x+VENDING_WIDTH+.08&&p.y>d.y-.08&&p.y<d.y+VENDING_DEPTH+.08)))&&
   furniture.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>o.r);
  const clear=(p:Point)=>staticClear(p)&&
   bodies.every(o=>Math.hypot(p.x-o.x,p.y-o.y)>=CUSTOMER_COLLISION_RADIUS+.00001);
@@ -57,7 +62,7 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
    while(current!==-1){result.push(point(current));current=prev.get(current)!;}
    return result.reverse();
   }
-  for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+  for(const [dx,dy] of NEIGHBOR_STEPS){
    const x=key%cols+dx!,y=Math.floor(key/cols)+dy!,next=y*cols+x;
    if(x<0||x>=cols||y<0||y>=rows||prev.has(next))continue;
    if(segmentClear(at,point(next))){prev.set(next,key);queue.push(next);}
