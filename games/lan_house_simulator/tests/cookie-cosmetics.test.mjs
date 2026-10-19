@@ -122,7 +122,7 @@ test('Revestimento premium usa geometria projetada, preserva toda a superfície'
 test('últimos dois cosméticos VIP só aparecem com direito de conta e no ano correto',()=>{
  setVerifiedCosmetics([]);
  const save=createGame(567,'historical');
- const before=serializeSave(save),cash=save.cash;
+ const before=JSON.parse(serializeSave(save)).state,cash=save.cash;
  assert.equal(cosmeticAvailable('tony-cyber',2030),false);
  assert.equal(cosmeticAvailable('aquarium-rgb',2030),false);
  setVerifiedCosmetics(['tony-cyber','aquarium-rgb']);
@@ -133,7 +133,8 @@ test('últimos dois cosméticos VIP só aparecem com direito de conta e no ano c
  assert.equal(toggleVerifiedCosmetic('aquarium-rgb',false),true);
  assert.equal(cosmeticAvailable('aquarium-rgb',2015),false);
  assert.equal(cosmeticAvailable('tony-cyber',2015),true);
- assert.equal(serializeSave(save),before);
+ // Export timestamps may cross a millisecond; the persisted game must stay identical.
+ assert.deepEqual(JSON.parse(serializeSave(save)).state,before);
  assert.equal(save.cash,cash);
  setVerifiedCosmetics([]);
  assert.equal(cosmeticAvailable('tony-cyber',2020),false);
