@@ -25,6 +25,7 @@ import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
 
 import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
+import {recordCustomerFeedback,sessionFeedbackReason,validCustomerFeedback} from "./customerFeedback.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
 import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.js";
 import {recordPaidSession,recordStationMinute,validStationLedger} from "./stationAccounting.js";
@@ -516,7 +517,9 @@ function tryServe(s: GameState, c: Customer): void {
       return;
     }
     s.lostCustomers++;
+    const priorReputation=s.reputation;
     s.reputation=Math.max(10,s.reputation-0.4);
+    recordCustomerFeedback(s,c,index===undefined?"espera":"preco","desistencia",priorReputation);
     customerSays(s,c,index===undefined?complaintLine("queue",c.id):"Hoje não cabe no meu orçamento.");
     sendHome(s,c);return;
   }
@@ -608,7 +611,9 @@ function advanceCustomer(s: GameState, c: Customer): void {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;
+          const priorReputation=s.reputation;
           s.reputation = Math.max(10, s.reputation - 1.1);
+          recordCustomerFeedback(s,c,"internet","conexao",priorReputation);
           addLog(s, "Cliente saiu insatisfeito com a internet.");
           customerSays(s,c,complaintLine("outage",c.id));
           startStanding(c, false);
@@ -634,7 +639,11 @@ function advanceCustomer(s: GameState, c: Customer): void {
           bonus+vipReputationAdjustment(c,bonus,paidHourly)+profileAdjustment));
         const impact=c.happy?serviceReputationImpact(s.reputation,paidHourly,bonus,rating):Math.min(0,rating);
         c.happy=impact>=0;
+        const priorReputation=s.reputation;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
+        recordCustomerFeedback(s,c,sessionFeedbackReason(c,{
+          price:paidHourly,hardwareBonus:bonus,consoleSession
+        }),"sessao",priorReputation);
         if(impact < -0.12){
           addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
           const message=c.offlineWait>0
@@ -804,7 +813,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
