@@ -78,6 +78,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
   {id:'balance',label:'Caixa e contas',nodes:[admin.querySelector('.balance-guide')!,$('bill-watch'),...following($('finance'),finance.querySelector('.finance-usage'))]},
   {id:'usage',label:'Ocupação e resultado',nodes:[finance.querySelector('.finance-usage')!,$('expansion')]},
   {id:'promotion',label:'Divulgação',nodes:[finance.querySelector('.promotion-panel')!]},
+  {id:'feedback',label:'Opiniões dos clientes',nodes:[$('customer-feedback-panel')]},
   {id:'restart',label:'Reiniciar partida',nodes:[$('reset-game').closest('.action-row')!]}
  ]);
  const consoleRoot=$('section-consoles'),discs=consoleRoot.querySelector('.ps1-disc-admin')!;
