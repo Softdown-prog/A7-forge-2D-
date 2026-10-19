@@ -40,6 +40,13 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const press=async sel=>width<700?await page.locator(sel).tap():await page.locator(sel).click();
+  // Privacy notice is a real blocking overlay; choose explicitly rather than
+  // bypassing pointer checks. Preserve consent across the reload below.
+  const consent=page.locator("#privacy-banner");
+  if(await consent.isVisible()){
+   await press("#privacy-reject");
+   await consent.waitFor({state:"hidden"});
+  }
   await press("#menu-continue");await press("#open-notices");
   const notices=page.locator("#notices-list");
   assert.match(await notices.innerText(),/2004: alunos de uniforme durante as aulas/);

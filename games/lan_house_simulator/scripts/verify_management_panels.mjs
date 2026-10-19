@@ -87,8 +87,26 @@ try{
    assert.ok(scrolled>=Math.min(100,scrollRange)-8,
     'Native scrolling must advance within the actual available content height');
   else assert.ok(scrolled>=0,'Short content needs no scrolling');
-  await page.locator('#admin').evaluate(el=>el.scrollTop=0);await page.waitForTimeout(600);
-  assert.ok((await page.locator('#admin').evaluate(el=>el.scrollTop))<=3,'Live refresh leaves the top accessible within native pixel rounding');
+  // Native touch scrolling has kinetic momentum after touchEnd. Resetting scrollTop
+  // during that momentum is not a valid test of app-driven scroll jumps: Chromium
+  // will continue the unfinished fling and move the panel again on its own.
+  // First wait for its position to settle, then test the live UI refresh.
+  if(mobile)await page.locator('#admin').evaluate(el=>new Promise(resolve=>{
+   let last=el.scrollTop,quietSince=performance.now(),start=quietSince;
+   function settle(){
+    const now=performance.now(),top=el.scrollTop;
+    if(Math.abs(top-last)>.4)quietSince=now;
+    last=top;
+    if(now-quietSince>=260||now-start>=2500)resolve();
+    else requestAnimationFrame(settle);
+   }
+   requestAnimationFrame(settle);
+  }));
+  await page.locator('#admin').evaluate(el=>{el.scrollTo({top:0,behavior:'instant'});});
+  await page.waitForTimeout(600);
+  const refreshedTop=await page.locator('#admin').evaluate(el=>el.scrollTop);
+  console.log(JSON.stringify({refreshCheck:{width,year,refreshedTop}}));
+  assert.ok(refreshedTop<=3,'Live refresh leaves the top accessible after native momentum stops: '+refreshedTop);
   await page.screenshot({path:resolve(output,`panels_${width}_${year}.png`)});
   await press(page.locator('#close-admin'));await press(page.locator('#open-shop'));
   const products=[];
