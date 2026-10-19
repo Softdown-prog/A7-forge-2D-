@@ -1035,3 +1035,13 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .customer-feedback-list .feedback-positive strong{color:#247348}
 .customer-feedback-list .feedback-negative strong{color:#a24a39}
 @media(max-width:560px){.customer-feedback-panel{padding:10px}.customer-feedback-reason,.customer-feedback-list li{font-size:11px}}
+
+/* Merchandise uses stable, compact task panels on narrow screens. */
+.merchandise-fields{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin:12px 0}
+.merchandise-fields label{display:flex;flex:1 1 180px;min-width:0;flex-direction:column;gap:6px}
+.merchandise-fields select,.merchandise-fields input{box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px;font:inherit;padding:8px;border-radius:6px}
+#merchandise-catalog p,.merchandise-supplier-card{overflow-wrap:anywhere;line-height:1.5}
+.merchandise-supplier-card{padding:10px 12px;margin:8px 0;border:1px solid #728e86;border-radius:8px}
+.merchandise-supplier-card h4,.merchandise-supplier-card p{margin:5px 0}
+#merchandise-orders{white-space:pre-line;overflow-wrap:anywhere;line-height:1.7}
+#merchandise-feedback{min-height:1.5em}

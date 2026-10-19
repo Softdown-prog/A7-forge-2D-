@@ -1,3 +1,4 @@
+import {productSpec,type ProductId} from "../sim/merchandise.js";
 import type {Point} from "../sim/types.js";
 import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 import {VENDING_WIDTH,VENDING_DEPTH} from "../sim/layout.js";
@@ -52,7 +53,7 @@ function sweet(c:CanvasRenderingContext2D,x:number,y:number,color:string,index:n
  c.fillStyle=index%2?"#735148":"#997441";c.fillRect(x+5,y+10,4,3);
  line(c,[{x:x+2,y:y+4},{x:x+11,y:y+4}],"#f1dca6",1);
 }
-function paintMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:MachineKind,quantity:number,pulse:number):void{
+function paintMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:MachineKind,quantity:number,pulse:number,display?:readonly ProductId[]):void{
  const soda=kind==="soda",h=soda?106:94,w=VENDING_WIDTH,d=VENDING_DEPTH,z=cam.zoom;
  const top=soda?"#ce7771":"#dbbc78",front=soda?"#a4484b":"#b38a4e",side=soda?"#72383d":"#806943";
  const at=(x:number,y:number,h:number)=>iso({x:p.x+x,y:p.y+y},cam,h);
@@ -84,7 +85,10 @@ function paintMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:Mac
    for(let col=0;col<cols;col++){
     const i=row*cols+col;if(i>=quantity)continue;
     const x=soda?17+col*16:15+col*12;
-    if(soda)can(c,x,y,palette[(row+col)%palette.length]!);else sweet(c,x,y+1,palette[(row+col)%palette.length]!,i);
+    const product=display?.[i]?productSpec(display[i]!)!:undefined;
+    const color=product?.color??palette[(row+col)%palette.length]!;
+    if(soda)can(c,x,y,color);else sweet(c,x,y+1,color,product?.id==='candy'?0:i+1);
+    if(product)caption(c,product.name.slice(0,2).toUpperCase(),x+6,y+16,5,"#fff",10);
    }
    rounded(c,14,y+23,52,3,1,"#8b9b7c");
    if(!soda)for(let col=0;col<4;col++){
@@ -110,7 +114,7 @@ function paintMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:Mac
   rounded(c,4,171,88,5,1,"#41584c");
  });c.restore();
 }
-function bag(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,z:number,color:string,index:number):void{
+function bag(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,z:number,color:string,index:number,label="CROC"):void{
  const span=.145,height=13.5,at=(x:number,y:number,h:number)=>iso({x,y},cam,h);
  polygon(c,[at(x,y,z),at(x-.09,y+.015,z+1),at(x-.085,y+.015,z+height-1),at(x,y,z+height)],"#886745","#556452");
  polygon(c,[at(x,y,z+height),at(x-.085,y+.015,z+height-1),at(x-.085,y+span-.015,z+height-1),at(x,y+span,z+height)],"#dec68d","#776c4e");
@@ -119,7 +123,7 @@ function bag(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,z:numbe
   c.strokeStyle="#5e664e";c.lineWidth=3;c.stroke();
   polygon(c,[{x:11,y:12},{x:23,y:12},{x:19,y:162},{x:9,y:166}],"rgba(252,237,187,.28)");
   polygon(c,[{x:80,y:14},{x:87,y:14},{x:90,y:165},{x:76,y:158}],"rgba(49,62,44,.18)");
-  rounded(c,16,55,64,52,15,"#f0dfaa");caption(c,"CROC",48,83,32,"#56664a",56);
+  rounded(c,16,55,64,52,15,"#f0dfaa");caption(c,label,48,83,32,"#56664a",56);
   c.fillStyle="#c5a565";c.beginPath();c.ellipse(42,94,13,7,-.25,0,Math.PI*2);c.fill();
   c.fillStyle="#d9bb75";c.beginPath();c.ellipse(59,91,10,6,.3,0,Math.PI*2);c.fill();
   line(c,[{x:12,y:10},{x:84,y:10}],"#f5dfa5",4);line(c,[{x:10,y:170},{x:88,y:170}],"#d6bd7e",4);
@@ -127,7 +131,7 @@ function bag(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,z:numbe
   rounded(c,31,126,34,8,3,index%2?"#e3c578":"#d9dda9");
  });
 }
-function paintShelf(c:CanvasRenderingContext2D,cam:Projection,p:Point,quantity:number):void{
+function paintShelf(c:CanvasRenderingContext2D,cam:Projection,p:Point,quantity:number,display?:readonly ProductId[]):void{
  const w=.46,d=1.22,z=cam.zoom,at=(x:number,y:number,h:number)=>iso({x:p.x+x,y:p.y+y},cam,h);
  c.save();c.lineJoin="round";
  const ground=at(w/2,d/2,0);c.fillStyle="rgba(20,40,32,.18)";c.beginPath();c.ellipse(ground.x,ground.y,39*z,13*z,0,0,Math.PI*2);c.fill();
@@ -141,7 +145,8 @@ function paintShelf(c:CanvasRenderingContext2D,cam:Projection,p:Point,quantity:n
   box(c,cam,p.x+.025,p.y+.025,w-.05,d-.05,height-2,2,"#c3cab0","#7b9275","#96a387");
   for(let i=4;i>=0;i--){
    const index=(3-row)*5+i;if(index>=quantity)continue;
-   bag(c,cam,p.x+w-.037,p.y+.10+i*.215,height+.8,palette[(i+row*2)%palette.length]!,index);
+   const product=display?.[index]?productSpec(display[index]!)!:undefined;
+   bag(c,cam,p.x+w-.037,p.y+.10+i*.215,height+.8,product?.color??palette[(i+row*2)%palette.length]!,index,product?.id==='cookies'?'BISC':product?.id==='wholegrain'?'INT':'CROC');
   }
   // Low guard rail and blank price tickets belong to the front shelf edge.
   line(c,[at(w-.016,.035,height+1),at(w-.016,d-.035,height+1)],"#476951",1.7*z);
@@ -179,11 +184,11 @@ function drawCached(c:CanvasRenderingContext2D,cam:Projection,p:Point,keyParts:u
  }else{cache.delete(key);cache.set(key,sprite);}
  c.drawImage(sprite,ix-padX,iy-padY);
 }
-export function drawVendingMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:MachineKind,time:number,stock:number=RETAIL_DISPLAY_CAPACITY[kind],useCache=true):void{
- const quantity=visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY[kind]),pulse=quantity?Math.floor(time*1.2)%2:0;
- drawCached(c,cam,p,[kind,quantity,pulse],target=>paintMachine(target,cam,p,kind,quantity,pulse),useCache);
+export function drawVendingMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:MachineKind,time:number,stock:number=RETAIL_DISPLAY_CAPACITY[kind],useCache=true,display?:readonly ProductId[]):void{
+ const quantity=display?.length??visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY[kind]),pulse=quantity?Math.floor(time*1.2)%2:0;
+ drawCached(c,cam,p,[kind,quantity,pulse,display],target=>paintMachine(target,cam,p,kind,quantity,pulse,display),useCache);
 }
-export function drawSnackShelf(c:CanvasRenderingContext2D,cam:Projection,minX=0,stock:number=RETAIL_DISPLAY_CAPACITY.snacks,useCache=true,position?:Point):void{
- const p=position??{x:minX+.23,y:2.92},quantity=visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY.snacks);
- drawCached(c,cam,p,["snacks",quantity],target=>paintShelf(target,cam,p,quantity),useCache);
+export function drawSnackShelf(c:CanvasRenderingContext2D,cam:Projection,minX=0,stock:number=RETAIL_DISPLAY_CAPACITY.snacks,useCache=true,position?:Point,display?:readonly ProductId[]):void{
+ const p=position??{x:minX+.23,y:2.92},quantity=display?.length??visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY.snacks);
+ drawCached(c,cam,p,["snacks",quantity,display],target=>paintShelf(target,cam,p,quantity,display),useCache);
 }

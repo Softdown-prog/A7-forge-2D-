@@ -1,3 +1,4 @@
+import {categoryStock} from "../render/merchandiseDisplay.js";
 import type {GameState} from "../sim/types.js";
 import {online,pcCount,pcWear,pcBroken} from "../sim/engine.js";
 import {computerOccupancyPercent} from "../sim/financialReview.js";
@@ -57,7 +58,7 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
  const html=cards.map(c=>'<div class="hud-card '+c.className+'"><span>'+iconMarkup(c.icon)+'</span><div><small>'+c.label+'</small><strong>'+c.value+'</strong></div></div>').join("");
  if(status&&status.innerHTML!==html)status.innerHTML=html;
  const stock=document.getElementById("stock");
- if(stock&&section==="stock"){stock.className="stock-metrics";const stockHtml=([['soda','Refrigerantes'],['candy','Doces'],['snacks','Salgadinhos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+s.inventory[k]+'</strong><small>'+label+'</small></p></div>').join("");if(stock.innerHTML!==stockHtml)stock.innerHTML=stockHtml;}
+ if(stock&&section==="stock"){stock.className="stock-metrics";const stockHtml=([['soda','Bebidas'],['candy','Doces'],['snacks','Alimentos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+categoryStock(s,k)+'</strong><small>'+label+'</small></p></div>').join("");if(stock.innerHTML!==stockHtml)stock.innerHTML=stockHtml;}
  const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!isPromotionActive(s);
  const usage=document.querySelector(".finance-usage"),capacity=s.monthPcCapacityMinutes??0;
  if(usage&&section==="finance"&&!usage.closest(".management-page[hidden]")){

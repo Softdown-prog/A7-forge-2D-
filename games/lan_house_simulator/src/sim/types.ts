@@ -37,7 +37,9 @@ export interface Customer {
   /** Perfil determinístico calculado na entrada; não depende do RNG da simulação. */
   preference?: CustomerPreference;
   desiredItem?: Item | null;
+  desiredProduct?: import("./merchandise.js").ProductId;
   /** No máximo uma bebida e um alimento por visita, inclusive após importar save. */
+  retailConsumption?: {product:import("./merchandise.js").ProductId;untilMinute:number};
   purchasedDrink?: boolean;
   purchasedFood?: boolean;
   /** Pedido de cópias já avaliado no balcão; impede reprocessamento após recarga. */
@@ -128,6 +130,7 @@ export interface GameState {
   pcLcdModels?: Array<"lcd05"|"lcd08"|"lcd12"|"lcd17"|"lcd24"|null>;
   /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
   supplierTier?: 1 | 2;
+  merchandise?: import("./merchandise.js").MerchandiseState;
   /** Dia da última campanha; compatível com saves antigos. */
   promotionDay?: number;
   /** Versão do Windows por estação, independente do upgrade de hardware. */

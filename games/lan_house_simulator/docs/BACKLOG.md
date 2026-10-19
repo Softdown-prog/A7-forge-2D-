@@ -905,3 +905,17 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Criar validação real em Chromium (desktop/414/360 px), compra na loja, aba de preços e cena com jogador sentado.
 - [ ] Segunda cadeira e modo para dois jogadores, depois de validar a experiência individual.
 - [ ] Catálogo de jogos de console e licenciamento por título, com pesquisa histórica e balanceamento posterior.
+
+## Mercadorias individuais, fornecedores e consumo real (19/10/2026)
+- [x] Catálogo de 12 produtos, identidade visual e progressão 1998–2030; estoque e preços legados preservados.
+- [x] Custos médios, qualidade ponderada, preço individual, unidades vendidas, receita e margem bruta sem lançar despesas novamente.
+- [x] Básico imediato; econômico com mínimo de 3 lotes e entrega após 720 minutos; selecionado com qualidade superior; parceiro mantém adesão única de R$ 180 e desconto de 20%.
+- [x] Pedidos pré-pagos persistentes, recebimento idempotente, limite de estoque e bloqueio de entrega após 2030.
+- [x] Escolha por necessidade, carteira, preço aceitável e perfil; atendimento e estoque compartilhados nas filas e equipamentos atuais.
+- [x] Painéis Mercadorias / Fornecedores / Entregas, controle de preço estável e recuperação após recarga em desktop e celular.
+- [x] Embalagens e cores vinculadas ao estoque com cache de sprites; gesto e fala de consumo após venda real.
+- [x] Testes de economia, eventos de fornecedor, concorrência na última unidade, saves antigos/novos e navegador, incorporados aos gates de CI.
+- [x] Inspeção de interface e vídeo de consumo no Canvas real; sem personagem criado para gerar receita.
+- [ ] Expiração de alimentos, lotes FIFO, cancelamento de pedidos e transporte físico: fora deste incremento.
+
+Detalhes, limites e reprodução: `docs/MERCHANDISE.md`.

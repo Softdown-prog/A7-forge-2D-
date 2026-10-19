@@ -1,3 +1,4 @@
+import {merchandisePrice,setMerchandisePrice,orderMerchandise,sellMerchandise,quoteOrder,CLASSIC_PRICES,CLASSIC_WHOLESALE,PRODUCTS} from "./merchandise.js";
 import type { GameState, Inventory, Item, Result } from "./types.js";
 import { SESSION_MINUTES } from "./types.js";
 import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./era.js";
@@ -10,27 +11,10 @@ import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,yearFromMinutes,
   sessionPrice,MIN_HOURLY_PRICE,isHistorical} from "./historicalEconomy.js";
 
 /** Valores iniciais de 1998 no universo do jogo; inflação vem do IPCA. */
-export const ITEM_PRICES: Record<Item, number> = { soda: 8, candy: 5, snacks: 9 };
-export const HISTORICAL_ITEM_PRICES:Record<Item,number>={soda:1.5,candy:1,snacks:2};
-export function productPrice(s:GameState,item:Item):number {
- const value=s.retailPrices?.[item];
- return Number.isFinite(value)&&value!>=.25&&value!<=100?value!:
-  (isHistorical(s)?Math.round(HISTORICAL_ITEM_PRICES[item]*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100:ITEM_PRICES[item]);
-}
-export function setProductPrice(s:GameState,item:Item,value:number):Result {
- if(isHistorical(s)){
-  if(!Number.isFinite(value)||value<.25||value>100||Math.abs(Math.round(value*100)-value*100)>1e-7)
-   return {ok:false,message:"Preço permitido: R$ 0,25 a R$ 100,00, em centavos."};
- }else if(!Number.isInteger(value)||value<1||value>40)
-  return {ok:false,message:"Preço permitido: R$ 1 a R$ 40."};
- // Criar o registro a partir dos preços da própria época, jamais copiar
- // R$ 8/5/9 da economia clássica ao editar apenas um produto em 1998.
- (s.retailPrices??={
-  soda:productPrice(s,"soda"),candy:productPrice(s,"candy"),
-  snacks:productPrice(s,"snacks")
- })[item]=value;
- return {ok:true,message:"Preço de "+item+" alterado para R$ "+value+"."};
-}
+export const ITEM_PRICES: Record<Item, number> = CLASSIC_PRICES;
+export const HISTORICAL_ITEM_PRICES=Object.fromEntries(PRODUCTS.slice(0,3).map(p=>[p.id,p.price])) as Record<Item,number>;
+export function productPrice(s:GameState,item:Item):number {return merchandisePrice(s,item);}
+export function setProductPrice(s:GameState,item:Item,value:number):Result {return setMerchandisePrice(s,item,value);}
 export function upgradeComputer(s:GameState,index:number):Result {
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};
@@ -51,9 +35,9 @@ export function hardwareSatisfactionBonus(state:GameState,index:number):number {
  return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+gpuBonus(state,index)+
    (lcdSpec(installedLcd(state,index))?.bonus??0);
 }
-export const ITEM_WHOLESALE: Record<Item, number> = { soda: 40, candy: 28, snacks: 48 };
-export const HISTORICAL_ITEM_WHOLESALE:Record<Item,number>={soda:7,candy:7,snacks:12};
-export const ITEM_PACK: Record<Item, number> = { soda: 10, candy: 14, snacks: 12 };
+export const ITEM_WHOLESALE: Record<Item, number> = CLASSIC_WHOLESALE;
+export const HISTORICAL_ITEM_WHOLESALE=Object.fromEntries(PRODUCTS.slice(0,3).map(p=>[p.id,p.packCost])) as Record<Item,number>;
+export const ITEM_PACK=Object.fromEntries(PRODUCTS.slice(0,3).map(p=>[p.id,p.pack])) as Record<Item,number>;
 
 export function demandFactor(price: number, reputation: number, internetOnline: boolean, rainy: boolean): number {
   // Até R$ 18/h, manter a curva aprovada. Acima disso a resistência ao
@@ -136,11 +120,9 @@ export function supplierLevel(state: GameState):1|2 {
   return state.supplierTier===2?2:1;
 }
 export function wholesaleCost(state:GameState,item:Item):number {
-  // O parceiro cobra taxa de adesão e reduz o valor de novos pedidos.
-  if(!isHistorical(state))return supplierLevel(state)===2?Math.round(ITEM_WHOLESALE[item]*.8):ITEM_WHOLESALE[item];
- const normal=HISTORICAL_ITEM_WHOLESALE[item]*priceIndex(yearFromMinutes(state.totalMinutes));
- return Math.round(100*normal*(supplierLevel(state)===2?.8:1))/100;
+  return quoteOrder(state,item,supplierLevel(state)===2?"partner":"basic");
 }
+
 export function contractSupplier(state:GameState):Result {
   if(supplierLevel(state)===2)return {ok:false,message:"Fornecedor parceiro já contratado."};
   const fee=180;
@@ -148,20 +130,10 @@ export function contractSupplier(state:GameState):Result {
   state.cash-=fee;state.expenses+=fee;state.supplierTier=2;
   return {ok:true,message:"Fornecedor parceiro contratado: -R$ 180. Novos lotes custam 20% menos."};
 }
-export function stockItem(state: GameState, item: Item): Result {
-  const cost = wholesaleCost(state,item);
-  if (state.cash < cost) return { ok: false, message: "Caixa insuficiente para repor " + item + "." };
-  state.cash -= cost; state.expenses += cost;
-  state.inventory[item] += ITEM_PACK[item];
-  return { ok: true, message: "Estoque de " + item + " reposto: -" + cost + " reais." };
+export function stockItem(state:GameState,item:Item):Result {
+ return orderMerchandise(state,item,supplierLevel(state)===2?"partner":"basic");
 }
-export function sellItem(state: GameState, item: Item): Result {
-  if (state.inventory[item] <= 0) return { ok: false, message: "Produto esgotado: " + item };
-  state.inventory[item]--;
-  const value = productPrice(state,item);
-  state.cash += value; state.revenue += value; state.purchases++;
-  return { ok: true, message: "Venda de " + item + ": +R$ " + value + "." };
-}
+export function sellItem(state:GameState,item:Item):Result {return sellMerchandise(state,item);}
 export function licenseGames(state: GameState): Result {
   if (state.licensedGames) return { ok: false, message: "Catálogo já regularizado." };
   if (state.cash < 450) return { ok: false, message: "São necessários R$ 450 para licenciar os jogos." };

@@ -1,3 +1,5 @@
+import {merchandiseDisplay} from "./merchandiseDisplay.js";
+import {productSpec,type ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,builtPosters,type EditableObject} from "../sim/editableObjects.js";
 import {computerSeat} from "../sim/route.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
@@ -59,8 +61,8 @@ export class SceneRenderer {
       if(changed){
       if(draft.kind==="pc")this.desk(cam,draft,draft.index!,time,online(s),s);
       else if(draft.kind==="counter")this.counter(cam,draft);
-      else if(draft.kind==="shelf")this.shelf(cam,0,s.inventory.snacks,draft);
-      else if(draft.kind==="soda"||draft.kind==="candy")this.machine(cam,draft.x,draft.y,draft.kind,time,s.inventory[draft.kind],draft.rotation);
+      else if(draft.kind==="shelf")this.shelf(cam,0,s.inventory.snacks,draft,merchandiseDisplay(s,"snacks"));
+      else if(draft.kind==="soda"||draft.kind==="candy")this.machine(cam,draft.x,draft.y,draft.kind,time,s.inventory[draft.kind],draft.rotation,merchandiseDisplay(s,draft.kind));
       else if(draft.kind==="bin")this.trashBin(cam,draft,0);
       else if(draft.id.startsWith("built-poster:"))drawWallPoster(ctx,cam,{x:draft.x,y:draft.y,axis:draft.rotation===3?"y":"x",span:draft.span!,top:133,height:59},draft.posterKind!);
       else this.renderPurchasedFurniture(cam,draft.kind as FurnitureKind,draft.x,draft.y,draft.rotation,"city",draft.axis);
@@ -76,11 +78,11 @@ export class SceneRenderer {
     this.drawBackground(s,camera,bounds,w,h);
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
-      {depth:placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).x+placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).y+.55,paint:()=>this.shelf(camera,bounds.minX,s.inventory.snacks,placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}))},
+      {depth:placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).x+placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).y+.55,paint:()=>this.shelf(camera,bounds.minX,s.inventory.snacks,placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}),merchandiseDisplay(s,"snacks"))},
       {depth:6,paint:()=>this.extraFurniture(camera,s)},
       ...vendingMachines(s).map(m=>({
         depth:m.x+m.y+0.25,
-        paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds,s.inventory[m.kind],m.rotation)
+        paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds,s.inventory[m.kind],m.rotation,merchandiseDisplay(s,m.kind))
       })),
       {depth:counterPoint(s,{x:1.45,y:1.05}).x+counterPoint(s,{x:1.45,y:1.05}).y-.5,paint:()=>this.owner(camera,elapsedSeconds,s)},
       {depth:placedObject(s,"counter",{x:.9,y:1.42}).x+placedObject(s,"counter",{x:.9,y:1.42}).y+.8,paint:()=>{
@@ -496,11 +498,11 @@ export class SceneRenderer {
   private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
     drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
   }
-  private shelf(camera:Projection,minX=0,stock=20,p:PlacedPoint={x:minX+.23,y:2.92}):void {
-    drawSnackShelf(this.ctx,objectCamera(camera,p,.46,1.22,p.rotation),minX,stock,true,p);
+  private shelf(camera:Projection,minX=0,stock=20,p:PlacedPoint={x:minX+.23,y:2.92},display?:readonly ProductId[]):void {
+    drawSnackShelf(this.ctx,objectCamera(camera,p,.46,1.22,p.rotation),minX,stock,true,p,display);
   }
-  private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number,stock?:number,rotation:0|1|2|3=0):void {
-    drawVendingMachine(this.ctx,objectCamera(camera,{x,y},.66,.59,rotation),{x,y},kind,t,stock);
+  private machine(camera:Projection,x:number,y:number,kind:"soda"|"candy",t:number,stock?:number,rotation:0|1|2|3=0,display?:readonly ProductId[]):void {
+    drawVendingMachine(this.ctx,objectCamera(camera,{x,y},.66,.59,rotation),{x,y},kind,t,stock,true,display);
   }
   private trashBin(camera:Projection,p:Point,fill:number):void{
     const ctx=this.ctx,loc=iso(p,camera),z=camera.zoom;
@@ -703,6 +705,17 @@ export class SceneRenderer {
         c.stage==="standing"?1-transition:0;
       drawSeatedKeyboardOverlay(this.ctx,objectCamera(camera,pcPosition(c.pcIndex,s),1.1,.7,pcPosition(c.pcIndex,s).rotation),pcPosition(c.pcIndex,s),t,
         style.skin,style.shirt,weight);
+    }
+    if(c.retailConsumption&&s.totalMinutes<c.retailConsumption.untilMinute){
+      // Small foreground hand/package overlay; no pose/sprite invalidation or collision changes.
+      const product=productSpec(c.retailConsumption.product)!;
+      const at=iso({x,y},camera,49),z=camera.zoom,lift=(1+Math.sin(t*5))/2;
+      const px=at.x+8*z,py=at.y-lift*10*z,ctx=this.ctx;
+      ctx.save();ctx.strokeStyle=actorStyleFor(c.costume,c.id).skin;ctx.lineWidth=3*z;ctx.lineCap="round";
+      ctx.beginPath();ctx.moveTo(at.x+12*z,at.y+8*z);ctx.lineTo(px+2*z,py+4*z);ctx.stroke();
+      ctx.fillStyle=product.color;ctx.strokeStyle="#344b42";ctx.lineWidth=z;
+      ctx.beginPath();ctx.roundRect(px-3*z,py-6*z,7*z,product.category==="soda"?12*z:8*z,2*z);ctx.fill();ctx.stroke();
+      ctx.fillStyle="#f7edca";ctx.fillRect(px-2*z,py-2*z,5*z,2*z);ctx.restore();
     }
     if(c.vip){
       const marker=iso({x,y},camera,100);

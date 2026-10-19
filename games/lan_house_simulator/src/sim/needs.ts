@@ -1,5 +1,6 @@
+import {chooseMerchandise,productSpec} from "./merchandise.js";
 import type { Customer, Inventory, Item } from "./types.js";
-import { ITEM_PRICES, productPrice } from "./economy.js";
+import { ITEM_PRICES } from "./economy.js";
 import type {GameState} from "./types.js";
 import {SESSION_PACKAGES} from "./historicalEconomy.js";
 
@@ -16,20 +17,26 @@ export function tickNeeds(c:Customer):void{
 /** Só decidir compras depois do PC; a reserva da cadeira não é interrompida. */
 export function selectPurchase(c:Customer,inventory:Inventory,state?:GameState):Item|null{
   const n=c.needs??initialNeeds(c.id);
+  if(state){
+    const selected=(!c.purchasedDrink&&n.thirst>=55?chooseMerchandise(state,c,true):null)??
+      (!c.purchasedFood&&n.hunger>=55?chooseMerchandise(state,c,false):null);
+    c.desiredProduct=selected??undefined;
+    return selected?productSpec(selected)!.category:null;
+  }
   const cash=c.wallet??18;
-  if(!c.purchasedDrink&&n.thirst>=55&&inventory.soda>0&&cash>=(state?productPrice(state,"soda"):ITEM_PRICES.soda))return "soda";
+  if(!c.purchasedDrink&&n.thirst>=55&&inventory.soda>0&&cash>=ITEM_PRICES.soda)return "soda";
   if(!c.purchasedFood&&n.hunger>=55){
-    if(inventory.snacks>0&&cash>=(state?productPrice(state,"snacks"):ITEM_PRICES.snacks))return "snacks";
-    if(inventory.candy>0&&cash>=(state?productPrice(state,"candy"):ITEM_PRICES.candy))return "candy";
+    if(inventory.snacks>0&&cash>=ITEM_PRICES.snacks)return "snacks";
+    if(inventory.candy>0&&cash>=ITEM_PRICES.candy)return "candy";
   }
   return null;
 }
 
 /** Aplicar apenas após a venda real; impede compras repetidas durante o trajeto. */
-export function consumePurchase(c:Customer,item:Item):void{
+export function consumePurchase(c:Customer,item:Item,relief?:number):void{
  const n=c.needs??(c.needs=initialNeeds(c.id));
- if(item==="soda"){c.purchasedDrink=true;n.thirst=Math.max(0,n.thirst-55);}
- else{c.purchasedFood=true;n.hunger=Math.max(0,n.hunger-(item==="snacks"?55:35));}
+ if(item==="soda"){c.purchasedDrink=true;n.thirst=Math.max(0,n.thirst-(relief??55));}
+ else{c.purchasedFood=true;n.hunger=Math.max(0,n.hunger-(relief??(item==="snacks"?55:35)));}
 }
 
 /** Escolha determinística por perfil, energia e sede. O tempo é contratado antes do pagamento. */

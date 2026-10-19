@@ -1,12 +1,12 @@
+import {acceptsProduct,merchandiseStock,merchandisePrice,productSpec,productQuality,sellMerchandise,receiveDueOrders,validMerchandise} from "./merchandise.js";
 import {validateObjectPlacements} from "./editableObjects.js";
 import type { Costume, Customer, GameState, Item, Point, Result } from "./types.js";
 import { DAY_MINUTES, OPEN_HOUR, SESSION_MINUTES } from "./types.js";
-import { customerSatisfactionDelta, demandFactor, monthlyBills, sellItem, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
+import { customerSatisfactionDelta, demandFactor, monthlyBills, sessionRevenue, hardwareSatisfactionBonus, energyCostPerMinute } from "./economy.js";
 import {INITIAL_CASH,paidMonthlyBillReceipt,validPaidMonthlyBill} from "./financialClarity.js";
 import { AISLE_Y, COUNTER_QUEUE, VENDING_QUEUE, computerSeat, hallwayRoute } from "./route.js";
 import { counterQueueCustomers, counterQueueSlot, MAX_COUNTER_QUEUE, CUSTOMER_COLLISION_RADIUS } from "./checkoutQueue.js";
 import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
-import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
 import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget,visitorPreference,preferredSessionLength,maxServiceWait,prefersConsole,preferenceSatisfactionAdjustment,preferenceSessionComment} from "./customerChoices.js";
@@ -292,6 +292,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
 function sendHome(s: GameState, c: Customer): void {
   c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.queueIndex=undefined;
   delete c.doorwayYielding;
+  delete c.desiredProduct;
   c.stalledMinutes=0;
   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
   if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
@@ -558,30 +559,24 @@ function tryServe(s: GameState, c: Customer): void {
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0)+(printing?.revenue??0),x:c.x,y:c.y});
 }
 function resolvePurchase(s: GameState, c: Customer): void {
-  const items: Item[] = ["soda", "candy", "snacks"];
-  const chosen = c.desiredItem ?? (items[Math.floor(random(s) * items.length)] ?? "soda");
-  // Não comprar algo indisponível ou que excede o orçamento pessoal.
-  if(c.desiredItem && (s.inventory[chosen]<=0 || (c.wallet??18)<productPrice(s,chosen))){
-    customerSays(s,c,s.inventory[chosen]<=0?"Produto esgotado!":"Está muito caro!");
+  const chosen=c.desiredProduct??c.desiredItem??"soda",spec=productSpec(chosen);
+  if(!spec||!acceptsProduct(s,c,chosen)){
+    customerSays(s,c,merchandiseStock(s,chosen)<=0?"Produto esgotado!":"Está muito caro ou já comprei.");
     sendHome(s,c);return;
   }
-  const result = sellItem(s, chosen);
-  if (result.ok){
-    if(c.desiredItem){
-      c.wallet=Math.max(0,(c.wallet??18)-productPrice(s,chosen));
-      consumePurchase(c,chosen);
-    }
-    s.saleEffects=queueVisualEvent(s.saleEffects,{item:chosen,amount:productPrice(s,chosen),x:c.x,y:c.y});
-    addWaste(s,chosen==="soda"?5:3);
-    addLog(s,result.message);
-    // Uma bebida não elimina a fome. Permitir o outro grupo se necessário,
-    // com dinheiro restante, estoque e rota reais; nunca repetir um grupo.
-    if(c.desiredItem){
-      const next=selectPurchase(c,s.inventory,s);
-      if(next&&setTravel(s,c,purchaseApproach(next,s))){
-        c.desiredItem=next;return;
-      }
-    }
+  const value=merchandisePrice(s,chosen),quality=productQuality(s,chosen);
+  const result=sellMerchandise(s,chosen);
+  if(result.ok){
+    c.wallet=Math.round(Math.max(0,(c.wallet??18)-value)*100)/100;
+    consumePurchase(c,spec.category,spec.relief*quality);
+    c.retailConsumption={product:chosen,untilMinute:s.totalMinutes+16};
+    // Sound and sale effects retain the equipment category; the held package uses the product.
+    customerSays(s,c,quality>1.08?"Gostei da qualidade de "+spec.name+"!":"Vou consumir: "+spec.name+".","praise");
+    c.happy=quality>=1;
+    s.saleEffects=queueVisualEvent(s.saleEffects,{item:spec.category,amount:value,x:c.x,y:c.y});
+    addWaste(s,spec.category==="soda"?5:3);addLog(s,result.message);
+    const next=selectPurchase(c,s.inventory,s);
+    if(next&&setTravel(s,c,purchaseApproach(next,s))){c.desiredItem=next;return;}
   }
   sendHome(s, c);
 }
@@ -751,6 +746,7 @@ function advanceMinute(s: GameState): void {
   recordComputerUtilization(s);
   recordStationMinute(s,pcCount(s),energyExpense);
   s.totalMinutes++;
+  for(const message of receiveDueOrders(s))addLog(s,message);
   if(s.economyVersion===2&&s.totalMinutes===4*360*DAY_MINUTES)
     addLog(s,"2002: chegaram os videogames! A loja agora oferece bancada com PlayStation 1, TV de tubo e cadeira.");
   for(const installed of tickGpuGameInstallations(s))
@@ -813,7 +809,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -821,6 +817,8 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
+      (c.retailConsumption===undefined||(!!c.retailConsumption&&!!productSpec(c.retailConsumption.product)&&Number.isInteger(c.retailConsumption.untilMinute)&&c.retailConsumption.untilMinute>=0&&c.retailConsumption.untilMinute<=1e9))&&
+      (c.desiredProduct===undefined||(!!productSpec(c.desiredProduct)&&productSpec(c.desiredProduct)!.category===c.desiredItem))&&
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding,c.budgetAware].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.preference===undefined||["economy","comfort","gaming","quick"].includes(c.preference))&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&

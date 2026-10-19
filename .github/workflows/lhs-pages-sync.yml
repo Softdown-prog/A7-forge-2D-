@@ -38,7 +38,7 @@ jobs:
           npm ci
           npm run build:site
           npm run check:site
-          node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/customer-feedback.test.mjs tests/website.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/email-confirmation.test.mjs tests/privacy-notice.test.mjs tests/customer-choices.test.mjs tests/customer-spending.test.mjs tests/ps1-2002.test.mjs tests/counter-queue.test.mjs
+          node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/customer-feedback.test.mjs tests/website.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/email-confirmation.test.mjs tests/privacy-notice.test.mjs tests/customer-choices.test.mjs tests/customer-spending.test.mjs tests/merchandise.test.mjs tests/ps1-2002.test.mjs tests/counter-queue.test.mjs
 
       - name: Conferir abertura real antes de publicar
         working-directory: source/games/lan_house_simulator
@@ -50,6 +50,7 @@ jobs:
           node scripts/verify_account_navigation.mjs
           node scripts/verify_hardware_scroll.mjs
           node scripts/verify_management_panels.mjs
+          node scripts/verify_merchandise.mjs out/release-merchandise
           node scripts/verify_ps1_2002.mjs out/release-ps1
           node scripts/verify_financial_clarity.mjs out/release-finance
           node scripts/verify_save_on_menu.mjs out/release-save

@@ -50,6 +50,11 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
   const empty=document.createElement('p');empty.className='management-empty';empty.textContent=text;
   $('page-prices-'+page).append(empty);
  }
+ mount('stock',[
+  {id:'catalog',label:'Mercadorias',nodes:[$('stock'),$('merchandise-catalog')]},
+  {id:'suppliers',label:'Fornecedores',nodes:[$('merchandise-suppliers'),$('supplier-status'),$('supplier-up').closest('.action-row')!]},
+  {id:'orders',label:'Entregas',nodes:[$('merchandise-orders')]}
+ ]);
  const computers=$('section-computers');
  mount('computers',[
   {id:'operations',label:'Operação e reparos',nodes:[]},

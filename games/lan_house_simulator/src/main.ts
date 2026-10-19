@@ -1,3 +1,4 @@
+import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
 import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
@@ -602,6 +603,7 @@ function activateAdminTab(tab:string):void{
  for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");admin.scrollTop=0;renderUI();});
+const merchandisePanel=installMerchandisePanel(()=>game,r=>{applyResult(game,r);renderUI();save();});
 const retailControls=document.getElementById("retail-price-controls");
 const discControls=document.getElementById("disc-copy-price-controls");
 const printControls=document.getElementById("print-price-controls");
@@ -621,6 +623,7 @@ discControls?.addEventListener("click",event=>{
  applyResult(game,setDiscCopyPrice(game,kind,game.discCopier.prices[kind]+delta));renderUI();save();
 });
 retailControls?.addEventListener("click",event=>{
+ if((event.target as Element).closest("#retail-full-catalog")){activateAdminTab("stock");managementPanels.select("stock","catalog");renderUI();return;}
  const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement))return;
  const item=target.dataset.item as Item|undefined;
@@ -1152,6 +1155,8 @@ function renderUI(liveOnly=false):void {
     }
     line.append(name,actions);nextRetail.append(line);
    }
+   const catalogLink=document.createElement("button");catalogLink.type="button";catalogLink.id="retail-full-catalog";catalogLink.className="slice";
+   catalogLink.textContent="Ver todas as mercadorias e margens no Estoque";nextRetail.append(catalogLink);
    syncPanelChildren(retailControls,nextRetail);
   }
   const discPanel=document.getElementById("disc-copy-panel");
@@ -1209,6 +1214,7 @@ function renderUI(liveOnly=false):void {
      (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 320 da impressora.")+
      " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
   }
+  if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
   const supplierButton=document.querySelector<HTMLButtonElement>("#supplier-up");
   if(supplierButton)supplierButton.disabled=supplierLevel(game)===2;

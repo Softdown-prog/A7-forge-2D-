@@ -1,3 +1,4 @@
+import {receivePaidMerchandise} from "./merchandise.js";
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {GameNotice} from "./notices.js";
@@ -56,7 +57,7 @@ export function chooseDecision(s:GameState,noticeId:string,choiceId:string):Resu
  if(option.cost>0&&s.cash<option.cost)return {ok:false,message:"Caixa insuficiente para esta decisão."};
  s.cash-=option.cost;s.expenses+=option.cost;
  switch(option.id){
-  case "supplier-accept":s.inventory.soda+=35;break;
+  case "supplier-accept":receivePaidMerchandise(s,"soda",35,option.cost);break;
   case "school-accept":s.cash+=240;s.revenue+=240;s.reputation=Math.min(100,s.reputation+2);break;
   case "tournament-host":s.reputation=Math.min(100,s.reputation+9);break;
   case "tournament-small":s.reputation=Math.min(100,s.reputation+3);break;
