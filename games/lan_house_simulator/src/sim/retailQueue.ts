@@ -4,6 +4,7 @@ import {roomBounds} from "./room.js";
 import {editableObjects,objectRect} from "./editableObjects.js";
 import {counterQueueSlot,MAX_COUNTER_QUEUE,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute} from "./navigation.js";
+import {crowdRoute} from "./crowdNavigation.js";
 import {layoutGoals} from "./editableObjects.js";
 import {AISLE_Y} from "./route.js";
 import {entrance} from "./engine.js";
@@ -47,7 +48,14 @@ export function refreshRetailQueues(s:GameState):void{
    const destination=slots[index];if(!destination)continue;
    const final=c.route?.at(-1)??c.target;
    if(c.retailQueueItem===item&&c.retailQueueIndex===index&&Math.hypot(final.x-destination.x,final.y-destination.y)<.005)continue;
-   const path=Math.hypot(c.x-destination.x,c.y-destination.y)<.05?[destination]:navigableRoute(s,c,destination);
+   // A rota clássica passa obrigatoriamente pelo corredor principal
+   // (y=4,48). Em alta lotação, várias filas de compras o bloqueavam
+   // de ponta a ponta. Planejar o caminho levando em conta os corpos
+   // impede que clientes aguardem em fila no próprio corredor.
+   const path=Math.hypot(c.x-destination.x,c.y-destination.y)<.05
+    ?[destination]
+    :crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25)??
+      navigableRoute(s,c,destination);
    if(!path?.length)continue;
    c.retailQueueItem=item;c.retailQueueIndex=index;c.target=path[0]!;c.route=path.slice(1);
   }
