@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/sim/customerChoices.ts'
+      - 'games/lan_house_simulator/src/sim/customerFeedback.ts'
+      - 'games/lan_house_simulator/src/ui/customerFeedbackPanel.ts'
+      - 'games/lan_house_simulator/tests/customer-feedback.test.mjs'
       - 'games/lan_house_simulator/src/sim/engine.ts'
       - 'games/lan_house_simulator/src/sim/needs.ts'
       - 'games/lan_house_simulator/src/sim/types.ts'
@@ -28,4 +31,4 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
-          node --test tests/customer-choices.test.mjs tests/customer-preferences.test.mjs tests/customer-spending.test.mjs tests/counter-queue.test.mjs tests/ps1-2002.test.mjs tests/doorway-recovery.test.mjs
+          node --test tests/customer-feedback.test.mjs tests/customer-choices.test.mjs tests/customer-preferences.test.mjs tests/customer-spending.test.mjs tests/counter-queue.test.mjs tests/ps1-2002.test.mjs tests/doorway-recovery.test.mjs
