@@ -104,6 +104,8 @@ export interface GameState {
   /** Métricas opcionais; saves antigos começam a coletar após carregar. */
   stationLedger?: StationAccount[];
   reputation: number;
+  /** Histórico curto de avaliações reais; ausente em saves antigos. */
+  customerFeedback?: import("./customerFeedback.js").CustomerFeedback[];
   /** 2 = modelo de preços histórico; ausência = save clássico. */
   economyVersion?:2;
   pricePerHour: number;
