@@ -30,6 +30,10 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const click=async selector=>mobile?await page.locator(selector).tap():await page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  const privacy=page.locator("#privacy-banner");
+  if(await privacy.isVisible()){
+   await click("#privacy-reject");await privacy.waitFor({state:"hidden"});
+  }
   await click("#menu-continue");await click("#open-admin");await selectAdminArea(page,"finance");await page.locator(".management-summary").evaluate(node=>node.open=true);
   assert.equal((await page.locator(".admin-summary").innerText()).includes("Saldo acumulado"),false);
   assert.match(await page.locator(".admin-summary").innerText(),/Resultado acumulado/);
@@ -67,6 +71,12 @@ try{
   const paidPage=await settledContext.newPage(),paidErrors=[];
   paidPage.on("pageerror",e=>paidErrors.push(String(e)));
   await paidPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  const paidPrivacy=paidPage.locator("#privacy-banner");
+  if(await paidPrivacy.isVisible()){
+   if(mobile)await paidPage.locator("#privacy-reject").tap();
+   else await paidPage.locator("#privacy-reject").click();
+   await paidPrivacy.waitFor({state:"hidden"});
+  }
   const paidClick=async selector=>mobile?await paidPage.locator(selector).tap():
    await paidPage.locator(selector).click();
   await paidClick("#menu-continue");await paidClick("#open-admin");
