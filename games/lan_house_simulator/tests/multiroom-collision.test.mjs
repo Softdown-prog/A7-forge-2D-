@@ -71,7 +71,7 @@ test("salas com três portas, fila cheia e quatro anexos mantêm circulação po
   }
   assert.deepEqual([...used].sort(),[3,4,5,6]);
   assert.ok(peak>=12,"exercitar alta lotação");
-  assert.ok(s.served>=12,"fila deve continuar avançando após as primeiras reservas");
+  assert.ok(s.served>=12,"fila deve continuar avançando após as primeiras reservas · seed "+seed+" · served "+s.served+" · exited "+exited.size+" · peak "+peak+" · lost "+s.lostCustomers);
   assert.ok(exited.size>=15,"clientes precisam concluir compras e sair pela porta");
   assert.ok(s.purchases>=5);
  }
