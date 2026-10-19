@@ -61,6 +61,13 @@ try{
     await page.locator("#start-screen").waitFor({state:"visible"});
     await writeFile(resolve(output,"lhs_menu_"+config.name+".png"),
       await page.locator("#start-screen").screenshot({type:"png"}));
+    // Escolha de privacidade real antes de interagir com a loja/cenário.
+    // O aviso é legítimo, porém intercepta cliques do robô quando não respondido.
+    const privacy=page.locator("#privacy-banner");
+    if(await privacy.isVisible()){
+      await page.locator("#privacy-reject").click();
+      await privacy.waitFor({state:"hidden"});
+    }
     await page.locator("#menu-continue").click();
     await page.locator("#game-app").waitFor({state:"visible"});
     await page.waitForFunction(()=>{
