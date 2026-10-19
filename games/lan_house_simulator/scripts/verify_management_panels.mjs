@@ -15,6 +15,8 @@ try{
   const mobile=width<700,context=await browser.newContext({viewport:{width,height:844},isMobile:mobile,hasTouch:mobile});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));
   const state=createGame();state.totalMinutes=(year-1998)*360*DAY_MINUTES;state.cash=10000;
+  state.reputation=74.75;
+  state.customerFeedback=[{minute:state.totalMinutes,customerId:123,reason:"preco",kind:"sessao",delta:-.25}];
   await page.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,state});
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
   // This test concerns admin scrolling, not cookie consent. A real visitor
@@ -43,6 +45,10 @@ try{
     pages.push(area+'/'+task);
    }
   }
+  await selectAdminArea(page,'finance');await selectTask(page,'finance','feedback');
+  assert.match(await page.locator('#customer-feedback-summary').innerText(),/1 crítica\\(s\\) com efeito/);
+  assert.match(await page.locator('#customer-feedback-summary').innerText(),/-0\\.25 pontos/);
+  assert.equal(await page.locator('#customer-feedback-list li').count(),1,'Only the real saved feedback entry appears');
   await selectAdminArea(page,'computers');await selectTask(page,'computers','hardware');
   await press(page.locator('#hardware-tab-ram'));
   await page.evaluate(()=>{window.retainedHardware=document.querySelector('#hardware-tab-ram');window.hiddenChanges=0;new MutationObserver(rs=>window.hiddenChanges+=rs.reduce((n,r)=>n+r.addedNodes.length,0)).observe(document.querySelector('#gpu-game-catalog'),{childList:true,subtree:true});});
