@@ -50,6 +50,13 @@ try{
    const tap=async css=>width<700
      ?await page.locator(css).tap()
      :await page.locator(css).click();
+   // The cookie notice is an interactive overlay on a fresh browser context.
+   // Choose the real rejection control, never force a click through it.
+   const notice=page.locator("#privacy-banner");
+   if(await notice.isVisible()){
+    await tap("#privacy-reject");
+    await notice.waitFor({state:"hidden"});
+   }
    await tap("#menu-continue");
    await tap("#open-admin");
    await selectAdminArea(page,'services');await selectTask(page,'services','access');
