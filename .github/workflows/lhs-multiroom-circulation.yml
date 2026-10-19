@@ -6,6 +6,7 @@ on:
       - 'games/lan_house_simulator/src/sim/navigation.ts'
       - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
       - 'games/lan_house_simulator/src/sim/checkoutQueue.ts'
+      - 'games/lan_house_simulator/src/sim/retailQueue.ts'
       - 'games/lan_house_simulator/tests/multiroom-collision.test.mjs'
       - 'games/lan_house_simulator/scripts/circulation_scenario.mjs'
       - '.github/workflows/lhs-multiroom-circulation.yml'
