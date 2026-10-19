@@ -21,7 +21,13 @@ try{
   const cdp=await page.context().newCDPSession(page);await cdp.send("Emulation.setCPUThrottlingRate",{rate:config.cpu});
   await page.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");},{key:GAME_SAVE_KEY,state});
   const errors=[];page.on("pageerror",e=>errors.push(String(e)));
-  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});await page.locator("#menu-continue").click();
+  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  const consent=page.locator("#privacy-banner");
+  if(await consent.isVisible()){
+   await page.locator("#privacy-reject").click();
+   await consent.waitFor({state:"hidden"});
+  }
+  await page.locator("#menu-continue").click();
   await page.evaluate(async()=>{
    const {SceneRenderer}=await import("./js/render/scene.js");
    const metrics=window.__runtimeProfile={start:performance.now(),frames:[],draw:[],mutations:0,added:0,samples:[],uiLongTasks:[]};
