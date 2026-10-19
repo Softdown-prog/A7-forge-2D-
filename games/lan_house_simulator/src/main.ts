@@ -37,6 +37,7 @@ import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
+import {renderCustomerFeedback} from "./ui/customerFeedbackPanel.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
@@ -1045,6 +1046,12 @@ function renderUI(liveOnly=false):void {
    if(statement.differenceCents!==0)unexplained.textContent="Atenção: o caixa deste salvamento difere em "+
     inCurrency(statement.differenceCents/100)+
     " do cálculo pelo capital inicial e pelos lançamentos. Confira o histórico em Finanças.";
+  }
+  if(activeAdminTab==="finance"&&managementPanels.active("finance","feedback")){
+   const host=document.getElementById("customer-feedback-panel");
+   if(host&&panelChanged("customerFeedback",
+     [Math.floor(game.totalMinutes/720),game.customerFeedback],!liveOnly))
+    renderCustomerFeedback(host,game);
   }
   if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
   const closing=monthlyClosingSnapshot(game);
