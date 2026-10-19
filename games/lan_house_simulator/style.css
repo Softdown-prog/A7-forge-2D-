@@ -1022,3 +1022,16 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 
 /* Consentimento no iframe do site: manter os botões alcançáveis sem rolar o site. */
 .lhs-embedded-game .privacy-banner{top:12px;bottom:auto;max-height:min(65dvh,500px);overflow-y:auto}
+
+/* Opinion metrics live in a separate Finance task page, never the HUD. */
+.customer-feedback-panel{min-width:0;padding:12px;border:1px solid #c6d4be;border-radius:9px;background:#f3f6eb}
+.customer-feedback-panel h4{margin:0 0 7px;color:#314e3d;font-size:15px}
+.customer-feedback-panel>p{margin:5px 0 10px;font-size:12px;line-height:1.5}
+.customer-feedback-total{font-weight:700;color:#274d39}
+.customer-feedback-reasons{display:grid;gap:6px;margin:10px 0}
+.customer-feedback-reason,.customer-feedback-list li{display:flex;gap:8px;justify-content:space-between;align-items:flex-start;border-bottom:1px solid #d8e0cd;padding:8px 0;font-size:12px}
+.customer-feedback-reason strong,.customer-feedback-list strong{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.customer-feedback-list{list-style:none;padding:0;margin:0}
+.customer-feedback-list .feedback-positive strong{color:#247348}
+.customer-feedback-list .feedback-negative strong{color:#a24a39}
+@media(max-width:560px){.customer-feedback-panel{padding:10px}.customer-feedback-reason,.customer-feedback-list li{font-size:11px}}
