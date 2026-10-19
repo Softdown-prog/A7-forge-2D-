@@ -57,6 +57,13 @@ try{
     movingPositionUpdatesPerSecond:+(changes.length/(moving.length/(m.frames.length/duration))).toFixed(1)};
   });
   if(errors.length)throw Error(errors.join("; "));
+  // Folga deliberada para diferenças entre runners; falhar só em regressões
+  // grandes, não em variações normais de 1–2 FPS do CI. O relatório mantém
+  // números completos para ajustes futuros, sem reduzir a qualidade gráfica.
+  if(!Number.isFinite(report.fps)||report.frameP95Ms>55||
+     report.drawP95Ms>35||report.domAddedPerSecond>150){
+   throw Error("Runtime budget exceeded in "+config.name+": "+JSON.stringify(report));
+  }
   reports.push({scenario:config.name,cpuSlowdown:config.cpu,...report});console.log(JSON.stringify(reports.at(-1)));await page.close();
  }
  await writeFile(resolve(output,"runtime_profile_"+label+".json"),JSON.stringify({label,reports},null,2)+"\n");
