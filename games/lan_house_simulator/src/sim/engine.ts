@@ -9,6 +9,7 @@ import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
+import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget} from "./customerChoices.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
@@ -32,7 +33,7 @@ import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
-import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
+import {clampPriceToEra,normalizedHourlyPrice,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {ps1Seat,ps1SeatApproach,ps1StationAvailable,ps1SessionPrice,ps1EnergyCostPerMinute,
  ps1SessionWear,ps1HourPrice,validPs1State,PS1_UNLOCK_YEAR} from "./ps1.js";
 import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameInstallJob,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
@@ -378,9 +379,10 @@ function spawn(s: GameState): void {
     gpuGamer:wantsGpuGame(s,s.nextCustomerId-1),
     preferredGpuGame:preferredGpuGame(s,s.nextCustomerId-1),
     pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
-    offlineWait: 0, happy: true,
+    offlineWait: 0, happy: true, budgetAware:true,
     needs:initialNeeds(s.nextCustomerId-1),wallet:
-    (s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18))
+    Math.round(((s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18)))*
+      (s.economyVersion===2?priceIndex(yearFromMinutes(s.totalMinutes)):1)*100)/100
   };
   if(!setTravel(s,c,c.target))return;
   if(c.preferredGpuGame)recordGpuGameRequest(s,c.preferredGpuGame);
@@ -457,14 +459,15 @@ function tryServe(s: GameState, c: Customer): void {
     sendHome(s,c);
     return;
   }
-  // Em 2002 as bancadas de videogame passam a dividir o público com PCs.
-  // Um em cada cinco visitantes não gamers prefere console; nunca há
-  // reservas extras nem sorteio novo. Só cobra quando a rota existe.
-  // Quando todos os PCs estão desligados, o console continua sendo
-  // um serviço independente: qualquer visitante pode escolhê-lo.
-  // Com PCs ligados, manter a preferência histórica de 1 em 5.
-  const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).some(i=>stationPoweredOn(s,i));
-  const consoleIndex=((!c.gpuGamer&&c.id%5===0)||!poweredPcs)?(s.ps1Stations??[]).findIndex((_,i)=>{
+  // Decisão executada uma vez por minuto no balcão, nunca por frame.
+  // Serviços de impressão e cópia continuam exclusivos e independentes.
+  const remaining=SESSION_FINISH_MINUTE-localMinute(s);
+  if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+  const wanted=c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2);
+  const pcCandidate=chooseAvailablePc(s,c);
+  // O console pode atender inclusive um visitante que encontrou todos os
+  // PCs ocupados. Só contratar quando houver CD, cadeira e trajeto livres.
+  const consoleIndex=shouldConsiderConsole(c,pcCandidate)?(s.ps1Stations??[]).findIndex((_,i)=>{
     if(!ps1StationAvailable(s,i))return false;
     const side=ps1SeatApproach(s,i),seat=ps1Seat(s,i);
     return !!side&&!!seat&&!!navigableRoute(s,{x:c.x,y:c.y},side)&&
@@ -472,21 +475,19 @@ function tryServe(s: GameState, c: Customer): void {
   }): -1;
   const consoleSeat=consoleIndex>=0?ps1Seat(s,consoleIndex):null;
   const consoleSide=consoleIndex>=0?ps1SeatApproach(s,consoleIndex):null;
-  if(consoleSeat&&consoleSide){
-    const remaining=SESSION_FINISH_MINUTE-localMinute(s);
-    if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
-    c.sessionMinutes??=chooseSessionMinutes(c,s.economyVersion===2);
-    if(c.sessionMinutes>remaining)c.sessionMinutes=
-      ([240,180,120,90,60,45,30] as number[]).find(n=>n<=remaining)??30;
+  const consoleMinutes=consoleSeat&&consoleSide
+    ?sessionPlan(c,wanted,remaining,minutes=>ps1SessionPrice(s,minutes)):null;
+  if(consoleSeat&&consoleSide&&consoleMinutes!==null){
     if(leaveCounterForPc(s,c,consoleSide)){
-      // Já na lateral da bancada, entrar pela frente da cadeira em linha
-      // direta. A rota padrão pelo corredor faria o ator voltar e atravessar a TV.
+      // Entrar na bancada pela lateral impede cruzar a TV/mesa.
       const tail=canTraverseLocalStep(s,consoleSide,consoleSeat)
        ?[consoleSeat]:navigableRoute(s,consoleSide,consoleSeat)!;
       c.route=[...(c.route??[]),...tail];
-      const paid=ps1SessionPrice(s,c.sessionMinutes);
+      c.sessionMinutes=consoleMinutes;
+      const paid=ps1SessionPrice(s,consoleMinutes);
       c.pcIndex=null;c.ps1StationIndex=consoleIndex;
       c.queueIndex=undefined;c.stage="to_pc";s.counterBusyUntil=s.totalMinutes+3;
+      debitVisitorBudget(c,paid);
       s.cash+=paid;s.revenue+=paid;s.served++;
       s.ps1Sessions=(s.ps1Sessions??0)+1;s.ps1Revenue=Math.round(((s.ps1Revenue??0)+paid)*100)/100;
       s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
@@ -495,26 +496,32 @@ function tryServe(s: GameState, c: Customer): void {
       return;
     }
   }
-  const index=chooseAvailablePc(s,c);
-  if (index === undefined) {
-    c.waitingMinutes++;
-    if (c.waitingMinutes > (c.vip?19:25)) {
-      s.lostCustomers++; s.reputation = Math.max(10, s.reputation - 0.4);
-      customerSays(s,c,complaintLine("queue",c.id));
-      sendHome(s, c);
+  const index=pcCandidate;
+  // O caixa não deixa a pessoa pagar por uma sessão que ela não consegue
+  // custear; antes de desistir, tenta um pacote mais curto ou uma compra.
+  const pcMinutes=index===undefined?null:sessionPlan(c,wanted,remaining,minutes=>
+    s.economyVersion===2
+      ?gpuGameSessionPrice(s,index,minutes,!!c.gpuGamer,c.preferredGpuGame)
+      :sessionRevenue(s.pricePerHour,minutes,false));
+  if(index===undefined||pcMinutes===null){
+    const queueFullTimeout=index===undefined&&++c.waitingMinutes<=(c.vip?19:25);
+    if(queueFullTimeout)return;
+    const snack=emergencyRetailChoice(s,c);
+    if(snack&&setTravel(s,c,purchaseApproach(snack,s))){
+      c.desiredItem=snack;c.stage="shopping";c.queueIndex=undefined;
+      customerSays(s,c,"Vou aproveitar para comprar um lanche.","praise");
+      return;
     }
-    return;
+    s.lostCustomers++;
+    s.reputation=Math.max(10,s.reputation-0.4);
+    customerSays(s,c,index===undefined?complaintLine("queue",c.id):"Hoje não cabe no meu orçamento.");
+    sendHome(s,c);return;
   }
-  // Uma sessão nova só é cobrada se tiver duração para terminar antes da saída final.
-  const available=SESSION_FINISH_MINUTE-localMinute(s);
-  if(available<30 || localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
-  c.sessionMinutes??=chooseSessionMinutes(c,s.economyVersion===2);
-  if(c.sessionMinutes>available)c.sessionMinutes=
-    ([240,180,120,90,60,45,30] as number[]).find(n=>n<=available)??30;
   if(!leaveCounterForPc(s,c,computerSeat(pcPosition(index,s)))){
     c.waitingMinutes++;
     return; // Não cobrar se a sala não for acessível.
   }
+  c.sessionMinutes=pcMinutes;
   c.pcIndex=index;
   c.queueIndex=undefined;
   c.stage="to_pc";
@@ -526,6 +533,7 @@ function tryServe(s: GameState, c: Customer): void {
   c.gpuGameCharged=paid>regular;
   if(c.preferredGpuGame)recordGpuGameSession(s,c.preferredGpuGame,
    gpuGamePlayableOnPc(s,index,c.preferredGpuGame),paid-regular);
+  debitVisitorBudget(c,paid);
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
@@ -794,7 +802,7 @@ export function isValidSave(value: unknown): value is GameState {
     Number.isFinite(v.rng) && Number.isFinite(v.pricePerHour) &&
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
-      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding,c.budgetAware].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&

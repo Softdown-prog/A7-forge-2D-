@@ -30,6 +30,8 @@ export interface Customer {
   needs?: {thirst:number;hunger:number;energy:number};
   /** Dinheiro pessoal fictício do visitante; não é o caixa do estabelecimento. */
   wallet?: number;
+  /** Novas visitas usam o saldo pessoal ao contratar; saves anteriores preservam o comportamento. */
+  budgetAware?: boolean;
   desiredItem?: Item | null;
   /** No máximo uma bebida e um alimento por visita, inclusive após importar save. */
   purchasedDrink?: boolean;
