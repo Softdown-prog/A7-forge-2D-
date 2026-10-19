@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Cenários históricos reais nos painéis: amortização, preços, demanda potencial e mobile.
 import {chromium} from "playwright";
@@ -31,6 +32,7 @@ try{
   const page=await context.newPage(),errors=[];
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   const click=async sel=>mobile?await page.locator(sel).tap():await page.locator(sel).click();
   await click("#menu-continue");await click("#open-admin");await selectAdminArea(page,'prices');await selectTask(page,'prices','printing');
   const printer=page.locator("#print-service-panel"),disc=page.locator("#disc-copy-panel");

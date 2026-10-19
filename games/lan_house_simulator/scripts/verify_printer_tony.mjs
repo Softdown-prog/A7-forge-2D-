@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 // Check the real purchase, catalog artwork and Tony's paid printing gesture.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -18,6 +19,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const press=loc=>mobile?loc.tap():loc.click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   await press(page.locator("#menu-new"));
   await press(page.locator("#open-shop"));
   const printerCard=page.locator("#shop-catalog .shop-card").filter({has:page.locator('button[data-buy="printer"]')});

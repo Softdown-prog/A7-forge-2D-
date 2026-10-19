@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 // Regression in the real browser: recovery, quota warning and retry on desktop/mobile.
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
@@ -27,6 +28,7 @@ try {
   page.on("pageerror",error=>errors.push(String(error)));
   const click=async selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   const fixture=createGame(width,"historical");
   fixture.cash=6384.50;fixture.served=4600;fixture.totalMinutes=22*360*720+25;
   await page.evaluate(({primary,backup,state})=>{

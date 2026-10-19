@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Actual purchase/pricing controls plus scene-pixel validation: the purchased machine now appears on the counter.
 import {chromium} from 'playwright';
@@ -18,6 +19,7 @@ try{
   await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,state:s});
   const page=await context.newPage();page.on('pageerror',e=>errors.push(String(e)));page.on('response',r=>{if(r.status()>=400)errors.push(r.status()+' '+r.url());});
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
+   await dismissPrivacyNotice(page,width<700);
   const click=async selector=>{const node=page.locator(selector);if(width<700)await node.tap();else await node.click();};
   await click('#menu-continue');await click('#open-shop');const buy=page.locator('[data-buy="disc-copier"]');
   assert.equal(await buy.isDisabled(),year<2001);assert.equal(await page.locator('.shop-art[data-item="disc-copier"] img').count(),1);

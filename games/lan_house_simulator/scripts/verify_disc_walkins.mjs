@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Valida um cliente real que entra apenas para fazer cópias de CD/DVD.
 import {chromium} from "playwright";
@@ -39,6 +40,7 @@ try {
   fixture.nextCustomerId=16;
   await page.addInitScript(state=>localStorage.setItem("lhs-save-v1",JSON.stringify(state)),fixture);
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   const press=loc=>mobile?loc.tap():loc.click();
   await press(page.locator("#menu-continue"));
   await page.waitForFunction(()=>document.querySelector("#events")?.textContent?.includes("Cliente avulso copiou"),null,{timeout:9000});

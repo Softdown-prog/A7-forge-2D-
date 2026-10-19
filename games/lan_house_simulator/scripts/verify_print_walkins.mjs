@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // E2: real game walk-in printing checkout, accounting and responsive interface.
 import {chromium} from "playwright";
@@ -35,6 +36,7 @@ try {
   fixture.nextCustomerId=5;
   await page.addInitScript(state=>localStorage.setItem("lhs-save-v1",JSON.stringify(state)),fixture);
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   const press=selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
   await press("#menu-continue");
   await page.waitForFunction(()=>document.querySelector("#events")?.textContent?.includes("Cliente avulso imprimiu"),null,{timeout:9000});

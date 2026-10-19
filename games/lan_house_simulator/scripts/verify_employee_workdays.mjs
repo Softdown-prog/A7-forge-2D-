@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea} from './management_navigation.mjs';
 // Exercita contratos mensais com diária somente de serviço em navegador desktop e mobile.
 import assert from "node:assert/strict";
@@ -38,6 +39,7 @@ try{
   const page=await ctx.newPage(),errors=[];
   page.on("pageerror",e=>errors.push(String(e)));
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+   await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   const press=async sel=>mobile?await page.locator(sel).tap():await page.locator(sel).click();
   await press("#menu-continue");await press("#open-admin");await selectAdminArea(page,'services');
   const summary=await page.locator("#staff-summary").innerText();
