@@ -9,7 +9,7 @@ import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
-import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget,visitorPreference,preferredSessionLength,maxServiceWait,prefersConsole} from "./customerChoices.js";
+import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget,visitorPreference,preferredSessionLength,maxServiceWait,prefersConsole,preferenceSatisfactionAdjustment,preferenceSessionComment} from "./customerChoices.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
@@ -627,18 +627,25 @@ function advanceCustomer(s: GameState, c: Customer): void {
         // Consoles e computadores têm tabelas de preço independentes.
         // A satisfação do cliente PS1 usa a tarifa que ele realmente pagou.
         const paidHourly=normalizedHourlyPrice(s,consoleSession?ps1HourPrice(s):s.pricePerHour);
+        const profileAdjustment=preferenceSatisfactionAdjustment(c,{
+          hourlyPrice:paidHourly,hardwareBonus:bonus,consoleSession
+        });
         const rating=Math.max(-.9,Math.min(0.30,customerSatisfactionDelta(paidHourly,c.waitingMinutes,c.offlineWait)+
-          bonus+vipReputationAdjustment(c,bonus,paidHourly)));
+          bonus+vipReputationAdjustment(c,bonus,paidHourly)+profileAdjustment));
         const impact=c.happy?serviceReputationImpact(s.reputation,paidHourly,bonus,rating):Math.min(0,rating);
         c.happy=impact>=0;
         s.reputation=Math.max(10,Math.min(100,s.reputation+impact));
         if(impact < -0.12){
           addLog(s,"Cliente avaliou mal: preço, espera ou conexão.");
-          customerSays(s,c,complaintLine(c.offlineWait>0?"slow-internet":c.waitingMinutes>5?"wait":"price",c.id));
+          const message=c.offlineWait>0
+            ?complaintLine("slow-internet",c.id)
+            :preferenceSessionComment(c,profileAdjustment,false)??
+              complaintLine(c.waitingMinutes>5?"wait":"price",c.id);
+          customerSays(s,c,message);
         }
         else if(impact >= 0.15){
           addLog(s,"Cliente elogiou a experiência na lan house.");
-          customerSays(s,c,praiseLine(c.id),"praise");
+          customerSays(s,c,preferenceSessionComment(c,profileAdjustment,true)??praiseLine(c.id),"praise");
         }
         c.desiredItem=selectPurchase(c,s.inventory,s);
         startStanding(c,c.desiredItem!==null);

@@ -70,3 +70,62 @@ export function prefersConsole(
  // Saves sem perfil continuam respeitando a preferência antiga pelo console.
  return true;
 }
+
+/** Avaliação limitada por perfil, calculada uma única vez quando a sessão
+ * termina. A avaliação global, as regras de VIP e o teto sustentável de
+ * reputação continuam sob o motor. Sem RNG, campos de save ou custo por frame. */
+export interface PreferenceSessionExperience{
+ hourlyPrice:number;
+ hardwareBonus:number;
+ consoleSession:boolean;
+}
+export function preferenceSatisfactionAdjustment(
+ c:Customer,experience:PreferenceSessionExperience
+):number{
+ const {hourlyPrice,hardwareBonus,consoleSession}=experience;
+ if(!Number.isFinite(hourlyPrice)||!Number.isFinite(hardwareBonus))return 0;
+ const clamp=(value:number,min:number,max:number)=>Math.max(min,Math.min(max,value));
+ switch(c.preference){
+  case "economy":
+   // Preço normalizado à referência da economia clássica/ano-base:
+   // barato recompensa; tarifa premium penaliza progressivamente.
+   return clamp(.07-Math.max(0,hourlyPrice-8)*.012,-.18,.07);
+  case "comfort":
+   // Quem só encontrou um console não recebe uma penalidade artificial
+   // por hardware de computador inexistente.
+   return consoleSession?0:clamp((hardwareBonus-.10)*.70,-.09,.09);
+  case "gaming":
+   if(consoleSession)return c.gpuGamer?0:.07;
+   // O cliente que pediu jogo GPU específico avalia o que foi de fato
+   // contratado. Uma máquina bonita, mas sem o jogo, não o satisfaz.
+   if(c.preferredGpuGame)return c.gpuGameCharged===true?.08:-.12;
+   return c.gpuGameCharged===true?.06:0;
+  case "quick":
+   return clamp(.055-Math.max(0,c.waitingMinutes-3)*.02,-.18,.055);
+  default:return 0; // Cliente de save antigo.
+ }
+}
+/** Diálogos mostram a razão da avaliação apenas quando há evidência do
+ * comportamento. Evita elogio/queixa aleatória incoerente com a sessão. */
+export function preferenceSessionComment(
+ c:Customer,adjustment:number,positive:boolean
+):string|null{
+ if(positive){
+  if(adjustment<.05)return null;
+  switch(c.preference){
+   case "economy":return "Preço justo, vou voltar!";
+   case "comfort":return "Computador confortável e rápido!";
+   case "gaming":return "Gostei demais de jogar aqui!";
+   case "quick":return "Fui atendido rapidinho!";
+   default:return null;
+  }
+ }
+ if(adjustment>-.055)return null;
+ switch(c.preference){
+  case "economy":return "Esse preço pesou no bolso!";
+  case "comfort":return "Precisam melhorar esses computadores!";
+  case "gaming":return "Não consegui jogar o que eu queria!";
+  case "quick":return "Demorou demais para me atender!";
+  default:return null;
+ }
+}

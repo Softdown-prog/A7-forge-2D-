@@ -84,3 +84,61 @@ test("the quick shopper does not wait 25 minutes for a computer",()=>{
  assert.equal(s.served,0);
  assert.equal(c.pcIndex,null);
 });
+
+test("reputation consequences depend on what each preference values, not a new random roll",async()=>{
+ const {preferenceSatisfactionAdjustment:score,preferenceSessionComment:line}=await import("../dist/js/sim/customerChoices.js");
+ const evalAt=(preference,hourlyPrice,hardwareBonus=0,wait=0,other={})=>
+  score({preference,waitingMinutes:wait,...other},{hourlyPrice,hardwareBonus,consoleSession:false});
+ assert.equal(evalAt(undefined,40),0,"old saves have identical reputation rules");
+ assert.ok(evalAt("economy",8)>evalAt("economy",18));
+ assert.ok(evalAt("economy",18)>evalAt("economy",35));
+ assert.ok(evalAt("economy",8)>0&&evalAt("economy",35)<0);
+ assert.equal(line({preference:"economy"},evalAt("economy",35),false),"Esse preço pesou no bolso!");
+ assert.ok(evalAt("comfort",12,.27)>evalAt("comfort",12,0));
+ assert.ok(evalAt("comfort",12,0)<0);
+ assert.equal(score({preference:"comfort",waitingMinutes:1},{hourlyPrice:12,hardwareBonus:0,consoleSession:true}),0);
+ assert.ok(evalAt("gaming",12,0,0,{preferredGpuGame:"neon-rush",gpuGameCharged:true})>
+  evalAt("gaming",12,0,0,{preferredGpuGame:"neon-rush",gpuGameCharged:false}));
+ assert.ok(score({preference:"gaming",gpuGamer:false},{hourlyPrice:12,hardwareBonus:0,consoleSession:true})>0);
+ assert.ok(evalAt("quick",12,0,0)>evalAt("quick",12,0,15));
+ assert.ok(evalAt("quick",12,0,15)<0);
+ assert.equal(line({preference:"quick"},evalAt("quick",12,0,15),false),"Demorou demais para me atender!");
+ for(const profile of ["economy","comfort","gaming","quick"])
+  for(const price of [0,8,12,26,60])for(const wait of [0,5,25,100]){
+   const scoreValue=evalAt(profile,price,.25,wait);
+   assert.ok(scoreValue>=-.18000001&&scoreValue<=.09000001);
+  }
+});
+test("real session applies profile impact once and keeps revenue and save unchanged",async()=>{
+ const {hardwareSatisfactionBonus}=await import("../dist/js/sim/economy.js");
+ const perform=(preference,price=12,tier=1,wait=0)=>{
+  const s=createGame(514);s.pricePerHour=price;s.reputation=70;
+  s.pcTiers=[tier,1,1];s.totalMinutes=15;
+  const c=waiting(s,2,preference);c.stage="using";c.pcIndex=0;c.waitingMinutes=wait;
+  c.usedMinutes=29;c.sessionMinutes=30;c.target={x:2.2,y:2.1};
+  s.customers=[c];
+  const cash=s.cash,served=s.served,revenue=s.revenue,rng=s.rng;
+  // No arrivals: the whole system still advances one real game minute.
+  stepGame(s,1);
+  assert.equal(c.stage,"standing");
+  assert.equal(s.cash,cash);assert.equal(s.served,served);assert.equal(s.revenue,revenue);
+  assert.equal(isValidSave(s),true);
+  const saved=parseImportedSave(serializeSave(s));
+  assert.equal(saved.customers[0].preference,preference);
+  return {rep:s.reputation,speech:s.speechEffects?.at(-1)?.text,
+   bonus:hardwareSatisfactionBonus(s,0),rng:s.rng};
+ };
+ const legacy=perform(undefined,12);
+ const economicFair=perform("economy",12),economicExpensive=perform("economy",26);
+ const baselineExpensive=perform(undefined,26);
+ assert.ok(economicFair.rep>legacy.rep,"fair price helps the price-sensitive client");
+ assert.ok(economicExpensive.rep<baselineExpensive.rep,"overpricing now hurts more");
+ const comfortBasic=perform("comfort",12,1),comfortUpgraded=perform("comfort",12,3);
+ assert.ok(comfortUpgraded.bonus>comfortBasic.bonus);
+ assert.ok(comfortUpgraded.rep>comfortBasic.rep,"hardware investment pays off with demanding customers");
+ const slow=perform("quick",12,1,18),fast=perform("quick",12,1,0);
+ assert.ok(fast.rep>slow.rep);
+ assert.equal(fast.speech,"Fui atendido rapidinho!");
+ const oldAgain=perform(undefined,12);
+ assert.equal(oldAgain.rep,legacy.rep,"legacy behavior reproducible");
+});
