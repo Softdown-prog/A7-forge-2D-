@@ -484,7 +484,7 @@ function tryServe(s: GameState, c: Customer): void {
       ?gpuGameSessionPrice(s,index,minutes,!!c.gpuGamer,c.preferredGpuGame)
       :sessionRevenue(s.pricePerHour,minutes,false);
   const pcMinutes=index===undefined?null:sessionPlan(c,wanted,remaining,pcQuote);
-  if(consoleSeat&&consoleSide&&prefersConsole(c,pcMinutes,consoleMinutes,pcQuote,
+  if(consoleSeat&&consoleSide&&consoleMinutes!==null&&prefersConsole(c,pcMinutes,consoleMinutes,pcQuote,
     minutes=>ps1SessionPrice(s,minutes))){
     if(leaveCounterForPc(s,c,consoleSide)){
       // Entrar na bancada pela lateral impede cruzar a TV/mesa.
