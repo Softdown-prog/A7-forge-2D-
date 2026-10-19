@@ -9,7 +9,7 @@ import { vendingApproach,purchaseApproach,type PlacedPoint } from "./layout.js";
 import { productPrice } from "./economy.js";
 import { directionFromDelta } from "../render/direction.js";
 import { chooseSessionMinutes, initialNeeds, selectPurchase, tickNeeds, consumePurchase } from "./needs.js";
-import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget} from "./customerChoices.js";
+import {sessionPlan,shouldConsiderConsole,emergencyRetailChoice,debitVisitorBudget,visitorPreference,preferredSessionLength,maxServiceWait,prefersConsole} from "./customerChoices.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {refreshRetailQueues,firstRetailCustomer} from "./retailQueue.js";
 import {annexComputerPosition} from "./stations.js";
@@ -257,7 +257,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
   if(!route)continue;
   // A escolha inicial é sempre o primeiro PC acessível, para manter a
   // fila e a circulação aprovadas antes desta melhoria.
-  if(fallback===undefined && !c.vip)return i;
+  if(fallback===undefined && !c.vip&&c.preference!=="comfort")return i;
   const quality=hardwareSatisfactionBonus(s,i);
   // Computar o trajeto real apenas se o visitante tem preferência VIP.
   let distance=0,previous=origin;
@@ -380,6 +380,7 @@ function spawn(s: GameState): void {
     preferredGpuGame:preferredGpuGame(s,s.nextCustomerId-1),
     pcIndex: null, usedMinutes: 0, waitingMinutes: 0,
     offlineWait: 0, happy: true, budgetAware:true,
+    preference:visitorPreference(s.nextCustomerId-1,s.mailScheduleSeed??0),
     needs:initialNeeds(s.nextCustomerId-1),wallet:
     Math.round(((s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18)))*
       (s.economyVersion===2?priceIndex(yearFromMinutes(s.totalMinutes)):1)*100)/100
@@ -463,7 +464,7 @@ function tryServe(s: GameState, c: Customer): void {
   // Serviços de impressão e cópia continuam exclusivos e independentes.
   const remaining=SESSION_FINISH_MINUTE-localMinute(s);
   if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
-  const wanted=c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2);
+  const wanted=preferredSessionLength(c,c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2));
   const pcCandidate=chooseAvailablePc(s,c);
   // O console pode atender inclusive um visitante que encontrou todos os
   // PCs ocupados. Só contratar quando houver CD, cadeira e trajeto livres.
@@ -477,7 +478,14 @@ function tryServe(s: GameState, c: Customer): void {
   const consoleSide=consoleIndex>=0?ps1SeatApproach(s,consoleIndex):null;
   const consoleMinutes=consoleSeat&&consoleSide
     ?sessionPlan(c,wanted,remaining,minutes=>ps1SessionPrice(s,minutes)):null;
-  if(consoleSeat&&consoleSide&&consoleMinutes!==null){
+  const index=pcCandidate;
+  const pcQuote=(minutes:number)=>index===undefined?Infinity:
+    s.economyVersion===2
+      ?gpuGameSessionPrice(s,index,minutes,!!c.gpuGamer,c.preferredGpuGame)
+      :sessionRevenue(s.pricePerHour,minutes,false);
+  const pcMinutes=index===undefined?null:sessionPlan(c,wanted,remaining,pcQuote);
+  if(consoleSeat&&consoleSide&&prefersConsole(c,pcMinutes,consoleMinutes,pcQuote,
+    minutes=>ps1SessionPrice(s,minutes))){
     if(leaveCounterForPc(s,c,consoleSide)){
       // Entrar na bancada pela lateral impede cruzar a TV/mesa.
       const tail=canTraverseLocalStep(s,consoleSide,consoleSeat)
@@ -496,15 +504,10 @@ function tryServe(s: GameState, c: Customer): void {
       return;
     }
   }
-  const index=pcCandidate;
-  // O caixa não deixa a pessoa pagar por uma sessão que ela não consegue
-  // custear; antes de desistir, tenta um pacote mais curto ou uma compra.
-  const pcMinutes=index===undefined?null:sessionPlan(c,wanted,remaining,minutes=>
-    s.economyVersion===2
-      ?gpuGameSessionPrice(s,index,minutes,!!c.gpuGamer,c.preferredGpuGame)
-      :sessionRevenue(s.pricePerHour,minutes,false));
+  // O caixa só cobra uma opção viável. Caso o console esteja ocupado ou
+  // fora do orçamento, o PC ainda pode atender normalmente.
   if(index===undefined||pcMinutes===null){
-    const queueFullTimeout=index===undefined&&++c.waitingMinutes<=(c.vip?19:25);
+    const queueFullTimeout=index===undefined&&++c.waitingMinutes<=maxServiceWait(c);
     if(queueFullTimeout)return;
     const snack=emergencyRetailChoice(s,c);
     if(snack&&setTravel(s,c,purchaseApproach(snack,s))){
@@ -803,6 +806,7 @@ export function isValidSave(value: unknown): value is GameState {
     v.inventory !== undefined && ["soda", "candy", "snacks"].every(k => Number.isFinite(v.inventory?.[k as Item])) &&
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
       [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding,c.budgetAware].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      (c.preference===undefined||["economy","comfort","gaming","quick"].includes(c.preference))&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&

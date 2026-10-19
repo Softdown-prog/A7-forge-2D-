@@ -1,6 +1,8 @@
 export type CustomerStage = "arriving" | "waiting" | "to_pc" | "sitting" | "using" | "standing" | "shopping" | "leaving";
 export type Costume = "regular" | "female" | "female-bob" | "female-ponytail" | "clown" | "vampire" | "stitched-monster" | "rabbit" | "mouse-mascot";
 export type Item = "soda" | "candy" | "snacks";
+/** Preferência leve, fixa por visita; saves antigos não têm esse campo. */
+export type CustomerPreference = "economy" | "comfort" | "gaming" | "quick";
 
 export interface Point { x: number; y: number }
 import type { ActorDirection } from "../render/direction.js";
@@ -32,6 +34,8 @@ export interface Customer {
   wallet?: number;
   /** Novas visitas usam o saldo pessoal ao contratar; saves anteriores preservam o comportamento. */
   budgetAware?: boolean;
+  /** Perfil determinístico calculado na entrada; não depende do RNG da simulação. */
+  preference?: CustomerPreference;
   desiredItem?: Item | null;
   /** No máximo uma bebida e um alimento por visita, inclusive após importar save. */
   purchasedDrink?: boolean;
