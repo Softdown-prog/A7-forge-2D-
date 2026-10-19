@@ -7,6 +7,9 @@ on:
       - 'games/lan_house_simulator/scripts/profile_runtime.mjs'
       - 'games/lan_house_simulator/scripts/benchmark_crowded_simulation.mjs'
       - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
+      - 'games/lan_house_simulator/scripts/verify_ps1_2002.mjs'
+      - 'games/lan_house_simulator/scripts/verify_save_on_menu.mjs'
+      - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
       - 'games/lan_house_simulator/src/main.ts'
       - 'games/lan_house_simulator/src/ui/**'
       - 'games/lan_house_simulator/src/render/**'
@@ -34,6 +37,15 @@ jobs:
       - name: Verify native scrolling and touch interface
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/mobile-stability
+      - name: Verify PS1 admin/shops with real touch and cookie choice
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_ps1_2002.mjs out/mobile-stability/ps1
+      - name: Verify immediate menu and pagehide local saves
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_save_on_menu.mjs out/mobile-stability/saves
+      - name: Regression test for multiroom collisions and stuck visitors
+        working-directory: games/lan_house_simulator
+        run: node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/doorway-recovery.test.mjs
       - name: Measure crowded six-hour engine costs and validate throughput
         working-directory: games/lan_house_simulator
         run: node scripts/benchmark_crowded_simulation.mjs out/mobile-stability
