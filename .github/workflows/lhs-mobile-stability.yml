@@ -5,6 +5,7 @@ on:
     paths:
       - 'games/lan_house_simulator/scripts/verify_mobile_interface.mjs'
       - 'games/lan_house_simulator/scripts/profile_runtime.mjs'
+      - 'games/lan_house_simulator/scripts/benchmark_crowded_simulation.mjs'
       - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
       - 'games/lan_house_simulator/src/main.ts'
       - 'games/lan_house_simulator/src/ui/**'
@@ -33,6 +34,9 @@ jobs:
       - name: Verify native scrolling and touch interface
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/mobile-stability
+      - name: Measure crowded six-hour engine costs and validate throughput
+        working-directory: games/lan_house_simulator
+        run: node scripts/benchmark_crowded_simulation.mjs out/mobile-stability
       - name: Profile real runtime on desktop and 4x CPU-throttled mobile
         working-directory: games/lan_house_simulator
         run: node scripts/profile_runtime.mjs out/mobile-stability production
