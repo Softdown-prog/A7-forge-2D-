@@ -1,0 +1,43 @@
+name: LHS - Mobile Stability and Runtime Profile
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/scripts/verify_mobile_interface.mjs'
+      - 'games/lan_house_simulator/scripts/profile_runtime.mjs'
+      - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
+      - 'games/lan_house_simulator/src/main.ts'
+      - 'games/lan_house_simulator/src/ui/**'
+      - 'games/lan_house_simulator/src/render/**'
+      - 'games/lan_house_simulator/style.css'
+      - '.github/workflows/lhs-mobile-stability.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build web application
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Verify native scrolling and touch interface
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_mobile_interface.mjs out/mobile-stability
+      - name: Profile real runtime on desktop and 4x CPU-throttled mobile
+        working-directory: games/lan_house_simulator
+        run: node scripts/profile_runtime.mjs out/mobile-stability production
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs-mobile-stability
+          path: games/lan_house_simulator/out/mobile-stability
