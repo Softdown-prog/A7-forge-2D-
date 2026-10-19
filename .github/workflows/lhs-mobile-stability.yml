@@ -9,6 +9,7 @@ on:
       - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
       - 'games/lan_house_simulator/scripts/verify_ps1_2002.mjs'
       - 'games/lan_house_simulator/scripts/verify_save_on_menu.mjs'
+      - 'games/lan_house_simulator/scripts/verify_financial_clarity.mjs'
       - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
       - 'games/lan_house_simulator/src/main.ts'
       - 'games/lan_house_simulator/src/ui/**'
@@ -40,6 +41,9 @@ jobs:
       - name: Verify PS1 admin/shops with real touch and cookie choice
         working-directory: games/lan_house_simulator
         run: node scripts/verify_ps1_2002.mjs out/mobile-stability/ps1
+      - name: Verify finance summary and monthly bills on desktop and mobile
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_financial_clarity.mjs out/mobile-stability/finance
       - name: Verify immediate menu and pagehide local saves
         working-directory: games/lan_house_simulator
         run: node scripts/verify_save_on_menu.mjs out/mobile-stability/saves
