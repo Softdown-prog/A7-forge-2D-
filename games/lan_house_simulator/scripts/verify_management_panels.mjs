@@ -46,8 +46,8 @@ try{
    }
   }
   await selectAdminArea(page,'finance');await selectTask(page,'finance','feedback');
-  assert.match(await page.locator('#customer-feedback-summary').innerText(),/1 crítica\\(s\\) com efeito/);
-  assert.match(await page.locator('#customer-feedback-summary').innerText(),/-0\\.25 pontos/);
+  assert.ok((await page.locator('#customer-feedback-summary').innerText()).includes('1 crítica(s) com efeito'));
+  assert.ok((await page.locator('#customer-feedback-summary').innerText()).includes('-0.25 pontos'));
   assert.equal(await page.locator('#customer-feedback-list li').count(),1,'Only the real saved feedback entry appears');
   await selectAdminArea(page,'computers');await selectTask(page,'computers','hardware');
   await press(page.locator('#hardware-tab-ram'));
