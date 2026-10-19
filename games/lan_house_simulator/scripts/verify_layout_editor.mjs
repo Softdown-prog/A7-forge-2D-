@@ -19,7 +19,14 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));const state=createGame();state.cash=20000;assert.equal(buyFurniture(state,"poster").ok,true);
   const originalDoor={axis:"y",x:4,y:4};assert.equal(buildWall(state,originalDoor).ok,true);assert.equal(installInteriorDoor(state,originalDoor).ok,true);
   await page.addInitScript(s=>{if(!localStorage.getItem("lhs-save-v1"))localStorage.setItem("lhs-save-v1",JSON.stringify(s));},state);
-  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});await press(page.locator("#menu-continue"));
+  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  // Touch tests should exercise the real consent choice before editing a room.
+  const consent=page.locator("#privacy-banner");
+  if(await consent.isVisible()){
+   await press(page.locator("#privacy-reject"));
+   await consent.waitFor({state:"hidden"});
+  }
+  await press(page.locator("#menu-continue"));
   await openEditor();await page.locator("#layout-object").selectOption("pc:0");assert.equal(await page.locator("#layout-remove").isDisabled(),true);assert.equal(await page.locator(".scene-controls #organize-furniture").count(),0);
   if(width===1440){
    const cases=await page.evaluate(async()=>{
