@@ -1,0 +1,29 @@
+name: LHS - Multiroom Circulation Regression
+on:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/navigation.ts'
+      - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
+      - 'games/lan_house_simulator/src/sim/checkoutQueue.ts'
+      - 'games/lan_house_simulator/tests/multiroom-collision.test.mjs'
+      - 'games/lan_house_simulator/scripts/circulation_scenario.mjs'
+      - '.github/workflows/lhs-multiroom-circulation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  six-hour-crowd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and run focused collision/throughput regression
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/doorway-recovery.test.mjs
