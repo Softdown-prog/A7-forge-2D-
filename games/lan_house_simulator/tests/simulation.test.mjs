@@ -361,7 +361,7 @@ test("compra de refrigerante na máquina correta emite dinheiro real sem duplica
 test("cliente reclama com balão quando desiste de fila sem gerar receita",()=>{
  const s=createGame(1);
  for(let i=0;i<3;i++)s.customers.push({id:40+i,x:2,y:3,stage:"using",target:{x:2,y:3},costume:"regular",pcIndex:i,usedMinutes:1,waitingMinutes:0,offlineWait:0,happy:true});
- const c={id:99,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:25,offlineWait:0,happy:true};
+ const c={id:99,x:1.55,y:2.56,stage:"waiting",target:{x:1.55,y:2.56},costume:"regular",pcIndex:null,usedMinutes:0,waitingMinutes:25,offlineWait:0,happy:true,needs:{thirst:10,hunger:10,energy:60},wallet:0};
  s.customers.push(c);const before=s.cash;
  stepGame(s,1);
  assert.equal(c.stage,"leaving");assert.equal(s.cash,before);
