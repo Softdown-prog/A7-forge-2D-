@@ -196,6 +196,8 @@ mountCloudControls(saveMessage,()=>game,(state)=>{
  announceSave("Partida da nuvem restaurada. Clique em Continuar.");
 });
 function showMenu():void{
+ // Salvar ANTES de isPlaying=false, inclusive se o jogador sair entre os ciclos de 8s.
+ if(isPlaying)save();
  if(layoutEditor.active)layoutEditor.close();
  sceneMotion.reset();
  soundscape.stopKeyboard();
@@ -1849,6 +1851,10 @@ function frame(timestamp:number):void {
 }
 setInterval(save,8000);
 window.addEventListener("beforeunload",save);
+// Em celulares, a aba pode ser descartada sem disparar beforeunload.
+// Persistência permanece local: nenhuma requisição para a nuvem.
+window.addEventListener("pagehide",save);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)save();});
 decorateControls();installWindowNavigation();
 showMenu();
 requestAnimationFrame(frame);
