@@ -48,11 +48,12 @@ ok(buyPs1Station(campaign,ps1Slot.id));
 ok(buyPs1Disc(campaign,"turbo-circuito"));
 // Force genuinely needed contracted work without inventing a service charge.
 campaign.binFill=[80,80];campaign.pcWear[0]=100;
-let placedUnits=0,delayedPlaced=0,deliveriesSeen=0;
+let s=campaign,placedUnits=0,delayedPlaced=0,deliveriesSeen=0;
+const stockAtStart=availableProducts(s).reduce((n,p)=>n+merchandiseStock(s,p.id),0);
 function purchase(id,supplier,packs=1){
- const p=availableProducts(campaign).find(p=>p.id===id);
+ const p=availableProducts(s).find(p=>p.id===id);
  assert.ok(p,"Product must be available in its historical year: "+id);
- ok(orderMerchandise(campaign,id,supplier,packs));
+ ok(orderMerchandise(s,id,supplier,packs));
  placedUnits+=p.pack*packs;
  if(supplier==="economy")delayedPlaced++;
 }
@@ -61,9 +62,8 @@ purchase("gum","basic");
 purchase("chocolate","quality");
 purchase("pacoca","basic");
 purchase("juice","basic");
-let s=campaign,remainingSamples=[],actualSessions=0;
+const remainingSamples=[];
 const reports=[];
-const stockAtStart=availableProducts(s).reduce((n,p)=>n+merchandiseStock(s,p.id),0);
 for(let day=0;day<35;day++){
  // The day-7 backup intentionally contains a prepaid, not-yet-delivered order.
  if(day===7){
@@ -82,15 +82,16 @@ for(let day=0;day<35;day++){
   const supplier=day%4===0?"economy":day%4===1?"quality":"basic",packs=supplier==="economy"?3:1;
   if(s.cash>=quoteOrder(s,p.id,supplier,packs)+1500)purchase(p.id,supplier,packs);
  }
- const initialServed=s.served,initialPurchases=s.purchases;
+ const initialPurchases=s.purchases;
+ const pendingBefore=new Set((s.merchandise?.orders??[]).map(o=>o.id));
  for(let minute=0;minute<DAY_MINUTES;minute+=60){
   const start=performance.now();
   stepGame(s,60);
   remainingSamples.push(performance.now()-start);
   assert.ok(Number.isFinite(s.cash)&&Number.isFinite(s.revenue)&&Number.isFinite(s.expenses));
  }
- actualSessions+=s.served-initialServed;
- deliveriesSeen+=s.eventLog.filter(msg=>msg.includes("Entrega recebida")).length?1:0;
+ const pendingAfter=new Set((s.merchandise?.orders??[]).map(o=>o.id));
+ deliveriesSeen += [...pendingBefore].filter(id=>!pendingAfter.has(id)).length;
  checkCash(s,opening);
  reports.push({day:day+1,served:s.served,retailSales:s.purchases,
   dailyRetailSales:s.purchases-initialPurchases,customers:s.customers.length,
