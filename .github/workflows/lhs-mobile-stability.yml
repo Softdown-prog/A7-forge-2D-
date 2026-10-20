@@ -46,6 +46,8 @@ jobs:
       - name: Encode real two-player PS1 footage as MP4
         working-directory: games/lan_house_simulator
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
           ffmpeg -hide_banner -loglevel error -y -i out/mobile-stability/ps1/ps1_two_players_real_gameplay.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
             -movflags +faststart out/mobile-stability/ps1/ps1_two_players_real_gameplay.mp4
