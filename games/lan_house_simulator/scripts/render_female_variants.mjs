@@ -27,6 +27,7 @@ try{
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
   const {drawActor,FEMALE_COSTUMES,actorStyleFor}=await import("./js/render/actorArt.js");
+  const {screenViewForMotion}=await import("./js/render/direction.js");
   document.body.replaceChildren();
   document.body.style.cssText="margin:0;overflow:hidden;background:#0b1524";
   const canvas=document.createElement("canvas");
@@ -54,11 +55,14 @@ try{
      ctx.strokeStyle="#48627a";ctx.lineWidth=1;ctx.stroke();
      ctx.strokeStyle="rgba(140,206,220,.12)";
      for(let line=0;line<5;line++){ctx.beginPath();ctx.moveTo(left+24,top+35+line*32);ctx.lineTo(left+260,top+35+line*32);ctx.stroke();}
-     label(["FRENTE / ANDANDO","PERFIL / ANDANDO","COSTAS / SENTADA","PERFIL / LEVANTANDO"][col],
+     label(["DIAGONAL ESQUERDA / ANDANDO","DIAGONAL DIREITA / ANDANDO","COSTAS / SENTADA","PERFIL / LEVANTANDO"][col],
        left+11,top+19,11,"#c4d5e7");
-     drawActor(ctx,{originX:left+143,originY:top+177,zoom:1.65},
-      {x:0,y:0,kind,id:2,time:time+r*.4,pose:poses[col],
-       direction:directions[col],transition:col===3?.5:1});
+     const walking=poses[col]==="walking",step=walking?(time%1.5)/1.5:0;
+     const wx=col===1?step*.46:0,wy=col===0?step*.46:0;
+     drawActor(ctx,{originX:left+130,originY:top+165,zoom:1.65},
+      {x:wx,y:wy,kind,id:2,time:time+r*.4,pose:poses[col],
+       direction:directions[col],transition:col===3?.5:1,
+       screenView:walking?screenViewForMotion(col===1?1:0,col===0?1:0):undefined});
     }
    }
    label("ROPA E CABELO DESENHADOS POR MODELO · SEM MÁSCARAS OU ROTAÇÃO DE PALETA",
