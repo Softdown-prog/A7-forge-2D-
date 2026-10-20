@@ -9,7 +9,8 @@ import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,buyPs1Station,
  ps1HourPrice,ps1AllowedHourlyCeiling,setPs1HourlyPrice,repairPs1Controls,ps1StationPoint,
- PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc,ps1PlacementLabel} from "./sim/ps1.js";
+ PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc,ps1PlacementLabel,
+ buyPs1SecondSeat,ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
@@ -451,11 +452,14 @@ document.getElementById("ps1-stations")?.addEventListener("change",event=>{
  renderUI();if(result.ok)save();
 });
 document.getElementById("ps1-stations")?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button[data-ps1-repair]"):null;
+ const button=event.target instanceof Element?
+  event.target.closest("button[data-ps1-repair], button[data-ps1-second-seat]"):null;
  if(!(button instanceof HTMLButtonElement)||button.disabled)return;
- const index=Number(button.dataset.ps1Repair);
+ const upgrade=button.dataset.ps1SecondSeat!==undefined;
+ const index=Number(upgrade?button.dataset.ps1SecondSeat:button.dataset.ps1Repair);
  if(!Number.isInteger(index))return;
- applyResult(game,repairPs1Controls(game,index));renderUI();save();
+ const result=upgrade?buyPs1SecondSeat(game,index):repairPs1Controls(game,index);
+ applyResult(game,result);renderUI();if(result.ok)save();
 });
 button("price-down",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour-step)*100)/100));renderUI();save();});
 button("price-up",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour+step)*100)/100));renderUI();save();});
@@ -1610,7 +1614,8 @@ function renderUI(liveOnly=false):void {
     "Bancadas instaladas: "+(game.ps1Stations?.length??0)+"/"+PS1_MAX_STATIONS+
     " · sessões atendidas: "+(game.ps1Sessions??0)+
     " · receita acumulada: "+money(game.ps1Revenue??0)+
-    ". Uma cadeira por bancada. Internet não é necessária para jogar.");
+    ". Segunda cadeira opcional por bancada: até dois jogadores simultâneos, "+
+    "cada cliente paga sua sessão. Internet não é necessária para jogar.");
   setText("ps1-hourly",ps1HourPrice(game).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})+"/h");
   const ownedDiscs=PS1_CD_CATALOG.reduce((sum,disc)=>sum+ps1DiscCopies(game,disc.id),0);
   const readyStations=(game.ps1Stations??[]).filter((_,i)=>ps1PlayableDisc(game,i)!==null).length;
@@ -1631,13 +1636,16 @@ function renderUI(liveOnly=false):void {
    for(const [index,station] of (game.ps1Stations??[]).entries()){
     const card=document.createElement("div");card.className="ps1-station-summary";
     const text=document.createElement("span");
-    const occupied=game.customers.some(c=>c.ps1StationIndex===index&&
+    const busy=game.customers.filter(c=>c.ps1StationIndex===index&&
       ["to_pc","sitting","using","standing"].includes(c.stage));
+    const occupied=busy.length>0;
     const cdId=ps1PlayableDisc(game,index);
     const cdName=PS1_CD_CATALOG.find(x=>x.id===cdId)?.title??"Nenhum CD";
-    text.textContent="Bancada "+(index+1)+" · controle: "+Math.round(station.wear)+"% de desgaste"+
+    text.textContent="Bancada "+(index+1)+" · vagas: "+busy.length+"/"+(station.secondSeat?2:1)+
+     " · controles: "+Math.round(station.wear)+"% de desgaste"+
      (station.wear>=100?" · Precisa de manutenção":occupied?" · Em uso":
       cdId?" · Livre":" · Sem jogo")+
+     (station.secondSeat&&ps1OpenSeat(game,index)!==null?" · Aceita outro jogador":"")+
      " · Disco: "+cdName;
     const button=document.createElement("button");button.className="slice";
     button.dataset.ps1Repair=String(index);button.type="button";
@@ -1660,7 +1668,13 @@ function renderUI(liveOnly=false):void {
     }
     selector.value=station.discId??"";
     cdLabel.append(selector);
-    card.append(text,cdLabel,button);ps1Area.append(card);
+    const extra=document.createElement("button");extra.className="slice";
+    extra.dataset.ps1SecondSeat=String(index);extra.type="button";
+    const secondPrice=ps1SecondSeatPrice(game);
+    extra.textContent=station.secondSeat?"Modo dupla instalado · 2 cadeiras":
+      "Instalar segunda cadeira + controle · "+money(secondPrice);
+    extra.disabled=!!station.secondSeat||occupied||game.cash<secondPrice;
+    card.append(text,cdLabel,button,extra);ps1Area.append(card);
    }
   }
   }

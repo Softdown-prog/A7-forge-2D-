@@ -60,6 +60,8 @@ export interface Customer {
   gpuGameCharged?: boolean;
   /** Estação PS1 reservada ao pagar; independente do PC e da internet. */
   ps1StationIndex?: number;
+  /** 0 = original; 1 = cadeira adicional. Saves antigos assumem 0. */
+  ps1SeatIndex?: 0|1;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
@@ -141,7 +143,7 @@ export interface GameState {
   offlineUntil: number;
   licensedGames: boolean;
   /** Estações físicas compradas em 2002+: TV CRT, console, bancada e uma cadeira. */
-  ps1Stations?: Array<{slotId:string;wear:number;discId?:import("./ps1.js").Ps1DiscId}>;
+  ps1Stations?: Array<import("./ps1.js").Ps1Station>;
   /** Cópias físicas compradas na loja, sem licenças e sem custo recorrente. */
   ps1Discs?: Partial<Record<import("./ps1.js").Ps1DiscId,number>>;
   ps1HourlyPrice?:number;

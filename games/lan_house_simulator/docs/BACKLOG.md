@@ -919,3 +919,11 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [ ] Expiração de alimentos, lotes FIFO, cancelamento de pedidos e transporte físico: fora deste incremento.
 
 Detalhes, limites e reprodução: `docs/MERCHANDISE.md`.
+
+## PlayStation 1 — segunda cadeira e dois jogadores (20/10/2026)
+- [x] Upgrade opcional pago por bancada (cadeira e segundo controle), desbloqueado a partir de 2002; a bancada original e o mesmo CD continuam válidos.
+- [x] Reserva independente por cadeira, duas entradas laterais e pagamento real individual, sem gerar novo videogame nem receita fictícia.
+- [x] Mostrar dois assentos/controles no salão e vagas 0/2, 1/2 ou 2/2 na Administração.
+- [x] Validar saves antigos (cadeira 0 implícita), vagas duplicadas e upgrades inválidos.
+- [ ] Revisar o vídeo real com dois visitantes simultâneos e a experiência no celular físico.
+

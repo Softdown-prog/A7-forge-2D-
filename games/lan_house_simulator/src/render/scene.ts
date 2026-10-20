@@ -120,7 +120,8 @@ export class SceneRenderer {
       if(point){
        const inUse=s.customers.some(c=>c.ps1StationIndex===i&&c.stage==="using");
        entries.push({depth:point.x+point.y+.3,paint:()=>drawPs1Station(ctx,camera,point,
-        s.ps1Stations![i]!.wear,inUse,elapsedSeconds,ps1PlayableDisc(s,i))});
+        s.ps1Stations![i]!.wear,inUse,elapsedSeconds,ps1PlayableDisc(s,i),
+        s.ps1Stations![i]!.secondSeat===true)});
       }
     }
     for(let i=0;i<BIN_SPOTS.length;i++){
@@ -136,7 +137,8 @@ export class SceneRenderer {
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
       const location=seated&&c.ps1StationIndex!==undefined
-        ?ps1Seat(s,c.ps1StationIndex)??c:seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
+        ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0)??c:
+          seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
       entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s)});
     }
     entries.sort((a,b)=>a.depth-b.depth);
@@ -674,7 +676,7 @@ export class SceneRenderer {
     let pose:ActorPose=moving&&(motion?motion.moving:Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001)?"walking":"idle";
     let transition=1;
     if(seated && c.ps1StationIndex!==undefined){
-      const seat=ps1Seat(s,c.ps1StationIndex);
+      const seat=ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0);
       if(seat){x=seat.x;y=seat.y;pose=c.stage==="standing"?"standing-up":"sitting";
        transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;}
@@ -704,7 +706,7 @@ export class SceneRenderer {
        headsetOnSession(c.id,c.pcIndex)
     });
     if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
-      drawPs1Controller(this.ctx,camera,{x,y},t);
+      drawPs1Controller(this.ctx,camera,{x,y},t,c.ps1SeatIndex??0);
     if(seated && c.pcIndex!==null){
       const style=actorStyleFor(c.costume,c.id);
       const weight=c.stage==="using"?1:

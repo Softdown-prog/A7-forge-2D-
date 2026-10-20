@@ -15,7 +15,7 @@ export function ps1ScreenFrame(seconds:number):{heroX:number;heroY:number;sparkl
  * console, controle e cadeira. Tudo geométrico, sem sprites externos. */
 export function drawPs1Station(
  ctx:CanvasRenderingContext2D,cam:Projection,p:Point,wear:number,active:boolean,t:number,
- discId:Ps1DiscId|null=null
+ discId:Ps1DiscId|null=null,twoSeats=false
 ):void{
  const {x,y}=p,z=cam.zoom;
  const ground=iso({x:x+.58,y:y+.58},cam,0);
@@ -54,10 +54,13 @@ export function drawPs1Station(
  ctx.fillStyle="#6c6b69";ctx.beginPath();ctx.ellipse(disc.x,disc.y,10*z,4*z,0,0,2*Math.PI);ctx.fill();
  ctx.fillStyle="#d8d5c9";ctx.font="bold "+Math.max(8,9*z)+"px system-ui";
  const badge=iso({x:x+.91,y:y+.43},cam,30);ctx.textAlign="center";ctx.fillText("PS1",badge.x,badge.y);
- // Cadeira de tecido escuro, encosto e pés.
- for(const dx of [.26,.64])raisedCuboid(ctx,cam,x+dx,y+.67,.10,.11,0,19,["#474b50","#303638","#43484d"]);
- raisedCuboid(ctx,cam,x+.18,y+.61,.66,.31,17,7,["#354b53","#1b323b","#29414a"]);
- raisedCuboid(ctx,cam,x+.18,y+.88,.66,.09,22,27,["#2d464e","#1b3038","#274049"]);
+ // Duas cadeiras de verdade: bases e encostos separados, uma TV compartilhada.
+ for(const [cx,cw] of (twoSeats?[[.06,.35],[.65,.35]]:[[.18,.66]])){
+  for(const dx of [cx+.05,cx+cw-.09])
+   raisedCuboid(ctx,cam,x+dx,y+.67,.08,.11,0,19,["#474b50","#303638","#43484d"]);
+  raisedCuboid(ctx,cam,x+cx,y+.61,cw,.31,17,7,["#354b53","#1b323b","#29414a"]);
+  raisedCuboid(ctx,cam,x+cx,y+.88,cw,.09,22,27,["#2d464e","#1b3038","#274049"]);
+ }
  if(wear>=100){
   const warn=iso({x:x+.57,y:y+.2},cam,88);ctx.font="bold "+Math.max(10,11*z)+"px system-ui";
   ctx.textAlign="center";ctx.fillStyle="#e9a765";ctx.fillText("!",warn.x,warn.y);
@@ -71,13 +74,13 @@ export function ps1ControllerAnchor(seat:Point):{point:Point;height:number}{
  return {point:{x:seat.x+.12,y:seat.y-.08},height:24};
 }
 /** Ponto onde o cabo encontra a frente do console, na bancada. */
-export function ps1ControllerPort(seat:Point):{point:Point;height:number}{
- return {point:{x:seat.x+.40,y:seat.y-.35},height:35};
+export function ps1ControllerPort(seat:Point,number:0|1=0):{point:Point;height:number}{
+ return {point:{x:seat.x+(number===1?.16:.40),y:seat.y-.35},height:35};
 }
 /** Gamepad com cabo, duas empunhaduras, direcional e botões de ação.
  * Desenhado pelo renderer oficial apenas durante a sessão do console. */
-export function drawPs1Controller(ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,t:number):void{
- const anchor=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat);
+export function drawPs1Controller(ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,t:number,number:0|1=0):void{
+ const anchor=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat,number);
  const p=iso(anchor.point,cam,anchor.height);
  const plug=iso(port.point,cam,port.height),z=cam.zoom*.85;
  ctx.save();

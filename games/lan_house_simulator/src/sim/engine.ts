@@ -35,7 +35,7 @@ import {validHardwareState} from "./hardware.js";
 import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
-import {ps1Seat,ps1SeatApproach,ps1StationAvailable,ps1SessionPrice,ps1EnergyCostPerMinute,
+import {ps1Seat,ps1SeatApproach,ps1StationAvailable,ps1OpenSeat,ps1SessionPrice,ps1EnergyCostPerMinute,
  ps1SessionWear,ps1HourPrice,validPs1State,PS1_UNLOCK_YEAR} from "./ps1.js";
 import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameInstallJob,gpuGameSpec,gpuGamePlayableOnPc,gpuGameHourlyRate,gpuGameSessionPrice,wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest,recordGpuGameSession,validGpuGameDemand} from "./gpuDemand.js";
@@ -185,9 +185,9 @@ function moveRoute(s:GameState,c: Customer): boolean {
       // Replanejar diretamente até o assento poderia mandar o visitante
       // atravessar novamente a bancada/TV após encontrar outra pessoa.
       const seat=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
-        ?ps1Seat(s,c.ps1StationIndex):null;
+        ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0):null;
       const side=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
-        ?ps1SeatApproach(s,c.ps1StationIndex):null;
+        ?ps1SeatApproach(s,c.ps1StationIndex,c.ps1SeatIndex??0):null;
       if(seat&&side&&!canTraverseLocalStep(s,side,seat))return false;
       const destination=seat&&side?side:(c.route?.at(-1)??c.target);
       // Narrow gaps between visitors may not contain a half-tile grid point.
@@ -296,7 +296,7 @@ function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"prais
   s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.queueIndex=undefined;
+  c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.ps1SeatIndex=undefined; c.queueIndex=undefined;
   delete c.doorwayYielding;
   delete c.desiredProduct;
   c.stalledMinutes=0;
@@ -477,13 +477,17 @@ function tryServe(s: GameState, c: Customer): void {
   // O console pode atender inclusive um visitante que encontrou todos os
   // PCs ocupados. Só contratar quando houver CD, cadeira e trajeto livres.
   const consoleIndex=shouldConsiderConsole(c,pcCandidate)?(s.ps1Stations??[]).findIndex((_,i)=>{
-    if(!ps1StationAvailable(s,i))return false;
-    const side=ps1SeatApproach(s,i),seat=ps1Seat(s,i);
+    const number=ps1OpenSeat(s,i);
+    if(number===null)return false;
+    const side=ps1SeatApproach(s,i,number),seat=ps1Seat(s,i,number);
     return !!side&&!!seat&&!!navigableRoute(s,{x:c.x,y:c.y},side)&&
       (canTraverseLocalStep(s,side,seat)||!!navigableRoute(s,side,seat));
   }): -1;
-  const consoleSeat=consoleIndex>=0?ps1Seat(s,consoleIndex):null;
-  const consoleSide=consoleIndex>=0?ps1SeatApproach(s,consoleIndex):null;
+  const consoleSeatNumber=consoleIndex>=0?ps1OpenSeat(s,consoleIndex):null;
+  const consoleSeat=consoleIndex>=0&&consoleSeatNumber!==null?
+    ps1Seat(s,consoleIndex,consoleSeatNumber):null;
+  const consoleSide=consoleIndex>=0&&consoleSeatNumber!==null?
+    ps1SeatApproach(s,consoleIndex,consoleSeatNumber):null;
   const consoleMinutes=consoleSeat&&consoleSide
     ?sessionPlan(c,wanted,remaining,minutes=>ps1SessionPrice(s,minutes)):null;
   const index=pcCandidate;
@@ -501,14 +505,15 @@ function tryServe(s: GameState, c: Customer): void {
       c.route=[...(c.route??[]),...tail];
       c.sessionMinutes=consoleMinutes;
       const paid=ps1SessionPrice(s,consoleMinutes);
-      c.pcIndex=null;c.ps1StationIndex=consoleIndex;
+      c.pcIndex=null;c.ps1StationIndex=consoleIndex;c.ps1SeatIndex=consoleSeatNumber??0;
       c.queueIndex=undefined;c.stage="to_pc";s.counterBusyUntil=s.totalMinutes+3;
       debitVisitorBudget(c,paid);
       s.cash+=paid;s.revenue+=paid;s.served++;
       s.ps1Sessions=(s.ps1Sessions??0)+1;s.ps1Revenue=Math.round(((s.ps1Revenue??0)+paid)*100)/100;
       s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid,x:c.x,y:c.y});
       addLog(s,"Cliente pagou R$ "+paid.toFixed(2)+" por "+c.sessionMinutes+
-        " minutos de PlayStation 1 na bancada "+(consoleIndex+1)+".");
+        " minutos de PlayStation 1 na bancada "+(consoleIndex+1)+
+        (consoleSeatNumber===1?" (segundo jogador).":"."));
       return;
     }
   }
@@ -665,7 +670,7 @@ function advanceCustomer(s: GameState, c: Customer): void {
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
         if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
-        c.pcIndex = null;c.ps1StationIndex=undefined;
+        c.pcIndex = null;c.ps1StationIndex=undefined;c.ps1SeatIndex=undefined;
         if (c.wantsSnack) {
           c.stage = "shopping";
           setTravel(s,c,c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s));
@@ -830,6 +835,8 @@ export function isValidSave(value: unknown): value is GameState {
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&
         c.ps1StationIndex<(v.ps1Stations?.length??0)&&c.pcIndex===null))&&
+      (c.ps1SeatIndex===undefined||(c.ps1StationIndex!==undefined&&
+        (c.ps1SeatIndex===0||(c.ps1SeatIndex===1&&v.ps1Stations?.[c.ps1StationIndex]?.secondSeat===true))))&&
       (c.nextCrowdRetryMinute===undefined||(Number.isInteger(c.nextCrowdRetryMinute)&&c.nextCrowdRetryMinute>=0&&c.nextCrowdRetryMinute<=1e9))&&
       (c.stalledMinutes===undefined||(Number.isInteger(c.stalledMinutes)&&c.stalledMinutes>=0&&c.stalledMinutes<=120))&&
       (c.retailQueueItem===undefined||["soda","candy","snacks"].includes(c.retailQueueItem))&&

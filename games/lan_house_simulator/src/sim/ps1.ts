@@ -17,7 +17,13 @@ export const PS1_CD_CATALOG=[
  {id:"cosmo-blocos",title:"Cosmo Blocos",genre:"Quebra-cabeça",basePrice:29}
 ] as const;
 export type Ps1DiscId=typeof PS1_CD_CATALOG[number]["id"];
-export type Ps1Station={slotId:string;wear:number;discId?:Ps1DiscId};
+export type Ps1Station={slotId:string;wear:number;discId?:Ps1DiscId;secondSeat?:boolean};
+export const PS1_SECOND_SEAT_BASE_COST=120;
+/** Extra original: cadeira e gamepad, sem comprar outro console ou CD. */
+export function ps1SecondSeatPrice(s:GameState):number{
+ return coin(PS1_SECOND_SEAT_BASE_COST*
+  priceIndex(yearFromMinutes(s.totalMinutes))/priceIndex(PS1_UNLOCK_YEAR));
+}
 /** O jogador compra CDs físicos, não licenças. Cada cópia atende uma bancada por vez. */
 export function ps1DiscCopies(s:Pick<GameState,"ps1Discs">,id:Ps1DiscId):number{
  return s.ps1Discs?.[id]??0;
@@ -112,23 +118,53 @@ export function ps1StationPoint(s:GameState,index:number):Point|null{
  const slot=id&&furnitureSlots(s).find(p=>p.id===id&&p.surface==="floor");
  return slot?{x:slot.x,y:slot.y}:null;
 }
-export function ps1Seat(s:GameState,index:number):Point|null{
- const p=ps1StationPoint(s,index);
- return p?{x:p.x+.43,y:p.y+.77}:null;
+export type Ps1SeatNumber=0|1;
+export function ps1Seat(s:GameState,index:number,number:Ps1SeatNumber=0):Point|null{
+ const p=ps1StationPoint(s,index),duo=s.ps1Stations?.[index]?.secondSeat===true;
+ if(!p||(number===1&&!duo))return null;
+ return {x:p.x+(duo?(number===0?.27:.85):.43),y:p.y+.77};
 }
-/** Contornar a bancada pelo lado antes de alcançar a cadeira, em vez de
- * atravessar a TV. Funciona também em salas com extensão lateral. */
-export function ps1SeatApproach(s:GameState,index:number):Point|null{
- const p=ps1StationPoint(s,index),seat=ps1Seat(s,index);
+/** A cadeira esquerda e a direita têm entradas distintas. */
+export function ps1SeatApproach(s:GameState,index:number,number:Ps1SeatNumber=0):Point|null{
+ const p=ps1StationPoint(s,index),seat=ps1Seat(s,index,number);
  if(!p||!seat)return null;
  const bounds=roomBounds(s);
+ if(s.ps1Stations?.[index]?.secondSeat){
+  const x=number===0?p.x-.35:p.x+1.36;
+  return x>bounds.minX+.22&&x<bounds.maxX-.22?{x,y:seat.y}:null;
+ }
  const right=p.x+1.36;
  return {x:right<bounds.maxX-.22?right:p.x-.35,y:seat.y};
 }
+const ps1SeatOccupied=(s:GameState,index:number,number:Ps1SeatNumber):boolean=>
+ s.customers.some(c=>c.ps1StationIndex===index&&
+  ["to_pc","sitting","using","standing"].includes(c.stage)&&
+  (c.ps1SeatIndex??0)===number);
+export function ps1OpenSeat(s:GameState,index:number):Ps1SeatNumber|null{
+ const st=s.ps1Stations?.[index];
+ if(!st||ps1PlayableDisc(s,index)===null||st.wear>=PS1_WEAR_LIMIT)return null;
+ if(!ps1SeatOccupied(s,index,0))return 0;
+ return st.secondSeat&&!ps1SeatOccupied(s,index,1)?1:null;
+}
 export function ps1StationAvailable(s:GameState,index:number):boolean{
- const station=s.ps1Stations?.[index];
- return !!station&&ps1PlayableDisc(s,index)!==null&&station.wear<PS1_WEAR_LIMIT&&!s.customers.some(c=>
-  c.ps1StationIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage));
+ return ps1OpenSeat(s,index)!==null;
+}
+/** Upgrade instalado entre atendimentos; guarda estado no save. */
+export function buyPs1SecondSeat(s:GameState,index:number):Result{
+ const st=s.ps1Stations?.[index];
+ if(!in2002(s)||!st)return {ok:false,message:"Instale primeiro uma bancada de PlayStation em 2002."};
+ if(st.secondSeat)return {ok:false,message:"Esta bancada já tem duas cadeiras."};
+ if(s.customers.some(c=>c.ps1StationIndex===index&&
+   ["to_pc","sitting","using","standing"].includes(c.stage)))
+  return {ok:false,message:"Aguarde os jogadores saírem antes de instalar a cadeira."};
+ const bounds=roomBounds(s),p=ps1StationPoint(s,index);
+ if(!p||p.x-.35<=bounds.minX+.22||p.x+1.36>=bounds.maxX-.22)
+  return {ok:false,message:"Esta bancada não tem corredor lateral para a segunda cadeira."};
+ const cost=ps1SecondSeatPrice(s);
+ if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para cadeira e segundo controle."};
+ s.cash=coin(s.cash-cost);s.expenses=coin(s.expenses+cost);st.secondSeat=true;
+ return {ok:true,message:"Bancada "+(index+1)+": segunda cadeira e controle instalados por R$ "+
+  cost.toFixed(2)+". Dois clientes podem jogar no mesmo console."};
 }
 export function ps1HourPrice(s:GameState):number{
  return s.ps1HourlyPrice??2.5;
@@ -201,7 +237,8 @@ export function validPs1State(s:Partial<GameState>):boolean{
   p.id.startsWith("floor-")&&!p.id.startsWith("floor-grid-")).map(p=>p.id));
  for(const st of allowed){
   if(!st||typeof st.slotId!=="string"||!slots.has(st.slotId)||used.has(st.slotId)||
-     !Number.isFinite(st.wear)||st.wear<0||st.wear>PS1_WEAR_LIMIT)return false;
+     !Number.isFinite(st.wear)||st.wear<0||st.wear>PS1_WEAR_LIMIT||
+     (st.secondSeat!==undefined&&typeof st.secondSeat!=="boolean"))return false;
   used.add(st.slotId);
   if(st.discId!==undefined){
    if(!PS1_CD_CATALOG.some(t=>t.id===st.discId))return false;
@@ -209,6 +246,16 @@ export function validPs1State(s:Partial<GameState>):boolean{
   }
  }
  for(const [id,count] of inserted)if(count>ps1DiscCopies(s as GameState,id))return false;
+ const occupied=new Set<string>();
+ for(const c of s.customers??[]){
+  if(c.ps1StationIndex===undefined||
+   !["to_pc","sitting","using","standing"].includes(c.stage))continue;
+  const st=allowed[c.ps1StationIndex],seat=c.ps1SeatIndex??0;
+  if(!st||(seat===1&&!st.secondSeat)||(seat!==0&&seat!==1))return false;
+  const key=c.ps1StationIndex+":"+seat;
+  if(occupied.has(key))return false;
+  occupied.add(key);
+ }
  if((s.furniturePlacements??[]).some(p=>used.has(p.slotId)))return false;
  const cents=(n:number)=>Number.isFinite(n)&&Math.abs(n*100-Math.round(n*100))<1e-4;
  if(s.ps1HourlyPrice!==undefined&&(!cents(s.ps1HourlyPrice)||s.ps1HourlyPrice<.5||
