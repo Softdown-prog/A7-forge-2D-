@@ -11,6 +11,7 @@ on:
       - 'games/lan_house_simulator/index.html'
       - 'games/lan_house_simulator/style.css'
       - 'games/lan_house_simulator/tests/ps1-2002.test.mjs'
+      - 'games/lan_house_simulator/tests/ps1-two-players.test.mjs'
       - 'games/lan_house_simulator/scripts/ps1_real_cycle.mjs'
       - 'games/lan_house_simulator/scripts/ps1_crowded_cycle.mjs'
       - '.github/workflows/lhs-ps1-cds.yml'
@@ -36,4 +37,4 @@ jobs:
         run: npm run build
       - name: Validate physical PS1 CD economy and simultaneous NPC sessions
         working-directory: games/lan_house_simulator
-        run: node --test tests/ps1-2002.test.mjs
+        run: node --test tests/ps1-2002.test.mjs tests/ps1-two-players.test.mjs
