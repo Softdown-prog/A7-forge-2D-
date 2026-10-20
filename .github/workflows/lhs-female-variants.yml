@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/render/actorArt.ts'
+      - 'games/lan_house_simulator/src/render/walkCycle.ts'
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/sim/engine.ts'
       - 'games/lan_house_simulator/tests/female-customer.test.mjs'

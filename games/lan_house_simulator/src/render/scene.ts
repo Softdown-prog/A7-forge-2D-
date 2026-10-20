@@ -1,3 +1,4 @@
+import type {MotionCustomer} from "./motion.js";
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
 import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,builtPosters,type EditableObject} from "../sim/editableObjects.js";
@@ -667,9 +668,10 @@ export class SceneRenderer {
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {
     let x=c.x,y=c.y;
+    const motion=(c as MotionCustomer).renderMotion;
     const moving=c.stage==="arriving" || c.stage==="to_pc" ||
       c.stage==="shopping" || c.stage==="leaving";
-    let pose:ActorPose=moving&&Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001?"walking":"idle";
+    let pose:ActorPose=moving&&(motion?motion.moving:Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001)?"walking":"idle";
     let transition=1;
     if(seated && c.ps1StationIndex!==undefined){
       const seat=ps1Seat(s,c.ps1StationIndex);
@@ -690,9 +692,9 @@ export class SceneRenderer {
       moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
-      pose,direction,transition,
+      pose,direction,transition,walkDistance:motion?.distance,
       // Face the current interpolated world step in SCREEN space (2:1 isometric).
-      screenView:seated?undefined:screenViewForMotion(
+      screenView:seated?undefined:motion?.view??screenViewForMotion(
         pose==="walking"?c.target.x-c.x:0,
         pose==="walking"?c.target.y-c.y:0,direction),
       gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using",

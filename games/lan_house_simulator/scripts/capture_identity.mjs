@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 // Real-browser review of every workspace and of the new SVG click targets.
 import {chromium} from "playwright";
@@ -29,6 +30,7 @@ try{
   page.on("pageerror",e=>errors.push(config.name+": "+e));
   page.on("response",r=>{if(r.status()>=400)errors.push(config.name+": HTTP "+r.status()+" "+r.url());});
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  await dismissPrivacyNotice(page);
   const hold=async()=>{if(filming)await page.waitForTimeout(1200);};
   // Resolve and dispatch in one browser task: a live UI refresh can replace an
   // SVG between a locator resolution and its separate evaluate() execution.
@@ -115,7 +117,7 @@ try{
   // A simulação continua atendendo clientes enquanto o painel fica aberto:
   // uma venda simultânea pode reduzir o estoque entre os dois snapshots.
   // Validar a transação registrada, não a quantidade líquida momentânea.
-  assert.ok(after.eventLog.some(line=>line.includes("Estoque de soda reposto:")),
+  assert.ok(after.eventLog.some(line=>line.includes("Refrigerante da casa:")&&line.includes("Estoque recebido.")),
     "compra de refrigerante deve constar no diário real da partida");
   assert.ok(after.expenses>before.expenses,"reposição deve debitar a despesa real");
   assert.equal(after.cash,before.cash+(after.revenue-before.revenue)-(after.expenses-before.expenses));

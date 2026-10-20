@@ -62,6 +62,7 @@ try{
      drawActor(ctx,{originX:left+130,originY:top+165,zoom:1.65},
       {x:wx,y:wy,kind,id:2,time:time+r*.4,pose:poses[col],
        direction:directions[col],transition:col===3?.5:1,
+       walkDistance:walking?Math.hypot((wx-wy)*64,(wx+wy)*32):undefined,
        screenView:walking?screenViewForMotion(col===1?1:0,col===0?1:0):undefined});
     }
    }
