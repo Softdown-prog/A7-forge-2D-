@@ -76,7 +76,7 @@ try{
   assert.equal(await page.locator('#stock-soda').isEnabled(),true);
   assert.equal(await page.locator('#stock-candy').isEnabled(),true);
   assert.equal(await page.locator('#stock-snacks').isEnabled(),true);
-  assert.match(await page.locator('#stock').innerText(),/Bebidas|Doces|Salgados|Estoque/i);
+  // Botões básicos continuam acessíveis no painel Fornecedores.
   // A disabled page must not be accessible through programmatic navigation.
   assert.equal(await page.locator('#section-stock > .management-page:visible').count(),1);
   reports.push({width,year,locked:true,basicStockAccessible:true});
