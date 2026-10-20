@@ -14,7 +14,7 @@ import {drawPixelClock} from "./pixelClockArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import { actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
 import {drawActorSprite as drawActor} from "./actorSprites.js";
-import { movementDirection } from "./direction.js";
+import { movementDirection,screenViewForMotion } from "./direction.js";
 import {FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,availablePlacementSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../sim/layout.js";
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
@@ -691,6 +691,10 @@ export class SceneRenderer {
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,
+      // Face the current interpolated world step in SCREEN space (2:1 isometric).
+      screenView:seated?undefined:screenViewForMotion(
+        pose==="walking"?c.target.x-c.x:0,
+        pose==="walking"?c.target.y-c.y:0,direction),
       gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using",
       consoleSeat:seated&&c.ps1StationIndex!==undefined,
       premiumHeadset:seated&&c.pcIndex!==null&&c.ps1StationIndex===undefined&&

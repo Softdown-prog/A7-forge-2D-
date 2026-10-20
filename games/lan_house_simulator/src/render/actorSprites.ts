@@ -51,7 +51,7 @@ export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a
  const offset=pose==="walking"?a.id*.27:pose==="sitting"&&!a.gamepad?a.id*.37:0;
  const phase=rate?((Math.round((a.time*rate+offset)/TAU*FRAMES)%FRAMES)+FRAMES)%FRAMES:0;
  const time=rate?(phase/FRAMES*TAU-(pose==="walking"?id*.27:pose==="sitting"&&!a.gamepad?id*.37:0))/rate:0;
- const key=[a.kind,id,pose,a.direction??"south",a.facing??1,!!a.gamepad,!!a.consoleSeat,phase].join("|");
+ const key=[a.kind,id,pose,a.direction??"south",a.screenView??"legacy",a.facing??1,!!a.gamepad,!!a.consoleSeat,phase].join("|");
  const cache=sharedCache??=createCache();
  const sprite=cache.frames.get(key);
  if(!sprite){

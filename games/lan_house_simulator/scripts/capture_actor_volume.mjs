@@ -18,6 +18,7 @@ try{
  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
  const result=await page.evaluate(async before=>{
   const {drawActor}=await import("./js/render/actorArt.js");
+  const {screenViewForMotion}=await import("./js/render/direction.js");
   let old;
   if(before){
    const code=before.replaceAll('"./isometric.js"',JSON.stringify(location.origin+"/js/render/isometric.js"));
@@ -40,6 +41,15 @@ try{
     title(comparison.ctx,labels[i],x-70,70+row*210);
     draw(comparison.ctx,{originX:x,originY:y,zoom:1.95},{x:0,y:0,kind:"regular",id:2,time:0,pose:"idle",direction:directions[i]});
    }
+  }
+  const steps=[[0,1],[1,0],[0,-1],[-1,0],[1,1],[1,-1],[-1,-1],[-1,1]];
+  const actualViews=sheet(1160,500,"Caminhada projetada na câmera isométrica 2:1");
+  for(let i=0;i<steps.length;i++){
+   const [dx,dy]=steps[i],view=screenViewForMotion(dx,dy);
+   const x=108+i*138,y=330;
+   title(actualViews.ctx,view,x-60,85,12);
+   drawActor(actualViews.ctx,{originX:x,originY:y,zoom:1.35},
+    {x:0,y:0,kind:"regular",id:2,time:.45,pose:"walking",direction:"south",screenView:view});
   }
   const variants=sheet(880,1370,"Figurinos preservados — quatro direções");
   for(let k=0;k<kinds.length;k++){
@@ -70,12 +80,13 @@ try{
     if(count<300||minX===0||maxX===199)throw Error("Ator vazio/cortado: "+JSON.stringify({kind,direction,pose,transition,count}));
     maxWidth=Math.max(maxWidth,maxX-minX);samples++;
    }
-  return {comparison:comparison.c.toDataURL(),variants:variants.c.toDataURL(),poses:poses.c.toDataURL(),samples,maxWidth,torsoCoverage};
+  return {comparison:comparison.c.toDataURL(),variants:variants.c.toDataURL(),poses:poses.c.toDataURL(),
+   actualViews:actualViews.c.toDataURL(),samples,maxWidth,torsoCoverage};
  },before);
  assert.equal(errors.length,0,errors.join("; "));
- for(const [key,file] of [["comparison","lhs_actor_volume_comparison.png"],["variants","lhs_actor_volume_four_directions.png"],["poses","lhs_actor_volume_poses.png"]])
+ for(const [key,file] of [["comparison","lhs_actor_volume_comparison.png"],["variants","lhs_actor_volume_four_directions.png"],["poses","lhs_actor_volume_poses.png"],["actualViews","lhs_actual_isometric_walks.png"]])
   await writeFile(resolve(output,file),Buffer.from(result[key].split(",")[1],"base64"));
- const {comparison,variants,poses,...metrics}=result;
+ const {comparison,variants,poses,actualViews,...metrics}=result;
  if(before)for(const row of metrics.torsoCoverage)assert.ok(row.after>row.before,"Sem aumento de volume: "+JSON.stringify(row));
  await writeFile(resolve(output,"actor_volume_validation.json"),JSON.stringify(metrics,null,2)+"\n");console.log(JSON.stringify(metrics));
 }finally{await browser?.close();server.kill();}
