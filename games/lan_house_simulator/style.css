@@ -736,6 +736,9 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 /* Management task pages: one short subject at a time, with native touch scroll. */
 .management-pages{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 18px}
 .management-pages button{flex:1 1 140px;min-height:44px;font-size:12px;white-space:normal}
+.admin .management-pages button:disabled{opacity:.75;cursor:not-allowed;background:#e7e7dc;border-style:dashed;color:#596451;box-shadow:none}
+.management-lock-note{margin:-8px 0 15px;padding:9px 12px;border:1px dashed #c7cfb6;border-radius:8px;background:#f4f3e7;color:#52644c;font-size:12px;line-height:1.5}
+.management-lock-note[hidden]{display:none}
 .management-pages [aria-pressed="true"]{background:var(--ink);color:var(--mint);border-color:var(--ink)}
 .management-page{min-width:0;overflow-wrap:anywhere}
 .management-page[hidden]{display:none!important}

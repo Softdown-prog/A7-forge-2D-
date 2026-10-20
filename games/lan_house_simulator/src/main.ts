@@ -593,7 +593,7 @@ maintenancePanel.addEventListener("click",event=>{
 });
 const shopPanels=shop?installShopPanels(shop,()=>renderUI()):null;
 const shopArtwork=new Map<string,string>();
-const managementPanels=installManagementPanels(admin,()=>renderUI());
+const managementPanels=installManagementPanels(admin,()=>renderUI(),()=>yearFromMinutes(game.totalMinutes));
 const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]"));
 const adminSections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
 function activateAdminTab(tab:string):void{
@@ -1021,6 +1021,7 @@ function renderUI(liveOnly=false):void {
   if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));
   renderShop(!liveOnly);
   activateAdminTab(activeAdminTab);
+  if(adminOpen)managementPanels.syncUnlocks();
   renderTimeWeatherPanel(game,iconMarkup);
   const year=gameYear(game);
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&!node.closest(".admin-section[hidden],.management-page[hidden]")&&node.textContent!==value)node.textContent=value;};

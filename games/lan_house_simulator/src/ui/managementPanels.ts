@@ -1,9 +1,12 @@
 /** Small task pages keep each management area navigable without a long catalog.
  * Existing nodes are moved once, preserving IDs, listeners and the save format. */
-type Page={id:string;label:string;nodes:Element[]};
-export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
+type Page={id:string;label:string;nodes:Element[];unlockYear?:number};
+/** The advanced merchandise catalog appears in 2000, but legacy restocking is always available. */
+export const MERCHANDISE_CATALOG_UNLOCK_YEAR=2000;
+export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getYear:()=>number){
  const selections=new Map<string,string>();
  const selectors=new Map<string,(id:string)=>void>();
+ const lockRefreshers:Array<()=>void>=[];
  const $=(id:string)=>document.getElementById(id)!;
  const following=(start:Element,end:Element|null=null):Element[]=>{
   const nodes:Element[]=[];let node:Element|null=start;
@@ -15,6 +18,14 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
   nav.className='management-pages';nav.setAttribute('aria-label','Painéis de '+(root.querySelector('h3')?.textContent??area));
   root.querySelector('h3')?.after(nav);
   const controls:HTMLButtonElement[]=[],panes:HTMLElement[]=[];
+  const isLocked=(page:Page)=>page.unlockYear!==undefined&&getYear()<page.unlockYear;
+  const lockHint=area==='stock'?document.createElement('p'):null;
+  if(lockHint){
+   lockHint.id='stock-catalog-unlock-note';
+   lockHint.className='management-lock-note';
+   lockHint.textContent='🔒 Catálogo avançado disponível a partir de 2000. Até lá, reponha bebidas, doces e salgadinhos na aba Fornecedores.';
+   nav.after(lockHint);
+  }
   for(const page of pages){
    const pane=document.createElement('section');pane.className='management-page';pane.id='page-'+area+'-'+page.id;
    pane.dataset.managementPage=page.id;pane.setAttribute('aria-label',page.label);pane.hidden=true;
@@ -25,15 +36,33 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
    controls.push(button);nav.append(button);
   }
   function select(id:string){
-   selections.set(area,id);
+   const requested=pages.find(page=>page.id===id);
+   // Disabled buttons cannot be clicked, and programmatic navigation must
+   // never expose the locked catalog through old shortcut links.
+   const chosen=requested&&!isLocked(requested)?requested:pages.find(page=>!isLocked(page));
+   if(!chosen)return;
+   selections.set(area,chosen.id);
    for(const [i,pane] of panes.entries()){
-    const active=pages[i]!.id===id;pane.hidden=!active;controls[i]!.setAttribute('aria-pressed',String(active));
+    const active=pages[i]===chosen;pane.hidden=!active;controls[i]!.setAttribute('aria-pressed',String(active));
     // One delegated maintenance host, mounted only in the selected task page.
-    if(active&&dynamic&&id!=='ledger')pane.append(dynamic);
+    if(active&&dynamic&&chosen.id!=='ledger')pane.append(dynamic);
    }
-   if(dynamic)dynamic.hidden=id==='ledger';
+   if(dynamic)dynamic.hidden=chosen.id==='ledger';
   }
+  lockRefreshers.push(()=>{
+   for(const [i,page] of pages.entries()){
+    if(page.unlockYear===undefined)continue;
+    const locked=isLocked(page),button=controls[i]!;
+    const label=(locked?'🔒 ':'🔓 ')+page.label+(locked?' · '+page.unlockYear:'');
+    if(button.textContent!==label)button.textContent=label;
+    button.disabled=locked;
+    button.title=locked?'Disponível a partir de '+page.unlockYear+'.':'';
+    if(locked&&selections.get(area)===page.id)select(pages.find(p=>!isLocked(p))!.id);
+    if(lockHint)lockHint.hidden=!locked;
+   }
+  });
   selectors.set(area,select);select(pages[0]!.id);
+  lockRefreshers[lockRefreshers.length-1]!();
  }
  const prices=$('section-prices'),insight=prices.querySelector('.price-insight')!;
  const packageList=$('session-package-prices'),packages=[packageList.previousElementSibling!,packageList];
@@ -51,8 +80,8 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
   $('page-prices-'+page).append(empty);
  }
  mount('stock',[
-  {id:'catalog',label:'Mercadorias',nodes:[$('stock'),$('merchandise-catalog')]},
-  {id:'suppliers',label:'Fornecedores',nodes:[$('merchandise-suppliers'),$('supplier-status'),$('supplier-up').closest('.action-row')!]},
+  {id:'catalog',label:'Mercadorias',unlockYear:MERCHANDISE_CATALOG_UNLOCK_YEAR,nodes:[$('merchandise-catalog')]},
+  {id:'suppliers',label:'Fornecedores',nodes:[$('stock'),$('merchandise-suppliers'),$('supplier-status'),$('supplier-up').closest('.action-row')!]},
   {id:'orders',label:'Entregas',nodes:[$('merchandise-orders')]}
  ]);
  const computers=$('section-computers');
@@ -107,6 +136,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void){
   select:(area:string,page:string)=>selectors.get(area)?.(page),
   current:(area:string)=>selections.get(area),
   active:(area:string,page:string)=>selections.get(area)===page,
-  syncArea:(area:string)=>{if(areaSelect.value!==area)areaSelect.value=area;}
+  syncArea:(area:string)=>{if(areaSelect.value!==area)areaSelect.value=area;},
+  syncUnlocks:()=>{for(const refresh of lockRefreshers)refresh();}
  };
 }
