@@ -60,7 +60,10 @@ test("dois visitantes pagam individualmente e reservam assentos independentes",(
   together ||= active.length===2;
  }
  assert.equal(together,true,"os dois devem jogar simultaneamente durante a partida real");
- assert.deepEqual(snapshotGameState(restored),snapshotGameState(s));
+ // O JSON exportado elimina propriedades explicitamente undefined.
+ // Comparar os dados persistidos, não detalhes transitórios do objeto JS.
+ assert.deepEqual(JSON.parse(JSON.stringify(snapshotGameState(restored))),
+  JSON.parse(JSON.stringify(snapshotGameState(s))));
 });
 test("saves antigos têm uma cadeira e duplas adulteradas são rejeitadas",()=>{
  const s=setup(),old=parseImportedSave(serializeSave(s));
