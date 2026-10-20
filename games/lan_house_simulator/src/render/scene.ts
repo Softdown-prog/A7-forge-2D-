@@ -1,5 +1,5 @@
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
-import {productSpec,type ProductId} from "../sim/merchandise.js";
+import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,builtPosters,type EditableObject} from "../sim/editableObjects.js";
 import {computerSeat} from "../sim/route.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
@@ -705,17 +705,6 @@ export class SceneRenderer {
         c.stage==="standing"?1-transition:0;
       drawSeatedKeyboardOverlay(this.ctx,objectCamera(camera,pcPosition(c.pcIndex,s),1.1,.7,pcPosition(c.pcIndex,s).rotation),pcPosition(c.pcIndex,s),t,
         style.skin,style.shirt,weight);
-    }
-    if(c.retailConsumption&&s.totalMinutes<c.retailConsumption.untilMinute){
-      // Small foreground hand/package overlay; no pose/sprite invalidation or collision changes.
-      const product=productSpec(c.retailConsumption.product)!;
-      const at=iso({x,y},camera,49),z=camera.zoom,lift=(1+Math.sin(t*5))/2;
-      const px=at.x+8*z,py=at.y-lift*10*z,ctx=this.ctx;
-      ctx.save();ctx.strokeStyle=actorStyleFor(c.costume,c.id).skin;ctx.lineWidth=3*z;ctx.lineCap="round";
-      ctx.beginPath();ctx.moveTo(at.x+12*z,at.y+8*z);ctx.lineTo(px+2*z,py+4*z);ctx.stroke();
-      ctx.fillStyle=product.color;ctx.strokeStyle="#344b42";ctx.lineWidth=z;
-      ctx.beginPath();ctx.roundRect(px-3*z,py-6*z,7*z,product.category==="soda"?12*z:8*z,2*z);ctx.fill();ctx.stroke();
-      ctx.fillStyle="#f7edca";ctx.fillRect(px-2*z,py-2*z,5*z,2*z);ctx.restore();
     }
     if(c.vip){
       const marker=iso({x,y},camera,100);

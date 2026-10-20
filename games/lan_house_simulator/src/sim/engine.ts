@@ -23,7 +23,7 @@ import {servePrinting,validPrinterService,printWalkInDue,printReferencePrice,pag
 import {GAME_LAST_MINUTE,GAME_END_DAY,isSporadicMailId} from "./mailCalendar.js";
 import {storyVisitorMultiplier,STORY_IDS,CHAIN_IDS} from "./storyEvents.js";
 
-import {praiseLine,complaintLine} from "./customerDialogue.js";
+import {praiseLine,complaintLine,shouldShowCustomerSpeech,SPEECH_COOLDOWN_MINUTES} from "./customerDialogue.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import {recordCustomerFeedback,sessionFeedbackReason,validCustomerFeedback} from "./customerFeedback.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
@@ -286,7 +286,13 @@ function queueVisualEvent<T>(queue:T[]|undefined,item:T):T[]{
  if(out.length>48)out.splice(0,out.length-48);
  return out;
 }
+// Controle visual isolado: não persiste no save nem modifica RNG, filas ou reputação.
+const lastSpeechMinute=new WeakMap<GameState,number>();
 function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"|"praise"="complaint"):void {
+  const last=lastSpeechMinute.get(s);
+  if(last!==undefined&&s.totalMinutes>=last&&s.totalMinutes-last<SPEECH_COOLDOWN_MINUTES)return;
+  if(!shouldShowCustomerSpeech(c.id,text,s.totalMinutes,kind))return;
+  lastSpeechMinute.set(s,s.totalMinutes);
   s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 function sendHome(s: GameState, c: Customer): void {
@@ -570,8 +576,7 @@ function resolvePurchase(s: GameState, c: Customer): void {
     c.wallet=Math.round(Math.max(0,(c.wallet??18)-value)*100)/100;
     consumePurchase(c,spec.category,spec.relief*quality);
     c.retailConsumption={product:chosen,untilMinute:s.totalMinutes+16};
-    // Sound and sale effects retain the equipment category; the held package uses the product.
-    customerSays(s,c,quality>1.08?"Gostei da qualidade de "+spec.name+"!":"Vou consumir: "+spec.name+".","praise");
+    // A venda já tem efeito visual e sonoro próprio; não criar um balão por produto.
     c.happy=quality>=1;
     s.saleEffects=queueVisualEvent(s.saleEffects,{item:spec.category,amount:value,x:c.x,y:c.y});
     addWaste(s,spec.category==="soda"?5:3);addLog(s,result.message);
