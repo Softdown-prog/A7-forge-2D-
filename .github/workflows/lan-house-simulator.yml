@@ -100,6 +100,10 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/capture_actor_volume.mjs out/validation
+      - name: Verify distance-driven walking in eight views and sprite-worker parity
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_customer_walk.mjs out/validation/customer-walk
       - name: Inspect original posters and paid wall placements
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator

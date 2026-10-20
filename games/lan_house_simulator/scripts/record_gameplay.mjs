@@ -1,3 +1,4 @@
+import {dismissPrivacyNotice} from './privacyNoticeTest.mjs';
 import {selectAdminArea} from './management_navigation.mjs';
 // Gravação contínua da execução REAL do jogo em Chromium via Playwright.
 // Diferente das pranchas PNG: um frame de vídeo é capturado a cada instante da partida.
@@ -47,6 +48,7 @@ try{
  await page.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
    {key:GAME_SAVE_KEY,payload:state});
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(page);
  await page.locator("#menu-continue").click();
  await page.locator("#game-app").waitFor({state:"visible"});
  await page.waitForTimeout(1200);
@@ -56,6 +58,8 @@ try{
  const repair=page.locator('button').filter({hasText:/Chamar técnico/}).first();
  if(await repair.count()&&await repair.isEnabled())await repair.click();
  await page.locator("#close-admin").click();
+ // Enquadrar todo o salão sem o banner cobrir a caminhada.
+ await page.locator("#game").scrollIntoViewIfNeeded();
  // Capturar no tempo real do navegador, sem slideshow ou render fora do jogo.
  await page.waitForTimeout(19000);
  if(errors.length)throw Error("Erros do jogo: "+errors.join(" | "));

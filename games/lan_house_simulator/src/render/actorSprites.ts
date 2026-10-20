@@ -1,4 +1,5 @@
 import {drawActor,type ActorRender} from "./actorArt.js";
+import {walkPhase,WALK_CYCLE_DISTANCE} from "./walkCycle.js";
 import {iso,type Projection} from "./isometric.js";
 
 const FRAMES=32,TAU=Math.PI*2;
@@ -49,14 +50,15 @@ export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a
  const id=a.kind==="regular"?(Math.abs(Math.trunc(a.id))||0)%4:0;
  const rate=pose==="walking"?7.7:pose==="sitting"?(a.gamepad?8:5.2):0;
  const offset=pose==="walking"?a.id*.27:pose==="sitting"&&!a.gamepad?a.id*.37:0;
- const phase=rate?((Math.round((a.time*rate+offset)/TAU*FRAMES)%FRAMES)+FRAMES)%FRAMES:0;
+ const angle=pose==="walking"&&a.walkDistance!==undefined?walkPhase(a.walkDistance):a.time*rate+offset;
+ const phase=rate?((Math.round(angle/TAU*FRAMES)%FRAMES)+FRAMES)%FRAMES:0;
  const time=rate?(phase/FRAMES*TAU-(pose==="walking"?id*.27:pose==="sitting"&&!a.gamepad?id*.37:0))/rate:0;
  const key=[a.kind,id,pose,a.direction??"south",a.screenView??"legacy",a.facing??1,!!a.gamepad,!!a.consoleSeat,phase].join("|");
  const cache=sharedCache??=createCache();
  const sprite=cache.frames.get(key);
  if(!sprite){
   if(cache.worker&&!cache.pending.has(key)&&cache.pending.size<64){
-   cache.pending.add(key);cache.worker.postMessage({key,actor:{...a,x:0,y:0,id,time}});
+   cache.pending.add(key);cache.worker.postMessage({key,actor:{...a,x:0,y:0,id,time,walkDistance:a.walkDistance===undefined?undefined:phase/FRAMES*WALK_CYCLE_DISTANCE}});
   }
   drawActor(ctx,camera,a);return;
  }

@@ -1,6 +1,7 @@
 import type { Costume } from "../sim/types.js";
 import { iso, type Projection } from "./isometric.js";
 import type { ActorDirection,ActorScreenView } from "./direction.js";
+import {walkPhase,walkingLeg,walkAxis} from "./walkCycle.js";
 import {workerMotion} from "./workerMotion.js";
 
 type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
@@ -45,6 +46,8 @@ export interface ActorRender {
   direction?: ActorDirection;
   /** Direction of visible movement projected onto the screen; seats keep legacy rig. */
   screenView?: ActorScreenView;
+  /** Distance on the projected floor at zoom 1; independent of wall-clock time. */
+  walkDistance?:number;
   transition?: number;
   /** Cliente usando controle de console; anima mãos sem alterar poses de PC. */
   gamepad?: boolean;
@@ -328,20 +331,6 @@ export function profileWalkingStep(step:number,side:-1|1):
    toeX:hipX+advance,ankleY:-4-lift};
 }
 
-/** In three-quarter view the shoe travels in the same 2:1 direction
- * as the anchor in the room, instead of a generic camera-facing leg swing. */
-export function screenWalkingStep(step:number,side:-1|1,view:ActorScreenView):
- {hipX:number;kneeX:number;kneeY:number;toeX:number;ankleY:number}{
- if(view==="profile-left"||view==="profile-right")return profileWalkingStep(step,side);
- const back=view==="back"||view.startsWith("back-");
- const quarter=view.includes("-left")||view.includes("-right");
- const hipX=side*(quarter?4.2:6.4);
- const advanceX=step*side*(quarter?7.8:1.6);
- const advanceY=step*side*(quarter?(back?-3.9:3.9):(back?-6:6));
- const lift=Math.max(0,-step*side)*1.7;
- return {hipX,kneeX:hipX+advanceX*.55,kneeY:-13+advanceY*.36-lift*.35,
-   toeX:hipX+advanceX,ankleY:-4+advanceY-lift};
-}
 export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void {
   const base=iso({x:a.x,y:a.y},camera);
   const z=camera.zoom,cyber=a.kind==="owner"&&!!a.premiumCyber;
@@ -358,14 +347,15 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   const seated=pose==="sitting"?eased:pose==="standing-up"?1-eased:0;
   const gamepadActive=!!a.gamepad&&pose==="sitting"&&seated>.99;
   const consoleSeat=!!a.consoleSeat&&(pose==="sitting"||pose==="standing-up");
-  const step=walking?Math.sin(a.time*7.7+a.id*.27):0;
+  const phase=a.walkDistance===undefined?a.time*7.7+a.id*.27:walkPhase(a.walkDistance);
+  const step=walking?Math.sin(phase):0;
   const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*1.4)*.6:0;
-  const bob=walking?Math.abs(step)*1.5:0;
+  const bob=walking?(1-Math.cos(phase*2))*.45:0;
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
   // Antes, o corpo afundava 18px e parecia agachado no chão.
   const settle=(pose==="sitting"||pose==="standing-up")?Math.sin(Math.PI*transition)*1.5:0;
   const headShift=seated*(consoleSeat?10:3)+settle;
-  const lean=walking?Math.cos(a.time*7.7+a.id*.27)*1.1:work?work.pulse*.65:seated*2;
+  const lean=walking?Math.sin(phase*2)*.35:work?work.pulse*.65:seated*2;
   const typing=seated>0.95&&!gamepadActive?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south",screenView=a.screenView;
   const back=screenView?(screenView==="back"||screenView.startsWith("back-")):direction==="north";
@@ -375,7 +365,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     direction==="west"?-1:direction==="east"?1:(a.facing??1);
   ctx.save();
   ctx.translate(base.x,base.y-bob*z);
-  ctx.scale(z*flip*(quarter?.93:1),z);
+  ctx.scale(z*flip,z);
   ctx.lineJoin="round";
   ctx.lineCap="round";
 
@@ -402,19 +392,21 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // Passos com movimentos opostos nas pernas. Ao sentar, a coxa dobra para a frente.
   const legY=-24+headShift;
   const footY=-4;
-  const screenWalk=!!screenView&&walking&&seated===0;
+  const screenRig=!!screenView&&seated===0&&(pose==="walking"||pose==="idle");
   const profileWalk=!screenView&&sideways&&walking&&seated===0;
-  for(const side of [-1,1] as const){
+  const nearSide=quarter&&!back?-1:1;
+  const legOrder=screenRig&&quarter&&!back?[1,-1] as const:[-1,1] as const;
+  for(const side of legOrder){
     const swing=step*7*side*(1-seated);
-    const profileLeg=screenWalk?screenWalkingStep(step,side,screenView!):
-      profileWalk?profileWalkingStep(step,side):null;
+    const rigLeg=screenRig?walkingLeg(phase,side,screenView!,walking):null;
+    const profileLeg=rigLeg??(profileWalk?profileWalkingStep(step,side):null);
     const kneeX=profileLeg?.kneeX??side*7+swing*.55+side*seated*10;
     // Side profiles move feet in the facing axis; frontal/seat poses stay intact.
     const kneeY=profileLeg?.kneeY??-13-seated*(consoleSeat?1:8);
     const toeX=profileLeg?.toeX??side*7+swing+side*seated*12;
-    const ankleY=profileLeg?.ankleY??footY-seated*4;
-    const legColor=profileLeg&&side===-1?style.dark:style.pants;
-    limb(ctx,profileLeg?.hipX??side*6,legY,kneeX,kneeY,9.6,legColor);
+    const ankleY=(profileLeg?.ankleY??footY-seated*4)+(screenRig?bob:0);
+    const legColor=profileLeg&&side!==nearSide?style.dark:style.pants;
+    limb(ctx,profileLeg?.hipX??side*6,legY+(rigLeg?.hipY??0),kneeX,kneeY,9.6,legColor);
     limb(ctx,kneeX,kneeY,toeX,ankleY,8.2,legColor);
     // Costura de joelho e volume de tecido: visíveis sem aumentar a silhueta.
     ctx.save();ctx.globalAlpha=.38;
@@ -422,9 +414,12 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.beginPath();ctx.moveTo(kneeX-1.5,kneeY+1);ctx.lineTo(kneeX+2.1,kneeY+2);ctx.stroke();
     ctx.restore();
     const shoe=a.kind==="rabbit"?"#E5D5D5":"#283647";
-    ell(ctx,toeX+2,ankleY,6.8,3.6,shoe,"#1D2736");
+    // Body rises while the supporting shoe stays on the floor.
+    const shoeY=ankleY;
+    const shoeX=toeX+(screenRig?walkAxis(screenView!).x*2:2);
+    ell(ctx,shoeX,shoeY,screenRig&&!sideways?5.3:6.8,3.2,shoe,"#1D2736");
     // Sola clara de baixo contraste, pequena o bastante para não parecer tênis brilhante.
-    segment(ctx,toeX-1,ankleY+1.8,toeX+6,ankleY+1.9,1.0,
+    segment(ctx,shoeX-3,shoeY+1.8,shoeX+3,shoeY+1.9,1.0,
       a.kind==="rabbit"?"#B5A7AC":"#788597");
   }
 
@@ -434,19 +429,22 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const copying=a.kind==="owner"&&pose==="copying";
     const serving=a.kind==="owner"&&(pose==="idle"||printing||copying);
     const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
-    const angledWalk=profileWalk||(screenWalk&&(sideways||quarter));
-    const ax=angledWalk?(side===-1?-7:9):side*(sideways?10:15), ay=-47+headShift;
+    const angledWalk=profileWalk||screenRig;
+    const shoulderX=side*(sideways?8:quarter?10:15);
+    const axis=screenRig?walkAxis(screenView!):{x:1,y:0};
+    const armSwing=walking?-Math.cos(phase+(side===1?0:Math.PI))*7:0;
+    const ax=angledWalk?shoulderX:side*(sideways?10:15), ay=-47+headShift+(screenRig&&quarter?-side*axis.y*3:0);
     const wave=step*5*-side*(1-seated);
     // In profile the shoulders remain narrow, and the arms counter-swing the legs.
-    const elbowX=angledWalk?(side===-1?-9+step*4:12-step*4):
+    const elbowX=angledWalk?shoulderX+side*1.5+armSwing*axis.x*.5:
       work?(side===1?21:-17)+work.pulse*1.7:
       side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
-    const elbowY=angledWalk?-36+headShift:
+    const elbowY=angledWalk?-36+headShift+armSwing*axis.y*.5:
       work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
-    const handX=angledWalk?(side===-1?-10+step*7:13-step*7):
+    const handX=angledWalk?shoulderX+side*2+armSwing*axis.x:
       movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=angledWalk?-25+headShift:
+    const handY=angledWalk?-25+headShift+armSwing*axis.y:
       movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
@@ -460,7 +458,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,handX-1.1,handY-1,2.3,2.5,"rgba(255,241,208,.22)");
     if(serving){segment(ctx,elbowX+(handX-elbowX)*.65,elbowY+(handY-elbowY)*.65,handX-side*3,handY-.3,2.3,style.trim);}
   };
-  arm(-1);if(!sideways&&!quarter)arm(1);
+  arm(-nearSide);if(!sideways&&!quarter)arm(nearSide);
 
   if(isFemaleCostume(a.kind))femaleTorso(ctx,style,headShift,sideways,back,a.kind,quarter);
   else{
@@ -514,7 +512,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   }
 
   // The near arm overlaps the profile's chest: actual depth, not an X squash.
-  if(sideways||quarter)arm(1);
+  if(sideways||quarter)arm(nearSide);
   else if(a.kind==="owner"&&!back){arm(-1);arm(1);}
   if(cyber){
     // Ombreiras facetadas nas quatro orientações.
@@ -598,6 +596,11 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,9,-66,6,13,"rgba(17,24,36,.25)");
     ell(ctx,-6,-74,3.8,7,"rgba(255,241,208,.14)");
     ctx.restore();
+    if(quarter){
+      // A visible side ear/cheek distinguishes the diagonal rear from straight back.
+      ell(ctx,11+lean,-64+headShift,2.8,4.6,style.skin,"#785C59");
+      segment(ctx,12+lean,-65+headShift,12+lean,-62+headShift,.9,"#A66A64");
+    }
     if(isFemaleCostume(a.kind))femaleHairBack(ctx,style,a.kind,headShift,lean);
     if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
       ell(ctx,0,-61+headShift,5,3,style.highlight);
@@ -614,15 +617,15 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     }
   } else if(quarter){
     // One recessed eye and a projecting cheek/nose make the 3/4 facing legible.
-    ell(ctx,-3.5+lean,-68.2+headShift,1.05,1.7,"#263348");
-    ell(ctx,5.3+lean,-67.5+headShift,1.75,2.1,"#263348");
-    ell(ctx,5+lean,-68.2+headShift,.5,.6,"#F6E7D0");
-    segment(ctx,-5.5+lean,-72+headShift,-1.5+lean,-72.3+headShift,1,style.hair);
-    segment(ctx,3+lean,-71.9+headShift,8+lean,-71.4+headShift,1,style.hair);
+    ell(ctx,-.5+lean,-68.2+headShift,.85,1.6,"#263348");
+    ell(ctx,7.3+lean,-67.5+headShift,1.6,2.1,"#263348");
+    ell(ctx,7+lean,-68.2+headShift,.5,.6,"#F6E7D0");
+    segment(ctx,-2.5+lean,-72+headShift,1.5+lean,-72.3+headShift,1,style.hair);
+    segment(ctx,5+lean,-71.9+headShift,10+lean,-71.4+headShift,1,style.hair);
     if(a.kind==="clown")ell(ctx,8+lean,-63.2+headShift,3.4,3.1,"#D64C5B");
     else if(a.kind==="mouse-mascot")ell(ctx,8+lean,-63.2+headShift,2.8,2.5,"#B47B83");
-    else shape(ctx,[[7+lean,-65+headShift],[11+lean,-63+headShift],
-      [7+lean,-61+headShift]],style.skin,"#A66A64");
+    else shape(ctx,[[10+lean,-65+headShift],[14+lean,-63+headShift],
+      [10+lean,-61+headShift]],style.skin,"#A66A64");
     segment(ctx,3+lean,-58+headShift,9+lean,-58.4+headShift,1.1,"#784F51");
     if(a.kind==="stitched-monster")segment(ctx,-9,-68+headShift,-5,-65+headShift,.9,"#6B8071");
     if(a.kind==="vampire")shape(ctx,[[6,-59+headShift],[8,-55+headShift],[9,-59+headShift]],"#FFF1E8","#AC7077");
