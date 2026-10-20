@@ -37,6 +37,7 @@ import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
+import {shopPlacementStatus,shopPurchaseButtonText} from "./ui/shopGuidance.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
 import {renderCustomerFeedback} from "./ui/customerFeedbackPanel.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
@@ -805,6 +806,9 @@ function renderShop(force=true):void{
   const title=document.createElement("h3");title.textContent=item.label;
   const category=document.createElement("small");category.textContent=item.category;
   const description=document.createElement("p");description.textContent=item.description;
+  const placementHint=shopPlacementStatus(game,item.id);
+  const hint=document.createElement("small");hint.className="shop-purchase-status";
+  if(placementHint)hint.textContent=placementHint;
   const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
   const max=(item.id==="poster"||item.id==="plant"||item.id==="table")?furnitureLimit(game,item.id):0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
@@ -818,7 +822,7 @@ function renderShop(force=true):void{
      max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
-  button.textContent=full?(max>0?"Sem espaço livre":"Limite atingido"):game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
+  button.textContent=shopPurchaseButtonText(item.id,full,game.cash<price,price,max>0);
   if(item.id==="printer"){
    const quote=quotePrinter(game);button.disabled=!quote.ok;button.title=quote.message;
    button.textContent=game.printer?"Adquirida · serviço ativo":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
@@ -874,7 +878,11 @@ function renderShop(force=true):void{
     locationHelp.className="ps1-placement-help";
     locationHelp.textContent="Escolha um local no salão: norte é o fundo, sul é a entrada, oeste é a esquerda e leste é a direita.";
     card.append(art,category,title,description,placement,locationSelector,locationHelp,button);
-  }else card.append(art,category,title,description,button);
+  }else{
+   card.append(art,category,title,description);
+   if(placementHint)card.append(hint);
+   card.append(button);
+  }
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
  }
@@ -1010,7 +1018,7 @@ function renderUI(liveOnly=false):void {
 
   if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode||installingAnnexPc));
   if(placementHelp)placementHelp.textContent=installingAnnexPc?
-    (placementNotice||"Selecione um círculo verde para instalar um computador completo por R$ "+ANNEX_PC_COST+"."):
+    (placementNotice||"Escolha um círculo verde numa área ampliada (esquerda, direita ou fundos). PC completo: R$ "+ANNEX_PC_COST+". A cobrança só ocorre ao selecionar a vaga."):
     wallMode?
     (placementNotice||(wallMode==="build"?"Selecione a borda, confira a prévia e confirme. Cada segmento custa R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
     relocating?

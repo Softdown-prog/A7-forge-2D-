@@ -1048,3 +1048,7 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .merchandise-supplier-card h4,.merchandise-supplier-card p{margin:5px 0}
 #merchandise-orders{white-space:pre-line;overflow-wrap:anywhere;line-height:1.7}
 #merchandise-feedback{min-height:1.5em}
+
+/* Uma linha de estado abaixo de cada opção de construção ou PC, sem novos painéis. */
+#shop .shop-card>.shop-purchase-status{display:block;color:#425d47;font:600 11px/1.5 system-ui,sans-serif;text-transform:none;letter-spacing:normal;overflow-wrap:anywhere;margin:0 0 3px}
+@media(max-width:700px){#shop .shop-card>.shop-purchase-status{font-size:11px;line-height:1.45}}

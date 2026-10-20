@@ -1,0 +1,51 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {createGame} from "../dist/js/sim/engine.js";
+import {SHOP_CATALOG,shopPrice,buyComputer} from "../dist/js/sim/shop.js";
+import {expandShop} from "../dist/js/sim/economy.js";
+import {expandDirection} from "../dist/js/sim/room.js";
+import {shopPlacementStatus,shopPurchaseButtonText} from "../dist/js/ui/shopGuidance.js";
+
+test("different purchase locations and the non-random expansion are explicit",()=>{
+ const item=id=>SHOP_CATALOG.find(x=>x.id===id);
+ assert.match(item("computer").label,/área principal/);
+ assert.match(item("computer-annex").label,/ampliação/);
+ assert.match(item("expand").description,/sem sorteio/);
+ for(const id of ["extend-west","extend-east","extend-north"])assert.match(item(id).description,/vaga para PC/);
+});
+test("shop guidance tracks actual availability without mutating saves or prices",()=>{
+ const s=createGame(1988);s.cash=5000;
+ const original=JSON.stringify(s);
+ assert.equal(shopPrice(s,"computer"),320);
+ assert.equal(shopPrice(s,"computer-annex"),320);
+ assert.equal(shopPrice(s,"expand"),650);
+ assert.equal(shopPrice(s,"extend-west"),500);
+ assert.match(shopPlacementStatus(s,"computer"),/0 vagas livres/);
+ assert.match(shopPlacementStatus(s,"computer-annex"),/Primeiro amplie/);
+ assert.match(shopPlacementStatus(s,"expand"),/sem sorteio/);
+ assert.equal(JSON.stringify(s),original);
+ assert.ok(expandShop(s).ok);
+ assert.equal(s.expansionLevel,1);
+ assert.equal(s.roomExtensions.west,0);
+ assert.equal(shopPrice(s,"expand"),1100);
+ assert.match(shopPlacementStatus(s,"computer"),/2 vagas livres/);
+ assert.match(shopPlacementStatus(s,"expand"),/largura 10/);
+ assert.ok(buyComputer(s).ok);
+ assert.match(shopPlacementStatus(s,"computer"),/1 vaga livre/);
+ assert.ok(expandDirection(s,"west").ok);
+ assert.equal(s.roomExtensions.west,1);
+ assert.equal(shopPrice(s,"extend-west"),850);
+ assert.match(shopPlacementStatus(s,"computer-annex"),/1 vaga livre/);
+ assert.match(shopPlacementStatus(s,"extend-west"),/1\/5/);
+ assert.match(shopPlacementStatus(s,"extend-east"),/0\/5/);
+});
+test("purchase actions and exhausted-slot messages differ across the two systems",()=>{
+ assert.equal(shopPurchaseButtonText("computer-annex",false,false,320),"Escolher vaga · R$ 320");
+ assert.equal(shopPurchaseButtonText("computer",false,false,320),"Instalar PC · R$ 320");
+ assert.equal(shopPurchaseButtonText("expand",false,false,650),"Ampliar · R$ 650");
+ assert.equal(shopPurchaseButtonText("computer-annex",true,false,320),"Sem vaga na ampliação");
+ assert.equal(shopPurchaseButtonText("computer",true,false,320),"Sem vaga na área principal");
+ assert.equal(shopPurchaseButtonText("extend-west",true,false,850),"Limite nesta direção");
+ assert.equal(shopPurchaseButtonText("computer",false,true,320),"Caixa insuficiente · R$ 320");
+ assert.equal(shopPurchaseButtonText("poster",true,false,45,true),"Sem espaço livre");
+});
