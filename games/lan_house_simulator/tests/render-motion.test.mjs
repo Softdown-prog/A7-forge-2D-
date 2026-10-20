@@ -62,3 +62,15 @@ test("60 apresentações por minuto não alteram a campanha nem o RNG",()=>{
   assert.deepEqual(a,b);
  }
 });
+
+test("o movimento interpolado conserva a orientação do trecho atual, mesmo com curva adiante",()=>{
+ const s=createGame(),motion=new SceneMotion();
+ s.customers=[{...visitor(),x:2,y:3,facing:"east"}];
+ motion.capture(s);
+ s.customers[0].x=2.3;
+ s.customers[0].target={x:2.3,y:4};
+ s.leftoverMinutes=.5;
+ const frame=motion.sample(s);
+ assert.equal(frame.customers[0].facing,"east");
+ assert.equal(frame.customers[0].target.y,3);
+});

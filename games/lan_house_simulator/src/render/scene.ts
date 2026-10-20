@@ -685,8 +685,9 @@ export class SceneRenderer {
     }
     const direction=seated&&c.ps1StationIndex!==undefined?"north":
       seated&&c.pcIndex!==null?(["north","east","south","west"] as const)[pcPosition(c.pcIndex,s).rotation??0]:
-      moving?movementDirection({x:c.x,y:c.y},c.target,c.facing??"south"):
-      (c.facing??"south");
+      // SceneMotion resolves the direction of the *visible* interpolated step.
+      // The next waypoint can already be around a corner: do not turn early.
+      moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,

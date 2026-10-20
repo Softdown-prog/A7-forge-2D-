@@ -90,7 +90,20 @@ function limb(ctx:ActorContext,x1:number,y1:number,x2:number,y2:number,
 }
 function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean):void{
  ctx.save();ctx.translate(0,shift);
- // Curved shoulders, ribcage, belly and hips; profiles have their own outline.
+ if(profile){
+  // Truly turned shoulders/ribcage: narrow depth, no front-facing shirt placket.
+  shape(ctx,[[-5,-53],[-10,-50],[-12,-43],[-10,-30],[-6,-24],
+    [6,-23],[12,-28],[12,-40],[7,-52]],style.shirt);
+  shape(ctx,[[3,-51],[9,-47],[11,-33],[7,-24],[3,-25],[5,-39]],
+    style.dark,style.dark);
+  ctx.save();ctx.globalAlpha=.48;
+  shape(ctx,[[-6,-50],[-9,-43],[-8,-34],[-5,-27],[-3,-30],[-5,-40]],
+    style.highlight,style.shirt);
+  ctx.restore();
+  ell(ctx,-1,-25,7,1.7,"rgba(23,32,43,.16)");
+  ctx.restore();return;
+ }
+ // Curved shoulders, ribcage, belly and hips; front and back keep original art.
  ctx.beginPath();
  if(profile){
   ctx.moveTo(-8,-52);ctx.bezierCurveTo(-15,-50,-16,-42,-14,-33);
@@ -132,6 +145,24 @@ function isFemaleCostume(kind:ActorKind):kind is FemaleCostume{
 function femaleTorso(ctx:ActorContext,style:ActorStyle,shift:number,
  profile:boolean,back:boolean,kind:FemaleCostume):void{
  ctx.save();ctx.translate(0,shift);
+ if(profile){
+  // Three distinct garments seen from their narrow side, without two front lapels.
+  const coat=kind==="female-bob"?style.dark:style.shirt;
+  shape(ctx,[[-5,-54],[-11,-50],[-11,-37],[-8,-24],[7,-23],
+    [12,-29],[11,-47],[5,-54]],coat);
+  if(kind==="female"){
+   shape(ctx,[[3,-51],[9,-48],[10,-31],[7,-24],[4,-25]],style.dark,style.dark);
+   segment(ctx,-6,-27,7,-27,2.1,style.trim);
+  }else if(kind==="female-bob"){
+   shape(ctx,[[-3,-52],[5,-51],[7,-30],[1,-27],[-6,-29]],style.highlight,style.dark);
+   segment(ctx,4,-48,6,-31,1.5,style.trim);
+  }else{
+   shape(ctx,[[-6,-53],[1,-57],[7,-53],[7,-45],[0,-42],[-7,-46]],style.dark,style.dark);
+   shape(ctx,[[3,-37],[9,-37],[8,-28],[2,-27]],style.dark,style.dark);
+   segment(ctx,-7,-25,8,-25,2.4,style.trim);
+  }
+  ctx.restore();return;
+ }
  if(kind==="female"){
   // Long-haired character: soft blouse with layered cardigan and folded hem.
   shape(ctx,profile?[[-8,-52],[-13,-48],[-15,-37],[-10,-24],[11,-23],[15,-30],[14,-46],[7,-53]]:
@@ -258,6 +289,16 @@ function femaleHairBack(ctx:ActorContext,style:ActorStyle,kind:FemaleCostume,
  ctx.restore();
 }
 
+/** Profile walk: both legs advance along the facing axis, not away from the camera.
+ * The raised trailing foot and the darker far leg give the stride depth. */
+export function profileWalkingStep(step:number,side:-1|1):
+  {hipX:number;kneeX:number;kneeY:number;toeX:number;ankleY:number}{
+ const hipX=side*2.4,advance=step*side*9;
+ const lift=Math.max(0,-step*side)*1.7;
+ return {hipX,kneeX:hipX+advance*.58,kneeY:-13+lift*.55,
+   toeX:hipX+advance,ankleY:-4-lift};
+}
+
 export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void {
   const base=iso({x:a.x,y:a.y},camera);
   const z=camera.zoom,cyber=a.kind==="owner"&&!!a.premiumCyber;
@@ -316,23 +357,27 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // Passos com movimentos opostos nas pernas. Ao sentar, a coxa dobra para a frente.
   const legY=-24+headShift;
   const footY=-4;
-  for(const side of [-1,1]){
+  const profileWalk=sideways&&walking&&seated===0;
+  for(const side of [-1,1] as const){
     const swing=step*7*side*(1-seated);
-    const kneeX=side*7+swing*.55+side*seated*10;
-    // Coxa dobra junto à altura do assento; panturrilha desce até o chão.
-    const kneeY=-13-seated*(consoleSeat?1:8);
-    const toeX=side*7+swing+side*seated*12;
-    limb(ctx,side*6,legY,kneeX,kneeY,9.6,style.pants);
-    limb(ctx,kneeX,kneeY,toeX,footY-seated*4,8.2,style.pants);
+    const profileLeg=profileWalk?profileWalkingStep(step,side):null;
+    const kneeX=profileLeg?.kneeX??side*7+swing*.55+side*seated*10;
+    // Side profiles move feet in the facing axis; frontal/seat poses stay intact.
+    const kneeY=profileLeg?.kneeY??-13-seated*(consoleSeat?1:8);
+    const toeX=profileLeg?.toeX??side*7+swing+side*seated*12;
+    const ankleY=profileLeg?.ankleY??footY-seated*4;
+    const legColor=profileLeg&&side===-1?style.dark:style.pants;
+    limb(ctx,profileLeg?.hipX??side*6,legY,kneeX,kneeY,9.6,legColor);
+    limb(ctx,kneeX,kneeY,toeX,ankleY,8.2,legColor);
     // Costura de joelho e volume de tecido: visíveis sem aumentar a silhueta.
     ctx.save();ctx.globalAlpha=.38;
     ctx.strokeStyle=style.highlight;ctx.lineWidth=1.1;
     ctx.beginPath();ctx.moveTo(kneeX-1.5,kneeY+1);ctx.lineTo(kneeX+2.1,kneeY+2);ctx.stroke();
     ctx.restore();
     const shoe=a.kind==="rabbit"?"#E5D5D5":"#283647";
-    ell(ctx,toeX+2,footY-seated*4,6.8,3.6,shoe,"#1D2736");
+    ell(ctx,toeX+2,ankleY,6.8,3.6,shoe,"#1D2736");
     // Sola clara de baixo contraste, pequena o bastante para não parecer tênis brilhante.
-    segment(ctx,toeX-1,footY-seated*4+1.8,toeX+6,footY-seated*4+1.9,1.0,
+    segment(ctx,toeX-1,ankleY+1.8,toeX+6,ankleY+1.9,1.0,
       a.kind==="rabbit"?"#B5A7AC":"#788597");
   }
 
@@ -342,14 +387,19 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const copying=a.kind==="owner"&&pose==="copying";
     const serving=a.kind==="owner"&&(pose==="idle"||printing||copying);
     const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
-    const ax=side*(sideways?10:15), ay=-47+headShift;
+    const ax=profileWalk?(side===-1?-4:5):side*(sideways?10:15), ay=-47+headShift;
     const wave=step*5*-side*(1-seated);
-    const elbowX=work?(side===1?21:-17)+work.pulse*1.7:
+    // In profile the shoulders remain narrow, and the arms counter-swing the legs.
+    const elbowX=profileWalk?(side===-1?-5+step*5:7-step*5):
+      work?(side===1?21:-17)+work.pulse*1.7:
       side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
-    const elbowY=work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
+    const elbowY=profileWalk?-36+headShift:
+      work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
-    const handX=movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
+    const handX=profileWalk?(side===-1?-7+step*8:10-step*8):
+      movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
+    const handY=profileWalk?-25+headShift:
+      movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
     // Borda da manga e luz discreta: o braço continua legível de costas.
@@ -368,9 +418,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   else{
     torso(ctx,style,headShift,sideways);
     segment(ctx,-11,-24+headShift,10,-24+headShift,2,style.dark);
-    if(!back)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
+    if(!back&&!sideways)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
       [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
-    if(!back){
+    if(!back&&!sideways){
       shape(ctx,[[-8,-50+headShift],[0,-46+headShift],[6,-51+headShift],
         [3,-53+headShift],[-5,-53+headShift]],style.trim);
       ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
