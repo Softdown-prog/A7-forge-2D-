@@ -71,7 +71,9 @@ try{
  for(const [key,name] of [["gallery","lhs_retail_before_after.png"],["stockSheet","lhs_retail_stock_states.png"]])await writeFile(resolve(output,name),Buffer.from(result[key].split(",")[1],"base64"));
  await writeFile(resolve(output,"retail_render_validation.json"),JSON.stringify({cases:result.cases,sold:result.sold,stockChanges:result.stockChanges,positions:result.positions},null,2)+"\n");
  assert.deepEqual(errors,[]);assert.deepEqual([...result.sold].sort(),["candy","snacks","soda"]);
- // Ignore one-level Canvas gradient rounding; bound larger differences independently.
- for(const c of result.cases){assert.ok(c.maxChannelDelta<=24&&c.changedChannels<=200&&c.meanBeyondRounding<.001,JSON.stringify(c));if(c.alpha!==1)assert.equal(c.maxChannelDelta,0);}
+ // Rounded, multi-depth chip packets add a few anti-aliased edges to cached sprites.
+ // Keep the max per-channel error and global delta budget unchanged; relax only
+ // the absolute changed-channel count for this more detailed shelf.
+ for(const c of result.cases){assert.ok(c.maxChannelDelta<=24&&c.changedChannels<=(c.kind==="snacks"?360:200)&&c.meanBeyondRounding<.001,JSON.stringify(c));if(c.alpha!==1)assert.equal(c.maxChannelDelta,0);}
  console.log(JSON.stringify({cases:result.cases.length,maxDelta:Math.max(...result.cases.map(c=>c.maxChannelDelta)),changedChannels:Math.max(...result.cases.map(c=>c.changedChannels)),meanDelta:Math.max(...result.cases.map(c=>c.meanChannelDelta)),sold:result.sold,stockChanges:true}));
 }finally{await browser?.close();server.kill();}
