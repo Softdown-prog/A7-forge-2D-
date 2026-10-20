@@ -6,6 +6,7 @@ on:
       - 'games/lan_house_simulator/scripts/verify_mobile_interface.mjs'
       - 'games/lan_house_simulator/scripts/profile_runtime.mjs'
       - 'games/lan_house_simulator/scripts/benchmark_crowded_simulation.mjs'
+      - 'games/lan_house_simulator/scripts/verify_integrated_engine_campaign.mjs'
       - 'games/lan_house_simulator/scripts/profile_stutter.mjs'
       - 'games/lan_house_simulator/scripts/verify_ps1_2002.mjs'
       - 'games/lan_house_simulator/scripts/verify_save_on_menu.mjs'
@@ -53,6 +54,9 @@ jobs:
       - name: Measure crowded six-hour engine costs and validate throughput
         working-directory: games/lan_house_simulator
         run: node scripts/benchmark_crowded_simulation.mjs out/mobile-stability
+      - name: Verify real integrated 35-day campaign with stock, employees, consoles and saves
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_integrated_engine_campaign.mjs out/mobile-stability/integrated
       - name: Profile real runtime on desktop and 4x CPU-throttled mobile
         working-directory: games/lan_house_simulator
         run: node scripts/profile_runtime.mjs out/mobile-stability production
