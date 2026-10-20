@@ -1,12 +1,12 @@
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 import {chromium} from "playwright";
 import {spawn} from "node:child_process";
-import {mkdir,writeFile} from "node:fs/promises";
+import {mkdir,writeFile,rename} from "node:fs/promises";
 import {resolve} from "node:path";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
-import {buyPs1Station,buyPs1Disc,ps1PlacementSlots,ps1Seat} from "../dist/js/sim/ps1.js";
+import {buyPs1Station,buyPs1Disc,buyPs1SecondSeat,ps1PlacementSlots,ps1Seat} from "../dist/js/sim/ps1.js";
 
 // Interagir com o aviso legítimo antes de testar botões do jogo.
 async function dismissPrivacy(page,mobile){
@@ -60,6 +60,12 @@ try{
   assert.match(await page.locator("#ps1-hourly").innerText(),/2,75/);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(overflow<=3,"console panel overflow "+width+": "+overflow);
+  await selectTask(page,"consoles","stations");
+  const upgrade=page.locator('button[data-ps1-second-seat="0"]');
+  assert.equal(await upgrade.isEnabled(),true,"second chair purchasable in 2002");
+  await click('button[data-ps1-second-seat="0"]');
+  assert.match(await page.locator("#ps1-stations").innerText(),/Modo dupla instalado/);
+  assert.match(await page.locator("#ps1-stations").innerText(),/vagas: 0\/2/);
   await page.locator("#section-consoles").screenshot({path:resolve(out,"ps1_admin_"+width+".png")});
   // Outra partida salva com cliente usando o controle no salão; exercício
   // do render real e da posição do personagem sobre a cadeira.
@@ -68,13 +74,18 @@ try{
   const slot=ps1PlacementSlots(active)[0];
   assert.ok(slot);assert.equal(buyPs1Station(active,slot.id).ok,true);
   assert.equal(buyPs1Disc(active,"turbo-circuito").ok,true);
-  const seat=ps1Seat(active,0);assert.ok(seat);
-  active.customers=[{
-   id:5,x:seat.x,y:seat.y,target:seat,stage:"using",costume:"regular",
-   pcIndex:null,ps1StationIndex:0,usedMinutes:12,sessionMinutes:45,waitingMinutes:0,
-   offlineWait:0,happy:true,wallet:20
-  }];
-  const playback=await browser.newContext({viewport:{width,height:900},isMobile:mobile,hasTouch:mobile});
+  assert.equal(buyPs1SecondSeat(active,0).ok,true);
+  const seat=ps1Seat(active,0,0),other=ps1Seat(active,0,1);
+  assert.ok(seat&&other);
+  active.nextCustomerId=7;
+  active.customers=[seat,other].map((point,i)=>({
+   id:5+i,x:point.x,y:point.y,target:point,stage:"using",costume:"regular",
+   pcIndex:null,ps1StationIndex:0,ps1SeatIndex:i,usedMinutes:12,sessionMinutes:90,
+   waitingMinutes:0,offlineWait:0,happy:true,wallet:20
+  }));
+  const playback=await browser.newContext({viewport:{width,height:900},
+   isMobile:mobile,hasTouch:mobile,
+   ...(!mobile?{recordVideo:{dir:out,size:{width,height:900}}}:{})});
   await playback.addInitScript(({key,state})=>{
    localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");
   },{key:GAME_SAVE_KEY,state:active});
@@ -84,10 +95,14 @@ try{
   await dismissPrivacy(playPage,mobile);
   if(mobile)await playPage.locator("#menu-continue").tap();
   else await playPage.locator("#menu-continue").click();
-  await playPage.screenshot({path:resolve(out,"ps1_playing_"+width+".png")});
+  await playPage.screenshot({path:resolve(out,"ps1_two_players_"+width+".png")});
+  if(!mobile)await playPage.waitForTimeout(3500);
   assert.deepEqual(errors,[],"browser PS1 UI has no runtime errors");
-  reports.push({width,consoleBought:true,ps1Price:2.75,overflow,actorSeated:true});
-  await playback.close();await ctx.close();
+  reports.push({width,consoleBought:true,secondSeatBought:true,ps1Price:2.75,overflow,twoActorsSeated:true});
+  const recording=playPage.video();
+  await playback.close();
+  if(recording)await rename(await recording.path(),resolve(out,"ps1_two_players_real_gameplay.webm"));
+  await ctx.close();
  }
  await writeFile(resolve(out,"ps1_smoke.json"),JSON.stringify({reports,passed:true},null,2));
  console.log(JSON.stringify({reports,passed:true}));

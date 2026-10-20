@@ -43,6 +43,13 @@ jobs:
       - name: Verify PS1 admin/shops with real touch and cookie choice
         working-directory: games/lan_house_simulator
         run: node scripts/verify_ps1_2002.mjs out/mobile-stability/ps1
+      - name: Encode real two-player PS1 footage as MP4
+        working-directory: games/lan_house_simulator
+        run: |
+          ffmpeg -hide_banner -loglevel error -y -i out/mobile-stability/ps1/ps1_two_players_real_gameplay.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
+            -movflags +faststart out/mobile-stability/ps1/ps1_two_players_real_gameplay.mp4
+          test -s out/mobile-stability/ps1/ps1_two_players_real_gameplay.mp4
       - name: Verify finance summary and monthly bills on desktop and mobile
         working-directory: games/lan_house_simulator
         run: node scripts/verify_financial_clarity.mjs out/mobile-stability/finance
