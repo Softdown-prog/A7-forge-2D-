@@ -19,7 +19,7 @@ Este documento **não é uma lista de funcionalidades aprovadas para implementa�
 
 # Ideia 001 — Primo Eric, a febre multiplayer e o nascimento do corujão
 
-**Versão da ideia:** 0.2 — plano de UI, mecânicas, consequências e próximos passos acrescentado em 21/10/2026; preserva integralmente o conceito narrativo 0.1.  
+**Versão da ideia:** 0.3 — campeonatos de sexta para sábado e madrugada jogável, mantendo as versões 0.1 e 0.2 como histórico de evolução. Nenhuma implementação autorizada.  
 **Situação:** EM DESENVOLVIMENTO / NÃO APROVADA PARA CODIFICAR  
 **Período narrativo pretendido:** 2000 a aproximadamente 2002  
 **Áreas afetadas no futuro:** história do Tony, correio/e-mails, jogos licenciáveis, comportamento dos clientes, ocupação dos PCs, campeonatos, expediente noturno e economia.
@@ -283,6 +283,104 @@ Planejamento de investigação futura, sem aprovar arquitetura definitiva:
 - Não deve haver monetização fictícia, renda de NPC invisível, cliente duplicado, teleporte na madrugada ou mudança de data que corrompa save.
 - O corujão pode ser uma consequência de decisões bem construídas, mas **não é obrigação nem condição para vencer o LHS**.
 
+## Versão 0.3 — campeonatos apenas de sexta para sábado, com madrugada jogável (21/10/2026)
+
+> **Refinamento de design em conversa; NÃO IMPLEMENTAR AINDA.** Esta versão preserva o surgimento gradual da ideia com Eric, mas revisa o formato de jogo. **Direção desejada pelo criador:** os campeonatos/corujões oficiais ocorrem **somente da sexta-feira para o sábado**; os visitantes realmente ocupam os PCs durante toda a madrugada, depois o jogo prossegue normalmente às 10h de sábado. **Proposta inicial de horários** (ainda não decididos): sexta fecha ao público às 22h, preparação até 23h, grupo chega às 23h, sessão termina aproximadamente às 6h ou 7h de sábado. Nem horário final, nem tamanho de grupo, nem tarifa foram aprovados.
+
+### Alteração da versão anterior
+
+Na versão 0.1/0.2, explorávamos a possibilidade de realizar **campeonatos oficiais de dia** e descobrir que atrapalham o salão. Com esta nova direção, **isso não é mais o funcionamento pretendido**: partidas normais e **grupinhos interessados em multiplayer podem aparecer de dia**, demonstrando a procura e a competição por máquinas, mas a **competição oficial organizada por Tony fica reservada para sexta à noite, avançando pelo sábado de madrugada**. O nascimento da ideia continua orgânico: Eric apresenta o jogo, os amigos querem jogar em grupo, Tony vê que reservar muitos PCs no horário normal prejudicaria o comércio, e então começa a pensar em noites de sexta.
+
+Não criar **um campeonato automaticamente toda sexta**. Sexta–sábado é a única janela permitida; o jogador deve escolher se deseja marcar um evento nessa semana, com antecedência e vagas viáveis. Outras noites não recebem corujões nesta versão.
+
+### Jornada de uma sexta com corujão — proposta visual
+
+| Horário / momento | Experiência dentro do jogo |
+| --- | --- |
+| **Durante a semana** | Se a oportunidade já surgiu, Tony pode planejar o próximo corujão: escolher a sexta, conferir computadores aptos, capacidade, pacote e reservas. |
+| **Sexta até 22h** | Expediente normal da lan house. Clientes comuns entram, pagam, usam PCs e saem normalmente. Nenhum PC fica ocupado por um evento que ainda não começou; regras de reservas precisam evitar promessas incompatíveis. |
+| **22h** | Fecha o expediente diurno como de costume; finalizam-se filas e a saída dos clientes normais. Tony prepara o salão. A loja não volta a admitir visitantes comuns nessa noite. |
+| **22h–23h (exemplo)** | Pequena transição de preparação: conferir PCs, lugar para o grupo, energia e estoque. Decidir se será uma fase visual curta ou um avanço de tempo, sem uma hora inteira de espera ociosa para o jogador. |
+| **23h (exemplo)** | Amigos inscritos chegam fisicamente à porta, dirigem-se ao atendimento e às estações, pagam de acordo com o modelo a definir, sentam e começam a jogar juntos. Não surgem instantaneamente sentados nas máquinas. |
+| **23h–6h/7h** | A câmera acompanha **a madrugada inteira**, com relógio e passagem do tempo reais: personagens usando PCs, animações de telas/teclados, possíveis saídas para comprar bebidas e lanches, reações e eventuais falhas. O jogador deve poder acompanhar e administrar, sem obrigatoriedade de ficar olhando cada minuto. |
+| **6h ou 7h de sábado (a definir)** | O campeonato termina; o grupo se levanta, libera PCs e sai fisicamente. Apurar vendas e gastos sem criar receita automática. |
+| **Após a saída → 10h** | O jogo **avança apenas o período restante** até a reabertura normal de sábado; não cria um “segundo dia” artificial nem reinicia caixa, estoque, contratos ou campanha. Pode mostrar um resumo enxuto do corujão durante a transição. |
+| **Sábado, 10h** | A lan house abre para o público comum, no mesmo save e com consequências reais da madrugada: desgaste, caixa, energia, estoque, reputação e eventuais pendências. |
+
+**Observação de ritmo:** poderíamos oferecer **Acompanhar madrugada**, **Velocidade normal/acelerada** e **Ver resultado após encerrar**, mas pular tudo não deve gerar o resultado por fórmula fictícia. Um avanço rápido deve executar a mesma simulação determinística que ocorreria normalmente. Esses botões **ainda não estão aprovados**.
+
+### Estado do calendário encontrado no repositório
+
+A campanha já usa 12 meses de 30 dias (360 por ano), com 1998–2030, e cada expediente simulado tem 720 minutos correspondentes às 10h–22h. Porém **a UI de calendário atual mostra dia, data e horário, não o dia da semana**. Não existe ainda um contrato explícito de `sexta-feira`/`sábado`. Portanto, apesar de o calendário de campanha funcionar, **será necessário acrescentar o ciclo semanal antes de liberar corujões de sexta**.
+
+- Definir uma âncora estável de dia da semana, coerente com o calendário **fictício de 360 dias por ano**. Testar sextas/sábados consecutivos atravessando fim de mês e fim de ano; não derivar o dia da semana diretamente de datas reais do sistema operacional.
+- O evento pertence à **sexta-feira que o originou**, embora parte da sessão aconteça depois da meia-noite. Não permitir agendamento simultâneo da mesma madrugada em dois dias, duplicar cobrança ou contar duas sextas.
+- Decidir como representar, na camada de simulação, o tempo além das 22h sem reinterpretar todos os saves antigos nem modificar cegamente `DAY_MINUTES = 720`.
+- A passagem por 00h da vida civil e a virada **única** do dia normal devem coexistir corretamente. Cobrança mensal, clima, correio, chegadas de clientes, serviço contratado e registros financeiros não podem duplicar ou disparar durante um expediente que já terminou.
+- Sábado às 10h deve representar **um único próximo dia normal**. O avanço de 7h para 10h não pode contar um segundo dia ou apagar dados.
+- Se ocorrer encerramento de mês/ano durante o corujão, elaborar regras expressas para despesas e datas e testar saves feitos às 2h, 5h e 7h da madrugada.
+- A camada de desenho só exibirá data/hora coerentes com o turno atual; nenhuma mudança visual no calendário sem teste de compatibilidade.
+
+### Tamanho do grupo, vagas e reserva — ainda a decidir
+
+O corujão deve usar PCs físicos existentes e participantes reais. Antes de anunciar a sexta, o jogador precisará conferir **quantos computadores aptos existem** (ligados, funcionando, com sistema e jogo compatíveis, e sem impedimentos). O número de vagas nunca pode exceder a capacidade simultânea elegível.
+
+Possível formulário compacto, **ainda provisório**:
+- **Data:** próxima sexta-feira ou uma sexta futura, nunca outra noite.
+- **Vagas:** limitada ao número de PCs compatíveis e disponíveis; sugerir valor, mas deixar o jogador decidir dentro de limites.
+- **Valor do pacote:** cobrar por pessoa, por PC ou por grupo? Definir futuramente e mostrar preço completo antes de confirmar.
+- **Previsão:** inscritos confirmados x capacidade, equipamentos disponíveis, custo de energia e caixa necessário.
+- **Ação:** **Abrir inscrições**, depois **Fechar inscrições**, **Cancelar** ou **Acompanhar reservas** conforme fase.
+- O **primeiro evento** pode ser um grupo de amigos que pede vagas; depois, uma agenda pode permitir noites opcionais. Isso precisa crescer gradualmente junto com a história, sem entregar todos os controles de imediato.
+- Grupos **não necessariamente terão sempre a mesma quantidade de integrantes**; decidir limites mínimos para um campeonato e alternativas para quem chega a menos.
+- **No-show**, desistências, adiantamentos e reembolsos estão em aberto. No momento da chegada, ninguém pode pagar duas vezes nem ocupar vaga de outro.
+- PCs que quebram entre reserva e evento precisam gerar escolha ou remediação coerente, não teleporte, vaga imaginária ou faturamento garantido.
+
+### Gameplay durante a madrugada
+
+- **Um turno especial**, não clientes comuns aleatórios entrando a noite toda; o acesso do público diurno encerra-se às 22h, e o evento admite somente os convidados/inscritos conforme a regra futura.
+- Clientes têm identidade, intenção de jogar em grupo, entrada, fila, pagamento, caminhada, uso do PC, compra de mercadorias, saída e reação a incidentes.
+- Sessão longa: os jogadores podem ficar nos computadores durante a noite toda, mas precisam de animação crível, necessidades de consumo e possibilidade de pausa física sem perder a vaga indevidamente. Não precisam ficar oito horas na mesmíssima pose sem variações.
+- O **mesmo** sistema de rota, motor de clientes, computadores, sons, despesas, compra e estoque do jogo diurno deve ser reutilizado; comportamentos coletivos são regras adicionais separadas.
+- Possíveis incidentes: queda de conexão/rede local, problema elétrico, computador quebrado, falta de bebida/comida, grupo incompleto, desistência, barulho e reclamações de vizinhos. Frequência pequena e condicionada; não transformar toda noite em uma sequência de problemas.
+- Falar de campeonatos implica estudar placar simbólico, partidas/equipes, pontuação de evento e eventual premiação, mas não exige que o FPS inteiro exista dentro do simulador.
+- **A vida normal continua no sábado:** computador desgastado ou quebrado na madrugada pode atrapalhar o dia seguinte; estoque consumido à noite precisa ser reposto; caixa muda pelo que ocorreu de verdade.
+
+### Escolhas, consequências e duração da experiência
+
+- **Não marcar a sexta:** operação normal, sexta fecha às 22h e sábado abre às 10h. Sem punição mágica; existe apenas a possível demanda noturna não atendida.
+- **Marcar e anunciar:** gera oportunidade de preencher vagas, mas também compromisso; condições de cancelamento e satisfação ainda precisam ser especificadas.
+- **Poucas inscrições:** noite pode render pouco ou dar prejuízo. Escolher antes se cancela, reduz o evento ou mantém a reserva pequena.
+- **Corujão bem-sucedido:** os mesmos grupos podem recomendar a lan house e solicitar outra sexta; efeitos dependem de atendimento e lucro reais, sem crescimento ilimitado.
+- **Corujão problemático:** reclamações e custo maior podem afetar oportunidades futuras; não aplicar multas ou eventos punitivos inevitáveis.
+- **Recusar por meses:** outros estabelecimentos *podem* se tornar referência para aquele público (ideia narrativa de concorrência, não sistema rival aprovado). Tony pode mais tarde reconsiderar, mas talvez tenha de reconstruir a comunidade e não receba o mesmo primeiro convite.
+- Evitar **esgotar o calendário** com corujões repetitivos: nunca tornar obrigatória a mesma noite toda semana. O evento deve parecer uma ocasião aguardada, não tarefa doméstica.
+
+### Interface mínima sugerida para a sexta
+
+**A. Agenda de eventos (futura página compacta de Administração):** próxima sexta, vagas, reservas, tarifa, situação (*não anunciado / inscrições / confirmado / em curso / finalizado*) e botões contextuais. Não acrescentar outra janela enorme.
+
+**B. HUD de madrugada:** algo como **“SEX 23:10 · CORUJÃO · 4/6 jogadores”**, depois **“SÁB 02:30 · CORUJÃO”** e, ao término, **“SÁB 07:00 · Encerramento”**. Mostrar os nomes dos dias apenas depois que existir um cálculo semanal consistente.
+
+**C. Notificações:** confirmação da primeira turma, erro de disponibilidade, pedido de cancelamento, resultado financeiro e pequenas mensagens orgânicas dos participantes. Não gerar e-mails de Eric a cada etapa.
+
+**D. Encerramento:** após a saída do grupo, um relatório curto e opcional com entradas e custos; ação **“Abrir sábado às 10h”** ou transição equivalente, sem resetar o negócio. Garantir que o jogo não fique preso entre 7h e 10h.
+
+### Novas decisões para continuar conversando
+
+1. **Começa às 22h, 22h30 ou 23h?** Os participantes entram depois que o último cliente comum sair? Existe uma preparação visível ou transição curta?
+2. **Termina às 6h ou 7h?** Como o jogo trata o intervalo até as 10h e possíveis serviços de limpeza/manutenção?
+3. **Campeonato e corujão serão sinônimos?** Pode existir corujão só com amigos jogando sem torneio formal? Nesta versão, as competições oficiais são restritas a sexta–sábado.
+4. **Todas as sextas disponíveis ou apenas convites esporádicos?** A proposta atual é oportunidade semanal opcional, sem evento automático.
+5. **Quantos PCs/participantes são o mínimo para começar?** E como um grupo maior se divide em rodadas?
+6. **Como funciona o pagamento?** Pacote por PC, por pessoa, reserva antecipada, política de reembolso e compra extra de mercadorias.
+7. **Os amigos ficam sentados continuamente ou podem se levantar para comprar coisas?** A reserva da vaga deve persistir durante pausas legítimas.
+8. **O relógio acelera na madrugada?** Se sim, mesmas consequências reais; como oferecer uma experiência agradável sem oito horas entediantes.
+9. **Dia da semana:** âncora/primeiro dia do calendário fictício, apresentação ao jogador e respeito à passagem de ano.
+10. **Como tornar a primeira sexta especial?** Eric, Tony, a demanda dos amigos e as consequências anteriores precisam justificar o primeiro corujão sem desbloqueio artificial.
+
+**Status no final da conversa:** preferência do criador registrada como **campeonatos de sexta para sábado**, com clientes reais durante a madrugada, saída de manhã e retorno ao expediente de sábado às 10h. **Horários e regras de pagamento/vagas ainda em aberto. Nenhuma implementação autorizada.**
+
 ## Pontos que ainda precisamos conversar
 
 1. **Personalidade de Eric:** idade aproximada, relação com Tony, linguagem dos e-mails, ocupação na França e frequência dos contatos.
@@ -310,6 +408,7 @@ Planejamento de investigação futura, sem aprovar arquitetura definitiva:
 
 - **21/10/2026 — Versão 0.1:** registrado o conceito original de Eric na França, a descoberta gradual de um jogo multiplayer inspirado em *Counter-Strike*, a demanda e os campeonatos que pressionam a capacidade diurna, e o surgimento do corujão como solução entre 2000 e aproximadamente 2002. Permanecem abertas as escolhas narrativas, regras técnicas e mecânicas reais de jogo.
 - **21/10/2026 — Versão 0.2:** acrescido mapa gradual de UI e botões, comércio, grupos de jogadores, campeonatos, corujão, escolhas de investimento/recusa com oportunidades futuras, plano de arquitetura do relógio e uma sequência explícita de decisões a amadurecer antes de programar. **Ainda não aprovado para implementação.**
+- **21/10/2026 — Versão 0.3:** campeonatos oficiais limitados à noite de sexta para sábado, grupo chega e joga fisicamente a madrugada, saída às 6h/7h (a definir), retorno ao expediente normal às 10h de sábado; horários, vagas, pacotes e calendário semanal ainda em discussão. O conflito diurno passa a ser a **procura por partidas em grupo**, não campeonatos oficiais de dia. Identificada necessidade de introduzir cálculo de dia da semana no calendário fictício.
 
 ---
 
