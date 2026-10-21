@@ -36,8 +36,8 @@ export class SceneMotion {
   return {distance:(old?.distance??0)+travel,
    view:travel>.0001?screenViewForMotion(dx,dy):old?.view??screenViewForMotion(0,0,current.facing)};
  }
- private workerSample(s:GameState,prev:RepairJob|CleaningJob|undefined,
-  current:RepairJob|CleaningJob,base:WorkerStride|undefined,alpha:number):MotionWorker{
+ private workerSample<T extends RepairJob|CleaningJob>(s:GameState,prev:T|undefined,
+  current:T,base:WorkerStride|undefined,alpha:number):T&{renderMotion:RenderMotion}{
   const fallback:WorkerStride=base??{distance:0,view:screenViewForMotion(0,0,current.facing)};
   if(!prev)return {...current,renderMotion:{...fallback,moving:false}};
   const dx=current.x-prev.x,dy=current.y-prev.y;
