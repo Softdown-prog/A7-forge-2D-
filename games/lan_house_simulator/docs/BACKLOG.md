@@ -1,5 +1,7 @@
 # Backlog — visão sem perda de escopo
 
+> **Ideias grandes ainda em discussão:** consultar [IDEIAS_IMPLEMENTACOES_FUTURAS.md](IDEIAS_IMPLEMENTACOES_FUTURAS.md). O caderno reúne conceitos narrativos e mecânicas que **ainda não foram aprovados para implementação**, começando por Eric, multiplayer e a origem do corujão (2000–2002). Este backlog continua reservado à execução e validação.
+
 > **Prioridades atualizadas em 20/10/2026.** As fases abaixo preservam o histórico; checkboxes antigas podem ter sido superadas por entregas posteriores. Antes de abrir um sistema novo, consultar este painel e a seção datada mais recente. A prioridade é **terminar o jogo sem burocracia desnecessária**.
 
 ## Painel atual de execução
