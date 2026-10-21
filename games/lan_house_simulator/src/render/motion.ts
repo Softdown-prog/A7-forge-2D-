@@ -50,7 +50,7 @@ export class SceneMotion {
    facing:travel>.0001?directionFromDelta(dx,dy,current.facing??prev.facing):current.facing,
    renderMotion:{distance:fallback.distance+travel*alpha,
     view:travel>.0001?screenViewForMotion(dx,dy):fallback.view,
-    moving:travel>.0001&&phase!=="working"}} as T&{renderMotion:RenderMotion};
+    moving:travel>.0001&&phase!=="working"}} as unknown as T&{renderMotion:RenderMotion};
  }
  capture(s:GameState):void{
   const strides=new Map<number,{distance:number;view:ActorScreenView}>();
