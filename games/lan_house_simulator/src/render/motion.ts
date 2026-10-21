@@ -4,8 +4,11 @@ import {canTraverseLocalStep} from "../sim/navigation.js";
 import {directionFromDelta,screenViewForMotion,type ActorScreenView} from "./direction.js";
 import {entrance} from "../sim/engine.js";
 
-/** Presentation-only data. Never added to the simulation or a saved customer. */
-export type MotionCustomer=Customer & {renderMotion?:{distance:number;view:ActorScreenView;moving:boolean}};
+/** Presentation-only data. Never added to the simulation or a save. */
+export interface RenderMotion {distance:number;view:ActorScreenView;moving:boolean}
+export type MotionCustomer=Customer & {renderMotion?:RenderMotion};
+export type MotionWorker=(RepairJob|CleaningJob)&{renderMotion?:RenderMotion};
+interface WorkerStride {distance:number;view:ActorScreenView}
 const groundDistance=(dx:number,dy:number)=>Math.hypot((dx-dy)*64,(dx+dy)*32);
 
 const lerp=(a:number,b:number,t:number)=>a+(b-a)*t;
@@ -17,7 +20,38 @@ export class SceneMotion {
  private cleaning:CleaningJob|undefined;
  private captured=false;
  private strides=new Map<number,{distance:number;view:ActorScreenView}>();
- reset():void{this.customers.clear();this.repairs.clear();this.cleaning=undefined;this.captured=false;this.strides.clear();}
+ private repairStrides=new Map<number,WorkerStride>();
+ private cleaningStride:WorkerStride|undefined;
+ reset():void{
+  this.customers.clear();this.repairs.clear();this.cleaning=undefined;
+  this.captured=false;this.strides.clear();this.repairStrides.clear();this.cleaningStride=undefined;
+ }
+ /** Same screen-space distance and eight-view facing used for customer strides. */
+ private workerStride(s:GameState,prev:RepairJob|CleaningJob|undefined,
+  current:RepairJob|CleaningJob,old:WorkerStride|undefined):WorkerStride{
+  if(!prev)return {distance:0,view:screenViewForMotion(0,0,current.facing)};
+  const dx=current.x-prev.x,dy=current.y-prev.y;
+  const valid=Math.hypot(dx,dy)<=.8&&canTraverseLocalStep(s,prev,current);
+  const travel=valid?groundDistance(dx,dy):0;
+  return {distance:(old?.distance??0)+travel,
+   view:travel>.0001?screenViewForMotion(dx,dy):old?.view??screenViewForMotion(0,0,current.facing)};
+ }
+ private workerSample(s:GameState,prev:RepairJob|CleaningJob|undefined,
+  current:RepairJob|CleaningJob,base:WorkerStride|undefined,alpha:number):MotionWorker{
+  const fallback:WorkerStride=base??{distance:0,view:screenViewForMotion(0,0,current.facing)};
+  if(!prev)return {...current,renderMotion:{...fallback,moving:false}};
+  const dx=current.x-prev.x,dy=current.y-prev.y;
+  // Never animate a teleport, nor interpolate a chord across a closed partition.
+  const valid=Math.hypot(dx,dy)<=.8&&canTraverseLocalStep(s,prev,current);
+  const travel=valid?groundDistance(dx,dy):0;
+  const at=valid?this.position(s,prev,current,alpha):{x:current.x,y:current.y};
+  const phase=alpha<1?prev.phase:current.phase;
+  return {...current,...at,phase,progress:lerp(prev.progress,current.progress,alpha),
+   facing:travel>.0001?directionFromDelta(dx,dy,current.facing??prev.facing):current.facing,
+   renderMotion:{distance:fallback.distance+travel*alpha,
+    view:travel>.0001?screenViewForMotion(dx,dy):fallback.view,
+    moving:travel>.0001&&phase!=="working"}};
+ }
  capture(s:GameState):void{
   const strides=new Map<number,{distance:number;view:ActorScreenView}>();
   for(const c of s.customers){
@@ -32,6 +66,15 @@ export class SceneMotion {
     view:distance>.0001?screenViewForMotion(dx,dy):old?.view??screenViewForMotion(0,0,c.facing)});
   }
   this.strides=strides;
+  const repairStrides=new Map<number,WorkerStride>();
+  for(const job of s.repairJobs??[]){
+   const old=this.repairs.get(job.pc);
+   const fresh=old?.phase==="leaving"&&job.phase==="arriving";
+   repairStrides.set(job.pc,this.workerStride(s,fresh?undefined:old,job,
+    fresh?undefined:this.repairStrides.get(job.pc)));
+  }
+  this.repairStrides=repairStrides;
+  this.cleaningStride=s.cleaningJob?this.workerStride(s,this.cleaning,s.cleaningJob,this.cleaningStride):undefined;
   this.captured=true;
   this.customers=new Map(s.customers.map(c=>[c.id,{...c,target:{...c.target}}]));
   this.repairs=new Map((s.repairJobs??[]).map(j=>[j.pc,{...j}]));
@@ -66,14 +109,9 @@ export class SceneMotion {
     // The renderer points the actor along the motion being presented, rather
     // than turning early toward the next simulation waypoint.
     target:{x:c.x,y:c.y}};
-  }),repairJobs:s.repairJobs?.map(j=>{
-   const prev=this.repairs.get(j.pc);if(!prev)return j;
-   return {...j,...this.position(s,prev,j,alpha),phase:alpha<1?prev.phase:j.phase,
-    progress:lerp(prev.progress,j.progress,alpha)};
-  }),cleaningJob:s.cleaningJob&&this.cleaning?{
-   ...s.cleaningJob,...this.position(s,this.cleaning,s.cleaningJob,alpha),
-   phase:alpha<1?this.cleaning.phase:s.cleaningJob.phase,
-   progress:lerp(this.cleaning.progress,s.cleaningJob.progress,alpha)
-  }:s.cleaningJob};
+  }),repairJobs:s.repairJobs?.map(j=>this.workerSample(s,this.repairs.get(j.pc),j,
+   this.repairStrides.get(j.pc),alpha)),cleaningJob:s.cleaningJob
+    ?this.workerSample(s,this.cleaning,s.cleaningJob,this.cleaningStride,alpha)
+    :undefined};
  }
 }

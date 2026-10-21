@@ -81,3 +81,10 @@ Os campos são opcionais no `GameState` e em saves antigos. Testes: `tests/emplo
 - Após o acabamento dos serviços dos funcionários, o correio recebe um acontecimento de 2004 relacionado à presença de alunos uniformizados durante as aulas. O assunto é tratado como **pedido da escola local**, não regra nacional.
 - O evento usa `school-uniform-policy` no sistema de histórias já existente, com consequências, retorno e encerramento. Não interfere no caminho, salário ou renderização de funcionários.
 - Testes `school-uniform-2004.test.mjs` e `verify_uniform_2004.mjs` cobrem calendário, economia, decisões, save e apresentação na caixa de correio do jogo.
+
+## Passada ancorada ao deslocamento — faxineiro e técnico (21/10/2026)
+- A animação de chegada/saída dos profissionais agora usa a mesma fase de passada por distância projetada no piso e a mesma direção isométrica de oito vistas dos clientes, conforme `walkCycle.ts` e `screenViewForMotion()`.
+- `SceneMotion` mantém distância acumulada de cada reparo (por PC) e da limpeza somente na camada visual; interpolação e direção usam o deslocamento real, nunca o próximo waypoint.
+- Funcionário parado mantém os pés parados. Varrer e reparar continuam com animações específicas de mãos e ferramentas; não há caminhada durante o serviço.
+- Salários, duração, rotas, divisórias, posições, reservas e formato de save permanecem idênticos. Deslocamentos inválidos/teleporte não criam passadas.
+- Testes em `tests/worker-motion.test.mjs` comparam deslocamento, distância, direção, animação parada, serviço, reinício do interpolador e ausência de dados visuais no save. A cena aplica `walkDistance`/`screenView` somente para os profissionais em deslocamento.

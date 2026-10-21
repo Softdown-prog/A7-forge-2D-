@@ -1,4 +1,4 @@
-import type {MotionCustomer} from "./motion.js";
+import type {MotionCustomer,MotionWorker} from "./motion.js";
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
 import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,builtPosters,type EditableObject} from "../sim/editableObjects.js";
@@ -565,10 +565,16 @@ export class SceneRenderer {
         ctx.restore();
       }
     }
+    const locomotion=(job as MotionWorker).renderMotion;
+    const moving=locomotion?.moving??!!job.moving;
     drawActor(ctx,camera,{
       x:job.x,y:job.y,kind,id:kind==="cleaner"?-17:-19,
-      time,pose:working?(kind==="cleaner"?"sweeping":"repairing"):job.moving?"walking":"idle",
-      direction:job.facing??"north"
+      time,pose:working?(kind==="cleaner"?"sweeping":"repairing"):moving?"walking":"idle",
+      direction:job.facing??"north",
+      // Workers now share the customers' ground-driven stride and isometric facing.
+      // Work actions stay independent; an idle worker never walks in place.
+      walkDistance:!working?locomotion?.distance:undefined,
+      screenView:!working&&moving?locomotion?.view:undefined
     });
     const p=iso({x:job.x,y:job.y},camera);
     if(working){
