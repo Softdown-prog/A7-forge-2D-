@@ -4,6 +4,12 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/simulationState.ts'
+      - 'games/lan_house_simulator/src/sim/customerMotion.ts'
+      - 'games/lan_house_simulator/src/sim/customerFlow.ts'
+      - 'games/lan_house_simulator/src/sim/customerArrival.ts'
+      - 'games/lan_house_simulator/src/sim/customerDecisions.ts'
+      - 'games/lan_house_simulator/src/sim/customerLifecycle.ts'
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
       - 'games/lan_house_simulator/tests/customer-stall-recovery.test.mjs'
@@ -13,7 +19,7 @@ permissions:
   contents: read
 jobs:
   crowd-recovery:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
