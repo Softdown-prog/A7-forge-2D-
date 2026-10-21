@@ -1,36 +1,65 @@
 # Backlog — visão sem perda de escopo
 
+> **Prioridades atualizadas em 20/10/2026.** As fases abaixo preservam o histórico; checkboxes antigas podem ter sido superadas por entregas posteriores. Antes de abrir um sistema novo, consultar este painel e a seção datada mais recente. A prioridade é **terminar o jogo sem burocracia desnecessária**.
+
+## Painel atual de execução
+
+### Entregas consolidadas
+- [x] Jogo HTML5/TypeScript/Canvas, economia, fluxo dos clientes, expansões, equipamentos, eventos e saves.
+- [x] Caminhada aprovada: passada orientada pela distância real percorrida, poses isométricas e cache coerente (PR #36).
+- [x] Auditoria de lotação, fechamento às 22h e recuperação de save durante circulação; manter regressões.
+- [x] Mercadorias com catálogo individual, fornecedores, preço, qualidade, pedidos, vendas e consumo reais.
+- [x] PlayStation 1 de 2002 com CDs, cobranças e segunda cadeira opcional para duas sessões simultâneas.
+- [x] Testes automatizados Node.js/Chromium em desktop e mobile emulado. **Não são aprovação em aparelho físico.**
+
+### Prioridades de desenvolvimento
+1. **Revisão visual:** aprovar no jogo real as duas cadeiras de PS1, as poses e a oclusão, preservando a caminhada atual.
+2. **Campanhas longas e balanceamento:** medir preços, procura, VIPs, salários, expansões, hardware e retorno de GPUs sem gerar clientes/receitas fictícios.
+3. **Eventos e progressão 1998–2030:** conferir intervalos, escolhas e efeitos de longo prazo antes de ampliar cartas.
+4. **Teste em celular físico:** toque, rolagem, FPS, legibilidade, importação/exportação e retomada de partidas.
+5. **Saneamento contínuo:** separar entrega técnica, aprovação humana, ideias futuras e tarefas obsoletas. Planos antigos de serviços online exigem reconciliação com a implementação atual.
+
+### Decisões de design — fora de escopo
+- **Não implementar produtos perecíveis, vencimento de estoque, prazo de validade ou lotes FIFO.** Esse gerenciamento acrescentaria trabalho repetitivo à lan house sem ganho suficiente para a diversão. O sistema atual de compras/fornecedores continua.
+- **Cancelamento avançado de pedidos e transporte físico de mercadorias não estão priorizados** e não são compromissos de desenvolvimento.
+- Novas mecânicas devem melhorar a estratégia, a clareza ou a experiência; não adicionar complexidade por si só.
+
+### Como ler o histórico
+- **[x]** indica entrega técnica no escopo descrito, não aprovação artística.
+- **[ ]** indica implementação/estudo/validação ainda por fechar; verificações em celular físico não se confundem com emulação.
+- As seções datadas continuam para preservar decisões antigas, mas o **status mais recente prevalece** sobre listas iniciais repetidas.
+
 ## Fase A — estrutura e recorte jogável
 - [x] Pasta isolada, documentação de produto, contratos e painel inicial.
 - [x] TypeScript + Canvas 2D fixo com cenário dimétrico, balcão, dono e clientes.
 - [x] Protótipo de fluxo de clientes, PCs, finanças, incidentes e save.
 - [x] Pool de 3 workers de CI com validações e piloto de arte.
-- [ ] Teste visual real em browsers móveis e desktop e ajuste de escala.
-- [ ] Aprovação visual dos sprites substituindo placeholders.
+- [x] Testes reais no Chromium desktop e mobile emulado (360/414 px), com ajuste de escala; avaliação em celular físico permanece pendente.
+- [ ] Aprovação humana da arte/sprites finais em tamanho real de jogo; CI não equivale a aprovação artística.
 
 ## Fase B — Forge e personagens
 - [ ] Design original de dono/balcão, mesa/monitor/cadeira, refrigerante, doce e prateleiras de balas/paçocas/biscoitos/salgadinhos; sprites 2D separados com âncora.
-- [ ] Animações direcionais de caminhada; sentar/usar PC (telas piscando), levantar e sair; identidade travada.
-- [ ] Fantasias originais: palhaço, vampiro, monstro costurado, coelho e mascotes genéricos; sem cópia de IPs.
-- [ ] Controle de oclusão e profundidade entre balcão, dono, mesa, cadeira e cliente.
+- [x] Caminhada dirigida por distância real, vistas isométricas, sentar/usar PC, levantar e sair (PR #36). Aceite de arte final permanece separado.
+- [x] Arquétipos de fantasias procedurais originais (palhaço, vampiro, monstro costurado e mascotes) implementados; revisão artística final separada.
+- [x] Ordenação de profundidade/oclusão integrada ao Canvas; pequenos ajustes visuais seguem sujeitos a avaliação.
 
 ## Fase C — economia tycoon
-- [ ] Mais linhas de estoque/fornecedores: refrigerantes, doces, balas, paçocas, biscoitos e salgadinhos, preços e qualidade por fornecedor.
-- [ ] Cliente VIP, conforto, humor, fila, avaliações e reputação com efeitos consistentes.
-- [ ] Melhorias no computador, rede, energia; desgaste/consumo por cliente e relatórios financeiros.
-- [ ] Aumento de preço reduz procura; promoções aumentam circulação, desgaste e custos, sem fabricar receita.
-- [ ] Multa por jogos comerciais sem licença e opção de regularizar; balanço cuidadoso do evento.
+- [x] Mercadorias individuais, fornecedores, preço, qualidade ponderada e consumo real integrados (seção de 19/10). Sem validade ou FIFO.
+- [x] VIP, necessidades, espera/fila, humor e reputação implementados; frequência e margem exigem balanceamento longo.
+- [x] Evolução de PCs, conexão, energia, desgaste, consumo e relatórios implementados; amortização histórica ainda em análise.
+- [x] Precificação, demanda e campanhas publicitárias pagas integradas; calibragem em campanhas longas segue pendente.
+- [x] Evento de multa/licenciamento e regularização integrado; duplicidade de multa corrigida, impacto econômico em acompanhamento.
 
 ## Fase D — expansão e polimento
-- [ ] Nova sala anexada, montagem física das mesas/PCs com colisão/ocupação e rotas internas.
-- [ ] Aluguel, link, energia, manutenção, eventual equipe; cobrança por mês do jogo.
-- [ ] Chuva fora da cena como sinal econômico e instabilidade de internet; variedade de eventos.
+- [x] Expansão do salão, PCs, divisórias, ocupação e rotas internas implementados; ergonomia de layout máximo em celular real pendente.
+- [x] Aluguel, internet, energia, manutenção, funcionários e cobrança mensal integrados; valores sujeitos a balanceamento.
+- [x] Clima, instabilidades e eventos implementados; ritmo e impactos históricos exigem revisão.
 - [ ] Importar efeitos gravados pelo criador: moedas, líquido, vendas, alertas.
-- [ ] Menu completo, opções, som, acessibilidade, suporte touch, save versionado, publicação estática.
+- [x] Menu, áudio, suporte touch, saves e publicação web integrados; acessibilidade e experiência em aparelhos físicos seguem em refinamento.
 
 ## Regra de pronto
 
-A tarefa só recebe status concluído se código + testes + visualização em tamanho de jogo estiverem consistentes. CI verde não significa arte aprovada. Não substituir dois objetos aprovados para refazer o terceiro. 
+A entrega técnica exige código, testes e visualização em tamanho real consistentes. **CI verde não significa aprovação artística nem teste em celular físico**; manter aceites humanos separados. Não substituir dois objetos aprovados para refazer o terceiro.
 
 ## Próxima validação visual (restrita)
 - [x] Definir plataforma 2:1 suspensa, telhado omitido, frente recortada e soleira sem exterior.
@@ -903,8 +932,8 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Tarifa e receita separadas das sessões de PCs, desgaste e manutenção dos controles.
 - [x] Preservar saves antigos sem PS1; limitar a três bancadas e recusar instalação em espaços ocupados.
 - [x] Criar validação real em Chromium (desktop/414/360 px), compra na loja, aba de preços e cena com jogador sentado.
-- [ ] Segunda cadeira e modo para dois jogadores, depois de validar a experiência individual.
-- [ ] Catálogo de jogos de console e licenciamento por título, com pesquisa histórica e balanceamento posterior.
+- [x] Segunda cadeira e dois jogadores simultâneos entregues em 20/10/2026; ver seção específica e `tests/ps1-two-players.test.mjs`.
+- [x] Catálogo inicial de CDs físicos do PS1 implementado; expansão e licenciamento adicional ficam como possibilidades de design, não tarefas exigidas.
 
 ## Mercadorias individuais, fornecedores e consumo real (19/10/2026)
 - [x] Catálogo de 12 produtos, identidade visual e progressão 1998–2030; estoque e preços legados preservados.
@@ -916,7 +945,7 @@ Detalhes: [PRINTING_SERVICE.md](PRINTING_SERVICE.md).
 - [x] Embalagens e cores vinculadas ao estoque com cache de sprites; gesto e fala de consumo após venda real.
 - [x] Testes de economia, eventos de fornecedor, concorrência na última unidade, saves antigos/novos e navegador, incorporados aos gates de CI.
 - [x] Inspeção de interface e vídeo de consumo no Canvas real; sem personagem criado para gerar receita.
-- [ ] Expiração de alimentos, lotes FIFO, cancelamento de pedidos e transporte físico: fora deste incremento.
+**Decisão de escopo (20/10/2026):** não criar vencimento de alimentos, itens perecíveis nem lotes FIFO. Cancelamento avançado de pedidos e transporte físico não estão priorizados e **não são pendências de implementação**. Preservar a gestão de mercadorias atual.
 
 Detalhes, limites e reprodução: `docs/MERCHANDISE.md`.
 
