@@ -19,7 +19,7 @@ Este documento **não é uma lista de funcionalidades aprovadas para implementa�
 
 # Ideia 001 — Primo Eric, a febre multiplayer e o nascimento do corujão
 
-**Versão da ideia:** 0.3 — campeonatos de sexta para sábado e madrugada jogável, mantendo as versões 0.1 e 0.2 como histórico de evolução. Nenhuma implementação autorizada.  
+**Versão da ideia:** 0.4 — primeiro grupo, agenda de sexta, reservas reais e percurso comercial; versões 0.1–0.3 preservadas. Nenhuma implementação autorizada.  
 **Situação:** EM DESENVOLVIMENTO / NÃO APROVADA PARA CODIFICAR  
 **Período narrativo pretendido:** 2000 a aproximadamente 2002  
 **Áreas afetadas no futuro:** história do Tony, correio/e-mails, jogos licenciáveis, comportamento dos clientes, ocupação dos PCs, campeonatos, expediente noturno e economia.
@@ -381,6 +381,138 @@ Possível formulário compacto, **ainda provisório**:
 
 **Status no final da conversa:** preferência do criador registrada como **campeonatos de sexta para sábado**, com clientes reais durante a madrugada, saída de manhã e retorno ao expediente de sábado às 10h. **Horários e regras de pagamento/vagas ainda em aberto. Nenhuma implementação autorizada.**
 
+## Versão 0.4 — o primeiro grupo, a agenda de sexta e a reserva real (22/10/2026)
+
+> **Etapa de ideação, SEM IMPLEMENTAÇÃO AUTORIZADA.** Esta versão especifica um *caminho de experiência candidato*, não define preços, probabilidades nem botões finais. As ideias v0.1–0.3 seguem preservadas; em conflitos, a preferência mais recente por **eventos oficiais somente de sexta para sábado** prevalece. Aqui exploramos o primeiro grupinho de amigos, as inscrições e o custo real de uma noite — não acrescentamos esses sistemas ao jogo.
+
+### Um princípio: não começar com um campeonato gigante
+
+O LHS começa com **três computadores**. Por isso, exigir de imediato equipes 5 contra 5 ou seis PCs tornaria a primeira novidade impossível para uma lan house pequena. Melhor separar duas experiências, ainda **candidatas**:
+
+1. **Encontro multiplayer experimental:** Tony reúne uma pequena turma na sexta à noite; pode funcionar com **2 ou 3 jogadores** em PCs separados. Não precisa de placar formal nem grande prêmio. O objetivo é sentir a procura, usar os computadores e descobrir o potencial do negócio.
+2. **Campeonato noturno:** possibilidade posterior, quando houver PCs e jogadores suficientes. Formato 2×2 (quatro participantes), grupos maiores e eliminatórias estão em aberto. O evento de estreia **não precisa** exigir expansão forçada do salão.
+3. **Corujão recorrente:** se o primeiro encontro gerar interesse, Tony pode escolher novas sextas e ampliar vagas/serviços aos poucos. Corujão e campeonato não são necessariamente sinônimos: pode haver madrugada de jogos sem disputa formal.
+
+Essa distinção preserva a narrativa: primeiro surgem amigos interessados em jogar **juntos**, depois Tony experimenta uma sexta à noite, e só mais tarde aprende a administrar campeonatos completos.
+
+### O primeiro convite: uma pessoa, não uma janela automática
+
+**Situação possível:** depois das mensagens espaçadas de Eric, da disponibilização de um título multiplayer original e de visitas reais de interessados, Tony recebe uma solicitação de um pequeno grupo do bairro. Pode chegar pelo **Correio** ou por uma conversa no salão; canal ainda não decidido.
+
+Rascunho de tom, **não texto final**:
+
+> **Assunto:** Tony, e se a gente jogasse junto sexta?
+>
+> "A gente tentou marcar uma partida com a turma, mas de dia nunca tem computador livre para todo mundo. Você conseguiria separar umas máquinas depois do fechamento? A gente paga pelo tempo, claro."
+
+A proposta não deve aparecer sem motivo: pelo menos a novidade precisa ser conhecida, a possibilidade comercial precisa existir e a procura por multiplayer deve ser observável. Não exigir obrigatoriamente que Tony tenha feito um campeonato diurno; isso ficou superado na v0.3.
+
+**Respostas candidatas:** **Ver se consigo organizar**, **Preciso de mais tempo**, **Não vou trabalhar de madrugada**. A primeira abre estudo/agenda, não desconta dinheiro nem confirma vagas. As outras preservam a história e permitem novas oportunidades contextualizadas mais tarde. Recusar não apaga o vínculo com Eric.
+
+### Agenda semanal: reservar UMA sexta, não ativar eventos diários
+
+**Descoberta e calendário:** o painel atual tem dias, meses e anos, mas ainda não mostra dia da semana. O futuro agendador só poderá oferecer noites que comecem **numa sexta-feira**, com término sábado. Precisamos escolher uma âncora semanal contínua para o calendário fictício de 360 dias/ano; não usar calendário Gregorian real de forma que uma importação altere a sexta.
+
+**Ciclo sugerido:**
+- **Durante a semana:** um grupo interessado pede uma noite; Tony pode **Planejar a próxima sexta**. A oportunidade fica disponível sem lembrar todo dia por correio.
+- **Até a sexta, antes do fechamento:** mostrar *vagas oferecidas / confirmadas*, disponibilidade técnica e previsão de gastos. Um pequeno grupo inicial pode vir por convite, não por uma fila infinita de inscrições.
+- **Sexta, até as 22h:** loja diurna funciona normalmente; as reservas noturnas **não ocupam PCs de dia**. Últimos clientes saem pelo fluxo habitual.
+- **22h–23h (referência provisória):** conferência final e transição sem uma hora de espera obrigatória. Não reabrir a loja para o público.
+- **23h–6h ou 7h (referência provisória):** convidados chegam, pagam se for esse o modelo aprovado, ocupam máquinas e participam da sessão durante a madrugada.
+- **Depois da saída:** resultado da noite e avanço até sábado às 10h, sem perder o estado da partida nem contar dois dias.
+
+Nenhuma sexta precisa ter evento; **apenas uma reserva ativa por noite** é a hipótese inicial. Escolher mais de uma sexta futura, repetir automaticamente e aceitar convites de grupos simultâneos ficam para discussão posterior.
+
+### Painel de planejamento candidato — mostrar o essencial
+
+Uma única página compacta em **Administração → Eventos** (ou subtela associada aos serviços; lugar definitivo ainda aberto), surgindo quando Tony realmente considerar a ideia:
+
+| Informação | Para que serve |
+| --- | --- |
+| **Próxima sexta elegível** | Evita erros de data e bloqueia eventos em outras noites. |
+| **Tipo** | Primeiro encontro simples; campeonato formal somente quando essa possibilidade tiver surgido. |
+| **Computadores disponíveis / aptos** | Conta máquinas físicas ligadas, acessíveis, não quebradas e capazes de executar o jogo licenciado. |
+| **Vagas oferecidas / reservadas** | Nunca maior que a capacidade simultânea; permite menos vagas que PCs disponíveis. |
+| **Pacote noturno / valor total** | Mostra preço que será cobrado e o que ele inclui; fórmula ainda não definida. |
+| **Interesse dos jogadores** | Indicação estimada, nunca garantia de lotação nem receita fictícia. |
+| **Custo estimado** | Energia, preparação, possíveis materiais/premiação; não disfarçar custos. |
+| **Situação do evento** | Rascunho → anunciado/convites → confirmado → em andamento → encerrado/cancelado. |
+
+**Botões por etapa**, propostas e não requisitos:
+- **Planejar sexta-feira:** abre o rascunho, sem alterar caixa.
+- **Escolher vagas** e **Definir pacote:** editam o rascunho; confirmar precisa checar orçamento/capacidade.
+- **Convidar turma** / **Abrir inscrições:** inicia procura; não materializa instantaneamente inscrições máximas.
+- **Ver inscritos:** apresenta quantidade e possíveis desistências; avaliar se nomes de clientes recorrentes serão persistidos.
+- **Confirmar evento:** fica disponível depois de pré-requisitos e até um prazo coerente.
+- **Adiar** e **Cancelar evento:** liberam reserva; políticas de adiantamento/reembolso são pontos pendentes.
+- **Acompanhar a noite:** leva ao salão real na sexta.
+- **Ver relatório:** disponível depois do encerramento, sem obrigar a leitura para abrir sábado.
+
+No primeiro encontro, **não mostrar todos os controles** de um campeonato profissional. O jogador vê apenas convite, capacidade, pacote e confirmação. Controles extras entram quando já fizerem sentido.
+
+### Fluxo dos participantes: chegada, fila, lugar reservado, compra e saída
+
+**A sequência que queremos assistir:**
+1. Inscrições referem-se a **vagas prometidas**, mas não ocupam fisicamente a máquina durante o expediente de sexta.
+2. Perto da abertura, uma checagem atômica valida que existem PCs distintos elegíveis, rotas livres e capacidade suficiente. Se faltarem PCs por pane/reforma, deve haver opção de reduzir participantes ou cancelar/reembolsar, **nunca fingir que a máquina existe**.
+3. Convidados entram **pela mesma porta e sem sobreposição**, com espaçamento e respeito à fila; os personagens não são teletransportados diretamente para as cadeiras.
+4. Cobrança acontece **uma única vez** por participante ou por pacote do grupo, modelo a definir. A receita só entra quando houver pagamento real; se existir sinal antecipado, ele precisa ser conciliado para não cobrar duas vezes.
+5. Cada pessoa chega a um **PC reservado distinto**, senta e joga. O evento usa o mesmo mecanismo de ocupação do cliente comum, mas uma sessão longa própria da madrugada.
+6. Durante a noite, há pequenas variações de animação, comentários ocasionais e oportunidade real de compras. Se puderem levantar para comprar, o PC permanece reservado e não entra outro visitante no lugar; **não há venda sem estoque**.
+7. Às 6h/7h (a definir), termina a sessão. Participantes se levantam, liberam reservas, saem por etapas e o saldo do evento é fechado uma vez.
+8. O dia de sábado continua **com caixa, estoque, desgaste, eventuais PCs quebrados, reputação e funcionários preservados**. O que se reinicia é somente a operação diária normal, não o save.
+
+**Casos difíceis a resolver:** grupo que não comparece, cliente atrasado, insuficiência de máquinas, internet instável, participante sem dinheiro, falha de rota, visitante preso na saída, save às 3h da manhã e retorno de partida no meio do evento. A política de grupo incompleto, cobrança e desistência ainda requer decisão.
+
+### Forma de cobrança: simplicidade primeiro
+
+**Hipótese preferida para discutir:** **pacote por pessoa e por noite**, com cada participante ocupando um PC; valor anunciado antes e efetivamente pago na entrada. Facilita entender quanto custa ao jogador e evita uma conta complexa de dezenas de sessões durante a madrugada.
+
+Ainda podemos estudar:
+- Pagamento antecipado / sinal de reserva versus pagamento na chegada.
+- Um organizador paga por todo o grupo versus cada um paga o seu.
+- Participante chega tarde: desconto, recusa ou sessão menor?
+- Reembolso quando o problema é da lan house versus desistência pessoal.
+- Venda de bebidas/alimentos **à parte**, abatendo estoque de verdade.
+- Cálculo do preço com índice histórico do ano e custo de oportunidade dos PCs, sem definir R$ arbitrários agora.
+
+**Regra contábil:** reservas não geram receita; receita = valores realmente cobrados; custos = consumos/despesas de fato; resultado é calculado, não sorteado.
+
+### Consequências para quem aceita ou recusa a sexta
+
+- **Planeja e não consegue participantes:** pode desistir antes de gastar, ajustar pacote ou perder o custo de divulgação se já tiver investido. Sem grupo fictício para compensar.
+- **Aceita turma pequena:** uma primeira noite modesta pode produzir contatos e demanda futura mesmo sem um grande lucro; não precisa ser um torneio profissional.
+- **Tem tudo pronto e PC quebra:** incidente pode forçar redução de vagas, reposicionamento ou cancelamento, gerando efeitos reais e compreensíveis.
+- **Não quer abrir sexta:** mantém a operação regular, sem multa nem desbloqueio obrigatório; talvez um grupo do bairro passe a frequentar outra lan house. Isso é **oportunidade não capturada**, não débito automático.
+- **Recusa várias vezes:** interesse noturno pode esfriar. Uma próxima mensagem de Eric, novo jogo ou crescimento do estabelecimento pode permitir retomar a ideia; não criar bloqueio permanente invisível.
+- **Realiza noites boas:** convites podem ficar mais frequentes e o público fiel, com **limites**, sem renda passiva.
+- **Realiza noites ruins:** reclamação, desistência ou prejuízo devem estar ligados à experiência: atendimento, preço, energia, acesso, barulho, estoque e tempo desperdiçado.
+
+O jogador deverá poder desenvolver uma lan house lucrativa **sem corujões**, mas terá uma história distinta daquela de quem transformou as sextas em tradição.
+
+### Pequenos easter eggs sem virar tarefa
+
+- Eric envia, muitos meses depois, uma mensagem casual perguntando como foram as partidas; não precisa saber automaticamente que Tony realizou campeonato.
+- Um participante pode dizer que trouxe um amigo de outra região para a noite de sexta.
+- Alguns jogadores lembram histórias de partidas anteriores; o retorno deve ser raro e não exigir simular redes sociais completas.
+- Um jogador comum pode reclamar que falta PC de dia, enquanto outro comenta que preferia jogar à noite. Esses sinais antecedem a ideia, em vez de ser um tutorial explícito.
+- As mensagens devem ter intervalo, condições e **não ficar disparando a cada sexta**.
+
+### Checklist de decisões a resolver na próxima conversa
+
+- [ ] **Primeira noite:** dois ou três amigos bastam? Qual é a experiência mínima divertida com três PCs de partida?
+- [ ] **Competições:** qual é a diferença prática entre um encontro de amigos e um campeonato com equipes/premiação?
+- [ ] **Reservas:** nomear ou não os inscritos e como lidar com vagas não preenchidas sem criar NPCs artificiais?
+- [ ] **Pagamento:** por pessoa, por grupo ou sinal; como explicar reembolsos e faltas de convidados?
+- [ ] **Horários:** chegada às 22h, 22h30 ou 23h e encerramento às 6h ou 7h?
+- [ ] **UI:** a página *Eventos* fica em Administração ou num painel dedicado acessível pelo Correio?
+- [ ] **Progressão:** o que exatamente habilita o primeiro convite e quando o primeiro grupo aparece?
+- [ ] **Relógio:** dia da semana fictício e passagem civil pela meia-noite com compatibilidade total de saves.
+- [ ] **Experiência noturna:** opções de velocidade, animação dos personagens, pausas para compras e pequenos incidentes ocasionais.
+- [ ] **Conclusão:** ao chegar sábado às 10h, confirmar que ninguém ficou na lan house, que nenhum valor foi duplicado e que a campanha avançou um único dia.
+
+**Estado da versão 0.4:** o ciclo sexta–sábado e a participação física dos amigos continuam sendo a **direção preferida do criador**. Encontro inicial com poucos amigos, pacote por pessoa, painel compacto e os botões mencionados são **novas propostas** para discutir, não decisões definitivas nem instruções para codificar.
+
 ## Pontos que ainda precisamos conversar
 
 1. **Personalidade de Eric:** idade aproximada, relação com Tony, linguagem dos e-mails, ocupação na França e frequência dos contatos.
@@ -409,6 +541,7 @@ Possível formulário compacto, **ainda provisório**:
 - **21/10/2026 — Versão 0.1:** registrado o conceito original de Eric na França, a descoberta gradual de um jogo multiplayer inspirado em *Counter-Strike*, a demanda e os campeonatos que pressionam a capacidade diurna, e o surgimento do corujão como solução entre 2000 e aproximadamente 2002. Permanecem abertas as escolhas narrativas, regras técnicas e mecânicas reais de jogo.
 - **21/10/2026 — Versão 0.2:** acrescido mapa gradual de UI e botões, comércio, grupos de jogadores, campeonatos, corujão, escolhas de investimento/recusa com oportunidades futuras, plano de arquitetura do relógio e uma sequência explícita de decisões a amadurecer antes de programar. **Ainda não aprovado para implementação.**
 - **21/10/2026 — Versão 0.3:** campeonatos oficiais limitados à noite de sexta para sábado, grupo chega e joga fisicamente a madrugada, saída às 6h/7h (a definir), retorno ao expediente normal às 10h de sábado; horários, vagas, pacotes e calendário semanal ainda em discussão. O conflito diurno passa a ser a **procura por partidas em grupo**, não campeonatos oficiais de dia. Identificada necessidade de introduzir cálculo de dia da semana no calendário fictício.
+- **22/10/2026 — Versão 0.4:** expandido o planejamento de grupos pequenos, convites orgânicos, escolha de sexta, painel com botões contextuais, cobrança e fila reais, resultado financeiro, oportunidades perdidas e diferenças entre encontro multiplayer e campeonato. Novidades registradas como **propostas, sem implementação**.
 
 ---
 
