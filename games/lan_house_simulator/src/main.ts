@@ -21,7 +21,7 @@ import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} 
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
@@ -986,7 +986,7 @@ function renderUI(liveOnly=false):void {
       const action=document.createElement("button");action.className="slice";
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
-      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Licenciar jogos · R$ 450";actions.append(action);}
+      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Regularizar jogos · "+inCurrency(basicGamesLicenseCost(game));actions.append(action);}
       const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
       if(record&&(record.stage==="pending"||record.stage==="ending")){
         const progress=document.createElement("small");
@@ -1397,7 +1397,16 @@ function renderUI(liveOnly=false):void {
    syncPanelChildren(gpuPcChoice,nextGpuChoice);
    syncPanelChildren(gpuList,nextGpuList);
   }
-  setText("license-status", game.licensedGames?"Jogos regularizados":"Catálogo sem licença — risco de multa");
+  const basicLicensePrice=basicGamesLicenseCost(game);
+  setText("license-status",game.licensedGames
+    ?"Jogos regularizados · licença permanente, sem renovação anual."
+    :"Catálogo sem regularização — risco de multa. Taxa única: "+inCurrency(basicLicensePrice)+".");
+  const basicLicenseButton=document.querySelector<HTMLButtonElement>("#license");
+  if(basicLicenseButton){
+    basicLicenseButton.hidden=game.licensedGames;
+    basicLicenseButton.disabled=game.cash<basicLicensePrice;
+    basicLicenseButton.textContent="Regularizar jogos · "+inCurrency(basicLicensePrice);
+  }
   if(licensePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","windows")&&panelChanged("licensePanel",[stationRevision],!liveOnly)){
     const nextWindows=document.createElement("div");
     for(let i=0;i<pcCount(game);i++){

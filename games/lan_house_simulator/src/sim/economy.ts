@@ -134,11 +134,22 @@ export function stockItem(state:GameState,item:Item):Result {
  return orderMerchandise(state,item,supplierLevel(state)===2?"partner":"basic");
 }
 export function sellItem(state:GameState,item:Item):Result {return sellMerchandise(state,item);}
-export function licenseGames(state: GameState): Result {
-  if (state.licensedGames) return { ok: false, message: "Catálogo já regularizado." };
-  if (state.cash < 450) return { ok: false, message: "São necessários R$ 450 para licenciar os jogos." };
-  state.cash -= 450; state.expenses += 450; state.licensedGames = true;
-  return { ok: true, message: "Catálogo de jogos licenciado: -R$ 450." };
+/** Taxa única de regularização básica; novas compras acompanham o índice monetário.
+ * Saves já regularizados permanecem válidos e nunca são cobrados novamente.
+ */
+export const BASIC_GAMES_LICENSE_COST_1998=450;
+export function basicGamesLicenseCost(state:Pick<GameState,"totalMinutes"|"economyVersion">):number{
+  return isHistorical(state)
+    ? Math.round(BASIC_GAMES_LICENSE_COST_1998*priceIndex(yearFromMinutes(state.totalMinutes))*100)/100
+    : BASIC_GAMES_LICENSE_COST_1998;
+}
+export function licenseGames(state:GameState):Result {
+  if(state.licensedGames)return {ok:false,message:"Catálogo já regularizado. Licença permanente, sem renovação."};
+  const cost=basicGamesLicenseCost(state);
+  const text=cost.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  if(state.cash<cost)return {ok:false,message:"Caixa insuficiente: regularização dos jogos custa "+text+"."};
+  state.cash-=cost;state.expenses+=cost;state.licensedGames=true;
+  return {ok:true,message:"Catálogo de jogos regularizado por taxa única: -"+text+". Licença permanente."};
 }
 /** Serviço emergencial: tem custo real e só pode ser comprado durante uma falha. */
 export function repairInternet(state: GameState): Result {
