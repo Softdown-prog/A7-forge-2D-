@@ -1,0 +1,36 @@
+name: LHS - Capacity Benchmark
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/scripts/capacity_fixture.mjs'
+      - 'games/lan_house_simulator/scripts/benchmark_capacity.mjs'
+      - '.github/workflows/lhs-capacity-benchmark.yml'
+permissions:
+  contents: read
+jobs:
+  capacity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install LHS and compile production modules
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Profile Node simulation and Chromium Canvas with 14 30 50 100 synthetic actors
+        working-directory: games/lan_house_simulator
+        run: node scripts/benchmark_capacity.mjs out/capacity
+      - name: Upload capacity metrics and comparison table
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-capacity-benchmark
+          path: games/lan_house_simulator/out/capacity
