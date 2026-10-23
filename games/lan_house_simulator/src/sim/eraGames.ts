@@ -1,5 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {gameYear,installedWindows,WINDOWS_ERAS} from "./era.js";
+import {gamePopularityWeight} from "./gamePopularity.js";
 
 /** Dez jogos fictícios com contratos individuais. Valores são de game design. */
 export const ERA_GAME_CATALOG=[
@@ -56,12 +57,16 @@ export function validEraGameLicenses(value:unknown,s:Partial<GameState>):boolean
   return !!title&&title.year<=year;
  });
 }
-/** Variedade aumenta um pouco a chegada REAL de clientes, nunca gera receita fictícia. */
+/** Catálogo clássico com popularidade anual: máximo +1,5% por título novo,
+ * nostalgia conserva 25% do apelo, sem retirar nenhuma licença existente.
+ * Bônus significa chance maior de chegada REAL, não venda fictícia.
+ */
 export function eraGameVisitorMultiplier(s:GameState):number{
  if(!s.licensedGames||!s.pcWindowsLicenses?.some(Boolean))return 1;
  const year=gameYear(s);
- const available=new Set((s.licensedEraGames??[]).filter(id=>{
-  const title=eraGameSpec(id);return !!title&&title.year<=year;
- }));
- return 1+Math.min(.15,available.size*.015);
+ const appeal=(s.licensedEraGames??[]).reduce((total,id)=>{
+  const title=eraGameSpec(id);
+  return total+(title&&title.year<=year?gamePopularityWeight(title.year,year)*.015:0);
+ },0);
+ return 1+Math.min(.15,appeal);
 }

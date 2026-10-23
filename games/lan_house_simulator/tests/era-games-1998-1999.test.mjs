@@ -63,7 +63,7 @@ test("modo clássico também desbloqueia, sem GPU; bônus depende de PC licencia
  assert.equal(licenseEraGame(s,"blocos-e-cores").ok,true);
  s.totalMinutes=360*DAY_MINUTES;
  assert.equal(licenseEraGame(s,"ilha-dos-segredos").ok,true);
- assert.equal(eraGameVisitorMultiplier(s),1.03);
+ assert.ok(Math.abs(eraGameVisitorMultiplier(s)-(1+.015*.85+.015))<1e-10,"o jogo de 1998 perde parte do apelo em 1999");
  s.pcWindowsLicenses=[false,false,false];assert.equal(eraGameVisitorMultiplier(s),1);
 });
 test("UI mostra dois anos e mantém jogos GPU 2005+",()=>{

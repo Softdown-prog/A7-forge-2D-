@@ -48,9 +48,10 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
+import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
@@ -1434,7 +1435,7 @@ function renderUI(liveOnly=false):void {
     const nextEraGames=document.createElement("div");
     const owned=game.licensedEraGames??[];
     const summary=document.createElement("p");summary.className="era-game-summary";
-    summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · variedade amplia a procura em "+Math.round((eraGameVisitorMultiplier(game)-1)*1000)/10+"%, até 15%.";
+    summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · bônus atual de procura: +"+(Math.round((eraGameVisitorMultiplier(game)-1)*10000)/100).toLocaleString("pt-BR")+"%. Novidades atraem mais; títulos antigos conservam 25% de apelo nostálgico. Licenças permanentes.";
     nextEraGames.append(summary);
     for(const releaseYear of [1998,1999]){
       const section=document.createElement("section");section.className="era-game-section";
@@ -1454,9 +1455,12 @@ function renderUI(liveOnly=false):void {
         const details=document.createElement("div");details.className="era-game-details";
         const name=document.createElement("strong");name.textContent=title.name;
         const info=document.createElement("p");info.textContent=title.description;
-        const meta=document.createElement("small");meta.textContent=title.genre+" · "+title.year+" · licença da lan house · R$ "+title.cost;
+        const meta=document.createElement("small");
+       meta.textContent=title.genre+" · "+title.year+" · licença da lan house · R$ "+title.cost+
+        " · "+(locked?"popularidade no lançamento: 100%":"popularidade em "+year+": "+gamePopularityPercent(title.year,year)+"%");
         const status=document.createElement("small");status.className="era-game-status";
-        status.textContent=bought?"✓ Licença ativa no estabelecimento":quote.ok?"Pronto para licenciar":quote.message;
+        status.textContent=(bought?"✓ Licença permanente":quote.ok?"Pronto para licenciar":quote.message)+
+        (locked?"":" · potencial de procura por título: +"+(gamePopularityPercent(title.year,year)*.015).toLocaleString("pt-BR",{maximumFractionDigits:3})+"% (com Windows licenciado)");
         const button=document.createElement("button");button.type="button";button.className="slice";button.dataset.eraGameBuy=title.id;
         button.textContent=bought?"✓ Licenciado":locked?"🔒 Chega em "+title.year:quote.ok?"Licenciar · R$ "+title.cost:"Indisponível";
         button.disabled=!quote.ok;button.title=quote.message;
@@ -1466,7 +1470,7 @@ function renderUI(liveOnly=false):void {
     }
    syncPanelChildren(eraGamePanel,nextEraGames);
   }
-  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[stationRevision,game.licensedGames,game.licensedGpuGames,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
+  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
     const nextGpuGames=document.createElement("div");
     if(game.gpuGameInstallJobs?.length){
       const overview=document.createElement("section");
@@ -1526,7 +1530,10 @@ function renderUI(liveOnly=false):void {
         ?"Compatível com PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
         :"Nenhuma máquina compatível ainda.")+
        " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
-       "/h, somente para clientes de jogos avançados e dentro do teto anual.";
+       "/h, somente para clientes de jogos avançados e dentro do teto anual."+
+       (year>=title.year?" Popularidade atual: "+gamePopularityPercent(title.year,year)+
+       "% · procura adicional efetiva: +"+(gpuGameAttraction(game,title.id)*100).toLocaleString("pt-BR",{maximumFractionDigits:3})+
+       "% (requer jogo licenciado, instalado e PC compatível ligado).":"");
       if(bought&&quote.eligiblePcs.length){
         const enabled=quote.eligiblePcs.filter(i=>gpuGameInstalledOnPc(game,i,title.id));
         status.textContent+=enabled.length

@@ -3,6 +3,7 @@ import {GPU_CATALOG,installedGpu,type GpuId} from "./gpu.js";
 import {WINDOWS_ERAS,installedWindows} from "./era.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
 import {stationPowerCount,stationPoweredOn,stationHasCustomer} from "./stationPower.js";
+import {gamePopularityWeight} from "./gamePopularity.js";
 
 /** Títulos fictícios, independentes do catálogo básico R$ 450.
  * A licença é do estabelecimento; a execução e o adicional são por PC.
@@ -205,6 +206,26 @@ export function hasPlayableGpuGame(s:GameState):boolean{
   const game=gpuGameSpec(id);
   return !!game&&game.year<=year&&gpuGameEligiblePcs(s,game).some(i=>gpuGamePlayableOnPc(s,i,id));
  });
+}
+/** Procura adicional por um jogo GPU efetivamente ofertado hoje.
+ * Uma licença sem instalação, PC ligado e compatível não anuncia algo que
+ * a lan house não pode oferecer. Não afeta tarifa, compra ou licenças.
+ */
+export function gpuGameAttraction(s:GameState,id:GpuGameId):number{
+ if(!isHistorical(s)||!s.licensedGames||!s.licensedGpuGames?.includes(id))return 0;
+ const title=gpuGameSpec(id),year=yearFromMinutes(s.totalMinutes);
+ if(!title||year<title.year)return 0;
+ if(!gpuGameEligiblePcs(s,title).some(i=>
+   stationPoweredOn(s,i)&&gpuGamePlayableOnPc(s,i,id)))return 0;
+ return .025*gamePopularityWeight(title.year,year);
+}
+/** Até +7,5% para três títulos recentes, com desgaste natural até a nostalgia.
+ * Sem RNG, estado persistido ou receitas extras.
+ */
+export function gpuGameVisitorMultiplier(s:GameState):number{
+ if(!isHistorical(s)||!s.licensedGames||!(s.licensedGpuGames?.length))return 1;
+ const total=s.licensedGpuGames.reduce((sum,id)=>sum+gpuGameAttraction(s,id),0);
+ return 1+Math.min(.075,total);
 }
 export interface GpuGameQuote extends Result {cost:number;eligiblePcs:number[]}
 export function quoteGpuGame(s:GameState,id:string):GpuGameQuote{

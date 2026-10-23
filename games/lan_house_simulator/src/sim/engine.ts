@@ -28,7 +28,7 @@ import {stationPoweredOn,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps1StationAvailable,ps1EnergyCostPerMinute,ps1HourPrice,validPs1State} from "./ps1.js";
-import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameSpec,preferredGpuGame} from "./gpuGames.js";
+import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameSpec,preferredGpuGame,gpuGameVisitorMultiplier} from "./gpuGames.js";
 import {validGpuGameDemand} from "./gpuDemand.js";
 import {validEraGameLicenses,eraGameVisitorMultiplier} from "./eraGames.js";
 import {dayNumber,online,pcCount,entrance,random,addLog,LAST_ADMISSION_MINUTE,CLOSING_START_MINUTE,SESSION_FINISH_MINUTE,localMinute} from "./simulationState.js";
@@ -80,7 +80,7 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
   const rate=normalizedHourlyPrice(s,consoleOnly?ps1HourPrice(s):s.pricePerHour);
   const factor=demandFactor(rate,s.reputation,consoleOnly||online(s),s.weather==="rain");
   const congestion=occupied>=poweredPcs+(s.ps1Stations?.length??0)?0.38:1;
-  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*congestion;
+  return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*gpuGameVisitorMultiplier(s)*congestion;
 }
 /** Dispensa em pequenos grupos: fila e compras primeiro, sessões até 21h30. */
 function prepareClosing(s:GameState):void {
