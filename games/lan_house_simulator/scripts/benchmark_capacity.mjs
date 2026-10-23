@@ -81,10 +81,11 @@ try{
      const {SceneRenderer}=await import('./js/render/scene.js');
      const {SceneMotion}=await import('./js/render/motion.js');
      const m=window.__capacityProbe={started:performance.now(),frames:[],draw:[],motion:[],
-      longTasks:[],painted:0,domMutations:0};
+      longTasks:[],painted:0,domMutations:0,maxObservedActors:0};
      const orig=SceneRenderer.prototype.draw;
      SceneRenderer.prototype.draw=function(...args){
       if(this.ctx.canvas.id!=='game')return orig.apply(this,args);
+      m.maxObservedActors=Math.max(m.maxObservedActors,args[0]?.customers?.length??0);
       const t=performance.now();
       try{return orig.apply(this,args);}finally{
        m.draw.push(performance.now()-t);m.painted++;
@@ -121,12 +122,13 @@ try{
       motionMeanMs:+mean(m.motion).toFixed(2),motionP95Ms:+pct(m.motion,.95).toFixed(2),
       longTasksCount:m.longTasks.length,longTasksMaxMs:+Math.max(0,...m.longTasks).toFixed(2),
       domMutationRecords:m.domMutations,stage:'synthetic-stress',
-      remainingActors:Number(document.querySelector('#status')?.textContent?.match(/\d+/)?.[0]??0)};
+      observedActors:m.maxObservedActors};
     });
     const result={device:config.name,cpuSlowdown:config.cpuSlowdown,actors:count,...metrics,errors:failures};
     console.log('LHS_CAPACITY_CANVAS '+JSON.stringify(result));browserRuns.push(result);
     if(failures.length)throw Error('Runtime error for '+config.name+'/'+count+': '+failures.join('; '));
     if(!metrics.canvasDrawsPerSecond)throw Error('Canvas did not render actors in '+config.name+'/'+count);
+    if(metrics.observedActors!==count)throw Error('Expected '+count+' rendered actors, got '+metrics.observedActors+' in '+config.name);
    }finally{await context.close();}
   }
  }
