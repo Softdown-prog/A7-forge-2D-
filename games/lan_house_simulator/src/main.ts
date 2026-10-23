@@ -32,7 +32,7 @@ import { DAY_MINUTES, type GameState, type Item } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
-import { promotionCost, launchPromotion, isPromotionActive, promotionMinutesRemaining } from "./sim/promotion.js";
+import { promotionCost, launchPromotion, isPromotionActive, promotionCanAttractVisitors, promotionAdmissionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
@@ -1767,15 +1767,25 @@ function renderUI(liveOnly=false):void {
     :"Fechamento mensal: disponível após o primeiro mês completo desta partida.");
   setText("capacity-advice",expansionAdvice(game));
   const promoting=isPromotionActive(game);
+  const admissionsOpen=promotionCanAttractVisitors(game);
+  const promoPrice=promotionCost(game);
+  const promoLabel=inCurrency(promoPrice);
+  setText("promotion-description","Custo atual: "+promoLabel+
+    ". Aumenta em 40% a chance de chegada até 20h30, desde que haja PCs ligados ou bancadas de PlayStation disponíveis. Lotação e filas reduzem o resultado; não garante clientes nem vendas.");
   setText("promotion-status",promoting
-    ?"Panfletagem ativa! +40% de chance de novos visitantes. Restam "+promotionMinutesRemaining(game)+" minutos de jogo, até 22h."
-    :"Sem panfletagem hoje. Divulgue sua lan house no bairro para aumentar a procura até 22h.");
+    ?admissionsOpen
+      ?"Panfletagem ativa! +40% na chance de novos visitantes. Restam "+promotionAdmissionMinutesRemaining(game)+" minutos de entrada (até 20h30)."
+      :"Panfletagem contratada hoje. Novos clientes não entram após 20h30; a campanha termina às 22h."
+    :game.totalMinutes>=GAME_LAST_MINUTE
+      ?"Calendário encerrado: não é possível contratar panfletagem."
+      :admissionsOpen
+        ?"Sem panfletagem hoje. Divulgue sua lan house para aumentar a procura até 20h30."
+        :"Novas entradas encerradas às 20h30. A panfletagem estará disponível amanhã.");
   const promotionButton=document.querySelector<HTMLButtonElement>("#launch-promotion");
   if(promotionButton){
-    const cost=promotionCost(game);
-    const label=cost.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-    promotionButton.disabled=promoting||game.cash<cost;
-    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":"📣 Fazer panfletagem · "+label;
+    promotionButton.disabled=promoting||!admissionsOpen||game.cash<promoPrice;
+    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":
+      !admissionsOpen?"📣 Panfletagem indisponível após 20h30":"📣 Fazer panfletagem · "+promoLabel;
   }
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   }

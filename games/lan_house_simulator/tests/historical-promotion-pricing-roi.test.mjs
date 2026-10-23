@@ -163,7 +163,12 @@ test("interface de divulgação exibe valor cotado, não constante clássica",()
  const file=resolve(dirname(fileURLToPath(import.meta.url)),"..","src","main.ts");
  const ui=readFileSync(file,"utf8");
  assert.ok(ui.includes("promotionCost(game)"));
- assert.ok(ui.includes("promotionButton.disabled=promoting||game.cash<cost"));
+ assert.ok(ui.includes("promotionButton.disabled=promoting||!admissionsOpen||game.cash<promoPrice"));
+ assert.ok(ui.includes("promotionCanAttractVisitors(game)"));
+ assert.ok(ui.includes('setText("promotion-description"'));
+ const html=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"..","index.html"),"utf8");
+ assert.ok(html.includes('id="promotion-description"'));
+ assert.equal(html.includes("Uma campanha custa R$ 120"),false);
  assert.equal(ui.includes("game.cash<PROMOTION_COST"),false);
 });
 const full=process.env.LHS_PROMOTION_PRICING_AUDIT==="1";

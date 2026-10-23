@@ -8,7 +8,7 @@ import {pcUnderRepair} from "./services.js";
 
 export const COSTUMES: Costume[] = ["regular", "regular", "female", "female-bob", "female-ponytail", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 /** Encerrar de forma gradual: últimos visitantes até 20h30, início da saída às 21h. */
-export const LAST_ADMISSION_MINUTE = DAY_MINUTES-90;
+export {LAST_ADMISSION_MINUTE} from "./types.js";
 export const CLOSING_START_MINUTE = DAY_MINUTES-60;
 export const SESSION_FINISH_MINUTE = DAY_MINUTES-30; // Últimas sessões terminam até 21h30.
 export const localMinute = (s:GameState):number => s.totalMinutes%DAY_MINUTES;
