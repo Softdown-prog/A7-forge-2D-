@@ -986,7 +986,7 @@ function renderUI(liveOnly=false):void {
       const action=document.createElement("button");action.className="slice";
       if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
       if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
-      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Regularizar jogos · "+inCurrency(basicGamesLicenseCost(game));actions.append(action);}
+      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Regularizar jogos · "+basicGamesLicenseCost(game).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});actions.append(action);}
       const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
       if(record&&(record.stage==="pending"||record.stage==="ending")){
         const progress=document.createElement("small");

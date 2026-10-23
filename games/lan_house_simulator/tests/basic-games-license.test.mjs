@@ -75,7 +75,7 @@ test("UI oculta contrato concluído e apresenta preços e avisos atualizados",()
   assert.ok(main.includes("basicLicenseButton.hidden=game.licensedGames"));
   assert.ok(main.includes("basicLicenseButton.disabled=game.cash<basicLicensePrice"));
   assert.ok(main.includes('basicGamesLicenseCost(game)'));
-  assert.ok(main.includes("Regularizar jogos · "+'"+inCurrency(basicGamesLicenseCost(game))'));
+  assert.ok(main.includes('action.textContent="Regularizar jogos · "+basicGamesLicenseCost(game).toLocaleString'));
   assert.ok(html.includes("taxa única para o estabelecimento, sem renovação anual"));
   assert.equal(html.includes('id="license" class="slice">Licenciar jogos R$ 450'),false);
 });
