@@ -1,0 +1,55 @@
+name: LHS - Eric real multiplayer gameplay
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/scripts/record_eric_multiplayer.mjs'
+      - 'games/lan_house_simulator/src/sim/multiplayerVisitors.ts'
+      - 'games/lan_house_simulator/src/sim/customerLifecycle.ts'
+      - 'games/lan_house_simulator/src/sim/customerDecisions.ts'
+      - 'games/lan_house_simulator/src/render/pcScreenActivities.ts'
+      - '.github/workflows/lhs-eric-multiplayer-gameplay.yml'
+permissions:
+  contents: read
+jobs:
+  gameplay-real:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build game and verify deterministic round
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/multiplayer-visitors.test.mjs tests/pc-screen-activities.test.mjs
+      - name: Install Chromium and ffmpeg
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Film original 2000 game interface and verify three customers
+        working-directory: games/lan_house_simulator
+        run: |
+          node scripts/record_eric_multiplayer.mjs out/eric-multiplayer
+          ffmpeg -hide_banner -loglevel error -y -i out/eric-multiplayer/eric_setor_zero_canvas_real.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
+            -movflags +faststart out/eric-multiplayer/eric_setor_zero_canvas_real.mp4
+          test -s out/eric-multiplayer/eric_setor_zero_canvas_real.mp4
+          ffprobe -v error -show_entries format=duration -of default=nw=1 out/eric-multiplayer/eric_setor_zero_canvas_real.mp4
+      - name: Upload real multiplayer video and evidence (including failure)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-eric-setor-zero-gameplay-real
+          path: |
+            games/lan_house_simulator/out/eric-multiplayer/*.mp4
+            games/lan_house_simulator/out/eric-multiplayer/*.png
+            games/lan_house_simulator/out/eric-multiplayer/*.json
+          retention-days: 30
+          if-no-files-found: warn
