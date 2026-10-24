@@ -1,0 +1,119 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
+import {DAY_MINUTES} from "../dist/js/sim/types.js";
+import {licenseGames} from "../dist/js/sim/economy.js";
+import {licenseWindows} from "../dist/js/sim/era.js";
+import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
+import {tickMultiplayerVisitors,waitForMultiplayerFriends} from "../dist/js/sim/multiplayerVisitors.js";
+import {tryServe} from "../dist/js/sim/customerDecisions.js";
+import {isReserved} from "../dist/js/sim/customerFlow.js";
+import {counterQueueSlot} from "../dist/js/sim/checkoutQueue.js";
+import {toggleStationPower} from "../dist/js/sim/stationPower.js";
+import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {withStationOff} from "./station-power-fixture.mjs";
+
+function prepared(seed=721){
+ const s=createGame(seed,"historical");
+ s.totalMinutes=2*360*DAY_MINUTES;s.cash=20000;s.reputation=10;
+ s.ericSecondMailDelivered=true;
+ assert.equal(licenseGames(s).ok,true);
+ for(let i=0;i<3;i++)
+  assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
+ assert.equal(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID).ok,true);
+ const firstDay=2*360+1;
+ const nextDay=firstDay+((seed%7-firstDay%7+7)%7);
+ const minute=170+seed%110;
+ s.totalMinutes=(nextDay-1)*DAY_MINUTES+minute;
+ return s;
+}
+function collectVisitors(s){
+ tickMultiplayerVisitors(s);
+ assert.ok(s.multiplayerVisit,"a oportunidade encontra o salão");
+ const v=s.multiplayerVisit;
+ for(let k=0;k<20&&v.memberIds.length<v.size;k++){
+  // Soleira desobstruída após a caminhada de cada novo amigo.
+  for(const c of s.customers)if(c.multiplayerVisitId===v.id){c.x=2.6;c.y=3.4;}
+  s.totalMinutes++;tickMultiplayerVisitors(s);
+ }
+ assert.equal(v.memberIds.length,v.size,"todos entraram por uma única porta, um de cada vez");
+ const members=v.memberIds.map(id=>s.customers.find(c=>c.id===id));
+ for(let i=0;i<members.length;i++){
+  const q=counterQueueSlot(i,s),c=members[i];
+  c.x=q.x;c.y=q.y;c.target={...q};c.route=[];c.stage="waiting";c.queueIndex=i;
+ }
+ return members;
+}
+
+test("grupinho de 2 ou 3 amigos entra, ocupa slots de fila e reserva PCs diferentes",()=>{
+ const s=prepared(),members=collectVisitors(s),v=s.multiplayerVisit;
+ assert.ok(v.size===2||v.size===3);
+ assert.deepEqual(members.map(c=>c.multiplayerVisitId),Array(v.size).fill(v.id));
+ assert.ok(s.nextCustomerId>=v.size+1);
+ assert.equal(waitForMultiplayerFriends(s,members[0]),false);
+ const booked=members.map(c=>c.multiplayerAssignedPc);
+ assert.equal(new Set(booked).size,v.size);
+ assert.ok(booked.every(pc=>Number.isInteger(pc)&&isReserved(s,pc)));
+ assert.equal(isValidSave(s),true);
+ const restored=parseImportedSave(serializeSave(s));
+ assert.deepEqual(restored.multiplayerVisit,v);
+ assert.deepEqual(restored.customers.map(c=>c.multiplayerAssignedPc),booked);
+});
+
+test("cada amigo paga uma vez no caixa e ocupa seu próprio PC; reserva impede desligamento",()=>{
+ const s=prepared(724),members=collectVisitors(s),slots=[],startCash=s.cash;
+ for(const c of members){
+  const prior=s.cash,priorServed=s.served;
+  tryServe(s,c);
+  assert.equal(c.stage,"to_pc","a pessoa sai do caixa caminhando");
+  assert.ok(Number.isInteger(c.pcIndex));
+  slots.push(c.pcIndex);
+  assert.ok(s.cash>prior,"pagamento real acontece no balcão");
+  assert.equal(s.served,priorServed+1);
+  assert.equal(s.paymentEffects.length>=1,true);
+  assert.match(toggleStationPower(s,c.pcIndex).message,/ocupado/);
+  s.totalMinutes+=3;
+ }
+ assert.equal(new Set(slots).size,members.length);
+ assert.ok(s.cash>startCash);
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+ const paid=s.cash;
+ s.totalMinutes+=1;
+ assert.equal(waitForMultiplayerFriends(s,members[0]),false);
+ assert.equal(s.cash,paid,"rever a reserva não cobra outra vez");
+});
+
+test("sem licença ou PCs compatíveis não surgem grupos e não há receita",()=>{
+ const s=createGame(8,"historical");
+ s.totalMinutes=2*360*DAY_MINUTES+230;
+ s.multiplayerLastVisitDay=undefined;
+ const before=s.cash;
+ for(let i=0;i<360;i++){s.totalMinutes++;tickMultiplayerVisitors(s);}
+ assert.equal(s.multiplayerVisit,undefined);
+ assert.equal(s.cash,before);
+ const eligible=prepared(12);
+ eligible.pcPoweredOff=[false,false,true];
+ eligible.pcWear[1]=100;
+ tickMultiplayerVisitors(eligible);
+ assert.equal(eligible.multiplayerVisit,undefined,"falta de duas máquinas bloqueia grupo");
+});
+
+test("salão lotado antes de pagar dispensa a turma sem gerar caixa nem PCs fantasmas",()=>{
+ const s=prepared(14),members=collectVisitors(s);
+ const money=s.cash,served=s.served;
+ s.pcPoweredOff=[false,true,true];
+ assert.equal(waitForMultiplayerFriends(s,members[0]),true);
+ assert.equal(s.multiplayerVisit,undefined);
+ assert.ok(members.every(c=>c.stage==="leaving"&&c.pcIndex===null));
+ assert.equal(s.cash,money);assert.equal(s.served,served);
+ assert.equal(isValidSave(s),true);
+});
+
+test("partidas anteriores sem dados de multiplayer seguem válidas",()=>{
+ const s=createGame(9),old=parseImportedSave(serializeSave(s));
+ assert.equal(old.multiplayerVisit,undefined);
+ assert.equal(old.multiplayerLastVisitDay,undefined);
+ assert.equal(isValidSave(old),true);
+ old.multiplayerVisit={id:1,size:3,memberIds:[1,1],createdMinute:0};
+ assert.equal(isValidSave(old),false);
+});
