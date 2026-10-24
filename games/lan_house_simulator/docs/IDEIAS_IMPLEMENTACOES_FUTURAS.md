@@ -733,3 +733,9 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Divisórias recusadas quando um cliente está atravessando ou encostado no segmento. Obras recusadas não cobram dinheiro, não deslocam pessoas nem mudam o save.
 - As mudanças válidas continuam replanejando os trajetos com a navegação existente; não se criam atalhos, teletransportes ou cobrança de serviços artificiais.
 - Regressões `tests/layout-live-circulation.test.mjs`: máquina girada, mesa, construção tangente, restauração de save e caminhada real no salão reorganizado.
+
+### Edição do salão com filas reais simultâneas
+
+- O reposicionamento das máquinas mantém cada fila associada ao produto correto; os compradores não são desviados indiscriminadamente ao atendimento de outra máquina. Após uma alteração, as filas são recalculadas imediatamente.
+- O editor agora verifica se os lugares de espera de compradores presentes continuam alcançáveis antes de mover equipamentos, construir uma parede ou instalar decoração. Alterações que impedem o atendimento são recusadas antes de debitar dinheiro ou modificar o mapa.
+- Regressão `tests/layout-live-queues.test.mjs`: até 14 clientes no caixa, máquinas e saída, com rotação de produto durante atendimento, validação de rota, rejeição sem cobrança, colisões e save continuando o mesmo resultado financeiro.
