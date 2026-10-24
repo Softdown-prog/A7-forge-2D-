@@ -9,7 +9,7 @@ import {DAY_MINUTES} from "./types.js";
 import {weekdayIndex,campaignDate,currentCampaignDay} from "./campaignWeek.js";
 import {NIGHT_FIRST_ARRIVAL_OFFSET,NIGHT_MORNING_EXIT_OFFSET,NIGHT_MAX_EXIT_OFFSET} from "./futureNightClock.js";
 import {multiplayerEligiblePcs,ERIC_MULTIPLAYER_GAME_ID} from "./eraGames.js";
-import {sessionRevenue,energyCostPerMinute} from "./economy.js";
+import {energyCostPerMinute} from "./economy.js";
 import {initialNeeds,tickNeeds,consumePurchase} from "./needs.js";
 import {sellMerchandise,merchandisePrice,merchandiseStock} from "./merchandise.js";
 import {entrance,pcPosition,pcWear,addLog} from "./simulationState.js";
@@ -23,7 +23,7 @@ import {recordComputerUtilization} from "./financialReview.js";
 import {recordStationMinute} from "./stationAccounting.js";
 import {pcCount} from "./simulationState.js";
 import {stationReadyForSessions} from "./stationPower.js";
-import {futureNightClock} from "./futureNightClock.js";
+
 
 export function confirmFridayMeetup(s:GameState):Result{
  const draft=s.fridayMeetupDraft;
@@ -211,6 +211,7 @@ export function advanceNightMeetup(s:GameState):boolean{
    n.revenue=Math.round((n.revenue-paid)*100)/100;
    c.wallet=Math.round(((c.wallet??0)+paid)*100)/100;
   }
+  s.served=Math.max(0,s.served-n.paidIds.length);
   n.paidIds=[]; // impede qualquer estorno repetido depois de recarregar
  }
  if(n.elapsed===NIGHT_MORNING_EXIT_OFFSET){
@@ -242,10 +243,10 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
    !Number.isInteger(last.playedMinutes)||last.playedMinutes<0||last.playedMinutes>480||
    ![last.revenue,last.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)))return false;
  if(n===undefined)return !(s.customers??[]).some(c=>c.nightMeetupDay!==undefined);
- if(!n||!Number.isInteger(n.fridayDay)||weekdayIndex(n.fridayDay)!==4||
+ if(!n||!Number.isInteger(n.fridayDay)||n.fridayDay<1||weekdayIndex(n.fridayDay)!==4||
    Math.floor((s.totalMinutes??0)/DAY_MINUTES)+1!==n.fridayDay||
    (s.totalMinutes??0)%DAY_MINUTES!==DAY_MINUTES-1||
-   (n.seats!==2&&n.seats!==3)||!Number.isInteger(n.elapsed)||n.elapsed<0||n.elapsed>720||
+   (n.seats!==2&&n.seats!==3)||!Number.isInteger(n.elapsed)||n.elapsed<0||n.elapsed>=720||
    !["arriving","playing","leaving","closed"].includes(n.phase)||
    !Array.isArray(n.pcIndexes)||n.pcIndexes.length!==n.seats||
    new Set(n.pcIndexes).size!==n.pcIndexes.length||
