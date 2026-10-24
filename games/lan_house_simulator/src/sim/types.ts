@@ -205,7 +205,11 @@ export interface GameState {
   weather: "sun" | "rain";
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
-  multiplayerVisit?: {id:number;size:2|3;memberIds:number[];createdMinute:number;paid?:boolean};
+  /** Turma física durante o expediente; rodada inicia após todos se sentarem. */
+  multiplayerVisit?: {
+    id:number;size:2|3;memberIds:number[];createdMinute:number;paid?:boolean;
+    sessionMinutes?:30|45;startedMinute?:number;
+  };
   multiplayerLastVisitDay?: number;
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
