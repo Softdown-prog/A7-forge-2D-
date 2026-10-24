@@ -14,6 +14,7 @@ import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.j
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {nightPrizePresentation,prizeAmountText} from "../dist/js/render/nightPrizePresentation.js";
+import {nightReopeningPresentation} from "../dist/js/render/nightReopening.js";
 import {GAME_SAVE_KEY,DAY_MINUTES} from "../dist/js/sim/types.js";
 import {selectAdminArea} from "./management_navigation.mjs";
 import {dismissPrivacyNotice} from "./privacyNoticeTest.mjs";
@@ -179,7 +180,48 @@ try{
   throw Error("Comprovante na partida real divergiu do prêmio pago.");
  await awardPage.screenshot({path:resolve(out,"corujao_premiacao_real_7h.png")});
  await awardPage.close();
- while(state.nightMeetup)stepGame(state,1);
+ // 09h59: todos os minutos de saída acontecem no motor real, sem saltar a madrugada.
+ let closingTicks=0;
+ while(state.nightMeetup?.elapsed<719&&closingTicks++<180)stepGame(state,1);
+ const preparing=nightReopeningPresentation(state);
+ if(!preparing||preparing.phase!=="preparing"||preparing.minutesUntilOpen!==1)
+  throw Error("Despedida da madrugada não chegou ao minuto 09h59.");
+ const fridayMinute=state.totalMinutes;
+ const farewellPage=await browser.newPage({viewport:{width:1280,height:850}});
+ farewellPage.on("pageerror",e=>errors.push(String(e)));
+ await farewellPage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+   {key:GAME_SAVE_KEY,payload:state});
+ await farewellPage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(farewellPage);
+ await farewellPage.locator("#menu-continue").click();
+ const countdown=await farewellPage.locator("#night-reopening-announcement");
+ await countdown.waitFor({state:"visible"});
+ if(!await countdown.textContent().then(s=>s.includes("1 min"))||
+    !await farewellPage.locator("#game").isVisible())
+  throw Error("Contagem regressiva do encerramento não aparece no salão real.");
+ await farewellPage.screenshot({path:resolve(out,"corujao_preparando_reabertura_0959.png")});
+ await farewellPage.close();
+ // Só o motor avança o minuto decisivo, remove convidados e abre no sábado.
+ stepGame(state,1);
+ const opened=nightReopeningPresentation(state);
+ if(state.nightMeetup||state.totalMinutes!==fridayMinute+1||
+    !opened||opened.phase!=="open"||!isValidSave(state)||
+    state.customers.some(c=>c.nightMeetupDay!==undefined))
+  throw Error("Virada das 10h duplicou dia ou deixou convidados no salão.");
+ const openPage=await browser.newPage({viewport:{width:1280,height:850}});
+ openPage.on("pageerror",e=>errors.push(String(e)));
+ await openPage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+   {key:GAME_SAVE_KEY,payload:state});
+ await openPage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(openPage);
+ await openPage.locator("#menu-continue").click();
+ const openLabel=openPage.locator("#night-reopening-announcement");
+ await openLabel.waitFor({state:"visible"});
+ if(!await openLabel.textContent().then(s=>s.includes("PORTAS ABERTAS"))||
+    !await openPage.locator("#game").isVisible())
+  throw Error("A reabertura real das 10h não ficou visível no jogo.");
+ await openPage.screenshot({path:resolve(out,"corujao_portas_abertas_sabado_10h.png")});
+ await openPage.close();
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
   throw Error("A final não produziu um troféu verdadeiro e persistente.");
@@ -286,7 +328,8 @@ try{
   slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
   zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,
   liveMatchCanvasCaptured:true,realChampionReactionCaptured:true,
-  realSevenAMPrizeCaptured:true,
+  realSevenAMPrizeCaptured:true,reopeningCountdownCaptured:true,
+  realSaturdayTenAMOpeningCaptured:true,
   repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
   mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");

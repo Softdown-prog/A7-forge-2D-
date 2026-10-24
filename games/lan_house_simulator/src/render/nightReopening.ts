@@ -52,7 +52,7 @@ export function drawNightReopening(
  if(!state)return;
  const opened=state.phase==="open",width=332,height=80;
  const x=ctx.canvas.width-width-18,y=20;
- const pulse=opened?.8+.2*Math.sin(time*2):1;
+ const pulse=opened?0.8+0.2*Math.sin(time*2):1;
  ctx.save();
  ctx.fillStyle="rgba(16,31,39,.93)";
  ctx.fillRect(x,y,width,height);

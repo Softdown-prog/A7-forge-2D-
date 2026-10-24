@@ -701,3 +701,11 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Por dez minutos do corujão após 7h, uma faixa de confirmação aparece sobre o salão e um selo animado acompanha o verdadeiro cliente vencedor enquanto ele sai. Se o prêmio não pôde ser pago (R$ 0), o evento não aparece. Encontro livre também não mostra celebração financeira falsa.
 - Módulo `src/render/nightPrizePresentation.ts`; integração em `SceneRenderer` e `nightTournamentHud`. Sem mudanças no formato do save e sem NPCs ou colisões adicionais.
 - Teste `tests/night-prize-presentation.test.mjs` confere dois/três jogadores, transferência real, reload, ausência de segunda despesa e condições sem pagamento. O Chromium fotografa `corujao_premiacao_real_7h.png` no gameplay original.
+
+### Visualização do encerramento do corujão até sábado às 10h (24/10/2026)
+
+- O cliente vê a contagem real dos amigos ainda no salão depois das 7h e, a partir das 9h30, o tempo restante antes da reabertura.
+- No instante em que `advanceNightMeetup` termina a madrugada e `nextDay` vira para sábado uma única vez, aparece a placa `SÁBADO · 10H · PORTAS ABERTAS`, acompanhada do total de clientes pagos e da receita efetivamente registrada (incluindo vendas). O aviso some após doze minutos normais.
+- A apresentação é **somente leitura** de `nightMeetup`, `lastNightMeetup` e `totalMinutes`. Não cria um segundo calendário, evento no caixa, NPC, armazenamento ou colisão. O relógio e as movimentações permanecem os originais.
+- Código: `src/render/nightReopening.ts`; integrações no Canvas e painel do topo. Teste com dois e três jogadores e encontro livre: `tests/night-reopening-presentation.test.mjs`.
+- O teste real do Chromium gera `corujao_preparando_reabertura_0959.png` e `corujao_portas_abertas_sabado_10h.png`, verificando a transição exata de minuto no motor original.
