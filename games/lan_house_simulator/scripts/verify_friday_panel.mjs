@@ -43,7 +43,7 @@ if(!isValidSave(state))throw Error("Save de teste inválido.");
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
- const page=await browser.newPage({viewport:{width:1280,height:850}});
+ let page=await browser.newPage({viewport:{width:1280,height:850}});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
  await page.addInitScript(({key,payload})=>{
  if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(payload));
@@ -107,9 +107,19 @@ try{
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
   throw Error("A final não produziu um troféu verdadeiro e persistente.");
- await page.evaluate(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+ // O navegador da primeira etapa continua com um jogo antigo vivo e autosave ativo.
+ // Reutilizar seu localStorage e recarregar a mesma aba pode restaurar esse
+ // checkpoint antigo em vez do resultado da eliminatória. Um contexto novo
+ // equivale a abrir o jogo novamente em outro navegador com o save importado.
+ await page.close();
+ page=await browser.newPage({viewport:{width:1280,height:850}});
+ page.on("pageerror",e=>errors.push(String(e)));
+ await page.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
   {key:GAME_SAVE_KEY,payload:state});
- await page.reload({waitUntil:"networkidle"});
+ await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ const reloaded=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+ if(reloaded.nightTournamentTrophies?.length!==1)
+  throw Error("O novo contexto não recebeu o save com troféu persistente.");
  await dismissPrivacyNotice(page);
  await page.locator("#menu-continue").click();
  await page.locator("#open-admin").click();
