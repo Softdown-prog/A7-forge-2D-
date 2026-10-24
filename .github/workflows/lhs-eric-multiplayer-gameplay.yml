@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/scripts/record_eric_multiplayer.mjs'
+      - 'games/lan_house_simulator/tests/multiplayer-visitors.test.mjs'
+      - 'games/lan_house_simulator/tests/pc-screen-activities.test.mjs'
       - 'games/lan_house_simulator/src/sim/multiplayerVisitors.ts'
       - 'games/lan_house_simulator/src/sim/customerLifecycle.ts'
       - 'games/lan_house_simulator/src/sim/customerDecisions.ts'
