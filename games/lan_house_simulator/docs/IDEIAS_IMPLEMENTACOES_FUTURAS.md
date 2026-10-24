@@ -662,3 +662,14 @@ A mesma noite jogável pode ser **encontro livre** (padrão e compatível com sa
 - Validação: `tests/night-knockout.test.mjs` cobre 2 e 3 participantes, partida física, pausas, save intermediário, prêmio e antifraude; o workflow `lhs-night-tournament.yml` roda junto às regressões anteriores. Gravação opcional `LHS_RECORD_KNOCKOUT=1` registra Canvas + telemetria para demonstrar que a eliminatória ocorre realmente no jogo.
 
 **Limite:** é uma chave curta dentro do primeiro corujão da turma de Eric. Não implementar adversários fantasmas, troféus que parecem existir sem um objeto/sistema no jogo, nem campeonatos gigantes fora da disponibilidade real de computadores. Expansões futuras exigem público novo e turnos/fases desenhados e testados.
+
+### Complemento 4D — galeria de troféus (24/10/2026)
+
+A LAN House mantém uma **galeria digital de troféus no painel de Administração → Finanças → Primeira sexta**. Cada conquista corresponde a uma final eliminatória realmente concluída pelos visitantes nos PCs. O troféu registra dia da sexta, ID do campeão e número de participantes; não é uma decoração falsa fora do motor.
+
+- Registro persistente em `GameState.nightTournamentTrophies`, opcional em saves antigos.
+- Título só concedido quando `settleNightTournament` encerra a partida, confirma o vencedor da final e liquida o prêmio. Um mesmo dia de sexta gera no máximo um troféu; recarregar o save não duplica a conquista.
+- Galeria com contagem total e até quatro conquistas recentes; máximo de 64 entradas para conter o tamanho do save. Valores inválidos, dias que não sejam sexta e vencedores inexistentes são rejeitados.
+- Regressão automatizada `tests/night-knockout.test.mjs`, que simula a noite real até 7h, salva, retoma, reabre e testa duplicações e fraudes.
+
+O troféu é inicialmente **digital no histórico do estabelecimento**, não uma estatueta física posicionável no cenário. Esta distinção deve permanecer clara até implementar um objeto visual completo.
