@@ -81,7 +81,9 @@ test("validador rejeita sexta inválida, rascunho confirmado sem operação ou c
  assert.equal(isValidSave(s),false);
  s.fridayMeetupDraft.fridayDay--;
  s.fridayMeetupDraft.status="confirmed";
- assert.equal(isValidSave(s),false);
+ assert.equal(isValidSave(s),true,"o evento agora pode ser confirmado, antes de começar");
+ s.fridayMeetupDraft.status="unknown";
+ assert.equal(isValidSave(s),false,"status adulterado não pode entrar no save");
  s.fridayMeetupDraft=undefined;
  s.multiplayerRoundsPlayed=-1;
  assert.equal(isValidSave(s),false);
