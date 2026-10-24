@@ -2,6 +2,7 @@ import {dayNumber,displayTime} from "../sim/engine.js";
 import {gameYear} from "../sim/era.js";
 import {DAY_MINUTES,type GameState} from "../sim/types.js";
 import {GAME_LAST_MINUTE} from "../sim/mailCalendar.js";
+import {weekdayName} from "../sim/campaignWeek.js";
 
 /** Uses only the existing simulation clock and the observed day's weather.
  * The next day's weather is randomized at the daily rollover, not forecast. */
@@ -12,7 +13,7 @@ export function timeWeatherSnapshot(s:GameState){
  const time=displayTime(s);
  const rainy=s.weather==="rain";
  return {
-  day:dayNumber(s),date,time,
+  day:dayNumber(s),date,time,weekday:weekdayName(day+1),
   weather:rainy?"Chuva":"Tempo firme",
   weatherIcon:rainy?"rain":"sun",
   impact:rainy
@@ -39,12 +40,12 @@ export function renderTimeWeatherPanel(
  };
  const ended=s.totalMinutes>=GAME_LAST_MINUTE;
  setHtml("calendar-hud",iconMarkup("calendar")+
-  (ended?"Fim da campanha · ":"")+"Dia "+view.day+" · "+view.date+" · "+view.time);
+  (ended?"Fim da campanha · ":"")+"Dia "+view.day+" · "+view.weekday+" · "+view.date+" · "+view.time);
  setHtml("weather-hud",iconMarkup(view.weatherIcon)+view.weather);
  const panel=doc.getElementById("time-weather-panel");
  if(!panel?.hasAttribute("open"))return;
  setText("time-weather-date",view.date);
- setText("time-weather-day",(ended?"Último dia":"Dia "+view.day)+" da campanha");
+ setText("time-weather-day",(ended?"Último dia":"Dia "+view.day)+" da campanha · "+view.weekday);
  setText("time-weather-hour",view.time);
  setText("time-weather-condition",view.weather);
  setText("time-weather-effect",view.impact);

@@ -111,6 +111,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  mount('finance',[
   {id:'balance',label:'Caixa e contas',nodes:[admin.querySelector('.balance-guide')!,$('bill-watch'),...following($('finance'),finance.querySelector('.finance-usage'))]},
   {id:'usage',label:'Ocupação e resultado',nodes:[finance.querySelector('.finance-usage')!,$('expansion')]},
+  {id:'events',label:'Primeira sexta',nodes:[$('first-meetup-panel')]},
   {id:'promotion',label:'Divulgação',nodes:[finance.querySelector('.promotion-panel')!]},
   {id:'feedback',label:'Opiniões dos clientes',nodes:[$('customer-feedback-panel')]},
   {id:'restart',label:'Reiniciar partida',nodes:[$('reset-game').closest('.action-row')!]}
