@@ -709,3 +709,10 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - A apresentação é **somente leitura** de `nightMeetup`, `lastNightMeetup` e `totalMinutes`. Não cria um segundo calendário, evento no caixa, NPC, armazenamento ou colisão. O relógio e as movimentações permanecem os originais.
 - Código: `src/render/nightReopening.ts`; integrações no Canvas e painel do topo. Teste com dois e três jogadores e encontro livre: `tests/night-reopening-presentation.test.mjs`.
 - O teste real do Chromium gera `corujao_preparando_reabertura_0959.png` e `corujao_portas_abertas_sabado_10h.png`, verificando a transição exata de minuto no motor original.
+
+### Primeiro atendimento depois do corujão (24/10/2026)
+
+- A abertura das 10h continua a chamar apenas o motor de clientes normal. Não são criadas chegadas artificiais, cobranças antecipadas, NPCs de demonstração ou uma segunda simulação.
+- Depois do aviso de abertura, o painel mostra até meio-dia quantos clientes normais estão presentes e quantos estão nos PCs. Os contadores são derivados das entidades `Customer` reais, com o sábado confirmado por `lastNightMeetup`, sem campos novos no save.
+- Testes `tests/saturday-first-customers.test.mjs` percorrem toda a noite para 2 e 3 participantes e encontro livre, e seguem no sábado até a chegada real, pagamento e uso do PC. Conferem que o corujão anterior e troféus não mudam, que a persistência funciona e que a partida continua após reload.
+- O Chromium captura `primeiro_cliente_real_sabado_pc.png` após o próprio motor confirmar que há cliente normal usando um PC pago. Nenhum screenshot ou vídeo de gameplay fictício.

@@ -80,8 +80,11 @@ for(const seats of [2,3]){
   stepGame(s,12);
   assert.equal(nightReopeningPresentation(s)?.phase,"open");
   stepGame(s,1);
-  assert.equal(nightReopeningPresentation(s),undefined,"sem faixa permanente");
+  assert.equal(nightReopeningPresentation(s)?.phase,"service",
+   "após o aviso, mostrar somente os clientes normais presentes");
   assert.equal(s.totalMinutes,friday*DAY_MINUTES+13);
+  stepGame(s,108);
+  assert.equal(nightReopeningPresentation(s),undefined,"sem painel permanente após meio-dia");
   assert.equal(isValidSave(s),true);
  });
 }
@@ -96,6 +99,6 @@ test("a reabertura também aparece em corujão livre, sem prêmio fictício",()=
 test("dia comum e última sexta antiga não geram aviso de abertura",()=>{
  const {s}=fixture(2);
  toMinute(s,719);stepGame(s,1);
- stepGame(s,15);
+ stepGame(s,121);
  assert.equal(nightReopeningPresentation(s),undefined);
 });
