@@ -6,6 +6,7 @@ import {roomBounds} from "./room.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 import {editableObjects,wallCutsObject} from "./editableObjects.js";
 import {counterQueue} from "./route.js";
+import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 
 export type WallAxis="x"|"y";
@@ -89,6 +90,7 @@ export function canBuildWall(s:GameState,w:WallSegment):boolean{
  vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
  for(const goal of goals)if(!navigableRoute(next,entrance(s),goal))return false;
  for(const c of s.customers)if(!navigableRoute(next,c,c.route?.at(-1)??c.target))return false;
+ if(!activeRetailQueuesReachable(next))return false;
  return true;
 }
 export function buildWall(s:GameState,w:WallSegment):Result{
@@ -97,7 +99,7 @@ export function buildWall(s:GameState,w:WallSegment):Result{
  if(s.cash<WALL_COST)return {ok:false,message:"Caixa insuficiente para construir parede."};
  s.cash-=WALL_COST;s.expenses+=WALL_COST;
  (s.interiorWalls??=[]).push({...w});
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Parede interna construída: -R$ "+WALL_COST+"."};
 }
 export function removeWall(s:GameState,w:WallSegment):Result{

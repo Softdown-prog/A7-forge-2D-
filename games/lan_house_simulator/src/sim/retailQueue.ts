@@ -64,3 +64,19 @@ export function refreshRetailQueues(s:GameState):void{
 export function firstRetailCustomer(s:GameState,item:Item):number|undefined{
  return s.customers.filter(c=>c.stage==="shopping"&&(c.desiredItem??"soda")===item).sort((a,b)=>a.id-b.id)[0]?.id;
 }
+
+/** Reavalia os lugares de espera dos compradores depois de uma edição.
+ * Não muda a simulação; a consulta é feita somente pelo editor.
+ */
+export function activeRetailQueuesReachable(s:GameState):boolean{
+ for(const item of ["soda","candy","snacks"] as const){
+  const line=s.customers.filter(c=>c.stage==="shopping"&&
+    (c.desiredItem??"soda")===item).sort((a,b)=>a.id-b.id);
+  if(!line.length)continue;
+  const slots=retailQueueSlots(s,item);
+  if(slots.length<line.length)return false;
+  for(const [index,c] of line.entries())
+   if(!navigableRoute(s,c,slots[index]!))return false;
+ }
+ return true;
+}

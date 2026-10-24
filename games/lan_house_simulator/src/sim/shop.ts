@@ -2,6 +2,7 @@ import type {EditableObject} from "./editableObjects.js";
 import {stationPoweredOn} from "./stationPower.js";
 import {layoutGoals} from "./editableObjects.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
+import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
 import {entrance} from "./engine.js";
 import {fixedLayoutObjects,pointInsideObject,objectTouchesCustomer,builtPosters,layoutPlacementIssue} from "./editableObjects.js";
 import type {GameState,Result} from "./types.js";
@@ -94,6 +95,8 @@ function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot
   const issue=layoutPlacementIssue(s,object);if(issue)return issue;
  }
  for(const c of s.customers)if(!navigableRoute(candidate,c,c.route?.at(-1)??c.target))return "Esta posição prende um cliente. Escolha outro encaixe.";
+ if(!activeRetailQueuesReachable(candidate))
+  return "Esta posição bloqueia um lugar da fila de compras.";
  return layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p))?"Esta posição bloqueia uma passagem.":null;
 }
 export function buyFurniture(s:GameState,kind:FurnitureKind):Result{
@@ -110,7 +113,7 @@ export function buyFurniture(s:GameState,kind:FurnitureKind):Result{
  s.cash-=cost;s.expenses+=cost;
  s.furniturePlacements=[...existing,{kind,slotId:slot.id}];
  (s.furniture??={poster:0,plant:0,table:0})[kind]=count+1;
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Móvel instalado: -R$ "+cost+"."};
 }
 
@@ -180,7 +183,8 @@ export function placeFurniture(s:GameState,kind:FurnitureKind,slotId:string,rota
  const count=s.furniture?.[kind]??0,cost=shopPrice(s,kind);if(s.cash<cost)return {ok:false,message:"Caixa insuficiente."};
  const existing=furnitureLocations(s),candidate={...s,furniture:{...(s.furniture??{poster:0,plant:0,table:0}),[kind]:count+1},furniturePlacements:[...existing,{kind,slotId,rotation}]};
  const issue=decorationIssue(s,candidate,kind,furnitureSlots(s).find(p=>p.id===slotId)!,rotation);if(issue)return {ok:false,message:issue};
- s.cash-=cost;s.expenses+=cost;s.furniture=candidate.furniture;s.furniturePlacements=candidate.furniturePlacements;routesForCurrentCustomers(s);
+ s.cash-=cost;s.expenses+=cost;s.furniture=candidate.furniture;s.furniturePlacements=candidate.furniturePlacements;
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Móvel instalado: -R$ "+shopPrice(s,kind)+"."};
 }
 export function validFurniturePlacements(s:GameState):boolean{

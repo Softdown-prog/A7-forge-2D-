@@ -5,6 +5,7 @@ import {roomBounds} from "./room.js";
 import {computerSeat,counterQueue} from "./route.js";
 import {counterQueueSlot,counterQueueCustomers,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
+import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
 import {furnitureLocations,furnitureSlots,removeFurniture} from "./shop.js";
 import {binSpots} from "./services.js";
 export interface EditableObject extends Point{id:string;label:string;kind:"pc"|"counter"|"soda"|"candy"|"shelf"|"bin"|"poster"|"plant"|"table";rotation:Rotation;w:number;d:number;index?:number;surface:"floor"|"wall";axis?:"x"|"y";span?:number;posterKind?:"terminal"|"arcade"|"coaster"|"tactical"|"golf"|"artillery"|"city"}
@@ -122,9 +123,20 @@ export function moveLayoutObject(s:GameState,id:string,destination:Point,rotatio
  if(id==="counter")for(const [i,c] of counterQueueCustomers(candidate).entries())if(!navigableRoute(candidate,c,counterQueueSlot(i,candidate)))return {ok:false,message:"A fila atual não cabe aqui. Escolha outra posição ou aguarde o atendimento."};
  for(const goal of layoutGoals(candidate))if(!navigableRoute(candidate,entrance(candidate),goal))return {ok:false,message:"Deixe uma passagem para todos os PCs, balcão e máquinas."};
  for(const c of candidate.customers){const end=c.stage==="shopping"?purchaseApproach(c.desiredItem??"soda",candidate):c.route?.at(-1)??c.target;if(!navigableRoute(candidate,c,end))return {ok:false,message:"Esta mudança prende um cliente; deixe uma passagem."};}
+ if(!activeRetailQueuesReachable(candidate))
+  return {ok:false,message:"Esta mudança bloqueia a fila de compras. Deixe passagem para os clientes."};
  if(id.startsWith("decor:"))s.furniturePlacements=candidate.furniturePlacements;else s.objectPlacements=candidate.objectPlacements;
  if(id==="counter")for(const [i,c] of counterQueueCustomers(s).entries()){c.stage="arriving";c.target=counterQueueSlot(i,s);c.route=[];c.queueIndex=i;}
- if(id==="soda"||id==="candy"||id==="shelf")for(const c of s.customers)if(c.stage==="shopping"){c.target=purchaseApproach(c.desiredItem??"soda",s);c.route=[];}
+ // Preservar filas de outros produtos; só a fila da máquina movida perde
+ // a atribuição anterior. O motor escolhe um novo lugar real para cada comprador.
+ if(id==="soda"||id==="candy"||id==="shelf"){
+  const changed=id==="shelf"?"snacks":id;
+  for(const c of s.customers)if(c.stage==="shopping"&&
+      (c.desiredItem??"soda")===changed){
+   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
+  }
+ }
  routesForCurrentCustomers(s);
+ refreshRetailQueues(s);
  return {ok:true,message:"Posição atualizada: "+original.label+". Mudança gratuita e salva."};
 }
