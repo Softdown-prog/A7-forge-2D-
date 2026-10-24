@@ -2,10 +2,11 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
 import type {StoryNoticeId} from "./storyEvents.js";
-import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstMailDue} from "./ericStory.js";
+import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstMailDue,
+ ERIC_SECOND_MAIL_ID,ERIC_SECOND_MAIL_TITLE,ERIC_SECOND_MAIL_BODY,ericSecondMailDue} from "./ericStory.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|DecisionId|StoryNoticeId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -33,6 +34,13 @@ export function reviewNotices(s:GameState):void{
  if(!s.ericFirstMailDelivered&&ericFirstMailDue(s)){
   deliver(s,ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,"info");
   s.ericFirstMailDelivered=true;
+ }
+ // Meses depois: carta pessoal, sem compra forçada ou recompensa.
+ if(!s.ericSecondMailDelivered&&s.notices?.some(n=>n.id===ERIC_SECOND_MAIL_ID))
+  s.ericSecondMailDelivered=true;
+ if(!s.ericSecondMailDelivered&&ericSecondMailDue(s)){
+  deliver(s,ERIC_SECOND_MAIL_ID,ERIC_SECOND_MAIL_TITLE,ERIC_SECOND_MAIL_BODY,"info");
+  s.ericSecondMailDelivered=true;
  }
  // Evento histórico: aviso antes da virada de 1999 para 2000, sem retroatividade.
  if(!s.y2kNoticeDelivered&&s.notices?.some(n=>n.id==="y2k-warning"))s.y2kNoticeDelivered=true;

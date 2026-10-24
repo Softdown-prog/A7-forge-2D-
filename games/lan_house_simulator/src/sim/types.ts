@@ -212,6 +212,8 @@ export interface GameState {
   y2kNoticeDelivered?: boolean;
   /** Eric: carta pessoal de 2000 entregue, mesmo após compactação do correio. */
   ericFirstMailDelivered?: boolean;
+  /** Carta pessoal do primo Eric em meados de 2000; registro persistente. */
+  ericSecondMailDelivered?: boolean;
   /** Histórias únicas: sorteadas uma única vez, mesmo após compactar o envelope. */
   storySeenIds?: import("./storyEvents.js").StoryId[];
   /** Cadeias persistentes: retorno e encerramento independentes do RNG. */

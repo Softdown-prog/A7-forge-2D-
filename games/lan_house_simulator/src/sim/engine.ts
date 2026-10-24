@@ -201,6 +201,7 @@ export function isValidSave(value: unknown): value is GameState {
     (v.mailStartDay===undefined||(Number.isInteger(v.mailStartDay)&&v.mailStartDay>=1&&v.mailStartDay<=GAME_END_DAY)) &&
     (v.y2kNoticeDelivered===undefined||typeof v.y2kNoticeDelivered==="boolean") &&
     (v.ericFirstMailDelivered===undefined||typeof v.ericFirstMailDelivered==="boolean") &&
+    (v.ericSecondMailDelivered===undefined||typeof v.ericSecondMailDelivered==="boolean") &&
     (v.mailSeenIds===undefined||(Array.isArray(v.mailSeenIds)&&v.mailSeenIds.length<=8&&
       new Set(v.mailSeenIds).size===v.mailSeenIds.length&&v.mailSeenIds.every(id=>isSporadicMailId(id)))) &&
     (v.storySeenIds===undefined||(Array.isArray(v.storySeenIds)&&v.storySeenIds.length<=STORY_IDS.length&&

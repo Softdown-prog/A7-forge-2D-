@@ -28,3 +28,26 @@ export function ericFirstMailDue(s:GameState):boolean{
  // retroativa; fora do ano/da janela, não há entrega tardia.
  return mailDay(s)>=first;
 }
+
+/** A segunda carta é pessoal e não vende nem instala títulos. */
+export const ERIC_SECOND_MAIL_ID="eric-second-mail" as const;
+export const ERIC_SECOND_MAIL_TITLE="Eric (França) — lembra daquele jogo em rede?";
+export const ERIC_SECOND_MAIL_BODY=[
+ "Tony! Como andam os computadores e o movimento aí? Faz tempo que a gente não conversa. Espero que esteja tudo bem com vocês.",
+ "Lembra do jogo de equipes que eu comentei? A turma aqui continua se reunindo para jogar. Um protege o outro, cada um no seu computador, e depois ninguém para de discutir quem salvou a partida!",
+ "Vi que estão aparecendo mais jogos desse tipo para redes de computadores. Se um dia você quiser experimentar aí na lan house, vale pesquisar com calma se as máquinas conseguem jogar juntas. Não precisa fazer isso agora, nem comprar nada só porque eu falei.",
+ "Depois me conta as novidades daí. Um abraço, Eric."
+].join("\n\n");
+
+/** Junho/julho de 2000, dias 156–200 da campanha de 360 dias/ano.
+ * Reutiliza a semente do correio, sem tocar no RNG dos clientes.
+ */
+export function ericSecondMailDayOfYear(s:GameState):number{
+ ensureMailCalendar(s);
+ return 156+((Math.imul((s.mailScheduleSeed!^0xe71c2001)>>>0,2246822519)>>>0)%45);
+}
+export function ericSecondMailDue(s:GameState):boolean{
+ if(!fixedYearMailWindowDue(s,2000,151,210))return false;
+ if(!s.ericFirstMailDelivered&&!s.notices?.some(n=>n.id===ERIC_FIRST_MAIL_ID))return false;
+ return mailDay(s)>=(2000-1998)*DAYS_PER_YEAR+ericSecondMailDayOfYear(s);
+}
