@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/sim/nightTournament.ts'
+      - 'games/lan_house_simulator/src/sim/nightKnockout.ts'
+      - 'games/lan_house_simulator/tests/night-knockout.test.mjs'
       - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
       - 'games/lan_house_simulator/src/sim/fridayMeetup.ts'
       - 'games/lan_house_simulator/src/sim/types.ts'
@@ -29,4 +31,4 @@ jobs:
           npm run build
       - name: Test paid registration, real usage scoring, award and compatibility
         working-directory: games/lan_house_simulator
-        run: node --test tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs
+        run: node --test tests/night-knockout.test.mjs tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs
