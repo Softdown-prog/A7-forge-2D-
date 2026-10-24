@@ -84,16 +84,18 @@ const validScore=(v:NightTournamentScore):boolean=>!!v&&Number.isInteger(v.id)&&
  Number.isInteger(v.points)&&v.points>=0&&v.points<=5000&&
  Number.isInteger(v.rounds)&&v.rounds>=0&&v.rounds<=50;
 export function validTournamentState(t:NightTournamentState|undefined,
- ids:number[],paid:number[],seats:number):boolean{
+ ids:number[],paid:number[],seats:number,elapsed:number):boolean{
  if(t===undefined)return true;
  if(!t||!Array.isArray(t.scores)||t.scores.length>seats||
     t.scores.some(x=>!validScore(x)||!ids.includes(x.id)||!paid.includes(x.id))||
     new Set(t.scores.map(x=>x.id)).size!==t.scores.length||
     (t.settled!==undefined&&typeof t.settled!=="boolean")||
     (t.winnerId!==undefined&&(!Number.isInteger(t.winnerId)||!t.scores.some(x=>x.id===t.winnerId)))||
-    (t.prizePaid!==undefined&&!money(t.prizePaid))||
+    (t.prizePaid!==undefined&&(!money(t.prizePaid)||t.prizePaid>40))||
+    (t.settled===true&&elapsed<540)||
     (t.settled!==true&&(t.winnerId!==undefined||t.prizePaid!==undefined))||
-    (t.winnerId===undefined&&(t.prizePaid??0)>0))return false;
+    (t.winnerId===undefined&&(t.prizePaid??0)>0)||
+    (t.winnerId!==undefined&&tournamentStandings(t)[0]?.id!==t.winnerId))return false;
  return true;
 }
 export function validTournamentResult(result:NightTournamentResult|undefined,seats:number):boolean{
@@ -103,6 +105,7 @@ export function validTournamentResult(result:NightTournamentResult|undefined,sea
     new Set(result.rankings.map(x=>x.id)).size!==result.rankings.length||
     !money(result.prizePaid)||result.prizePaid>40||
     (result.winnerId!==undefined&&!result.rankings.some(x=>x.id===result.winnerId))||
-    (result.winnerId===undefined&&result.prizePaid!==0))return false;
+    (result.winnerId===undefined&&result.prizePaid!==0)||
+    (result.winnerId!==undefined&&tournamentStandings({scores:result.rankings})[0]?.id!==result.winnerId))return false;
  return true;
 }
