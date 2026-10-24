@@ -632,3 +632,18 @@ A implementação conecta uma madrugada física ao **motor original**, e não a 
 - Para **duas ou três vagas**, o convite depende do Setor Zero e de pelo menos uma rodada diurna previamente concluída, preservando o ritmo narrativo de Tony.
 
 **Limite do escopo:** é o primeiro encontro coletivo da madrugada, não um sistema de campeonatos com fases, classificação, prêmios e troféus. Estes ficam para uma etapa posterior, após validar a experiência real de chegada e permanência.
+
+
+## Etapa 4C — torneio amistoso de Setor Zero na madrugada (24/10/2026)
+
+A mesma noite jogável pode ser **encontro livre** (padrão e compatível com saves antigos) ou **torneio amistoso** por opção explícita de Tony antes da confirmação.
+
+- Admin → Finanças → Primeira sexta: um botão alterna `Encontro livre` e `Torneio amistoso` no rascunho; depois de confirmar não é permitido mudar a regra. Confirmar não cobra inscrição antecipada nem reserva ficticiamente a receita.
+- Convidados inscritos são os mesmos objetos `Customer`, **somente após terem pago no caixa**. Não há segundo pagamento nem NPC simulado fora do salão.
+- O placar registra uma rodada a cada 12 minutos de jogo, **somente para clientes fisicamente usando os PCs** da turma; pausas de compra não pontuam. Os pontos representam um resultado simplificado de Setor Zero — não um FPS completo com detecção de tiros. Classificação determinística por pontos, rodadas e ID como desempate.
+- Um `details` discreto acima do Canvas mostra inscritos, líder e classificação em tempo real, sem impedir acesso ao cenário nem acrescentar um painel gigante no mobile.
+- Às 7h, se a rodada conjunta ocorreu e todos os participantes registraram jogo, declara-se vencedor e paga-se um prêmio de **20% da receita das sessões (limite R$40 e disponibilidade real do caixa)**. O prêmio diminui `cash`, aumenta `expenses` e entra na carteira existente do campeão. Sem participantes válidos, não existe premiação.
+- O placar, vencedor e valor pago persistem nos saves intermediários e no relatório da última madrugada. A liquidação é **idempotente**, antes da saída física; recarregar o save não concede outro prêmio.
+- Validação dedicada: `tests/night-tournament.test.mjs` (2 e 3 convidados, classificação, caixa, saves, alterações fraudulentas); `scripts/verify_friday_panel.mjs` (seleção visual real); workflow `lhs-night-tournament.yml` (sem dependência de Chromium) e gravação da variante noturna real no workflow `lhs-friday-night-gameplay.yml`.
+
+**Limitação consciente:** esta é a primeira edição do campeonato, com uma rodada de classificação durante a madrugada. Chaveamento de eliminatórias, grupos rivais, múltiplas equipes, troféus e premiações maiores continuam futuras extensões; não apresentar o placar simples como um FPS jogável.
