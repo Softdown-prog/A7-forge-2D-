@@ -211,6 +211,10 @@ export interface GameState {
     sessionMinutes?:30|45;startedMinute?:number;
   };
   multiplayerLastVisitDay?: number;
+  /** Número de rodadas de rede iniciadas com clientes reais, opcional em saves antigos. */
+  multiplayerRoundsPlayed?: number;
+  /** Somente um RASCUNHO de planejamento; não reserva PCs nem executa turnos. */
+  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"};
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
   mailScheduleSeed?: number;

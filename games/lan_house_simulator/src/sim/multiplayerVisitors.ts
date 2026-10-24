@@ -123,6 +123,7 @@ export function startMultiplayerRound(s:GameState,c:Customer):boolean{
     friend.stage!=="sitting"||(friend.poseMinutes??0)<3||friend.pcIndex===null))return true;
  if(new Set(members.map(friend=>friend.pcIndex)).size!==visit.size)return true;
  visit.startedMinute=s.totalMinutes;
+ s.multiplayerRoundsPlayed=(s.multiplayerRoundsPlayed??0)+1;
  for(const friend of members){
   friend.stage="using";
   friend.poseMinutes=0;friend.usedMinutes=0;
