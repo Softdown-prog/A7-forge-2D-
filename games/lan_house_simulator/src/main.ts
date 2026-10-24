@@ -50,7 +50,8 @@ import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} fro
 import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
-import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "./sim/eraGames.js";
+import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier,
+ ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
 import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
@@ -1431,20 +1432,21 @@ function renderUI(liveOnly=false):void {
     }
    syncPanelChildren(licensePanel,nextWindows);
   }
-  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[stationRevision,game.licensedGames,game.licensedEraGames],!liveOnly)){
+  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly)){
     const nextEraGames=document.createElement("div");
     const owned=game.licensedEraGames??[];
     const summary=document.createElement("p");summary.className="era-game-summary";
     summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · bônus atual de procura: +"+(Math.round((eraGameVisitorMultiplier(game)-1)*10000)/100).toLocaleString("pt-BR")+"%. Novidades atraem mais; títulos antigos conservam 25% de apelo nostálgico. Licenças permanentes.";
     nextEraGames.append(summary);
-    for(const releaseYear of [1998,1999]){
+    for(const releaseYear of [1998,1999,...(year>=2000&&multiplayerGameKnown(game)?[2000]:[])]){
       const section=document.createElement("section");section.className="era-game-section";
       const groupTitle=document.createElement("h4");
       const titles=ERA_GAME_CATALOG.filter(title=>title.year===releaseYear);
-      groupTitle.textContent=releaseYear+" · "+titles.filter(title=>owned.some(id=>id===title.id)).length+" de 5 jogos";
+      groupTitle.textContent=releaseYear+" · "+titles.filter(title=>owned.some(id=>id===title.id)).length+" de "+titles.length+" jogos";
       const grid=document.createElement("div");grid.className="era-game-grid";
       for(const title of titles){
         const quote=quoteEraGame(game,title.id),bought=owned.some(id=>id===title.id),locked=year<title.year;
+        const multiplayer=title.id===ERIC_MULTIPLAYER_GAME_ID;
         const card=document.createElement("article");card.className="era-game-card"+(locked?" era-game-locked":"")+(bought?" era-game-owned":"");
         const cover=document.createElement("div");cover.className="era-game-cover";cover.dataset.theme=title.theme;
         const release=document.createElement("small");release.className="era-cover-release";release.textContent="SOFTDOWN · "+title.year;
@@ -1461,6 +1463,7 @@ function renderUI(liveOnly=false):void {
         const status=document.createElement("small");status.className="era-game-status";
         status.textContent=(bought?"✓ Licença permanente":quote.ok?"Pronto para licenciar":quote.message)+
         (locked?"":" · potencial de procura por título: +"+(gamePopularityPercent(title.year,year)*.015).toLocaleString("pt-BR",{maximumFractionDigits:3})+"% (com Windows licenciado)");
+        if(multiplayer)status.textContent+=" · PCs aptos agora: "+multiplayerEligiblePcs(game).length+" (mínimo 2).";
         const button=document.createElement("button");button.type="button";button.className="slice";button.dataset.eraGameBuy=title.id;
         button.textContent=bought?"✓ Licenciado":locked?"🔒 Chega em "+title.year:quote.ok?"Licenciar · R$ "+title.cost:"Indisponível";
         button.disabled=!quote.ok;button.title=quote.message;

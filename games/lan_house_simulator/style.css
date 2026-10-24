@@ -555,7 +555,7 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 @media(max-width:560px){.shop-art[data-item="disc-copier"]{height:118px}.disc-copy-panel p{overflow-wrap:anywhere}}
 
 
-/* Coleção 1998–1999: capas locais desenhadas por CSS, sem conteúdo externo. */
+/* Coleção 1998–2000: capas locais desenhadas por CSS, sem conteúdo externo. */
 #era-game-catalog{margin:17px 0 28px;min-width:0}
 .era-game-summary{border:1px solid #b9c9a2;background:#e3edd5;padding:12px 14px;border-radius:9px;color:#35543b;font-size:12px;line-height:1.55}
 .era-game-section{margin:20px 0 25px}
@@ -578,6 +578,7 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .era-game-cover[data-theme="cyber"]{--art-a:#15183e;--art-b:#3f4e9c;--art-c:#86d5f9}
 .era-game-cover[data-theme="island"]{--art-a:#135065;--art-b:#26765d;--art-c:#efd4a3}
 .era-game-cover[data-theme="circuit"]{--art-a:#234544;--art-b:#788d32;--art-c:#caee82}
+.era-game-cover[data-theme="squad"]{--art-a:#172a37;--art-b:#526b60;--art-c:#b8d4a1}
 .era-game-details{display:flex;flex-direction:column;gap:8px;padding:13px;flex:1}
 .era-game-details>strong{color:#2d5038;font-size:14px}
 .era-game-details p{font-size:11px;line-height:1.55;color:#667959;margin:0;flex:1}

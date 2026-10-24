@@ -15,10 +15,10 @@ function setup(mode="historical"){
  return s;
 }
 test("cinco jogos por ano e capas distintas",()=>{
- assert.equal(ERA_GAME_CATALOG.length,10);
+ assert.equal(ERA_GAME_CATALOG.length,11);
  assert.deepEqual([1998,1999].map(year=>ERA_GAME_CATALOG.filter(x=>x.year===year).length),[5,5]);
- assert.equal(new Set(ERA_GAME_CATALOG.map(x=>x.id)).size,10);
- assert.equal(new Set(ERA_GAME_CATALOG.map(x=>x.theme)).size,10);
+ assert.equal(new Set(ERA_GAME_CATALOG.map(x=>x.id)).size,11);
+ assert.equal(new Set(ERA_GAME_CATALOG.map(x=>x.theme)).size,11);
 });
 test("restrições: contrato base, Windows, ano e dinheiro",()=>{
  const s=createGame(4,"historical");s.cash=4000;

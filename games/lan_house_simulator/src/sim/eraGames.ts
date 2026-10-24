@@ -3,7 +3,8 @@ import {gameYear,installedWindows,WINDOWS_ERAS} from "./era.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
 import {stationReadyForSessions,stationPowerCount} from "./stationPower.js";
 
-/** Dez jogos fictícios com contratos individuais. Valores são de game design. */
+/** Jogos fictícios com contratos individuais. Valores são de game design. */
+export const ERIC_MULTIPLAYER_GAME_ID="setor-zero" as const;
 export const ERA_GAME_CATALOG=[
  {id:"turbo-98",name:"Corrida Turbo 98",year:1998,cost:65,genre:"Corrida",theme:"speed",symbol:"➤",description:"Disputas de velocidade nos circuitos da cidade."},
  {id:"castelo-das-chaves",name:"Castelo das Chaves",year:1998,cost:70,genre:"Aventura",theme:"castle",symbol:"♜",description:"Explore torres e resolva enigmas de portas."},
@@ -14,7 +15,8 @@ export const ERA_GAME_CATALOG=[
  {id:"reinos-de-papel",name:"Reinos de Papel",year:1999,cost:100,genre:"Estratégia",theme:"kingdom",symbol:"♛",description:"Comande vilarejos e fortalezas desenhadas."},
  {id:"cyber-arena-99",name:"Cyber Arena 99",year:1999,cost:120,genre:"Ação",theme:"cyber",symbol:"⚡",description:"Desafios futuristas em arenas neon."},
  {id:"ilha-dos-segredos",name:"Ilha dos Segredos",year:1999,cost:95,genre:"Aventura",theme:"island",symbol:"◈",description:"Procure pistas em uma ilha misteriosa."},
- {id:"circuitos-malucos",name:"Circuitos Malucos",year:1999,cost:85,genre:"Quebra-cabeça",theme:"circuit",symbol:"✳",description:"Conecte trilhas, motores e engrenagens."}
+ {id:"circuitos-malucos",name:"Circuitos Malucos",year:1999,cost:85,genre:"Quebra-cabeça",theme:"circuit",symbol:"✳",description:"Conecte trilhas, motores e engrenagens."},
+ {id:ERIC_MULTIPLAYER_GAME_ID,name:"Setor Zero",year:2000,cost:145,genre:"Ação em rede",theme:"squad",symbol:"◎",description:"Jogo tático original em equipes, pela rede local. Exige ao menos dois PCs operacionais com Windows licenciado."}
 ] as const;
 
 export type EraGameId=(typeof ERA_GAME_CATALOG)[number]["id"];
@@ -29,15 +31,30 @@ export function eligibleEraGamePcs(s:GameState):number[]{
  return Array.from({length:count},(_,i)=>i).filter(i=>s.pcWindowsLicenses?.[i]===true&&
   WINDOWS_ERAS.findIndex(w=>w.id===installedWindows(s,i))>=win98);
 }
+/** Descoberta por Eric em 2000; saves de 2001+ também podem voltar à novidade. */
+export function multiplayerGameKnown(s:GameState):boolean{
+ return gameYear(s)>2000||s.ericSecondMailDelivered===true;
+}
+/** A rede local precisa de duas estações reais, operacionais e licenciadas. */
+export function multiplayerEligiblePcs(s:GameState):number[]{
+ return eligibleEraGamePcs(s).filter(i=>stationReadyForSessions(s,i));
+}
+export function hasOperationalMultiplayer(s:GameState):boolean{
+ return multiplayerEligiblePcs(s).length>=2;
+}
 export interface EraGameQuote extends Result {cost:number;eligiblePcs:number[]}
 export function quoteEraGame(s:GameState,id:string):EraGameQuote{
- const title=eraGameSpec(id),cost=title?.cost??0,eligiblePcs=eligibleEraGamePcs(s);
+ const title=eraGameSpec(id),cost=title?.cost??0;
+ const multiplayer=id===ERIC_MULTIPLAYER_GAME_ID;
+ const eligiblePcs=multiplayer?multiplayerEligiblePcs(s):eligibleEraGamePcs(s);
  const reject=(message:string):EraGameQuote=>({ok:false,message,cost,eligiblePcs});
  if(!title)return reject("Título inexistente.");
  if(gameYear(s)<title.year)return reject("Chega em "+title.year+".");
+ if(multiplayer&&!multiplayerGameKnown(s))return reject("Novidade ainda não apresentada por Eric.");
  if(!s.licensedGames)return reject("Regularize primeiro os direitos básicos em Serviços.");
  if(s.licensedEraGames?.includes(title.id))return reject("Licença já adquirida.");
  if(eligiblePcs.length===0)return reject("Licencie o Windows em pelo menos um computador.");
+ if(multiplayer&&eligiblePcs.length<2)return reject("São necessários dois PCs operacionais com Windows licenciado.");
  if(s.cash<cost)return reject("Caixa insuficiente: "+cost+" reais.");
  return {ok:true,message:"Licença de "+title.name+" para toda a lan house.",cost,eligiblePcs};
 }
@@ -68,7 +85,9 @@ export function eraGameVisitorMultiplier(s:GameState):number{
  const year=gameYear(s);
  const appeal=(s.licensedEraGames??[]).reduce((total,id)=>{
   const title=eraGameSpec(id);
-  return total+(title&&title.year<=year?gamePopularityWeight(title.year,year)*.015:0);
+  return total+(title&&title.year<=year&&
+   (id!==ERIC_MULTIPLAYER_GAME_ID||hasOperationalMultiplayer(s))
+    ?gamePopularityWeight(title.year,year)*.015:0);
  },0);
- return 1+Math.min(.15,appeal);
+ return 1+Math.min(.165,appeal);
 }
