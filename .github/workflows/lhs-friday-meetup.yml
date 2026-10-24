@@ -5,6 +5,8 @@ on:
     paths:
       - 'games/lan_house_simulator/src/sim/campaignWeek.ts'
       - 'games/lan_house_simulator/src/sim/futureNightClock.ts'
+      - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
+      - 'games/lan_house_simulator/tests/night-meetup.test.mjs'
       - 'games/lan_house_simulator/tests/future-night-clock.test.mjs'
       - 'games/lan_house_simulator/src/sim/fridayMeetup.ts'
       - 'games/lan_house_simulator/src/sim/multiplayerVisitors.ts'
@@ -33,7 +35,7 @@ jobs:
           npm run build
       - name: Check Fridays, saved drafts, multiplayer and normal clock
         working-directory: games/lan_house_simulator
-        run: node --test tests/friday-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
+        run: node --test tests/friday-meetup.test.mjs tests/night-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
       - name: Install Chromium for genuine administration UI
         working-directory: games/lan_house_simulator
         run: |
