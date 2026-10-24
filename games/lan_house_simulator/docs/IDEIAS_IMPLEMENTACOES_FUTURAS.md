@@ -588,3 +588,17 @@ As ideias v0.1–0.4 anteriores permanecem registradas como histórico; os horá
 - O log do jogo informa quando os amigos chegam e quando todos pagaram. Os personagens seguem sendo NPCs do simulador, usando a mesma movimentação e animação de sessão.
 - Ainda não foram implementados campeonatos oficiais, rodada competitiva pontuada ou turnos especiais de sexta para sábado.
 - Regressões: `tests/multiplayer-visitors.test.mjs`.
+
+
+## Correção da etapa 3 — partida coletiva real no salão (24/10/2026)
+
+Após revisar a demonstração inadequada, a etapa 3 deixou de tratar os participantes como sessões que começam independentemente:
+
+- Os amigos continuam entrando um a um pela porta verdadeira, fazendo fila e pagando **individualmente** no caixa do jogo. Uma mesma turma negocia **uma duração comum** de 30 ou 45 minutos, de acordo com o orçamento de todos. Nenhum membro recebe um pacote incompatível com o restante do grupo.
+- O primeiro cliente que senta espera os demais. A rodada de rede local começa apenas quando **todos** pagaram, alcançaram PCs diferentes e terminaram a animação de sentar; `startedMinute` é único e persistido no save.
+- O tempo de uso corre em conjunto. A internet externa não interrompe automaticamente uma partida pela rede local. Se a formação não for concluída dentro do limite, o grupo se dissolve e as sessões individuais já pagas continuam sendo respeitadas, sem criar dinheiro fictício.
+- **Na interface original do LHS**, os monitores CRT/LCD dos participantes passam a mostrar uma microcena tática original de `Setor Zero` durante a mesma rodada, com atualização sincronizada. É uma representação no simulador, não um FPS completo nem uma página externa de demonstração.
+- A validação foi ampliada em `tests/multiplayer-visitors.test.mjs` e `tests/pc-screen-activities.test.mjs`, incluindo sincronização, caixa, save, queda de internet, renderização e um percurso completo pelo motor com `stepGame`.
+- **Ainda fora do escopo:** convite, reserva e aceitação do primeiro evento noturno; calendário de sexta/sábado; passagem por meia-noite; pacotes da madrugada; placar formal e relatório do corujão. Os horários e preços noturnos continuam sem definição final.
+
+**Critério de demonstração:** capturar e apresentar como gameplay apenas a interface real do jogo, com prova de que a visita coletiva foi disparada pelo motor. Etiquetas e painéis criados exclusivamente para um vídeo não demonstram a experiência que o jogador encontrará.
