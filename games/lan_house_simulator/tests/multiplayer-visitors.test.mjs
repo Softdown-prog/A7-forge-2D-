@@ -202,3 +202,28 @@ test("simulação completa usa a porta, a fila e os PCs reais sem montar uma cen
  assert.ok(s.eventLog.some(line=>line.includes("MESMA partida em rede")));
  assert.equal(isValidSave(s),true);
 });
+
+test("regressão real: terceiro amigo atrasado ainda consegue sentar após 85 minutos",()=>{
+ const s=prepared(721);
+ tickMultiplayerVisitors(s);
+ const groupId=s.multiplayerVisit.id;
+ let reachedAfter85=false,started=false;
+ for(let minute=1;minute<=125;minute++){
+  stepGame(s,1);
+  const visit=s.multiplayerVisit;
+  if(visit?.id!==groupId)break;
+  if(minute>85&&visit.memberIds.length===3&&visit.startedMinute===undefined)
+   reachedAfter85=true;
+  if(visit.startedMinute!==undefined){
+   const members=visit.memberIds.map(id=>s.customers.find(c=>c.id===id));
+   assert.equal(members.length,3);
+   assert.ok(members.every(c=>c&&c.stage==="using"));
+   assert.equal(new Set(members.map(c=>c.pcIndex)).size,3);
+   assert.equal(visit.paid,true);
+   started=true;break;
+  }
+ }
+ assert.equal(reachedAfter85,true,"a fila real exige esperar o terceiro sem cancelar");
+ assert.equal(started,true,"os três iniciam no salão de verdade, não num cenário montado");
+ assert.equal(isValidSave(s),true);
+});
