@@ -13,7 +13,7 @@ export function nightPrizePresentation(s:GameState):NightPrizePresentation|undef
  if(!n||!t||!t.settled||n.phase!=="leaving"||
     n.elapsed<NIGHT_MORNING_EXIT_OFFSET||n.elapsed>NIGHT_MORNING_EXIT_OFFSET+10||
     t.winnerId===undefined||!n.paidIds.includes(t.winnerId)||
-    !Number.isFinite(t.prizePaid)||!(t.prizePaid!>0))return undefined;
+    (t.prizePaid===undefined||!Number.isFinite(t.prizePaid)||t.prizePaid<=0))return undefined;
  return {fridayDay:n.fridayDay,winnerId:t.winnerId,
   amount:t.prizePaid!,elapsed:n.elapsed,ageMinutes:n.elapsed-NIGHT_MORNING_EXIT_OFFSET};
 }
@@ -30,8 +30,7 @@ export function drawNightPrizePresentation(
  if(!prize)return;
  const n=s.nightMeetup!;
  const winner=s.customers.find(c=>c.id===prize.winnerId&&
-  c.nightMeetupDay===n.fridayDay&&c.stage!=="leaving"?false:
-  c.id===prize.winnerId&&c.nightMeetupDay===n.fridayDay);
+  c.nightMeetupDay===n.fridayDay);
  if(!winner)return;
  const at=iso({x:winner.x,y:winner.y},camera,133);
  const z=Math.max(.75,camera.zoom),label="PRÊMIO PAGO · "+prizeAmountText(prize.amount);
