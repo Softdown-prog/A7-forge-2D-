@@ -35,6 +35,7 @@ import {dayNumber,online,pcCount,entrance,random,addLog,LAST_ADMISSION_MINUTE,CL
 import {EXIT_REACH_DISTANCE} from "./customerMotion.js";
 import {sendHome,refreshCounterQueue} from "./customerFlow.js";
 import {spawn,spawnPrintWalkIn,spawnDiscWalkIn} from "./customerArrival.js";
+import {tickMultiplayerVisitors,validMultiplayerVisit} from "./multiplayerVisitors.js";
 import {advanceCustomer} from "./customerLifecycle.js";
 
 function nextDay(s: GameState): void {
@@ -115,7 +116,7 @@ function advanceMinute(s: GameState): void {
     addLog(s,"Download concluído: "+gpuGameSpec(installed.id)?.name+" no PC "+(installed.pc+1)+".");
   if(s.totalMinutes===GAME_LAST_MINUTE)addLog(s,"Fim de 2030: calendário da campanha concluído.");
   if(s.totalMinutes===1)reviewNotices(s);
-  if (s.totalMinutes % DAY_MINUTES === 0) { nextDay(s); return; }
+  if (s.totalMinutes % DAY_MINUTES === 0) {s.multiplayerVisit=undefined;nextDay(s); return;}
   if (s.offlineUntil === s.totalMinutes) addLog(s, "A internet voltou!");
   if (online(s)) {
     const chance = (s.weather === "rain" ? 0.00065 : 0.00015) / Math.sqrt(s.internetTier);
@@ -134,6 +135,8 @@ function advanceMinute(s: GameState): void {
   const occupied = s.customers.filter(c => c.stage === "using" || c.stage === "to_pc").length;
   const admission=visitorArrivalChance(s,occupied);
   if (s.customers.length < 14 && admission>0 && random(s)<admission)spawn(s);
+  // Grupos pequenos entram aos poucos pela mesma porta dos demais clientes.
+  tickMultiplayerVisitors(s);
   // Outra fonte de movimento comercial: sem PC, sem receita passiva e sem RNG adicional.
   if(s.customers.length<14&&printWalkInDue(s)&&pagesPrintedToday(s)<PRINT_PAGES_PER_DAY)spawnPrintWalkIn(s);
   if(s.customers.length<14&&discWalkInDue(s)&&discCopiesToday(s)<DISC_COPIES_PER_DAY)spawnDiscWalkIn(s);
@@ -171,7 +174,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validMultiplayerVisit(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -185,6 +188,8 @@ export function isValidSave(value: unknown): value is GameState {
       (c.preference===undefined||["economy","comfort","gaming","quick"].includes(c.preference))&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
+      (c.multiplayerVisitId===undefined||(Number.isInteger(c.multiplayerVisitId)&&c.multiplayerVisitId>0&&c.multiplayerVisitId<=v.nextCustomerId!))&&
+      (c.multiplayerAssignedPc===undefined||(Number.isInteger(c.multiplayerAssignedPc)&&c.multiplayerAssignedPc>=0&&c.multiplayerAssignedPc<pcCount(v as GameState)))&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&
         c.ps1StationIndex<(v.ps1Stations?.length??0)&&c.pcIndex===null))&&
       (c.ps1SeatIndex===undefined||(c.ps1StationIndex!==undefined&&

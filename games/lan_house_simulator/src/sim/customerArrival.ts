@@ -38,6 +38,27 @@ export function spawn(s: GameState): void {
   if(c.preferredGpuGame)recordGpuGameRequest(s,c.preferredGpuGame);
   s.customers.push(c);
 }
+/** Um amigo entra pela mesma soleira e fila, com carteira própria e sem
+ * incrementar o RNG de clientes comuns. Nunca produz receita ao chegar. */
+export function spawnMultiplayerFriend(s:GameState,visitId:number):Customer|null{
+ const queueIndex=counterQueueCustomers(s).length,entry=entrance(s);
+ if(queueIndex>=MAX_COUNTER_QUEUE||!entranceAvailable(s,entry))return null;
+ const id=s.nextCustomerId;
+ const rate=s.economyVersion===2?priceIndex(yearFromMinutes(s.totalMinutes)):1;
+ const c:Customer={
+  id,x:entry.x,y:entry.y,facing:"north",stage:"arriving",
+  target:counterQueueSlot(queueIndex,s),queueIndex,
+  costume:COSTUMES[id%COSTUMES.length]??"regular",
+  preference:"gaming",multiplayerVisitId:visitId,
+  pcIndex:null,usedMinutes:0,sessionMinutes:45,waitingMinutes:0,
+  offlineWait:0,happy:true,budgetAware:true,
+  wallet:Math.round((s.economyVersion===2?9:18)*rate*100)/100,
+  needs:initialNeeds(id)
+ };
+ if(!setTravel(s,c,c.target))return null;
+ s.nextCustomerId++;s.customers.push(c);
+ return c;
+}
 /** Clientes avulsos de impressão usam a mesma fila e saída física dos demais,
  * mas não reservam PCs nem recebem cobrança por sessão. */
 export function spawnPrintWalkIn(s:GameState):void {

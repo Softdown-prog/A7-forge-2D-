@@ -18,7 +18,9 @@ export function startStanding(c: Customer, wantsSnack: boolean): void {
   c.wantsSnack = wantsSnack;
 }
 export function isReserved(s: GameState, index: number): boolean {
-  return s.customers.some(c => c.pcIndex === index && (c.stage === "to_pc" || c.stage === "sitting" || c.stage === "using" || c.stage === "standing"));
+  return s.customers.some(c =>
+   (c.pcIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage))||
+   (c.multiplayerAssignedPc===index&&c.stage!=="leaving"));
 }
 /**
  * VIPs comparam QUALIDADE e distância navegável; clientes comuns mantêm
@@ -28,6 +30,12 @@ export function isReserved(s: GameState, index: number): boolean {
  * Empates favorecem o menor índice para não mudar os PCs básicos.
  */
 export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
+ // Turmas mantêm reserva de um PC específico; os demais clientes não
+ // conseguem ocupar a máquina enquanto cada amigo aguarda na fila.
+ if(c.multiplayerAssignedPc!==undefined){
+  const pc=c.multiplayerAssignedPc;
+  return stationReadyForSessions(s,pc)?pc:undefined;
+ }
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
  const origin={x:c.x,y:c.y};
@@ -88,7 +96,7 @@ export function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"
   s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 export function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.pcIndex = null; c.ps1StationIndex=undefined; c.ps1SeatIndex=undefined; c.queueIndex=undefined;
+  c.stage = "leaving"; c.pcIndex = null; c.multiplayerAssignedPc=undefined; c.ps1StationIndex=undefined; c.ps1SeatIndex=undefined; c.queueIndex=undefined;
   delete c.doorwayYielding;
   delete c.desiredProduct;
   c.stalledMinutes=0;

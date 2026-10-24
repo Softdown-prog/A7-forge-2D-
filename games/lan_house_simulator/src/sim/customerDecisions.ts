@@ -20,6 +20,7 @@ import {recordGpuGameSession} from "./gpuDemand.js";
 import {pcCount,pcPosition,addLog,CLOSING_START_MINUTE,SESSION_FINISH_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel} from "./customerMotion.js";
 import {chooseAvailablePc,customerSays,sendHome,leaveCounterForPc,queueVisualEvent} from "./customerFlow.js";
+import {waitForMultiplayerFriends} from "./multiplayerVisitors.js";
 
 export function tryServe(s: GameState, c: Customer): void {
   if(counterQueueCustomers(s)[0]?.id!==c.id||s.totalMinutes<(s.counterBusyUntil??0)){
@@ -57,11 +58,12 @@ export function tryServe(s: GameState, c: Customer): void {
   // Serviços de impressão e cópia continuam exclusivos e independentes.
   const remaining=SESSION_FINISH_MINUTE-localMinute(s);
   if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
+  if(c.multiplayerVisitId!==undefined&&waitForMultiplayerFriends(s,c))return;
   const wanted=preferredSessionLength(c,c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2));
   const pcCandidate=chooseAvailablePc(s,c);
   // O console pode atender inclusive um visitante que encontrou todos os
   // PCs ocupados. Só contratar quando houver CD, cadeira e trajeto livres.
-  const consoleIndex=shouldConsiderConsole(c,pcCandidate)?(s.ps1Stations??[]).findIndex((_,i)=>{
+  const consoleIndex=c.multiplayerVisitId===undefined&&shouldConsiderConsole(c,pcCandidate)?(s.ps1Stations??[]).findIndex((_,i)=>{
     const number=ps1OpenSeat(s,i);
     if(number===null)return false;
     const side=ps1SeatApproach(s,i,number),seat=ps1Seat(s,i,number);

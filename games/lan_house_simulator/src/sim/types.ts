@@ -58,6 +58,10 @@ export interface Customer {
   preferredGpuGame?: import("./gpuGames.js").GpuGameId;
   /** Sessão cobrada com adicional de jogo GPU; preservado em saves. */
   gpuGameCharged?: boolean;
+  /** Identifica uma turma de amigos em rede; compatível com saves antigos. */
+  multiplayerVisitId?: number;
+  /** Estação prometida enquanto este amigo espera no caixa. */
+  multiplayerAssignedPc?: number;
   /** Estação PS1 reservada ao pagar; independente do PC e da internet. */
   ps1StationIndex?: number;
   /** 0 = original; 1 = cadeira adicional. Saves antigos assumem 0. */
@@ -201,6 +205,8 @@ export interface GameState {
   weather: "sun" | "rain";
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
+  multiplayerVisit?: {id:number;size:2|3;memberIds:number[];createdMinute:number};
+  multiplayerLastVisitDay?: number;
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
   mailScheduleSeed?: number;
