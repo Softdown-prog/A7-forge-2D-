@@ -23,6 +23,7 @@ import {recordComputerUtilization} from "./financialReview.js";
 import {recordStationMinute} from "./stationAccounting.js";
 import {pcCount} from "./simulationState.js";
 import {stationReadyForSessions} from "./stationPower.js";
+import {registerTournamentPlayer,scoreTournamentMinute,settleNightTournament,completedTournamentResult,validTournamentState,validTournamentResult} from "./nightTournament.js";
 
 
 export function confirmFridayMeetup(s:GameState):Result{
@@ -62,7 +63,8 @@ export function beginNightMeetup(s:GameState):void{
  s.multiplayerVisit=undefined;
  s.nightMeetup={fridayDay:draft.fridayDay,seats:draft.seats,elapsed:0,
   phase:"arriving",pcIndexes:pcs.slice(0,draft.seats),memberIds:[],paidIds:[],
-  revenue:0,retailRevenue:0};
+  revenue:0,retailRevenue:0,
+  tournament:draft.format==="tournament"?{scores:[]}:undefined};
  s.fridayMeetupDraft=undefined;
  addLog(s,"Sexta 22h: portas fechadas ao público para o encontro de Setor Zero.");
 }
@@ -106,6 +108,7 @@ function serveNightFriend(s:GameState,c:Customer):void{
  s.served++;
  n.revenue=Math.round((n.revenue+fee)*100)/100;
  n.paidIds.push(c.id);
+ registerTournamentPlayer(s,c.id);
  s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:fee,x:c.x,y:c.y});
  addLog(s,"Corujão: amigo "+n.paidIds.length+"/"+n.seats+
   " pagou R$ "+fee.toFixed(2)+" e foi para o PC "+(pc+1)+".");
@@ -192,6 +195,7 @@ export function advanceNightMeetup(s:GameState):boolean{
     break;
   }
  }
+ scoreTournamentMinute(s);
  if(n.phase==="arriving"&&n.paidIds.length===n.seats&&people.length===n.seats&&
     people.every(c=>c.stage==="sitting"&&(c.poseMinutes??0)>=3)){
   n.phase="playing";n.startedAt=n.elapsed;
@@ -213,8 +217,10 @@ export function advanceNightMeetup(s:GameState):boolean{
   }
   s.served=Math.max(0,s.served-n.paidIds.length);
   n.paidIds=[]; // impede qualquer estorno repetido depois de recarregar
+  if(n.tournament)n.tournament.scores=[]; // inscrições estornadas não valem pontos.
  }
  if(n.elapsed===NIGHT_MORNING_EXIT_OFFSET){
+  settleNightTournament(s); // pagamento único antes da saída física
   n.phase="leaving";
   for(const c of people)if(c.stage!=="leaving")sendHome(s,c);
   addLog(s,"Sábado 07h: terminou a noite de jogos; amigos saindo pela porta.");
@@ -226,7 +232,8 @@ export function advanceNightMeetup(s:GameState):boolean{
  if(n.elapsed===NIGHT_MAX_EXIT_OFFSET){
   s.lastNightMeetup={fridayDay:n.fridayDay,seats:n.seats,paid:n.paidIds.length,
    playedMinutes:n.startedAt===undefined?0:Math.max(0,NIGHT_MORNING_EXIT_OFFSET-n.startedAt),
-   revenue:n.revenue,retailRevenue:n.retailRevenue};
+   revenue:n.revenue,retailRevenue:n.retailRevenue,
+   tournament:n.tournament?completedTournamentResult(n.tournament):undefined};
   for(const c of nightPeople(s))s.customers.splice(s.customers.indexOf(c),1);
   s.nightMeetup=undefined;
   addLog(s,"Sábado 10h: reabertura após o corujão, resultado R$ "+
@@ -241,7 +248,8 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
  if(last!==undefined&&(!last||!Number.isInteger(last.fridayDay)||last.fridayDay<1||
    ![2,3].includes(last.seats)||!Number.isInteger(last.paid)||last.paid<0||last.paid>last.seats||
    !Number.isInteger(last.playedMinutes)||last.playedMinutes<0||last.playedMinutes>480||
-   ![last.revenue,last.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)))return false;
+   ![last.revenue,last.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)||
+   !validTournamentResult(last.tournament,last.seats)))return false;
  if(n===undefined)return !(s.customers??[]).some(c=>c.nightMeetupDay!==undefined);
  if(!n||!Number.isInteger(n.fridayDay)||n.fridayDay<1||weekdayIndex(n.fridayDay)!==4||
    Math.floor((s.totalMinutes??0)/DAY_MINUTES)+1!==n.fridayDay||
@@ -257,6 +265,7 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
    new Set(n.paidIds).size!==n.paidIds.length||
    n.paidIds.some(id=>!n.memberIds.includes(id))||
    ![n.revenue,n.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)||
+   !validTournamentState(n.tournament,n.memberIds,n.paidIds,n.seats)||
    (n.startedAt!==undefined&&(!Number.isInteger(n.startedAt)||n.startedAt<60||
      n.startedAt>n.elapsed)))return false;
  return n.memberIds.every(id=>Number.isInteger(id)&&id>0&&id<(s.nextCustomerId??0))&&

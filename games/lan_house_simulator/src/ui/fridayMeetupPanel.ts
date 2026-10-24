@@ -6,6 +6,7 @@ import type {GameState,Result} from "../sim/types.js";
 import {campaignDate,currentCampaignDay} from "../sim/campaignWeek.js";
 import {firstFridayEligibility,draftFridayMeetup,cancelFridayMeetupDraft} from "../sim/fridayMeetup.js";
 import {confirmFridayMeetup} from "../sim/nightMeetup.js";
+import {selectNightTournament,tournamentStandings} from "../sim/nightTournament.js";
 
 export function installFridayMeetupPanel(
  admin:HTMLElement,getGame:()=>GameState,onResult:(result:Result)=>void
@@ -22,15 +23,18 @@ export function installFridayMeetupPanel(
  const actions=document.createElement("div");actions.className="action-row wrap";
  const two=document.createElement("button");two.type="button";two.className="slice";two.id="first-meetup-two";two.textContent="Estudar 2 vagas";
  const three=document.createElement("button");three.type="button";three.className="slice";three.id="first-meetup-three";three.textContent="Estudar 3 vagas";
+ const format=document.createElement("button");format.type="button";format.className="slice";format.id="first-meetup-format";format.textContent="Ativar torneio amistoso";
+ const ranking=document.createElement("div");ranking.id="first-meetup-ranking";ranking.className="management-empty";
  const confirm=document.createElement("button");confirm.type="button";confirm.className="slice primary";confirm.id="first-meetup-confirm";confirm.textContent="Confirmar encontro de sexta";
  const cancel=document.createElement("button");cancel.type="button";cancel.className="slice";cancel.id="first-meetup-cancel";cancel.textContent="Descartar rascunho";
  const caution=document.createElement("p");caution.className="management-empty";
  caution.textContent="Confirmar não cobra antecipadamente. Cada amigo paga no caixa; o salão fecha ao público às 22h e reabre sábado às 10h.";
- actions.append(two,three,confirm,cancel);
- section.append(heading,description,status,info,actions,caution);
+ actions.append(two,three,format,confirm,cancel);
+ section.append(heading,description,status,info,ranking,actions,caution);
  admin.querySelector("#section-finance")?.append(section);
  two.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),2)));
  three.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),3)));
+ format.addEventListener("click",()=>onResult(selectNightTournament(getGame(),getGame().fridayMeetupDraft?.format==="tournament"?"free":"tournament")));
  confirm.addEventListener("click",()=>onResult(confirmFridayMeetup(getGame())));
  cancel.addEventListener("click",()=>onResult(cancelFridayMeetupDraft(getGame())));
  return {
@@ -48,6 +52,20 @@ export function installFridayMeetupPanel(
    info.textContent="Próxima sexta: "+q.date+" · "+q.pcs.length+
     " PC(s) livre(s) e compatível(is). "+
     (q.reasons.length?q.reasons.join(" "):"Há capacidade para planejar sem ocupar PCs agora.");
+   const tournament=s.nightMeetup?.tournament;
+   const last=s.lastNightMeetup?.tournament;
+   ranking.textContent=tournament
+    ?"Torneio em andamento · inscrições: "+tournament.scores.length+"/"+(s.nightMeetup?.seats??0)+
+      " · classificação por rodadas nos PCs: "+
+      (tournamentStandings(tournament).map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pts ("+x.rounds+" rodadas)").join(" · ")||"aguardando pagamentos")
+    :last
+     ?"Último torneio · "+last.rankings.map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pontos").join(" · ")+
+      " · campeão: "+(last.winnerId??"sem vencedor")+" · prêmio R$ "+last.prizePaid.toFixed(2)
+     :draft?.format==="tournament"
+      ?"Torneio amistoso: placar calculado apenas enquanto os amigos jogam. Prêmio: até 20% da receita das sessões, máximo R$ 40, pago ao campeão."
+      :"Encontro livre sem classificação. Um torneio amistoso pode ser ativado antes da confirmação.";
+   format.textContent=draft?.format==="tournament"?"Usar encontro livre":"Ativar torneio amistoso";
+   format.disabled=!draft||draft.status!=="draft"||!!s.nightMeetup;
    two.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<2;
    three.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<3;
    confirm.disabled=!!s.nightMeetup||!draft||draft.status!=="draft"||draft.fridayDay<currentCampaignDay(s);
