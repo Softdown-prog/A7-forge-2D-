@@ -11,7 +11,8 @@ import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
-import {toggleStationPower} from "../dist/js/sim/stationPower.js";
+import {toggleStationPower,stationHasCustomer} from "../dist/js/sim/stationPower.js";
+import {startRepair} from "../dist/js/sim/services.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {nightPrizePresentation,prizeAmountText} from "../dist/js/render/nightPrizePresentation.js";
 import {nightReopeningPresentation} from "../dist/js/render/nightReopening.js";
@@ -297,7 +298,24 @@ try{
  // Só os dias comuns entre sextas são acelerados no teste; cada madrugada
  // ainda roda minuto a minuto, com pessoas, PCs, cobranças e premiação reais.
  const recordedFridays=[trophyFriday];
+ // O sábado comercial provoca desgaste de PC; usar a manutenção real e paga
+ // entre as sextas. Não alterar pcWear diretamente nem forçar estações válidas.
+ function maintainFleet(){
+  for(let pc=0;pc<3;pc++){
+   let wait=0;
+   while(stationHasCustomer(state,pc)&&wait++<200)stepGame(state,1);
+   if(stationHasCustomer(state,pc))
+    throw Error("PC ocupado por tempo excessivo durante manutenção do sábado.");
+   if((state.pcWear?.[pc]??0)>=1)ok(startRepair(state,pc));
+  }
+  let elapsed=0;
+  while(state.repairJobs?.length&&elapsed++<180)stepGame(state,1);
+  if(state.repairJobs?.length)
+   throw Error("Técnicos não finalizaram os reparos físicos antes da sexta.");
+  if(!isValidSave(state))throw Error("Manutenção real gerou save inválido.");
+ }
  for(const seats of [3,2,3,2]){
+  maintainFleet();
   ok(draftFridayMeetup(state,seats));
   ok(selectNightTournament(state,"knockout"));
   ok(confirmFridayMeetup(state));
