@@ -127,6 +127,26 @@ try{
   throw Error("Canvas original do salão não ficou visível no campeonato.");
  await livePage.screenshot({path:resolve(out,"corujao_confronto_pcs_reais.png")});
  await livePage.close();
+ // Fotografia do gesto no salão original no exato minuto da decisão.
+ let finalTicks=0;
+ while(state.nightMeetup?.tournament?.bracket?.winnerId===undefined&&finalTicks++<240)
+  stepGame(state,1);
+ const finalMatch=state.nightMeetup?.tournament?.bracket?.matches.at(-1);
+ if(!finalMatch?.winnerId||finalMatch.resolvedAtElapsed!==state.nightMeetup.elapsed)
+  throw Error("Final real não produziu horário válido para a reação.");
+ const reactionPage=await browser.newPage({viewport:{width:1280,height:850}});
+ reactionPage.on("pageerror",e=>errors.push(String(e)));
+ await reactionPage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+  {key:GAME_SAVE_KEY,payload:state});
+ await reactionPage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(reactionPage);
+ await reactionPage.locator("#menu-continue").click();
+ await reactionPage.waitForFunction(()=>document.querySelector("#night-tournament-hud > summary")
+  ?.textContent?.includes("final encerrada"));
+ if(!await reactionPage.locator("#game").isVisible())
+  throw Error("Canvas original do salão indisponível após a final.");
+ await reactionPage.screenshot({path:resolve(out,"corujao_reacao_campeao_real.png")});
+ await reactionPage.close();
  while(state.nightMeetup)stepGame(state,1);
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
@@ -233,7 +253,8 @@ try{
  await writeFile(resolve(out,"verificacao.json"),JSON.stringify({status:"pass",firstFridayDay:draft.fridayMeetupDraft.fridayDay,
   slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
   zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,
-  liveMatchCanvasCaptured:true,repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
+  liveMatchCanvasCaptured:true,realChampionReactionCaptured:true,
+  repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
   mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");
 }finally{

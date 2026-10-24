@@ -687,3 +687,10 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Durante a eliminatória Setor Zero, o Canvas do salão apresenta indicadores discretos sobre **os PCs efetivamente ocupados** pelos clientes pagantes da madrugada: pontos do duelo, aguardando a vez, eliminado e vencedor.
 - A apresentação é derivada do bracket persistido e do estado `using` dos personagens; some quando o jogador sai do computador para comprar, quando a noite não é eliminatória ou quando o corujão termina. **Não** cria participantes, premiações, NPCs, tempo ou lógica de campeonato adicional.
 - Implementação em `src/render/nightMatchMarkers.ts`, chamada pelo `SceneRenderer` original. Testes de regressão em `tests/night-match-markers.test.mjs`; o Chromium captura `corujao_confronto_pcs_reais.png` no salão original durante uma rodada do motor.
+
+### Reações físicas ao confronto no salão (24/10/2026)
+
+- Quando uma classificatória ou final REAL termina, o vencedor levanta os dois braços sentado ao PC e o perdedor abaixa as mãos e se inclina; efeitos discretos de comemoração/derrota ficam sobre a estação respectiva. O evento dura oito minutos do relógio do corujão e desaparece se o jogador sair do PC.
+- O campo opcional `resolvedAtElapsed` identifica o minuto real da decisão; salva e valida, mas continua opcional para não invalidar campanhas antigas. A interface não reproduz celebrações tardias de saves sem esse dado.
+- A renderização é a arte vetorial original, com gestos sem sobresposição do teclado e sem modificar movimento, colisões, pontuação, prêmio ou personagens.
+- Regressões em `tests/night-match-reactions.test.mjs`, e captura da partida original pelo Chromium em `corujao_reacao_campeao_real.png`.

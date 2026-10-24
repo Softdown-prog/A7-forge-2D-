@@ -18,6 +18,9 @@ on:
       - 'games/lan_house_simulator/scripts/verify_friday_panel.mjs'
       - 'games/lan_house_simulator/src/render/nightMatchMarkers.ts'
       - 'games/lan_house_simulator/src/render/scene.ts'
+      - 'games/lan_house_simulator/src/render/actorArt.ts'
+      - 'games/lan_house_simulator/src/render/actorSprites.ts'
+      - 'games/lan_house_simulator/src/sim/nightKnockout.ts'
       - 'games/lan_house_simulator/tests/night-trophy-consecutive-fridays.test.mjs'
       - '.github/workflows/lhs-friday-meetup.yml'
 permissions:
