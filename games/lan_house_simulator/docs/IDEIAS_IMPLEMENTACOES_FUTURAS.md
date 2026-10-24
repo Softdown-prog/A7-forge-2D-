@@ -694,3 +694,10 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - O campo opcional `resolvedAtElapsed` identifica o minuto real da decisão; salva e valida, mas continua opcional para não invalidar campanhas antigas. A interface não reproduz celebrações tardias de saves sem esse dado.
 - A renderização é a arte vetorial original, com gestos sem sobresposição do teclado e sem modificar movimento, colisões, pontuação, prêmio ou personagens.
 - Regressões em `tests/night-match-reactions.test.mjs`, e captura da partida original pelo Chromium em `corujao_reacao_campeao_real.png`.
+
+### Prêmio pago às 7h: comprovante visual no salão (24/10/2026)
+
+- O fluxo financeiro continua integralmente em `settleNightTournament()`: às 7h o motor debita o caixa, aumenta a despesa e credita a carteira do campeão uma única vez. A apresentação lê `settled`, `winnerId` e `prizePaid` — não executa nova transação.
+- Por dez minutos do corujão após 7h, uma faixa de confirmação aparece sobre o salão e um selo animado acompanha o verdadeiro cliente vencedor enquanto ele sai. Se o prêmio não pôde ser pago (R$ 0), o evento não aparece. Encontro livre também não mostra celebração financeira falsa.
+- Módulo `src/render/nightPrizePresentation.ts`; integração em `SceneRenderer` e `nightTournamentHud`. Sem mudanças no formato do save e sem NPCs ou colisões adicionais.
+- Teste `tests/night-prize-presentation.test.mjs` confere dois/três jogadores, transferência real, reload, ausência de segunda despesa e condições sem pagamento. O Chromium fotografa `corujao_premiacao_real_7h.png` no gameplay original.

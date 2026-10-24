@@ -18,6 +18,9 @@ on:
       - 'games/lan_house_simulator/src/render/scene.ts'
       - 'games/lan_house_simulator/tests/night-match-markers.test.mjs'
       - 'games/lan_house_simulator/tests/night-match-reactions.test.mjs'
+      - 'games/lan_house_simulator/tests/night-prize-presentation.test.mjs'
+      - 'games/lan_house_simulator/src/render/nightPrizePresentation.ts'
+      - 'games/lan_house_simulator/style.css'
       - 'games/lan_house_simulator/src/render/actorArt.ts'
       - 'games/lan_house_simulator/src/render/actorSprites.ts'
       - 'games/lan_house_simulator/tests/night-tournament.test.mjs'
@@ -40,4 +43,4 @@ jobs:
           npm run build
       - name: Test paid registration, real usage scoring, award and compatibility
         working-directory: games/lan_house_simulator
-        run: node --test tests/night-knockout.test.mjs tests/night-match-markers.test.mjs tests/night-match-reactions.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-trophy-stats.test.mjs tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs
+        run: node --test tests/night-knockout.test.mjs tests/night-match-markers.test.mjs tests/night-match-reactions.test.mjs tests/night-prize-presentation.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-trophy-stats.test.mjs tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs

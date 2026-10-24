@@ -12,6 +12,8 @@ import {licenseGames} from "../dist/js/sim/economy.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
+import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {nightPrizePresentation,prizeAmountText} from "../dist/js/render/nightPrizePresentation.js";
 import {GAME_SAVE_KEY,DAY_MINUTES} from "../dist/js/sim/types.js";
 import {selectAdminArea} from "./management_navigation.mjs";
 import {dismissPrivacyNotice} from "./privacyNoticeTest.mjs";
@@ -147,6 +149,36 @@ try{
   throw Error("Canvas original do salão indisponível após a final.");
  await reactionPage.screenshot({path:resolve(out,"corujao_reacao_campeao_real.png")});
  await reactionPage.close();
+ // Pagamento acontece às 7h, não quando a final termina. A cena e o aviso
+ // devem refletir o caixa e a carteira do vencedor já atualizados no motor.
+ while(state.nightMeetup&&state.nightMeetup.elapsed<539)stepGame(state,1);
+ if(nightPrizePresentation(state))throw Error("Prêmio anunciado antes do pagamento.");
+ const cashBeforePrize=state.cash,expenseBeforePrize=state.expenses;
+ stepGame(state,1);
+ const award=nightPrizePresentation(state);
+ if(!award||state.nightMeetup?.elapsed!==540||
+    Math.round((cashBeforePrize-state.cash)*100)!==Math.round(award.amount*100)||
+    Math.round((state.expenses-expenseBeforePrize)*100)!==Math.round(award.amount*100))
+  throw Error("Aviso de prêmio não corresponde ao débito real das 7h.");
+ const awardSave=parseImportedSave(serializeSave(state));
+ if(!isValidSave(awardSave)||nightPrizePresentation(awardSave)?.winnerId!==award.winnerId)
+  throw Error("A entrega real não sobreviveu ao salvamento.");
+ const awardPage=await browser.newPage({viewport:{width:1280,height:850}});
+ awardPage.on("pageerror",e=>errors.push(String(e)));
+ await awardPage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+   {key:GAME_SAVE_KEY,payload:awardSave});
+ await awardPage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(awardPage);
+ await awardPage.locator("#menu-continue").click();
+ const notice=awardPage.locator("#night-prize-announcement");
+ await notice.waitFor({state:"visible"});
+ const receipt=await notice.textContent();
+ if(!receipt.includes("jogador "+award.winnerId)||
+    !receipt.includes(prizeAmountText(award.amount))||
+    !await awardPage.locator("#game").isVisible())
+  throw Error("Comprovante na partida real divergiu do prêmio pago.");
+ await awardPage.screenshot({path:resolve(out,"corujao_premiacao_real_7h.png")});
+ await awardPage.close();
  while(state.nightMeetup)stepGame(state,1);
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
@@ -254,6 +286,7 @@ try{
   slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
   zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,
   liveMatchCanvasCaptured:true,realChampionReactionCaptured:true,
+  realSevenAMPrizeCaptured:true,
   repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
   mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");
