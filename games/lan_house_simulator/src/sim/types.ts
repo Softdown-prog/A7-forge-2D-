@@ -216,14 +216,18 @@ export interface GameState {
   /** Número de rodadas de rede iniciadas com clientes reais, opcional em saves antigos. */
   multiplayerRoundsPlayed?: number;
   /** Somente um RASCUNHO de planejamento; não reserva PCs nem executa turnos. */
-  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"|"confirmed"};
+  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"|"confirmed";format?:"free"|"tournament"};
   /** Relógio civil independente: a sexta fica congelada no último minuto até sábado 10h. */
   nightMeetup?: {
     fridayDay:number;seats:2|3;elapsed:number;phase:"arriving"|"playing"|"leaving"|"closed";
     pcIndexes:number[];memberIds:number[];paidIds:number[];startedAt?:number;
     revenue:number;retailRevenue:number;
+    /** Torneio opcional: pontuação derivada de minutos realmente jogados nos PCs. */
+    tournament?: import("./nightTournament.js").NightTournamentState;
   };
-  lastNightMeetup?: {fridayDay:number;seats:number;paid:number;playedMinutes:number;revenue:number;retailRevenue:number};
+  lastNightMeetup?: {fridayDay:number;seats:number;paid:number;playedMinutes:number;revenue:number;retailRevenue:number;
+    tournament?: import("./nightTournament.js").NightTournamentResult;
+  };
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
   mailScheduleSeed?: number;
