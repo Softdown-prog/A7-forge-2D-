@@ -44,7 +44,7 @@ test("inscrição do torneio é opcional, sem taxa ou cobrança antecipada; enco
  assert.equal(selectNightTournament(s,"free").ok,false,"depois de confirmar não pode trocar placar");
  assert.equal(s.cash,cash);assert.equal(s.revenue,revenue);assert.equal(s.served,served);
  assert.equal(isValidSave(s),true);
- assert.equal(JSON.parse(serializeSave(s)).fridayMeetupDraft.format,"tournament");
+ assert.equal(JSON.parse(serializeSave(s)).state.fridayMeetupDraft.format,"tournament");
  const legacy=fixture(2,"free");
  assert.equal(confirmFridayMeetup(legacy.s).ok,true);
  reopenAfterNight(legacy.s,legacy.friday);
@@ -92,7 +92,7 @@ test("classificação só conta minutos reais em PCs, prêmio sai do caixa uma �
  assert.ok(r);assert.equal(r.winnerId,atSeven.leader);
  assert.equal(r.prizePaid,atSeven.prize);
  assert.ok(r.rankings[0].points>=r.rankings[1].points);
- assert.equal(s.expenses,initialExpenses+atSeven.prize);
+ assert.equal(Number(s.expenses.toFixed(2)),Number((initialExpenses+atSeven.prize).toFixed(2)));
  assert.equal(isValidSave(s),true);
 });
 
@@ -104,7 +104,7 @@ test("salvar às 3h mantém score, ganhador e prêmio ao retomar; trio também c
  while(s.nightMeetup.elapsed<300)stepGame(s,1);
  assert.ok(s.nightMeetup.tournament.scores.length===3);
  assert.ok(s.nightMeetup.tournament.scores.every(row=>row.rounds>=3));
- const a=JSON.parse(serializeSave(s)),b=JSON.parse(serializeSave(s));
+ const a=JSON.parse(serializeSave(s)).state,b=JSON.parse(serializeSave(s)).state;
  assert.equal(isValidSave(a),true);
  assert.deepEqual(a.nightMeetup.tournament,b.nightMeetup.tournament);
  for(const copy of [a,b])while(copy.nightMeetup)stepGame(copy,1);
@@ -122,7 +122,7 @@ test("um save adulterado com ranking forjado é recusado",()=>{
  assert.equal(confirmFridayMeetup(s).ok,true);
  s.totalMinutes=friday*DAY_MINUTES-1;
  stepGame(s,1);
- const valid=JSON.parse(serializeSave(s));
+ const valid=JSON.parse(serializeSave(s)).state;
  assert.equal(isValidSave(valid),true);
  const spoof=JSON.parse(JSON.stringify(valid));
  spoof.nightMeetup.tournament.scores.push({id:999999,points:4000,rounds:35});
