@@ -8,6 +8,7 @@ import {firstFridayEligibility,draftFridayMeetup,cancelFridayMeetupDraft} from "
 import {confirmFridayMeetup} from "../sim/nightMeetup.js";
 import {selectNightTournament,tournamentStandings} from "../sim/nightTournament.js";
 import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
+import {summarizeNightTrophies} from "../sim/nightTrophyStats.js";
 
 export function installFridayMeetupPanel(
  admin:HTMLElement,getGame:()=>GameState,onResult:(result:Result)=>void
@@ -30,12 +31,17 @@ export function installFridayMeetupPanel(
  gallery.className="night-trophy-gallery";gallery.hidden=true;
  gallery.setAttribute("aria-label","Galeria digital de campeões de Setor Zero");
  const trophyTitle=document.createElement("h5");
+ const trophyRecords=document.createElement("p");trophyRecords.className="night-trophy-records";
+ trophyRecords.id="first-meetup-trophy-records";
+ const trophyChampions=document.createElement("ol");
+ trophyChampions.className="night-trophy-champions";
+ trophyChampions.setAttribute("aria-label","Ranking histórico dos campeões de Setor Zero");
  const trophyList=document.createElement("ol");trophyList.className="night-trophy-list";
  const trophyMore=document.createElement("button");trophyMore.type="button";
  trophyMore.className="slice";trophyMore.id="first-meetup-trophies-more";trophyMore.hidden=true;
  trophyMore.setAttribute("aria-controls","first-meetup-trophies-list");
  trophyList.id="first-meetup-trophies-list";
- gallery.append(trophyTitle,trophyList,trophyMore);
+ gallery.append(trophyTitle,trophyRecords,trophyChampions,trophyList,trophyMore);
  let showAllTrophies=false,renderedTrophies="";
  const renderTrophies=(state:GameState)=>{
   const trophies=state.nightTournamentTrophies??[];
@@ -44,8 +50,23 @@ export function installFridayMeetupPanel(
    trophies.map(t=>t.fridayDay+":"+t.winnerId+":"+t.participants).join("|");
   if(signature===renderedTrophies)return;
   renderedTrophies=signature;
-  trophyTitle.textContent="🏆 Galeria digital · "+trophies.length+
-   (trophies.length===1?" conquista":" conquistas");
+  const stats=summarizeNightTrophies(trophies);
+  trophyTitle.textContent="🏆 Galeria digital · "+stats.total+
+   (stats.total===1?" conquista":" conquistas");
+  trophyRecords.textContent=stats.uniqueChampions+
+   (stats.uniqueChampions===1?" campeão diferente":" campeões diferentes")+
+   " · "+stats.finalsTwo+" finais com 2 jogadores · "+
+   stats.finalsThree+" finais com 3 jogadores";
+  trophyChampions.replaceChildren(...stats.champions.slice(0,3).map((record,i)=>{
+   const item=document.createElement("li");
+   const name=document.createElement("strong");
+   name.textContent=(i+1)+"º jogador "+record.winnerId;
+   const result=document.createElement("span");
+   result.textContent=record.titles+(record.titles===1?" título":" títulos")+
+    " · último em "+campaignDate(record.lastFridayDay);
+   item.append(name,result);
+   return item;
+  }));
   const visible=showAllTrophies?trophies:trophies.slice(-4);
   trophyList.replaceChildren(...[...visible].reverse().map(t=>{
    const item=document.createElement("li");item.className="night-trophy-item";

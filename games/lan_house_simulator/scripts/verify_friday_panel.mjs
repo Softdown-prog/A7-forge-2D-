@@ -133,6 +133,15 @@ try{
  if(!galleryText.includes("Campeão: jogador "+state.nightTournamentTrophies[0].winnerId)||
     !galleryText.includes("1 conquista"))
   throw Error("Vencedor ou total da galeria não confere com a final real.");
+ const records=await page.locator("#first-meetup-trophy-records").textContent();
+ if(!records.includes("1 campeão diferente")||!records.includes("1 finais com 2 jogadores")||
+    !records.includes("0 finais com 3 jogadores"))
+  throw Error("Quadro de campeões não corresponde às conquistas persistidas.");
+ const championRank=await page.locator(".night-trophy-champions li").allTextContents();
+ if(championRank.length!==1||
+    !championRank[0].includes("1º jogador "+state.nightTournamentTrophies[0].winnerId)||
+    !championRank[0].includes("1 título"))
+  throw Error("Ranking da galeria não corresponde à final real.");
  if(await page.locator("#first-meetup-trophies-more").isVisible())
   throw Error("Uma conquista não precisa do botão de histórico completo.");
  await page.screenshot({path:resolve(out,"galeria_trofeu_final_real.png")});

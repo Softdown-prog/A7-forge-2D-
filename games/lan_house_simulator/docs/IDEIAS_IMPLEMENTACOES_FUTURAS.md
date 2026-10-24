@@ -669,7 +669,8 @@ A LAN House mantém uma **galeria digital de troféus no painel de Administraç�
 
 - Registro persistente em `GameState.nightTournamentTrophies`, opcional em saves antigos.
 - Título só concedido quando `settleNightTournament` encerra a partida, confirma o vencedor da final e liquida o prêmio. Um mesmo dia de sexta gera no máximo um troféu; recarregar o save não duplica a conquista.
-- Galeria com cartões individuais para as quatro conquistas mais recentes e botão para expandir todo o histórico; máximo de 64 entradas para conter o tamanho do save. A interface distingue troféu conquistado de campeonato ainda em disputa. Valores inválidos, dias que não sejam sexta e vencedores inexistentes são rejeitados.
+- Galeria com cartões individuais para as quatro conquistas mais recentes e botão para expandir todo o histórico; máximo de 64 entradas para conter o tamanho do save. A interface distingue troféu conquistado de campeonato ainda em disputa.
+- Quadro de campeões calculado dos troféus salvos: títulos por jogador, quantidade de campeões diferentes e finais com dois/três participantes. Desempate por data da última vitória, depois ID; não modifica partidas nem inventa premiações. Valores inválidos, dias que não sejam sexta e vencedores inexistentes são rejeitados.
 - Regressão automatizada `tests/night-knockout.test.mjs`, que simula a noite real até 7h, salva, retoma, reabre e testa duplicações e fraudes.
 
 O troféu é inicialmente **digital no histórico do estabelecimento**, não uma estatueta física posicionável no cenário. Esta distinção deve permanecer clara até implementar um objeto visual completo.

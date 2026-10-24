@@ -1091,3 +1091,14 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .night-trophy-list{grid-template-columns:1fr}
  .night-trophy-item{padding:8px}
 }
+
+/* Resultados acumulados da galeria: estatísticas calculadas, sem estado paralelo. */
+.night-trophy-records{margin:2px 0 9px;font-size:12px;line-height:1.5;
+ color:#635431;overflow-wrap:anywhere}
+.night-trophy-champions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,165px),1fr));
+ gap:7px;margin:0 0 12px;padding:0;list-style:none}
+.night-trophy-champions li{display:flex;flex-direction:column;gap:4px;min-width:0;
+ border:1px solid #d3bd82;border-radius:7px;background:#f5ecd4;padding:7px 9px;
+ font-size:12px;overflow-wrap:anywhere}
+.night-trophy-champions li span{font-size:11px}
+@media(max-width:600px){.night-trophy-champions{grid-template-columns:1fr}}
