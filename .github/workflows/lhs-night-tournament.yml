@@ -1,0 +1,32 @@
+name: LHS - Campeonato noturno real
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/nightTournament.ts'
+      - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
+      - 'games/lan_house_simulator/src/sim/fridayMeetup.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/ui/fridayMeetupPanel.ts'
+      - 'games/lan_house_simulator/src/ui/nightTournamentHud.ts'
+      - 'games/lan_house_simulator/tests/night-tournament.test.mjs'
+      - '.github/workflows/lhs-night-tournament.yml'
+permissions:
+  contents: read
+jobs:
+  match-integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile actual game
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Test paid registration, real usage scoring, award and compatibility
+        working-directory: games/lan_house_simulator
+        run: node --test tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs
