@@ -2,9 +2,10 @@ import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import type {DecisionId} from "./decisions.js";
 import type {StoryNoticeId} from "./storyEvents.js";
+import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstMailDue} from "./ericStory.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|DecisionId|StoryNoticeId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|DecisionId|StoryNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -25,6 +26,14 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
 }
 export function reviewNotices(s:GameState):void{
  const d=day(s);
+ // Eric é família, não um vendedor: primeiro contato narrativo, sem preço,
+ // novo catálogo ou pressão para decidir. A leitura é opcional.
+ if(!s.ericFirstMailDelivered&&s.notices?.some(n=>n.id===ERIC_FIRST_MAIL_ID))
+  s.ericFirstMailDelivered=true;
+ if(!s.ericFirstMailDelivered&&ericFirstMailDue(s)){
+  deliver(s,ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,"info");
+  s.ericFirstMailDelivered=true;
+ }
  // Evento histórico: aviso antes da virada de 1999 para 2000, sem retroatividade.
  if(!s.y2kNoticeDelivered&&s.notices?.some(n=>n.id==="y2k-warning"))s.y2kNoticeDelivered=true;
  if(!s.y2kNoticeDelivered&&fixedYearMailWindowDue(s,1999,331,350)){

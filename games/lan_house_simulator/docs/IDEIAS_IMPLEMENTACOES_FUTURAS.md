@@ -19,8 +19,8 @@ Este documento **não é uma lista de funcionalidades aprovadas para implementa�
 
 # Ideia 001 — Primo Eric, a febre multiplayer e o nascimento do corujão
 
-**Versão da ideia:** 0.4 — primeiro grupo, agenda de sexta, reservas reais e percurso comercial; versões 0.1–0.3 preservadas. Nenhuma implementação autorizada.  
-**Situação:** EM DESENVOLVIMENTO / NÃO APROVADA PARA CODIFICAR  
+**Versão da ideia:** 0.4 — primeiro grupo, agenda de sexta, reservas reais e percurso comercial; versões 0.1–0.3 preservadas. Etapa inicial de correspondência autorizada em 23/10/2026.  
+**Situação:** ETAPA 1 EM IMPLEMENTAÇÃO / MECÂNICAS FUTURAS EM ESTUDO  
 **Período narrativo pretendido:** 2000 a aproximadamente 2002  
 **Áreas afetadas no futuro:** história do Tony, correio/e-mails, jogos licenciáveis, comportamento dos clientes, ocupação dos PCs, campeonatos, expediente noturno e economia.
 
@@ -548,3 +548,16 @@ O jogador deverá poder desenvolver uma lan house lucrativa **sem corujões**, m
 # Próximas ideias grandes
 
 Este espaço fica reservado para os próximos conceitos que ainda precisem amadurecer antes de entrar no backlog de execução. Criar um novo tópico numerado para cada ideia, mantendo a versão e seu estado.
+
+
+## Início da implementação — Etapa 1: primo Eric (23/10/2026)
+
+**Autorização do criador:** começar o arco de Eric no jogo existente. A primeira entrega é deliberadamente narrativa: uma carta pessoal proveniente da França, que apresenta os jogos em equipe pela rede sem compra, desbloqueio, exigência de resposta ou bônus de procura.
+
+- A carta surge em uma janela determinística de janeiro/fevereiro de 2000 (dias 8–51 do ano fictício) e é marcada como entregue permanentemente no save.
+- Reutiliza o Correio, inclusive leitura/não lida, toque de mensagem nova e histórico. Excluir ou compactar a carta não faz outra cópia surgir.
+- Não muda caixa, clientes, RNG, licenças, computador ou calendário civil; partidas que já passaram de fevereiro de 2000 não recebem o evento retroativamente.
+- A próxima etapa depende de definir um **jogo multiplayer original**, a compatibilidade e um interesse real dos clientes. **Não** ativar eventos semanais, mudar relógio de 720 minutos ou implementar corujões enquanto as regras de horários, reservas e preços permanecerem em estudo.
+- Código: `src/sim/ericStory.ts`, integração em `notices.ts`; testes: `tests/eric-story.test.mjs`.
+
+Os parágrafos anteriores continuam como histórico das versões 0.1–0.4; seus avisos de não implementar se referem às decisões ainda não aprovadas nas respectivas versões.
