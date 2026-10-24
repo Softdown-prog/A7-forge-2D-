@@ -1,0 +1,33 @@
+name: LHS - First Friday foundation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/campaignWeek.ts'
+      - 'games/lan_house_simulator/src/sim/fridayMeetup.ts'
+      - 'games/lan_house_simulator/src/sim/multiplayerVisitors.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/ui/fridayMeetupPanel.ts'
+      - 'games/lan_house_simulator/src/ui/managementPanels.ts'
+      - 'games/lan_house_simulator/src/ui/timeWeatherPanel.ts'
+      - 'games/lan_house_simulator/tests/friday-meetup.test.mjs'
+      - '.github/workflows/lhs-friday-meetup.yml'
+permissions:
+  contents: read
+jobs:
+  friday-foundation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build original simulator
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Check Fridays, saved drafts, multiplayer and normal clock
+        working-directory: games/lan_house_simulator
+        run: node --test tests/friday-meetup.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
