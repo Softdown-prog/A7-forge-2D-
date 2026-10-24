@@ -205,13 +205,19 @@ test("simulação completa usa a porta, a fila e os PCs reais sem montar uma cen
 
 test("regressão real: terceiro amigo atrasado ainda consegue sentar após 85 minutos",()=>{
  const s=prepared(721);
- tickMultiplayerVisitors(s);
- const groupId=s.multiplayerVisit.id;
- let reachedAfter85=false,started=false;
+ // Avança pelos três minutos ANTES da oportunidade: clientes normais
+ // já podem disputar a circulação. Esse foi o cenário que falhava.
+ s.totalMinutes-=3;
+ let groupId=null,reachedAfter85=false,started=false;
  for(let minute=1;minute<=125;minute++){
   stepGame(s,1);
   const visit=s.multiplayerVisit;
-  if(visit?.id!==groupId)break;
+  if(!visit){
+   if(minute<=3)continue;
+   break;
+  }
+  if(groupId===null)groupId=visit.id;
+  if(visit.id!==groupId)break;
   if(minute>85&&visit.memberIds.length===3&&visit.startedMinute===undefined)
    reachedAfter85=true;
   if(visit.startedMinute!==undefined){
