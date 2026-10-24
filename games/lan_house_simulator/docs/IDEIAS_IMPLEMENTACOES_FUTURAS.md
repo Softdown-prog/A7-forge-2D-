@@ -722,3 +722,7 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Teste `tests/saturday-full-shift.test.mjs`: roda os 720 minutos de sábado com 2 e 3 participantes ou encontro livre. Acompanha IDs reais, filas de caixa, filas de mercadorias, vendas, sessões, saída, reload às 21h e virada única para domingo.
 - O painel isométrico do corujão passa a indicar o encerramento real de sábado entre 21h e 22h, incluindo a quantidade de clientes presentes e os que já estão indo para a porta. Não cria NPC, não altera vendas, não força saída e não prolonga a madrugada.
 - O Chromium executa um ramo do save com o sábado verdadeiro até 21h20, valida o estado salvo e captura `sabado_fechamento_2120_real.png`. O ramo não interfere nas cinco sextas consecutivas do teste de troféus.
+
+### Congestionamento de 14 clientes na porta durante fechamento (24/10/2026)
+- Corrigido o fallback de `sendHome`: se a navegação para a porta falhar, nenhum visitante segue primeiro para o destino obsoleto de uma fila/compra. O destino passa a ser a porta, com tentativa normal de replanejamento e mesmas colisões; não há teleporte.
+- Teste `tests/closing-door-pressure.test.mjs` reproduz 14 NPCs simultâneos de caixa, loja, PC, entrada e saída às 21h; confere saída física, limite de deslocamento, colisões, zero cobranças/vendas fantasmas e equivalência de save recarregado. Um caso de divisória fechada valida o fallback sem criar passagem ilegal.

@@ -101,7 +101,14 @@ export function sendHome(s: GameState, c: Customer): void {
   delete c.desiredProduct;
   c.stalledMinutes=0;
   c.retailQueueItem=undefined;c.retailQueueIndex=undefined;
-  if(!setTravel(s,c,entrance(s)))c.route=[entrance(s)];
+  const door=entrance(s);
+  if(!setTravel(s,c,door)){
+    // Quando uma divisória recém-fechada impede o planejamento estático,
+    // não seguir o alvo antigo da fila/compra antes de tentar a saída.
+    // O motor mantém a colisão e replaneja sem atravessar paredes ou corpos.
+    c.target=door;c.route=[];
+    c.nextCrowdRetryMinute=s.totalMinutes;
+  }
 }
 /** Avança cada cliente uma casa quando a primeira posição é liberada. */
 export function refreshCounterQueue(s:GameState):void {

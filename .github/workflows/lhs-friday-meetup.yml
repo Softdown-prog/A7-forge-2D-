@@ -7,6 +7,9 @@ on:
       - 'games/lan_house_simulator/src/sim/futureNightClock.ts'
       - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
       - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/customerFlow.ts'
+      - 'games/lan_house_simulator/src/sim/customerMotion.ts'
+      - 'games/lan_house_simulator/tests/closing-door-pressure.test.mjs'
       - 'games/lan_house_simulator/tests/night-meetup.test.mjs'
       - 'games/lan_house_simulator/tests/future-night-clock.test.mjs'
       - 'games/lan_house_simulator/src/sim/fridayMeetup.ts'
@@ -49,7 +52,7 @@ jobs:
           npm run build
       - name: Check Fridays, saved drafts, multiplayer and normal clock
         working-directory: games/lan_house_simulator
-        run: node --test tests/friday-meetup.test.mjs tests/saturday-first-customers.test.mjs tests/saturday-full-shift.test.mjs tests/night-reopening-presentation.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
+        run: node --test tests/friday-meetup.test.mjs tests/saturday-first-customers.test.mjs tests/saturday-full-shift.test.mjs tests/closing-door-pressure.test.mjs tests/night-reopening-presentation.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
       - name: Install Chromium for genuine administration UI
         working-directory: games/lan_house_simulator
         run: |
