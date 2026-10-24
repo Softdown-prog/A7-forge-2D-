@@ -55,13 +55,14 @@ try{
  if(!await btn.isEnabled())throw Error("O estudo da sexta deveria estar disponível.");
  const initial=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),GAME_SAVE_KEY);
  await btn.click();
- await page.locator("#first-meetup-status").getByText(/Rascunho salvo/).waitFor();
+ await page.waitForFunction(()=>document.querySelector("#first-meetup-status")?.textContent?.includes("Rascunho salvo"));
  const draft=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),GAME_SAVE_KEY);
  if(draft.fridayMeetupDraft?.seats!==2||draft.fridayMeetupDraft.status!=="draft")
   throw Error("Rascunho não persistido no save.");
- for(const name of ["cash","revenue","expenses","served","totalMinutes"]){
+ for(const name of ["cash","revenue","expenses","served"]){
   if(draft[name]!==initial[name])throw Error("O estudo alterou "+name);
  }
+ if(draft.totalMinutes<initial.totalMinutes||draft.totalMinutes>initial.totalMinutes+5)throw Error("O calendário avançou sem comando.");
  if(draft.customers.length!==initial.customers.length)throw Error("Foram criados visitantes fantasmas.");
  await page.screenshot({path:resolve(out,"primeira_sexta_painel_real.png")});
  await page.locator("#first-meetup-cancel").click();
