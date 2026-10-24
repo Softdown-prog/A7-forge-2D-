@@ -74,6 +74,9 @@ export function installFridayMeetupPanel(
           "aguardando pagamentos")
     :last
      ?(last.mode==="knockout"?"Última eliminatória":"Último torneio")+" · "+last.rankings.map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pontos").join(" · ")+
+      (last.bracket?.matches?.length?" · confrontos: "+last.bracket.matches.map(m=>
+        (m.stage==="qualifier"?"Classificatória":"Final")+" "+m.playerIds.join(" x ")+
+        " ("+m.points.join("–")+")").join(" · "):"")+
       " · campeão: "+(last.winnerId??"sem vencedor")+" · prêmio R$ "+last.prizePaid.toFixed(2)
      :draft?.format==="knockout"
       ?"Eliminatórias: 2 amigos disputam uma final; com 3, dois disputam uma classificatória e o terceiro aguarda a final. Só vale ponto jogando nos PCs."

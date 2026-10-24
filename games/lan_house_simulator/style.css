@@ -1064,3 +1064,10 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  font-size:12px;font-weight:400;line-height:1.6}
 @media(max-width:650px){.night-tournament-hud{font-size:11px;
  margin:3px 0 5px;padding:5px 8px}.night-tournament-standings{font-size:11px}}
+
+/* Chave de campeonato integrada ao HUD recolhível e acessível no mobile. */
+.night-knockout-bracket{padding:7px 0 7px 23px;margin:5px 0;
+ border-bottom:1px solid #c8dccd;font-weight:600;font-size:12px;line-height:1.6}
+.night-knockout-bracket li{overflow-wrap:anywhere;margin-bottom:3px}
+.night-knockout-bracket[hidden]{display:none}
+@media(max-width:650px){.night-knockout-bracket{font-size:11px;padding-left:19px}}
