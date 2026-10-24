@@ -55,6 +55,8 @@ export interface ActorRender {
   consoleSeat?: boolean;
   /** Só passa true com entitlement verificado no backend; exclusivo de sessão PC. */
   premiumHeadset?: boolean;
+  /** Gesto transitório ao concluir a chave real, sem mudar posição no salão. */
+  reaction?:"win"|"loss";
   /** Aplicado ao dono somente com direito VIP verificado. */
   premiumCyber?: boolean;
 }
@@ -345,17 +347,21 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // A cabeça mantém exatamente as mesmas feições, materiais e cores em todas as poses.
   const eased=seatTransitionWeight(transition);
   const seated=pose==="sitting"?eased:pose==="standing-up"?1-eased:0;
+  const celebrating=a.reaction==="win"&&seated>.95;
+  const disappointed=a.reaction==="loss"&&seated>.95;
   const gamepadActive=!!a.gamepad&&pose==="sitting"&&seated>.99;
   const consoleSeat=!!a.consoleSeat&&(pose==="sitting"||pose==="standing-up");
   const phase=a.walkDistance===undefined?a.time*7.7+a.id*.27:walkPhase(a.walkDistance);
   const step=walking?Math.sin(phase):0;
   const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*1.4)*.6:0;
-  const bob=walking?(1-Math.cos(phase*2))*.45:0;
+  const bob=walking?(1-Math.cos(phase*2))*.45:
+    celebrating?(1+Math.sin(a.time*6))*.9:0;
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
   // Antes, o corpo afundava 18px e parecia agachado no chão.
   const settle=(pose==="sitting"||pose==="standing-up")?Math.sin(Math.PI*transition)*1.5:0;
-  const headShift=seated*(consoleSeat?10:3)+settle;
-  const lean=walking?Math.sin(phase*2)*.35:work?work.pulse*.65:seated*2;
+  const headShift=seated*(consoleSeat?10:3)+settle+(disappointed?3:0);
+  const lean=walking?Math.sin(phase*2)*.35:work?work.pulse*.65:
+    seated*2+(disappointed?1.5:0);
   const typing=seated>0.95&&!gamepadActive?Math.sin(a.time*5.2+a.id*.37)*1.5:0;
   const direction=a.direction??"south",screenView=a.screenView;
   const back=screenView?(screenView==="back"||screenView.startsWith("back-")):direction==="north";
@@ -436,15 +442,20 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const ax=angledWalk?shoulderX:side*(sideways?10:15), ay=-47+headShift+(screenRig&&quarter?-side*axis.y*3:0);
     const wave=step*5*-side*(1-seated);
     // In profile the shoulders remain narrow, and the arms counter-swing the legs.
-    const elbowX=angledWalk?shoulderX+side*1.5+armSwing*axis.x*.5:
+    const elbowX=celebrating?side*20:
+      angledWalk?shoulderX+side*1.5+armSwing*axis.x*.5:
       work?(side===1?21:-17)+work.pulse*1.7:
       side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
-    const elbowY=angledWalk?-36+headShift+armSwing*axis.y*.5:
+    const elbowY=celebrating?-52+headShift+Math.sin(a.time*6+side)*1.5:
+      angledWalk?-36+headShift+armSwing*axis.y*.5:
       work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
-    const handX=angledWalk?shoulderX+side*2+armSwing*axis.x:
+    const handX=celebrating?side*22:
+      angledWalk?shoulderX+side*2+armSwing*axis.x:
       movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=angledWalk?-25+headShift+armSwing*axis.y:
+    const handY=celebrating?-72+headShift+Math.sin(a.time*6+side)*2:
+      disappointed?-17+headShift:
+      angledWalk?-25+headShift+armSwing*axis.y:
       movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);

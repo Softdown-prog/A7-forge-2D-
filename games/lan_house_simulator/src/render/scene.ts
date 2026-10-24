@@ -38,7 +38,7 @@ import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
 import {copyingAnimationActive} from "../sim/discCopy.js";
 import {drawCounterDiscCopier} from "./discCopierArt.js";
-import {drawNightMatchMarkers} from "./nightMatchMarkers.js";
+import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -135,12 +135,14 @@ export class SceneRenderer {
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
       entries.push({depth:door.x+door.y+0.5,paint:()=>this.drawInteriorDoor(camera,door)});
+    const matchReactions=nightMatchReactions(s);
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
       const location=seated&&c.ps1StationIndex!==undefined
         ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0)??c:
           seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
-      entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s)});
+      entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s,
+        matchReactions.find(reaction=>reaction.playerId===c.id))});
     }
     entries.sort((a,b)=>a.depth-b.depth);
     for (const e of entries) e.paint();
@@ -148,6 +150,7 @@ export class SceneRenderer {
     this.sign(camera,roomW);
     // Indicadores dos jogadores reais por cima do cenário e atrás do HUD geral.
     drawNightMatchMarkers(ctx,s,camera);
+    drawNightMatchReactions(ctx,s,camera,elapsedSeconds,matchReactions);
     this.hudInside(ctx,s);
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */
@@ -677,7 +680,8 @@ export class SceneRenderer {
       premiumCyber:!!s&&cosmeticAvailable("tony-cyber",yearFromMinutes(s.totalMinutes))});
     this.heroHitbox=actorHitbox(camera,position.x,position.y);
   }
-  private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState):void {
+  private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState,
+    reaction?:NightMatchReaction):void {
     let x=c.x,y=c.y;
     const motion=(c as MotionCustomer).renderMotion;
     const moving=c.stage==="arriving" || c.stage==="to_pc" ||
@@ -704,6 +708,7 @@ export class SceneRenderer {
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,walkDistance:motion?.distance,
+      reaction:reaction?.kind,
       // Face the current interpolated world step in SCREEN space (2:1 isometric).
       screenView:seated?undefined:motion?.view??screenViewForMotion(
         pose==="walking"?c.target.x-c.x:0,
@@ -718,7 +723,7 @@ export class SceneRenderer {
       drawPs1Controller(this.ctx,camera,{x,y},t,c.ps1SeatIndex??0);
     if(seated && c.pcIndex!==null){
       const style=actorStyleFor(c.costume,c.id);
-      const weight=c.stage==="using"?1:
+      const weight=reaction?0:c.stage==="using"?1:
         c.stage==="sitting"?transition:
         c.stage==="standing"?1-transition:0;
       drawSeatedKeyboardOverlay(this.ctx,objectCamera(camera,pcPosition(c.pcIndex,s),1.1,.7,pcPosition(c.pcIndex,s).rotation),pcPosition(c.pcIndex,s),t,

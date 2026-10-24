@@ -13,6 +13,8 @@ export type KnockoutMatch={
  points:[number,number];
  rounds:number;
  winnerId?:number;
+ /** Minuto do corujão em que a partida acabou. Opcional em saves antigos. */
+ resolvedAtElapsed?:number;
 };
 export type NightKnockoutBracket={
  seedIds:number[];
@@ -60,6 +62,7 @@ export function scoreKnockoutMinute(s:GameState):void{
   ?Math.min(...match.playerIds)
   :match.playerIds[match.points[0]>match.points[1]?0:1];
  match.winnerId=winner;
+ match.resolvedAtElapsed=n.elapsed;
  if(match.stage==="qualifier"){
   const bye=t.scores.find(row=>!match.playerIds.includes(row.id));
   if(!bye)return;
@@ -103,6 +106,10 @@ export function validKnockoutBracket(
      !m.points.every((p:number)=>Number.isInteger(p)&&p>=0&&p<=48)||
      !Number.isInteger(m.rounds)||m.rounds<0||m.rounds>target(m.stage)||
      m.points.some(p=>p<m.rounds||p>4*m.rounds)||
+     (m.resolvedAtElapsed!==undefined&&
+      (m.winnerId===undefined||!Number.isInteger(m.resolvedAtElapsed)||
+       m.resolvedAtElapsed<0||m.resolvedAtElapsed>elapsed||
+       m.resolvedAtElapsed>540||m.resolvedAtElapsed%12!==0))||
      (m.winnerId!==undefined&&
       (m.rounds!==target(m.stage)||m.winnerId!==
        (m.points[0]===m.points[1]?Math.min(...m.playerIds):

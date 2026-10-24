@@ -7,6 +7,32 @@ import {pcPosition} from "../sim/engine.js";
 import {iso,type Projection} from "./isometric.js";
 
 export type NightMatchMarkerKind="duel"|"waiting"|"eliminated"|"champion";
+export type NightMatchReactionKind="win"|"loss";
+export type NightMatchReaction={
+ playerId:number;pcIndex:number;kind:NightMatchReactionKind;
+ stage:"qualifier"|"final";ageMinutes:number;
+};
+/** Reações apenas para uma vitória marcada pelo motor, com 8 minutos de duração. */
+export function nightMatchReactions(s:GameState):NightMatchReaction[]{
+ const n=s.nightMeetup,t=n?.tournament;
+ if(!n||n.phase!=="playing"||t?.mode!=="knockout"||!t.bracket)return [];
+ const reactions:NightMatchReaction[]=[];
+ for(const match of t.bracket.matches){
+  if(match.winnerId===undefined||match.resolvedAtElapsed===undefined)continue;
+  const age=n.elapsed-match.resolvedAtElapsed;
+  if(age<0||age>8)continue;
+  for(const id of match.playerIds){
+   if(!n.paidIds.includes(id))continue;
+   const customer=s.customers.find(c=>c.id===id);
+   if(!customer||customer.stage!=="using"||customer.pcIndex===null||
+      !n.pcIndexes.includes(customer.pcIndex))continue;
+   reactions.push({playerId:id,pcIndex:customer.pcIndex,
+     kind:id===match.winnerId?"win":"loss",stage:match.stage,ageMinutes:age});
+  }
+ }
+ return reactions;
+}
+
 export type NightMatchMarker={
  playerId:number;pcIndex:number;kind:NightMatchMarkerKind;label:string;
 };
@@ -68,6 +94,45 @@ export function drawNightMatchMarkers(
   ctx.strokeStyle=palette[1];ctx.lineWidth=Math.max(1,1.25*z);
   ctx.strokeRect(x-width/2,y-height/2,width,height);
   ctx.fillStyle=palette[2];ctx.fillText(marker.label,x,y,Math.max(5,width-8));
+ }
+ ctx.restore();
+}
+
+/** Efeitos discretos no mesmo Canvas do salão, sem colisão, custo ou NPC novo. */
+export function drawNightMatchReactions(
+ ctx:CanvasRenderingContext2D,s:GameState,camera:Projection,time:number,
+ reactions:readonly NightMatchReaction[]=nightMatchReactions(s)
+):void{
+ if(!reactions.length)return;
+ const z=Math.max(.70,camera.zoom);
+ ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
+ ctx.font="700 "+Math.max(10,Math.round(12*z))+"px system-ui, sans-serif";
+ for(const reaction of reactions){
+  const pc=pcPosition(reaction.pcIndex,s);
+  const at=iso({x:pc.x+.35,y:pc.y+.34},camera,168);
+  const fade=Math.max(.18,1-reaction.ageMinutes/9);
+  const label=reaction.kind==="win"
+    ?reaction.stage==="final"?"FINAL VENCIDA!":"CLASSIFICADO!"
+    :"ELIMINADO";
+  ctx.globalAlpha=fade;
+  ctx.fillStyle=reaction.kind==="win"?"#ffe6a0":"#d4cfce";
+  ctx.strokeStyle="rgba(20,25,36,.9)";ctx.lineWidth=Math.max(2,3*z);
+  ctx.strokeText(label,at.x,at.y,155*z);
+  ctx.fillText(label,at.x,at.y,155*z);
+  if(reaction.kind==="win"){
+   for(let i=0;i<6;i++){
+    const angle=(i/6)*Math.PI*2+time*.85;
+    const range=(16+5*Math.sin(time*3+i))*z;
+    const x=at.x+Math.cos(angle)*range;
+    const y=at.y+22*z+Math.sin(angle)*range*.55;
+    ctx.beginPath();ctx.arc(x,y,Math.max(1.5,2.4*z),0,Math.PI*2);
+    ctx.fillStyle=i%2===0?"#ffe38c":"#9eeef2";ctx.fill();
+   }
+  }else{
+   const y=at.y+15*z+Math.sin(time*3+reaction.playerId)*1.5*z;
+   ctx.fillStyle="rgba(145,189,206,.85)";
+   ctx.beginPath();ctx.ellipse(at.x+14*z,y,2.3*z,4*z,-.2,0,Math.PI*2);ctx.fill();
+  }
  }
  ctx.restore();
 }
