@@ -13,6 +13,7 @@ import {normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps1SessionWear,ps1HourPrice} from "./ps1.js";
 import {online,pcWear,pcBroken,addLog,CLOSING_START_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
+import {navigableRoute} from "./navigation.js";
 import {startStanding,customerSays,sendHome,yieldDoorway,queueVisualEvent} from "./customerFlow.js";
 import {tryServe,resolvePurchase} from "./customerDecisions.js";
 
@@ -98,13 +99,24 @@ export function advanceCustomer(s: GameState, c: Customer): void {
         if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
         c.pcIndex = null;c.ps1StationIndex=undefined;c.ps1SeatIndex=undefined;
         if (c.wantsSnack) {
-          c.stage = "shopping";
-          setTravel(s,c,c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s));
+          // Uma obra pode isolar a prateleira depois de a sessão terminar.
+          // Não iniciar uma compra sem caminho: cliente ficaria preso na
+          // posição do PC e ocuparia a fila da loja para sempre.
+          const destination=c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s);
+          if(setTravel(s,c,destination))c.stage="shopping";
+          else sendHome(s,c);
         } else sendHome(s, c);
       }
       return;
     case "shopping":
       if(localMinute(s)>=CLOSING_START_MINUTE)return; // Balcão encerrou as vendas; aguarda liberação para sair.
+      // Obras/realocações durante a caminhada podem inutilizar a rota antiga.
+      // Não expulsar por congestionamento temporário de corpos: só desistir
+      // quando a navegação estática também não alcança o produto.
+      if((c.stalledMinutes??0)>=12&&
+         !navigableRoute(s,{x:c.x,y:c.y},purchaseApproach(c.desiredItem??"soda",s))){
+        sendHome(s,c);return;
+      }
       if (moveRoute(s,c)&&firstRetailCustomer(s,c.desiredItem??"soda")===c.id&&Math.hypot(c.x-purchaseApproach(c.desiredItem??"soda",s).x,c.y-purchaseApproach(c.desiredItem??"soda",s).y)<.05) resolvePurchase(s, c);
       return;
     case "leaving": moveRoute(s,c); return;
