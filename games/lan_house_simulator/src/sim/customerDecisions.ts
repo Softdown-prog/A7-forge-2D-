@@ -155,6 +155,11 @@ export function tryServe(s: GameState, c: Customer): void {
    s.printEffects=queueVisualEvent(s.printEffects,{customerId:c.id});
   }
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0)+(printing?.revenue??0),x:c.x,y:c.y});
+  if(c.multiplayerVisitId!==undefined&&s.multiplayerVisit?.id===c.multiplayerVisitId&&
+    s.multiplayerVisit.memberIds.every(id=>s.customers.some(friend=>friend.id===id&&friend.pcIndex!==null))){
+   addLog(s,"A turma de "+s.multiplayerVisit.size+
+    " amigos pagou e foi para computadores diferentes jogar Setor Zero.");
+  }
 }
 export function resolvePurchase(s: GameState, c: Customer): void {
   const chosen=c.desiredProduct??c.desiredItem??"soda",spec=productSpec(chosen);

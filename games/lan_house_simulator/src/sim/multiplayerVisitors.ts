@@ -6,7 +6,7 @@ import {DAY_MINUTES} from "./types.js";
 import {gameYear} from "./era.js";
 import {ERIC_MULTIPLAYER_GAME_ID,multiplayerEligiblePcs} from "./eraGames.js";
 import {spawnMultiplayerFriend} from "./customerArrival.js";
-import {entrance,pcPosition} from "./simulationState.js";
+import {entrance,pcPosition,addLog} from "./simulationState.js";
 import {computerSeat} from "./route.js";
 import {navigableRoute} from "./navigation.js";
 import {isReserved,sendHome} from "./customerFlow.js";
@@ -32,11 +32,17 @@ export function tickMultiplayerVisitors(s:GameState):void{
  const now=s.totalMinutes,day=Math.floor(now/DAY_MINUTES)+1,minute=now%DAY_MINUTES;
  const visit=s.multiplayerVisit;
  if(visit){
-  if(now-visit.createdMinute>MAX_VISIT_AGE&&visit.memberIds.length<visit.size){
-   dismiss(s,"a turma não conseguiu se reunir.");return;
+  const present=groupMembers(s);
+  if(now-visit.createdMinute>MAX_VISIT_AGE&&
+     (visit.memberIds.length<visit.size||present.some(c=>c.pcIndex===null))){
+   dismiss(s,"a turma não conseguiu se reunir a tempo.");return;
   }
   if(visit.memberIds.length===visit.size){
-   if(groupMembers(s).length===0)s.multiplayerVisit=undefined;
+   if(!present.length){s.multiplayerVisit=undefined;return;}
+   // Um integrante que desapareceu não pode deixar o resto da turma
+   // aguardando indefinidamente diante do caixa.
+   if(present.length<visit.size&&present.some(c=>c.pcIndex===null))
+    dismiss(s,"um amigo saiu antes de a turma concluir o pagamento.");
    return;
   }
   if(s.customers.length>=14)return;
@@ -54,6 +60,7 @@ export function tickMultiplayerVisitors(s:GameState):void{
  if(available.length<2)return;
  const size:2|3=available.length>=3&&((day+(s.mailScheduleSeed??0))%2===0)?3:2;
  s.multiplayerVisit={id:s.nextCustomerId,size,memberIds:[],createdMinute:now};
+ addLog(s,"Uma turma de "+size+" amigos quer jogar Setor Zero em rede. Eles entram e pagam no caixa.");
  const first=spawnMultiplayerFriend(s,s.multiplayerVisit.id);
  if(first)s.multiplayerVisit.memberIds.push(first.id);
 }

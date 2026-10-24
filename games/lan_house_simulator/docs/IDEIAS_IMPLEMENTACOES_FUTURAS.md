@@ -576,3 +576,15 @@ Os parágrafos anteriores continuam como histórico das versões 0.1–0.4; seus
 - Referências: `src/sim/ericStory.ts`, `src/sim/eraGames.ts`, `tests/eric-multiplayer-2000.test.mjs`.
 
 As ideias v0.1–0.4 anteriores permanecem registradas como histórico; os horários, o dia semanal, as regras de ingresso e os pacotes noturnos não foram transformados em decisões finais.
+
+## Etapa 3 implementada — grupos diurnos de Setor Zero (23/10/2026)
+
+**Escopo desta etapa:** amigos de dois ou três integrantes procuram o jogo original já licenciado e **entram fisicamente no salão**, um de cada vez, sem se sobrepor na soleira. A oportunidade aparece esporadicamente (um dia elegível a cada sete dias da campanha, desde 2000), nunca antes da licença e somente quando existem PCs capazes de recebê-los.
+
+- Cada integrante tem identidade, carteira pessoal, fila própria no caixa e trajeto real até uma estação distinta. Usa os sistemas de sessão, cobrança, energia, desgaste, satisfação, compras e saída já existentes — não há receita fictícia por surgir no mapa.
+- O jogo agenda a turma somente quando encontra ao menos dois PCs operacionais com Windows licenciado e caminhos até as cadeiras. As reservas são feitas antes do atendimento e impedem que outro visitante ocupe as máquinas prometidas.
+- Se o salão não comporta toda a turma antes da cobrança, a visita é cancelada; quem pagou uma sessão real pode terminá-la mesmo que um amigo desista depois.
+- Campo opcional `multiplayerVisit` e referências de reserva nos clientes são persistidos e validados sem invalidar saves anteriores. O evento é **diurno**; o fechamento das 22h, o relógio de 720 minutos e os campeonatos noturnos permanecem intactos.
+- O log do jogo informa quando os amigos chegam e quando todos pagaram. Os personagens seguem sendo NPCs do simulador, usando a mesma movimentação e animação de sessão.
+- Ainda não foram implementados campeonatos oficiais, rodada competitiva pontuada ou turnos especiais de sexta para sábado.
+- Regressões: `tests/multiplayer-visitors.test.mjs`.
