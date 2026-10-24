@@ -14,6 +14,7 @@ export type KnockoutMatch={
  winnerId?:number;
 };
 export type NightKnockoutBracket={
+ seedIds:number[];
  matches:KnockoutMatch[];
  winnerId?:number;
 };
@@ -27,7 +28,7 @@ export function beginNightKnockout(s:GameState):void{
     n.phase!=="playing")return;
  const ids=t.scores.map(x=>x.id);
  const pair:[number,number]=[ids[0]!,ids[1]!];
- t.bracket={matches:[{stage:n.seats===3?"qualifier":"final",
+ t.bracket={seedIds:[...ids],matches:[{stage:n.seats===3?"qualifier":"final",
   playerIds:pair,points:[0,0],rounds:0}]};
  addLog(s,n.seats===3
   ?"Eliminatória Setor Zero: jogadores "+pair.join(" x ")+" disputam uma vaga na final; jogador "+ids[2]+" aguarda."
@@ -86,10 +87,13 @@ export function validKnockoutBracket(
  if(!bracket||!Array.isArray(bracket.matches)||bracket.matches.length<1||
     bracket.matches.length>(seatCount===3?2:1))return false;
  const ids=t.scores.map(row=>row.id);
- if(ids.length!==seatCount||!unique(ids))return false;
+ if(ids.length!==seatCount||!unique(ids)||!Array.isArray(bracket.seedIds)||
+    bracket.seedIds.length!==seatCount||!unique(bracket.seedIds)||
+    bracket.seedIds.some(id=>!ids.includes(id)))return false;
+ const seeds=bracket.seedIds;
  const matches=bracket.matches,first=matches[0]!;
  if(first.stage!==(seatCount===3?"qualifier":"final"))return false;
- if(first.playerIds[0]!==ids[0]||first.playerIds[1]!==ids[1])return false;
+ if(first.playerIds[0]!==seeds[0]||first.playerIds[1]!==seeds[1])return false;
  for(let i=0;i<matches.length;i++){
   const m=matches[i]!;
   if(!m||!Array.isArray(m.playerIds)||m.playerIds.length!==2||
@@ -105,7 +109,7 @@ export function validKnockoutBracket(
   if(i>0&&matches[i-1]?.winnerId===undefined)return false;
  }
  if(seatCount===3&&matches.length===2){
-  const final=matches[1]!,bye=ids[2]!;
+  const final=matches[1]!,bye=seeds[2]!;
   if(final.stage!=="final"||final.playerIds[0]!==first.winnerId||
       final.playerIds[1]!==bye)return false;
  }
