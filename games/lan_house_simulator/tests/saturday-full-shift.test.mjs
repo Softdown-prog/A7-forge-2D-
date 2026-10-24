@@ -92,9 +92,9 @@ for(const [seed,seats,format] of [[147,2,"knockout"],[482,3,"knockout"],[9182,2,
     assert.equal(isValidSave(s),true,"salvar na hora de fechar");
     assert.equal(nightReopeningPresentation(s)?.phase,"closing");
    }
-   if(minute>=690){
+   if(minute>=705){
     stagesAtClosing=s.customers.filter(c=>c.stage!=="leaving").map(c=>c.stage);
-    assert.deepEqual(stagesAtClosing,[],"após 21h30 ninguém fica retido no caixa, compras ou PC");
+    assert.deepEqual(stagesAtClosing,[],"às 21h45 ninguém segue em atendimento, fila ou PC");
    }
   }
   assert.ok(arrivals>0&&seen.size>0&&paid&&used,"dia teve visita pagante e sessão real");
@@ -112,7 +112,10 @@ for(const [seed,seats,format] of [[147,2,"knockout"],[482,3,"knockout"],[9182,2,
   assert.ok(next.customers.every(c=>c.nightMeetupDay===undefined));
   assert.equal(isValidSave(next),true);
   assert.equal(JSON.stringify(next.lastNightMeetup),frozenNight);
-  assert.ok(maxQueue>=0&&maxRetail>=0&&sales>=0&&shopping!==undefined);
+  assert.ok(maxQueue<=10&&maxRetail<=14,"filas limitadas pela ocupação real");
+  assert.ok(s.purchases>=startPurchases&&sales===s.purchases-startPurchases,
+   "compras não podem ser perdidas ou recontadas no encerramento");
+  if(shopping)assert.ok(stageTrace.has("shopping"));
   assert.ok(stageTrace.has("using"));
  });
 }

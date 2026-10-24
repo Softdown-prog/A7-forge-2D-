@@ -98,9 +98,12 @@ function prepareClosing(s:GameState):void {
  // Poucos clientes por vez: um a cada dois minutos no começo, um por
  // minuto depois das 21h20. Evita uma debandada quando muitos PCs desocupam.
  if(minute<CLOSING_START_MINUTE+20&&(minute-CLOSING_START_MINUTE)%2!==0)return;
- const next=candidates.find(c=>
+ // Ao concluir as últimas sessões às 21h30, liberar dois clientes por
+ // minuto pela rota real da porta. Um único por minuto pode manter alguém
+ // usando o PC depois do limite quando a fila de compras está cheia.
+ const eligible=candidates.filter(c=>
    !active(c)||minute>=SESSION_FINISH_MINUTE||c.usedMinutes>=(c.sessionMinutes??SESSION_MINUTES));
- if(next)sendHome(s,next);
+ for(const c of eligible.slice(0,minute>=SESSION_FINISH_MINUTE?2:1))sendHome(s,c);
 }
 function advanceMinute(s: GameState): void {
   if(s.nightMeetup){
