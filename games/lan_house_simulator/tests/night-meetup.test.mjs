@@ -164,3 +164,23 @@ test("corujão de três amigos: três PCs, três pagamentos e reabertura única"
  assert.equal(s.lastNightMeetup?.paid,3);
  assert.equal(isValidSave(s),true);
 });
+
+test("sexta no último dia do mês cobra as contas uma só vez na reabertura",()=>{
+ const {s}=fixture(2);
+ // Sexta que coincide com o dia 30 de um mês fictício, após 2001.
+ const friday=Array.from({length:1000},(_,i)=>1081+i).find(day=>
+  day%30===0&&weekdayIndex(day)===4);
+ assert.ok(friday!==undefined);
+ s.fridayMeetupDraft.fridayDay=friday;
+ reachClosing(s,friday);
+ while(s.nightMeetup)stepGame(s,100);
+ const receipt=s.lastPaidMonthlyBill;
+ assert.ok(receipt,"a conta deve fechar ao iniciar o mês seguinte");
+ const afterExpenses=s.expenses,afterRevenue=s.revenue;
+ stepGame(s,1);
+ assert.deepEqual(s.lastPaidMonthlyBill,receipt);
+ assert.equal(s.expenses,afterExpenses);
+ assert.equal(s.revenue,afterRevenue);
+ assert.equal(s.totalMinutes,friday*DAY_MINUTES+1);
+ assert.equal(isValidSave(s),true);
+});
