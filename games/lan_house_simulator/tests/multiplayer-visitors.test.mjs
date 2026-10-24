@@ -7,6 +7,8 @@ import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {tickMultiplayerVisitors,waitForMultiplayerFriends} from "../dist/js/sim/multiplayerVisitors.js";
 import {tryServe} from "../dist/js/sim/customerDecisions.js";
+import {advanceCustomer} from "../dist/js/sim/customerLifecycle.js";
+import {sessionRevenue} from "../dist/js/sim/economy.js";
 import {isReserved} from "../dist/js/sim/customerFlow.js";
 import {counterQueueSlot} from "../dist/js/sim/checkoutQueue.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
@@ -116,4 +118,87 @@ test("partidas anteriores sem dados de multiplayer seguem válidas",()=>{
  assert.equal(isValidSave(old),true);
  old.multiplayerVisit={id:1,size:3,memberIds:[1,1],createdMinute:0};
  assert.equal(isValidSave(old),false);
+});
+
+test("a rodada LAN só começa com TODOS sentados e dura o mesmo tempo em PCs diferentes",()=>{
+ const s=prepared(724),members=collectVisitors(s);
+ // Todos reservam computadores reais; cada pagamento usa o balcão existente.
+ for(const c of members){
+  const previous=s.served;
+  tryServe(s,c);
+  assert.equal(c.stage,"to_pc");
+  assert.equal(s.served,previous+1);
+  s.totalMinutes+=3;
+ }
+ assert.equal(s.multiplayerVisit.paid,true);
+ assert.ok(members.every(c=>c.sessionMinutes===s.multiplayerVisit.sessionMinutes));
+ assert.equal(new Set(members.map(c=>c.pcIndex)).size,members.length);
+ const money=s.cash,served=s.served;
+ // O primeiro já sentou; ninguém começa a jogar enquanto os demais andam.
+ members[0].stage="sitting";members[0].poseMinutes=3;
+ advanceCustomer(s,members[0]);
+ assert.equal(members[0].stage,"sitting");
+ assert.equal(s.multiplayerVisit.startedMinute,undefined);
+ // Último amigo chega; o grupo inicia no MESMO minuto.
+ for(const c of members.slice(1)){c.stage="sitting";c.poseMinutes=3;}
+ advanceCustomer(s,members[members.length-1]);
+ assert.ok(Number.isInteger(s.multiplayerVisit.startedMinute));
+ assert.ok(members.every(c=>c.stage==="using"&&c.usedMinutes===0));
+ assert.equal(s.cash,money);assert.equal(s.served,served);
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(isValidSave(restored),true);
+ assert.equal(restored.multiplayerVisit.startedMinute,s.multiplayerVisit.startedMinute);
+ // Sem internet externa: Setor Zero roda pela rede LOCAL.
+ s.offlineUntil=s.totalMinutes+200;
+ const minutes=s.multiplayerVisit.sessionMinutes;
+ for(let i=1;i<=minutes;i++){
+  s.totalMinutes++;
+  for(const c of members)advanceCustomer(s,c);
+  assert.ok(members.every(c=>c.usedMinutes===i),
+   "todos jogam o mesmo número de minutos, inclusive durante a queda da internet");
+  if(i<minutes)assert.ok(members.every(c=>c.stage==="using"));
+ }
+ assert.ok(members.every(c=>c.stage==="standing"));
+ assert.equal(s.served,served);assert.equal(s.cash,money);
+});
+
+test("orçamento do integrante mais pobre reduz o pacote para TODOS, sem cobrar outro valor",()=>{
+ const s=prepared(721),members=collectVisitors(s);
+ const halfHour=sessionRevenue(s.pricePerHour,30,s.economyVersion===2);
+ members[1].wallet=halfHour;
+ assert.equal(waitForMultiplayerFriends(s,members[0]),false);
+ assert.equal(s.multiplayerVisit.sessionMinutes,30);
+ for(const c of members){
+  const prior=s.revenue;
+  tryServe(s,c);
+  assert.equal(c.stage,"to_pc");
+  assert.equal(c.sessionMinutes,30);
+  assert.equal(s.revenue-prior,halfHour);
+  s.totalMinutes+=3;
+ }
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
+});
+
+test("simulação completa usa a porta, a fila e os PCs reais sem montar uma cena paralela",()=>{
+ const s=prepared(721);
+ tickMultiplayerVisitors(s);
+ assert.ok(s.multiplayerVisit);
+ const id=s.multiplayerVisit.id,ids=s.multiplayerVisit.memberIds;
+ let observedReady=false;
+ for(let i=0;i<170;i++){
+  stepGame(s,1);
+  const visit=s.multiplayerVisit;
+  if(visit?.id===id&&visit.startedMinute!==undefined){
+   const guests=visit.memberIds.map(cid=>s.customers.find(c=>c.id===cid)).filter(Boolean);
+   if(guests.length===visit.size&&guests.every(c=>c.pcIndex!==null)){
+    assert.equal(new Set(guests.map(c=>c.pcIndex)).size,visit.size);
+    assert.ok(guests.every(c=>["using","standing","shopping","leaving"].includes(c.stage)));
+    observedReady=true;
+    break;
+   }
+  }
+ }
+ assert.equal(observedReady,true,"o salão REAL deve conseguir iniciar a partida conjunta");
+ assert.ok(s.eventLog.some(line=>line.includes("MESMA partida em rede")));
+ assert.equal(isValidSave(s),true);
 });
