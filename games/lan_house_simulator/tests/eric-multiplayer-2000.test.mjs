@@ -23,9 +23,9 @@ test("segunda mensagem de Eric aparece uma vez em junho/julho de 2000",()=>{
   assert.ok(first>=8&&first<=51);
   assert.ok(second>=156&&second<=200);
   at(s,2000,first);reviewNotices(s);
-  const cash=s.cash,rng=s.rng,expenses=s.expenses;
   assert.equal(letters(s,ERIC_FIRST_MAIL_ID).length,1);
   at(s,2000,second-1);reviewNotices(s);
+  const cash=s.cash,rng=s.rng,expenses=s.expenses;
   assert.equal(letters(s,ERIC_SECOND_MAIL_ID).length,0);
   at(s,2000,second);reviewNotices(s);reviewNotices(s);
   assert.equal(letters(s,ERIC_SECOND_MAIL_ID).length,1);
