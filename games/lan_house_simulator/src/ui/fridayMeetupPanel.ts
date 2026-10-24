@@ -55,8 +55,8 @@ export function installFridayMeetupPanel(
    (stats.total===1?" conquista":" conquistas");
   trophyRecords.textContent=stats.uniqueChampions+
    (stats.uniqueChampions===1?" campeão diferente":" campeões diferentes")+
-   " · "+stats.finalsTwo+" finais com 2 jogadores · "+
-   stats.finalsThree+" finais com 3 jogadores";
+   " · "+stats.finalsTwo+(stats.finalsTwo===1?" final":" finais")+" com 2 jogadores · "+
+   stats.finalsThree+(stats.finalsThree===1?" final":" finais")+" com 3 jogadores";
   trophyChampions.replaceChildren(...stats.champions.slice(0,3).map((record,i)=>{
    const item=document.createElement("li");
    const name=document.createElement("strong");

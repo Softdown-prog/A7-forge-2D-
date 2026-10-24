@@ -134,7 +134,7 @@ try{
     !galleryText.includes("1 conquista"))
   throw Error("Vencedor ou total da galeria não confere com a final real.");
  const records=await page.locator("#first-meetup-trophy-records").textContent();
- if(!records.includes("1 campeão diferente")||!records.includes("1 finais com 2 jogadores")||
+ if(!records.includes("1 campeão diferente")||!records.includes("1 final com 2 jogadores")||
     !records.includes("0 finais com 3 jogadores"))
   throw Error("Quadro de campeões não corresponde às conquistas persistidas.");
  const championRank=await page.locator(".night-trophy-champions li").allTextContents();
