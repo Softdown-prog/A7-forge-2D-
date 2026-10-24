@@ -10,6 +10,7 @@ import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {addLog} from "../dist/js/sim/simulationState.js";
 
 function fixture(seats=2){
  const s=createGame(9182,"historical");
@@ -57,6 +58,9 @@ test("agendamento não cobra; 22h mantém sexta, meia-noite mostra sábado sem a
  assert.equal(displayTime(s),"00:00");
  assert.equal(s.nightMeetup.fridayDay,friday);
  assert.equal(weekdayIndex(friday+1),5);
+ addLog(s,"registro após meia-noite");
+ assert.match(s.eventLog[0],new RegExp("^D"+(friday+1)+" 00:00"),
+  "diário deve acompanhar sábado sem alterar o dia econômico");
  assert.equal(isValidSave(s),true);
 });
 
