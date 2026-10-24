@@ -157,6 +157,7 @@ export function tryServe(s: GameState, c: Customer): void {
   s.paymentEffects=queueVisualEvent(s.paymentEffects,{amount:paid+(copy?.revenue??0)+(printing?.revenue??0),x:c.x,y:c.y});
   if(c.multiplayerVisitId!==undefined&&s.multiplayerVisit?.id===c.multiplayerVisitId&&
     s.multiplayerVisit.memberIds.every(id=>s.customers.some(friend=>friend.id===id&&friend.pcIndex!==null))){
+   s.multiplayerVisit.paid=true;
    addLog(s,"A turma de "+s.multiplayerVisit.size+
     " amigos pagou e foi para computadores diferentes jogar Setor Zero.");
   }

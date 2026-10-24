@@ -205,7 +205,7 @@ export interface GameState {
   weather: "sun" | "rain";
   eventLog: string[];
   notices?: import("./notices.js").GameNotice[];
-  multiplayerVisit?: {id:number;size:2|3;memberIds:number[];createdMinute:number};
+  multiplayerVisit?: {id:number;size:2|3;memberIds:number[];createdMinute:number;paid?:boolean};
   multiplayerLastVisitDay?: number;
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */

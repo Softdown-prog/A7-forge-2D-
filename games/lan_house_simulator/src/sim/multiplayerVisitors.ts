@@ -33,7 +33,7 @@ export function tickMultiplayerVisitors(s:GameState):void{
  const visit=s.multiplayerVisit;
  if(visit){
   const present=groupMembers(s);
-  if(now-visit.createdMinute>MAX_VISIT_AGE&&
+  if(!visit.paid&&now-visit.createdMinute>MAX_VISIT_AGE&&
      (visit.memberIds.length<visit.size||present.some(c=>c.pcIndex===null))){
    dismiss(s,"a turma não conseguiu se reunir a tempo.");return;
   }
@@ -41,7 +41,7 @@ export function tickMultiplayerVisitors(s:GameState):void{
    if(!present.length){s.multiplayerVisit=undefined;return;}
    // Um integrante que desapareceu não pode deixar o resto da turma
    // aguardando indefinidamente diante do caixa.
-   if(present.length<visit.size&&present.some(c=>c.pcIndex===null))
+   if(!visit.paid&&present.length<visit.size&&present.some(c=>c.pcIndex===null))
     dismiss(s,"um amigo saiu antes de a turma concluir o pagamento.");
    return;
   }
@@ -103,6 +103,7 @@ export function validMultiplayerVisit(s:Partial<GameState>):boolean{
  if(visit===undefined)return true;
  if(!visit||!Number.isInteger(visit.id)||visit.id<1||
   !Number.isInteger(visit.size)||![2,3].includes(visit.size)||
+  (visit.paid!==undefined&&typeof visit.paid!=="boolean")||
   !Number.isInteger(visit.createdMinute)||visit.createdMinute<0||
   visit.createdMinute>(s.totalMinutes??0)||!Array.isArray(visit.memberIds)||
   visit.memberIds.length>visit.size||new Set(visit.memberIds).size!==visit.memberIds.length)return false;
