@@ -228,6 +228,8 @@ export interface GameState {
   lastNightMeetup?: {fridayDay:number;seats:number;paid:number;playedMinutes:number;revenue:number;retailRevenue:number;
     tournament?: import("./nightTournament.js").NightTournamentResult;
   };
+  /** Galeria da lan house: só finais eliminatórias concluídas geram troféus. */
+  nightTournamentTrophies?: import("./nightKnockout.js").NightKnockoutTrophy[];
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
   mailScheduleSeed?: number;
