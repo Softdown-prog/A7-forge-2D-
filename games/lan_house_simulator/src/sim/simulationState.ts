@@ -61,7 +61,12 @@ export function random(s: GameState): number {
   return s.rng / 0x100000000;
 }
 export function addLog(s: GameState, message: string): void {
-  s.eventLog.unshift("D" + dayNumber(s) + " " + displayTime(s) + " · " + message);
+  // O contador econômico fica na sexta até 10h, mas após meia-noite
+  // o diário já pertence ao sábado civil (igual ao calendário da tela).
+  const civilDay=s.nightMeetup
+    ?futureNightClock(s.nightMeetup.fridayDay,s.nightMeetup.elapsed).calendarDay
+    :dayNumber(s);
+  s.eventLog.unshift("D" + civilDay + " " + displayTime(s) + " · " + message);
   s.eventLog = s.eventLog.slice(0, 14);
 }
 export function applyResult(s: GameState, result: Result): Result {
