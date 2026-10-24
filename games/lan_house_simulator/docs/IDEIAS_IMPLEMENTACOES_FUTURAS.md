@@ -561,3 +561,18 @@ Este espaço fica reservado para os próximos conceitos que ainda precisem amadu
 - Código: `src/sim/ericStory.ts`, integração em `notices.ts`; testes: `tests/eric-story.test.mjs`.
 
 Os parágrafos anteriores continuam como histórico das versões 0.1–0.4; seus avisos de não implementar se referem às decisões ainda não aprovadas nas respectivas versões.
+
+
+## Etapa 2 implementada — meados de 2000: Eric e os primeiros jogos em rede (23/10/2026)
+
+**Autorização para seguir com o arco:** esta etapa integra o correio e o catálogo real do LHS, sem antecipar campeonatos/corujões.
+
+- Eric envia uma segunda mensagem familiar em junho/julho de 2000 (dia 156–200, determinado pela semente do correio). O conteúdo não cobra, não oferece benefício imediato, não consome RNG e não bloqueia quem não quer investir.
+- O catálogo de jogos clássicos recebe **Setor Zero**, um título fictício de ação em equipes pela rede local (nome e identidade visual de implementação, revisáveis). Em 2000 o título é apresentado após a notícia de Eric; em 2001 ou depois, saves que perderam a janela histórica também podem descobri-lo.
+- Licença **única para o estabelecimento**, independente dos direitos básicos e das licenças Windows individuais. São necessários **dois computadores existentes, operacionais e com Windows licenciado**; não exige placa de vídeo dedicada nem internet externa.
+- A pequena parcela de atração depende de a licença existir e de haver dois PCs realmente aptos. Se um computador quebrar ou for desligado, ela deixa de contar temporariamente, sem reembolso fictício ou perda da licença. Qualquer receita continua sujeita a visitantes reais usando os serviços comuns.
+- **Limite desta etapa:** um atrativo de jogo multiplayer não equivale a grupos já implementados. Ainda não há reserva coordenada de máquinas para um grupo, partida simultânea específica, campeonato ou turno noturno.
+- A próxima implementação deverá inserir **grupos físicos de amigos** no salão, com passagem pelo caixa, PCs distintos, sessão, pagamento e saída reais, antes de evoluir para reservas opcionais de sexta.
+- Referências: `src/sim/ericStory.ts`, `src/sim/eraGames.ts`, `tests/eric-multiplayer-2000.test.mjs`.
+
+As ideias v0.1–0.4 anteriores permanecem registradas como histórico; os horários, o dia semanal, as regras de ingresso e os pacotes noturnos não foram transformados em decisões finais.
