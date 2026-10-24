@@ -104,7 +104,7 @@ test("dois amigos entram, pagam separadamente, sentam e jogam até 7h; sábado r
 test("save e retomada não repetem cobrança nem virada de sábado",()=>{
  const {s,friday}=fixture(2);
  reachClosing(s,friday);
- stepGame(s,210);
+ stepGame(s,110);stepGame(s,100);
  const a=saveReload(s),b=saveReload(s);
  assert.equal(a.nightMeetup.paidIds.length,2,"os dois precisam ter pago antes do save");
  const beforeRevenue=a.revenue,beforeServed=a.served,beforeCash=a.cash;
