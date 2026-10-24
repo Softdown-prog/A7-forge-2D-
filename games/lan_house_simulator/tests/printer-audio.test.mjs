@@ -90,9 +90,12 @@ test("sons não aparecem por frame nem por CD/DVD",()=>{
  const root=resolve(import.meta.dirname,"..");
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const engine=readFileSync(resolve(root,"src/sim/engine.ts"),"utf8");
+ const decisions=readFileSync(resolve(root,"src/sim/customerDecisions.ts"),"utf8");
  const saves=readFileSync(resolve(root,"src/sim/saveTransfer.ts"),"utf8");
  assert.match(main,/game\.printEffects\?\.splice\(0\)/);
  assert.match(main,/soundscape\.printer\(\)/);
- assert.equal((engine.match(/s\.printEffects=queueVisualEvent/g)||[]).length,2);
+ // As duas emissões por serviço pago estão em customerDecisions, não no engine.
+ assert.equal((decisions.match(/s\.printEffects=queueVisualEvent/g)||[]).length,2);
+ assert.equal((engine.match(/s\.printEffects=queueVisualEvent/g)||[]).length,0);
  assert.match(saves,/\bprintEffects\b/);
 });

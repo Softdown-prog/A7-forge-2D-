@@ -108,7 +108,9 @@ test("comparativo controlado 2005/2009/2013: licenÃ§as e 1 ou 2 GPUs com transaÃ
  const pcChoices=process.env.LHS_GPU_DIAG==="1"?[1]:[1,2];
  for(const config of configs)for(const seed of seeds)for(const pcs of pcChoices){
   const no=campaign(config,seed,pcs,false),yes=campaign(config,seed,pcs,true);
-  assert.equal(yes.initialExpenses-no.initialExpenses,
+  // Despesas podem acumular residuos IEEE-754 menores que um centavo.
+  // Comparar os centavos cobrados, nao os bits do numero de ponto flutuante.
+  assert.equal(Math.round((yes.initialExpenses-no.initialExpenses)*100)/100,
    GPU_GAME_CATALOG.find(g=>g.id===config.id).cost);
   assert.ok(yes.requested>0&&no.requested>0,"visitantes com demanda real");
   assert.ok(yes.played<=yes.requested);
