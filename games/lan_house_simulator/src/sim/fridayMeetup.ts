@@ -47,7 +47,7 @@ export function validFridayMeetupDraft(s:Partial<GameState>):boolean{
  const draft=s.fridayMeetupDraft;
  if(draft===undefined)return true;
  return !!draft&&(draft.status==="draft"||draft.status==="confirmed")&&
-  (draft.format===undefined||draft.format==="free"||draft.format==="tournament")&&
+  (draft.format===undefined||draft.format==="free"||draft.format==="tournament"||draft.format==="knockout")&&
   !(s.nightMeetup&&draft.status==="confirmed")&&(draft.seats===2||draft.seats===3)&&
   Number.isInteger(draft.fridayDay)&&draft.fridayDay>=1&&
   draft.fridayDay<=GAME_END_DAY&&weekdayIndex(draft.fridayDay)===4;

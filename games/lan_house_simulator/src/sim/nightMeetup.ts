@@ -24,6 +24,7 @@ import {recordStationMinute} from "./stationAccounting.js";
 import {pcCount} from "./simulationState.js";
 import {stationReadyForSessions} from "./stationPower.js";
 import {registerTournamentPlayer,scoreTournamentMinute,settleNightTournament,completedTournamentResult,validTournamentState,validTournamentResult} from "./nightTournament.js";
+import {beginNightKnockout} from "./nightKnockout.js";
 
 
 export function confirmFridayMeetup(s:GameState):Result{
@@ -64,7 +65,8 @@ export function beginNightMeetup(s:GameState):void{
  s.nightMeetup={fridayDay:draft.fridayDay,seats:draft.seats,elapsed:0,
   phase:"arriving",pcIndexes:pcs.slice(0,draft.seats),memberIds:[],paidIds:[],
   revenue:0,retailRevenue:0,
-  tournament:draft.format==="tournament"?{scores:[]}:undefined};
+  tournament:draft.format==="tournament"?{scores:[],mode:"league"}:
+    draft.format==="knockout"?{scores:[],mode:"knockout"}:undefined};
  s.fridayMeetupDraft=undefined;
  addLog(s,"Sexta 22h: portas fechadas ao público para o encontro de Setor Zero.");
 }
@@ -200,6 +202,7 @@ export function advanceNightMeetup(s:GameState):boolean{
     people.every(c=>c.stage==="sitting"&&(c.poseMinutes??0)>=3)){
   n.phase="playing";n.startedAt=n.elapsed;
   for(const c of people){c.stage="using";c.poseMinutes=0;}
+  beginNightKnockout(s);
   addLog(s,"Corujão: os "+n.seats+" amigos começaram juntos a partida de Setor Zero.");
  }
  if(n.phase==="arriving"&&n.elapsed>=225){
@@ -265,7 +268,8 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
    new Set(n.paidIds).size!==n.paidIds.length||
    n.paidIds.some(id=>!n.memberIds.includes(id))||
    ![n.revenue,n.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)||
-   !validTournamentState(n.tournament,n.memberIds,n.paidIds,n.seats,n.elapsed)||
+   !validTournamentState(n.tournament,n.memberIds,n.paidIds,n.seats,n.elapsed,
+     n.startedAt!==undefined)||
    (n.startedAt!==undefined&&(!Number.isInteger(n.startedAt)||n.startedAt<60||
      n.startedAt>n.elapsed)))return false;
  return n.memberIds.every(id=>Number.isInteger(id)&&id>0&&id<(s.nextCustomerId??0))&&

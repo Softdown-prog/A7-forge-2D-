@@ -95,7 +95,7 @@ const validScore=(v:NightTournamentScore):boolean=>!!v&&Number.isInteger(v.id)&&
  Number.isInteger(v.points)&&v.points>=0&&v.points<=5000&&
  Number.isInteger(v.rounds)&&v.rounds>=0&&v.rounds<=50;
 export function validTournamentState(t:NightTournamentState|undefined,
- ids:number[],paid:number[],seats:number,elapsed:number):boolean{
+ ids:number[],paid:number[],seats:number,elapsed:number,started:boolean):boolean{
  if(t===undefined)return true;
  if(!t||!Array.isArray(t.scores)||t.scores.length>seats||
     t.scores.some(x=>!validScore(x)||!ids.includes(x.id)||!paid.includes(x.id))||
@@ -108,7 +108,7 @@ export function validTournamentState(t:NightTournamentState|undefined,
     (t.winnerId===undefined&&(t.prizePaid??0)>0)||
     (t.winnerId!==undefined&&(t.mode==="knockout"?t.bracket?.winnerId!==t.winnerId:
       tournamentStandings(t)[0]?.id!==t.winnerId))||
-    !validKnockoutBracket(t,seats,t.bracket!==undefined,elapsed))return false;
+    !validKnockoutBracket(t,seats,started,elapsed))return false;
  return true;
 }
 export function validTournamentResult(result:NightTournamentResult|undefined,seats:number):boolean{
