@@ -681,3 +681,9 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Para manter a suíte rápida, apenas os **dias comuns entre sextas** são adiantados no fixture. Isto **não** prova que cinco semanas completas de jogo diurno foram simuladas; noites, inscrições, pagamentos, rodadas e saídas passam pelo motor real.
 - `scripts/verify_friday_panel.mjs` abre a Administração em Chromium mobile de 360 px com cinco conquistas provenientes dessas noites, confere quatro cartões recentes, botão de expansão/colapso, ordem cronológica e ausência de overflow horizontal interno, salvando capturas do próprio jogo.
 - CI integrado em `lhs-friday-meetup.yml` e `lhs-night-tournament.yml`. Emulação Chromium não substitui aceite em aparelho físico.
+
+### Placar dos confrontos nos computadores reais (24/10/2026)
+
+- Durante a eliminatória Setor Zero, o Canvas do salão apresenta indicadores discretos sobre **os PCs efetivamente ocupados** pelos clientes pagantes da madrugada: pontos do duelo, aguardando a vez, eliminado e vencedor.
+- A apresentação é derivada do bracket persistido e do estado `using` dos personagens; some quando o jogador sai do computador para comprar, quando a noite não é eliminatória ou quando o corujão termina. **Não** cria participantes, premiações, NPCs, tempo ou lógica de campeonato adicional.
+- Implementação em `src/render/nightMatchMarkers.ts`, chamada pelo `SceneRenderer` original. Testes de regressão em `tests/night-match-markers.test.mjs`; o Chromium captura `corujao_confronto_pcs_reais.png` no salão original durante uma rodada do motor.

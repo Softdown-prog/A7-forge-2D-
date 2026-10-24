@@ -14,6 +14,9 @@ on:
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/ui/fridayMeetupPanel.ts'
       - 'games/lan_house_simulator/src/ui/nightTournamentHud.ts'
+      - 'games/lan_house_simulator/src/render/nightMatchMarkers.ts'
+      - 'games/lan_house_simulator/src/render/scene.ts'
+      - 'games/lan_house_simulator/tests/night-match-markers.test.mjs'
       - 'games/lan_house_simulator/tests/night-tournament.test.mjs'
       - '.github/workflows/lhs-night-tournament.yml'
 permissions:
@@ -34,4 +37,4 @@ jobs:
           npm run build
       - name: Test paid registration, real usage scoring, award and compatibility
         working-directory: games/lan_house_simulator
-        run: node --test tests/night-knockout.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-trophy-stats.test.mjs tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs
+        run: node --test tests/night-knockout.test.mjs tests/night-match-markers.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-trophy-stats.test.mjs tests/night-tournament.test.mjs tests/night-meetup.test.mjs tests/friday-meetup.test.mjs tests/pc-screen-activities.test.mjs

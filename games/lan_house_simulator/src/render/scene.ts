@@ -38,6 +38,7 @@ import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
 import {copyingAnimationActive} from "../sim/discCopy.js";
 import {drawCounterDiscCopier} from "./discCopierArt.js";
+import {drawNightMatchMarkers} from "./nightMatchMarkers.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -145,6 +146,8 @@ export class SceneRenderer {
     for (const e of entries) e.paint();
     this.drawGpuInstallMarkers(s,camera,elapsedSeconds);
     this.sign(camera,roomW);
+    // Indicadores dos jogadores reais por cima do cenário e atrás do HUD geral.
+    drawNightMatchMarkers(ctx,s,camera);
     this.hudInside(ctx,s);
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */

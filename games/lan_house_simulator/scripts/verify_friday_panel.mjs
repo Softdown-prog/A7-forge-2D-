@@ -103,6 +103,30 @@ try{
  state.totalMinutes=trophyFriday*DAY_MINUTES-1;
  stepGame(state,1);
  if(!state.nightMeetup)throw Error("A madrugada real não começou.");
+ // Mostra os próprios PCs da madrugada no Canvas, sem compor uma cena externa.
+ let liveTicks=0;
+ while(state.nightMeetup&&(!state.nightMeetup.tournament?.bracket||
+   (state.nightMeetup.tournament.bracket.matches[0]?.rounds??0)<2)&&liveTicks++<350)
+  stepGame(state,1);
+ if(!state.nightMeetup?.tournament?.bracket||
+    (state.nightMeetup.tournament.bracket.matches[0]?.rounds??0)<2)
+  throw Error("A partida real não iniciou as rodadas para captura de imagem.");
+ const livePage=await browser.newPage({viewport:{width:1280,height:850}});
+ livePage.on("pageerror",e=>errors.push(String(e)));
+ await livePage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+   {key:GAME_SAVE_KEY,payload:state});
+ await livePage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(livePage);
+ await livePage.locator("#menu-continue").click();
+ await livePage.locator("#night-tournament-hud").waitFor({state:"visible"});
+ const hudText=await livePage.locator("#night-tournament-hud > summary").textContent();
+ if(!hudText.includes("Setor Zero")||!hudText.includes("–"))
+  throw Error("Placar de rodada não acompanha o confronto real.");
+ const gameCanvas=livePage.locator("#game");
+ if(!await gameCanvas.isVisible())
+  throw Error("Canvas original do salão não ficou visível no campeonato.");
+ await livePage.screenshot({path:resolve(out,"corujao_confronto_pcs_reais.png")});
+ await livePage.close();
  while(state.nightMeetup)stepGame(state,1);
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
@@ -209,7 +233,7 @@ try{
  await writeFile(resolve(out,"verificacao.json"),JSON.stringify({status:"pass",firstFridayDay:draft.fridayMeetupDraft.fridayDay,
   slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
   zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,
-  repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
+  liveMatchCanvasCaptured:true,repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
   mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");
 }finally{
