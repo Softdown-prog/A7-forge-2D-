@@ -11,6 +11,7 @@ on:
       - 'games/lan_house_simulator/src/ui/managementPanels.ts'
       - 'games/lan_house_simulator/src/ui/timeWeatherPanel.ts'
       - 'games/lan_house_simulator/tests/friday-meetup.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_friday_panel.mjs'
       - '.github/workflows/lhs-friday-meetup.yml'
 permissions:
   contents: read
@@ -31,3 +32,19 @@ jobs:
       - name: Check Fridays, saved drafts, multiplayer and normal clock
         working-directory: games/lan_house_simulator
         run: node --test tests/friday-meetup.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
+      - name: Install Chromium for genuine administration UI
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Inspect first Friday panel, persistent draft and cancellation
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_friday_panel.mjs out/friday-panel
+      - name: Store actual UI screenshot and test verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-primeira-sexta-painel-real
+          path: games/lan_house_simulator/out/friday-panel/
+          retention-days: 14
+          if-no-files-found: warn
