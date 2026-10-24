@@ -602,3 +602,17 @@ Após revisar a demonstração inadequada, a etapa 3 deixou de tratar os partici
 - **Ainda fora do escopo:** convite, reserva e aceitação do primeiro evento noturno; calendário de sexta/sábado; passagem por meia-noite; pacotes da madrugada; placar formal e relatório do corujão. Os horários e preços noturnos continuam sem definição final.
 
 **Critério de demonstração:** capturar e apresentar como gameplay apenas a interface real do jogo, com prova de que a visita coletiva foi disparada pelo motor. Etiquetas e painéis criados exclusivamente para um vídeo não demonstram a experiência que o jogador encontrará.
+
+
+## Etapa 4A implementada — calendário contínuo e estudo da primeira sexta (24/10/2026)
+
+**Estado: somente fundação, NÃO é corujão jogável.** O expediente atual das 10h às 22h e os 720 minutos por dia foram mantidos para não reinterpretar partidas anteriores.
+
+- `src/sim/campaignWeek.ts` estabelece semana contínua de sete dias no calendário **fictício de 360 dias por ano**: o primeiro dia, 01/01/1998, é quinta-feira; sextas e sábados nunca são derivados do relógio real do dispositivo. O cabeçalho de calendário mostra o dia da semana.
+- A página compacta **Administração → Finanças → Primeira sexta** surge como etapa de estudo, sem nova aba principal. Tony só consegue criar um rascunho quando chegou a 2001, licenciou Setor Zero, observou pelo menos uma rodada multiplayer real e dispõe de 2 ou 3 PCs aptos.
+- `multiplayerRoundsPlayed` conta as rodadas de verdade iniciadas por personagens físicos, nunca a simples compra de licença. `fridayMeetupDraft` guarda apenas uma intenção para a próxima sexta, com 2 ou 3 vagas.
+- **O rascunho NÃO vende ingressos, não ocupa estações, não reserva PCs, não convoca NPCs, não estende expediente e não promete que haverá encontro naquele dia.** Sextas que passam com o rascunho permanecem dias normais. Cancelar não custa nada.
+- Ambos os campos são opcionais nos saves antigos; o validador rejeita datas que não sejam sexta, grupos adulterados e status de evento falsamente confirmado. Regressão em `tests/friday-meetup.test.mjs`.
+- **Etapa 4B necessária antes de liberar a confirmação**: contrato separado de dia/horário civil/turno noturno, cobrança e consumo reais na madrugada, clientes físicos e saída ao amanhecer, persistência de saves às 3h, calendário e contas exatamente uma vez, teste de gameplay no Canvas original. A execução da madrugada só deverá aparecer como jogável quando esses cenários passarem.
+
+Os horários 23h–7h são referência da história, não um compromisso programado nessa etapa. O rascunho prepara terreno sem prometer o que ainda não roda.
