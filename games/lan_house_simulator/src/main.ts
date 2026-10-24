@@ -1436,7 +1436,9 @@ function renderUI(liveOnly=false):void {
     const nextEraGames=document.createElement("div");
     const owned=game.licensedEraGames??[];
     const summary=document.createElement("p");summary.className="era-game-summary";
-    summary.textContent=owned.length+" de "+ERA_GAME_CATALOG.length+" títulos licenciados · bônus atual de procura: +"+(Math.round((eraGameVisitorMultiplier(game)-1)*10000)/100).toLocaleString("pt-BR")+"%. Novidades atraem mais; títulos antigos conservam 25% de apelo nostálgico. Licenças permanentes.";
+    const visibleTitles=ERA_GAME_CATALOG.filter(title=>title.year<=1999||
+      (year>=2000&&multiplayerGameKnown(game)));
+    summary.textContent=owned.length+" de "+visibleTitles.length+" títulos licenciados · bônus atual de procura: +"+(Math.round((eraGameVisitorMultiplier(game)-1)*10000)/100).toLocaleString("pt-BR")+"%. Novidades atraem mais; títulos antigos conservam 25% de apelo nostálgico. Licenças permanentes.";
     nextEraGames.append(summary);
     for(const releaseYear of [1998,1999,...(year>=2000&&multiplayerGameKnown(game)?[2000]:[])]){
       const section=document.createElement("section");section.className="era-game-section";
