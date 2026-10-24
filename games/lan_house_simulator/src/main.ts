@@ -716,8 +716,8 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  }
  // O zoom CSS do visor reduz a área tocável real. Usar um raio em
  // pixels de tela para que os encaixes sejam selecionáveis no celular.
- const rect=canvas.getBoundingClientRect();
- const cssPixels=canvas.width/Math.max(1,rect.width);
+ const rect=canvas!.getBoundingClientRect();
+ const cssPixels=canvas!.width/Math.max(1,rect.width);
  const coarse=window.matchMedia("(pointer:coarse)").matches;
  return distance<=Math.max((coarse?48:23)*cssPixels,38*camera.zoom)?nearest:null;
 }
