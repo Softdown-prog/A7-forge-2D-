@@ -59,7 +59,11 @@ export function tryServe(s: GameState, c: Customer): void {
   const remaining=SESSION_FINISH_MINUTE-localMinute(s);
   if(remaining<30||localMinute(s)>=CLOSING_START_MINUTE){sendHome(s,c);return;}
   if(c.multiplayerVisitId!==undefined&&waitForMultiplayerFriends(s,c))return;
-  const wanted=preferredSessionLength(c,c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2));
+  // Todos os amigos compram o MESMO tempo de partida, negociado antes
+  // da primeira cobrança. Clientes normais conservam a escolha individual.
+  const group=s.multiplayerVisit?.id===c.multiplayerVisitId?s.multiplayerVisit:undefined;
+  const wanted=group?.sessionMinutes??preferredSessionLength(c,
+    c.sessionMinutes??chooseSessionMinutes(c,s.economyVersion===2));
   const pcCandidate=chooseAvailablePc(s,c);
   // O console pode atender inclusive um visitante que encontrou todos os
   // PCs ocupados. Só contratar quando houver CD, cadeira e trajeto livres.

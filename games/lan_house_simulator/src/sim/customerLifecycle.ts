@@ -16,6 +16,7 @@ import {setTravel,moveRoute} from "./customerMotion.js";
 import {navigableRoute} from "./navigation.js";
 import {startStanding,customerSays,sendHome,yieldDoorway,queueVisualEvent} from "./customerFlow.js";
 import {tryServe,resolvePurchase} from "./customerDecisions.js";
+import {startMultiplayerRound,multiplayerRoundActive} from "./multiplayerVisitors.js";
 
 export function advanceCustomer(s: GameState, c: Customer): void {
   switch (c.stage) {
@@ -33,13 +34,16 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       return;
     case "sitting":
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
+      // Sem esta barreira cada um iniciava um jogo individual ao sentar.
+      // startMultiplayerRound altera TODOS os integrantes no mesmo minuto.
+      if(startMultiplayerRound(s,c))return;
       if (c.poseMinutes >= 3) {
         c.stage = "using"; c.poseMinutes = 0;
         if(c.pcIndex!==null)s.keyboardEffects=queueVisualEvent(s.keyboardEffects,{customerId:c.id,pcIndex:c.pcIndex});
       }
       return;
     case "using":
-      if (c.ps1StationIndex===undefined&&!online(s)) {
+      if (c.ps1StationIndex===undefined&&!multiplayerRoundActive(s,c)&&!online(s)) {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;
