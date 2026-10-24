@@ -115,8 +115,8 @@ test("save e retomada não repetem cobrança nem virada de sábado",()=>{
  assert.equal(a.revenue,beforeRevenue);
  assert.equal(a.served,beforeServed);
  assert.equal(a.cash,beforeCash);
- stepGame(a,720);
- stepGame(b,720);
+ while(a.nightMeetup)stepGame(a,110);
+ while(b.nightMeetup)stepGame(b,110);
  assert.equal(a.nightMeetup,undefined);
  assert.equal(a.totalMinutes,b.totalMinutes);
  assert.equal(a.cash,b.cash);
