@@ -5,27 +5,33 @@
  */
 import type {GameState,Result} from "./types.js";
 import {addLog} from "./simulationState.js";
+import {scoreKnockoutMinute,validKnockoutBracket} from "./nightKnockout.js";
+import type {NightKnockoutBracket} from "./nightKnockout.js";
 
 export type NightTournamentScore={id:number;points:number;rounds:number};
 export type NightTournamentState={
  scores:NightTournamentScore[];
+ mode?:"league"|"knockout";bracket?:NightKnockoutBracket;
  settled?:boolean;winnerId?:number;prizePaid?:number;
 };
 export type NightTournamentResult={
  rankings:NightTournamentScore[];winnerId?:number;prizePaid:number;
+ mode?:"league"|"knockout";bracket?:NightKnockoutBracket;
 };
 const cents=(v:number)=>Math.round(v*100)/100;
 
-export function selectNightTournament(s:GameState,format:"free"|"tournament"):Result{
+export function selectNightTournament(s:GameState,format:"free"|"tournament"|"knockout"):Result{
  const d=s.fridayMeetupDraft;
  if(!d||d.status!=="draft"||s.nightMeetup)
   return {ok:false,message:"Escolha o formato antes de confirmar o encontro."};
- if(format!=="free"&&format!=="tournament")
+ if(format!=="free"&&format!=="tournament"&&format!=="knockout")
   return {ok:false,message:"Formato não reconhecido."};
  d.format=format;
  return {ok:true,message:format==="tournament"
-  ?"Torneio amistoso selecionado: classificação por rodadas de Setor Zero e prêmio limitado a 20% da receita das sessões, máximo R$ 40. Sem taxa adicional de inscrição."
-  :"Encontro livre selecionado: mesma madrugada, sem placar competitivo ou premiação."};
+  ?"Torneio por pontos: classificação por rodadas no PC, prêmio de até R$ 40 sem cobrança de inscrição."
+  :format==="knockout"
+  ?"Eliminatória selecionada: com 2 jogadores, final direta; com 3, classificatória e final com uma vaga automática. Pontos apenas enquanto os adversários estiverem nos PCs."
+  :"Encontro livre selecionado, sem classificação ou premiação."};
 }
 export function registerTournamentPlayer(s:GameState,id:number):void{
  const t=s.nightMeetup?.tournament;
@@ -40,6 +46,7 @@ export function scoreTournamentMinute(s:GameState):void{
  const n=s.nightMeetup,t=n?.tournament;
  if(!n||!t||t.settled||n.phase!=="playing"||n.elapsed>=540||
     n.elapsed%12!==0)return;
+ if(t.mode==="knockout"){scoreKnockoutMinute(s);return;}
  for(const row of t.scores){
   const c=s.customers.find(x=>x.id===row.id);
   if(!c||c.stage!=="using"||c.pcIndex===null||!n.pcIndexes.includes(c.pcIndex))
@@ -56,11 +63,14 @@ export function settleNightTournament(s:GameState):void{
  if(!n||!t||t.settled)return;
  t.settled=true;t.prizePaid=0;
  if(n.startedAt===undefined||t.scores.length!==n.seats||
-    t.scores.some(row=>row.rounds===0)){
+    t.scores.some(row=>row.rounds===0)||
+    (t.mode==="knockout"&&!t.bracket?.winnerId)){
   addLog(s,"Campeonato não concluído: sem vencedor ou prêmio, pois a rodada completa não aconteceu.");
   return;
  }
- const standings=tournamentStandings(t),winner=standings[0]!;
+ const standings=tournamentStandings(t),winner=t.mode==="knockout"
+  ?t.scores.find(row=>row.id===t.bracket?.winnerId)!
+  :standings[0]!;
  const desired=cents(Math.min(40,n.revenue*.2));
  const affordable=cents(Math.max(0,Math.min(s.cash,desired)));
  t.winnerId=winner.id;t.prizePaid=affordable;
@@ -76,7 +86,8 @@ export function settleNightTournament(s:GameState):void{
   ", "+winner.points+" pontos, prêmio de R$ "+affordable.toFixed(2)+".");
 }
 export function completedTournamentResult(t:NightTournamentState):NightTournamentResult{
- return {rankings:tournamentStandings(t),winnerId:t.winnerId,prizePaid:t.prizePaid??0};
+ return {rankings:tournamentStandings(t),winnerId:t.winnerId,prizePaid:t.prizePaid??0,
+  mode:t.mode,bracket:t.bracket?structuredClone(t.bracket):undefined};
 }
 const money=(v:unknown):v is number=>typeof v==="number"&&Number.isFinite(v)&&v>=0&&
  v<=1000000&&Math.abs(v*100-Math.round(v*100))<1e-4;
@@ -95,7 +106,9 @@ export function validTournamentState(t:NightTournamentState|undefined,
     (t.settled===true&&elapsed<540)||
     (t.settled!==true&&(t.winnerId!==undefined||t.prizePaid!==undefined))||
     (t.winnerId===undefined&&(t.prizePaid??0)>0)||
-    (t.winnerId!==undefined&&tournamentStandings(t)[0]?.id!==t.winnerId))return false;
+    (t.winnerId!==undefined&&(t.mode==="knockout"?t.bracket?.winnerId!==t.winnerId:
+      tournamentStandings(t)[0]?.id!==t.winnerId))||
+    !validKnockoutBracket(t,seats,t.bracket!==undefined,elapsed))return false;
  return true;
 }
 export function validTournamentResult(result:NightTournamentResult|undefined,seats:number):boolean{
@@ -106,6 +119,11 @@ export function validTournamentResult(result:NightTournamentResult|undefined,sea
     !money(result.prizePaid)||result.prizePaid>40||
     (result.winnerId!==undefined&&!result.rankings.some(x=>x.id===result.winnerId))||
     (result.winnerId===undefined&&result.prizePaid!==0)||
-    (result.winnerId!==undefined&&tournamentStandings({scores:result.rankings})[0]?.id!==result.winnerId))return false;
+    (result.winnerId!==undefined&&(result.mode==="knockout"?
+      result.bracket?.winnerId!==result.winnerId:
+      tournamentStandings({scores:result.rankings})[0]?.id!==result.winnerId))||
+    !validKnockoutBracket({scores:result.rankings,mode:result.mode,bracket:result.bracket,
+      settled:true,winnerId:result.winnerId,prizePaid:result.prizePaid},seats,
+      result.bracket!==undefined,540))return false;
  return true;
 }
