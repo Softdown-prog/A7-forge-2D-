@@ -72,8 +72,8 @@ for(const seed of [128,729]){
    checkStep(s,removed,minute);
    if(minute===675)resumed=parseImportedSave(serializeSave(s));
    else if(minute>675)stepGame(resumed,1);
-   if(minute>=690)assert.ok(s.customers.every(c=>c.stage==="leaving"),
-    "nenhum atendimento ativo depois das 21h30");
+   if(minute>=705)assert.ok(s.customers.every(c=>c.stage==="leaving"),
+    "até 21h45 todos devem estar em saída, mesmo no salão lotado");
   }
   assert.equal(removed.size,14,"14 clientes devem cruzar a porta antes de 22h");
   assert.equal(s.customers.length,0,"não reter NPCs nem filas");
