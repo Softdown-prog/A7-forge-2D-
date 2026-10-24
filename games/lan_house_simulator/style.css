@@ -1102,3 +1102,10 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  font-size:12px;overflow-wrap:anywhere}
 .night-trophy-champions li span{font-size:11px}
 @media(max-width:600px){.night-trophy-champions{grid-template-columns:1fr}}
+
+/* Confirmação curta do prêmio real pago pelo motor às 7h. */
+.night-prize-announcement{margin:0 0 8px;padding:7px 11px;
+ border-radius:9px;border:1px solid #b29459;background:#fff6da;color:#604919;
+ font:650 12px/1.45 system-ui,sans-serif;overflow-wrap:anywhere}
+.night-prize-announcement[hidden]{display:none}
+@media(max-width:650px){.night-prize-announcement{padding:6px 8px;font-size:11px}}

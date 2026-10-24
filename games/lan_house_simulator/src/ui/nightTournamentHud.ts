@@ -5,6 +5,7 @@
 import type {GameState} from "../sim/types.js";
 import {tournamentStandings} from "../sim/nightTournament.js";
 import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
+import {nightPrizePresentation,prizeAmountText} from "../render/nightPrizePresentation.js";
 export function installNightTournamentHud(){
  const viewport=document.getElementById("scene-viewport");
  const hud=document.createElement("details");
@@ -16,9 +17,19 @@ export function installNightTournamentHud(){
  const rows=document.createElement("ol");rows.className="night-tournament-standings";
  rows.setAttribute("aria-label","Placar de pontos de Setor Zero");
  hud.append(summary,matches,rows);
+ const prizeNotice=document.createElement("p");
+ prizeNotice.id="night-prize-announcement";prizeNotice.className="night-prize-announcement";
+ prizeNotice.setAttribute("role","status");prizeNotice.setAttribute("aria-live","polite");
+ prizeNotice.hidden=true;
  viewport?.parentElement?.insertBefore(hud,viewport);
+ hud.insertAdjacentElement("afterend",prizeNotice);
  return {
   render:(state:GameState)=>{
+   const payment=nightPrizePresentation(state);
+   prizeNotice.hidden=!payment;
+   const paymentLabel=payment?"🏆 7h · Prêmio pago ao jogador "+payment.winnerId+
+     ": "+prizeAmountText(payment.amount)+". Registrado no caixa.":"";
+   if(prizeNotice.textContent!==paymentLabel)prizeNotice.textContent=paymentLabel;
    const n=state.nightMeetup,t=n?.tournament;
    hud.hidden=!n||!t;
    if(!n||!t)return;
