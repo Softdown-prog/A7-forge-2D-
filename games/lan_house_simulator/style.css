@@ -1053,3 +1053,14 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 /* Uma linha de estado abaixo de cada opção de construção ou PC, sem novos painéis. */
 #shop .shop-card>.shop-purchase-status{display:block;color:#425d47;font:600 11px/1.5 system-ui,sans-serif;text-transform:none;letter-spacing:normal;overflow-wrap:anywhere;margin:0 0 3px}
 @media(max-width:700px){#shop .shop-card>.shop-purchase-status{font-size:11px;line-height:1.45}}
+
+/* Torneio de Setor Zero: só uma linha compacta sobre o Canvas; expandir é opcional. */
+.night-tournament-hud{display:block;max-width:100%;margin:3px 0 9px;
+ padding:6px 10px;border:1px solid #8caa97;border-radius:9px;
+ background:#ecf5ed;color:#204b32;font:600 12px/1.5 system-ui,sans-serif}
+.night-tournament-hud[hidden]{display:none}
+.night-tournament-hud>summary{cursor:pointer;list-style:revert;overflow-wrap:anywhere}
+.night-tournament-standings{margin:7px 0 2px;padding-left:22px;
+ font-size:12px;font-weight:400;line-height:1.6}
+@media(max-width:650px){.night-tournament-hud{font-size:11px;
+ margin:3px 0 5px;padding:5px 8px}.night-tournament-standings{font-size:11px}}

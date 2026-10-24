@@ -41,6 +41,7 @@ import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {shopPlacementStatus,shopPurchaseButtonText} from "./ui/shopGuidance.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
+import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
 import {renderCustomerFeedback} from "./ui/customerFeedbackPanel.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
@@ -601,6 +602,7 @@ maintenancePanel.addEventListener("click",event=>{
 });
 const shopPanels=shop?installShopPanels(shop,()=>renderUI()):null;
 const shopArtwork=new Map<string,string>();
+const nightTournamentHud=installNightTournamentHud();
 const fridayMeetupPanel=installFridayMeetupPanel(admin,()=>game,
  result=>{applyResult(game,result);renderUI();save();});
 const managementPanels=installManagementPanels(admin,()=>renderUI(),()=>yearFromMinutes(game.totalMinutes));
@@ -971,6 +973,7 @@ function refreshGpuDownloadMeters():void{
  }
 }
 function renderUI(liveOnly=false):void {
+  nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
    fridayMeetupPanel.render();
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
