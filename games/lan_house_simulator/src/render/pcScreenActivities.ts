@@ -1,7 +1,8 @@
 /** Microcenas para telas CRT/LCD dos computadores: nenhum asset, vídeo,
  * requisição de rede ou aleatoriedade por quadro. O visitante escolhe um
  * visual por sessão (ID do cliente + estação), com transição discreta. */
-export type PcScreenActivity="game"|"video"|"browser"|"chat"|"music"|"editor";
+import type {GameState} from "../sim/types.js";
+export type PcScreenActivity="game"|"video"|"browser"|"chat"|"music"|"editor"|"lan";
 export type PcScreenPixel=(x:number,y:number,w:number,h:number,color:string)=>void;
 const early:readonly PcScreenActivity[]=["game","browser","chat","editor","music"];
 const late:readonly PcScreenActivity[]=["game","video","browser","chat","music","editor"];
@@ -15,6 +16,17 @@ export function pcActivityForSession(customerId:number,pcIndex:number,year:numbe
  // multiplicação modular em 32 bits sem alterar o gerador RNG da simulação
  const hash=Math.imul(id+17,2654435761)^Math.imul(pc+11,1597334677);
  return pool[(hash>>>0)%pool.length]!;
+}
+/** Escolhe a atividade REAL da estação, não uma cena paralela de vídeo.
+ * Os PCs dos participantes mostram a mesma partida tática em rede local.
+ */
+export function pcActivityForStation(s:GameState,pc:number,year:number):PcScreenActivity|null{
+ const customer=s.customers.find(c=>c.pcIndex===pc&&c.stage==="using");
+ if(!customer)return null;
+ if(customer.multiplayerVisitId!==undefined&&
+    s.multiplayerVisit?.id===customer.multiplayerVisitId&&
+    s.multiplayerVisit.startedMinute!==undefined)return "lan";
+ return pcActivityForSession(customer.id,pc,year);
 }
 export function pcScreenFrame(seconds:number):number{
  return Math.floor(Math.max(0,Number.isFinite(seconds)?seconds:0)*2.5);
@@ -31,7 +43,29 @@ export function drawPcScreenActivity(
   if(x1>x0&&y1>y0)pixel(x0,y0,x1-x0,y1-y0,color);
  };
  const shift=(t%16)/16,beat=t%8;
- if(activity==="game"){
+ if(activity==="lan"){
+  // Setor Zero: microcena tática original e sincronizada entre monitores.
+  // É atividade visual de um mesmo jogo em rede, não um FPS independente.
+  r(0,0,1,1,"#152834");r(0,0,1,.16,"#254355");
+  r(.05,.045,.30,.055,"#a3d6d5");r(.67,.045,.26,.055,"#d7bd89");
+  r(.04,.21,.92,.69,"#344f56");
+  // Grade do mapa vista de cima, com corredores, obstáculos e caixas.
+  for(let i=0;i<5;i++)r(.10+i*.18,.21,.012,.65,"#405f63");
+  for(let i=0;i<4;i++)r(.05,.28+i*.18,.88,.012,"#405f63");
+  r(.17,.32,.22,.14,"#8b816e");r(.62,.59,.22,.13,"#827d6b");
+  r(.44,.29,.11,.20,"#737d79");r(.45,.68,.10,.15,"#797a69");
+  // Duas equipes que avançam e trocam posições no MESMO mapa.
+  const mx=Math.sin(t*.24)*.13,my=Math.cos(t*.18)*.09;
+  r(.25+mx,.52+my,.085,.11,"#7fd0c5");
+  r(.273+mx,.54+my,.035,.044,"#d9f3db");
+  r(.70-mx,.42-my,.085,.11,"#e4a279");
+  r(.722-mx,.44-my,.035,.044,"#f5d6aa");
+  // Tiros curtos e indicador de placar: nunca desenhar fora da tela.
+  if(t%8<4)r(.37+mx,.55+my,.18,.018,"#e7d58b");
+  else r(.57-mx,.48-my,.12,.018,"#e7a88d");
+  r(.05,.93,.36,.035,"#6aaeb9");r(.59,.93,.36,.035,"#bf866f");
+  r(.44,.93,.12,.034,"#f5ead0");
+ }else if(activity==="game"){
   // Jogo de plataforma: nuvens, obstáculos e protagonista pulando.
   r(0,0,1,1,"#163451");r(0,.12,1,.62,"#316d93");
   r(.04,.16,.21,.045,"#d2ecf0");r(.70,.23,.24,.045,"#e4ecda");

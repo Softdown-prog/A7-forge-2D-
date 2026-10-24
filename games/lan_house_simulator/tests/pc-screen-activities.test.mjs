@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {pcActivityForSession,pcScreenFrame,drawPcScreenActivity} from "../dist/js/render/pcScreenActivities.js";
+import {pcActivityForSession,pcActivityForStation,pcScreenFrame,drawPcScreenActivity} from "../dist/js/render/pcScreenActivities.js";
 import {createGame} from "../dist/js/sim/engine.js";
 import {serializeSave} from "../dist/js/sim/saveTransfer.js";
 const kinds=["game","video","browser","chat","music","editor"];
@@ -32,7 +32,7 @@ test("2.5Hz discretization ensures time stability and no per-frame redraw",()=>{
  assert.equal(pcScreenFrame(Number.NaN),0);
 });
 test("every 2D activity uses bounded rectangles and visibly animates",()=>{
- for(const kind of kinds){
+ for(const kind of [...kinds,"lan"]){
   const sample=frame=>{
    const rectangles=[];
    drawPcScreenActivity((x,y,w,h,color)=>{
@@ -48,4 +48,21 @@ test("every 2D activity uses bounded rectangles and visibly animates",()=>{
   const frames=[0,4,8,12,15].map(sample);
   assert.ok(new Set(frames).size>1,"no screen movement: "+kind);
  }
+});
+
+test("telas do salão mostram Setor Zero somente quando a rodada conjunta começou",()=>{
+ const s=createGame(71,"historical");
+ const c={id:12,pcIndex:0,stage:"using",multiplayerVisitId:12};
+ s.customers=[c];
+ assert.equal(pcActivityForStation(s,0,2000),pcActivityForSession(12,0,2000));
+ s.multiplayerVisit={id:12,size:2,memberIds:[12,13],createdMinute:1,paid:true};
+ assert.equal(pcActivityForStation(s,0,2000),pcActivityForSession(12,0,2000),
+  "o primeiro jogador não vê uma partida que ainda não começou");
+ s.multiplayerVisit.startedMinute=2;
+ assert.equal(pcActivityForStation(s,0,2000),"lan");
+ s.customers.push({...c,id:13,pcIndex:1});
+ assert.equal(pcActivityForStation(s,1,2000),"lan");
+ assert.equal(pcActivityForStation(s,2,2000),null);
+ s.multiplayerVisit=undefined;
+ assert.equal(pcActivityForStation(s,0,2000),pcActivityForSession(12,0,2000));
 });

@@ -6,7 +6,7 @@ import {installedGpu} from "../sim/gpu.js";
 import {installedLcd,type LcdId} from "../sim/computerModels.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import {drawPcScreenActivity,pcActivityForSession,pcScreenFrame,type PcScreenActivity} from "./pcScreenActivities.js";
+import {drawPcScreenActivity,pcActivityForStation,pcScreenFrame,type PcScreenActivity} from "./pcScreenActivities.js";
 
 type ComputerMode="ready"|"busy"|"offline"|"maintenance"|"powered-off";
 interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number;activity:PcScreenActivity|null;activityFrame:number}
@@ -386,14 +386,16 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  const rawTier=s.pcTiers?.[index]??1;
  const tier=Number.isInteger(rawTier)?Math.max(1,Math.min(3,rawTier)):1;
  const occupied=s.customers.some(c=>c.pcIndex===index&&["sitting","using","standing"].includes(c.stage));
- const mode:ComputerMode=!stationPoweredOn(s,index)?"powered-off":pcBroken(s,index)?"maintenance":!isOnline?"offline":occupied?"busy":"ready";
+ const candidate=pcActivityForStation(s,index,yearFromMinutes(s.totalMinutes));
+ // Partida LAN local continua visível mesmo quando cai a internet externa.
+ const mode:ComputerMode=!stationPoweredOn(s,index)?"powered-off":pcBroken(s,index)?"maintenance":
+  !isOnline&&candidate!=="lan"?"offline":occupied?"busy":"ready";
  const premiumChair=cosmeticAvailable("chair-gamer-neon",yearFromMinutes(s.totalMinutes));
  const premiumKeyboard=cosmeticAvailable("keyboard-rainbow-rgb",yearFromMinutes(s.totalMinutes));
  const keyboardPhase=premiumKeyboard?Math.floor(t*3+index)%8:0;
  // O visitante define o conteúdo, jamais o quadro: alternar de atividade
  // só ocorre entre sessões. Nenhuma alteração do RNG ou do save.
- const visitor=mode==="busy"?s.customers.find(c=>c.pcIndex===index&&c.stage==="using"):undefined;
- const activity=visitor?pcActivityForSession(visitor.id,index,yearFromMinutes(s.totalMinutes)):null;
+ const activity=mode==="busy"?candidate:null;
  const activityFrame=activity?pcScreenFrame(t):0;
  const appearance:ComputerAppearance={tier,occupied,mode,
   pulse:mode==="busy"||premiumChair?Math.floor(t*1.7+index)%2:0,
