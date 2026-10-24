@@ -320,11 +320,15 @@ try{
   // Aguardar um horário com estações disponíveis, nunca cancelar suas sessões
   // nem adulterar a ocupação para encaixar uma sexta de teste.
   let quietMinutes=0;
-  while(!firstFridayEligibility(state).ready&&quietMinutes++<720)
+  let eligibility=firstFridayEligibility(state);
+  while((!eligibility.ready||eligibility.pcs.length<seats)&&quietMinutes++<720){
    stepGame(state,1);
-  if(!firstFridayEligibility(state).ready)
+   eligibility=firstFridayEligibility(state);
+  }
+  if(!eligibility.ready||eligibility.pcs.length<seats)
    throw Error("PCs indisponíveis mesmo após manutenção e expediente: "+
-     JSON.stringify({reasons:firstFridayEligibility(state).reasons,
+     JSON.stringify({requestedSeats:seats,eligiblePcs:eligibility.pcs,
+      reasons:eligibility.reasons,
       pcWear:state.pcWear,poweredOff:state.pcPoweredOff,
       repairJobs:state.repairJobs,customers:state.customers.map(c=>({
        id:c.id,stage:c.stage,pc:c.pcIndex
