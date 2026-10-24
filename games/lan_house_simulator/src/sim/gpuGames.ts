@@ -2,7 +2,7 @@ import type {GameState,Result} from "./types.js";
 import {GPU_CATALOG,installedGpu,type GpuId} from "./gpu.js";
 import {WINDOWS_ERAS,installedWindows} from "./era.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
-import {stationPowerCount,stationPoweredOn,stationHasCustomer} from "./stationPower.js";
+import {stationPowerCount,stationPoweredOn,stationHasCustomer,stationReadyForSessions} from "./stationPower.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
 
 /** Títulos fictícios, independentes do catálogo básico R$ 450.
@@ -216,7 +216,7 @@ export function gpuGameAttraction(s:GameState,id:GpuGameId):number{
  const title=gpuGameSpec(id),year=yearFromMinutes(s.totalMinutes);
  if(!title||year<title.year)return 0;
  if(!gpuGameEligiblePcs(s,title).some(i=>
-   stationPoweredOn(s,i)&&gpuGamePlayableOnPc(s,i,id)))return 0;
+   stationReadyForSessions(s,i)&&gpuGamePlayableOnPc(s,i,id)))return 0;
  return .025*gamePopularityWeight(title.year,year);
 }
 /** Até +7,5% para três títulos recentes, com desgaste natural até a nostalgia.

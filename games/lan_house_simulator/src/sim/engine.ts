@@ -24,7 +24,7 @@ import {recordComputerUtilization,closeFinancialMonth} from "./financialReview.j
 import {recordStationMinute,validStationLedger} from "./stationAccounting.js";
 import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
-import {stationPoweredOn,validStationPower} from "./stationPower.js";
+import {stationReadyForSessions,validStationPower} from "./stationPower.js";
 import {WINDOWS_ERAS} from "./era.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps1StationAvailable,ps1EnergyCostPerMinute,ps1HourPrice,validPs1State} from "./ps1.js";
@@ -71,7 +71,7 @@ function nextDay(s: GameState): void {
 export function visitorArrivalChance(s:GameState,occupied:number):number {
   // Não bloquear o público de console quando todos os PCs estão apagados.
   // O serviço PS1 não depende da internet e só admite clientes se há cadeira livre.
-  const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).filter(i=>stationPoweredOn(s,i)).length;
+  const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).filter(i=>stationReadyForSessions(s,i)).length;
   const consoleCapacity=(s.ps1Stations??[]).filter((_,i)=>ps1StationAvailable(s,i)).length;
   if(!poweredPcs&&!consoleCapacity)return 0;
   if(localMinute(s)>=LAST_ADMISSION_MINUTE||

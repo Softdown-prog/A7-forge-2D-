@@ -9,7 +9,7 @@ import {ERA_GAME_CATALOG,licenseEraGame,eraGameVisitorMultiplier} from "../dist/
 import {GAME_POPULARITY_NOSTALGIA_FLOOR,gamePopularityWeight,gamePopularityPercent} from "../dist/js/sim/gamePopularity.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {toggleStationPower} from "../dist/js/sim/stationPower.js";
+import {toggleStationPower,stationReadyForSessions} from "../dist/js/sim/stationPower.js";
 import {licenseGpuGame,gpuGameAttraction,gpuGameVisitorMultiplier,toggleGpuGameInstallation,tickGpuGameInstallations} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {withStationOff} from "./station-power-fixture.mjs";
@@ -107,4 +107,72 @@ test("UI mostra popularidade atual, nostalgia, bônus e disponibilidade física"
  assert.ok(ts.includes('popularidade em '));
  assert.ok(html.includes('As licenças não vencem'));
  assert.ok(html.includes('PCs compatíveis ligados'));
+});
+
+
+test("PCs quebrados, interditados e desligados nao criam capacidade fantasma",()=>{
+ const s=createGame(1901,"historical");
+ const original=visitorArrivalChance(s,0);
+ assert.ok(original>0);
+ const accounting={cash:s.cash,expenses:s.expenses,revenue:s.revenue,rng:s.rng};
+ s.pcWear=[100,100,100];
+ assert.equal(visitorArrivalChance(s,0),0);
+ assert.equal(stationReadyForSessions(s,0),false);
+ s.pcWear[0]=80;
+ near(visitorArrivalChance(s,0),original);
+ s.repairJobs=[{pc:0,x:2.2,y:1.1,phase:"working",progress:1,duration:24}];
+ assert.equal(stationReadyForSessions(s,0),false);
+ assert.equal(visitorArrivalChance(s,0),0);
+ s.repairJobs=[];
+ ok(toggleStationPower(s,0));
+ assert.equal(visitorArrivalChance(s,0),0);
+ ok(toggleStationPower(s,0));
+ near(visitorArrivalChance(s,0),original);
+ assert.deepEqual({cash:s.cash,expenses:s.expenses,revenue:s.revenue,rng:s.rng},accounting);
+ assert.ok(isValidSave(s));
+});
+
+test("licencas classicas nao anunciam jogo se o unico Windows licenciado esta fora de servico",()=>{
+ const s=createGame(991,"historical");s.cash=5000;
+ ok(licenseGames(s));ok(withStationOff(s,1,()=>licenseWindows(s,1,"win98")));
+ ok(licenseEraGame(s,"turbo-98"));
+ near(eraGameVisitorMultiplier(s),1.015);
+ const chance=visitorArrivalChance(s,0),rng=s.rng,revenue=s.revenue;
+ ok(toggleStationPower(s,1));
+ assert.equal(eraGameVisitorMultiplier(s),1);
+ assert.ok(visitorArrivalChance(s,0)<chance,"restam PCs sem jogo, mas nao o bonus anunciado");
+ ok(toggleStationPower(s,1));
+ s.pcWear=[0,100,0];
+ assert.equal(eraGameVisitorMultiplier(s),1);
+ s.pcWear[1]=0;
+ near(eraGameVisitorMultiplier(s),1.015);
+ assert.equal(s.rng,rng);assert.equal(s.revenue,revenue);
+ assert.deepEqual(s.licensedEraGames,["turbo-98"]);
+ assert.ok(isValidSave(s));
+ near(eraGameVisitorMultiplier(parseImportedSave(serializeSave(s))),1.015);
+});
+
+test("jogo GPU sem PC operacional perde apelo temporariamente, sem perder licenca",()=>{
+ const s=createGame(901,"historical");setYear(s,2005);s.cash=50000;
+ ok(licenseGames(s));
+ ok(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")));
+ ok(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")));
+ ok(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")));
+ ok(licenseGpuGame(s,"neon-rush"));
+ near(gpuGameAttraction(s,"neon-rush"),.025);
+ s.pcWear[1]=100;
+ assert.equal(gpuGameAttraction(s,"neon-rush"),0);
+ s.pcWear[1]=0;
+ s.repairJobs=[{pc:1,x:3.65,y:1.1,phase:"working",progress:1,duration:24}];
+ assert.equal(gpuGameAttraction(s,"neon-rush"),0);
+ s.repairJobs=[];
+ ok(toggleGpuGameInstallation(s,1,"neon-rush")); // remove
+ ok(toggleGpuGameInstallation(s,1,"neon-rush")); // inicia download
+ assert.equal(stationReadyForSessions(s,1),false);
+ assert.equal(gpuGameAttraction(s,"neon-rush"),0);
+ for(let t=0;t<40&&s.gpuGameInstallJobs?.length;t++)tickGpuGameInstallations(s);
+ near(gpuGameAttraction(s,"neon-rush"),.025);
+ assert.deepEqual(s.licensedGpuGames,["neon-rush"]);
+ assert.ok(isValidSave(s));
+ near(gpuGameAttraction(parseImportedSave(serializeSave(s)),"neon-rush"),.025);
 });

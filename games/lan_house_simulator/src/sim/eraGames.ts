@@ -1,6 +1,7 @@
 import type {GameState,Result} from "./types.js";
 import {gameYear,installedWindows,WINDOWS_ERAS} from "./era.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
+import {stationReadyForSessions,stationPowerCount} from "./stationPower.js";
 
 /** Dez jogos fictícios com contratos individuais. Valores são de game design. */
 export const ERA_GAME_CATALOG=[
@@ -62,7 +63,8 @@ export function validEraGameLicenses(value:unknown,s:Partial<GameState>):boolean
  * Bônus significa chance maior de chegada REAL, não venda fictícia.
  */
 export function eraGameVisitorMultiplier(s:GameState):number{
- if(!s.licensedGames||!s.pcWindowsLicenses?.some(Boolean))return 1;
+ if(!s.licensedGames||!s.pcWindowsLicenses?.some((licensed,i)=>
+  licensed&&i<stationPowerCount(s)&&stationReadyForSessions(s,i)))return 1;
  const year=gameYear(s);
  const appeal=(s.licensedEraGames??[]).reduce((total,id)=>{
   const title=eraGameSpec(id);

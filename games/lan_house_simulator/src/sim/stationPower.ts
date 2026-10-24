@@ -5,6 +5,18 @@ export function validStationPower(s:Partial<GameState>):boolean{
  return s.pcPoweredOff===undefined||(Array.isArray(s.pcPoweredOff)&&s.pcPoweredOff.length<=200&&
   Array.from({length:s.pcPoweredOff.length},(_,i)=>typeof s.pcPoweredOff?.[i]==="boolean").every(Boolean));
 }
+/** Prontidão comercial: não anuncia estações desligadas, quebradas,
+ * interditadas por técnico ou temporariamente ocupadas por download.
+ * A reserva de cliente e o trajeto físico continuam sendo validados
+ * separadamente na escolha do PC; assim filas não somem artificialmente.
+ */
+export function stationReadyForSessions(s:GameState,index:number):boolean{
+ if(!Number.isInteger(index)||index<0||index>=stationPowerCount(s)||!stationPoweredOn(s,index))return false;
+ if((s.pcWear?.[index]??0)>=100)return false;
+ if(s.repairJobs?.some(job=>job.pc===index&&job.phase!=="leaving"))return false;
+ if(s.gpuGameInstallJobs?.some(job=>job.pc===index))return false;
+ return true;
+}
 export function stationPowerCount(s:GameState):number{
  return Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
 }

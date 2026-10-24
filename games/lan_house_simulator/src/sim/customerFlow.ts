@@ -7,9 +7,9 @@ import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {roomBounds} from "./room.js";
 import {shouldShowCustomerSpeech,SPEECH_COOLDOWN_MINUTES} from "./customerDialogue.js";
 import {crowdRoute} from "./crowdNavigation.js";
-import {stationPoweredOn} from "./stationPower.js";
-import {gpuGameInstallJob,gpuGamePlayableOnPc,gpuGameHourlyRate,preferredGpuGame} from "./gpuGames.js";
-import {pcCount,pcBroken,entrance,pcPosition} from "./simulationState.js";
+import {stationReadyForSessions} from "./stationPower.js";
+import {gpuGamePlayableOnPc,gpuGameHourlyRate,preferredGpuGame} from "./gpuGames.js";
+import {pcCount,entrance,pcPosition} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
 
 export function startStanding(c: Customer, wantsSnack: boolean): void {
@@ -36,7 +36,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  // não possuem preferência mantêm a lógica anterior de prioridade premium.
  if(c.gpuGamer){
   for(let i=0;i<pcCount(s);i++){
-   if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameInstallJob(s,i))continue;
+   if(isReserved(s,i)||!stationReadyForSessions(s,i))continue;
    const playable=c.preferredGpuGame
     ?gpuGamePlayableOnPc(s,i,c.preferredGpuGame)
     :gpuGameHourlyRate(s,i)>s.pricePerHour;
@@ -44,7 +44,7 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
   }
  }
  for(let i=0;i<pcCount(s);i++){
-  if(isReserved(s,i)||pcBroken(s,i)||!stationPoweredOn(s,i)||gpuGameInstallJob(s,i))continue;
+  if(isReserved(s,i)||!stationReadyForSessions(s,i))continue;
   const destination=computerSeat(pcPosition(i,s));
   const route=navigableRoute(s,origin,destination);
   if(!route)continue;
