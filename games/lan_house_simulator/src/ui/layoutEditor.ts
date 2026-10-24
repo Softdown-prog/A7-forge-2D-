@@ -40,17 +40,21 @@ export function createLayoutEditor(canvas:HTMLCanvasElement,getState:()=>GameSta
   if(message)message.textContent=result.message;
  });
  confirm?.addEventListener("click",()=>{if(!draft||!selected)return;const result=moveLayoutObject(getState(),selected,draft,draft.rotation);if(message)message.textContent=result.message;if(result.ok){draft=null;selected=null;onChange();update();if(message)message.textContent=result.message;}});
- canvas.addEventListener("click",e=>{
-  if(!active)return;e.preventDefault();e.stopImmediatePropagation();
-  if(removalPending)return;
-  const rect=canvas.getBoundingClientRect(),x=(e.clientX-rect.left)/rect.width*canvas.width,y=(e.clientY-rect.top)/rect.height*canvas.height,s=getState(),cam=cameraForGame(s);
+ // No celular, o navegador pode consumir o click sintético ao reconhecer
+ // rolagem. Tratar pointerup como toque intencional, sem interceptar arrastos.
+ const onCanvasTap=(clientX:number,clientY:number)=>{
+  if(!active||removalPending)return;
+  const rect=canvas.getBoundingClientRect(),x=(clientX-rect.left)/rect.width*canvas.width,
+   y=(clientY-rect.top)/rect.height*canvas.height,s=getState(),cam=cameraForGame(s);
+  const touch=window.matchMedia("(pointer:coarse)").matches;
+  const pixelRatio=canvas.width/Math.max(1,rect.width);
   if(!draft){let best:string|null=null,score=Infinity;
    if(!partitionsOnly)for(const o of editableObjects(s)){const p=iso({x:o.x+o.w/2,y:o.y+o.d/2},cam,o.surface==="wall"?135:o.kind==="pc"?50:o.kind==="counter"?45:o.kind==="soda"||o.kind==="candy"||o.kind==="shelf"?50:20),d=Math.hypot(x-p.x,y-p.y);if(d<score){best=o.id;score=d;}}
    for(const wall of removablePartitions(s))for(const height of [0,38,76]){
     const [a,b]=wallEndpoints(wall),pa=iso(a,cam,height),pb=iso(b,cam,height),dx=pb.x-pa.x,dy=pb.y-pa.y,t=Math.max(0,Math.min(1,((x-pa.x)*dx+(y-pa.y)*dy)/Math.max(1,dx*dx+dy*dy))),distance=Math.hypot(x-pa.x-t*dx,y-pa.y-t*dy);
     if(distance<score&&distance<22*canvas.width/rect.width){best=wall.id;score=distance;}
    }
-   if(best&&score<32*canvas.width/rect.width)choose(best);return;
+   if(best&&score<(touch?54:32)*pixelRatio)choose(best);return;
   }
   const u=(x-cam.originX)/(64*cam.zoom),v=(y-cam.originY)/(32*cam.zoom),world={x:(u+v)/2,y:(v-u)/2};
   if(draft.id.startsWith("decor:")){
@@ -64,6 +68,42 @@ export function createLayoutEditor(canvas:HTMLCanvasElement,getState:()=>GameSta
    draft={...draft,...closest};
   }else draft={...draft,x:Math.round((world.x-draft.w/2)*4)/4,y:Math.round((world.y-draft.d/2)*4)/4};
   update();
+ };
+ let touchStart:{id:number;x:number;y:number;left:number;top:number}|null=null;
+ let lastTouch=0;
+ const viewport=canvas.closest<HTMLElement>("#scene-viewport");
+ canvas.addEventListener("pointerdown",e=>{
+  if(!active||e.pointerType==="mouse")return;
+  touchStart={id:e.pointerId,x:e.clientX,y:e.clientY,
+   left:viewport?.scrollLeft??0,top:viewport?.scrollTop??0};
  },{capture:true});
- return {get active(){return active;},get selected(){return selected;},get draft(){return draft;},get wall(){return partition();},open(onlyPartitions=false){onOpen();active=true;selected=null;draft=null;removalPending=false;partitionsOnly=onlyPartitions;update();panel?.scrollIntoView({block:"nearest",behavior:"instant"});select?.focus({preventScroll:true});},close};
+ canvas.addEventListener("pointercancel",()=>{touchStart=null;},{capture:true});
+ canvas.addEventListener("pointerup",e=>{
+  if(!active||e.pointerType==="mouse"||!touchStart||touchStart.id!==e.pointerId)return;
+  const start=touchStart;touchStart=null;
+  if(Math.hypot(e.clientX-start.x,e.clientY-start.y)>10||
+    Math.abs((viewport?.scrollLeft??0)-start.left)>3||
+    Math.abs((viewport?.scrollTop??0)-start.top)>3)return;
+  lastTouch=performance.now();
+  e.preventDefault();e.stopImmediatePropagation();
+  onCanvasTap(e.clientX,e.clientY);
+ },{capture:true});
+ canvas.addEventListener("click",e=>{
+  if(!active)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  // Touch já tratado em pointerup; o click de compatibilidade não pode
+  // selecionar novamente nem mover duas vezes o mesmo objeto.
+  if(performance.now()-lastTouch<650)return;
+  onCanvasTap(e.clientX,e.clientY);
+ },{capture:true});
+ return {get active(){return active;},get selected(){return selected;},get draft(){return draft;},get wall(){return partition();},open(onlyPartitions=false){
+  onOpen();active=true;selected=null;draft=null;removalPending=false;
+  partitionsOnly=onlyPartitions;update();
+  // No celular manter o salão visível: rolar até o painel fazia o mapa
+  // sumir da tela e focar no select acionava a interface nativa do Android.
+  if(!window.matchMedia("(pointer:coarse)").matches){
+   panel?.scrollIntoView({block:"nearest",behavior:"instant"});
+   select?.focus({preventScroll:true});
+  }
+ },close};
 }

@@ -714,7 +714,12 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
   const dist=Math.hypot(x-at.x,y-at.y);
   if(dist<distance){distance=dist;nearest=slot;}
  }
- return distance<=Math.max(23,38*camera.zoom)?nearest:null;
+ // O zoom CSS do visor reduz a área tocável real. Usar um raio em
+ // pixels de tela para que os encaixes sejam selecionáveis no celular.
+ const rect=canvas.getBoundingClientRect();
+ const cssPixels=canvas.width/Math.max(1,rect.width);
+ const coarse=window.matchMedia("(pointer:coarse)").matches;
+ return distance<=Math.max((coarse?48:23)*cssPixels,38*camera.zoom)?nearest:null;
 }
 canvas.addEventListener("pointermove",e=>{
  if(!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)return;
