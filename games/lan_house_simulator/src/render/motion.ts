@@ -1,6 +1,6 @@
 import type {Customer,GameState,Point} from "../sim/types.js";
 import type {RepairJob,CleaningJob} from "../sim/services.js";
-import {canTraverseLocalStep} from "../sim/navigation.js";
+import {canTraverseLocalStep,localStepValidator} from "../sim/navigation.js";
 import {directionFromDelta,screenViewForMotion,type ActorScreenView} from "./direction.js";
 import {entrance} from "../sim/engine.js";
 
@@ -53,14 +53,16 @@ export class SceneMotion {
     moving:travel>.0001&&phase!=="working"}} as unknown as T&{renderMotion:RenderMotion};
  }
  capture(s:GameState):void{
+  // A malha e as portas não mudam durante a captura: calcular uma vez
+  // para todos os clientes, mesmo em salões cheios e divididos.
+  const entry=entrance(s),traverse=localStepValidator(s);
   const strides=new Map<number,{distance:number;view:ActorScreenView}>();
   for(const c of s.customers){
-   const entry=entrance(s);
    const prev=this.customers.get(c.id)??(this.captured&&c.stage==="arriving"&&
     Math.hypot(c.x-entry.x,c.y-entry.y)<=.8?{...c,...entry}:undefined);
    const old=this.strides.get(c.id);
    const dx=prev?c.x-prev.x:0,dy=prev?c.y-prev.y:0;
-   const continuous=!!prev&&Math.hypot(dx,dy)<=.8&&canTraverseLocalStep(s,prev,c);
+   const continuous=!!prev&&Math.hypot(dx,dy)<=.8&&traverse(prev,c);
    const distance=continuous?groundDistance(dx,dy):0;
    strides.set(c.id,{distance:(old?.distance??0)+distance,
     view:distance>.0001?screenViewForMotion(dx,dy):old?.view??screenViewForMotion(0,0,c.facing)});
@@ -89,8 +91,10 @@ export class SceneMotion {
  }
  sample(s:GameState,fraction=s.leftoverMinutes):GameState{
   const alpha=Math.max(0,Math.min(1,fraction));
+  // Uma apresentação visual percorre todos os clientes com as mesmas
+  // divisórias. Não refazer roomBounds/portas para cada corpo a cada frame.
+  const entry=entrance(s),traverse=localStepValidator(s);
   return {...s,customers:s.customers.map(c=>{
-   const entry=entrance(s);
    const prev=this.customers.get(c.id)??(this.captured&&c.stage==="arriving"&&
     Math.hypot(c.x-entry.x,c.y-entry.y)<=.8?{...c,...entry}:undefined);
    const stride=this.strides.get(c.id)??{distance:0,view:screenViewForMotion(0,0,c.facing)};
@@ -99,7 +103,7 @@ export class SceneMotion {
    const stage=changed&&alpha<1?prev.stage:c.stage;
    const endPose=changed&&(prev.stage==="sitting"||prev.stage==="standing")?3:(c.poseMinutes??0);
    const dx=c.x-prev.x,dy=c.y-prev.y;
-   const travel=Math.hypot(dx,dy)<=.8&&canTraverseLocalStep(s,prev,c)?groundDistance(dx,dy):0;
+   const travel=Math.hypot(dx,dy)<=.8&&traverse(prev,c)?groundDistance(dx,dy):0;
    const at=travel?{x:lerp(prev.x,c.x,alpha),y:lerp(prev.y,c.y,alpha)}:{x:c.x,y:c.y};
    const renderMotion={distance:stride.distance+travel*alpha,
     view:travel>.0001?screenViewForMotion(dx,dy):stride.view,moving:travel>.0001};

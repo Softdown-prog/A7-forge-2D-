@@ -74,3 +74,20 @@ test("o movimento interpolado conserva a orientação do trecho atual, mesmo com
  assert.equal(frame.customers[0].facing,"east");
  assert.equal(frame.customers[0].target.y,3);
 });
+
+test("interpolacao visual enxerga porta aberta ou fechada sem reutilizar paredes antigas",()=>{
+ const s=createGame(913),motion=new SceneMotion();
+ s.customers=[{...visitor(),x:2.9,y:3.4,target:{x:3.3,y:3.4}}];
+ motion.capture(s);
+ s.customers[0].x=3.3;
+ s.interiorWalls=[{axis:"y",x:3,y:3}];
+ assert.equal(motion.sample(s,.5).customers[0].x,3.3,
+  "parede fechada impede interpolacao pelo obstaculo");
+ s.interiorDoors=[{axis:"y",x:3,y:3}];
+ assert.ok(Math.abs(motion.sample(s,.5).customers[0].x-3.1)<1e-9,
+  "porta aberta permite interpolacao no mesmo frame");
+ s.interiorDoors=[];
+ assert.equal(motion.sample(s,.5).customers[0].x,3.3);
+ s.interiorWalls=[];
+ assert.ok(Math.abs(motion.sample(s,.5).customers[0].x-3.1)<1e-9);
+});
