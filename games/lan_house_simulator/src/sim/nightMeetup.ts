@@ -265,7 +265,7 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
    new Set(n.paidIds).size!==n.paidIds.length||
    n.paidIds.some(id=>!n.memberIds.includes(id))||
    ![n.revenue,n.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)||
-   !validTournamentState(n.tournament,n.memberIds,n.paidIds,n.seats)||
+   !validTournamentState(n.tournament,n.memberIds,n.paidIds,n.seats,n.elapsed)||
    (n.startedAt!==undefined&&(!Number.isInteger(n.startedAt)||n.startedAt<60||
      n.startedAt>n.elapsed)))return false;
  return n.memberIds.every(id=>Number.isInteger(id)&&id>0&&id<(s.nextCustomerId??0))&&
