@@ -6,7 +6,7 @@ import {campaignDate,weekdayIndex,weekdayName} from "./campaignWeek.js";
 export const NIGHT_START_CIVIL_MINUTE=22*60;
 export const NIGHT_FIRST_ARRIVAL_OFFSET=60; // 23:00 de sexta (referência de design)
 export const NIGHT_MORNING_EXIT_OFFSET=540; // 07:00 de sábado (referência de design)
-export const NIGHT_MAX_EXIT_OFFSET=600; // 08:00, margem apenas para dispersão
+export const NIGHT_MAX_EXIT_OFFSET=720; // 10:00, reabertura normal no sábado
 
 export function futureNightClock(fridayDay:number,elapsed:number){
  if(!Number.isInteger(fridayDay)||fridayDay<1||weekdayIndex(fridayDay)!==4)

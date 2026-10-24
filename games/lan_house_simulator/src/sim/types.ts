@@ -60,6 +60,8 @@ export interface Customer {
   gpuGameCharged?: boolean;
   /** Identifica uma turma de amigos em rede; compatível com saves antigos. */
   multiplayerVisitId?: number;
+  /** Participante do corujão real: ID do dia de sexta, separado da visita diurna. */
+  nightMeetupDay?: number;
   /** Estação prometida enquanto este amigo espera no caixa. */
   multiplayerAssignedPc?: number;
   /** Estação PS1 reservada ao pagar; independente do PC e da internet. */
@@ -214,7 +216,14 @@ export interface GameState {
   /** Número de rodadas de rede iniciadas com clientes reais, opcional em saves antigos. */
   multiplayerRoundsPlayed?: number;
   /** Somente um RASCUNHO de planejamento; não reserva PCs nem executa turnos. */
-  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"};
+  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"|"confirmed"};
+  /** Relógio civil independente: a sexta fica congelada no último minuto até sábado 10h. */
+  nightMeetup?: {
+    fridayDay:number;seats:2|3;elapsed:number;phase:"arriving"|"playing"|"leaving"|"closed";
+    pcIndexes:number[];memberIds:number[];paidIds:number[];startedAt?:number;
+    revenue:number;retailRevenue:number;
+  };
+  lastNightMeetup?: {fridayDay:number;seats:number;paid:number;playedMinutes:number;revenue:number;retailRevenue:number};
   lastDecisionDay?: number;
   /** Semente exclusiva do calendário de cartas; não avança RNG de visitantes. */
   mailScheduleSeed?: number;
