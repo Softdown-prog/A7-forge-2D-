@@ -7,6 +7,7 @@ import {campaignDate,currentCampaignDay} from "../sim/campaignWeek.js";
 import {firstFridayEligibility,draftFridayMeetup,cancelFridayMeetupDraft} from "../sim/fridayMeetup.js";
 import {confirmFridayMeetup} from "../sim/nightMeetup.js";
 import {selectNightTournament,tournamentStandings} from "../sim/nightTournament.js";
+import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
 
 export function installFridayMeetupPanel(
  admin:HTMLElement,getGame:()=>GameState,onResult:(result:Result)=>void
@@ -34,7 +35,11 @@ export function installFridayMeetupPanel(
  admin.querySelector("#section-finance")?.append(section);
  two.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),2)));
  three.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),3)));
- format.addEventListener("click",()=>onResult(selectNightTournament(getGame(),getGame().fridayMeetupDraft?.format==="tournament"?"free":"tournament")));
+ format.addEventListener("click",()=>{
+  const current=getGame().fridayMeetupDraft?.format;
+  onResult(selectNightTournament(getGame(),current==="tournament"?"knockout":
+   current==="knockout"?"free":"tournament"));
+ });
  confirm.addEventListener("click",()=>onResult(confirmFridayMeetup(getGame())));
  cancel.addEventListener("click",()=>onResult(cancelFridayMeetupDraft(getGame())));
  return {
@@ -54,17 +59,29 @@ export function installFridayMeetupPanel(
     (q.reasons.length?q.reasons.join(" "):"Há capacidade para planejar sem ocupar PCs agora.");
    const tournament=s.nightMeetup?.tournament;
    const last=s.lastNightMeetup?.tournament;
+   const duel=tournament?.mode==="knockout"?knockoutCurrentMatch(tournament):undefined;
    ranking.textContent=tournament
-    ?"Torneio em andamento · inscrições: "+tournament.scores.length+"/"+(s.nightMeetup?.seats??0)+
-      " · classificação por rodadas nos PCs: "+
-      (tournamentStandings(tournament).map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pts ("+x.rounds+" rodadas)").join(" · ")||"aguardando pagamentos")
+    ?(tournament.mode==="knockout"?"Eliminatória":"Torneio por pontos")+" · "+
+      tournament.scores.length+"/"+(s.nightMeetup?.seats??0)+" inscritos · "+
+      (duel
+       ?(duel.stage==="qualifier"?"Classificatória":"Final")+" · "+
+         duel.playerIds.join(" x ")+" · placar "+duel.points.join("–")+
+         " · "+duel.rounds+"/"+(duel.stage==="qualifier"?8:12)+" rodadas"
+       :tournament.mode==="knockout"&&tournament.bracket?.winnerId
+        ?"Final encerrada · campeão jogador "+tournament.bracket.winnerId
+        :tournamentStandings(tournament).map((x,i)=>(i+1)+"º jogador "+x.id+
+          " — "+x.points+" pts ("+x.rounds+" rodadas)").join(" · ")||
+          "aguardando pagamentos")
     :last
-     ?"Último torneio · "+last.rankings.map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pontos").join(" · ")+
+     ?(last.mode==="knockout"?"Última eliminatória":"Último torneio")+" · "+last.rankings.map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pontos").join(" · ")+
       " · campeão: "+(last.winnerId??"sem vencedor")+" · prêmio R$ "+last.prizePaid.toFixed(2)
-     :draft?.format==="tournament"
-      ?"Torneio amistoso: placar calculado apenas enquanto os amigos jogam. Prêmio: até 20% da receita das sessões, máximo R$ 40, pago ao campeão."
-      :"Encontro livre sem classificação. Um torneio amistoso pode ser ativado antes da confirmação.";
-   format.textContent=draft?.format==="tournament"?"Usar encontro livre":"Ativar torneio amistoso";
+     :draft?.format==="knockout"
+      ?"Eliminatórias: 2 amigos disputam uma final; com 3, dois disputam uma classificatória e o terceiro aguarda a final. Só vale ponto jogando nos PCs."
+      :draft?.format==="tournament"
+       ?"Torneio por pontos: placar por rodadas reais. Prêmio máximo R$ 40 ao campeão."
+       :"Encontro livre. Também é possível escolher torneio por pontos ou eliminatórias.";
+   format.textContent=draft?.format==="tournament"?"Ativar eliminatórias":
+    draft?.format==="knockout"?"Usar encontro livre":"Ativar torneio por pontos";
    format.disabled=!draft||draft.status!=="draft"||!!s.nightMeetup;
    two.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<2;
    three.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<3;
