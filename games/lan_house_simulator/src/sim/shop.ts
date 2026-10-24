@@ -88,11 +88,13 @@ export function buyComputer(s:GameState):Result{
 export function furnitureLimit(s:GameState,kind:FurnitureKind):number{
  return furnitureSlots(s).filter(p=>p.surface===(kind==="poster"?"wall":"floor")).length;
 }
-function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0):string|null{
+function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0,editingSlotId?:string):string|null{
  if(kind!=="poster"){
-  const object:EditableObject={id:"new-decoration",label:"Decoração",kind,x:slot.x,y:slot.y,rotation,w:kind==="table"?.55:.32,d:kind==="table"?.4:.32,surface:"floor"};
+  const object:EditableObject={id:editingSlotId?"decor:"+editingSlotId:"new-decoration",label:"Decoração",kind,x:slot.x,y:slot.y,rotation,w:kind==="table"?.55:.32,d:kind==="table"?.4:.32,surface:"floor"};
   if(s.customers.some(c=>objectTouchesCustomer(object,c)))return "Aguarde o cliente sair dessa posição.";
-  const issue=layoutPlacementIssue(s,object);if(issue)return issue;
+  // During relocation/rotation the candidate contains this same decoration:
+  // validate the new geometry, excluding its own previous footprint.
+  const issue=layoutPlacementIssue(editingSlotId?candidate:s,object);if(issue)return issue;
  }
  for(const c of s.customers)if(!navigableRoute(candidate,c,c.route?.at(-1)??c.target))return "Esta posição prende um cliente. Escolha outro encaixe.";
  if(!activeRetailQueuesReachable(candidate))
@@ -222,7 +224,7 @@ export function removeFurniture(s:GameState,slotId:string):Result{
  if(!item||(s.furniture?.[item.kind]??0)<1)return {ok:false,message:"Não há um móvel instalado nessa posição."};
  s.furniturePlacements=furniture.filter(p=>p.slotId!==slotId);
  s.furniture={...(s.furniture??{poster:0,plant:0,table:0}),[item.kind]:s.furniture![item.kind]-1};
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Item removido. Espaço liberado, sem custo nem reembolso."};
 }
 /** Uma transação de mudança de lugar nunca cobra novamente nem altera a posse. */
@@ -234,9 +236,15 @@ export function relocateFurniture(s:GameState,fromSlotId:string,toSlotId:string)
  if(!from)return {ok:false,message:"Não há um móvel nessa posição."};
  if(!availablePlacementSlots(s,from.kind).some(slot=>slot.id===toSlotId))
    return {ok:false,message:"Destino ocupado ou incompatível com o móvel."};
- // Normaliza móveis antigos apenas após confirmação válida; cancelar não toca no save.
- s.furniturePlacements=furniture.map(item=>
-  item.slotId===fromSlotId?{...item,slotId:toSlotId}:{...item});
+ const rotation=from.rotation??0;
+ const next=furniture.map(item=>item.slotId===fromSlotId?{...item,slotId:toSlotId}:item);
+ const candidate:GameState={...s,furniturePlacements:next};
+ const slot=furnitureSlots(s).find(p=>p.id===toSlotId)!;
+ const issue=decorationIssue(s,candidate,from.kind,slot,rotation,toSlotId);
+ if(issue)return {ok:false,message:issue};
+ // Somente aplicar após validar pessoas, serviços e as filas da nova posição.
+ s.furniturePlacements=next;
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Móvel reposicionado sem custo adicional."};
 }
 
@@ -247,6 +255,12 @@ export function rotateFurniture(s:GameState,slotId:string):Result{
  if(!item)return {ok:false,message:"Selecione um móvel instalado."};
  if(item.kind==="poster")return {ok:false,message:"Pôster de parede não gira; a rotação vale para móveis de piso."};
  const value=(((item.rotation??0)+1)%4) as 0|1|2|3;
- s.furniturePlacements=furniture.map(p=>p.slotId===slotId?{...p,rotation:value}:{...p});
+ const next=furniture.map(p=>p.slotId===slotId?{...p,rotation:value}:p);
+ const candidate:GameState={...s,furniturePlacements:next};
+ const slot=furnitureSlots(s).find(p=>p.id===slotId)!;
+ const issue=decorationIssue(s,candidate,item.kind,slot,value,slotId);
+ if(issue)return {ok:false,message:issue};
+ s.furniturePlacements=next;
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Móvel girado para a direção "+["norte","leste","sul","oeste"][value]+", sem custo."};
 }

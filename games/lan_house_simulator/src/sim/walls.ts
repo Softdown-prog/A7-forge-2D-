@@ -106,7 +106,7 @@ export function removeWall(s:GameState,w:WallSegment):Result{
  const index=(s.interiorWalls??[]).findIndex(p=>wallId(p)===wallId(w));
  if(index<0)return {ok:false,message:"Nenhuma parede nessa posição."};
  s.interiorWalls!.splice(index,1);
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Divisória removida sem custo. Não há reembolso de materiais."};
 }
 export const DOOR_COST=80;
@@ -118,14 +118,14 @@ export function installInteriorDoor(s:GameState,w:WallSegment):Result{
  s.interiorWalls!.splice(index,1);
  (s.interiorDoors??=[]).push({...w});
  s.cash-=DOOR_COST;s.expenses+=DOOR_COST;
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Porta interna instalada: -R$ "+DOOR_COST+"."};
 }
 export function removeInteriorDoor(s:GameState,w:WallSegment):Result{
  const index=(s.interiorDoors??[]).findIndex(p=>wallId(p)===wallId(w));
  if(index<0)return {ok:false,message:"Não há porta nesse local."};
  s.interiorDoors!.splice(index,1);
- routesForCurrentCustomers(s);
+ routesForCurrentCustomers(s);refreshRetailQueues(s);
  return {ok:true,message:"Porta interna removida. Passagem livre."};
 }
 export function removablePartitions(s:GameState):Array<WallSegment&{id:string;label:string;kind:"wall"|"door"}>{
