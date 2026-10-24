@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,entrance,isValidSave,EXIT_REACH_DISTANCE} from "../dist/js/sim/engine.js";
-import {moveLayoutObject,editableObjects,objectRect} from "../dist/js/sim/editableObjects.js";
+import {moveLayoutObject,editableObjects,objectRect,objectTouchesCustomer} from "../dist/js/sim/editableObjects.js";
 import {placeFurniture,relocateFurniture,rotateFurniture,removeFurniture} from "../dist/js/sim/shop.js";
 import {retailQueueSlots,refreshRetailQueues,activeRetailQueuesReachable} from "../dist/js/sim/retailQueue.js";
 import {counterQueueSlot,CUSTOMER_COLLISION_RADIUS} from "../dist/js/sim/checkoutQueue.js";
@@ -78,6 +78,28 @@ test("móvel reposicionado com cliente no destino é recusado sem alterar o save
  assert.equal(relocateFurniture(s,"floor-2","floor-4").ok,true);
  assert.equal(editableObjects(s).some(o=>o.id==="decor:floor-4"),true);
  assert.equal(isValidSave(s),true);
+});
+test("giro com cliente perto da nova borda é recusado sem alterar a partida",()=>{
+ const s=createGame(9303);s.cash=20000;
+ assert.equal(placeFurniture(s,"table","floor-2").ok,true);
+ const current=editableObjects(s).find(o=>o.id==="decor:floor-2");
+ const rotated={...current,rotation:1};
+ let position;
+ for(let dy=-.75;dy<=.75&&!position;dy+=.025)for(let dx=-.75;dx<=.75;dx+=.025){
+  const p={x:current.x+dx,y:current.y+dy};
+  if(!objectTouchesCustomer(current,p)&&objectTouchesCustomer(rotated,p)){
+   position=p;break;
+  }
+ }
+ assert.ok(position,"girar altera a área efetiva da mesa");
+ s.customers=[npc(33,position.x,position.y,"leaving",{target:entrance(s)})];
+ const before=JSON.stringify(s);
+ const denied=rotateFurniture(s,"floor-2");
+ assert.equal(denied.ok,false,denied.message);
+ assert.equal(JSON.stringify(s),before,"sem movimento, cobrança ou alteração de pose");
+ s.customers=[];
+ assert.equal(rotateFurniture(s,"floor-2").ok,true);
+ assert.equal(isValidSave(reload(s)),true);
 });
 test("girar e realocar mesa quatro vezes é estável entre salvamentos",()=>{
  let s=createGame(9302);s.cash=20000;
