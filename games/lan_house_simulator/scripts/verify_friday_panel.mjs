@@ -5,7 +5,7 @@ import {createServer} from "node:http";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import {extname,resolve,sep} from "node:path";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
-import {draftFridayMeetup} from "../dist/js/sim/fridayMeetup.js";
+import {draftFridayMeetup,firstFridayEligibility} from "../dist/js/sim/fridayMeetup.js";
 import {confirmFridayMeetup} from "../dist/js/sim/nightMeetup.js";
 import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
@@ -316,6 +316,19 @@ try{
  }
  for(const seats of [3,2,3,2]){
   maintainFleet();
+  // Clientes comuns podem estar jogando enquanto os técnicos liberam os PCs.
+  // Aguardar um horário com estações disponíveis, nunca cancelar suas sessões
+  // nem adulterar a ocupação para encaixar uma sexta de teste.
+  let quietMinutes=0;
+  while(!firstFridayEligibility(state).ready&&quietMinutes++<720)
+   stepGame(state,1);
+  if(!firstFridayEligibility(state).ready)
+   throw Error("PCs indisponíveis mesmo após manutenção e expediente: "+
+     JSON.stringify({reasons:firstFridayEligibility(state).reasons,
+      pcWear:state.pcWear,poweredOff:state.pcPoweredOff,
+      repairJobs:state.repairJobs,customers:state.customers.map(c=>({
+       id:c.id,stage:c.stage,pc:c.pcIndex
+      }))}));
   ok(draftFridayMeetup(state,seats));
   ok(selectNightTournament(state,"knockout"));
   ok(confirmFridayMeetup(state));
