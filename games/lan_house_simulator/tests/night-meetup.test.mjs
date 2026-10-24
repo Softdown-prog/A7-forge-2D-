@@ -138,3 +138,29 @@ test("sem PC operacional às 22h, evento cancela sem pagamento ou salto no calen
  assert.equal(s.totalMinutes,friday*DAY_MINUTES);
  assert.equal(isValidSave(s),true);
 });
+
+test("corujão de três amigos: três PCs, três pagamentos e reabertura única",()=>{
+ const {s,friday}=fixture(3);
+ reachClosing(s,friday);
+ let started=false,paidCount=0;
+ for(let i=0;i<720&&s.nightMeetup;i++){
+  stepGame(s,1);
+  if(!s.nightMeetup)break;
+  const n=s.nightMeetup;
+  paidCount=Math.max(paidCount,n.paidIds.length);
+  if(n.phase==="playing"){
+   const group=n.memberIds.map(id=>s.customers.find(c=>c.id===id));
+   if(group.length===3&&group.every(c=>c?.stage==="using")&&
+      new Set(group.map(c=>c.pcIndex)).size===3)started=true;
+  }
+  if(n.elapsed===600)
+   assert.equal(n.memberIds.some(id=>s.customers.some(c=>c.id===id)),false,
+     "até 8h os participantes devem atravessar a porta, sem serem apagados às 10h");
+ }
+ assert.equal(paidCount,3);
+ assert.equal(started,true);
+ assert.equal(s.nightMeetup,undefined);
+ assert.equal(s.totalMinutes,friday*DAY_MINUTES);
+ assert.equal(s.lastNightMeetup?.paid,3);
+ assert.equal(isValidSave(s),true);
+});
