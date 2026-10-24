@@ -24,7 +24,7 @@ import {recordStationMinute} from "./stationAccounting.js";
 import {pcCount} from "./simulationState.js";
 import {stationReadyForSessions} from "./stationPower.js";
 import {registerTournamentPlayer,scoreTournamentMinute,settleNightTournament,completedTournamentResult,validTournamentState,validTournamentResult} from "./nightTournament.js";
-import {beginNightKnockout} from "./nightKnockout.js";
+import {beginNightKnockout,validNightKnockoutTrophies} from "./nightKnockout.js";
 
 
 export function confirmFridayMeetup(s:GameState):Result{
@@ -253,6 +253,7 @@ export function validNightMeetup(s:Partial<GameState>):boolean{
    !Number.isInteger(last.playedMinutes)||last.playedMinutes<0||last.playedMinutes>480||
    ![last.revenue,last.retailRevenue].every(v=>Number.isFinite(v)&&v>=0)||
    !validTournamentResult(last.tournament,last.seats)))return false;
+ if(!validNightKnockoutTrophies(s))return false;
  if(n===undefined)return !(s.customers??[]).some(c=>c.nightMeetupDay!==undefined);
  if(!n||!Number.isInteger(n.fridayDay)||n.fridayDay<1||weekdayIndex(n.fridayDay)!==4||
    Math.floor((s.totalMinutes??0)/DAY_MINUTES)+1!==n.fridayDay||

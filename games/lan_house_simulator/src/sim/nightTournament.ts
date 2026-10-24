@@ -5,7 +5,7 @@
  */
 import type {GameState,Result} from "./types.js";
 import {addLog} from "./simulationState.js";
-import {scoreKnockoutMinute,validKnockoutBracket} from "./nightKnockout.js";
+import {scoreKnockoutMinute,validKnockoutBracket,awardNightKnockoutTrophy} from "./nightKnockout.js";
 import type {NightKnockoutBracket} from "./nightKnockout.js";
 
 export type NightTournamentScore={id:number;points:number;rounds:number};
@@ -81,6 +81,7 @@ export function settleNightTournament(s:GameState):void{
   const c=s.customers.find(x=>x.id===winner.id);
   if(c)c.wallet=cents((c.wallet??0)+affordable);
  }
+ if(t.mode==="knockout")awardNightKnockoutTrophy(s,winner.id);
  addLog(s,"Campeonato Setor Zero: vencedor no PC "+
   ((s.customers.find(c=>c.id===winner.id)?.pcIndex??n.pcIndexes[0]!)+1)+
   ", "+winner.points+" pontos, prêmio de R$ "+affordable.toFixed(2)+".");
