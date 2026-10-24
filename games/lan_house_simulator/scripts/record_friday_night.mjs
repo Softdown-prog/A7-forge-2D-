@@ -16,7 +16,8 @@ import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {dismissPrivacyNotice} from "./privacyNoticeTest.mjs";
 const root=resolve(import.meta.dirname,"../dist"),output=resolve(process.argv[2]??"out/night-video");
 await mkdir(output,{recursive:true});
-const recordTournament=process.env.LHS_RECORD_TOURNAMENT==="1";
+const recordKnockout=process.env.LHS_RECORD_KNOCKOUT==="1";
+const recordTournament=recordKnockout||process.env.LHS_RECORD_TOURNAMENT==="1";
 const mime={".html":"text/html",".js":"text/javascript",".css":"text/css",".png":"image/png",".svg":"image/svg+xml",".webp":"image/webp",".ogg":"audio/ogg"};
 const server=createServer(async(req,res)=>{
  try{
@@ -39,13 +40,13 @@ for(let pc=0;pc<3;pc++){
 ok(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID));
 const friday=firstFridayEligibility(s).friday;
 ok(draftFridayMeetup(s,2));
-if(recordTournament)ok(selectNightTournament(s,"tournament"));
+if(recordTournament)ok(selectNightTournament(s,recordKnockout?"knockout":"tournament"));
 ok(confirmFridayMeetup(s));
 s.totalMinutes=friday*DAY_MINUTES-1;
 if(!isValidSave(s))throw Error("Save de sexta inválido.");
 const result={friday,checkpoints:[],observedNight:false,observedPaid:false,
  observedRound:false,uniquePcs:0,observedScores:false,observedHud:false,
- tournament:recordTournament,errors:[]};
+ observedKnockout:false,knockout:recordKnockout,tournament:recordTournament,errors:[]};
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
@@ -65,7 +66,7 @@ try{
   await hud.locator("summary").click();
   await hud.scrollIntoViewIfNeeded();
  }
- for(let second=0;second<60;second++){
+ for(let second=0;second<(recordKnockout?95:60);second++){
   await page.waitForTimeout(1000);
   if(second%3!==0)continue;
   const m=await page.evaluate(key=>{
@@ -73,6 +74,8 @@ try{
    const n=s.nightMeetup;
    return n?{time:n.elapsed,phase:n.phase,paid:n.paidIds.length,started:n.startedAt??null,
     scores:n.tournament?.scores.map(row=>({id:row.id,points:row.points,rounds:row.rounds}))??null,
+    bracket:n.tournament?.bracket?.matches.map(m=>({stage:m.stage,players:m.playerIds,
+     points:m.points,rounds:m.rounds,winnerId:m.winnerId??null}))??null,
     participants:n.memberIds.map(id=>{
      const c=s.customers.find(c=>c.id===id);
      return {id,stage:c?.stage??"missing",pc:c?.pcIndex??null};
@@ -87,6 +90,7 @@ try{
     new Set(m.participants.filter(x=>x.pc!==null).map(x=>x.pc)).size);
   }
   if(recordTournament&&m.scores?.some(row=>row.points>0))result.observedScores=true;
+  if(recordKnockout&&m.bracket?.some(match=>match.rounds>0))result.observedKnockout=true;
   if(recordTournament&&await page.locator("#night-tournament-hud").isVisible())result.observedHud=true;
   result.checkpoints.push({second:second+1,...m});
   if([15,34,48].includes(second))await page.screenshot({
@@ -96,8 +100,9 @@ try{
  await context.close();
  await rename(video,resolve(output,"corujao_gameplay_canvas_original.webm"));
  if(result.errors.length)throw Error(result.errors.join(" | "));
- if(recordTournament&&(!result.observedScores||!result.observedHud))
-  throw Error("Pontuação do torneio não apareceu no jogo original: "+JSON.stringify(result));
+ if(recordTournament&&(!result.observedScores||!result.observedHud||
+   (recordKnockout&&!result.observedKnockout)))
+  throw Error("Confronto/placar não comprovados no jogo original: "+JSON.stringify(result));
  if(!result.observedNight||!result.observedPaid||!result.observedRound||result.uniquePcs<2)
   throw Error("Não comprovou jogo noturno real: "+JSON.stringify(result));
  console.log("OK: gameplay verdadeiro, pagamento por pessoa, dois PCs distintos após meia-noite.");
