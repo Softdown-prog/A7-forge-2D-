@@ -26,7 +26,47 @@ export function installFridayMeetupPanel(
  const three=document.createElement("button");three.type="button";three.className="slice";three.id="first-meetup-three";three.textContent="Estudar 3 vagas";
  const format=document.createElement("button");format.type="button";format.className="slice";format.id="first-meetup-format";format.textContent="Ativar torneio amistoso";
  const ranking=document.createElement("div");ranking.id="first-meetup-ranking";ranking.className="management-empty";
- const gallery=document.createElement("div");gallery.id="first-meetup-trophies";gallery.className="management-empty";gallery.hidden=true;
+ const gallery=document.createElement("section");gallery.id="first-meetup-trophies";
+ gallery.className="night-trophy-gallery";gallery.hidden=true;
+ gallery.setAttribute("aria-label","Galeria digital de campeões de Setor Zero");
+ const trophyTitle=document.createElement("h5");
+ const trophyList=document.createElement("ol");trophyList.className="night-trophy-list";
+ const trophyMore=document.createElement("button");trophyMore.type="button";
+ trophyMore.className="slice";trophyMore.id="first-meetup-trophies-more";trophyMore.hidden=true;
+ trophyMore.setAttribute("aria-controls","first-meetup-trophies-list");
+ trophyList.id="first-meetup-trophies-list";
+ gallery.append(trophyTitle,trophyList,trophyMore);
+ let showAllTrophies=false,renderedTrophies="";
+ const renderTrophies=(state:GameState)=>{
+  const trophies=state.nightTournamentTrophies??[];
+  gallery.hidden=trophies.length===0;
+  const signature=(showAllTrophies?"all":"recent")+"|"+
+   trophies.map(t=>t.fridayDay+":"+t.winnerId+":"+t.participants).join("|");
+  if(signature===renderedTrophies)return;
+  renderedTrophies=signature;
+  trophyTitle.textContent="🏆 Galeria digital · "+trophies.length+
+   (trophies.length===1?" conquista":" conquistas");
+  const visible=showAllTrophies?trophies:trophies.slice(-4);
+  trophyList.replaceChildren(...[...visible].reverse().map(t=>{
+   const item=document.createElement("li");item.className="night-trophy-item";
+   const symbol=document.createElement("span");symbol.className="night-trophy-symbol";
+   symbol.textContent="🏆";symbol.setAttribute("aria-hidden","true");
+   const detail=document.createElement("span");detail.className="night-trophy-detail";
+   const date=document.createElement("strong");date.textContent="Sexta "+campaignDate(t.fridayDay);
+   const champion=document.createElement("span");
+   champion.textContent="Campeão: jogador "+t.winnerId+" · "+t.participants+" participantes";
+   detail.append(date,champion);item.append(symbol,detail);
+   return item;
+  }));
+  trophyMore.hidden=trophies.length<=4;
+  trophyMore.textContent=showAllTrophies?"Mostrar apenas recentes":
+   "Ver todas as "+trophies.length+" conquistas";
+  trophyMore.setAttribute("aria-expanded",String(showAllTrophies));
+ };
+ trophyMore.addEventListener("click",()=>{
+  showAllTrophies=!showAllTrophies;
+  renderTrophies(getGame());
+ });
  const confirm=document.createElement("button");confirm.type="button";confirm.className="slice primary";confirm.id="first-meetup-confirm";confirm.textContent="Confirmar encontro de sexta";
  const cancel=document.createElement("button");cancel.type="button";cancel.className="slice";cancel.id="first-meetup-cancel";cancel.textContent="Descartar rascunho";
  const caution=document.createElement("p");caution.className="management-empty";
@@ -84,13 +124,7 @@ export function installFridayMeetupPanel(
       :draft?.format==="tournament"
        ?"Torneio por pontos: placar por rodadas reais. Prêmio máximo R$ 40 ao campeão."
        :"Encontro livre. Também é possível escolher torneio por pontos ou eliminatórias.";
-   const trophies=s.nightTournamentTrophies??[];
-   gallery.hidden=trophies.length===0;
-   gallery.textContent=trophies.length
-    ?"🏆 Galeria da lan house · "+trophies.length+" troféu(s) conquistados · "+
-      trophies.slice(-4).reverse().map(x=>campaignDate(x.fridayDay)+
-       ": campeão jogador "+x.winnerId+" ("+x.participants+" participantes)").join(" · ")
-    :"";
+   renderTrophies(s);
    format.textContent=draft?.format==="tournament"?"Ativar eliminatórias":
     draft?.format==="knockout"?"Usar encontro livre":"Ativar torneio por pontos";
    format.disabled=!draft||draft.status!=="draft"||!!s.nightMeetup;

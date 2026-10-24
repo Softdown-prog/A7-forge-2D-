@@ -41,14 +41,15 @@ export function installNightTournamentHud(){
    const leader=standings[0];
    const label=leader?"líder: jogador "+leader.id+" ("+leader.points+" pts)":"aguardando";
    summary.textContent=t.settled
-    ?"🏆 Setor Zero · campeão: "+(t.winnerId??"sem vencedor")+" · prêmio R$ "+(t.prizePaid??0).toFixed(2)
+    ?(t.winnerId!==undefined?"🏆 Setor Zero · campeão: jogador "+t.winnerId:
+      "Setor Zero · campeonato não concluído")+" · prêmio R$ "+(t.prizePaid??0).toFixed(2)
     :duel
-     ?"🏆 Setor Zero · "+(duel.stage==="qualifier"?"classificatória":"final")+
+     ?"Setor Zero · "+(duel.stage==="qualifier"?"classificatória":"final")+
        " · "+duel.playerIds.join(" x ")+" · "+duel.points.join("–")+
        " ("+duel.rounds+"/"+(duel.stage==="qualifier"?8:12)+")"
      :t.mode==="knockout"&&t.bracket?.winnerId
-      ?"🏆 Setor Zero · final encerrada · jogador "+t.bracket.winnerId+" venceu"
-      :"🏆 Setor Zero · "+t.scores.length+"/"+n.seats+" inscritos · "+label;
+      ?"Setor Zero · final encerrada · jogador "+t.bracket.winnerId+" venceu"
+      :"Setor Zero · "+t.scores.length+"/"+n.seats+" inscritos · "+label;
    rows.replaceChildren(...standings.map((row,i)=>{
     const item=document.createElement("li");
     item.textContent=(i+1)+"º · jogador "+row.id+" · "+row.points+" pontos · "+row.rounds+" rodadas jogadas";

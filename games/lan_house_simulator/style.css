@@ -1071,3 +1071,23 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .night-knockout-bracket li{overflow-wrap:anywhere;margin-bottom:3px}
 .night-knockout-bracket[hidden]{display:none}
 @media(max-width:650px){.night-knockout-bracket{font-size:11px;padding-left:19px}}
+
+/* Galeria persistente de finais realmente disputadas; quatro recentes por padrão. */
+.night-trophy-gallery{min-width:0;margin:12px 0;padding:12px;
+ border:1px solid #bfa268;border-radius:10px;background:#fbf7e8;color:#4e432d}
+.night-trophy-gallery[hidden],.night-trophy-gallery button[hidden]{display:none}
+.night-trophy-gallery h5{font-size:14px;margin:0 0 10px;line-height:1.4}
+.night-trophy-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
+ list-style:none;gap:8px;margin:0 0 10px;padding:0}
+.night-trophy-item{display:flex;gap:9px;align-items:center;min-width:0;
+ border:1px solid #e0ce9e;border-radius:8px;background:#fffdf7;padding:9px}
+.night-trophy-symbol{font-size:23px;flex-shrink:0}
+.night-trophy-detail{display:flex;flex-direction:column;gap:3px;min-width:0;
+ overflow-wrap:anywhere;font-size:12px;line-height:1.45}
+.night-trophy-detail strong{font-size:12px}
+.night-trophy-gallery #first-meetup-trophies-more{min-height:40px}
+@media(max-width:600px){
+ .night-trophy-gallery{padding:10px}
+ .night-trophy-list{grid-template-columns:1fr}
+ .night-trophy-item{padding:8px}
+}

@@ -4,7 +4,10 @@ import {chromium} from "playwright";
 import {createServer} from "node:http";
 import {mkdir,readFile,writeFile} from "node:fs/promises";
 import {extname,resolve,sep} from "node:path";
-import {createGame,isValidSave} from "../dist/js/sim/engine.js";
+import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
+import {draftFridayMeetup} from "../dist/js/sim/fridayMeetup.js";
+import {confirmFridayMeetup} from "../dist/js/sim/nightMeetup.js";
+import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
@@ -42,7 +45,9 @@ try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
  const page=await browser.newPage({viewport:{width:1280,height:850}});
  const errors=[];page.on("pageerror",e=>errors.push(String(e)));
- await page.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+ await page.addInitScript(({key,payload})=>{
+ if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(payload));
+},
   {key:GAME_SAVE_KEY,payload:state});
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
  await dismissPrivacyNotice(page);
@@ -90,10 +95,42 @@ try{
  await page.locator("#first-meetup-cancel").click();
  const cancelled=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),GAME_SAVE_KEY);
  if(cancelled.fridayMeetupDraft!==undefined)throw Error("Cancelamento não liberou o rascunho.");
+ // A galeria só pode ser comprovada após uma final rodada pelo motor verdadeiro.
+ ok(draftFridayMeetup(state,2));
+ ok(selectNightTournament(state,"knockout"));
+ ok(confirmFridayMeetup(state));
+ const trophyFriday=state.fridayMeetupDraft.fridayDay;
+ state.totalMinutes=trophyFriday*DAY_MINUTES-1;
+ stepGame(state,1);
+ if(!state.nightMeetup)throw Error("A madrugada real não começou.");
+ while(state.nightMeetup)stepGame(state,1);
+ if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
+   state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
+  throw Error("A final não produziu um troféu verdadeiro e persistente.");
+ await page.evaluate(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+  {key:GAME_SAVE_KEY,payload:state});
+ await page.reload({waitUntil:"networkidle"});
+ await dismissPrivacyNotice(page);
+ await page.locator("#menu-continue").click();
+ await page.locator("#open-admin").click();
+ await selectAdminArea(page,"finance");
+ await page.locator('#section-finance [data-panel-choice="events"]').click();
+ const gallery=page.locator("#first-meetup-trophies");
+ await gallery.waitFor({state:"visible"});
+ if(await gallery.locator(".night-trophy-item").count()!==1)
+  throw Error("A galeria não mostra o troféu conquistado.");
+ const galleryText=await gallery.textContent();
+ if(!galleryText.includes("Campeão: jogador "+state.nightTournamentTrophies[0].winnerId)||
+    !galleryText.includes("1 conquista"))
+  throw Error("Vencedor ou total da galeria não confere com a final real.");
+ if(await page.locator("#first-meetup-trophies-more").isVisible())
+  throw Error("Uma conquista não precisa do botão de histórico completo.");
+ await page.screenshot({path:resolve(out,"galeria_trofeu_final_real.png")});
  if(errors.length)throw Error(errors.join(" | "));
  await writeFile(resolve(out,"verificacao.json"),JSON.stringify({status:"pass",firstFridayDay:draft.fridayMeetupDraft.fridayDay,
-  slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,zeroExtraRevenue:true,interface:"jogo original"},null,2));
- console.log("OK: planejamento em painel real, save, cancelamento, sem receita nem NPCs.");
+  slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
+  zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,interface:"jogo original"},null,2));
+ console.log("OK: planejamento, save, final no motor real e galeria no navegador.");
 }finally{
  if(browser)await browser.close();
  await new Promise(ok=>server.close(ok));
