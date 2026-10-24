@@ -1,0 +1,52 @@
+name: LHS - Corujao gameplay real
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
+      - 'games/lan_house_simulator/scripts/record_friday_night.mjs'
+      - 'games/lan_house_simulator/tests/night-meetup.test.mjs'
+      - '.github/workflows/lhs-friday-night-gameplay.yml'
+permissions:
+  contents: read
+jobs:
+  midnight-gameplay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build actual game and run night simulation tests
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/night-meetup.test.mjs tests/friday-meetup.test.mjs
+      - name: Install real Chromium and video encoder
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Film gameplay in original 2001 game interface
+        working-directory: games/lan_house_simulator
+        run: |
+          node scripts/record_friday_night.mjs out/night-video
+          ffmpeg -v error -y -i out/night-video/corujao_gameplay_canvas_original.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/night-video/corujao_gameplay_canvas_original.mp4
+          test -s out/night-video/corujao_gameplay_canvas_original.mp4
+      - name: Preserve source footage, PNG and telemetria
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-corujao-gameplay-real-2001
+          path: |
+            games/lan_house_simulator/out/night-video/*.mp4
+            games/lan_house_simulator/out/night-video/*.png
+            games/lan_house_simulator/out/night-video/*.json
+          retention-days: 21
+          if-no-files-found: warn
