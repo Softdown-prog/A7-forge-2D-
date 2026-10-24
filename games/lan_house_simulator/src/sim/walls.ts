@@ -6,6 +6,7 @@ import {roomBounds} from "./room.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 import {editableObjects,wallCutsObject} from "./editableObjects.js";
 import {counterQueue} from "./route.js";
+import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 
 export type WallAxis="x"|"y";
 export type WallSegment={axis:WallAxis;x:number;y:number};
@@ -68,8 +69,18 @@ export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
  }
  return false;
 }
+/** Obras não podem atravessar a área ocupada pelos clientes.
+ * Mantém a colisão idêntica à caminhada; nunca move ou expulsa pessoas.
+ */
+export function wallTouchesCustomer(s:GameState,w:WallSegment):boolean{
+ const [a,b]=wallEndpoints(w),dx=b.x-a.x,dy=b.y-a.y;
+ return s.customers.some(c=>{
+  const t=Math.max(0,Math.min(1,((c.x-a.x)*dx+(c.y-a.y)*dy)/(dx*dx+dy*dy)));
+  return Math.hypot(c.x-(a.x+t*dx),c.y-(a.y+t*dy))<CUSTOMER_COLLISION_RADIUS;
+ });
+}
 export function canBuildWall(s:GameState,w:WallSegment):boolean{
- if(!validWallPosition(s,w)||(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))||
+ if(!validWallPosition(s,w)||wallTouchesCustomer(s,w)||(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))||
     (s.interiorDoors??[]).some(p=>wallId(p)===wallId(w)))return false;
  if(editableObjects(s).some(o=>o.surface==="floor"&&wallCutsObject(w,o)))return false;
  // Preserva a alcançabilidade de todos os serviços e de clientes ativos.

@@ -3,7 +3,7 @@ import {pcCount,pcPosition,entrance} from "./engine.js";
 import {placedObject,turnPoint,counterPoint,vendingMachines,vendingApproach,purchaseApproach,type Rotation} from "./layout.js";
 import {roomBounds} from "./room.js";
 import {computerSeat,counterQueue} from "./route.js";
-import {counterQueueSlot,counterQueueCustomers} from "./checkoutQueue.js";
+import {counterQueueSlot,counterQueueCustomers,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 import {furnitureLocations,furnitureSlots,removeFurniture} from "./shop.js";
 import {binSpots} from "./services.js";
@@ -38,6 +38,16 @@ export function objectRect(o:EditableObject):{minX:number;maxX:number;minY:numbe
 }
 export function pointInsideObject(o:EditableObject,p:Point,padding=0):boolean{
  const r=objectRect(o);return p.x>r.minX-padding&&p.x<r.maxX+padding&&p.y>r.minY-padding&&p.y<r.maxY+padding;
+}
+/** O corpo circular ocupa espaço também fora do retângulo visual do móvel.
+ * Distância ao ponto mais próximo da caixa rotacionada: evita instalar
+ * equipamentos/móveis parcialmente dentro de um visitante em movimento.
+ */
+export function objectTouchesCustomer(o:EditableObject,p:Point):boolean{
+ const r=objectRect(o);
+ const nearX=Math.max(r.minX,Math.min(r.maxX,p.x));
+ const nearY=Math.max(r.minY,Math.min(r.maxY,p.y));
+ return Math.hypot(p.x-nearX,p.y-nearY)<CUSTOMER_COLLISION_RADIUS;
 }
 export function layoutGoals(s:GameState):Point[]{return [counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];}
 function overlap(a:EditableObject,b:EditableObject):boolean{
@@ -100,7 +110,7 @@ export function moveLayoutObject(s:GameState,id:string,destination:Point,rotatio
  if(original.kind==="pc"&&(s.customers.some(c=>c.pcIndex===original.index&&["to_pc","sitting","using","standing"].includes(c.stage))||s.repairJobs?.some(j=>j.pc===original.index)))return {ok:false,message:"Espere o cliente ou técnico liberar esse PC antes de movê-lo."};
  if(original.kind==="bin"&&s.cleaningJob)return {ok:false,message:"Aguarde a limpeza terminar antes de mover a lixeira."};
  const target={...original,...destination,rotation};
- if(target.surface==="floor"&&s.customers.some(c=>pointInsideObject(target,c,.15)))return {ok:false,message:"Espere o cliente sair da posição escolhida."};
+ if(target.surface==="floor"&&s.customers.some(c=>objectTouchesCustomer(target,c)))return {ok:false,message:"Espere o cliente sair da posição escolhida."};
  let candidate:GameState;
  if(id.startsWith("decor:")){
   const slot=furnitureSlots(s).filter(p=>p.surface===original.surface).find(p=>Math.hypot(p.x-target.x,p.y-target.y)<.12);

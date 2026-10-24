@@ -726,3 +726,10 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 ### Congestionamento de 14 clientes na porta durante fechamento (24/10/2026)
 - Corrigido o fallback de `sendHome`: se a navegação para a porta falhar, nenhum visitante segue primeiro para o destino obsoleto de uma fila/compra. O destino passa a ser a porta, com tentativa normal de replanejamento e mesmas colisões; não há teleporte.
 - Teste `tests/closing-door-pressure.test.mjs` reproduz 14 NPCs simultâneos de caixa, loja, PC, entrada e saída às 21h; confere saída física, limite de deslocamento, colisões, zero cobranças/vendas fantasmas e equivalência de save recarregado. Um caso de divisória fechada valida o fallback sem criar passagem ilegal.
+
+### Obras com clientes presentes — colisão de móveis e divisórias (24/10/2026)
+
+- A construção usa o mesmo raio circular de colisão dos NPCs (`CUSTOMER_COLLISION_RADIUS`). Não basta o centro do cliente estar fora do retângulo de uma mesa ou máquina: o corpo inteiro precisa estar livre. Aplica-se ao editor de objetos e à compra/instalação de móveis.
+- Divisórias recusadas quando um cliente está atravessando ou encostado no segmento. Obras recusadas não cobram dinheiro, não deslocam pessoas nem mudam o save.
+- As mudanças válidas continuam replanejando os trajetos com a navegação existente; não se criam atalhos, teletransportes ou cobrança de serviços artificiais.
+- Regressões `tests/layout-live-circulation.test.mjs`: máquina girada, mesa, construção tangente, restauração de save e caminhada real no salão reorganizado.

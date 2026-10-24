@@ -3,7 +3,7 @@ import {stationPoweredOn} from "./stationPower.js";
 import {layoutGoals} from "./editableObjects.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
 import {entrance} from "./engine.js";
-import {fixedLayoutObjects,pointInsideObject,builtPosters,layoutPlacementIssue} from "./editableObjects.js";
+import {fixedLayoutObjects,pointInsideObject,objectTouchesCustomer,builtPosters,layoutPlacementIssue} from "./editableObjects.js";
 import type {GameState,Result} from "./types.js";
 import {roomBounds,expansionPrice} from "./room.js";
 import {WALL_COST} from "./walls.js";
@@ -90,7 +90,7 @@ export function furnitureLimit(s:GameState,kind:FurnitureKind):number{
 function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0):string|null{
  if(kind!=="poster"){
   const object:EditableObject={id:"new-decoration",label:"Decoração",kind,x:slot.x,y:slot.y,rotation,w:kind==="table"?.55:.32,d:kind==="table"?.4:.32,surface:"floor"};
-  if(s.customers.some(c=>pointInsideObject(object,c,.15)))return "Aguarde o cliente sair dessa posição.";
+  if(s.customers.some(c=>objectTouchesCustomer(object,c)))return "Aguarde o cliente sair dessa posição.";
   const issue=layoutPlacementIssue(s,object);if(issue)return issue;
  }
  for(const c of s.customers)if(!navigableRoute(candidate,c,c.route?.at(-1)??c.target))return "Esta posição prende um cliente. Escolha outro encaixe.";
