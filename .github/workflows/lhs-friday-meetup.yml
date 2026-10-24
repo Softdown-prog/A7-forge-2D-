@@ -14,6 +14,7 @@ on:
       - 'games/lan_house_simulator/src/sim/walls.ts'
       - 'games/lan_house_simulator/tests/layout-live-circulation.test.mjs'
       - 'games/lan_house_simulator/tests/layout-live-queues.test.mjs'
+      - 'games/lan_house_simulator/tests/layout-multi-edit-recovery.test.mjs'
       - 'games/lan_house_simulator/src/sim/retailQueue.ts'
       - 'games/lan_house_simulator/tests/closing-door-pressure.test.mjs'
       - 'games/lan_house_simulator/tests/night-meetup.test.mjs'
@@ -58,7 +59,7 @@ jobs:
           npm run build
       - name: Check Fridays, saved drafts, multiplayer and normal clock
         working-directory: games/lan_house_simulator
-        run: node --test tests/friday-meetup.test.mjs tests/saturday-first-customers.test.mjs tests/saturday-full-shift.test.mjs tests/closing-door-pressure.test.mjs tests/layout-live-circulation.test.mjs tests/layout-live-queues.test.mjs tests/night-reopening-presentation.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
+        run: node --test tests/friday-meetup.test.mjs tests/saturday-first-customers.test.mjs tests/saturday-full-shift.test.mjs tests/closing-door-pressure.test.mjs tests/layout-live-circulation.test.mjs tests/layout-live-queues.test.mjs tests/layout-multi-edit-recovery.test.mjs tests/night-reopening-presentation.test.mjs tests/night-trophy-consecutive-fridays.test.mjs tests/night-meetup.test.mjs tests/future-night-clock.test.mjs tests/time-weather-hud.test.mjs tests/multiplayer-visitors.test.mjs
       - name: Install Chromium for genuine administration UI
         working-directory: games/lan_house_simulator
         run: |
