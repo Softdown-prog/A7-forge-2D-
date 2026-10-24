@@ -5,6 +5,7 @@
 import type {GameState} from "./types.js";
 import type {NightTournamentState,NightTournamentScore} from "./nightTournament.js";
 import {addLog} from "./simulationState.js";
+import {weekdayIndex,currentCampaignDay} from "./campaignWeek.js";
 
 export type KnockoutMatch={
  stage:"qualifier"|"final";
@@ -127,4 +128,34 @@ export function validKnockoutBracket(
  if(t.settled===true&&elapsed>=540&&t.winnerId!==undefined&&
     t.winnerId!==bracket.winnerId)return false;
  return true;
+}
+
+/** Medalha/troféu persistente da LAN HOUSE por sediar uma final disputada.
+ * Não é um item na loja: fica na galeria de campeões da administração.
+ */
+export type NightKnockoutTrophy={
+ fridayDay:number;winnerId:number;participants:2|3;
+};
+export function awardNightKnockoutTrophy(s:GameState,winnerId:number):void{
+ const n=s.nightMeetup,t=n?.tournament;
+ if(!n||t?.mode!=="knockout"||t.bracket?.winnerId!==winnerId||
+    !t.settled||!n.paidIds.includes(winnerId))return;
+ const trophies=s.nightTournamentTrophies??=[];
+ if(trophies.some(x=>x.fridayDay===n.fridayDay))return;
+ trophies.push({fridayDay:n.fridayDay,winnerId,participants:n.seats});
+ if(trophies.length>64)trophies.shift();
+ s.nightTournamentTrophies=trophies;
+ addLog(s,"Galeria da lan house: troféu da sexta entregue ao campeão "+
+  winnerId+" após a final de Setor Zero.");
+}
+export function validNightKnockoutTrophies(s:Partial<GameState>):boolean{
+ const trophies=s.nightTournamentTrophies;
+ if(trophies===undefined)return true; // Saves antigos não tinham a galeria.
+ if(!Array.isArray(trophies)||trophies.length>64)return false;
+ const current=currentCampaignDay(s as GameState);
+ if(trophies.some(t=>!t||!Number.isInteger(t.fridayDay)||t.fridayDay<1||
+    t.fridayDay>current||weekdayIndex(t.fridayDay)!==4||
+    !Number.isInteger(t.winnerId)||t.winnerId<1||t.winnerId>=(s.nextCustomerId??0)||
+    (t.participants!==2&&t.participants!==3)))return false;
+ return new Set(trophies.map(t=>t.fridayDay)).size===trophies.length;
 }
