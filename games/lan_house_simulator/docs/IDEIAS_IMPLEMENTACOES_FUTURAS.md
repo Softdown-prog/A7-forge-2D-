@@ -616,3 +616,19 @@ Após revisar a demonstração inadequada, a etapa 3 deixou de tratar os partici
 - **Etapa 4B necessária antes de liberar a confirmação**: contrato separado de dia/horário civil/turno noturno, cobrança e consumo reais na madrugada, clientes físicos e saída ao amanhecer, persistência de saves às 3h, calendário e contas exatamente uma vez, teste de gameplay no Canvas original. A execução da madrugada só deverá aparecer como jogável quando esses cenários passarem.
 
 Os horários 23h–7h são referência da história, não um compromisso programado nessa etapa. O rascunho prepara terreno sem prometer o que ainda não roda.
+
+
+## Etapa 4B — corujão real de sexta para sábado (24/10/2026)
+
+A implementação conecta uma madrugada física ao **motor original**, e não a uma simulação alternativa.
+
+- O painel de Finanças → Primeira sexta agora tem **Confirmar encontro de sexta**, além do rascunho. A confirmação não cobra, não vende ingresso e não desloca ninguém antes da noite.
+- Quando o expediente de sexta chega a 22h, o salão se fecha aos demais clientes e o relógio civil do evento percorre 22h–10h. O `totalMinutes` da campanha permanece no último minuto de sexta, **sem antecipar fechamento mensal, chuva e salários**.
+- A partir das 23h, convidados são objetos `Customer` normais, que entram pela porta, caminham fisicamente, fazem fila, **pagam individualmente**, sentam em estações licenciadas distintas e iniciam uma sessão em rede quando todos estiverem prontos.
+- As vendas de refrigerante e salgadinho ocorrem com caminhada até a loja, carteira do visitante, estoque e caixa reais. Energia e desgaste dos PCs também são computados durante a madrugada.
+- Às 7h os amigos levantam e recebem rota de saída; às 10h o salão reabre e **`nextDay` é executado apenas uma vez**, inclusive numa virada mensal. O último evento guarda receita de sessões/mercadorias, participação e duração, sem inventar dinheiro ou resultado.
+- O save contém `nightMeetup` durante o evento; os campos são opcionais para saves antigos. Uma recarga retoma a rodada sem duplicar cobranças, vendas, horários ou abertura. Validações recusam dia da semana, participantes, PCs e estados noturnos inválidos.
+- Testes: `tests/night-meetup.test.mjs`, `tests/friday-meetup.test.mjs`, `tests/future-night-clock.test.mjs`; gravação da interface original via `scripts/record_friday_night.mjs` e workflow `lhs-friday-night-gameplay.yml`.
+- Para **duas ou três vagas**, o convite depende do Setor Zero e de pelo menos uma rodada diurna previamente concluída, preservando o ritmo narrativo de Tony.
+
+**Limite do escopo:** é o primeiro encontro coletivo da madrugada, não um sistema de campeonatos com fases, classificação, prêmios e troféus. Estes ficam para uma etapa posterior, após validar a experiência real de chegada e permanência.
