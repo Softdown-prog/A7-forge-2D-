@@ -49,6 +49,14 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/tournament-video/torneio_setor_zero_canvas_original.mp4
           test -s out/tournament-video/torneio_setor_zero_canvas_original.mp4
+      - name: Film knockout qualifier on the ORIGINAL game scene
+        working-directory: games/lan_house_simulator
+        run: |
+          LHS_RECORD_KNOCKOUT=1 node scripts/record_friday_night.mjs out/knockout-video
+          ffmpeg -v error -y -i out/knockout-video/corujao_gameplay_canvas_original.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/knockout-video/eliminatoria_setor_zero_gameplay_real.mp4
+          test -s out/knockout-video/eliminatoria_setor_zero_gameplay_real.mp4
       - name: Preserve source footage, PNG and telemetria
         if: always()
         uses: actions/upload-artifact@v4
@@ -69,5 +77,16 @@ jobs:
             games/lan_house_simulator/out/tournament-video/*.mp4
             games/lan_house_simulator/out/tournament-video/*.png
             games/lan_house_simulator/out/tournament-video/*.json
+          retention-days: 21
+          if-no-files-found: warn
+      - name: Preserve knockout video, photos and real match telemetry
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-setor-zero-eliminatoria-canvas-real
+          path: |
+            games/lan_house_simulator/out/knockout-video/*.mp4
+            games/lan_house_simulator/out/knockout-video/*.png
+            games/lan_house_simulator/out/knockout-video/*.json
           retention-days: 21
           if-no-files-found: warn
