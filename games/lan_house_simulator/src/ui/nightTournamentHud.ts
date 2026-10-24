@@ -11,8 +11,11 @@ export function installNightTournamentHud(){
  hud.id="night-tournament-hud";hud.className="night-tournament-hud";hud.hidden=true;
  const summary=document.createElement("summary");
  summary.textContent="Torneio Setor Zero · aguardando inscrições";
+ const matches=document.createElement("ol");matches.className="night-knockout-bracket";
+ matches.setAttribute("aria-label","Chave de confrontos de Setor Zero");
  const rows=document.createElement("ol");rows.className="night-tournament-standings";
- hud.append(summary,rows);
+ rows.setAttribute("aria-label","Placar de pontos de Setor Zero");
+ hud.append(summary,matches,rows);
  viewport?.parentElement?.insertBefore(hud,viewport);
  return {
   render:(state:GameState)=>{
@@ -20,6 +23,20 @@ export function installNightTournamentHud(){
    hud.hidden=!n||!t;
    if(!n||!t)return;
    const standings=tournamentStandings(t);
+   matches.hidden=t.mode!=="knockout";
+   if(t.mode==="knockout"){
+    const games=t.bracket?.matches??[];
+    matches.replaceChildren(...games.map((game,i)=>{
+     const item=document.createElement("li");
+     const label=game.stage==="qualifier"?"Classificatória":"Final";
+     item.textContent=label+" · jogador "+game.playerIds[0]+" x jogador "+
+      game.playerIds[1]+" · "+game.points.join("–")+" · "+
+      game.rounds+"/"+(game.stage==="qualifier"?8:12)+" rodadas"+
+      (game.winnerId!==undefined?" · vencedor: "+game.winnerId:" · em andamento");
+     return item;
+    }));
+    if(games.length===0)matches.textContent="Aguardando os participantes sentarem.";
+   }else matches.replaceChildren();
    const duel=t.mode==="knockout"?knockoutCurrentMatch(t):undefined;
    const leader=standings[0];
    const label=leader?"líder: jogador "+leader.id+" ("+leader.points+" pts)":"aguardando";
