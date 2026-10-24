@@ -23,6 +23,9 @@ on:
       - 'games/lan_house_simulator/src/sim/multiplayerVisitors.ts'
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/ui/fridayMeetupPanel.ts'
+      - 'games/lan_house_simulator/src/ui/layoutEditor.ts'
+      - 'games/lan_house_simulator/src/main.ts'
+      - 'games/lan_house_simulator/scripts/verify_mobile_furniture.mjs'
       - 'games/lan_house_simulator/src/ui/managementPanels.ts'
       - 'games/lan_house_simulator/src/ui/timeWeatherPanel.ts'
       - 'games/lan_house_simulator/tests/friday-meetup.test.mjs'
@@ -68,6 +71,17 @@ jobs:
       - name: Inspect first Friday panel, real winner and persistent trophy gallery
         working-directory: games/lan_house_simulator
         run: node scripts/verify_friday_panel.mjs out/friday-panel
+      - name: Touch-test furniture placement on Android-sized Chromium
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_mobile_furniture.mjs out/mobile-furniture
+      - name: Store mobile touch screenshots and verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mobile-moveis-real
+          path: games/lan_house_simulator/out/mobile-furniture/
+          retention-days: 14
+          if-no-files-found: warn
       - name: Store actual UI screenshot and test verdict
         if: always()
         uses: actions/upload-artifact@v4
