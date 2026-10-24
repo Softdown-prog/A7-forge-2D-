@@ -99,6 +99,7 @@ test("a reabertura também aparece em corujão livre, sem prêmio fictício",()=
 test("dia comum e última sexta antiga não geram aviso de abertura",()=>{
  const {s}=fixture(2);
  toMinute(s,719);stepGame(s,1);
- stepGame(s,121);
+ // stepGame limita cada chamada a 120 minutos; avançar o último separadamente.
+ stepGame(s,120);stepGame(s,1);
  assert.equal(nightReopeningPresentation(s),undefined);
 });
