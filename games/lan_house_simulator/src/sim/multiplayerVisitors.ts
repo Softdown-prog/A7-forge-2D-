@@ -13,7 +13,9 @@ import {computerSeat} from "./route.js";
 import {navigableRoute} from "./navigation.js";
 import {isReserved,sendHome,queueVisualEvent} from "./customerFlow.js";
 
-const MAX_VISIT_AGE=85;
+/** Percursos reais de três amigos podem ultrapassar 85 minutos com a fila
+ * e a circulação do salão; não cancelar sessão já contratada em 85min. */
+const MAX_VISIT_AGE=125;
 const groupMembers=(s:GameState)=>s.multiplayerVisit?.memberIds
  .map(id=>s.customers.find(c=>c.id===id)).filter((c):c is Customer=>!!c)??[];
 
