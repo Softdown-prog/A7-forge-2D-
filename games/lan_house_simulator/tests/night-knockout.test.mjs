@@ -163,3 +163,31 @@ test("save antigo de torneio por pontos funciona e alterações na chave são re
  assert.equal(oldResult.mode,"league");
  assert.equal(isValidSave(old),true);
 });
+
+test("galeria concede um troféu real após final; não repete e recusa troféus falsos",()=>{
+ const {s,friday}=fixture(3);start(s,friday);
+ assert.equal(s.nightTournamentTrophies,undefined,"rascunho e início não dão troféu");
+ while(s.nightMeetup?.elapsed<539)stepGame(s,1);
+ assert.equal(s.nightTournamentTrophies,undefined,"título só após encerrar final");
+ stepGame(s,1);
+ const awarded=s.nightTournamentTrophies;
+ assert.equal(awarded?.length,1);
+ assert.deepEqual(awarded[0],{fridayDay:friday,
+  winnerId:s.nightMeetup.tournament.winnerId,participants:3});
+ const saved=parseImportedSave(serializeSave(s));
+ while(saved.nightMeetup)stepGame(saved,1);
+ assert.equal(saved.nightTournamentTrophies.length,1);
+ assert.equal(saved.nightTournamentTrophies[0].winnerId,s.nightTournamentTrophies[0].winnerId);
+ stepGame(saved,4);
+ assert.equal(saved.nightTournamentTrophies.length,1);
+ assert.equal(isValidSave(saved),true);
+ const counterfeit=JSON.parse(JSON.stringify(saved));
+ counterfeit.nightTournamentTrophies.push({...counterfeit.nightTournamentTrophies[0]});
+ assert.equal(isValidSave(counterfeit),false,"não pode duplicar troféu da mesma sexta");
+ const wrongDate=JSON.parse(JSON.stringify(saved));
+ wrongDate.nightTournamentTrophies[0].fridayDay++;
+ assert.equal(isValidSave(wrongDate),false,"campeonato só ocorre sexta");
+ const bogusChampion=JSON.parse(JSON.stringify(saved));
+ bogusChampion.nightTournamentTrophies[0].winnerId=bogusChampion.nextCustomerId+500;
+ assert.equal(isValidSave(bogusChampion),false);
+});
