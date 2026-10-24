@@ -21,7 +21,9 @@ export function stationPowerCount(s:GameState):number{
  return Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
 }
 export function stationHasCustomer(s:GameState,index:number):boolean{
- return s.customers.some(c=>c.pcIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage));
+ return s.customers.some(c=>
+  (c.pcIndex===index&&["to_pc","sitting","using","standing"].includes(c.stage))||
+  (c.multiplayerAssignedPc===index&&c.stage!=="leaving"));
 }
 export function stationUpgradeIssue(s:GameState,index:number):string|null{
  if(!Number.isInteger(index)||index<0||index>=stationPowerCount(s))return "PC inexistente.";
