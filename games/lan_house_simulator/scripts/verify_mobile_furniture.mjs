@@ -32,7 +32,9 @@ try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
  const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:1});
  const page=await context.newPage();page.on("pageerror",e=>pageErrors.push(String(e)));
- await page.addInitScript(({key,data})=>{localStorage.setItem(key,JSON.stringify(data));},{key:GAME_SAVE_KEY,data:state});
+ await page.addInitScript(({key,data})=>{
+  if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(data));
+ },{key:GAME_SAVE_KEY,data:state});
  const url="http://127.0.0.1:"+server.address().port+"/";
  await page.goto(url,{waitUntil:"networkidle"});
  await dismissPrivacyNotice(page);
