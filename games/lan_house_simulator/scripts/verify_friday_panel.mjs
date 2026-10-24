@@ -65,12 +65,21 @@ try{
  if(draft.totalMinutes<initial.totalMinutes||draft.totalMinutes>initial.totalMinutes+5)throw Error("O calendário avançou sem comando.");
  if(draft.customers.length!==initial.customers.length)throw Error("Foram criados visitantes fantasmas.");
  await page.screenshot({path:resolve(out,"primeira_sexta_painel_real.png")});
+ const fmt=page.locator("#first-meetup-format");
+ if(!await fmt.isEnabled())throw Error("Botão torneio deveria estar ativo.");
+ await fmt.click();
+ await page.waitForFunction(()=>document.querySelector("#first-meetup-format")?.textContent?.includes("Usar encontro livre"));
+ const selected=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),GAME_SAVE_KEY);
+ if(selected.fridayMeetupDraft?.format!=="tournament")throw Error("A escolha do torneio não ficou no save.");
+ if(selected.cash!==draft.cash||selected.revenue!==draft.revenue||selected.served!==draft.served)
+  throw Error("Inscrição em torneio cobrou antes dos participantes chegarem.");
+ await page.screenshot({path:resolve(out,"torneio_escolhido_no_jogo.png")});
  const confirm=page.locator("#first-meetup-confirm");
  if(!await confirm.isEnabled())throw Error("Confirmar encontro deveria estar ativo.");
  await confirm.click();
  await page.waitForFunction(()=>document.querySelector("#first-meetup-status")?.textContent?.includes("CONFIRMADO"));
  const confirmed=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),GAME_SAVE_KEY);
- if(confirmed.fridayMeetupDraft?.status!=="confirmed")throw Error("Confirmação não gravada no save.");
+ if(confirmed.fridayMeetupDraft?.status!=="confirmed"||confirmed.fridayMeetupDraft?.format!=="tournament")throw Error("Confirmação não gravada no save.");
  if(confirmed.cash!==draft.cash||confirmed.served!==draft.served||confirmed.revenue!==draft.revenue)
   throw Error("Confirmação cobrou antecipadamente ou inventou atendimento.");
  await page.screenshot({path:resolve(out,"primeira_sexta_confirmada_canvas_real.png")});
@@ -79,7 +88,7 @@ try{
  if(cancelled.fridayMeetupDraft!==undefined)throw Error("Cancelamento não liberou o rascunho.");
  if(errors.length)throw Error(errors.join(" | "));
  await writeFile(resolve(out,"verificacao.json"),JSON.stringify({status:"pass",firstFridayDay:draft.fridayMeetupDraft.fridayDay,
-  slots:2,savePreserved:true,confirmedWithoutUpfrontPayment:true,zeroExtraRevenue:true,interface:"jogo original"},null,2));
+  slots:2,savePreserved:true,tournamentFormatSelected:true,confirmedWithoutUpfrontPayment:true,zeroExtraRevenue:true,interface:"jogo original"},null,2));
  console.log("OK: planejamento em painel real, save, cancelamento, sem receita nem NPCs.");
 }finally{
  if(browser)await browser.close();
