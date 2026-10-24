@@ -12,9 +12,11 @@ import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 import {firstFridayEligibility,draftFridayMeetup} from "../dist/js/sim/fridayMeetup.js";
 import {confirmFridayMeetup} from "../dist/js/sim/nightMeetup.js";
+import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {dismissPrivacyNotice} from "./privacyNoticeTest.mjs";
 const root=resolve(import.meta.dirname,"../dist"),output=resolve(process.argv[2]??"out/night-video");
 await mkdir(output,{recursive:true});
+const recordTournament=process.env.LHS_RECORD_TOURNAMENT==="1";
 const mime={".html":"text/html",".js":"text/javascript",".css":"text/css",".png":"image/png",".svg":"image/svg+xml",".webp":"image/webp",".ogg":"audio/ogg"};
 const server=createServer(async(req,res)=>{
  try{
@@ -36,11 +38,14 @@ for(let pc=0;pc<3;pc++){
 }
 ok(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID));
 const friday=firstFridayEligibility(s).friday;
-ok(draftFridayMeetup(s,2));ok(confirmFridayMeetup(s));
+ok(draftFridayMeetup(s,2));
+if(recordTournament)ok(selectNightTournament(s,"tournament"));
+ok(confirmFridayMeetup(s));
 s.totalMinutes=friday*DAY_MINUTES-1;
 if(!isValidSave(s))throw Error("Save de sexta inválido.");
 const result={friday,checkpoints:[],observedNight:false,observedPaid:false,
- observedRound:false,uniquePcs:0,errors:[]};
+ observedRound:false,uniquePcs:0,observedScores:false,observedHud:false,
+ tournament:recordTournament,errors:[]};
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
@@ -54,6 +59,12 @@ try{
  await page.locator("#menu-continue").click();
  await page.locator("#game-app").waitFor({state:"visible"});
  await page.locator("#game").scrollIntoViewIfNeeded();
+ if(recordTournament){
+  const hud=page.locator("#night-tournament-hud");
+  await hud.waitFor({state:"visible"});
+  await hud.locator("summary").click();
+  await hud.scrollIntoViewIfNeeded();
+ }
  for(let second=0;second<60;second++){
   await page.waitForTimeout(1000);
   if(second%3!==0)continue;
@@ -61,6 +72,7 @@ try{
    const s=JSON.parse(localStorage.getItem(key)??"null");if(!s)return null;
    const n=s.nightMeetup;
    return n?{time:n.elapsed,phase:n.phase,paid:n.paidIds.length,started:n.startedAt??null,
+    scores:n.tournament?.scores.map(row=>({id:row.id,points:row.points,rounds:row.rounds}))??null,
     participants:n.memberIds.map(id=>{
      const c=s.customers.find(c=>c.id===id);
      return {id,stage:c?.stage??"missing",pc:c?.pcIndex??null};
@@ -74,6 +86,8 @@ try{
    result.uniquePcs=Math.max(result.uniquePcs,
     new Set(m.participants.filter(x=>x.pc!==null).map(x=>x.pc)).size);
   }
+  if(recordTournament&&m.scores?.some(row=>row.points>0))result.observedScores=true;
+  if(recordTournament&&await page.locator("#night-tournament-hud").isVisible())result.observedHud=true;
   result.checkpoints.push({second:second+1,...m});
   if([15,34,48].includes(second))await page.screenshot({
    path:resolve(output,"corujao_gameplay_real_"+(second+1)+".png")});
@@ -82,6 +96,8 @@ try{
  await context.close();
  await rename(video,resolve(output,"corujao_gameplay_canvas_original.webm"));
  if(result.errors.length)throw Error(result.errors.join(" | "));
+ if(recordTournament&&(!result.observedScores||!result.observedHud))
+  throw Error("Pontuação do torneio não apareceu no jogo original: "+JSON.stringify(result));
  if(!result.observedNight||!result.observedPaid||!result.observedRound||result.uniquePcs<2)
   throw Error("Não comprovou jogo noturno real: "+JSON.stringify(result));
  console.log("OK: gameplay verdadeiro, pagamento por pessoa, dois PCs distintos após meia-noite.");
