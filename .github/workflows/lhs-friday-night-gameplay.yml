@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'games/lan_house_simulator/src/sim/nightMeetup.ts'
+      - 'games/lan_house_simulator/src/sim/nightTournament.ts'
+      - 'games/lan_house_simulator/src/ui/nightTournamentHud.ts'
       - 'games/lan_house_simulator/scripts/record_friday_night.mjs'
       - 'games/lan_house_simulator/tests/night-meetup.test.mjs'
       - '.github/workflows/lhs-friday-night-gameplay.yml'
@@ -23,7 +25,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
-          node --test tests/night-meetup.test.mjs tests/friday-meetup.test.mjs
+          node --test tests/night-meetup.test.mjs tests/night-tournament.test.mjs tests/friday-meetup.test.mjs
       - name: Install real Chromium and video encoder
         working-directory: games/lan_house_simulator
         run: |
@@ -39,6 +41,14 @@ jobs:
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/night-video/corujao_gameplay_canvas_original.mp4
           test -s out/night-video/corujao_gameplay_canvas_original.mp4
+      - name: Film REAL Setor Zero tournament with live scores
+        working-directory: games/lan_house_simulator
+        run: |
+          LHS_RECORD_TOURNAMENT=1 node scripts/record_friday_night.mjs out/tournament-video
+          ffmpeg -v error -y -i out/tournament-video/corujao_gameplay_canvas_original.webm \
+            -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
+            -movflags +faststart out/tournament-video/torneio_setor_zero_canvas_original.mp4
+          test -s out/tournament-video/torneio_setor_zero_canvas_original.mp4
       - name: Preserve source footage, PNG and telemetria
         if: always()
         uses: actions/upload-artifact@v4
@@ -48,5 +58,16 @@ jobs:
             games/lan_house_simulator/out/night-video/*.mp4
             games/lan_house_simulator/out/night-video/*.png
             games/lan_house_simulator/out/night-video/*.json
+          retention-days: 21
+          if-no-files-found: warn
+      - name: Preserve REAL tournament gameplay and scoreboard evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-torneio-setor-zero-gameplay-real
+          path: |
+            games/lan_house_simulator/out/tournament-video/*.mp4
+            games/lan_house_simulator/out/tournament-video/*.png
+            games/lan_house_simulator/out/tournament-video/*.json
           retention-days: 21
           if-no-files-found: warn
