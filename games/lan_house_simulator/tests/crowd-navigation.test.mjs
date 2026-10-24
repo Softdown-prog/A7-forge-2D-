@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame} from "../dist/js/sim/engine.js";
 import {crowdRoute} from "../dist/js/sim/crowdNavigation.js";
-import {canTraverseLocalStep} from "../dist/js/sim/navigation.js";
+import {canTraverseLocalStep,localStepValidator,navigableRoute} from "../dist/js/sim/navigation.js";
 import {workerRoute} from "../dist/js/sim/workerNavigation.js";
 
 test("desvio de multidão contorna corpos e preserva a porta como passagem",()=>{
@@ -62,4 +62,44 @@ test("destino bloqueado por divisória continua inacessível apesar da espera",(
  s.interiorWalls=Array.from({length:6},(_,y)=>({axis:"y",x:4,y}));
  assert.equal(crowdRoute(s,client,{x:blocker.x,y:blocker.y}),null,
   "um corpo no objetivo não pode criar um atalho através da parede");
+});
+
+test("verificacao de subpassos em lote equivale a regra de colisao com paredes e portas",()=>{
+ const layouts=[
+  {walls:[],doors:[],north:0},
+  {walls:[{axis:"y",x:4,y:2},{axis:"y",x:4,y:3},{axis:"x",x:3,y:4}],doors:[],north:0},
+  {walls:[{axis:"y",x:4,y:2},{axis:"y",x:4,y:3},{axis:"x",x:3,y:4}],
+   doors:[{axis:"y",x:4,y:2}],north:0},
+  {walls:[{axis:"x",x:2,y:-1},{axis:"y",x:4,y:2}],doors:[],north:2}
+ ];
+ const xs=[.002,.5,2.1,2.99,3,3.01,3.5,3.99,4,4.01,5.5,7.998];
+ const ys=[-1.5,.002,.5,1.99,2,2.01,2.5,3,3.5,4,5.998];
+ for(const {walls,doors,north} of layouts){
+  const s=createGame(911);s.roomExtensions={west:0,east:0,south:0,north};
+  s.interiorWalls=walls;s.interiorDoors=doors;
+  const batch=localStepValidator(s);
+  for(let k=0;k<xs.length*ys.length;k+=3){
+   const from={x:xs[k%xs.length],y:ys[k%ys.length]};
+   const to={x:xs[(k*7+1)%xs.length],y:ys[(k*5+3)%ys.length]};
+   assert.equal(batch(from,to),canTraverseLocalStep(s,from,to),
+    "divisoria e limite divergem no layout "+JSON.stringify({walls,doors,north})+
+    " entre "+JSON.stringify(from)+" e "+JSON.stringify(to));
+  }
+  assert.equal(batch({x:3,y:2},{x:NaN,y:3}),false);
+  assert.equal(batch({x:Infinity,y:2},{x:3,y:2}),false);
+ }
+});
+
+test("cada nova busca enxerga portas e paredes alteradas durante a partida",()=>{
+ const s=createGame(92),from={x:3.7,y:2.5},to={x:4.3,y:2.5};
+ assert.equal(localStepValidator(s)(from,to),true);
+ s.interiorWalls=[{axis:"y",x:4,y:2}];
+ assert.equal(localStepValidator(s)(from,to),false);
+ assert.equal(navigableRoute(s,from,to)!==null,true,"há desvio pelo corredor");
+ s.interiorDoors=[{axis:"y",x:4,y:2}];
+ assert.equal(localStepValidator(s)(from,to),true);
+ s.interiorDoors=[];
+ assert.equal(localStepValidator(s)(from,to),false);
+ s.interiorWalls=[];
+ assert.equal(localStepValidator(s)(from,to),true);
 });

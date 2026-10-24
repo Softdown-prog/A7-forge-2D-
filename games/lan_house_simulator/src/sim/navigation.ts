@@ -7,10 +7,11 @@ import {editableObjects,objectRect} from "./editableObjects.js";
 function furnishedRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const b=roomBounds(s),step=.5,cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
  const objects=editableObjects(s).filter(o=>o.surface==="floor").map(objectRect),point=(key:number)=>({x:b.minX+.25+(key%cols)*step,y:b.minY+.25+Math.floor(key/cols)*step});
+ const traverse=localStepValidator(s);
  const inside=(p:Point)=>p.x>b.minX&&p.x<b.maxX&&p.y>b.minY&&p.y<b.maxY;
  const clear=(p:Point)=>inside(p)&&(Math.hypot(p.x-to.x,p.y-to.y)<.22||objects.every(r=>!(p.x>r.minX-.035&&p.x<r.maxX+.035&&p.y>r.minY-.035&&p.y<r.maxY+.035)));
  if(!inside(to))return null;
- const segment=(a:Point,d:Point)=>{if(!canTraverseLocalStep(s,a,d))return false;const n=Math.max(1,Math.ceil(Math.hypot(d.x-a.x,d.y-a.y)/.1));for(let i=1;i<=n;i++)if(!clear({x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n}))return false;return true;};
+ const segment=(a:Point,d:Point)=>{if(!traverse(a,d))return false;const n=Math.max(1,Math.ceil(Math.hypot(d.x-a.x,d.y-a.y)/.1));for(let i=1;i<=n;i++)if(!clear({x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n}))return false;return true;};
  if(segment(from,to))return [{...to}];
  const queue:number[]=[],parent=new Map<number,number>();
  for(let y=Math.max(0,Math.floor((from.y-b.minY)/step)-2);y<Math.min(rows,Math.floor((from.y-b.minY)/step)+3);y++)for(let x=Math.max(0,Math.floor((from.x-b.minX)/step)-2);x<Math.min(cols,Math.floor((from.x-b.minX)/step)+3);x++){
@@ -50,6 +51,22 @@ export function canTraverseLocalStep(s:GameState,from:Point,to:Point):boolean{
  return !(s.interiorWalls??[]).some(w=>
    !(s.interiorDoors??[]).some(d=>barrierId(w.axis,w.x,w.y)===barrierId(d.axis,d.x,d.y)) &&
    crossesClosedWall(w,from,to));
+}
+/** Uma busca pode testar milhares de subpassos no mesmo desenho.
+ * Captura as paredes fechadas e os limites UMA vez por busca, sem mudar
+ * a regra pública canTraverseLocalStep usada pelos movimentos individuais.
+ * Criar novo validador a cada rota; nada é guardado no save ou entre obras.
+ */
+export function localStepValidator(s:GameState):(from:Point,to:Point)=>boolean{
+ const b=roomBounds(s),eps=.001;
+ const doors=new Set((s.interiorDoors??[]).map(d=>barrierId(d.axis,d.x,d.y)));
+ const closed=(s.interiorWalls??[]).filter(w=>!doors.has(barrierId(w.axis,w.x,w.y)));
+ return (from:Point,to:Point):boolean=>{
+  if(!Number.isFinite(from.x)||!Number.isFinite(from.y)||
+     !Number.isFinite(to.x)||!Number.isFinite(to.y))return false;
+  if(to.x<b.minX+eps||to.x>b.maxX-eps||to.y<b.minY+eps||to.y>b.maxY-eps)return false;
+  return !closed.some(w=>crossesClosedWall(w,from,to));
+ };
 }
 /** Grade de navegação separada do desenho; portas permitem passagem, paredes bloqueiam. */
 function barrierId(axis:"x"|"y",x:number,y:number):string{return axis+":"+x+":"+y;}

@@ -1,7 +1,7 @@
 import {editableObjects,objectRect} from "./editableObjects.js";
 import type {Customer,GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
-import {canTraverseLocalStep} from "./navigation.js";
+import {localStepValidator} from "./navigation.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {pcCount,pcPosition} from "./engine.js";
 import {vendingMachines,VENDING_WIDTH,VENDING_DEPTH} from "./layout.js";
@@ -12,7 +12,7 @@ const NEIGHBOR_STEPS=[[1,0],[-1,0],[0,1],[0,-1]] as const;
 /** Desvio temporário quando o corredor fica congestionado. Os corpos atuais
  * entram como obstáculos; os passos continuam sendo executados pelo motor. */
 export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=.5):Point[]|null{
- const b=roomBounds(s);
+ const b=roomBounds(s),traverse=localStepValidator(s);
  const custom=s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:")),objects=custom?editableObjects(s).filter(o=>o.surface==="floor").map(objectRect):[];
  const bodies=s.customers.filter(other=>other.id!==c.id);
  const desks=Array.from({length:pcCount(s)},(_,i)=>pcPosition(i,s));
@@ -35,7 +35,7 @@ export function crowdRoute(s:GameState,c:Customer,destination:Point,step:.5|.25=
  if(!staticClear(destination))return null; // Nunca rotear para dentro de um móvel.
  const destinationOccupied=!clear(destination);
  const segmentClear=(a:Point,d:Point,allowOccupiedGoal=false)=>{
-  if(!canTraverseLocalStep(s,a,d))return false;
+  if(!traverse(a,d))return false;
   const n=Math.max(1,Math.ceil(Math.hypot(d.x-a.x,d.y-a.y)/.08));
   for(let i=1;i<=n;i++){
    const p={x:a.x+(d.x-a.x)*i/n,y:a.y+(d.y-a.y)*i/n};
