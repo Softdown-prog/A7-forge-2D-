@@ -3,17 +3,20 @@ import {gameYear} from "../sim/era.js";
 import {DAY_MINUTES,type GameState} from "../sim/types.js";
 import {GAME_LAST_MINUTE} from "../sim/mailCalendar.js";
 import {weekdayName} from "../sim/campaignWeek.js";
+import {futureNightClock} from "../sim/futureNightClock.js";
 
 /** Uses only the existing simulation clock and the observed day's weather.
  * The next day's weather is randomized at the daily rollover, not forecast. */
 export function timeWeatherSnapshot(s:GameState){
  const day=Math.max(0,Math.floor(s.totalMinutes/DAY_MINUTES));
+ const night=s.nightMeetup?futureNightClock(s.nightMeetup.fridayDay,s.nightMeetup.elapsed):null;
  const date=String(day%30+1).padStart(2,"0")+"/"+
    String(Math.floor(day%360/30)+1).padStart(2,"0")+"/"+gameYear(s);
  const time=displayTime(s);
  const rainy=s.weather==="rain";
  return {
-  day:dayNumber(s),date,time,weekday:weekdayName(day+1),
+  day:night?.calendarDay??dayNumber(s),date:night?.date??date,time,
+  weekday:night?.weekday??weekdayName(day+1),nightActive:!!night,
   weather:rainy?"Chuva":"Tempo firme",
   weatherIcon:rainy?"rain":"sun",
   impact:rainy
@@ -49,5 +52,7 @@ export function renderTimeWeatherPanel(
  setText("time-weather-hour",view.time);
  setText("time-weather-condition",view.weather);
  setText("time-weather-effect",view.impact);
- setText("time-weather-outlook",view.outlook);
+ setText("time-weather-outlook",view.nightActive
+  ?"Encontro noturno em andamento. O sábado normal reabre às 10h, após a saída da turma."
+  :view.outlook);
 }

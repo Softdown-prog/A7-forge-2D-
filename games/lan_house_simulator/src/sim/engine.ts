@@ -37,6 +37,7 @@ import {sendHome,refreshCounterQueue} from "./customerFlow.js";
 import {spawn,spawnPrintWalkIn,spawnDiscWalkIn} from "./customerArrival.js";
 import {tickMultiplayerVisitors,validMultiplayerVisit} from "./multiplayerVisitors.js";
 import {validFridayMeetupDraft} from "./fridayMeetup.js";
+import {beginNightMeetup,nightScheduledForClosing,advanceNightMeetup,validNightMeetup} from "./nightMeetup.js";
 import {advanceCustomer} from "./customerLifecycle.js";
 
 function nextDay(s: GameState): void {
@@ -102,7 +103,18 @@ function prepareClosing(s:GameState):void {
  if(next)sendHome(s,next);
 }
 function advanceMinute(s: GameState): void {
+  if(s.nightMeetup){
+    if(advanceNightMeetup(s)){
+      s.totalMinutes++; // Uma única virada para sábado 10h.
+      nextDay(s);
+    }
+    return;
+  }
   if(s.totalMinutes>=GAME_LAST_MINUTE)return;
+  if(nightScheduledForClosing(s)){
+    beginNightMeetup(s);
+    if(s.nightMeetup){advanceNightMeetup(s);return;}
+  }
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
   const energyExpense=energyCostPerMinute(s)+ps1EnergyCostPerMinute(s);
@@ -175,7 +187,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validNightMeetup(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -190,6 +202,7 @@ export function isValidSave(value: unknown): value is GameState {
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&
       (c.multiplayerVisitId===undefined||(Number.isInteger(c.multiplayerVisitId)&&c.multiplayerVisitId>0&&c.multiplayerVisitId<=v.nextCustomerId!))&&
+      (c.nightMeetupDay===undefined||(v.nightMeetup!==undefined&&c.nightMeetupDay===v.nightMeetup.fridayDay))&&
       (c.multiplayerAssignedPc===undefined||(Number.isInteger(c.multiplayerAssignedPc)&&c.multiplayerAssignedPc>=0&&c.multiplayerAssignedPc<pcCount(v as GameState)))&&
       (c.ps1StationIndex===undefined||(Number.isInteger(c.ps1StationIndex)&&c.ps1StationIndex>=0&&
         c.ps1StationIndex<(v.ps1Stations?.length??0)&&c.pcIndex===null))&&

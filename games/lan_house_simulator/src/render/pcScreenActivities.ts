@@ -23,6 +23,9 @@ export function pcActivityForSession(customerId:number,pcIndex:number,year:numbe
 export function pcActivityForStation(s:GameState,pc:number,year:number):PcScreenActivity|null{
  const customer=s.customers.find(c=>c.pcIndex===pc&&c.stage==="using");
  if(!customer)return null;
+ if(customer.nightMeetupDay!==undefined&&
+    s.nightMeetup?.fridayDay===customer.nightMeetupDay&&
+    s.nightMeetup.phase==="playing")return "lan";
  if(customer.multiplayerVisitId!==undefined&&
     s.multiplayerVisit?.id===customer.multiplayerVisitId&&
     s.multiplayerVisit.startedMinute!==undefined)return "lan";

@@ -38,6 +38,7 @@ export function draftFridayMeetup(s:GameState,seats:2|3):Result{
 }
 export function cancelFridayMeetupDraft(s:GameState):Result{
  if(!s.fridayMeetupDraft)return {ok:false,message:"Não há rascunho para cancelar."};
+ if(s.nightMeetup)return {ok:false,message:"Não é possível cancelar o turno já iniciado."};
  s.fridayMeetupDraft=undefined;
  return {ok:true,message:"Rascunho da sexta cancelado sem custo e sem alterar o expediente."};
 }
@@ -46,7 +47,8 @@ export function validFridayMeetupDraft(s:Partial<GameState>):boolean{
  if(rounds!==undefined&&(!Number.isInteger(rounds)||rounds<0||rounds>1000000))return false;
  const draft=s.fridayMeetupDraft;
  if(draft===undefined)return true;
- return !!draft&&draft.status==="draft"&&(draft.seats===2||draft.seats===3)&&
+ return !!draft&&(draft.status==="draft"||draft.status==="confirmed")&&
+  !(s.nightMeetup&&draft.status==="confirmed")&&(draft.seats===2||draft.seats===3)&&
   Number.isInteger(draft.fridayDay)&&draft.fridayDay>=1&&
   draft.fridayDay<=GAME_END_DAY&&weekdayIndex(draft.fridayDay)===4;
 }

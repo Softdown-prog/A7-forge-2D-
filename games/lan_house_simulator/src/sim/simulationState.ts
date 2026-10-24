@@ -3,6 +3,7 @@ import type {Costume,GameState,Point,Result} from "./types.js";
 import {DAY_MINUTES,OPEN_HOUR} from "./types.js";
 import {INITIAL_CASH} from "./financialClarity.js";
 import {type PlacedPoint} from "./layout.js";
+import {futureNightClock} from "./futureNightClock.js";
 import {annexComputerPosition} from "./stations.js";
 import {pcUnderRepair} from "./services.js";
 
@@ -28,6 +29,7 @@ export function createGame(seed=72421,economyMode:"classic"|"historical"="classi
 }
 export function dayNumber(s: GameState): number { return Math.floor(s.totalMinutes / DAY_MINUTES) + 1; }
 export function displayTime(s: GameState): string {
+  if(s.nightMeetup)return futureNightClock(s.nightMeetup.fridayDay,s.nightMeetup.elapsed).time;
   const value = OPEN_HOUR * 60 + s.totalMinutes % DAY_MINUTES;
   return String(Math.floor(value / 60)).padStart(2, "0") + ":" + String(value % 60).padStart(2, "0");
 }
