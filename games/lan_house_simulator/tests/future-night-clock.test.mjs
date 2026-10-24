@@ -31,5 +31,5 @@ test("a madrugada atravessa um mês e um ano sem usar calendário real",()=>{
 
 test("dados de madrugada inválidos não corrompem o estado",()=>{
  for(const day of [0,-1,1,3,NaN])assert.throws(()=>futureNightClock(day,0),RangeError);
- for(const elapsed of [-1,601,23.4,NaN])assert.throws(()=>futureNightClock(2,elapsed),RangeError);
+ for(const elapsed of [-1,721,23.4,NaN])assert.throws(()=>futureNightClock(2,elapsed),RangeError);
 });
