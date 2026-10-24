@@ -716,3 +716,9 @@ O troféu é inicialmente **digital no histórico do estabelecimento**, não uma
 - Depois do aviso de abertura, o painel mostra até meio-dia quantos clientes normais estão presentes e quantos estão nos PCs. Os contadores são derivados das entidades `Customer` reais, com o sábado confirmado por `lastNightMeetup`, sem campos novos no save.
 - Testes `tests/saturday-first-customers.test.mjs` percorrem toda a noite para 2 e 3 participantes e encontro livre, e seguem no sábado até a chegada real, pagamento e uso do PC. Conferem que o corujão anterior e troféus não mudam, que a persistência funciona e que a partida continua após reload.
 - O Chromium captura `primeiro_cliente_real_sabado_pc.png` após o próprio motor confirmar que há cliente normal usando um PC pago. Nenhum screenshot ou vídeo de gameplay fictício.
+
+### Sábado integral após o corujão: atendimento, filas, compras e fechamento
+
+- Teste `tests/saturday-full-shift.test.mjs`: roda os 720 minutos de sábado com 2 e 3 participantes ou encontro livre. Acompanha IDs reais, filas de caixa, filas de mercadorias, vendas, sessões, saída, reload às 21h e virada única para domingo.
+- O painel isométrico do corujão passa a indicar o encerramento real de sábado entre 21h e 22h, incluindo a quantidade de clientes presentes e os que já estão indo para a porta. Não cria NPC, não altera vendas, não força saída e não prolonga a madrugada.
+- O Chromium executa um ramo do save com o sábado verdadeiro até 21h20, valida o estado salvo e captura `sabado_fechamento_2120_real.png`. O ramo não interfere nas cinco sextas consecutivas do teste de troféus.

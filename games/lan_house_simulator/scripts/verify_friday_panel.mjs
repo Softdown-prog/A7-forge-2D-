@@ -253,6 +253,36 @@ try{
  }
  await customerPage.screenshot({path:resolve(out,"primeiro_cliente_real_sabado_pc.png")});
  await customerPage.close();
+ // Ramo do MESMO save: registrar fechamento sem atrasar a sequência das
+ // cinco sextas usada pelo teste de troféus e sem inventar clientes.
+ const saturdayShift=parseImportedSave(serializeSave(state));
+ let cutoff=0;
+ while(saturdayShift.totalMinutes%DAY_MINUTES<680&&cutoff++<720)
+  stepGame(saturdayShift,1);
+ if(saturdayShift.totalMinutes%DAY_MINUTES!==680||
+    nightReopeningPresentation(saturdayShift)?.phase!=="closing"||
+    !isValidSave(saturdayShift))
+  throw Error("O sábado não chegou às 21h20 em fechamento real.");
+ const closingPage=await browser.newPage({viewport:{width:1280,height:850}});
+ closingPage.on("pageerror",e=>errors.push(String(e)));
+ await closingPage.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+  {key:GAME_SAVE_KEY,payload:saturdayShift});
+ await closingPage.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(closingPage);
+ await closingPage.locator("#menu-continue").click();
+ const closingLabel=closingPage.locator("#night-reopening-announcement");
+ await closingLabel.waitFor({state:"visible"});
+ if(!(await closingLabel.textContent()).includes("ENCERRAMENTO")||
+    !await closingPage.locator("#game").isVisible())
+  throw Error("Aviso do encerramento real não apareceu no sábado.");
+ await closingPage.screenshot({path:resolve(out,"sabado_fechamento_2120_real.png")});
+ await closingPage.close();
+ while(saturdayShift.totalMinutes%DAY_MINUTES!==0&&
+   saturdayShift.totalMinutes%DAY_MINUTES<720)
+  stepGame(saturdayShift,1);
+ if(saturdayShift.nightMeetup||!isValidSave(saturdayShift)||
+    nightReopeningPresentation(saturdayShift)!==undefined)
+  throw Error("Domingo começou sem encerrar o sábado de forma válida.");
  if(!isValidSave(state)||state.nightTournamentTrophies?.length!==1||
    state.lastNightMeetup?.tournament?.winnerId!==state.nightTournamentTrophies[0].winnerId)
   throw Error("A final não produziu um troféu verdadeiro e persistente.");
@@ -396,6 +426,7 @@ try{
   realSevenAMPrizeCaptured:true,reopeningCountdownCaptured:true,
   realSaturdayTenAMOpeningCaptured:true,
   firstSaturdayPayingPcCustomerCaptured:true,
+  realSaturdayClosingCaptured:true,
   repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
   mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");

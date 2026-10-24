@@ -8,7 +8,7 @@ import {currentCampaignDay,weekdayIndex} from "../sim/campaignWeek.js";
 import {NIGHT_MORNING_EXIT_OFFSET,NIGHT_MAX_EXIT_OFFSET} from "../sim/futureNightClock.js";
 
 export type NightReopeningPresentation={
- phase:"farewell"|"preparing"|"open"|"service";
+ phase:"farewell"|"preparing"|"open"|"service"|"closing";
  title:string;details:string;fridayDay:number;
  remainingGuests:number;minutesUntilOpen:number;progress:number;
  /** Clientes de sábado presentes e clientes usando PCs — números do motor, não simulados. */
@@ -39,7 +39,21 @@ export function nightReopeningPresentation(s:GameState):NightReopeningPresentati
  const last=s.lastNightMeetup;
  const minute=s.totalMinutes%DAY_MINUTES;
  if(!last||currentCampaignDay(s)!==last.fridayDay+1||
-    weekdayIndex(last.fridayDay+1)!==5||minute>120)return undefined;
+    weekdayIndex(last.fridayDay+1)!==5)return undefined;
+ // Fechamento gradual é o mesmo do motor: 21h até as 22h de sábado.
+ // Nada de expulsar personagens ou simular uma saída adicional.
+ if(minute>=660){
+  const current=s.customers.filter(c=>c.nightMeetupDay===undefined);
+  const leaving=current.filter(c=>c.stage==="leaving").length;
+  return {
+   phase:"closing",title:"SÁBADO · ENCERRAMENTO",
+   details:current.length+" cliente(s) no salão · "+leaving+" saindo pela porta",
+   fridayDay:last.fridayDay,remainingGuests:current.length,
+   minutesUntilOpen:0,progress:(minute-660)/60,
+   customersNow:current.length,atComputers:current.filter(c=>c.stage==="using").length
+  };
+ }
+ if(minute>120)return undefined;
  if(minute>12){
   const current=s.customers.filter(c=>c.nightMeetupDay===undefined);
   const atComputers=current.filter(c=>c.stage==="using"||c.stage==="sitting").length;
@@ -64,18 +78,19 @@ export function drawNightReopening(
 ):void{
  const state=nightReopeningPresentation(s);
  if(!state)return;
- const opened=state.phase==="open",service=state.phase==="service",width=332,height=80;
+ const opened=state.phase==="open",service=state.phase==="service",
+  closing=state.phase==="closing",width=332,height=80;
  const x=ctx.canvas.width-width-18,y=20;
  const pulse=opened?0.8+0.2*Math.sin(time*2):1;
  ctx.save();
  ctx.fillStyle="rgba(16,31,39,.93)";
  ctx.fillRect(x,y,width,height);
  ctx.lineWidth=1.7;
- ctx.strokeStyle=opened?"#d9d07f":service?"#81c8aa":"#80bacc";
+ ctx.strokeStyle=opened?"#d9d07f":service?"#81c8aa":closing?"#f0b475":"#80bacc";
  ctx.strokeRect(x+.9,y+.9,width-1.8,height-1.8);
  ctx.textAlign="left";ctx.textBaseline="middle";
  ctx.globalAlpha=pulse;
- ctx.fillStyle=opened?"#ffeb9a":service?"#a8eac4":"#b7ecdf";
+ ctx.fillStyle=opened?"#ffeb9a":service?"#a8eac4":closing?"#ffd1a4":"#b7ecdf";
  ctx.font="bold 15px system-ui,sans-serif";
  ctx.fillText(state.title,x+14,y+22,width-25);
  ctx.globalAlpha=1;
