@@ -26,12 +26,13 @@ export function installFridayMeetupPanel(
  const three=document.createElement("button");three.type="button";three.className="slice";three.id="first-meetup-three";three.textContent="Estudar 3 vagas";
  const format=document.createElement("button");format.type="button";format.className="slice";format.id="first-meetup-format";format.textContent="Ativar torneio amistoso";
  const ranking=document.createElement("div");ranking.id="first-meetup-ranking";ranking.className="management-empty";
+ const gallery=document.createElement("div");gallery.id="first-meetup-trophies";gallery.className="management-empty";gallery.hidden=true;
  const confirm=document.createElement("button");confirm.type="button";confirm.className="slice primary";confirm.id="first-meetup-confirm";confirm.textContent="Confirmar encontro de sexta";
  const cancel=document.createElement("button");cancel.type="button";cancel.className="slice";cancel.id="first-meetup-cancel";cancel.textContent="Descartar rascunho";
  const caution=document.createElement("p");caution.className="management-empty";
  caution.textContent="Confirmar não cobra antecipadamente. Cada amigo paga no caixa; o salão fecha ao público às 22h e reabre sábado às 10h.";
  actions.append(two,three,format,confirm,cancel);
- section.append(heading,description,status,info,ranking,actions,caution);
+ section.append(heading,description,status,info,ranking,gallery,actions,caution);
  admin.querySelector("#section-finance")?.append(section);
  two.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),2)));
  three.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),3)));
@@ -83,6 +84,13 @@ export function installFridayMeetupPanel(
       :draft?.format==="tournament"
        ?"Torneio por pontos: placar por rodadas reais. Prêmio máximo R$ 40 ao campeão."
        :"Encontro livre. Também é possível escolher torneio por pontos ou eliminatórias.";
+   const trophies=s.nightTournamentTrophies??[];
+   gallery.hidden=trophies.length===0;
+   gallery.textContent=trophies.length
+    ?"🏆 Galeria da lan house · "+trophies.length+" troféu(s) conquistados · "+
+      trophies.slice(-4).reverse().map(x=>campaignDate(x.fridayDay)+
+       ": campeão jogador "+x.winnerId+" ("+x.participants+" participantes)").join(" · ")
+    :"";
    format.textContent=draft?.format==="tournament"?"Ativar eliminatórias":
     draft?.format==="knockout"?"Usar encontro livre":"Ativar torneio por pontos";
    format.disabled=!draft||draft.status!=="draft"||!!s.nightMeetup;
