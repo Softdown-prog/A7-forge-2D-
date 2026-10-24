@@ -647,3 +647,18 @@ A mesma noite jogável pode ser **encontro livre** (padrão e compatível com sa
 - Validação dedicada: `tests/night-tournament.test.mjs` (2 e 3 convidados, classificação, caixa, saves, alterações fraudulentas); `scripts/verify_friday_panel.mjs` (seleção visual real); workflow `lhs-night-tournament.yml` (sem dependência de Chromium) e gravação da variante noturna real no workflow `lhs-friday-night-gameplay.yml`.
 
 **Limitação consciente:** esta é a primeira edição do campeonato, com uma rodada de classificação durante a madrugada. Chaveamento de eliminatórias, grupos rivais, múltiplas equipes, troféus e premiações maiores continuam futuras extensões; não apresentar o placar simples como um FPS jogável.
+
+
+## Etapa 4D — eliminatórias reais com 2 ou 3 participantes (24/10/2026)
+
+**Formato opcional e separado** do encontro livre e do torneio amistoso por pontos (4C). O botão na Administração → Finanças → Primeira sexta percorre Encontro livre → Por pontos → Eliminatórias, sempre antes da confirmação, sem taxa antecipada.
+
+- Para **2 jogadores**, há uma final direta. Para **3 jogadores**, os dois primeiros clientes pagantes jogam uma classificatória de 8 rodadas e o terceiro, com vaga automática, enfrenta o vencedor numa final de 12 rodadas. Nunca aparece um quarto personagem imaginário.
+- Uma rodada só pontua **quando os dois competidores estão no salão, com status `using`, em PCs efetivamente ocupados**. Durante a ida à loja, qualquer confronto em que um competidor estiver ausente fica pausado. A chave avança somente quando o confronto anterior terminou.
+- O desempate é determinístico por ID do personagem; o jogo registra placar, classificados e campeão, sem sorteio ou resultados artificiais após recarregar.
+- `nightKnockout.ts` mantém a ordem original de inscrição em `seedIds`, resultados por confronto e uma chave persistente. O placar recolhível acima do Canvas exibe **classificatória/final, jogadores, pontos e rodadas**.
+- Às 7h, o vencedor da final (não necessariamente quem somou mais pontos na noite) recebe a premiação máxima de 20% das receitas de acesso, até R$ 40 e limitada ao caixa disponível. O cálculo acontece **uma única vez** e o valor fica no relatório da última madrugada. Se os confrontos não terminarem, não há prêmio.
+- Saves antigos que só têm `scores` continuam válidos. Validações novas recusam IDs inventados, placares incompatíveis com as rodadas, chave adulterada, campeão incorreto e prêmio maior que o teto.
+- Validação: `tests/night-knockout.test.mjs` cobre 2 e 3 participantes, partida física, pausas, save intermediário, prêmio e antifraude; o workflow `lhs-night-tournament.yml` roda junto às regressões anteriores. Gravação opcional `LHS_RECORD_KNOCKOUT=1` registra Canvas + telemetria para demonstrar que a eliminatória ocorre realmente no jogo.
+
+**Limite:** é uma chave curta dentro do primeiro corujão da turma de Eric. Não implementar adversários fantasmas, troféus que parecem existir sem um objeto/sistema no jogo, nem campeonatos gigantes fora da disponibilidade real de computadores. Expansões futuras exigem público novo e turnos/fases desenhados e testados.
