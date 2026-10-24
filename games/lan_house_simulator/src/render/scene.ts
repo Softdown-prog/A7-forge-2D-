@@ -40,6 +40,7 @@ import {copyingAnimationActive} from "../sim/discCopy.js";
 import {drawCounterDiscCopier} from "./discCopierArt.js";
 import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
+import {drawNightReopening} from "./nightReopening.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -153,6 +154,7 @@ export class SceneRenderer {
     drawNightMatchMarkers(ctx,s,camera);
     drawNightMatchReactions(ctx,s,camera,elapsedSeconds,matchReactions);
     drawNightPrizePresentation(ctx,s,camera,elapsedSeconds);
+    drawNightReopening(ctx,s,elapsedSeconds);
     this.hudInside(ctx,s);
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */

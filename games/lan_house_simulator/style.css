@@ -1109,3 +1109,12 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  font:650 12px/1.45 system-ui,sans-serif;overflow-wrap:anywhere}
 .night-prize-announcement[hidden]{display:none}
 @media(max-width:650px){.night-prize-announcement{padding:6px 8px;font-size:11px}}
+
+/* Reabertura após o corujão; painel somente informativo sobre o salão real. */
+.night-reopening-announcement{margin:0 0 8px;padding:7px 10px;
+ border-radius:9px;border:1px solid #8eaeb4;background:#eaf5f3;
+ color:#214547;font:650 12px/1.5 system-ui,sans-serif;overflow-wrap:anywhere}
+.night-reopening-announcement[data-phase="open"]{border-color:#b7a466;
+ background:#fff7dc;color:#51411f}
+.night-reopening-announcement[hidden]{display:none}
+@media(max-width:650px){.night-reopening-announcement{font-size:11px;padding:6px 8px}}

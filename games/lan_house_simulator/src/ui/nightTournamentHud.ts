@@ -6,6 +6,7 @@ import type {GameState} from "../sim/types.js";
 import {tournamentStandings} from "../sim/nightTournament.js";
 import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
 import {nightPrizePresentation,prizeAmountText} from "../render/nightPrizePresentation.js";
+import {nightReopeningPresentation} from "../render/nightReopening.js";
 export function installNightTournamentHud(){
  const viewport=document.getElementById("scene-viewport");
  const hud=document.createElement("details");
@@ -23,8 +24,17 @@ export function installNightTournamentHud(){
  prizeNotice.hidden=true;
  viewport?.parentElement?.insertBefore(hud,viewport);
  hud.insertAdjacentElement("afterend",prizeNotice);
+ const reopening=document.createElement("p");
+ reopening.id="night-reopening-announcement";reopening.className="night-reopening-announcement";
+ reopening.setAttribute("aria-live","off");reopening.hidden=true;
+ prizeNotice.insertAdjacentElement("afterend",reopening);
  return {
   render:(state:GameState)=>{
+   const transition=nightReopeningPresentation(state);
+   reopening.hidden=!transition;
+   reopening.dataset.phase=transition?.phase??"";
+   const transitionLabel=transition?transition.title+" · "+transition.details:"";
+   if(reopening.textContent!==transitionLabel)reopening.textContent=transitionLabel;
    const payment=nightPrizePresentation(state);
    prizeNotice.hidden=!payment;
    const paymentLabel=payment?"🏆 7h · Prêmio pago ao jogador "+payment.winnerId+
