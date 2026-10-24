@@ -216,7 +216,7 @@ export interface GameState {
   /** Número de rodadas de rede iniciadas com clientes reais, opcional em saves antigos. */
   multiplayerRoundsPlayed?: number;
   /** Somente um RASCUNHO de planejamento; não reserva PCs nem executa turnos. */
-  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"|"confirmed";format?:"free"|"tournament"};
+  fridayMeetupDraft?: {fridayDay:number;seats:2|3;status:"draft"|"confirmed";format?:"free"|"tournament"|"knockout"};
   /** Relógio civil independente: a sexta fica congelada no último minuto até sábado 10h. */
   nightMeetup?: {
     fridayDay:number;seats:2|3;elapsed:number;phase:"arriving"|"playing"|"leaving"|"closed";
