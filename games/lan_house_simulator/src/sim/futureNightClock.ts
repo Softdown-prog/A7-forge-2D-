@@ -1,6 +1,6 @@
-/** Relógio civil do futuro encontro noturno, sem tocar em totalMinutes.
- * O fechamento mensal e os dias de 720 minutos continuam com o motor normal.
- * Contrato PURE: o motor noturno ainda NÃO o executa.
+/** Relógio civil puro da madrugada, usado pelo motor noturno verdadeiro.
+ * totalMinutes fica no último minuto de sexta e avança para sábado 10h
+ * apenas ao final. O mês não pode virar duas vezes.
  */
 import {campaignDate,weekdayIndex,weekdayName} from "./campaignWeek.js";
 export const NIGHT_START_CIVIL_MINUTE=22*60;

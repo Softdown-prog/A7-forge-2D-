@@ -1,7 +1,6 @@
-/** Primeiro passo do corujão: calendário e rascunho voluntário.
- * Deliberadamente NÃO cobra, reserva computadores, cria visitantes ou
- * altera o relógio. O turno noturno só será ativado após migração e teste
- * explícitos da simulação; não anunciar um serviço que ainda não roda.
+/** Planejamento do corujão: rascunho sem cobrança antecipada.
+ * A confirmação e o runtime físico estão em nightMeetup.ts.
+ * Uma simples intenção não bloqueia estações nem cria pessoas.
  */
 import type {GameState,Result} from "./types.js";
 import {gameYear} from "./era.js";

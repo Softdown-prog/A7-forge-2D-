@@ -1,6 +1,6 @@
-/** Página enxuta na Administração → Finanças → Primeira sexta.
- * O botão prepara somente o rascunho; deliberadamente não inicia um
- * evento noturno, altera o relógio, retém máquinas nem fabrica clientes.
+/** Administração → Finanças → Primeira sexta.
+ * Rascunho gratuito, confirmação sem pagamento adiantado e relatório
+ * real da última madrugada; noite física executada em nightMeetup.ts.
  */
 import type {GameState,Result} from "../sim/types.js";
 import {campaignDate,currentCampaignDay} from "../sim/campaignWeek.js";
