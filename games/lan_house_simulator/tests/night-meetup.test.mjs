@@ -176,11 +176,11 @@ test("sexta no último dia do mês cobra as contas uma só vez na reabertura",()
  while(s.nightMeetup)stepGame(s,100);
  const receipt=s.lastPaidMonthlyBill;
  assert.ok(receipt,"a conta deve fechar ao iniciar o mês seguinte");
- const afterExpenses=s.expenses,afterRevenue=s.revenue;
+ const afterExpenses=s.expenses,afterRevenue=s.revenue,afterMinute=s.totalMinutes;
  stepGame(s,1);
  assert.deepEqual(s.lastPaidMonthlyBill,receipt);
  assert.equal(s.expenses,afterExpenses);
  assert.equal(s.revenue,afterRevenue);
- assert.equal(s.totalMinutes,friday*DAY_MINUTES+1);
+ assert.equal(s.totalMinutes,afterMinute+1,"o avanço da manhã não deve retroceder ou virar outro dia");
  assert.equal(isValidSave(s),true);
 });
