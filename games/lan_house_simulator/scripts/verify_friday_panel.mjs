@@ -145,10 +145,72 @@ try{
  if(await page.locator("#first-meetup-trophies-more").isVisible())
   throw Error("Uma conquista não precisa do botão de histórico completo.");
  await page.screenshot({path:resolve(out,"galeria_trofeu_final_real.png")});
+ // Quatro noites adicionais completam CINCO finais no motor (sem inventar títulos).
+ // Só os dias comuns entre sextas são acelerados no teste; cada madrugada
+ // ainda roda minuto a minuto, com pessoas, PCs, cobranças e premiação reais.
+ const recordedFridays=[trophyFriday];
+ for(const seats of [3,2,3,2]){
+  ok(draftFridayMeetup(state,seats));
+  ok(selectNightTournament(state,"knockout"));
+  ok(confirmFridayMeetup(state));
+  const day=state.fridayMeetupDraft.fridayDay;
+  if(day!==recordedFridays.at(-1)+7)throw Error("Sextas não são consecutivas.");
+  state.totalMinutes=day*DAY_MINUTES-1;
+  stepGame(state,1);
+  let ticks=0;
+  while(state.nightMeetup&&ticks++<720)stepGame(state,1);
+  if(state.nightMeetup||state.nightTournamentTrophies?.length!==recordedFridays.length+1||
+     !isValidSave(state))throw Error("Campanha com múltiplas sextas inválida.");
+  recordedFridays.push(day);
+ }
+ await page.close();
+ page=await browser.newPage({viewport:{width:360,height:740},isMobile:true,hasTouch:true});
+ page.on("pageerror",e=>errors.push(String(e)));
+ await page.addInitScript(({key,payload})=>localStorage.setItem(key,JSON.stringify(payload)),
+  {key:GAME_SAVE_KEY,payload:state});
+ await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"networkidle"});
+ await dismissPrivacyNotice(page);
+ await page.locator("#menu-continue").click();
+ await page.locator("#open-admin").click();
+ await selectAdminArea(page,"finance");
+ await page.locator('#section-finance [data-panel-choice="events"]').click();
+ const mobileGallery=page.locator("#first-meetup-trophies");
+ await mobileGallery.waitFor({state:"visible"});
+ const viewAll=page.locator("#first-meetup-trophies-more");
+ if(await mobileGallery.locator(".night-trophy-item").count()!==4||
+    !await viewAll.isVisible()||
+    await viewAll.getAttribute("aria-expanded")!=="false")
+  throw Error("Galeria mobile deve mostrar só as quatro finais mais recentes.");
+ await page.screenshot({path:resolve(out,"galeria_cinco_sextas_mobile_recentes.png"),fullPage:true});
+ await viewAll.click();
+ if(await mobileGallery.locator(".night-trophy-item").count()!==5||
+    await viewAll.getAttribute("aria-expanded")!=="true")
+  throw Error("Histórico completo não abre após tocar em Ver todas.");
+ const currentItems=await mobileGallery.locator(".night-trophy-item").allTextContents();
+ if(!currentItems[0].includes("Sexta ")||
+    !currentItems[0].includes("Campeão: jogador "+state.nightTournamentTrophies.at(-1).winnerId)||
+    !currentItems.at(-1).includes("Campeão: jogador "+state.nightTournamentTrophies[0].winnerId))
+  throw Error("Histórico não está ordenado do troféu mais recente ao mais antigo.");
+ const mobileSizes=await page.evaluate(()=>{
+  const g=document.getElementById("first-meetup-trophies");
+  const items=[...g.querySelectorAll(".night-trophy-item")];
+  return {galleryWidth:g.clientWidth,galleryScrollWidth:g.scrollWidth,
+   itemOverflows:items.some(item=>item.scrollWidth>item.clientWidth+2)};
+ });
+ if(mobileSizes.galleryScrollWidth>mobileSizes.galleryWidth+3||
+    mobileSizes.itemOverflows)
+  throw Error("Galeria apresenta rolagem horizontal interna no celular: "+JSON.stringify(mobileSizes));
+ await page.screenshot({path:resolve(out,"galeria_cinco_sextas_mobile_completo.png"),fullPage:true});
+ await viewAll.click();
+ if(await mobileGallery.locator(".night-trophy-item").count()!==4||
+    await viewAll.getAttribute("aria-expanded")!=="false")
+  throw Error("Fechar histórico deve recuperar os quatro troféus recentes.");
  if(errors.length)throw Error(errors.join(" | "));
  await writeFile(resolve(out,"verificacao.json"),JSON.stringify({status:"pass",firstFridayDay:draft.fridayMeetupDraft.fridayDay,
   slots:2,savePreserved:true,knockoutFormatSelected:true,confirmedWithoutUpfrontPayment:true,
-  zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,interface:"jogo original"},null,2));
+  zeroExtraRevenue:true,realKnockoutTrophyVisible:true,trophyFriday,
+  repeatedFridays:recordedFridays,mobileHistoryExpanded:true,
+  mobileWidth:360,interface:"jogo original"},null,2));
  console.log("OK: planejamento, save, final no motor real e galeria no navegador.");
 }finally{
  if(browser)await browser.close();

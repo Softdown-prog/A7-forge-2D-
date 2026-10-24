@@ -674,3 +674,10 @@ A LAN House mantém uma **galeria digital de troféus no painel de Administraç�
 - Regressão automatizada `tests/night-knockout.test.mjs`, que simula a noite real até 7h, salva, retoma, reabre e testa duplicações e fraudes.
 
 O troféu é inicialmente **digital no histórico do estabelecimento**, não uma estatueta física posicionável no cenário. Esta distinção deve permanecer clara até implementar um objeto visual completo.
+
+### Regressão de cinco sextas e galeria mobile (24/10/2026)
+
+- `tests/night-trophy-consecutive-fridays.test.mjs` executa cinco corujões eliminatórios (alternando 2/3 participantes) minuto a minuto no motor, restaurando saves às ~3h, conferindo exatamente uma conquista por sexta, premiação única e sábado sem segundo fechamento.
+- Para manter a suíte rápida, apenas os **dias comuns entre sextas** são adiantados no fixture. Isto **não** prova que cinco semanas completas de jogo diurno foram simuladas; noites, inscrições, pagamentos, rodadas e saídas passam pelo motor real.
+- `scripts/verify_friday_panel.mjs` abre a Administração em Chromium mobile de 360 px com cinco conquistas provenientes dessas noites, confere quatro cartões recentes, botão de expansão/colapso, ordem cronológica e ausência de overflow horizontal interno, salvando capturas do próprio jogo.
+- CI integrado em `lhs-friday-meetup.yml` e `lhs-night-tournament.yml`. Emulação Chromium não substitui aceite em aparelho físico.
