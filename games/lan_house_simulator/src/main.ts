@@ -48,6 +48,7 @@ import {installManagementPanels} from "./ui/managementPanels.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
 import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
 import {renderCustomerFeedback} from "./ui/customerFeedbackPanel.js";
+import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
@@ -1057,7 +1058,7 @@ function renderUI(liveOnly=false):void {
    const host=document.getElementById("customer-feedback-panel");
    if(host&&panelChanged("customerFeedback",
      [Math.floor(game.totalMinutes/720),game.customerFeedback],!liveOnly))
-    renderCustomerFeedback(host,game);
+    renderCustomerFeedback(host,customerFeedbackSnapshot(game));
   }
   if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
   const closing=monthlyClosingSnapshot(game);
