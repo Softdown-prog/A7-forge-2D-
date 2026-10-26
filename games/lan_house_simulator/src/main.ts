@@ -1,4 +1,6 @@
 import {installMerchandisePanel} from "./ui/merchandisePanel.js";
+import {createMerchandisePort} from "./application/merchandisePort.js";
+import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
 import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
@@ -239,7 +241,7 @@ soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;sou
 // waiting for the next throttled HUD refresh.
 document.getElementById("time-weather-panel")?.addEventListener("toggle",()=>{
  const panel=document.getElementById("time-weather-panel");
- if(panel?.hasAttribute("open"))renderTimeWeatherPanel(game,iconMarkup);
+ if(panel?.hasAttribute("open"))renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup);
 });
 document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
@@ -615,7 +617,7 @@ function activateAdminTab(tab:string):void{
  for(const section of adminSections)section.hidden=section.dataset.section!==tab;
 }
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");admin.scrollTop=0;renderUI();});
-const merchandisePanel=installMerchandisePanel(()=>game,r=>{applyResult(game,r);renderUI();save();});
+const merchandisePanel=installMerchandisePanel(createMerchandisePort(()=>game),r=>{applyResult(game,r);renderUI();save();});
 const retailControls=document.getElementById("retail-price-controls");
 const discControls=document.getElementById("disc-copy-price-controls");
 const printControls=document.getElementById("print-price-controls");
@@ -1049,7 +1051,7 @@ function renderUI(liveOnly=false):void {
   renderShop(!liveOnly);
   activateAdminTab(activeAdminTab);
   if(adminOpen)managementPanels.syncUnlocks();
-  renderTimeWeatherPanel(game,iconMarkup);
+  renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup);
   const year=gameYear(game);
   const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&!node.closest(".admin-section[hidden],.management-page[hidden]")&&node.textContent!==value)node.textContent=value;};
   if(adminOpen){
