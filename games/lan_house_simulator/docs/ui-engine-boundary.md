@@ -41,6 +41,14 @@
 - `tests/station-ui-boundary.test.mjs` cobre índices inválidos, catálogo, power toggle com save/restauração, delegação DOM e ausência de dependência direta da simulação.
 - Os renderizadores Canvas, o layout de móveis, o formato do save e as regras de compra não foram modificados.
 
+## Quinto recorte: serviços e funcionários
+
+- `src/application/serviceActionsPort.ts` isola reposição de estoque rápido, fornecedor, panfletagem, internet, jogos, contratação/demissão e limpeza. Recebe `()=>game` para alcançar partidas importadas/restauradas.
+- `src/ui/serviceControls.ts` associa os IDs atuais dos botões à porta, sem importar `sim/` nem calcular preços/folha de pagamento.
+- Política legada de salvamento preservada: botões de contratação e demissão só persistem no êxito; as demais tentativas continuam notificando, redesenhando e salvando como anteriormente.
+- `tests/service-ui-boundary.test.mjs` cobre migração de save, validação de entradas, ano de internet, conexão offline, botões desabilitados e política de persistência.
+- Não foram alterados Canvas, navegação dos funcionários, RNG, conteúdo de saves ou lógica econômica.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -51,7 +59,7 @@
 
 ## Próximos recortes
 
-- Continuar a extração das ações restantes de serviços, jogos e compras de `main.ts` para controladores de aplicação.
+- Continuar a extração das ações restantes de loja, licenças de jogos por era, PS1 e outros comandos do `main.ts` para controladores de aplicação.
 - Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
 - Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.

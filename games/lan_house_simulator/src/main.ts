@@ -1,6 +1,8 @@
 import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {createMerchandisePort} from "./application/merchandisePort.js";
 import {createPricingPort} from "./application/pricingPort.js";
+import {createServiceActionsPort} from "./application/serviceActionsPort.js";
+import {installServiceControls} from "./ui/serviceControls.js";
 import {createStationActionsPort} from "./application/stationActionsPort.js";
 import {installStationControls} from "./ui/stationControls.js";
 import {installPricingControls} from "./ui/pricingControls.js";
@@ -28,7 +30,7 @@ import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} 
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, stockItem, supplierLevel, wholesaleCost, upgradeInternet, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
+import { expandShop, basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
@@ -39,7 +41,7 @@ import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
-import { promotionCost, launchPromotion, isPromotionActive, promotionCanAttractVisitors, promotionAdmissionMinutesRemaining } from "./sim/promotion.js";
+import { promotionCost, isPromotionActive, promotionCanAttractVisitors, promotionAdmissionMinutesRemaining } from "./sim/promotion.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
@@ -63,10 +65,10 @@ import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier,
  ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
-import {requestCleaning,pcUnderRepair,binStatus} from "./sim/services.js";
+import {pcUnderRepair,binStatus} from "./sim/services.js";
 import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
-import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
+import {employeeHired,employeeDailyWage} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
@@ -471,21 +473,13 @@ document.getElementById("ps1-stations")?.addEventListener("click",event=>{
  const result=upgrade?buyPs1SecondSeat(game,index):repairPs1Controls(game,index);
  applyResult(game,result);renderUI();if(result.ok)save();
 });
-button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();save();});
-button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
-button("stock-snacks",()=>{applyResult(game,stockItem(game,"snacks"));renderUI();save();});
-button("supplier-up",()=>{applyResult(game,contractSupplier(game));renderUI();save();});
-button("launch-promotion",()=>{applyResult(game,launchPromotion(game));renderUI();save();});
-button("internet-up",()=>{applyResult(game,upgradeInternet(game));renderUI();save();});
-button("internet-repair",()=>{applyResult(game,repairInternet(game));renderUI();save();});
-button("license",()=>{applyResult(game,licenseGames(game));renderUI();save();});
-const toggleEmployee=(role:EmployeeRole):void=>{
- const result=employeeHired(game,role)?dismissEmployee(game,role):hireEmployee(game,role);
- applyResult(game,result);renderUI();if(result.ok)save();
-};
-button("clean-bins",()=>toggleEmployee("cleaner"));
-button("hire-technician",()=>toggleEmployee("technician"));
-button("clean-bins-now",()=>{applyResult(game,requestCleaning(game));renderUI();save();});
+installServiceControls(createServiceActionsPort(()=>game),{
+ onResult:(result,policy)=>{
+  applyResult(game,result);
+  renderUI();
+  if(policy==="always"||result.ok)save();
+ }
+});
 button("show-service-access",()=>{
  const issues=inspectServiceAccess(true);
  if(!issues.length)return;
