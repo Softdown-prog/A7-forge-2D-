@@ -2,6 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {createMerchandisePort} from "../dist/js/application/merchandisePort.js";
+import {liveStatusSnapshot,computerOperationsSnapshot} from "../dist/js/application/presentationModels.js";
+import {readFileSync} from "node:fs";
 import {timeWeatherSnapshot} from "../dist/js/application/timeWeatherSnapshot.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
@@ -46,4 +48,32 @@ test("modelo do calendário não depende de DOM e acompanha o relógio atual",()
  assert.equal(view.date,"01/01/1998");assert.equal(view.ended,false);
  state.weather="rain";assert.equal(timeWeatherSnapshot(state).weather,"Chuva");
  assert.equal(JSON.stringify(state),before.replace('"weather":"sun"','"weather":"rain"'));
+});
+
+test("HUD e manutenção recebem apenas projeções independentes do GameState",()=>{
+ const s=createGame(15,"historical");
+ s.cash=1234.5;s.inventory.soda=17;
+ const view=liveStatusSnapshot(s,"Discada");
+ assert.equal(view.cash,1234.5);
+ assert.equal(view.stock.soda>=17,true);
+ assert.equal(view.computerCount,3);
+ assert.equal(view.internetName,"Discada");
+ assert.equal("customers" in view,false);
+ const operations=computerOperationsSnapshot(s);
+ assert.equal(operations.length,3);
+ assert.equal(operations[0].index,0);
+ assert.equal(typeof operations[0].cpu,"string");
+ assert.equal("pcTiers" in operations[0],false);
+});
+
+test("componentes migrados não importam o motor nem possuem lógica de negócio",()=>{
+ for(const name of ["merchandisePanel.ts","timeWeatherPanel.ts","presentation.ts"]){
+  const source=readFileSync(new URL("../src/ui/"+name,import.meta.url),"utf8");
+  assert.doesNotMatch(source,/from\s*["']\.\.\/sim\//,name+" não deve importar sim");
+  assert.doesNotMatch(source,/from\s*["']\.\.\/render\//,name+" não deve importar render");
+ }
+ for(const name of ["merchandisePort.ts","timeWeatherSnapshot.ts","presentationModels.ts"]){
+  const source=readFileSync(new URL("../src/application/"+name,import.meta.url),"utf8");
+  assert.doesNotMatch(source,/\bdocument\b|\bwindow\b|\bHTMLElement\b/,name+" deve ser independente do navegador");
+ }
 });
