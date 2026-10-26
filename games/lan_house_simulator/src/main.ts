@@ -1,6 +1,7 @@
 import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {createMerchandisePort} from "./application/merchandisePort.js";
 import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
+import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
 import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
@@ -1366,7 +1367,7 @@ function renderUI(liveOnly=false):void {
     }
     kits.append(title,hint,choices,installed,catalog);maintenance.append(kits);
     }
-    presentComputerOperations(game,maintenance);
+    presentComputerOperations(computerOperationsSnapshot(game),maintenance);
     decorateControls(maintenance);
     syncPanelChildren(liveMaintenance,maintenance);
     if(lcdFocus&&(!(focused instanceof HTMLButtonElement)||!focused.isConnected||focused.disabled)){
@@ -1848,7 +1849,7 @@ function renderUI(liveOnly=false):void {
   lastEventSignature=eventSignature;
   }
   controls.setAttribute("aria-expanded",String(adminOpen));
-  presentLiveState(game,internetName(),adminOpen?activeAdminTab:null);
+  presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
 let lastFrame=0,lastUI=0,lastMenuFrame=0,lastSceneFrame=0,elapsed=0,lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
 new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
