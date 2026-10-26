@@ -2,6 +2,10 @@ import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {createMerchandisePort} from "./application/merchandisePort.js";
 import {createPricingPort} from "./application/pricingPort.js";
 import {createServiceActionsPort} from "./application/serviceActionsPort.js";
+import {createGameLicensingPort} from "./application/gameLicensingPort.js";
+import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
+import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
+import {installPs1Controls} from "./ui/ps1Controls.js";
 import {installServiceControls} from "./ui/serviceControls.js";
 import {createStationActionsPort} from "./application/stationActionsPort.js";
 import {installStationControls} from "./ui/stationControls.js";
@@ -16,10 +20,10 @@ import {drawDiscCopier} from "./render/discCopierArt.js";
 import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
-import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,buyPs1Station,
- ps1HourPrice,ps1AllowedHourlyCeiling,repairPs1Controls,ps1StationPoint,
- PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc,ps1PlacementLabel,
- buyPs1SecondSeat,ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
+import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
+ ps1HourPrice,ps1AllowedHourlyCeiling,ps1StationPoint,
+ PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,ps1PlacementLabel,
+ ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
@@ -60,9 +64,9 @@ import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWind
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows} from "./sim/era.js";
 import {GPU_CATALOG,installedGpu,gpuSpec} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
-import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier,
+import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
  ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {pcUnderRepair,binStatus} from "./sim/services.js";
@@ -404,16 +408,10 @@ button("rotate-furniture",()=>{
 });
 button("organize-furniture",()=>layoutEditor.open());
 
+const ps1Actions=createPs1ActionsPort(()=>game);
 shopCatalog?.addEventListener("click",event=>{
  const target=event.target instanceof Element?event.target.closest("button"):null;
  if(!(target instanceof HTMLButtonElement)||target.disabled)return;
- const discId=target.dataset.buyPs1Disc;
- if(discId){
-  const title=PS1_CD_CATALOG.find(x=>x.id===discId);
-  if(!title)return;
-  applyResult(game,buyPs1Disc(game,title.id));
-  renderUI();save();return;
- }
  if(!target.dataset.buy)return;
  const id=target.dataset.buy;
  if(id==="computer-annex"){
@@ -434,7 +432,7 @@ shopCatalog?.addEventListener("click",event=>{
    return;
  }
  const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
-   id==="ps1"?buyPs1Station(game,shopCatalog.querySelector<HTMLSelectElement>("#ps1-placement")?.value??""):
+   id==="ps1"?ps1Actions.buyStation(shopCatalog.querySelector<HTMLSelectElement>("#ps1-placement")?.value??""):
    id==="disc-copier"?buyDiscCopier(game):
    id==="printer"?buyPrinter(game):
    id.startsWith("extend-")?expandDirection(game,id.slice(7) as ExtensionDirection):{ok:false,message:"Compra desconhecida."};
@@ -451,27 +449,12 @@ button("ps1-open-shop",()=>{
  adminOpen=false;shopOpen=true;shopPanels?.select("consoles");renderUI();
  (document.querySelector(".ps1-shop-heading")??document.getElementById("shop-catalog"))?.scrollIntoView({block:"start",behavior:"instant"});
 });
-document.getElementById("ps1-stations")?.addEventListener("change",event=>{
- const input=event.target;
- if(!(input instanceof HTMLSelectElement)||input.dataset.ps1Slot===undefined)return;
- const index=Number(input.dataset.ps1Slot);
- if(!Number.isInteger(index)||!game.ps1Stations?.[index])return;
- const id=input.value;
- const title=PS1_CD_CATALOG.find(x=>x.id===id);
- const result=setPs1StationDisc(game,index,id===""?null:title?.id??null);
- applyResult(game,result);
- if(!result.ok)input.value=game.ps1Stations[index]?.discId??"";
- renderUI();if(result.ok)save();
-});
-document.getElementById("ps1-stations")?.addEventListener("click",event=>{
- const button=event.target instanceof Element?
-  event.target.closest("button[data-ps1-repair], button[data-ps1-second-seat]"):null;
- if(!(button instanceof HTMLButtonElement)||button.disabled)return;
- const upgrade=button.dataset.ps1SecondSeat!==undefined;
- const index=Number(upgrade?button.dataset.ps1SecondSeat:button.dataset.ps1Repair);
- if(!Number.isInteger(index))return;
- const result=upgrade?buyPs1SecondSeat(game,index):repairPs1Controls(game,index);
- applyResult(game,result);renderUI();if(result.ok)save();
+installPs1Controls({
+ stations:document.getElementById("ps1-stations"),
+ shopCatalog
+},ps1Actions,(result,policy)=>{
+ applyResult(game,result);renderUI();
+ if(policy==="always"||result.ok)save();
 });
 installServiceControls(createServiceActionsPort(()=>game),{
  onResult:(result,policy)=>{
@@ -493,39 +476,11 @@ const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getEle
 const licensePanel=document.getElementById("windows-license-list");
 const gpuGamePanel=document.getElementById("gpu-game-catalog");
 const eraGamePanel=document.getElementById("era-game-catalog");
-eraGamePanel?.addEventListener("click",event=>{
- const action=event.target instanceof Element?event.target.closest("button[data-era-game-buy]"):null;
- if(!(action instanceof HTMLButtonElement)||action.disabled)return;
- const id=action.dataset.eraGameBuy;
- if(!id||!ERA_GAME_CATALOG.some(title=>title.id===id))return;
- applyResult(game,licenseEraGame(game,id));renderUI();save();
-});
-gpuGamePanel?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button"):null;
- if(!(button instanceof HTMLButtonElement)||button.disabled)return;
- const cancelId=button.dataset.gpuGameCancel;
- if(cancelId){
-  const index=Number(button.dataset.gpuGamePc);
-  if(!Number.isInteger(index)||!GPU_GAME_CATALOG.some(x=>x.id===cancelId))return;
-  applyResult(game,cancelGpuGameInstallation(game,index,cancelId as typeof GPU_GAME_CATALOG[number]["id"]));
-  renderUI();save();return;
- }
- const bulkId=button.dataset.gpuGameInstallAll;
- if(bulkId){
-  if(!GPU_GAME_CATALOG.some(x=>x.id===bulkId))return;
-  applyResult(game,installGpuGameOnAvailablePcs(game,bulkId as typeof GPU_GAME_CATALOG[number]["id"]));
-  renderUI();save();return;
- }
- const installId=button.dataset.gpuGameInstall;
- if(installId){
-  const index=Number(button.dataset.gpuGamePc);
-  if(!Number.isInteger(index)||!GPU_GAME_CATALOG.some(x=>x.id===installId))return;
-  applyResult(game,toggleGpuGameInstallation(game,index,installId as typeof GPU_GAME_CATALOG[number]["id"]));
-  renderUI();save();return;
- }
- const id=button.dataset.gpuGameBuy;
- if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
- applyResult(game,licenseGpuGame(game,id));renderUI();save();
+installGameLicensingControls({
+ eraGames:eraGamePanel,
+ gpuGames:gpuGamePanel
+},createGameLicensingPort(()=>game),result=>{
+ applyResult(game,result);renderUI();save();
 });
 // Controles unificados em abas, sem criar novos painéis sobre o jogo.
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
