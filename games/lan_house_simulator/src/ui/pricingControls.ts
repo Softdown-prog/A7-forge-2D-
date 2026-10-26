@@ -1,8 +1,7 @@
 import type {PricingPort,PriceDirection} from "../application/pricingPort.js";
-import type {Result} from "../sim/types.js";
 
 export interface PricingControlCallbacks {
- onResult(result:Result):void;
+ onResult(result:ReturnType<PricingPort["changeHourly"]>):void;
  onMigration():void;
  confirmMigration():boolean;
  openRetailCatalogue():void;
@@ -24,7 +23,7 @@ export function installPricingControls(
  on("price-down",()=>callbacks.onResult(port.changeHourly(-1)));
  on("price-up",()=>callbacks.onResult(port.changeHourly(1)));
  on("migrate-historical-pricing",()=>{
-  if(!callbacks.confirmMigration())return;
+  if(!port.canMigrateHistorical()||!callbacks.confirmMigration())return;
   if(port.migrateHistorical())callbacks.onMigration();
  });
  doc.getElementById("print-price-controls")?.addEventListener("click",event=>{
@@ -32,7 +31,7 @@ export function installPricingControls(
   if(!(target instanceof HTMLButtonElement)||target.disabled)return;
   const delta=Number(target.dataset.printDelta);
   if(![-1,-.5,.5,1].includes(delta))return;
-  callbacks.onResult(port.changePrinting(Math.sign(delta) as PriceDirection));
+  callbacks.onResult(port.changePrinting(Math.sign(delta) as PriceDirection,delta));
  });
  doc.getElementById("disc-copy-price-controls")?.addEventListener("click",event=>{
   const button=event.target instanceof Element?event.target.closest("button[data-disc-kind]"):null;
