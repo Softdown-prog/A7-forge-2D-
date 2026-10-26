@@ -614,6 +614,10 @@ installPricingControls(createPricingPort(()=>game),{
  confirmMigration:()=>window.confirm("Ativar o modelo histórico nesta partida? O preço da hora será limitado pelo ano e pelas máquinas, mas saldo, compras e resultados antigos não serão reescritos. Esta mudança não pode ser desfeita neste save."),
  openRetailCatalogue:()=>{activateAdminTab("stock");managementPanels.select("stock","catalog");renderUI();}
 });
+ // These stable DOM roots are still used by the panel renderer for reconciliation.
+const retailControls=document.getElementById("retail-price-controls");
+const discControls=document.getElementById("disc-copy-price-controls");
+const printControls=document.getElementById("print-price-controls");
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
