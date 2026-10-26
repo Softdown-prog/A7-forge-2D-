@@ -17,6 +17,15 @@
 5. Os DTOs contêm primitivas e listas recém-construídas. Um componente não recebe a referência mutável de `game`.
 6. `tests/ui-engine-boundary.test.mjs` protege os contratos e proíbe imports de `sim/` ou `render/` nos três módulos de UI migrados.
 
+## Segunda etapa: precificação e eventos
+
+- `src/application/pricingPort.ts` encapsula as ações de alterar a hora, a tarifa da PS1, preços de impressão, cópia de CD/DVD e produtos básicos, além da mudança irreversível de economia clássica para histórica.
+- `src/ui/pricingControls.ts` registra eventos DOM e solicita comandos tipados pela porta; não conhece `GameState`, serviços da simulação nem salvamento.
+- `src/main.ts` só injeta `() => game` e orquestra notificação, renderização e `save()`. Isso preserva saves substituídos por importação ou pela nuvem.
+- As constantes de DOM `retailControls`, `printControls` e `discControls` permanecem no renderizador atual de `main.ts` até a extração das projeções desses painéis.
+- `tests/pricing-ui-boundary.test.mjs` verifica deltas, valores inválidos, reentrada no histórico, save importado e ausência de imports diretos para simulação na UI.
+- Não houve alterações na engine, na geometria do Canvas nem nos IDs de controles, inclusive os botões delegados usados no celular.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -27,7 +36,7 @@
 
 ## Próximos recortes
 
-- Extração do restante das ações de preço, hardware e compras de `main.ts` para controladores de aplicação.
+- Extração das ações restantes de hardware, compras e serviços de `main.ts` para controladores de aplicação.
 - Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
 - Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.
