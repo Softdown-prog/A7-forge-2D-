@@ -15,9 +15,10 @@ export type PriceDirection=-1|1;
 export interface PricingPort {
  changeHourly(direction:PriceDirection):Result;
  changePs1(direction:PriceDirection):Result;
- changePrinting(direction:PriceDirection):Result;
+ changePrinting(direction:PriceDirection,requestedDelta?:number):Result;
  changeDisc(kind:DiscKind,direction:PriceDirection):Result;
  changeRetail(item:Item,direction:PriceDirection):Result;
+ canMigrateHistorical():boolean;
  migrateHistorical():boolean;
 }
 const invalid:Result={ok:false,message:"Ajuste de preço inválido."};
@@ -36,11 +37,11 @@ export function createPricingPort(getState:()=>GameState):PricingPort{
    const state=getState();
    return setPs1HourlyPrice(state,cents(ps1HourPrice(state)+direction*.25));
   },
-  changePrinting(direction){
+  changePrinting(direction,requestedDelta){
    if(!valid(direction))return invalid;
-   const state=getState();
+   const state=getState(),step=state.economyVersion===2?.5:1;
+   if(requestedDelta!==undefined&&requestedDelta!==direction*step)return invalid;
    if(!state.printer)return {ok:false,message:"Compre uma impressora primeiro."};
-   const step=state.economyVersion===2?.5:1;
    return setPrintPrice(state,cents(state.printer.price+direction*step));
   },
   changeDisc(kind,direction){
@@ -54,6 +55,7 @@ export function createPricingPort(getState:()=>GameState):PricingPort{
    const state=getState();
    return setProductPrice(state,item,productPrice(state,item)+direction);
   },
+  canMigrateHistorical(){return getState().economyVersion!==2;},
   migrateHistorical(){
    const state=getState();
    if(state.economyVersion===2)return false;
