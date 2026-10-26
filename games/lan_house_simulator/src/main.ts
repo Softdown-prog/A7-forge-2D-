@@ -34,7 +34,7 @@ import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
 import {SHOP_CATALOG,shopPrice,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
-import {roomBounds,MAX_EXTENSION_LEVEL} from "./sim/room.js";
+import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
