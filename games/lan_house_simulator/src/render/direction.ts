@@ -1,7 +1,7 @@
-import type { Point } from "../sim/types.js";
+import type { Point,ActorDirection } from "../sim/types.js";
+export type { ActorDirection } from "../sim/types.js";
 
 /** Four world directions used by the 2:1 fixed camera, never screen-space mirroring alone. */
-export type ActorDirection = "north" | "south" | "east" | "west";
 /** Rendered orientation on the 2:1 isometric screen, not in the world grid. */
 export type ActorScreenView = "front"|"back"|"profile-left"|"profile-right"|
  "front-left"|"front-right"|"back-left"|"back-right";
