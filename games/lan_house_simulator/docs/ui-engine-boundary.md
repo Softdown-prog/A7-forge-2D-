@@ -26,6 +26,13 @@
 - `tests/pricing-ui-boundary.test.mjs` verifica deltas, valores inválidos, reentrada no histórico, save importado e ausência de imports diretos para simulação na UI.
 - Não houve alterações na engine, na geometria do Canvas nem nos IDs de controles, inclusive os botões delegados usados no celular.
 
+## Terceiro recorte: opiniões dos clientes
+
+- `src/application/customerFeedbackSnapshot.ts` transforma a lista de avaliações e os totais de reputação em DTOs de apresentação.
+- `src/ui/customerFeedbackPanel.ts` recebe somente `FeedbackSnapshot`, sem importar `GameState` ou funções de simulação.
+- `src/main.ts` injeta o snapshot quando o painel de Finanças > Opiniões está ativo.
+- O teste de fronteira garante ausência de imports diretos no presenter e que alterações nos DTOs não modificam a partida.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
