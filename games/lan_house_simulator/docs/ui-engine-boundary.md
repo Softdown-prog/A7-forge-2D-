@@ -12,7 +12,10 @@
 
 1. Mercadorias: `createMerchandisePort(() => game)` recebe um getter, importante quando um save é importado ou a nuvem troca a instância do estado. A UI consulta opções, preços, pedidos e resultados via contrato; não invoca `setMerchandisePrice` nem `orderMerchandise` diretamente.
 2. Calendário/clima: `timeWeatherSnapshot(game)` projeta um DTO de leitura, e `renderTimeWeatherPanel` só mexe no DOM recebido.
-3. Os DTOs contêm primitivas e listas recém-construídas. Um componente não recebe a referência mutável de `game`.
+3. HUD e manutenção dos PCs: `liveStatusSnapshot(game, internetName)` e `computerOperationsSnapshot(game)` fazem todos os cálculos de negócio fora de `ui/presentation.ts`; o módulo de apresentação só atualiza o DOM.
+4. O tipo `ActorDirection` pertence a `sim/types.ts`; o renderizador continua reexportando o tipo para compatibilidade, sem que o motor importe o renderizador.
+5. Os DTOs contêm primitivas e listas recém-construídas. Um componente não recebe a referência mutável de `game`.
+6. `tests/ui-engine-boundary.test.mjs` protege os contratos e proíbe imports de `sim/` ou `render/` nos três módulos de UI migrados.
 
 ## Cuidados
 
