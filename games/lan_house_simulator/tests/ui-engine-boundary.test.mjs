@@ -5,6 +5,7 @@ import {createMerchandisePort} from "../dist/js/application/merchandisePort.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "../dist/js/application/presentationModels.js";
 import {readFileSync} from "node:fs";
 import {timeWeatherSnapshot} from "../dist/js/application/timeWeatherSnapshot.js";
+import {customerFeedbackSnapshot} from "../dist/js/application/customerFeedbackSnapshot.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 test("interface de mercadorias recebe DTO, não o estado vivo",()=>{
@@ -67,13 +68,30 @@ test("HUD e manutenção recebem apenas projeções independentes do GameState",
 });
 
 test("componentes migrados não importam o motor nem possuem lógica de negócio",()=>{
- for(const name of ["merchandisePanel.ts","timeWeatherPanel.ts","presentation.ts"]){
+ for(const name of ["merchandisePanel.ts","timeWeatherPanel.ts","presentation.ts","pricingControls.ts","customerFeedbackPanel.ts"]){
   const source=readFileSync(new URL("../src/ui/"+name,import.meta.url),"utf8");
   assert.doesNotMatch(source,/from\s*["']\.\.\/sim\//,name+" não deve importar sim");
   assert.doesNotMatch(source,/from\s*["']\.\.\/render\//,name+" não deve importar render");
  }
- for(const name of ["merchandisePort.ts","timeWeatherSnapshot.ts","presentationModels.ts"]){
+ for(const name of ["merchandisePort.ts","timeWeatherSnapshot.ts","presentationModels.ts","pricingPort.ts","customerFeedbackSnapshot.ts"]){
   const source=readFileSync(new URL("../src/application/"+name,import.meta.url),"utf8");
   assert.doesNotMatch(source,/\bdocument\b|\bwindow\b|\bHTMLElement\b/,name+" deve ser independente do navegador");
  }
+});
+
+test("projecao de opinioes mantem os dados da simulacao imutaveis",()=>{
+ const s=createGame(87,"historical");
+ s.totalMinutes=720;
+ s.customerFeedback=[
+  {minute:600,customerId:1,reason:"atendimento",kind:"sessao",delta:.2},
+  {minute:590,customerId:2,reason:"internet",kind:"conexao",delta:-.1}
+ ];
+ const before=JSON.stringify(s),view=customerFeedbackSnapshot(s);
+ assert.match(view.summary,/1 elogio\(s\).*1 crítica\(s\)/);
+ assert.equal(view.reasons.length,2);
+ assert.equal(view.recent.length,2);
+ assert.match(view.recent[1].label,/Conexão/);
+ assert.equal(view.recent[1].negative,true);
+ view.reasons[0].label="alterado apenas na UI";
+ assert.equal(JSON.stringify(s),before);
 });
