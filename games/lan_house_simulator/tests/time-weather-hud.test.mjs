@@ -2,7 +2,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {timeWeatherSnapshot,renderTimeWeatherPanel} from "../dist/js/ui/timeWeatherPanel.js";
+import {timeWeatherSnapshot} from "../dist/js/application/timeWeatherSnapshot.js";
+import {renderTimeWeatherPanel} from "../dist/js/ui/timeWeatherPanel.js";
 
 test("date and clock follow the LHS 30-day month, 360-day year",()=>{
  const s=createGame(20,"historical");
@@ -38,12 +39,12 @@ test("closed panel updates only the summary; open panel updates details without 
   }]));
  const doc={getElementById:id=>nodes.get(id)};
  const icon=name=>"<"+name+">";
- renderTimeWeatherPanel(s,icon,doc);
+ renderTimeWeatherPanel(timeWeatherSnapshot(s),icon,doc);
  assert.equal(nodes.get("time-weather-date").textContent,"");
  assert.match(nodes.get("calendar-hud").innerHTML,/01\/01\/1998/);
  nodes.get("time-weather-panel").attrs.add("open");
  s.totalMinutes=30*DAY_MINUTES+85;s.weather="rain";
- renderTimeWeatherPanel(s,icon,doc);
+ renderTimeWeatherPanel(timeWeatherSnapshot(s),icon,doc);
  assert.equal(nodes.get("time-weather-date").textContent,"01/02/1998");
  assert.equal(nodes.get("time-weather-hour").textContent,"11:25");
  assert.equal(nodes.get("time-weather-condition").textContent,"Chuva");
