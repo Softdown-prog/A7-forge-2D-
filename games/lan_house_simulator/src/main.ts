@@ -1,17 +1,19 @@
 import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {createMerchandisePort} from "./application/merchandisePort.js";
+import {createPricingPort} from "./application/pricingPort.js";
+import {installPricingControls} from "./ui/pricingControls.js";
 import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
-import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,setPrintPrice,PRINT_MAX_PRICE} from "./sim/printService.js";
-import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,setDiscCopyPrice,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
+import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,PRINT_MAX_PRICE} from "./sim/printService.js";
+import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
 import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,buyPs1Station,
- ps1HourPrice,ps1AllowedHourlyCeiling,setPs1HourlyPrice,repairPs1Controls,ps1StationPoint,
+ ps1HourPrice,ps1AllowedHourlyCeiling,repairPs1Controls,ps1StationPoint,
  PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,buyPs1Disc,setPs1StationDisc,ps1PlacementLabel,
  buyPs1SecondSeat,ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
@@ -24,14 +26,14 @@ import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} 
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, setHourlyPrice, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, setProductPrice, upgradeComputer } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, upgradeComputer } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
-import { DAY_MINUTES, type GameState, type Item } from "./sim/types.js";
+import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
@@ -444,8 +446,6 @@ button("ps1-open-shop",()=>{
  adminOpen=false;shopOpen=true;shopPanels?.select("consoles");renderUI();
  (document.querySelector(".ps1-shop-heading")??document.getElementById("shop-catalog"))?.scrollIntoView({block:"start",behavior:"instant"});
 });
-for(const [id,delta] of [["ps1-price-down",-.25],["ps1-price-up",.25]] as const)
- button(id,()=>{applyResult(game,setPs1HourlyPrice(game,Math.round((ps1HourPrice(game)+delta)*100)/100));renderUI();save();});
 document.getElementById("ps1-stations")?.addEventListener("change",event=>{
  const input=event.target;
  if(!(input instanceof HTMLSelectElement)||input.dataset.ps1Slot===undefined)return;
@@ -467,17 +467,6 @@ document.getElementById("ps1-stations")?.addEventListener("click",event=>{
  if(!Number.isInteger(index))return;
  const result=upgrade?buyPs1SecondSeat(game,index):repairPs1Controls(game,index);
  applyResult(game,result);renderUI();if(result.ok)save();
-});
-button("price-down",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour-step)*100)/100));renderUI();save();});
-button("price-up",()=>{const step=game.economyVersion===2?.5:2;applyResult(game,setHourlyPrice(game,Math.round((game.pricePerHour+step)*100)/100));renderUI();save();});
-button("migrate-historical-pricing",()=>{
- if(game.economyVersion===2)return;
- if(!window.confirm("Ativar o modelo histórico nesta partida? O preço da hora será limitado pelo ano e pelas máquinas, mas saldo, compras e resultados antigos não serão reescritos. Esta mudança não pode ser desfeita neste save."))return;
- game.economyVersion=2;
- if(game.retailPrices?.soda===8&&game.retailPrices.candy===5&&game.retailPrices.snacks===9)
-  delete game.retailPrices;
- clampPriceToEra(game);
- renderUI();save();
 });
 button("stock-soda",()=>{applyResult(game,stockItem(game,"soda"));renderUI();save();});
 button("stock-candy",()=>{applyResult(game,stockItem(game,"candy"));renderUI();save();});
@@ -619,34 +608,11 @@ function activateAdminTab(tab:string):void{
 }
 for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");admin.scrollTop=0;renderUI();});
 const merchandisePanel=installMerchandisePanel(createMerchandisePort(()=>game),r=>{applyResult(game,r);renderUI();save();});
-const retailControls=document.getElementById("retail-price-controls");
-const discControls=document.getElementById("disc-copy-price-controls");
-const printControls=document.getElementById("print-price-controls");
-printControls?.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("button[data-print-delta]"):null;
- if(!(target instanceof HTMLButtonElement)||target.disabled||!game.printer)return;
- const delta=Number(target.dataset.printDelta);
- const allowed=game.economyVersion===2?[-.5,.5]:[-1,1];
- if(!allowed.includes(delta))return;
- applyResult(game,setPrintPrice(game,Math.round((game.printer.price+delta)*100)/100));renderUI();save();
-});
-discControls?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button[data-disc-kind]"):null;
- if(!(button instanceof HTMLButtonElement)||button.disabled||!game.discCopier)return;
- const kind=button.dataset.discKind,delta=Number(button.dataset.delta);
- if((kind!=="cd"&&kind!=="dvd")||![-1,1].includes(delta))return;
- applyResult(game,setDiscCopyPrice(game,kind,game.discCopier.prices[kind]+delta));renderUI();save();
-});
-retailControls?.addEventListener("click",event=>{
- if((event.target as Element).closest("#retail-full-catalog")){activateAdminTab("stock");managementPanels.select("stock","catalog");renderUI();return;}
- const target=event.target instanceof Element?event.target.closest("button"):null;
- if(!(target instanceof HTMLButtonElement))return;
- const item=target.dataset.item as Item|undefined;
- const delta=Number(target.dataset.delta);
- if(!item||!["soda","candy","snacks"].includes(item)||![-1,1].includes(delta))return;
- 
- applyResult(game,setProductPrice(game,item,productPrice(game,item)+delta));
- renderUI();save();
+installPricingControls(createPricingPort(()=>game),{
+ onResult:result=>{applyResult(game,result);renderUI();save();},
+ onMigration:()=>{renderUI();save();},
+ confirmMigration:()=>window.confirm("Ativar o modelo histórico nesta partida? O preço da hora será limitado pelo ano e pelas máquinas, mas saldo, compras e resultados antigos não serão reescritos. Esta mudança não pode ser desfeita neste save."),
+ openRetailCatalogue:()=>{activateAdminTab("stock");managementPanels.select("stock","catalog");renderUI();}
 });
 activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
