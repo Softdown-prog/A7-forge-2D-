@@ -32,11 +32,11 @@ test("comandos respeitam validações e salvamento do motor; troca de save não 
  assert.equal(port.setPrice("water",1.6).ok,true);
  assert.equal(port.order("water","basic",1).ok,true);
  assert.equal(isValidSave(state),true);
- const old=state,loaded=parseImportedSave(serializeSave(state));
+ const old=state,oldSnapshot=JSON.stringify(state),loaded=parseImportedSave(serializeSave(state));
  state=loaded;
  assert.equal(port.details("water","basic",1)?.stock,12);
  assert.equal(port.setPrice("water",1.75).ok,true);
- assert.equal(old.retailPrices?.soda,undefined);
+ assert.equal(JSON.stringify(old),oldSnapshot,"troca de save não deve alterar a instância anterior");
  assert.equal(port.details("water","basic",1)?.price,1.75);
 });
 
