@@ -49,6 +49,15 @@
 - `tests/service-ui-boundary.test.mjs` cobre migração de save, validação de entradas, ano de internet, conexão offline, botões desabilitados e política de persistência.
 - Não foram alterados Canvas, navegação dos funcionários, RNG, conteúdo de saves ou lógica econômica.
 
+## Sexto recorte: jogos por era e bancadas PlayStation
+
+- `src/application/gameLicensingPort.ts`: contrato de aplicação para licenças de jogos por época e GPU, distribuição dos jogos entre computadores, instalação/remover e cancelamento de downloads. As validações definitivas e os débitos continuam no motor.
+- `src/ui/gameLicensingControls.ts`: só associa os botões já existentes aos comandos, preservando a prioridade cancelar > instalar em todos > instalar/remover > licenciar.
+- `src/application/ps1ActionsPort.ts`: compra de bancada, CD físico, troca de disco, segunda cadeira e manutenção. `discAt(index)` fornece apenas o valor atual para restaurar um seletor inválido.
+- `src/ui/ps1Controls.ts`: manipula clique do CD na vitrine, seleção de disco e botões das bancadas. Ações das bancadas salvam somente em caso de sucesso; tentativas de compra continuam com salvamento e renderização como antes.
+- `main.ts` apenas compõe os adaptadores e continua responsável pelo loop e pelo salvamento, sem passar `GameState` à UI migrada.
+- `tests/game-console-ui-boundary.test.mjs`: cobre IDs inválidos, licenciamento e download, saves substituídos, compras e manutenção de PS1, além de delegação de eventos DOM. Os testes legados de GPU/jogos foram ajustados para exigir a porta, e não chamadas diretas do motor no `main.ts`.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
