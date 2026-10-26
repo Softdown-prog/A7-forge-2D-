@@ -1,11 +1,4 @@
-import {categoryStock} from "../render/merchandiseDisplay.js";
-import type {GameState} from "../sim/types.js";
-import {online,pcCount,pcWear,pcBroken} from "../sim/engine.js";
-import {computerOccupancyPercent} from "../sim/financialReview.js";
-import {isPromotionActive} from "../sim/promotion.js";
-import {stationModelName} from "../sim/computerModels.js";
-import {installedWindows,WINDOWS_ERAS} from "../sim/era.js";
-import {hardwareFor,buildParts,formatMemory,describePart} from "../sim/hardware.js";
+import type {LiveStatusSnapshot,ComputerOperationSnapshot} from "../application/presentationModels.js";
 
 const icons=new Set("computer cart settings mail play pause continue save upload close coins chart disc calendar sun rain network users tag stock tools chip shield wall door expand move rotate plant poster table megaphone trash check cursor idea lock warning arrow soda candy snacks".split(" "));
 export function iconMarkup(name:string):string{
@@ -45,28 +38,36 @@ export function decorateControls(root:ParentNode=document):void{
   if(!node.querySelector(".ui-icon"))node.insertAdjacentHTML("beforeend",iconMarkup(summaryIcons[i]??"chart"));
  });
 }
-export function presentLiveState(s:GameState,internet:string,section:string|null=null):void{
- const count=pcCount(s),occupied=s.customers.filter(c=>c.stage==="using").length;
+export function presentLiveState(view:LiveStatusSnapshot,section:string|null=null):void{
  const cards=[
-  {icon:"coins",label:"Caixa disponível",value:"R$ "+s.cash.toLocaleString("pt-BR"),className:"cash"},
-  {icon:"users",label:"Reputação no bairro",value:s.reputation.toFixed(0)+'<span class="hud-secondary">/ 100</span>',className:s.reputation<35?"warning":""},
-  {icon:"network",label:"Internet · "+internet,value:online(s)?"Conectada":"Sem conexão",className:online(s)?"":"warning"},
-  {icon:"computer",label:"PCs em uso",value:occupied+'<span class="hud-secondary">/ '+count+'</span>',className:""},
-  {icon:"users",label:"Clientes no salão",value:String(s.customers.length),className:""}
+  {icon:"coins",label:"Caixa disponível",value:"R$ "+view.cash.toLocaleString("pt-BR"),className:"cash"},
+  {icon:"users",label:"Reputação no bairro",value:view.reputation.toFixed(0)+'<span class="hud-secondary">/ 100</span>',className:view.reputation<35?"warning":""},
+  {icon:"network",label:"Internet · "+view.internetName,value:view.connected?"Conectada":"Sem conexão",className:view.connected?"":"warning"},
+  {icon:"computer",label:"PCs em uso",value:view.occupied+'<span class="hud-secondary">/ '+view.computerCount+'</span>',className:""},
+  {icon:"users",label:"Clientes no salão",value:String(view.customerCount),className:""}
  ];
  const status=document.getElementById("status");
  const html=cards.map(c=>'<div class="hud-card '+c.className+'"><span>'+iconMarkup(c.icon)+'</span><div><small>'+c.label+'</small><strong>'+c.value+'</strong></div></div>').join("");
  if(status&&status.innerHTML!==html)status.innerHTML=html;
  const stock=document.getElementById("stock");
- if(stock&&section==="stock"){stock.className="stock-metrics";const stockHtml=([['soda','Bebidas'],['candy','Doces'],['snacks','Alimentos']] as const).map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+categoryStock(s,k)+'</strong><small>'+label+'</small></p></div>').join("");if(stock.innerHTML!==stockHtml)stock.innerHTML=stockHtml;}
- const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!isPromotionActive(s);
- const usage=document.querySelector(".finance-usage"),capacity=s.monthPcCapacityMinutes??0;
+ if(stock&&section==="stock"){
+  stock.className="stock-metrics";
+  const stockHtml=([["soda","Bebidas"],["candy","Doces"],["snacks","Alimentos"]] as const)
+   .map(([k,label])=>'<div>'+iconMarkup(k)+'<p><strong>'+view.stock[k]+'</strong><small>'+label+'</small></p></div>').join("");
+  if(stock.innerHTML!==stockHtml)stock.innerHTML=stockHtml;
+ }
+ const promotion=document.getElementById("promotion-hud");if(promotion)promotion.hidden=!view.promotionActive;
+ const usage=document.querySelector(".finance-usage");
  if(usage&&section==="finance"&&!usage.closest(".management-page[hidden]")){
   let meter=usage.querySelector<HTMLElement>(".occupancy-meter");
-  if(!meter){meter=document.createElement("div");meter.className="occupancy-meter";meter.setAttribute("role","progressbar");meter.setAttribute("aria-label","Ocupação real neste mês");meter.setAttribute("aria-valuemin","0");meter.setAttribute("aria-valuemax","100");usage.querySelector("h4")?.after(meter);}
-  const pct=computerOccupancyPercent(s.monthPcUsedMinutes??0,capacity);
-  meter.setAttribute("aria-valuenow",String(pct));
-  let fill=meter.querySelector("span");if(!fill){fill=document.createElement("span");meter.append(fill);}fill.style.width=pct+"%";
+  if(!meter){
+   meter=document.createElement("div");meter.className="occupancy-meter";meter.setAttribute("role","progressbar");
+   meter.setAttribute("aria-label","Ocupação real neste mês");meter.setAttribute("aria-valuemin","0");meter.setAttribute("aria-valuemax","100");
+   usage.querySelector("h4")?.after(meter);
+  }
+  meter.setAttribute("aria-valuenow",String(view.occupancyPercent));
+  let fill=meter.querySelector("span");if(!fill){fill=document.createElement("span");meter.append(fill);}
+  fill.style.width=view.occupancyPercent+"%";
  }
  const panel=document.querySelector<HTMLElement>(".admin:not([hidden])");if(panel){
   const active=section?panel.querySelector<HTMLElement>('[data-section="'+section+'"]'):panel;
@@ -74,14 +75,15 @@ export function presentLiveState(s:GameState,internet:string,section:string|null
  }syncWindowChrome();
 }
 
-export function presentComputerOperations(s:GameState,root:ParentNode):void{
+export function presentComputerOperations(stations:ReadonlyArray<ComputerOperationSnapshot>,root:ParentNode):void{
  for(const line of Array.from(root.querySelectorAll<HTMLElement>(":scope>div"))){
   const repair=line.querySelector<HTMLButtonElement>("[data-pc-repair]"),label=line.querySelector<HTMLElement>(":scope>span");
   if(!repair||!label)continue;
-  const i=Number(repair.dataset.pcRepair),wear=pcWear(s,i),broken=pcBroken(s,i);
+  const station=stations[Number(repair.dataset.pcRepair)];
+  if(!station)continue;
+  const {index:i,wear,broken}=station;
   label.className="pc-label";
-  const windows=WINDOWS_ERAS.find(w=>w.id===installedWindows(s,i))!.name,parts=buildParts(hardwareFor(s,i));
-  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+windows+' · '+stationModelName(s,i)+'</small><small>'+parts.cpu.name+' · RAM '+formatMemory(parts.ram.ramMb!)+' · '+describePart(parts.storage)+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
+  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+station.windows+' · '+station.model+'</small><small>'+station.cpu+' · RAM '+station.ram+' · '+station.storage+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
  }
 }
 
