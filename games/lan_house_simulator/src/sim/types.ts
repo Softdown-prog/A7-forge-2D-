@@ -4,8 +4,9 @@ export type Item = "soda" | "candy" | "snacks";
 /** Preferência leve, fixa por visita; saves antigos não têm esse campo. */
 export type CustomerPreference = "economy" | "comfort" | "gaming" | "quick";
 
+/** Direções de mundo são dado de simulação, não dependem do renderizador. */
+export type ActorDirection = "north" | "south" | "east" | "west";
 export interface Point { x: number; y: number }
-import type { ActorDirection } from "../render/direction.js";
 
 export interface Customer {
   id: number;
