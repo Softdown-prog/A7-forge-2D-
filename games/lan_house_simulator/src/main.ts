@@ -1,6 +1,8 @@
 import {installMerchandisePanel} from "./ui/merchandisePanel.js";
 import {createMerchandisePort} from "./application/merchandisePort.js";
 import {createPricingPort} from "./application/pricingPort.js";
+import {createStationActionsPort} from "./application/stationActionsPort.js";
+import {installStationControls} from "./ui/stationControls.js";
 import {installPricingControls} from "./ui/pricingControls.js";
 import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
@@ -26,7 +28,7 @@ import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} 
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, stockItem, supplierLevel, wholesaleCost, upgradeInternet, repairComputer, monthlyBills, energyMonthlyEstimate, productPrice, upgradeComputer } from "./sim/economy.js";
+import { contractSupplier, expandShop, licenseGames, basicGamesLicenseCost, repairInternet, stockItem, supplierLevel, wholesaleCost, upgradeInternet, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
@@ -54,8 +56,8 @@ import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions,chooseDecision} from "./sim/decisions.js";
-import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows,licenseWindows} from "./sim/era.js";
-import {GPU_CATALOG,buyGpu,installedGpu,gpuSpec,type GpuId} from "./sim/gpu.js";
+import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows} from "./sim/era.js";
+import {GPU_CATALOG,installedGpu,gpuSpec} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots,cancelGpuGameInstallation} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier,
@@ -66,11 +68,11 @@ import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {employeeHired,employeeDailyWage,hireEmployee,dismissEmployee,type EmployeeRole} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
-import {LCD_CATALOG,buyLcdKit,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
+import {LCD_CATALOG,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
-import {buyPart,buyPlatform,windowsHardwareIssues,hardwareFor,buildParts,requiredPsuWatts,type HardwareKind,HARDWARE_LABELS} from "./sim/hardware.js";
+import {windowsHardwareIssues,hardwareFor,buildParts,requiredPsuWatts} from "./sim/hardware.js";
 import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
-import {toggleStationPower,stationPoweredOn,stationHasCustomer} from "./sim/stationPower.js";
+import {stationPoweredOn,stationHasCustomer} from "./sim/stationPower.js";
 
 // Catalog illustrations use the same station renderer as the playable scene.
 // Generate once per model; live admin refreshes reuse these images.
@@ -494,17 +496,6 @@ button("show-service-access",()=>{
 button("hide-service-access",()=>{serviceAccessVisible=false;renderUI();});
 let selectedGpuPc=0;
 const gpuList=document.getElementById("gpu-catalog"),gpuPcChoice=document.getElementById("gpu-pc-choice");
-gpuPcChoice?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement))return;
- const index=Number(button.dataset.gpuSelect);
- if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedGpuPc=index;selectedLcdPc=index;renderUI();}
-});
-gpuList?.addEventListener("click",event=>{
- const button=event.target instanceof Element?event.target.closest("button"):null;if(!(button instanceof HTMLButtonElement)||button.disabled)return;
- const id=button.dataset.gpuBuy;
- if(!GPU_CATALOG.some(model=>model.id===id))return;
- applyResult(game,buyGpu(game,selectedGpuPc,id as GpuId));renderUI();save();
-});
 const licensePanel=document.getElementById("windows-license-list");
 const gpuGamePanel=document.getElementById("gpu-game-catalog");
 const eraGamePanel=document.getElementById("era-game-catalog");
@@ -542,56 +533,24 @@ gpuGamePanel?.addEventListener("click",event=>{
  if(!id||!GPU_GAME_CATALOG.some(x=>x.id===id))return;
  applyResult(game,licenseGpuGame(game,id));renderUI();save();
 });
-licensePanel?.addEventListener("click",event=>{
- const node=event.target instanceof Element?event.target.closest("button"):null;
- if(!(node instanceof HTMLButtonElement)||node.disabled)return;
- const index=Number(node.dataset.winPc),edition=node.dataset.winEdition;
- if(!Number.isInteger(index)||!WINDOWS_ERAS.some(e=>e.id===edition))return;
- applyResult(game,licenseWindows(game,index,edition as typeof WINDOWS_ERAS[number]["id"]));renderUI();save();
-});
-
 // Controles unificados em abas, sem criar novos painéis sobre o jogo.
 const maintenancePanel=document.querySelector<HTMLElement>("#pc-maintenance");
 let selectedLcdPc=0;
 let selectedHardwareTab:HardwareTab="platform";
 if(!maintenancePanel)throw new Error("Manutenção ausente no painel");
-maintenancePanel.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("button"):null;
- if(!(target instanceof HTMLButtonElement)||target.disabled)return;
- if(target.dataset.lcdSelect!==undefined||target.dataset.hardwareSelect!==undefined){
-  const index=Number(target.dataset.lcdSelect??target.dataset.hardwareSelect);
-  if(Number.isInteger(index)&&index>=0&&index<pcCount(game)){selectedLcdPc=index;selectedGpuPc=index;renderUI();}
-  return;
- }
- if(target.dataset.hardwareTab!==undefined){
-  const tab=target.dataset.hardwareTab;
-  if(tab==="platform"||Object.hasOwn(HARDWARE_LABELS,tab)){selectedHardwareTab=tab as HardwareTab;renderUI();}return;
- }
- if(target.dataset.hardwareKit!==undefined){applyResult(game,buyPlatform(game,selectedLcdPc,target.dataset.hardwareKit));renderUI();save();return;}
- if(target.dataset.hardwarePart!==undefined){
-  const kind=target.dataset.hardwareKind;
-  if(!kind||!Object.hasOwn(HARDWARE_LABELS,kind))return;
-  applyResult(game,buyPart(game,selectedLcdPc,kind as HardwareKind,target.dataset.hardwarePart));renderUI();save();return;
- }
- if(target.dataset.winPc!==undefined){
-  const index=Number(target.dataset.winPc),id=target.dataset.winEdition;
-  if(Number.isInteger(index)&&WINDOWS_ERAS.some(w=>w.id===id))applyResult(game,licenseWindows(game,index,id as typeof WINDOWS_ERAS[number]["id"]));
-  renderUI();save();return;
- }
- if(target.dataset.lcdBuy!==undefined){
-  const id=target.dataset.lcdBuy;
-  if(!LCD_CATALOG.some(model=>model.id===id))return;
-  applyResult(game,buyLcdKit(game,selectedLcdPc,id as LcdId));renderUI();save();return;
- }
- if(target.dataset.pcPower!==undefined){
-    applyResult(game,toggleStationPower(game,Number(target.dataset.pcPower)));renderUI();save();return;
-  }
-  if(target.dataset.pcRepair===undefined&&target.dataset.pcUpgrade===undefined)return;
- const index=Number(target.dataset.pcRepair??target.dataset.pcUpgrade);
- if(!Number.isInteger(index))return;
- 
- applyResult(game,target.dataset.pcRepair!==undefined?repairComputer(game,index):upgradeComputer(game,index));
- renderUI();save();
+// Motor e interface comunicam por uma porta tipada. Nunca guardar um GameState antigo.
+installStationControls({
+ maintenance:maintenancePanel,
+ gpuCatalog:gpuList,
+ gpuChoices:gpuPcChoice,
+ windowsLicenses:licensePanel
+},createStationActionsPort(()=>game),{
+ selectedStation:()=>selectedLcdPc,
+ selectedGpu:()=>selectedGpuPc,
+ selectStation:index=>{selectedLcdPc=index;selectedGpuPc=index;renderUI();},
+ selectGpu:index=>{selectedGpuPc=index;selectedLcdPc=index;renderUI();},
+ selectHardwareTab:tab=>{selectedHardwareTab=tab as HardwareTab;renderUI();},
+ onResult:result=>{applyResult(game,result);renderUI();save();}
 });
 const shopPanels=shop?installShopPanels(shop,()=>renderUI()):null;
 const shopArtwork=new Map<string,string>();
