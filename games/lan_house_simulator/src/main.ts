@@ -5,6 +5,10 @@ import {createServiceActionsPort} from "./application/serviceActionsPort.js";
 import {createGameLicensingPort} from "./application/gameLicensingPort.js";
 import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
 import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
+import {createShopActionsPort} from "./application/shopActionsPort.js";
+import {installShopControls} from "./ui/shopControls.js";
+import {createNoticeActionsPort} from "./application/noticeActionsPort.js";
+import {installNoticeControls} from "./ui/noticeControls.js";
 import {installPs1Controls} from "./ui/ps1Controls.js";
 import {installServiceControls} from "./ui/serviceControls.js";
 import {createStationActionsPort} from "./application/stationActionsPort.js";
@@ -14,8 +18,8 @@ import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
-import {buyPrinter,quotePrinter,printPaperInkCost,pagesPrintedToday,PRINT_MAX_PRICE} from "./sim/printService.js";
-import {buyDiscCopier,quoteDiscCopier,discMediaCost,discCopiesToday,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
+import {quotePrinter,printPaperInkCost,pagesPrintedToday,PRINT_MAX_PRICE} from "./sim/printService.js";
+import {quoteDiscCopier,discMediaCost,discCopiesToday,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
 import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
@@ -29,12 +33,12 @@ import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
-import {SHOP_CATALOG,shopPrice,buyComputer,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
-import {expandDirection,roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
+import {SHOP_CATALOG,shopPrice,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
+import {roomBounds,MAX_EXTENSION_LEVEL} from "./sim/room.js";
 import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { expandShop, basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
+import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
 import {stationAccountingSummary} from "./sim/stationAccounting.js";
@@ -60,8 +64,8 @@ import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.j
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
-import {reviewNotices,readNotice,unreadNotices,hireContentProgrammer,missingWindowsLicenses} from "./sim/notices.js";
-import {decisionOptions,chooseDecision} from "./sim/decisions.js";
+import {unreadNotices,missingWindowsLicenses} from "./sim/notices.js";
+import {decisionOptions} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows} from "./sim/era.js";
 import {GPU_CATALOG,installedGpu,gpuSpec} from "./sim/gpu.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots} from "./sim/gpuGames.js";
@@ -380,17 +384,19 @@ function button(id:string, handler:()=>void):void {
     }
   });
 }
-button("open-notices",()=>{noticesOpen=!noticesOpen;if(noticesOpen){adminOpen=false;shopOpen=false;reviewNotices(game);}renderUI();save();});
+button("open-notices",()=>{noticesOpen=!noticesOpen;if(noticesOpen){adminOpen=false;shopOpen=false;noticeActions.review();}renderUI();save();});
 button("close-notices",()=>{noticesOpen=false;renderUI();});
 const noticesList=document.querySelector<HTMLElement>("#notices-list");
-noticesList?.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("button"):null;
- if(!(target instanceof HTMLButtonElement))return;
- if(target.dataset.decision&&target.dataset.choice){applyResult(game,chooseDecision(game,target.dataset.decision,target.dataset.choice));renderUI();save();}
- else if(target.dataset.noticeRead){readNotice(game,target.dataset.noticeRead);renderUI();save();}
- else if(target.dataset.noticeAction==="programmer"){applyResult(game,hireContentProgrammer(game));renderUI();save();}
- else if(target.dataset.noticeAction==="windows"){noticesOpen=false;adminOpen=true;activateAdminTab("licenses");managementPanels.select("licenses","windows");renderUI();}
- else if(target.dataset.noticeAction==="games"){noticesOpen=false;adminOpen=true;activateAdminTab("services");managementPanels.select("services","network");renderUI();}
+const noticeActions=createNoticeActionsPort(()=>game);
+installNoticeControls(noticesList,noticeActions,{
+ onResult:result=>{applyResult(game,result);renderUI();save();},
+ onRead:()=>{renderUI();save();},
+ navigate:destination=>{
+  noticesOpen=false;adminOpen=true;
+  if(destination==="windows"){activateAdminTab("licenses");managementPanels.select("licenses","windows");}
+  else {activateAdminTab("services");managementPanels.select("services","network");}
+  renderUI();
+ }
 });
 button("open-admin",()=>{if(layoutEditor.active)layoutEditor.close();adminOpen=!adminOpen;if(adminOpen){noticesOpen=false;shopOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
 button("open-shop",()=>{if(layoutEditor.active)layoutEditor.close();shopOpen=!shopOpen;if(shopOpen){noticesOpen=false;adminOpen=false;placingKind=null;wallMode=null;installingAnnexPc=false;relocating=false;relocationFrom=null;hoveredPlacement=null;}renderUI();});
@@ -409,40 +415,25 @@ button("rotate-furniture",()=>{
 button("organize-furniture",()=>layoutEditor.open());
 
 const ps1Actions=createPs1ActionsPort(()=>game);
-shopCatalog?.addEventListener("click",event=>{
- const target=event.target instanceof Element?event.target.closest("button"):null;
- if(!(target instanceof HTMLButtonElement)||target.disabled)return;
- if(!target.dataset.buy)return;
- const id=target.dataset.buy;
- if(id==="computer-annex"){
+installShopControls(shopCatalog,createShopActionsPort(()=>game),{
+ onPlacement:id=>{
+  if(id==="computer-annex"){
    installingAnnexPc=true;wallMode=null;placingKind=null;relocating=false;hoveredAnnexPc=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
-   return;
- }
- if(id==="wall"||id==="door"){
+  }else if(id==="wall"||id==="door"){
    wallMode=id==="door"?"door":"build";installingAnnexPc=false;placingKind=null;relocating=false;hoveredWall=null;pendingWall=null;placementNotice="";
-   shopOpen=false;adminOpen=false;renderUI();canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
-   return;
- }
- if(id==="poster"||id==="plant"||id==="table"){
-   if(!availablePlacementSlots(game,id).length)return;
+  }else{
    placingKind=id;purchaseRotation=0;hoveredPlacement=null;placementNotice="";soundscape.stopKeyboard();
-   shopOpen=false;adminOpen=false;renderUI();
-   canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
-   return;
+  }
+  shopOpen=false;adminOpen=false;renderUI();
+  canvas.parentElement?.scrollIntoView({block:"nearest",behavior:"instant"});
+ },
+ onPurchase:(result,id)=>{
+  applyResult(game,result);
+  if(result.ok&&id==="ps1"&&(game.ps1Stations?.length??0)===1){
+   shopOpen=false;adminOpen=true;activateAdminTab("consoles");managementPanels.select("consoles","stations");
+  }
+  renderUI();save();
  }
- const result=id==="expand"?expandShop(game):id==="computer"?buyComputer(game):
-   id==="ps1"?ps1Actions.buyStation(shopCatalog.querySelector<HTMLSelectElement>("#ps1-placement")?.value??""):
-   id==="disc-copier"?buyDiscCopier(game):
-   id==="printer"?buyPrinter(game):
-   id.startsWith("extend-")?expandDirection(game,id.slice(7) as ExtensionDirection):{ok:false,message:"Compra desconhecida."};
- applyResult(game,result);
- // Na primeira compra, apresentar imediatamente o novo painel do console.
- // O atalho do próprio painel leva à loja para comprar o primeiro CD.
- if(result.ok&&id==="ps1"&&(game.ps1Stations?.length??0)===1){
-  shopOpen=false;adminOpen=true;activateAdminTab("consoles");managementPanels.select("consoles","stations");
- }
- renderUI();save();
 });
 button("close-admin",()=>{adminOpen=false;renderUI();});
 button("ps1-open-shop",()=>{

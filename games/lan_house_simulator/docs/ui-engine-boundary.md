@@ -58,6 +58,14 @@
 - `main.ts` apenas compõe os adaptadores e continua responsável pelo loop e pelo salvamento, sem passar `GameState` à UI migrada.
 - `tests/game-console-ui-boundary.test.mjs`: cobre IDs inválidos, licenciamento e download, saves substituídos, compras e manutenção de PS1, além de delegação de eventos DOM. Os testes legados de GPU/jogos foram ajustados para exigir a porta, e não chamadas diretas do motor no `main.ts`.
 
+## Sétimo recorte: compras da loja e correspondência
+
+- `src/application/shopActionsPort.ts` centraliza computador, expansões, impressora, copiadora e bancada PS1; valida direções e consulta espaço livre antes de iniciar a colocação.
+- `src/ui/shopControls.ts` apenas delega os botões `data-buy` ao motor via porta, ou ao estado visual de colocação. Preserva a navegação no celular e o listener separado de CDs da PS1.
+- `src/application/noticeActionsPort.ts` oferece ações de abrir/revisar correio, decidir, ler e contratar programador, sempre lendo `()=>game`.
+- `src/ui/noticeControls.ts` encapsula cliques e navegação do correio sem importar `sim/`.
+- Layout, toque mobile, pathfinding, render Canvas, esquema de save e valores econômicos inalterados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -68,7 +76,7 @@
 
 ## Próximos recortes
 
-- Continuar a extração das ações restantes de loja, licenças de jogos por era, PS1 e outros comandos do `main.ts` para controladores de aplicação.
+- Separar futuramente o editor de posicionamento, movimentação e divisórias, com teste real no celular antes de modificar gestos.
 - Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
 - Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.
