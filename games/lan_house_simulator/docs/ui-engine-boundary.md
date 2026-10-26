@@ -33,6 +33,14 @@
 - `src/main.ts` injeta o snapshot quando o painel de Finanças > Opiniões está ativo.
 - O teste de fronteira garante ausência de imports diretos no presenter e que alterações nos DTOs não modificam a partida.
 
+## Quarto recorte: estações e hardware
+
+- `src/application/stationActionsPort.ts` centraliza a compra de kits de plataforma, peças, GPU, LCD, licenças Windows, reparo, upgrade CRT e energia, validando índice da estação e IDs de catálogo antes de chamar o motor.
+- `src/ui/stationControls.ts` escuta os botões já existentes das abas de manutenção, GPUs e licenças; a UI só conhece uma porta tipada e callbacks de seleção/notificação.
+- `src/main.ts` injeta `()=>game` para sempre alcançar a instância atual, inclusive após importar ou recuperar partidas da nuvem. Também preserva a sincronização entre seleção de GPU e estação.
+- `tests/station-ui-boundary.test.mjs` cobre índices inválidos, catálogo, power toggle com save/restauração, delegação DOM e ausência de dependência direta da simulação.
+- Os renderizadores Canvas, o layout de móveis, o formato do save e as regras de compra não foram modificados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -43,7 +51,7 @@
 
 ## Próximos recortes
 
-- Extração das ações restantes de hardware, compras e serviços de `main.ts` para controladores de aplicação.
+- Continuar a extração das ações restantes de serviços, jogos e compras de `main.ts` para controladores de aplicação.
 - Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
 - Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.
