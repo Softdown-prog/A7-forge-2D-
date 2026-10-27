@@ -66,7 +66,8 @@ test("toques intencionais selecionam, enquanto arrasto e scroll não executam co
  };
  globalThis.window={matchMedia:()=>({matches:true})};
  globalThis.document={
-  querySelector:()=>null,
+  querySelector:selector=>selector==="#layout-confirm"?
+    {addEventListener:(name,fn)=>{elementListeners[name]=fn;},disabled:false}:null,
   getElementById:id=>id==="layout-confirm"?
     {addEventListener:(name,fn)=>{elementListeners[name]=fn;},disabled:false}:null
  };
