@@ -39,7 +39,7 @@ test("a porta de correio preserva decisões, marcação de leitura e save substi
  s=parseImportedSave(serializeSave(s));
  assert.equal(port.hireProgrammer().ok,true);
  assert.equal(s.contentFilterInstalled,true);
- assert.equal(previous.contentFilterInstalled,false);
+ assert.equal(previous.contentFilterInstalled===true,false);
  assert.equal(port.hireProgrammer().ok,false);
  assert.equal(isValidSave(s),true);
 });
