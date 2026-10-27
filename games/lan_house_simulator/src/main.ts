@@ -62,7 +62,8 @@ import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {SceneMotion} from "./render/motion.js";
-import { promotionCost, isPromotionActive, promotionCanAttractVisitors, promotionAdmissionMinutesRemaining } from "./sim/promotion.js";
+import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
+import {renderPromotionStatus} from "./ui/promotionStatusPanel.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
@@ -837,6 +838,7 @@ const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
+const promotionStatusPort=createPromotionStatusPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1522,27 +1524,7 @@ function renderUI(liveOnly=false):void {
     " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
   if(activeAdminTab==="finance"){
   renderMonthlyFinancePanel(monthlyFinancePort.snapshot(),setText,document);
-  const promoting=isPromotionActive(game);
-  const admissionsOpen=promotionCanAttractVisitors(game);
-  const promoPrice=promotionCost(game);
-  const promoLabel=inCurrency(promoPrice);
-  setText("promotion-description","Custo atual: "+promoLabel+
-    ". Aumenta em 40% a chance de chegada até 20h30, desde que haja PCs ligados ou bancadas de PlayStation disponíveis. Lotação e filas reduzem o resultado; não garante clientes nem vendas.");
-  setText("promotion-status",promoting
-    ?admissionsOpen
-      ?"Panfletagem ativa! +40% na chance de novos visitantes. Restam "+promotionAdmissionMinutesRemaining(game)+" minutos de entrada (até 20h30)."
-      :"Panfletagem contratada hoje. Novos clientes não entram após 20h30; a campanha termina às 22h."
-    :game.totalMinutes>=GAME_LAST_MINUTE
-      ?"Calendário encerrado: não é possível contratar panfletagem."
-      :admissionsOpen
-        ?"Sem panfletagem hoje. Divulgue sua lan house para aumentar a procura até 20h30."
-        :"Novas entradas encerradas às 20h30. A panfletagem estará disponível amanhã.");
-  const promotionButton=document.querySelector<HTMLButtonElement>("#launch-promotion");
-  if(promotionButton){
-    promotionButton.disabled=promoting||!admissionsOpen||game.cash<promoPrice;
-    promotionButton.textContent=promoting?"✓ Divulgação contratada hoje":
-      !admissionsOpen?"📣 Panfletagem indisponível após 20h30":"📣 Fazer panfletagem · "+promoLabel;
-  }
+  renderPromotionStatus(promotionStatusPort.snapshot(),setText,document);
   setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   }
   }

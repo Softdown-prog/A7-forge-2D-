@@ -144,6 +144,15 @@
 - `tests/monthly-finance-boundary.test.mjs` verifica formatação, totais, save substituído, DOM estável e separação das camadas. O teste financeiro legado passa a verificar o novo apresentador.
 - Simulação, RNG, cobranças, Canvas, autosave e formato de save permanecem inalterados.
 
+## Décimo nono recorte: status e custo da panfletagem
+
+- `src/application/promotionStatusPort.ts` projeta custo, condição de contratação e mensagens a partir da partida ativa, sem modificar a economia.
+- `src/ui/promotionStatusPanel.ts` atualiza `promotion-description`, `promotion-status` e o mesmo botão `#launch-promotion`, sem recriar o DOM nem trocar seu listener.
+- `src/main.ts` continua responsável pela aba de Finanças e injeta a porta com `()=>game` para reconhecer saves importados.
+- As ações de compra continuam em `serviceActionsPort` e `serviceControls`, com a política anterior de save.
+- `tests/promotion-status-boundary.test.mjs` verifica preço clássico/histórico, caixa, 20h29/20h30, encerramento, save importado, botão persistente e fronteira sem dependência do motor.
+- Não se alteraram motor, RNG, preços, calendário, Canvas, navegação mobile ou formato de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
