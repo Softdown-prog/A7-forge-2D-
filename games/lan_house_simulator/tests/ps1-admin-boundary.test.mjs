@@ -77,7 +77,7 @@ test("renderização mantém os IDs de controle e não destrói o painel fora da
   area.append(preserved);
   renderPs1AdminPanel(port,ui);
   assert.deepEqual(area.children,[preserved],"não recria a aba quando oculta");
-  assert.match(text["ps1-overview"],/2002/);
+  assert.match(text["ps1-overview"],/Bancadas instaladas: 0\/3/);
   assert.match(text["ps1-disc-summary"],/primeira bancada/);
   assert.equal(nodes.get("ps1-price-up").disabled,true);
   assert.equal(buyPs1Station(state,ps1PlacementSlots(state)[0].id).ok,true);

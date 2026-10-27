@@ -118,7 +118,9 @@ try{
   await page.locator("canvas").screenshot({path:resolve(output,"ps1_tv_"+titles[i]+".png")});
  }
  await page.evaluate(()=>window.__lhsShowcaseStart());
- await page.waitForFunction(()=>window.__lhsShowcaseDone===true,null,{timeout:35000});
+ // Video capture and detailed Canvas painting can slow Chromium on shared CI runners.
+ // Keep the completion assertion; only allow more real time for the 20s showcase.
+ await page.waitForFunction(()=>window.__lhsShowcaseDone===true,null,{timeout:90000});
  if(errors.length)throw Error("Erros no showcase: "+errors.join(" | "));
  const path=await page.video().path();
  await context.close();context=null;
