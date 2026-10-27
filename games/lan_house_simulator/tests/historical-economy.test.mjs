@@ -96,13 +96,16 @@ test("a interface da nova partida oferece períodos e teto histórico, sem apaga
  for(const id of ["year-price-ceiling","equipment-price-ceiling","annual-ipca","session-package-prices"])
   assert.ok(html.includes('id="'+id+'"'),id);
  assert.match(main,/newGameForPlayer\(72421,"historical"\)/);
- assert.match(main,/const fresh=createGame\(seed,mode\)/);
+  const session=readFileSync(resolve(root,"src/application/gameSessionPort.ts"),"utf8");
+  assert.match(main,/createGameSessionPort\(/);
+  assert.match(session,/const fresh=createGame\(seed,mode\)/);
  assert.match(main,/crypto\.getRandomValues/);
  assert.ok(main.includes("allowableHourlyPrice(game)"));
  // Save local agora é decodificado em localSave.ts; o estado recuperado
  // passa pelo ajuste de teto (que não altera o modo clássico).
- assert.ok(main.includes("loadLocalSave("));
- assert.match(main,/if\s*\(startupSave\.state\)\s*\{[\s\S]*?clampPriceToEra\(game\)/);
+  assert.match(session,/loadLocalSave\(store\)/);
+  assert.match(session,/if\(loaded\.state\)\{/);
+  assert.match(session,/clampPriceToEra\(loaded\.state\)/);
 });
 
 test("preço histórico de técnicos e limpeza é consistente com a época e não altera o clássico",()=>{
