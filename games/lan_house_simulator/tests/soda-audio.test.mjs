@@ -74,7 +74,9 @@ test("som aprovado toca apenas no fluxo de venda e não cria botão de teste na 
  assert.doesNotMatch(main,/preview-soda-sfx|previewSoda/);
  assert.doesNotMatch(engine,/previewSoda/);
  assert.doesNotMatch(css,/sound-preview/);
- assert.match(main,/if\(sale\.item==="soda"\)soundscape\.soda\(\)/);
+ const feedback=readFileSync(resolve(root,"src/application/frameFeedbackPort.ts"),"utf8");
+ assert.match(main,/frameFeedback\.sales\(isPlaying\)/);
+ assert.match(feedback,/if\(e\.item==="soda"\)audio\.soda\(\)/);
  assert.equal(AUDIO_LEVELS.soda,0.085);
  assert.equal(SODA_AFTER_SALE_DELAY_SECONDS,0.90);
 });
