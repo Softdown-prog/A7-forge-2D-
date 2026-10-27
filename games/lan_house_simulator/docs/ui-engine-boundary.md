@@ -80,6 +80,13 @@
 - `src/main.ts` mantém o mesmo canvas, hit testing, raio de toque, zoom e eventos do editor móvel. Agora só chama a porta tipada para operações e consultas de segmentos.
 - Os custos, validações de colisão, circulação, disponibilidade e salvamento continuam no motor original. A porta usa `()=>game` após importar saves.
 
+## Décimo recorte: sessão e arquivos de partida
+
+- `src/application/gameSessionPort.ts` coordena leitura do armazenamento local, recuperação do backup, clamp ao carregar saves antigos, criação de campanhas, persistência, substituição atômica, validação de importação JSON e preparação de exportação. Continua delegando as regras originais a `sim/localSave.ts` e `sim/saveTransfer.ts`.
+- `src/ui/saveFileControls.ts` trata clique de download, seletor de arquivos, tamanho máximo de 2 MB e mensagens. Não importa `GameState` nem módulos `sim/`.
+- `src/main.ts` preserva transições de menu, animações, notificação, confirmação antes de substituir e o contrato de save local/nuvem. Todo comando acessa a partida atual via `()=>game`.
+- A troca explícita grava no navegador antes de atribuir `game`. Falhas não substituem a partida visível, nem removem backups fora das políticas existentes.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -33,13 +33,13 @@ import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
 import {createPlacementActionsPort} from "./application/placementActionsPort.js";
 import {editableObjects} from "./sim/editableObjects.js";
-import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
-import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
+import {createGameSessionPort} from "./application/gameSessionPort.js";
+import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
-import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
+import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
@@ -126,25 +126,20 @@ let menuPreviewAvailable=true;
 try{menuRenderer?.draw(menuPreview,0);}catch{menuPreviewAvailable=false;}
 
 /** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
+const sessionPort=createGameSessionPort({
+ getItem:key=>localStorage.getItem(key),
+ setItem:(key,value)=>localStorage.setItem(key,value),
+ removeItem:key=>localStorage.removeItem(key)
+},()=>game);
+/** Mail schedule is unique per new game. The sim RNG remains independent. */
 function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):GameState{
- const fresh=createGame(seed,mode);
- if(typeof crypto!=="undefined"&&typeof crypto.getRandomValues==="function"){
-  fresh.mailScheduleSeed=crypto.getRandomValues(new Uint32Array(1))[0]??(seed>>>0);
- }else{
-  fresh.mailScheduleSeed=(Date.now()^Math.floor(Math.random()*0x100000000))>>>0;
- }
- return fresh;
+ const mailSeed=typeof crypto!=="undefined"&&typeof crypto.getRandomValues==="function"
+  ?crypto.getRandomValues(new Uint32Array(1))[0]??(seed>>>0)
+  :(Date.now()^Math.floor(Math.random()*0x100000000))>>>0;
+ return sessionPort.newGame(seed,mode,mailSeed);
 }
-const startupSave=loadLocalSave({
- getItem:(key:string)=>{try{return localStorage.getItem(key);}catch{return null;}}
-});
+const startupSave=sessionPort.startup();
 let game=startupSave.state??newGameForPlayer(72421,"historical");
-let knownMailIds=mailBaseline(game.notices);
-function resetMailAudioBaseline():void{knownMailIds=mailBaseline(game.notices);}
-if(startupSave.state){
- if(game.totalMinutes>GAME_LAST_MINUTE){game.totalMinutes=GAME_LAST_MINUTE;game.leftoverMinutes=0;}
- clampPriceToEra(game);
-}
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
 const gameApp=document.querySelector<HTMLElement>("#game-app");
 const continueButton=document.querySelector<HTMLButtonElement>("#menu-continue");
@@ -184,38 +179,28 @@ exportButton.disabled=!hasSavedGame;
 function announceSave(message:string):void{saveMessage!.textContent=message;}
 if(startupSave.source==="backup")announceSave("Save principal danificado: cópia local anterior recuperada. Exporte o JSON para maior segurança.");
 else if(startupSave.invalidPrimary)announceSave("O save local está inválido e não há cópia recuperável. O arquivo danificado não foi apagado.");
-document.getElementById("save-export")?.addEventListener("click",()=>{
- if(!hasSavedGame){announceSave("Nenhuma partida disponível para exportar.");return;}
- try{
-  const blob=new Blob([serializeSave(game)],{type:"application/json"});
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement("a");link.href=url;
-  link.download="lan-house-simulator-dia-"+dayNumber(game)+".json";
-  document.body.append(link);link.click();link.remove();
-  window.setTimeout(()=>URL.revokeObjectURL(url),1000);
-  announceSave("Partida salva em arquivo. Você pode carregá-la em outro navegador.");
- }catch{announceSave("Não foi possível exportar esta partida.");}
-});
-document.getElementById("save-import")?.addEventListener("click",()=>importFile!.click());
-importFile.addEventListener("change",async()=>{
- const file=importFile!.files?.[0];importFile!.value="";
- if(!file)return;
- if(file.size>2_000_000){announceSave("O arquivo excede o limite de 2 MB.");return;}
- try{
-  const state=parseImportedSave(await file.text());
+installSaveFileControls({
+ importFile,
+ importButton:document.getElementById("save-import"),
+ exportButton,
+ canExport:()=>hasSavedGame,
+ exportSnapshot:()=>sessionPort.exportSnapshot(),
+ notify:announceSave,
+ importText:async json=>{
+  const state=sessionPort.parseImport(json);
   if(!window.confirm("Importar esta partida? O progresso salvo neste navegador será substituído."))return;
-  // Persistir ANTES de atualizar o estado visível; falha de armazenamento preserva a partida atual.
-  replaceLocalSave(localStorage,state);
+  // Persist before showing the new save; failure keeps the current campaign.
+  sessionPort.replace(state);
   game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);
   soundscape.stopKeyboard();
   previousServed=game.served;previousPurchases=game.purchases;
   paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
   continueButton!.disabled=false;exportButton!.disabled=false;
   announceSave("Partida importada com sucesso. Clique em Continuar.");
- }catch(e){announceSave(e instanceof Error?e.message:"Não foi possível importar o arquivo.");}
+ }
 });
 mountCloudControls(saveMessage,()=>game,(state)=>{
- replaceLocalSave(localStorage,state);
+ sessionPort.replace(state);
  game=state;hasSavedGame=true;resetMailAudioBaseline();game.keyboardEffects?.splice(0);sceneMotion.reset();soundscape.stopKeyboard();
  previousServed=game.served;previousPurchases=game.purchases;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
@@ -243,7 +228,7 @@ function beginPlay():void{
 document.getElementById("menu-new")?.addEventListener("click",()=>{
  if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
  const fresh=newGameForPlayer(72421,"historical");
- try{replaceLocalSave(localStorage,fresh);}
+ try{sessionPort.replace(fresh);}
  catch{announceSave("Não foi possível gravar uma nova partida. A anterior foi preservada.");return;}
  game=fresh;resetMailAudioBaseline();hasSavedGame=true;exportButton!.disabled=false;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
@@ -367,7 +352,7 @@ function internetName(): string { return internetNames[game.internetTier-1] ?? "
 function save(): void {
   if(!isPlaying)return;
   try {
-    writeLocalSave(localStorage,game);hasSavedGame=true;exportButton!.disabled=false;
+    sessionPort.persist();hasSavedGame=true;exportButton!.disabled=false;
     if(autosaveState)autosaveState.textContent="Salvo neste navegador";
     autosaveIndicator?.removeAttribute("data-state");
     if(autosaveFailed)announceSave("Salvamento automático restabelecido neste navegador.");
@@ -526,7 +511,7 @@ activateAdminTab(activeAdminTab);
 button("reset-game",()=>{
   if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
   const fresh=newGameForPlayer(72421,"classic");
-  try{replaceLocalSave(localStorage,fresh);}
+  try{sessionPort.replace(fresh);}
   catch{announceSave("Falha ao salvar reinício. Progresso anterior preservado.");return;}
   game=fresh;resetMailAudioBaseline();hasSavedGame=true;
   previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;renderUI();
