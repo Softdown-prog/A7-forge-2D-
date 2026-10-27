@@ -696,7 +696,9 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="rotate-furniture"/);
- assert.match(source,/expandDirection\(game,id.slice\(7\)/);
+ assert.match(source,/installShopControls\(shopCatalog,createShopActionsPort/);
+  const port=readFileSync(resolve(root,"src/application/shopActionsPort.ts"),"utf8");
+  assert.match(port,/expandDirection\(s,direction\)/);
  assert.match(source,/rotateFurniture\(game,relocationFrom\)/);
  // The grid may change with the visual identity. capture_identity.mjs verifies
  // actual overflow and interaction at 1440, 414 and 360 pixels in Chromium.
