@@ -102,6 +102,14 @@
 - Eventos de toque e os limiares mobile não foram modificados. O relógio da prévia do menu só é atualizado após desenho bem-sucedido.
 - Seis testes em `tests/frame-scheduling-boundary.test.mjs` cobrem FPS, tempo, modal, rolagem, toque, cache, menu e fronteira de dependências.
 
+## Décimo terceiro recorte: feedback de áudio e efeitos de quadros
+
+- `src/application/frameFeedbackPort.ts` drena eventos de pagamento, venda, impressão, teclado e falas por uma API tipada que recebe as filas visuais e uma interface mínima de áudio.
+- `src/main.ts` mantém a ordem anterior dos efeitos, os contadores, a detecção de novas cartas, desenho do Canvas e as regras de pausa e salvamento.
+- São mantidos 12 popups financeiros e 8 falas. Uma venda confirmada toca o áudio mesmo com posição visual ausente. Impressora e teclado validam IDs inteiros.
+- A porta usa `()=>game` para acompanhar restores de save, sem acoplar ao objeto de `Soundscape`. Não foram alterados RNG, economia, formato do save ou gestos mobile.
+- Testes em `tests/frame-feedback-boundary.test.mjs` protegem esses contratos.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

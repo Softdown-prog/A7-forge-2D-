@@ -38,6 +38,7 @@ import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {createFrameSchedule} from "./application/frameSchedule.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
+import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
@@ -307,6 +308,9 @@ let lastEventSignature="";
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
+const frameFeedback=createFrameFeedbackPort(()=>game,soundscape,{
+ payments:paymentPopups,sales:salePopups,speech:speechPopups
+});
 function paintPayments(dt:number,visible=true):void {
   const camera=cameraForGame(game);
   for(let i=paymentPopups.length-1;i>=0;i--){
@@ -1737,37 +1741,13 @@ function frame(timestamp:number):void {
   // Detect new mail from every delivery path, not from opening the envelope.
   const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
   if(arrivedMail>0&&!document.hidden)soundscape.mail();
-  const payments=isPlaying?(game.paymentEffects?.splice(0)??[]):[];
-  for(const payment of payments){
-    paymentPopups.push({...payment,age:0});
-    if(paymentPopups.length>12)paymentPopups.shift();
-    soundscape.income("payment");
-  }
+  frameFeedback.payments(isPlaying);
   if(game.served>previousServed)previousServed=game.served;
-  const sales=isPlaying?(game.saleEffects?.splice(0)??[]):[];
-  for(const sale of sales){
-    if(Number.isFinite(sale.amount) && Number.isFinite(sale.x) && Number.isFinite(sale.y)){
-      salePopups.push({amount:sale.amount!,x:sale.x!,y:sale.y!,age:0});
-      if(salePopups.length>12)salePopups.shift();
-    }
-    // Payment sound is emitted by real confirmed sales, not UI clicks.
-    soundscape.income("sale");
-    if(sale.item==="soda")soundscape.soda();
-    else soundscape.candy();
-  }
-  // Impressão paga (avulsa ou na sessão): chance e cooldown no mixer.
-  for(const print of (isPlaying?(game.printEffects?.splice(0)??[]):[])){
-   if(Number.isInteger(print.customerId))soundscape.printer();
-  }
-  // A gentle 3.5-second phrase once a visitor starts a PC session.
-  for(const started of (isPlaying?(game.keyboardEffects?.splice(0)??[]):[])){
-    if(Number.isInteger(started.customerId)&&Number.isInteger(started.pcIndex))soundscape.keyboard();
-  }
+  frameFeedback.sales(isPlaying);
+  frameFeedback.prints(isPlaying);
+  frameFeedback.keyboards(isPlaying);
   if(game.purchases>previousPurchases)previousPurchases=game.purchases;
-  for(const speech of (isPlaying?(game.speechEffects?.splice(0)??[]):[])){
-    speechPopups.push({...speech,age:0});
-    if(speechPopups.length>8)speechPopups.shift();
-  }
+  frameFeedback.speech(isPlaying);
   const paintScene=frameSchedule.scene(timestamp,{
    playing:isPlaying,accountOpen,visible:sceneVisible,hidden:document.hidden,
    adminOpen,shopOpen,noticesOpen,coarse:coarsePointer.matches
