@@ -51,7 +51,8 @@ import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
-import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
+import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
+import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
@@ -835,6 +836,7 @@ function renderShop(force=true):void{
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);
+const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1519,36 +1521,7 @@ function renderUI(liveOnly=false):void {
     " · Impressões avulsas "+(game.printer?.walkIns??0)+
     " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
   if(activeAdminTab==="finance"){
-  const monthUsed=game.monthPcUsedMinutes??0,monthCapacity=game.monthPcCapacityMinutes??0;
-  const monthPct=computerOccupancyPercent(monthUsed,monthCapacity);
-  setText("pc-utilization","Ocupação neste mês: "+monthPct.toLocaleString("pt-BR")+"% dos minutos-PC disponíveis ("+monthUsed.toLocaleString("pt-BR")+"/"+monthCapacity.toLocaleString("pt-BR")+").");
-  const prevCap=game.lastMonthPcCapacityMinutes??0;
-  const previous=prevCap>0?computerOccupancyPercent(game.lastMonthPcUsedMinutes??0,prevCap).toLocaleString("pt-BR")+"%":"sem histórico";
-  setText("previous-occupancy","Ocupação do último mês: "+previous+".");
-  const hasStatement=game.lastMonthRevenue!==undefined&&game.lastMonthExpenses!==undefined;
-  const lastNet=(game.lastMonthRevenue??0)-(game.lastMonthExpenses??0);
-  const lastBill=game.lastPaidMonthlyBill;
-  const billInfo=document.getElementById("last-bill-info");
-  const billDetails=document.getElementById("last-bill-details");
-  if(billInfo)billInfo.textContent=lastBill?
-   "Último fechamento: mês "+String(Math.floor(((lastBill.endDay-1)%360)/30)+1).padStart(2,"0")+
-   "/"+(1998+Math.floor((lastBill.endDay-1)/360))+
-   " · pago "+inCurrency(lastBill.total)+
-   " · caixa após pagamento "+inCurrency(lastBill.cashAfterPayment)+"."
-   :"Nenhum fechamento pago nesta partida ainda. A primeira cobrança acontece após 30 dias do jogo.";
-  if(billDetails)billDetails.hidden=!lastBill;
-  if(lastBill){
-   setText("last-bill-rent",inCurrency(lastBill.rent));
-   setText("last-bill-internet",inCurrency(lastBill.internet));
-   setText("last-bill-energy",inCurrency(lastBill.energy));
-   setText("last-bill-maintenance",inCurrency(lastBill.maintenance));
-   setText("last-bill-wages",inCurrency(lastBill.wages));
-   setText("last-bill-total",inCurrency(lastBill.total));
-  }
-  setText("monthly-statement",hasStatement
-    ?"Fechamento anterior: entradas "+money(game.lastMonthRevenue??0)+" · saídas "+money(game.lastMonthExpenses??0)+" · resultado "+money(lastNet)+". Inclui investimentos e multas pagos no período."
-    :"Fechamento mensal: disponível após o primeiro mês completo desta partida.");
-  setText("capacity-advice",expansionAdvice(game));
+  renderMonthlyFinancePanel(monthlyFinancePort.snapshot(),setText,document);
   const promoting=isPromotionActive(game);
   const admissionsOpen=promotionCanAttractVisitors(game);
   const promoPrice=promotionCost(game);

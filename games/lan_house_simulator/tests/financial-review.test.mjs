@@ -72,8 +72,10 @@ test("indicadores estão visíveis na aba Finanças do jogo",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ const ui=readFileSync(resolve(root,"src/ui/monthlyFinancePanel.ts"),"utf8");
  for(const id of ["pc-utilization","previous-occupancy","monthly-statement","capacity-advice"]){
   assert.match(html,new RegExp('id="'+id+'"'));
-  assert.ok(main.includes('setText("'+id+'"'));
+  assert.ok(ui.includes('setText("'+id+'"'));
  }
+ assert.match(main,/renderMonthlyFinancePanel\(monthlyFinancePort\.snapshot\(\),setText,document\)/);
 });

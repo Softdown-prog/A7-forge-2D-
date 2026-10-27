@@ -136,6 +136,14 @@
 - `main.ts` só injeta a porta e chama o renderizador quando Computadores > Contabilidade está ativo. Nenhuma mudança nas regras financeiras, no Canvas, toque, RNG ou esquema de save.
 - `tests/station-ledger-boundary.test.mjs` verifica dados, importação de partida, cópias primitivas e dependências das camadas.
 
+## Décimo oitavo recorte: indicadores financeiros do mês
+
+- `src/application/monthlyFinancePort.ts` consulta a partida atual e projeta ocupação, último comprovante pago, histórico mensal e recomendação de expansão, sem alterar valores ou saves.
+- `src/ui/monthlyFinancePanel.ts` atualiza apenas os nós existentes, mantendo IDs e a apresentação original e sem recriar controles nem modificar a navegação mobile.
+- `main.ts` injeta `()=>game` e usa o renderizador somente na aba Finanças, preservando o filtro de visibilidade de `setText`.
+- `tests/monthly-finance-boundary.test.mjs` verifica formatação, totais, save substituído, DOM estável e separação das camadas. O teste financeiro legado passa a verificar o novo apresentador.
+- Simulação, RNG, cobranças, Canvas, autosave e formato de save permanecem inalterados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
