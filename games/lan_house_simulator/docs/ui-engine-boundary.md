@@ -161,6 +161,14 @@
 - `tests/financial-balance-boundary.test.mjs` cobre caixa, dívida, formato pt-BR, alerta, datas, restauração de saves e dependências de camadas.
 - Antes deste recorte foi corrigido o teste legado `historical-promotion-pricing-roi.test.mjs`: o worker-simulation da etapa anterior falhava por procurar um trecho removido intencionalmente de `main.ts` na 19ª etapa.
 
+## Vigésimo primeiro recorte: equipe, atividade e limpeza
+
+- `src/application/staffStatusPort.ts` reúne o estado somente-leitura de funcionários, diárias, trabalhos, progresso, lixeiras, caixa e custo da limpeza, sempre a partir da partida corrente.
+- `src/ui/staffStatusPanel.ts` usa exclusivamente o snapshot para atualizar os controles existentes, os indicadores de progresso e textos, mantendo os listeners e a rolagem mobile.
+- `src/main.ts` injeta `()=>game`, preserva a entrada na aba Serviços e mantém o painel de rotas de acesso separado.
+- `tests/staff-status-boundary.test.mjs` verifica contrato, saldo insuficiente, atendimento em andamento, importação de save, progresso e estabilidade do DOM.
+- Ações de contratação e limpeza seguem em `serviceActionsPort.ts`, sem alteração de regras, salários, jornadas, RNG, Canvas ou esquema de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

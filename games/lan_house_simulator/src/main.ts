@@ -51,6 +51,8 @@ import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
+import {createStaffStatusPort} from "./application/staffStatusPort.js";
+import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
 import {renderFinancialBalance,renderFinancialBillWatch} from "./ui/financialBalancePanel.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
@@ -88,10 +90,10 @@ import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
  ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
-import {pcUnderRepair,binStatus} from "./sim/services.js";
-import {staffActivity,workPhaseLabel} from "./sim/staffPresentation.js";
+import {pcUnderRepair} from "./sim/services.js";
+import {workPhaseLabel} from "./sim/staffPresentation.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
-import {employeeHired,employeeDailyWage} from "./sim/staff.js";
+import {employeeHired} from "./sim/staff.js";
 import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
@@ -841,6 +843,7 @@ const stationLedgerPort=createStationLedgerPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
+const staffStatusPort=createStaffStatusPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1437,34 +1440,7 @@ function renderUI(liveOnly=false):void {
    setText,money
   });
   if(activeAdminTab==="services"){
-  const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
-   for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
-    const el=document.querySelector<HTMLButtonElement>("#"+id);
-    if(el)el.textContent=employeeHired(game,role)?"Dispensar "+label:
-      "Contratar "+label+" · "+money(employeeDailyWage(game,role))+"/dia trabalhado";
-   }
-   setText("staff-summary","Equipe: faxineiro "+(cleanerHired?"contratado":"não contratado")+
-     " · técnico "+(technicianHired?"contratado":"não contratado")+
-     " · folha acumulada "+money(wages)+". Diárias: faxineiro "+money(employeeDailyWage(game,"cleaner"))+
-     ", técnico "+money(employeeDailyWage(game,"technician"))+
-     " · dias trabalhados neste mês: faxineiro "+(game.employeeWorkedDays?.cleaner??0)+
-     ", técnico "+(game.employeeWorkedDays?.technician??0)+
-     ". Contratos mensais sem diária ociosa; folha cobrada no fechamento.");
-   const cleanState=staffActivity(game,"cleaner"),techState=staffActivity(game,"technician");
-   setText("cleaner-activity","Faxineiro · "+cleanState.label);
-   setText("technician-activity","Técnico · "+techState.label);
-   for(const [id,activity] of [["cleaner-progress",cleanState],["technician-progress",techState]] as const){
-    const meter=document.getElementById(id);
-    if(meter instanceof HTMLProgressElement){
-     meter.hidden=activity.percent===null;
-     meter.value=activity.percent??0;
-    }
-   }
-   setText("bin-status","Lixeiras: "+(game.binFill??[0,0]).map((n,i)=>{
-    const state=binStatus(n);
-    return (i+1)+": "+(state==="empty"?"Vazia":state==="full"?"Cheia":"Enchendo · "+Math.round(n)+"%");
-  }).join(" · ")+(game.overflowWaste?" · ⚠ Lixo no chão: "+Math.round(game.overflowWaste):"")+
-  " · faxineiro "+(game.cleaningJob?workPhaseLabel("cleaner",game.cleaningJob).toLowerCase():cleanerHired?"contratado":"sem contrato"));
+  renderStaffStatusPanel(staffStatusPort.snapshot(),setText,document);
   if(adminOpen&&activeAdminTab==="services"&&managementPanels.active("services","access")){
    const issues=inspectServiceAccess(!liveOnly);
    const summary=issues.length
@@ -1477,14 +1453,6 @@ function renderUI(liveOnly=false):void {
    const see=document.querySelector<HTMLButtonElement>("#show-service-access");
    if(see){see.disabled=issues.length===0;see.textContent="Ver bloqueios no salão ("+issues.length+")";}
   }
-  const cleanButton=document.querySelector<HTMLButtonElement>("#clean-bins-now");
-   if(cleanButton){
-    cleanButton.textContent=game.cleaningJob?"Faxineiro · "+workPhaseLabel("cleaner",game.cleaningJob):
-      cleanerHired?"Solicitar limpeza · coberta pelo contrato":
-      "Chamar faxineiro avulso · "+money(serviceVisitCost(game,"cleaning"));
-    cleanButton.disabled=!!game.cleaningJob||(!(game.binFill??[]).some(x=>x>=10)&&(game.overflowWaste??0)<1)||
-      (!cleanerHired&&game.cash<serviceVisitCost(game,"cleaning"));
-   }
   }
   setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
     " · Atendimentos "+(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0))+
