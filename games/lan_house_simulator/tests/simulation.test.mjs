@@ -586,7 +586,8 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
- assert.match(main,/relocateFurniture\(game,relocationFrom,slot.id\)/);
+ assert.match(main,/placementActions\.move\(relocationFrom,slot.id\)/);
+ assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/relocateFurniture\(getState\(\),from,to\)/);
  assert.match(main,/if\(isPlaying&&!accountOpen&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc\)stepGame/);
 });
 
@@ -699,7 +700,8 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
  assert.match(source,/installShopControls\(shopCatalog,createShopActionsPort/);
   const port=readFileSync(resolve(root,"src/application/shopActionsPort.ts"),"utf8");
   assert.match(port,/expandDirection\(s,direction\)/);
- assert.match(source,/rotateFurniture\(game,relocationFrom\)/);
+ assert.match(source,/placementActions\.rotate\(relocationFrom\)/);
+  assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/rotateFurniture\(getState\(\),id\)/);
  // The grid may change with the visual identity. capture_identity.mjs verifies
  // actual overflow and interaction at 1440, 414 and 360 pixels in Chromium.
  assert.match(html,/name="viewport"[^>]+width=device-width/);
