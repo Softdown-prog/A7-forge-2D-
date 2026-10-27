@@ -36,6 +36,8 @@ import {editableObjects} from "./sim/editableObjects.js";
 import {createGameSessionPort} from "./application/gameSessionPort.js";
 import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
+import {createFrameSchedule} from "./application/frameSchedule.js";
+import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
@@ -646,11 +648,7 @@ canvas.addEventListener("click",e=>{
   }
   if(renderer.hitOwner(x,y)){soundscape.click();adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
-const panelRevisions=new Map<string,string>();
-function panelChanged(name:string,revision:unknown,force:boolean):boolean{
- const key=JSON.stringify(revision);if(!force&&panelRevisions.get(name)===key)return false;
- panelRevisions.set(name,key);return true;
-}
+const panelChanged=createPanelRevisionCache();
 function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
@@ -1719,7 +1717,8 @@ function renderUI(liveOnly=false):void {
   controls.setAttribute("aria-expanded",String(adminOpen));
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
-let lastFrame=0,lastUI=0,lastMenuFrame=0,lastSceneFrame=0,elapsed=0,lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
+const frameSchedule=createFrameSchedule();
+let lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
 new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
 document.addEventListener("scroll",()=>{lastScroll=performance.now();},{capture:true,passive:true});
 document.addEventListener("pointerdown",()=>{uiPointerHeld=true;lastInput=performance.now();},{capture:true,passive:true});
@@ -1729,9 +1728,7 @@ let wasSimulating=false;
 const coarsePointer=window.matchMedia("(pointer:coarse)");
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
-  if(lastFrame===0) lastFrame=timestamp;
-  const dt=Math.max(0,Math.min(0.08,(timestamp-lastFrame)/1000));
-  lastFrame=timestamp;elapsed+=dt;
+  const {dt,elapsed}=frameSchedule.begin(timestamp);
   const accountOpen=document.getElementById("player-account")?.hasAttribute("open")===true;
   const simulating=isPlaying&&!accountOpen&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
@@ -1771,16 +1768,20 @@ function frame(timestamp:number):void {
     speechPopups.push({...speech,age:0});
     if(speechPopups.length>8)speechPopups.shift();
   }
-  const sceneInterval=coarsePointer.matches?1000/30:0;
-  const paintScene=isPlaying&&!accountOpen&&sceneVisible&&!document.hidden&&!adminOpen&&!shopOpen&&!noticesOpen&&timestamp-lastSceneFrame>=sceneInterval;
-  if(paintScene)lastSceneFrame=sceneInterval?timestamp-((timestamp-lastSceneFrame)%sceneInterval):timestamp;
+  const paintScene=frameSchedule.scene(timestamp,{
+   playing:isPlaying,accountOpen,visible:sceneVisible,hidden:document.hidden,
+   adminOpen,shopOpen,noticesOpen,coarse:coarsePointer.matches
+  });
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
   if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
   if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
-  if(!isPlaying&&!accountOpen&&menuRenderer&&menuPreviewAvailable&&!document.hidden&&!reduceMotion.matches&&timestamp-lastMenuFrame>90){
-     try{menuRenderer.draw(menuPreview,elapsed);lastMenuFrame=timestamp;}
-     catch{menuPreviewAvailable=false;}
-   }
+  if(frameSchedule.menu(timestamp,{
+   playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,previewAvailable:menuPreviewAvailable,
+   hidden:document.hidden,reduceMotion:reduceMotion.matches
+  })&&menuRenderer){
+   try{menuRenderer.draw(menuPreview,elapsed);frameSchedule.menuPainted(timestamp);}
+   catch{menuPreviewAvailable=false;}
+  }
   if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}
   if(paintScene&&layoutEditor.active&&layoutEditor.wall)renderer.drawWallPreview(game,layoutEditor.wall,true);
   if(paintScene&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);
@@ -1790,7 +1791,8 @@ function frame(timestamp:number):void {
     else renderer.drawWallPreview(game,pendingWall??hoveredWall,wallMode==="remove");
   }
   if(paintScene&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
-  if(isPlaying&&!accountOpen&&timestamp-lastUI>450&&timestamp-lastScroll>160&&!uiPointerHeld&&timestamp-lastInput>120){lastUI=timestamp;renderUI(true);}
+  if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,lastScroll,pointerHeld:uiPointerHeld,lastInput}))
+   renderUI(true);
   requestAnimationFrame(frame);
 }
 setInterval(save,8000);
