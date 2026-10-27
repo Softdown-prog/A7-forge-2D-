@@ -22,10 +22,10 @@ test("construir, instalar porta e remover divisoria usam o mesmo motor de colisa
  assert.equal(port.confirmWall("door",wall).ok,true);
  assert.equal(port.walls("remove").some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y),true);
  const afterPurchase=[state.cash,state.expenses];
- assert.equal(port.confirmWall("remove",wall).ok,true,"remove primeiro a porta");
- assert.ok((state.interiorWalls??[]).some(w=>w.axis==="y"&&w.x===4&&w.y===4));
- assert.equal(port.confirmWall("remove",wall).ok,true,"remove depois a parede");
- assert.equal(state.interiorWalls?.length??0,0);
+ assert.equal(port.confirmWall("remove",wall).ok,true,"remove a porta e libera a passagem");
+ assert.equal(state.interiorWalls?.length??0,0,"a divisória foi convertida em porta");
+ assert.equal(state.interiorDoors?.length??0,0,"a porta também foi removida");
+ assert.equal(port.confirmWall("remove",wall).ok,false,"nova remoção não altera a partida");
  assert.deepEqual([state.cash,state.expenses],afterPurchase,"demolicao sem reembolso");
  assert.equal(isValidSave(parseImportedSave(serializeSave(state))),true);
 });
