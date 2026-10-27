@@ -94,6 +94,14 @@
 - Nova partida histórica e reinício clássico continuam distintos, incluindo confirmação e tratamento de falha de armazenamento. `sessionPort.replace` persiste antes da troca de `game`.
 - Eventos de Canvas, touch, autosave, áudio do jogo e esquema de salvamento permanecem iguais.
 
+## Décimo segundo recorte: relógio de frames e revisão de painéis
+
+- `src/application/frameSchedule.ts` controla exclusivamente as cadências visuais: delta máximo de 80 ms, tempo acumulado, pintura de até 30 FPS no celular, prévia ornamental do menu com intervalo superior a 90 ms e atualização do HUD após 450 ms sem rolagem/toque recente.
+- `src/application/panelRevisionCache.ts` mantém a igualdade por `JSON.stringify` dos painéis de loja, avisos, hardware e licenças, incluindo opção de forçar atualização.
+- `src/main.ts` continua responsável pelo `requestAnimationFrame`, pelo `stepGame`, pela captura do estado de movimento, pelos sons, pela renderização Canvas e pelo autosave a cada 8 segundos.
+- Eventos de toque e os limiares mobile não foram modificados. O relógio da prévia do menu só é atualizado após desenho bem-sucedido.
+- Seis testes em `tests/frame-scheduling-boundary.test.mjs` cobrem FPS, tempo, modal, rolagem, toque, cache, menu e fronteira de dependências.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -105,6 +113,6 @@
 ## Próximos recortes
 
 - Incrementar testes automatizados de toque mobile e projeção isométrica no editor sem alterar seus limiares de gesto nem o canvas.
-- Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
-- Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
+- Projeções do HUD e das áreas de administração sem `GameState` nos componentes; dividir o renderizador administrativo grande em atualizações menores.
+- Concluir a separação do loop (efeitos/audio/render), do bootstrap e dos renderizadores administrativos, preservando o motor e o save.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.
