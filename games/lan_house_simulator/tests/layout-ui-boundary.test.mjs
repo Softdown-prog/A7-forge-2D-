@@ -14,7 +14,7 @@ test("porta move objetos com a mesma validacao do motor e salva depois de import
  const port=createLayoutEditorPort(()=>s,cameraForGame);
  const old=s;
  assert.equal(port.objects().some(o=>o.id==="pc:0"),true);
- assert.equal(port.placementIssue({...port.objects().find(o=>o.id==="pc:0"),x:100}),null,false);
+ assert.ok(port.placementIssue({...port.objects().find(o=>o.id==="pc:0"),x:100}));
  const draft={...port.objects().find(o=>o.id==="pc:0"),x:2.5,y:3,rotation:1};
  const before=JSON.stringify(s);
  assert.equal(port.move("pc:0",{...draft,x:200}).ok,false);
