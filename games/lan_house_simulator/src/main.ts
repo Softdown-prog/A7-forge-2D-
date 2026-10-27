@@ -140,6 +140,8 @@ function newGameForPlayer(seed=72421,mode:"classic"|"historical"="historical"):G
 }
 const startupSave=sessionPort.startup();
 let game=startupSave.state??newGameForPlayer(72421,"historical");
+let knownMailIds=mailBaseline(game.notices);
+function resetMailAudioBaseline():void{knownMailIds=mailBaseline(game.notices);}
 const startScreen=document.querySelector<HTMLElement>("#start-screen");
 const gameApp=document.querySelector<HTMLElement>("#game-app");
 const continueButton=document.querySelector<HTMLButtonElement>("#menu-continue");
