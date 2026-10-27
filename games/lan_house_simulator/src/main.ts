@@ -935,7 +935,8 @@ function renderUI(liveOnly=false):void {
     renderCustomerFeedback(host,customerFeedbackSnapshot(game));
   }
   if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
-  renderFinancialBillWatch(financialBalancePort.billWatch(),document);
+   renderFinancialBillWatch(financialBalancePort.billWatch(),document);
+  }
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");
