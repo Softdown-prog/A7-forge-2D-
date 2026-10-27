@@ -110,6 +110,12 @@
 - A porta usa `()=>game` para acompanhar restores de save, sem acoplar ao objeto de `Soundscape`. Não foram alterados RNG, economia, formato do save ou gestos mobile.
 - Testes em `tests/frame-feedback-boundary.test.mjs` protegem esses contratos.
 
+## Décimo quarto recorte: administração PS1
+
+- `src/application/ps1AdminPort.ts` produz snapshots somente-leitura de preço por hora, bancadas, CDs, sessões, desgaste, ocupação, segunda cadeira e ações habilitadas. O estado é resolvido via `()=>game`, inclusive depois de importar saves.
+- `src/ui/ps1AdminPanel.ts` renderiza a aba Console/Estações só a partir dessa projeção. Mantém IDs, classes e atributos `data-ps1-repair`, `data-ps1-slot`, `data-ps1-second-seat` usados nos cliques.
+- `src/main.ts` passa apenas a porta e callbacks de apresentação, preservando os outros painéis, a política de abas, Canvas e mobile. Nenhuma mudança nas regras de PS1 ou esquema de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -5,6 +5,8 @@ import {createServiceActionsPort} from "./application/serviceActionsPort.js";
 import {createGameLicensingPort} from "./application/gameLicensingPort.js";
 import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
 import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
+import {createPs1AdminPort} from "./application/ps1AdminPort.js";
+import {renderPs1AdminPanel} from "./ui/ps1AdminPanel.js";
 import {createShopActionsPort} from "./application/shopActionsPort.js";
 import {installShopControls} from "./ui/shopControls.js";
 import {createNoticeActionsPort} from "./application/noticeActionsPort.js";
@@ -25,9 +27,8 @@ import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
- ps1HourPrice,ps1AllowedHourlyCeiling,ps1StationPoint,
- PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,ps1PlayableDisc,ps1PlacementLabel,
- ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
+ ps1StationPoint,PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,
+ ps1PlacementLabel} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
@@ -428,6 +429,7 @@ button("rotate-furniture",()=>{
 button("organize-furniture",()=>layoutEditor.open());
 
 const ps1Actions=createPs1ActionsPort(()=>game);
+const ps1AdminPort=createPs1AdminPort(()=>game);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
   if(id==="computer-annex"){
@@ -1513,78 +1515,10 @@ function renderUI(liveOnly=false):void {
    syncPanelChildren(gpuGamePanel,nextGpuGames);
   }
   refreshGpuDownloadMeters();
-  if(activeAdminTab==="consoles"){
-  const ps1Area=document.getElementById("ps1-stations");
-  const consoleReady=game.economyVersion===2&&year>=PS1_UNLOCK_YEAR;
-  setText("ps1-overview",!consoleReady?
-    "Disponível a partir de 2002. Compre um conjunto com TV de tubo, PS1, bancada e cadeira na loja.":
-    "Bancadas instaladas: "+(game.ps1Stations?.length??0)+"/"+PS1_MAX_STATIONS+
-    " · sessões atendidas: "+(game.ps1Sessions??0)+
-    " · receita acumulada: "+money(game.ps1Revenue??0)+
-    ". Segunda cadeira opcional por bancada: até dois jogadores simultâneos, "+
-    "cada cliente paga sua sessão. Internet não é necessária para jogar.");
-  setText("ps1-hourly",ps1HourPrice(game).toLocaleString("pt-BR",{style:"currency",currency:"BRL"})+"/h");
-  const ownedDiscs=PS1_CD_CATALOG.reduce((sum,disc)=>sum+ps1DiscCopies(game,disc.id),0);
-  const readyStations=(game.ps1Stations??[]).filter((_,i)=>ps1PlayableDisc(game,i)!==null).length;
-  setText("ps1-disc-summary",(game.ps1Stations?.length??0)===0?
-    "Compre a primeira bancada na loja. Depois, adquira os CDs físicos.":
-    ownedDiscs===0?"Sem CDs no acervo: as bancadas não recebem clientes até você comprar pelo menos um jogo.":
-    "CDs no acervo: "+ownedDiscs+" · Bancadas com jogo: "+readyStations+"/"+
-    (game.ps1Stations?.length??0)+". Cada CD comprado atende uma bancada por vez.");
-  for(const id of ["ps1-price-down","ps1-price-up"]){
-   const button=document.getElementById(id) as HTMLButtonElement|null;
-   if(button)button.disabled=!consoleReady||!(game.ps1Stations?.length)||
-    (id==="ps1-price-down"?ps1HourPrice(game)<=.5:
-     ps1HourPrice(game)>=ps1AllowedHourlyCeiling(game));
-  }
-  if(ps1Area&&adminOpen&&activeAdminTab==="consoles"&&managementPanels.active("consoles","stations")){
-   ps1Area.replaceChildren();
-   if(!(game.ps1Stations?.length)){const empty=document.createElement("p");empty.textContent=consoleReady?"Compre a primeira bancada na loja para receber clientes de videogame.":"As bancadas de PlayStation chegam em 2002.";ps1Area.append(empty);}
-   for(const [index,station] of (game.ps1Stations??[]).entries()){
-    const card=document.createElement("div");card.className="ps1-station-summary";
-    const text=document.createElement("span");
-    const busy=game.customers.filter(c=>c.ps1StationIndex===index&&
-      ["to_pc","sitting","using","standing"].includes(c.stage));
-    const occupied=busy.length>0;
-    const cdId=ps1PlayableDisc(game,index);
-    const cdName=PS1_CD_CATALOG.find(x=>x.id===cdId)?.title??"Nenhum CD";
-    text.textContent="Bancada "+(index+1)+" · vagas: "+busy.length+"/"+(station.secondSeat?2:1)+
-     " · controles: "+Math.round(station.wear)+"% de desgaste"+
-     (station.wear>=100?" · Precisa de manutenção":occupied?" · Em uso":
-      cdId?" · Livre":" · Sem jogo")+
-     (station.secondSeat&&ps1OpenSeat(game,index)!==null?" · Aceita outro jogador":"")+
-     " · Disco: "+cdName;
-    const button=document.createElement("button");button.className="slice";
-    button.dataset.ps1Repair=String(index);button.type="button";
-    button.textContent="Revisar controles · R$ 45";
-    button.disabled=occupied||station.wear<10||game.cash<45;
-    const cdLabel=document.createElement("label");cdLabel.className="ps1-station-cd-label";
-    cdLabel.textContent="CD inserido";
-    const selector=document.createElement("select");selector.className="slice";
-    selector.dataset.ps1Slot=String(index);selector.disabled=occupied;
-    const empty=document.createElement("option");empty.value="";empty.textContent="Sem CD";
-    selector.append(empty);
-    for(const disc of PS1_CD_CATALOG){
-     const copies=ps1DiscCopies(game,disc.id);
-     if(!copies)continue;
-     const used=(game.ps1Stations??[]).filter((st,i)=>i!==index&&st.discId===disc.id).length;
-     if(used>=copies&&station.discId!==disc.id)continue;
-     const option=document.createElement("option");option.value=disc.id;
-     option.textContent=disc.title+" ("+copies+" cópia"+(copies===1?"":"s")+")";
-     selector.append(option);
-    }
-    selector.value=station.discId??"";
-    cdLabel.append(selector);
-    const extra=document.createElement("button");extra.className="slice";
-    extra.dataset.ps1SecondSeat=String(index);extra.type="button";
-    const secondPrice=ps1SecondSeatPrice(game);
-    extra.textContent=station.secondSeat?"Modo dupla instalado · 2 cadeiras":
-      "Instalar segunda cadeira + controle · "+money(secondPrice);
-    extra.disabled=!!station.secondSeat||occupied||game.cash<secondPrice;
-    card.append(text,cdLabel,button,extra);ps1Area.append(card);
-   }
-  }
-  }
+  if(activeAdminTab==="consoles")renderPs1AdminPanel(ps1AdminPort,{
+   showStations:adminOpen&&managementPanels.active("consoles","stations"),
+   setText,money
+  });
   if(activeAdminTab==="services"){
   const cleanerHired=employeeHired(game,"cleaner"),technicianHired=employeeHired(game,"technician");
    for(const [id,role,label] of [["clean-bins","cleaner","faxineiro"],["hire-technician","technician","técnico"]] as const){
