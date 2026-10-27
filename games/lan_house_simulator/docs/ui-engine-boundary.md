@@ -87,6 +87,13 @@
 - `src/main.ts` preserva transições de menu, animações, notificação, confirmação antes de substituir e o contrato de save local/nuvem. Todo comando acessa a partida atual via `()=>game`.
 - A troca explícita grava no navegador antes de atribuir `game`. Falhas não substituem a partida visível, nem removem backups fora das políticas existentes.
 
+## Décimo primeiro recorte: menu e transições de partida
+
+- `src/ui/gameMenuControls.ts` registra eventos dos botões Nova Partida, Continuar, Reiniciar, Opções, Som e Voltar ao menu. Ele apenas manipula DOM e chama callbacks, sem acessar `sim/` ou `GameState`.
+- `createMenuScreens` gerencia visibilidade do menu/jogo, disponibilidade de Continuar/Exportar e painéis auxiliares. `main.ts` mantém parada de áudio, persistência antes de sair, reinício das animações e baseline de correspondência.
+- Nova partida histórica e reinício clássico continuam distintos, incluindo confirmação e tratamento de falha de armazenamento. `sessionPort.replace` persiste antes da troca de `game`.
+- Eventos de Canvas, touch, autosave, áudio do jogo e esquema de salvamento permanecem iguais.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

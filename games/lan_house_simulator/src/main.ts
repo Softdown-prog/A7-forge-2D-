@@ -35,6 +35,7 @@ import {createPlacementActionsPort} from "./application/placementActionsPort.js"
 import {editableObjects} from "./sim/editableObjects.js";
 import {createGameSessionPort} from "./application/gameSessionPort.js";
 import {installSaveFileControls} from "./ui/saveFileControls.js";
+import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
@@ -209,46 +210,61 @@ mountCloudControls(saveMessage,()=>game,(state)=>{
  continueButton!.disabled=false;exportButton!.disabled=false;
  announceSave("Partida da nuvem restaurada. Clique em Continuar.");
 });
+const menuElements={
+ startScreen,gameApp,continueButton,exportButton,settingsPanel,soundToggle,
+ newButton:document.getElementById("menu-new"),resetButton:document.getElementById("reset-game"),
+ optionsButton:document.getElementById("menu-options"),openMenuButton:document.getElementById("open-menu"),
+ auxiliaryPanels:["admin","shop","notices"].map(id=>document.getElementById(id))
+};
+const menuScreens=createMenuScreens(menuElements);
 function showMenu():void{
  // Salvar ANTES de isPlaying=false, inclusive se o jogador sair entre os ciclos de 8s.
  if(isPlaying)save();
  if(layoutEditor.active)layoutEditor.close();
  sceneMotion.reset();
  soundscape.stopKeyboard();
- isPlaying=false;startScreen!.hidden=false;gameApp!.hidden=true;
- continueButton!.disabled=!hasSavedGame;exportButton!.disabled=!hasSavedGame;adminOpen=false;shopOpen=false;noticesOpen=false;placingKind=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
- for(const id of ["admin","shop","notices"]){const panel=document.getElementById(id);if(panel)panel.hidden=true;}
+ isPlaying=false;menuScreens.showMenu(hasSavedGame);
+ adminOpen=false;shopOpen=false;noticesOpen=false;placingKind=null;wallMode=null;hoveredWall=null;installingAnnexPc=false;hoveredAnnexPc=null;relocating=false;relocationFrom=null;hoveredPlacement=null;
  syncWindowChrome();
 }
 function beginPlay():void{
  sceneMotion.reset();
  game.keyboardEffects?.splice(0); // Do not replay events restored from a save.
  resetMailAudioBaseline(); // Existing saved mail never replays.
- isPlaying=true;startScreen!.hidden=true;gameApp!.hidden=false;
+ isPlaying=true;menuScreens.showGame();
  renderUI();
 }
-document.getElementById("menu-new")?.addEventListener("click",()=>{
- if(hasSavedGame&&!window.confirm("Criar uma nova partida e substituir o progresso salvo?"))return;
- const fresh=newGameForPlayer(72421,"historical");
+function newPlayerCampaign(mode:GameCampaignMode):void{
+ const fresh=newGameForPlayer(72421,mode);
  try{sessionPort.replace(fresh);}
- catch{announceSave("Não foi possível gravar uma nova partida. A anterior foi preservada.");return;}
- game=fresh;resetMailAudioBaseline();hasSavedGame=true;exportButton!.disabled=false;
+ catch{
+  announceSave(mode==="historical"?"Não foi possível gravar uma nova partida. A anterior foi preservada.":
+   "Falha ao salvar reinício. Progresso anterior preservado.");
+  return;
+ }
+ game=fresh;resetMailAudioBaseline();hasSavedGame=true;
+ previousServed=0;previousPurchases=0;
  paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;
- previousServed=0;previousPurchases=0;beginPlay();
+ if(mode==="historical"){exportButton!.disabled=false;beginPlay();}
+ else renderUI();
+}
+installMenuControls(menuElements,{
+ hasSave:()=>hasSavedGame,
+ newCampaign:newPlayerCampaign,
+ continueCampaign:beginPlay,
+ leaveGame:showMenu,
+ confirm:message=>window.confirm(message),
+ setSound:enabled=>{
+  soundEnabled=enabled;soundscape.setEnabled(enabled);
+  try{localStorage.setItem("lhs.sound",enabled?"on":"off");}catch{}
+ }
 });
-continueButton.addEventListener("click",()=>{if(hasSavedGame)beginPlay();});
-document.getElementById("menu-options")?.addEventListener("click",()=>{
- settingsPanel!.hidden=!settingsPanel!.hidden;
- document.getElementById("menu-options")?.setAttribute("aria-expanded",String(!settingsPanel!.hidden));
-});
-soundToggle.addEventListener("change",()=>{soundEnabled=soundToggle!.checked;soundscape.setEnabled(soundEnabled);try{localStorage.setItem("lhs.sound",soundEnabled?"on":"off");}catch{}});
 // Populate the expanded view immediately on touch or keyboard, rather than
 // waiting for the next throttled HUD refresh.
 document.getElementById("time-weather-panel")?.addEventListener("toggle",()=>{
  const panel=document.getElementById("time-weather-panel");
  if(panel?.hasAttribute("open"))renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup);
 });
-document.getElementById("open-menu")?.addEventListener("click",showMenu);
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
 let placingKind:FurnitureKind|null=null;
@@ -510,14 +526,6 @@ const retailControls=document.getElementById("retail-price-controls");
 const discControls=document.getElementById("disc-copy-price-controls");
 const printControls=document.getElementById("print-price-controls");
 activateAdminTab(activeAdminTab);
-button("reset-game",()=>{
-  if(!window.confirm("Recomeçar o sonho da lan house? O progresso salvo será apagado.")) return;
-  const fresh=newGameForPlayer(72421,"classic");
-  try{sessionPort.replace(fresh);}
-  catch{announceSave("Falha ao salvar reinício. Progresso anterior preservado.");return;}
-  game=fresh;resetMailAudioBaseline();hasSavedGame=true;
-  previousServed=0;previousPurchases=0;paymentPopups.length=0;salePopups.length=0;speechPopups.length=0;renderUI();
-});
 const placementToolbar=document.getElementById("placement-toolbar");
 const placementHelp=document.getElementById("placement-help");
 const stage=canvas.closest<HTMLElement>(".stage");
