@@ -116,6 +116,13 @@
 - `src/ui/ps1AdminPanel.ts` renderiza a aba Console/Estações só a partir dessa projeção. Mantém IDs, classes e atributos `data-ps1-repair`, `data-ps1-slot`, `data-ps1-second-seat` usados nos cliques.
 - `src/main.ts` passa apenas a porta e callbacks de apresentação, preservando os outros painéis, a política de abas, Canvas e mobile. Nenhuma mudança nas regras de PS1 ou esquema de save.
 
+## Décimo quinto recorte: indicadores de download dos jogos GPU
+
+- `src/application/gpuDownloadMetersPort.ts` calcula, a partir do save corrente, banda disponível, downloads ativos, pausas e progresso sem mutação.
+- `src/ui/gpuDownloadMeters.ts` atualiza apenas os elementos `data-gpu-download-status`, `data-gpu-download-progress` e `data-gpu-bandwidth`; não recria o catálogo e preserva foco, toque e rolagem no celular.
+- `main.ts` injeta a nova porta de leitura. Instalação, cancelamento, preços, simulação, RNG e esquema de save não foram alterados.
+- `tests/gpu-download-ui-boundary.test.mjs` cobre progresso, pausa, importação de save, aba oculta e a fronteira de dependências.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

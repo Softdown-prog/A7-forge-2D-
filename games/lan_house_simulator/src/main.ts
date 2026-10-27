@@ -6,6 +6,8 @@ import {createGameLicensingPort} from "./application/gameLicensingPort.js";
 import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
 import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
 import {createPs1AdminPort} from "./application/ps1AdminPort.js";
+import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
+import {refreshGpuDownloadMeters} from "./ui/gpuDownloadMeters.js";
 import {renderPs1AdminPanel} from "./ui/ps1AdminPanel.js";
 import {createShopActionsPort} from "./application/shopActionsPort.js";
 import {installShopControls} from "./ui/shopControls.js";
@@ -75,7 +77,7 @@ import {unreadNotices,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,installedWindows} from "./sim/era.js";
 import {GPU_CATALOG,installedGpu,gpuSpec} from "./sim/gpu.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob,gpuGameInstallPausedReason,gpuGameDownloadSlots} from "./sim/gpuGames.js";
+import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
  ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
@@ -827,31 +829,7 @@ function renderShop(force=true):void{
   }
  }
 }
-/** Atualiza apenas o texto e o medidor dos downloads a cada minuto do jogo.
- * Não reconstruir o catálogo inteiro ao mudar 1%: preserva foco, toque e
- * posição de rolagem no painel mobile. */
-function refreshGpuDownloadMeters():void{
- if(!gpuGamePanel||!adminOpen||activeAdminTab!=="licenses"||!managementPanels.active("licenses","gpu"))return;
- const slots=gpuGameDownloadSlots(game);
- const running=game.gpuGameInstallJobs?.filter(job=>!gpuGameInstallPausedReason(game,job.pc)).length??0;
- const bandwidth=gpuGamePanel.querySelector<HTMLElement>("[data-gpu-bandwidth]");
- if(bandwidth)bandwidth.textContent="Internet nível "+game.internetTier+": até "+slots+
-  " PC(s) transferindo por minuto do jogo. "+running+" download(s) apto(s) a avançar"+
-  (running>slots?"; a conexão divide a banda por rodízio.":".");
- for(const label of Array.from(gpuGamePanel.querySelectorAll<HTMLElement>("[data-gpu-download-status]"))){
-  const pc=Number(label.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
-  if(!job||job.id!==label.dataset.gpuDownloadStatus)continue;
-  const reason=gpuGameInstallPausedReason(game,pc);
-  const remaining=job.durationMinutes-job.elapsedMinutes;
-  label.textContent="PC "+(pc+1)+" · "+Math.floor(job.elapsedMinutes/job.durationMinutes*100)+"%"+
-   (reason?" · Pausado: "+reason:" · "+remaining+" min de transferência pendentes"+
-    (running>slots?" · banda compartilhada":""));
- }
- for(const meter of Array.from(gpuGamePanel.querySelectorAll<HTMLProgressElement>("[data-gpu-download-progress]"))){
-  const pc=Number(meter.dataset.gpuGamePc),job=gpuGameInstallJob(game,pc);
-  if(job&&job.id===meter.dataset.gpuDownloadProgress)meter.value=job.elapsedMinutes;
- }
-}
+const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1514,7 +1492,7 @@ function renderUI(liveOnly=false):void {
     }
    syncPanelChildren(gpuGamePanel,nextGpuGames);
   }
-  refreshGpuDownloadMeters();
+  refreshGpuDownloadMeters(gpuGamePanel,adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu"),gpuDownloadMetersPort);
   if(activeAdminTab==="consoles")renderPs1AdminPanel(ps1AdminPort,{
    showStations:adminOpen&&managementPanels.active("consoles","stations"),
    setText,money
