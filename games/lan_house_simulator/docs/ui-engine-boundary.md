@@ -66,6 +66,14 @@
 - `src/ui/noticeControls.ts` encapsula cliques e navegação do correio sem importar `sim/`.
 - Layout, toque mobile, pathfinding, render Canvas, esquema de save e valores econômicos inalterados.
 
+## Oitavo recorte: editor de móveis e divisórias
+
+- `src/application/layoutEditorPort.ts` disponibiliza objetos editáveis, divisórias, posições, limites do salão, validações e comandos de mover e remover. Busca sempre a partida corrente e delega a validação ao motor.
+- `src/ui/layoutEditor.ts` recebe apenas essa porta tipada. Não importa nem acessa `GameState`, `sim/editableObjects`, `sim/walls` ou `sim/shop`.
+- `src/main.ts` injeta o callback de câmera `cameraForGame`, preservando a projeção isométrica no render. A camada de aplicação não depende do Canvas.
+- O bloco de `pointerdown`, `pointercancel`, `pointerup` e `click` foi preservado **byte a byte**: o limite de 10 pixels, o controle de scroll e a prevenção do click duplicado de 650 ms continuam iguais.
+- A escolha de coordenadas para móveis e paredes mantém as fórmulas existentes. Nenhum arquivo da simulação nem formato de save foi alterado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
@@ -76,7 +84,7 @@
 
 ## Próximos recortes
 
-- Separar futuramente o editor de posicionamento, movimentação e divisórias, com teste real no celular antes de modificar gestos.
+- Incrementar testes automatizados de toque mobile e projeção isométrica no editor sem alterar seus limiares de gesto nem o canvas.
 - Projeções do HUD e das áreas de administração sem `GameState` nos componentes.
 - Sessão do jogo como fachada para novo jogo, importação, nuvem, loop e autosave, separando `main.ts` em bootstrap, controlador e render loop.
 - Somente depois disso, considerar Angular, sem reescrever a simulação.

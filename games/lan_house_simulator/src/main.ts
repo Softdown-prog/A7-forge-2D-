@@ -30,6 +30,7 @@ import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
  ps1SecondSeatPrice,ps1OpenSeat} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
+import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
 import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
@@ -274,7 +275,8 @@ let placementNotice="";
 let purchaseRotation:0|1|2|3=0;
 let selectedPs1PlacementId:string|null=null; // escolha estável entre atualizações do painel
 let pendingWall:WallSegment|null=null;
-const layoutEditor=createLayoutEditor(canvas,()=>game,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
+const layoutEditorPort=createLayoutEditorPort(()=>game,cameraForGame);
+const layoutEditor=createLayoutEditor(canvas,layoutEditorPort,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
 installGameViewport(canvas);
 
 let adminOpen = false;
@@ -658,7 +660,7 @@ function renderShop(force=true):void{
  if(!shopCatalog)return;
  if(!panelChanged("shop",[shopPanels?.current(),game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
  const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
- if(organize){const count=editableObjects(game).length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
+ if(organize){const count=layoutEditorPort.objects().length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
  const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
  if(demolish){const count=(game.interiorWalls?.length??0)+(game.interiorDoors?.length??0);
   demolish.disabled=!count;demolish.textContent="Remover paredes e portas ("+count+")";}
