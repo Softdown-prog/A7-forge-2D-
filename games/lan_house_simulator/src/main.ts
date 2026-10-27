@@ -52,7 +52,8 @@ import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyR
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
 import {computerOccupancyPercent,expansionAdvice} from "./sim/financialReview.js";
-import {stationAccountingSummary} from "./sim/stationAccounting.js";
+import {createStationLedgerPort} from "./application/stationLedgerPort.js";
+import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
@@ -833,6 +834,7 @@ function renderShop(force=true):void{
 }
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
+const stationLedgerPort=createStationLedgerPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1118,28 +1120,8 @@ function renderUI(liveOnly=false):void {
   const poweredOff=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>!stationPoweredOn(game,i)).length;
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+poweredOff+" desligados · "+broken+" em manutenção");
   const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
-  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"&&managementPanels.active("computers","ledger")){
-    const rows:HTMLTableRowElement[]=[];
-    const currency=(value:number):string=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-    for(let i=0;i<pcCount(game);i++){
-      const account=stationAccountingSummary(game,i);
-      const row=document.createElement("tr");
-      const cells=[
-        "PC "+(i+1),String(account.sessions),String(account.vipSessions),
-        Math.floor(account.occupiedMinutes).toLocaleString("pt-BR"),
-        currency(account.sessionRevenue),currency(account.energyShare),
-        currency(account.sessionRevenue-account.energyShare)
-      ];
-      for(let j=0;j<cells.length;j++){
-        const cell=j===0?document.createElement("th"):document.createElement("td");
-        if(j===0)(cell as HTMLTableCellElement).scope="row";
-        cell.textContent=cells[j]!;
-        row.append(cell);
-      }
-      rows.push(row);
-    }
-    const next=document.createElement("tbody");next.append(...rows);syncPanelChildren(stationLedgerRows,next);
-  }
+  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"&&managementPanels.active("computers","ledger"))
+    renderStationLedgerRows(stationLedgerRows,stationLedgerPort);
   const liveMaintenance=document.getElementById("pc-maintenance");
   if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"&&!managementPanels.active("computers","ledger")&&panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly)){
     const page=managementPanels.current("computers");
