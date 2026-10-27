@@ -50,7 +50,8 @@ import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
-import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
+import {createFinancialBalancePort} from "./application/financialBalancePort.js";
+import {renderFinancialBalance,renderFinancialBillWatch} from "./ui/financialBalancePanel.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
@@ -839,6 +840,7 @@ const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
+const financialBalancePort=createFinancialBalancePort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -924,24 +926,8 @@ function renderUI(liveOnly=false):void {
   const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
   const monthlyMaintenance=Math.round((75+game.expansionLevel*35)*(historical?monetaryIndex:1));
    const wages=game.employeePayrollAccrued??0;
-  const statement=financialSnapshot(game);
   const inCurrency=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-  setText("admin-cash",money(game.cash));
-  setText("management-summary-value","Caixa "+money(game.cash)+" · contas/mês "+money(monthlyBills(game)));
-  setText("admin-profit",money(statement.netResult));
-  const resultFigure=document.getElementById("admin-profit");
-  if(resultFigure)resultFigure.classList.toggle("balance-negative",statement.netResult<0);
-  setText("balance-opening",inCurrency(statement.openingCash));
-  setText("balance-income",inCurrency(statement.income));
-  setText("balance-outgoing",inCurrency(statement.outgoing));
-  setText("balance-available",inCurrency(statement.availableCash));
-  const unexplained=document.getElementById("balance-reconciliation");
-  if(unexplained){
-   unexplained.hidden=statement.differenceCents===0;
-   if(statement.differenceCents!==0)unexplained.textContent="Atenção: o caixa deste salvamento difere em "+
-    inCurrency(statement.differenceCents/100)+
-    " do cálculo pelo capital inicial e pelos lançamentos. Confira o histórico em Finanças.";
-  }
+  renderFinancialBalance(financialBalancePort.balance(),setText,document);
   if(activeAdminTab==="finance"&&managementPanels.active("finance","feedback")){
    const host=document.getElementById("customer-feedback-panel");
    if(host&&panelChanged("customerFeedback",
@@ -949,23 +935,7 @@ function renderUI(liveOnly=false):void {
     renderCustomerFeedback(host,customerFeedbackSnapshot(game));
   }
   if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
-  const closing=monthlyClosingSnapshot(game);
-  const dueLabel=document.getElementById("bill-watch-title");
-  const dueStatus=document.getElementById("bill-watch-status");
-  const dueBox=document.getElementById("bill-watch");
-  if(closing.campaignEnding){
-   if(dueLabel)dueLabel.textContent="Calendário encerrando";
-   if(dueStatus)dueStatus.textContent="A campanha termina neste dia; não há outro fechamento agendado.";
-  }else{
-   if(dueLabel)dueLabel.textContent="Próximo fechamento em "+closing.daysRemaining+
-    (closing.daysRemaining===1?" dia do jogo":" dias do jogo");
-   if(dueStatus)dueStatus.textContent="Provisão acumulada até agora: "+inCurrency(closing.provision)+
-    ". "+(closing.coversProvision?"O caixa atual cobre este valor.":"Se a cobrança fosse agora, faltariam "+
-      inCurrency(closing.shortfall)+".");
-  }
-  if(dueBox)dueBox.classList.toggle("bill-watch-warning",
-   !closing.campaignEnding&&!closing.coversProvision&&closing.daysRemaining<=7);
-  }
+  renderFinancialBillWatch(financialBalancePort.billWatch(),document);
   setText("admin-bills",money(monthlyBills(game)));
   setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");

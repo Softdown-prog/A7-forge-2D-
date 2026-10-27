@@ -153,6 +153,14 @@
 - `tests/promotion-status-boundary.test.mjs` verifica preço clássico/histórico, caixa, 20h29/20h30, encerramento, save importado, botão persistente e fronteira sem dependência do motor.
 - Não se alteraram motor, RNG, preços, calendário, Canvas, navegação mobile ou formato de save.
 
+## Vigésimo recorte: demonstrativo de caixa e aviso da fatura
+
+- `src/application/financialBalancePort.ts` projeta saldo, entradas, saídas, reconciliação e próxima fatura sem modificar o save, consultando os serviços existentes do motor.
+- `src/ui/financialBalancePanel.ts` atualiza os elementos existentes e preserva classes de prejuízo, avisos de discrepância e alerta de fatura a até sete dias da cobrança.
+- `main.ts` mantém o filtro de abas, o estado injetado por `()=>game`, o Canvas e os demais painéis sem alteração de regra.
+- `tests/financial-balance-boundary.test.mjs` cobre caixa, dívida, formato pt-BR, alerta, datas, restauração de saves e dependências de camadas.
+- Antes deste recorte foi corrigido o teste legado `historical-promotion-pricing-roi.test.mjs`: o worker-simulation da etapa anterior falhava por procurar um trecho removido intencionalmente de `main.ts` na 19ª etapa.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
