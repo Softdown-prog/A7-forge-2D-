@@ -74,6 +74,12 @@
 - O bloco de `pointerdown`, `pointercancel`, `pointerup` e `click` foi preservado **byte a byte**: o limite de 10 pixels, o controle de scroll e a prevenção do click duplicado de 650 ms continuam iguais.
 - A escolha de coordenadas para móveis e paredes mantém as fórmulas existentes. Nenhum arquivo da simulação nem formato de save foi alterado.
 
+## Nono recorte: construção e instalação
+
+- `src/application/placementActionsPort.ts` concentra comandos de colocar, girar e reposicionar decoração, construir/remover paredes, instalar/remover portas e instalar PCs nos anexos.
+- `src/main.ts` mantém o mesmo canvas, hit testing, raio de toque, zoom e eventos do editor móvel. Agora só chama a porta tipada para operações e consultas de segmentos.
+- Os custos, validações de colisão, circulação, disponibilidade e salvamento continuam no motor original. A porta usa `()=>game` após importar saves.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

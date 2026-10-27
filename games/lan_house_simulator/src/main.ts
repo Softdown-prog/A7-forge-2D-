@@ -31,13 +31,14 @@ import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
+import {createPlacementActionsPort} from "./application/placementActionsPort.js";
 import {editableObjects} from "./sim/editableObjects.js";
 import { serializeSave, parseImportedSave } from "./sim/saveTransfer.js";
 import {loadLocalSave,writeLocalSave,replaceLocalSave} from "./sim/localSave.js";
-import {SHOP_CATALOG,shopPrice,placeFurniture,relocateFurniture,rotateFurniture,furnitureLimit,furnitureLocations,availablePlacementSlots,furnitureSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
+import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
-import {buildWall,canBuildWall,removeWall,installInteriorDoor,removeInteriorDoor,wallCandidates,wallEndpoints,WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
-import {annexComputerSlots,availableAnnexComputers,installAnnexComputer,ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
+import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
+import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, dayNumber, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
 import {financialSnapshot,monthlyClosingSnapshot} from "./sim/financialClarity.js";
@@ -276,6 +277,7 @@ let purchaseRotation:0|1|2|3=0;
 let selectedPs1PlacementId:string|null=null; // escolha estável entre atualizações do painel
 let pendingWall:WallSegment|null=null;
 const layoutEditorPort=createLayoutEditorPort(()=>game,cameraForGame);
+const placementActions=createPlacementActionsPort(()=>game);
 const layoutEditor=createLayoutEditor(canvas,layoutEditorPort,()=>{stopPlacement();shopOpen=false;adminOpen=false;noticesOpen=false;soundscape.stopKeyboard();renderUI();},()=>{save();renderUI();});
 installGameViewport(canvas);
 
@@ -410,7 +412,7 @@ button("demolish-walls",()=>{
 button("rotate-furniture",()=>{
  if(placingKind&&placingKind!=="poster"){purchaseRotation=((purchaseRotation+1)%4) as 0|1|2|3;renderUI();return;}
  if(!relocating||!relocationFrom)return;
- const result=rotateFurniture(game,relocationFrom);
+ const result=placementActions.rotate(relocationFrom);
  applyResult(game,result);renderUI();
  if(result.ok)save();
 });
@@ -539,8 +541,7 @@ function stopPlacement():void{
 document.getElementById("placement-cancel")?.addEventListener("click",stopPlacement);
 document.getElementById("confirm-wall")?.addEventListener("click",()=>{
  if(!pendingWall||!wallMode)return;const wall=pendingWall;
- const result=wallMode==="build"?buildWall(game,wall):wallMode==="door"?installInteriorDoor(game,wall):
-  (game.interiorDoors??[]).some(p=>p.axis===wall.axis&&p.x===wall.x&&p.y===wall.y)?removeInteriorDoor(game,wall):removeWall(game,wall);
+ const result=placementActions.confirmWall(wallMode,wall);
  placementNotice=result.message;if(result.ok){applyResult(game,result);save();pendingWall=null;}renderUI();
 });
 document.getElementById("turn-wall")?.addEventListener("click",()=>{if(pendingWall){pendingWall={...pendingWall,axis:pendingWall.axis==="x"?"y":"x"};hoveredWall=pendingWall;renderUI();}});
@@ -552,10 +553,10 @@ function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
          y:(e.clientY-bounds.top)/bounds.height*element.height};
 }
 function pickWall(x:number,y:number):WallSegment|null{
- const camera=cameraForGame(game),available=wallMode==="remove"?[...(game.interiorWalls??[]),...(game.interiorDoors??[])]:wallMode==="door"?(game.interiorWalls??[]):wallCandidates(game);
+ const camera=cameraForGame(game),available=wallMode?placementActions.walls(wallMode):[];
  let nearest:WallSegment|null=null,best=Infinity;
  for(const segment of available){
-   const [a,b]=wallEndpoints(segment);
+   const [a,b]=placementActions.endpoints(segment);
    for(const height of (wallMode==="build"?[0]:[0,38,76])){
      const pa=iso(a,camera,height),pb=iso(b,camera,height);
      const dx=pb.x-pa.x,dy=pb.y-pa.y,scale=Math.max(1,dx*dx+dy*dy);
@@ -568,7 +569,7 @@ function pickWall(x:number,y:number):WallSegment|null{
 }
 function pickAnnexPc(x:number,y:number):AnnexComputerSlot|null{
  const camera=cameraForGame(game);let nearest:AnnexComputerSlot|null=null,best=Infinity;
- for(const slot of annexComputerSlots(game)){
+ for(const slot of placementActions.annexSlots()){
   const p=iso({x:slot.position.x+0.35,y:slot.position.y+0.55},camera,4);
   const d=Math.hypot(x-p.x,y-p.y);
   if(d<best){best=d;nearest=slot;}
@@ -577,13 +578,13 @@ function pickAnnexPc(x:number,y:number):AnnexComputerSlot|null{
 }
 function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  if(!placingKind&&!relocating)return null;
- const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
+ const moving=placementActions.furniture().find(p=>p.slotId===relocationFrom);
  const surface=placingKind?(placingKind==="poster"?"wall":"floor"):moving?(moving.kind==="poster"?"wall":"floor"):null;
  const camera=cameraForGame(game);
  let nearest:PlacementSlot|null=null,distance=Infinity;
- for(const slot of furnitureSlots(game)){
+ for(const slot of placementActions.slots()){
   if(surface&&slot.surface!==surface)continue;
-  if(relocating&&!moving&&!furnitureLocations(game).some(p=>p.slotId===slot.id))continue;
+  if(relocating&&!moving&&!placementActions.furniture().some(p=>p.slotId===slot.id))continue;
   const at=slot.surface==="wall"?iso({x:slot.x+(slot.axis==="y"?0:.33),y:slot.y+(slot.axis==="y"?.33:0)},camera,137):
       iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
   const dist=Math.hypot(x-at.x,y-at.y);
@@ -608,7 +609,7 @@ canvas.addEventListener("click",e=>{
   const {x,y}=getCanvasPoint(e);
   if(relocating||placingKind||wallMode||installingAnnexPc)soundscape.click();
   if(installingAnnexPc){
-    const slot=pickAnnexPc(x,y),result=slot?installAnnexComputer(game,slot.id):
+    const slot=pickAnnexPc(x,y),result=slot?placementActions.installAnnex(slot.id):
       {ok:false,message:"Escolha um espaço sinalizado para o PC no anexo."};
     placementNotice=result.message;
     if(result.ok){applyResult(game,result);stopPlacement();save();}
@@ -624,7 +625,7 @@ canvas.addEventListener("click",e=>{
   if(relocating){
     const slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Escolha um móvel ou uma posição sinalizada.";renderUI();return;}
-    const owned=furnitureLocations(game).find(p=>p.slotId===slot.id);
+    const owned=placementActions.furniture().find(p=>p.slotId===slot.id);
     if(!relocationFrom){
       if(!owned){placementNotice="Selecione primeiro o móvel que deseja mover.";renderUI();return;}
       relocationFrom=slot.id;placementNotice="Agora escolha um destino verde para "+placementNames[owned.kind]+".";
@@ -635,7 +636,7 @@ canvas.addEventListener("click",e=>{
       relocationFrom=slot.id;placementNotice="Selecionado: "+placementNames[owned.kind]+". Escolha um destino verde.";
       renderUI();return;
     }
-    const result=relocateFurniture(game,relocationFrom,slot.id);
+    const result=placementActions.move(relocationFrom,slot.id);
     if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
@@ -643,7 +644,7 @@ canvas.addEventListener("click",e=>{
   if(placingKind){
     const kind=placingKind,slot=pickFurnitureSlot(x,y);
     if(!slot){placementNotice="Clique em uma das posições sinalizadas.";renderUI();return;}
-    const result=placeFurniture(game,kind,slot.id,purchaseRotation);
+    const result=placementActions.place(kind,slot.id,purchaseRotation);
     if(result.ok){applyResult(game,result);stopPlacement();save();}
     else{placementNotice=result.message;renderUI();}
     return;
@@ -667,7 +668,7 @@ function renderShop(force=true):void{
  const cash=document.getElementById("shop-cash");
  if(cash){
    const b=roomBounds(game),e=game.roomExtensions??{west:0,east:0,south:0};
-   cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2+annexComputerSlots(game).length)+
+   cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2+placementActions.annexSlots().length)+
      " · Tamanho do salão "+(b.maxX-b.minX)+"×"+(b.maxY-b.minY)+" · Ampliações: esquerda "+e.west+"/5 · direita "+e.east+"/5 · fundos "+(e.north??0)+"/5 · Salas "+wallZoneCount(game);
  }
  shopCatalog.replaceChildren();
@@ -705,7 +706,7 @@ function renderShop(force=true):void{
   const count=game.furniture?.[item.id as FurnitureKind]??0;
   const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
   const full=item.id==="door"?!(game.interiorWalls?.length):
-     item.id==="computer-annex"?!availableAnnexComputers(game).length:
+     item.id==="computer-annex"?!placementActions.availableAnnex().length:
      item.id==="ps1"?(game.ps1Stations?.length??0)>=PS1_MAX_STATIONS||!ps1PlacementSlots(game).length:
      ext?(game.roomExtensions?.[ext]??0)>=MAX_EXTENSION_LEVEL:
      item.id==="expand"?game.expansionLevel>=2:
@@ -905,10 +906,10 @@ function renderUI(liveOnly=false):void {
   }
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
-  const moving=furnitureLocations(game).find(p=>p.slotId===relocationFrom);
+  const moving=placementActions.furniture().find(p=>p.slotId===relocationFrom);
   if(rotateButton){rotateButton.hidden=!(placingKind&&placingKind!=="poster")&&(!relocating||!moving);rotateButton.disabled=placingKind?placingKind==="poster":!moving||moving.kind==="poster";}
  const confirmWall=document.querySelector<HTMLButtonElement>("#confirm-wall"),turnWall=document.querySelector<HTMLButtonElement>("#turn-wall");
- if(confirmWall){confirmWall.hidden=!wallMode;confirmWall.disabled=!pendingWall||(wallMode==="build"&&!canBuildWall(game,pendingWall));}if(turnWall){turnWall.hidden=wallMode!=="build";turnWall.disabled=!pendingWall;}
+ if(confirmWall){confirmWall.hidden=!wallMode;confirmWall.disabled=!pendingWall||(wallMode==="build"&&!placementActions.canBuild(pendingWall));}if(turnWall){turnWall.hidden=wallMode!=="build";turnWall.disabled=!pendingWall;}
 
   if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode||installingAnnexPc));
   if(placementHelp)placementHelp.textContent=installingAnnexPc?
