@@ -160,16 +160,20 @@ test("panfletagem acompanha IPCA sem criar visitantes ou pagamentos",()=>{
  assert.ok(Math.abs(s.expenses-before-quoted)<.001);
 });
 test("interface de divulgação exibe valor cotado, não constante clássica",()=>{
- const file=resolve(dirname(fileURLToPath(import.meta.url)),"..","src","main.ts");
- const ui=readFileSync(file,"utf8");
- assert.ok(ui.includes("promotionCost(game)"));
- assert.ok(ui.includes("promotionButton.disabled=promoting||!admissionsOpen||game.cash<promoPrice"));
- assert.ok(ui.includes("promotionCanAttractVisitors(game)"));
+ const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
+ const main=readFileSync(resolve(root,"src","main.ts"),"utf8");
+ const application=readFileSync(resolve(root,"src","application","promotionStatusPort.ts"),"utf8");
+ const ui=readFileSync(resolve(root,"src","ui","promotionStatusPanel.ts"),"utf8");
+ assert.ok(application.includes("promotionCost(state)"));
+ assert.ok(application.includes("state.cash<price"));
+ assert.ok(application.includes("promotionCanAttractVisitors(state)"));
  assert.ok(ui.includes('setText("promotion-description"'));
- const html=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"..","index.html"),"utf8");
+ assert.ok(ui.includes("#launch-promotion"));
+ assert.ok(main.includes("renderPromotionStatus(promotionStatusPort.snapshot(),setText,document)"));
+ const html=readFileSync(resolve(root,"index.html"),"utf8");
  assert.ok(html.includes('id="promotion-description"'));
  assert.equal(html.includes("Uma campanha custa R$ 120"),false);
- assert.equal(ui.includes("game.cash<PROMOTION_COST"),false);
+ assert.equal(application.includes("state.cash<PROMOTION_COST"),false);
 });
 const full=process.env.LHS_PROMOTION_PRICING_AUDIT==="1";
 test("18 campanhas de 180 dias: preço, panfletagem e expansão reais",
