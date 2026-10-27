@@ -1,4 +1,4 @@
-/** Display-only per-computer finance ledger. No GameState or simulation imports. */
+/** Display-only per-computer finance ledger. No direct domain-model or simulation imports. */
 import type {StationLedgerPort} from "../application/stationLedgerPort.js";
 import {syncPanelChildren} from "./panelChildren.js";
 
