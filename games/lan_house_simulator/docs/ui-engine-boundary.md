@@ -212,6 +212,14 @@
 - `tests/commerce-network-boundary.test.mjs` cobre os anos 1998/2002/2007, tarifas, falta de caixa, desconexão, técnico, fornecedor parceiro, importação de saves e estabilidade do DOM.
 - Sem alterar regras de contratação, upgrades, despesas, preços, RNG, Canvas, gestos ou esquema de save.
 
+## Vigésimo sétimo recorte: operação e manutenção por computador
+
+- `src/application/pcOperationsPort.ts` calcula somente snapshots de estado ligado, desgaste, reparos, disponibilidade de upgrades, custo do técnico e progresso do atendimento.
+- `src/ui/pcOperationsPanel.ts` gera os mesmos controles `data-pc-power`, `data-pc-repair` e `data-pc-upgrade`, incluindo progresso e `data-panel-key`.
+- `main.ts` continua responsável por `panelChanged("computers",...)`, `syncPanelChildren`, troca de abas e recuperação de foco após atualização LCD.
+- `tests/pc-operations-boundary.test.mjs` protege a contratação avulsa, bloqueio por ocupação, preço e ano de hardware, passagem de save e renderização de controles.
+- Sem alterar ações de estação, RNG, Canvas, editor de móveis, navegação touch nem formato do save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -75,7 +75,7 @@ import {SceneMotion} from "./render/motion.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import {renderPromotionStatus} from "./ui/promotionStatusPanel.js";
 import { cameraForGame, iso } from "./render/isometric.js";
-import { roomWidth, pcWear, pcBroken,pcPosition } from "./sim/engine.js";
+import { roomWidth,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
 import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
@@ -98,10 +98,9 @@ import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
  ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {pcUnderRepair} from "./sim/services.js";
-import {workPhaseLabel} from "./sim/staffPresentation.js";
+import {createPcOperationsPort} from "./application/pcOperationsPort.js";
+import {renderPcOperations} from "./ui/pcOperationsPanel.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
-import {employeeHired} from "./sim/staff.js";
-import {serviceVisitCost} from "./sim/historicalEconomy.js";
 import {LCD_CATALOG,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
 import {hardwareFor,buildParts,requiredPsuWatts} from "./sim/hardware.js";
@@ -856,6 +855,7 @@ const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
 const retailPriceStatusPort=createRetailPriceStatusPort(()=>game);
 const deskPricingPort=createDeskPricingPort(()=>game);
 const commerceNetworkPort=createCommerceNetworkPort(()=>game);
+const pcOperationsPort=createPcOperationsPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -986,9 +986,7 @@ function renderUI(liveOnly=false):void {
   }
   if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
   renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
-  const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
-  const poweredOff=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>!stationPoweredOn(game,i)).length;
-  setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+poweredOff+" desligados · "+broken+" em manutenção");
+  setText("pc",pcOperationsPort.summary());
   const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
   if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"&&managementPanels.active("computers","ledger"))
     renderStationLedgerRows(stationLedgerRows,stationLedgerPort);
@@ -1002,38 +1000,7 @@ function renderUI(liveOnly=false):void {
     const lcdFocus=focused instanceof HTMLButtonElement&&liveMaintenance.contains(focused)
       ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
       :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
-    if(page==="operations"){
-    const header=document.createElement("strong");header.textContent="Operação e manutenção por computador";maintenance.replaceChildren(header);
-    const powerHint=document.createElement("p");powerHint.className="station-power-hint";
-    powerHint.textContent="Desligue uma estação livre para economizar energia e instalar melhorias. Religue para receber clientes.";
-    maintenance.append(powerHint);
-    for(let i=0;i<pcCount(game);i++){
-      const wear=pcWear(game,i);
-      const line=document.createElement("div");
-      const isOn=stationPoweredOn(game,i),busy=stationHasCustomer(game,i);
-      line.dataset.panelKey="operation-"+i;
-      line.className="pc-operation"+(isOn?"":" is-powered-off");
-      const label=document.createElement("span");
-      label.textContent="PC "+(i+1)+" · "+(isOn?"LIGADO":"DESLIGADO")+" · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · MANUTENÇÃO":"");
-      const power=document.createElement("button");power.type="button";power.dataset.pcPower=String(i);
-      power.id="pc-power-"+i;power.className="pc-power-toggle";power.textContent=isOn?"Desligar estação":"Ligar estação";
-      power.disabled=isOn?busy:!!game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving");
-      power.title=isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?"Economize energia e libere atualizações.":"Religue para receber clientes.";
-      const repair=document.createElement("button");repair.type="button";repair.dataset.pcRepair=String(i);
-      const job=game.repairJobs?.find(j=>j.pc===i);
-      repair.textContent=job?"Técnico · "+workPhaseLabel("technician",job)+(job.phase==="working"?" · "+Math.floor(job.progress/job.duration*100)+"%":""):
-     employeeHired(game,"technician")?"Solicitar reparo · equipe contratada":"Chamar técnico avulso · "+money(serviceVisitCost(game,"repair",wear));
-      repair.disabled=wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage));
-      if(job){const meter=document.createElement("progress");meter.max=job.duration;meter.value=job.progress;meter.setAttribute("aria-label","Reparo do PC "+(i+1));line.append(meter);}
-      const upgrade=document.createElement("button");upgrade.type="button";upgrade.dataset.pcUpgrade=String(i);
-      const tier=game.pcTiers?.[i]??1;
-      const hardwareYear=tier===1?2000:2003;
-      upgrade.textContent=tier>=3?"Ver Peças e configuração":("Kit CRT "+hardwareYear+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)));
-      upgrade.disabled=tier>=3||year<hardwareYear||game.cash<tier*240||isOn||busy||!!job;
-      label.textContent+=" · hardware nível "+tier;
-      line.append(label,power,repair,upgrade);maintenance.appendChild(line);
-    }
-    }
+    if(page==="operations")renderPcOperations(maintenance,pcOperationsPort.rows(),document);
     selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
     if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
     if(page==="monitors"){
