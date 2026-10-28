@@ -71,5 +71,7 @@ test("UI desacoplada do motor; fluxo de compra original continua no main",()=>{
  assert.ok(main.includes("createBasicGamesLicenseStatusPort(()=>game)"));
  assert.ok(main.includes("renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document)"));
  assert.ok(main.includes("installGameLicensingControls("));
- assert.ok(main.includes('action.textContent="Regularizar jogos · "+basicGamesLicenseCost(game).toLocaleString'));
+ const inbox=readFileSync(new URL("application/noticeInboxPort.ts",root),"utf8");
+ assert.ok(inbox.includes("basicGamesLicenseCost(s).toLocaleString"));
+ assert.ok(inbox.includes('text:"Regularizar jogos · "+'));
 });
