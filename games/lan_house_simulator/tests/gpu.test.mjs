@@ -12,11 +12,14 @@ const year=(s,y)=>{s.totalMinutes=(y-1998)*360*DAY_MINUTES;};
 test("interface informa diferença de satisfação e custo integral de troca",()=>{
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
  const source=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
+ const presentation=readFileSync(new URL("../src/ui/gpuCatalogPanel.ts",import.meta.url),"utf8");
+ const projection=readFileSync(new URL("../src/application/gpuCatalogPort.ts",import.meta.url),"utf8");
  assert.match(html,/id="gpu-replacement-note"/);
- assert.ok(source.includes('setText("gpu-replacement-note"'));
- assert.ok(source.includes("sem desconto"));
- assert.ok(source.includes("model.bonus-(current?.bonus??0)"));
- assert.ok(source.includes("ganho adicional"));
+ assert.ok(source.includes("renderGpuCatalogPanel("));
+ assert.ok(presentation.includes('setText("gpu-replacement-note"'));
+ assert.ok(projection.includes("sem desconto"));
+ assert.ok(projection.includes("model.bonus-(current?.bonus??0)"));
+ assert.ok(projection.includes("ganho adicional"));
 });
 test("cinco GPUs distintas e desenhos SVG autênticos do jogo",()=>{
  assert.deepEqual(GPU_CATALOG.map(x=>x.year),[2005,2007,2009,2011,2013]);
