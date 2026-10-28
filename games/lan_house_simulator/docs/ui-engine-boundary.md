@@ -261,6 +261,14 @@
 - `tests/basic-games-license-status-boundary.test.mjs` tem seis cenários e `tests/basic-games-license.test.mjs` agora valida os novos arquivos.
 - Sem alterar compra, cálculo de IPCA, RNG, saves, Canvas ou controles touch.
 
+## Trigésimo terceiro recorte: caixa de correspondências
+
+- `src/application/noticeInboxPort.ts` projeta cartas, botões e motivos de indisponibilidade sem modificar o estado.
+- `src/ui/noticeInboxPanel.ts` conserva as classes, os ícones, o botão de leitura e os identificadores das ações e das decisões.
+- O fluxo `installNoticeControls` continua responsável por compras, decisões, leitura e salvamento; `main.ts` preserva os avisos de cartas não lidas e o cache de atualização.
+- `tests/notice-inbox-boundary.test.mjs` cobre alertas Windows, jogos, segurança, Bombeiros, propostas, saves e DOM.
+- Sem alterações no sistema de eventos narrativos, fiscalizações, RNG, motor, Canvas ou gestos touch.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

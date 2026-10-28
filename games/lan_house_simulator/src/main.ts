@@ -52,7 +52,7 @@ import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { basicGamesLicenseCost, monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
+import { monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
@@ -88,8 +88,9 @@ import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.j
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
-import {unreadNotices,missingWindowsLicenses} from "./sim/notices.js";
-import {decisionOptions} from "./sim/decisions.js";
+import {unreadNotices} from "./sim/notices.js";
+import {createNoticeInboxPort} from "./application/noticeInboxPort.js";
+import {renderNoticeInbox} from "./ui/noticeInboxPanel.js";
 import {gameYear,INTERNET_ERAS} from "./sim/era.js";
 import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
 import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
@@ -863,6 +864,7 @@ const gpuCatalogPort=createGpuCatalogPort(()=>game);
 const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
 const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
 const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
+const noticeInboxPort=createNoticeInboxPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -875,44 +877,7 @@ function renderUI(liveOnly=false):void {
   if(badge){badge.hidden=unread===0;badge.textContent=String(unread);}
   document.getElementById("open-notices")?.setAttribute("aria-expanded",String(noticesOpen));
   if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
-    noticesList.replaceChildren();
-    if(!(game.notices?.length)){const empty=document.createElement("p");empty.textContent="Nenhuma mensagem recebida por enquanto.";noticesList.append(empty);}
-    for(const n of game.notices??[]){
-      const card=document.createElement("article");card.className="notice-letter notice-"+n.severity+(n.read?" read":"");
-      const title=document.createElement("h3");title.textContent=n.title;title.insertAdjacentHTML("afterbegin",iconMarkup(n.severity==="urgent"?"warning":"mail"));
-      const date=document.createElement("small");date.textContent="Dia "+n.day;
-      const body=document.createElement("p");body.textContent=n.body;
-      const actions=document.createElement("div");actions.className="action-row wrap";
-      if(!n.read){const mark=document.createElement("button");mark.className="slice";mark.dataset.noticeRead=n.id;mark.textContent="Marcar como lida";actions.append(mark);}
-      const action=document.createElement("button");action.className="slice";
-      if(n.id==="safety"&&!game.contentFilterInstalled){action.dataset.noticeAction="programmer";action.textContent="Contratar programador · R$ 320";action.disabled=game.cash<320;actions.append(action);}
-      if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(game)>0){action.dataset.noticeAction="windows";action.textContent="Regularizar Windows";actions.append(action);}
-      if((n.id==="games"||n.id==="copyright")&&!game.licensedGames){action.dataset.noticeAction="games";action.textContent="Regularizar jogos · "+basicGamesLicenseCost(game).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});actions.append(action);}
-      const record=game.storyRecords?.find(r=>n.id===r.id||n.id===r.id+":followup");
-      if(record&&(record.stage==="pending"||record.stage==="ending")){
-        const progress=document.createElement("small");
-        progress.className="notice-followup-hint";
-        progress.textContent=record.stage==="pending"
-          ?"Consequências em acompanhamento: nova carta a partir do dia "+record.dueDay+"."
-          :"O resultado será registrado na correspondência a partir do dia "+record.dueDay+".";
-        actions.append(progress);
-      }
-      const options=decisionOptions(n.id,game);
-      if(n.id==="electrical-inspection"&&game.electricalDeadlineDay!==undefined&&!n.resolved){
-        const pending=document.createElement("strong");
-        pending.textContent=game.electricalInspectionFineApplied
-          ?"Prazo vencido: multa já aplicada. Ainda é necessário regularizar."
-          :(game.electricalExtensionUsed?"Prazo prorrogado até o dia ":"Prazo para regularizar até o dia ")+game.electricalDeadlineDay+".";
-        actions.append(pending);
-      }
-      if(options.length){
-        if(n.resolved){const done=document.createElement("strong");done.textContent="✓ Decisão tomada: "+(options.find(o=>o.id===n.resolved)?.label??n.resolved);actions.append(done);}
-        else for(const option of options){
-          if(n.id==="electrical-inspection"&&option.id==="electrical-defer"&&(game.electricalExtensionUsed||game.electricalInspectionFineApplied))continue;
-          const choice=document.createElement("button");choice.className="slice";choice.type="button";choice.dataset.decision=n.id;choice.dataset.choice=option.id;choice.textContent=option.label+" — "+option.description;choice.title=option.description;choice.disabled=option.cost>0&&game.cash<option.cost;actions.append(choice);}
-      }
-      card.append(title,date,body,actions);noticesList.append(card);
-    }
+    renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup);
   }
   if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
   const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
