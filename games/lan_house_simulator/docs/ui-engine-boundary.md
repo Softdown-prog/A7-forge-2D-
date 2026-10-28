@@ -285,6 +285,14 @@
 - `tests/financial-admin-overview-boundary.test.mjs` inclui oito casos sobre custos históricos, PlayStation, serviços avulsos, troca de save e fronteiras da UI.
 - Sem alterações em RNG, preço cobrado, saves, áudio, Canvas ou gestos mobile.
 
+## Trigésimo sexto recorte: avisos de circulação no salão
+
+- `src/application/serviceAccessStatusPort.ts` recebe as ocorrências já calculadas pelo motor e prepara o número de bloqueios, destinos e orientação para abrir passagens.
+- `src/ui/serviceAccessStatusPanel.ts` atualiza o painel administrativo, o botão de inspeção e a barra de marcações sobre o Canvas, sem modificar as rotas.
+- `main.ts` preserva o cache de 1,6 s, o comando para inspecionar o salão e o desenho real de bloqueios no Canvas.
+- `tests/service-access-status-boundary.test.mjs` acrescenta sete verificações para textos, destinos, botões, cache, save e isolamento da interface.
+- Não há mudanças no algoritmo de caminhada, colisões, manutenção, funcionários, RNG ou salvamento.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -107,6 +107,8 @@ import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
+import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
+import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
 import {stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
 import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
@@ -1003,15 +1005,7 @@ function renderUI(liveOnly=false):void {
   renderStaffStatusPanel(staffStatusPort.snapshot(),setText,document);
   if(adminOpen&&activeAdminTab==="services"&&managementPanels.active("services","access")){
    const issues=inspectServiceAccess(!liveOnly);
-   const summary=issues.length
-    ?issues.length+" destino(s) sem passagem para atendimento."
-    :"Nenhum destino com necessidade de atendimento está bloqueado.";
-   setText("service-access-summary",summary);
-   setText("service-access-list",issues.length
-    ?issues.map(issue=>issue.label+" · sem rota desde a porta").join(" · ")
-    :"Uma ocorrência futura só será verificada quando precisar de atendimento.");
-   const see=document.querySelector<HTMLButtonElement>("#show-service-access");
-   if(see){see.disabled=issues.length===0;see.textContent="Ver bloqueios no salão ("+issues.length+")";}
+   renderServiceAccessStatus(serviceAccessStatusSnapshot(issues),setText,document);
   }
   }
   renderFinancialAdminActivity(financialAdminOverview,setText,activeAdminTab==="finance");
@@ -1022,12 +1016,7 @@ function renderUI(liveOnly=false):void {
   }
   // Independente do painel administrativo: as marcações continuam visíveis
   // depois de fechar Administração para inspecionar o salão no Canvas.
-  const inspectToolbar=document.getElementById("service-access-toolbar");
-  if(inspectToolbar)inspectToolbar.hidden=!serviceAccessVisible;
-  if(serviceAccessVisible)setText("service-access-map-hint",
-   serviceAccessCache.length
-    ?serviceAccessCache.map(issue=>issue.label).join(", ")+": sem acesso. Abra uma porta ou reorganize o salão."
-    :"Nenhum destino está bloqueado. Você pode fechar as marcações.");
+  renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessCache),serviceAccessVisible,setText,document);
   const eventHistory=eventLogPort.snapshot();
   if(eventHistory.signature!==lastEventSignature){
    renderEventLog(events,eventHistory,document,iconMarkup);

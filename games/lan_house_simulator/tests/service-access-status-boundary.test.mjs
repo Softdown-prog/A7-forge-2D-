@@ -1,0 +1,79 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
+import {createGame,isValidSave} from "../dist/js/sim/engine.js";
+import {serviceAccessIssues} from "../dist/js/sim/serviceAccess.js";
+import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {serviceAccessStatusSnapshot} from "../dist/js/application/serviceAccessStatusPort.js";
+import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "../dist/js/ui/serviceAccessStatusPanel.js";
+const issue=(kind,index,label)=>({kind,index,label,point:{x:1.1,y:3.1}});
+test("sem impedimentos mantém textos, botão desabilitado e mapa vazio",()=>{
+ const v=serviceAccessStatusSnapshot([]);
+ assert.equal(v.count,0);
+ assert.equal(v.summary,"Nenhum destino com necessidade de atendimento está bloqueado.");
+ assert.equal(v.destinations,"Uma ocorrência futura só será verificada quando precisar de atendimento.");
+ assert.equal(v.showDisabled,true);
+ assert.equal(v.showLabel,"Ver bloqueios no salão (0)");
+ assert.equal(v.mapHint,"Nenhum destino está bloqueado. Você pode fechar as marcações.");
+});
+test("destinos sem rota preservam ordem, contagem e nomes",()=>{
+ const src=[issue("bin",0,"Lixeira 1"),issue("pc",2,"PC 3"),issue("bin",1,"Lixeira 2")];
+ const original=JSON.stringify(src),v=serviceAccessStatusSnapshot(src);
+ assert.equal(v.summary,"3 destino(s) sem passagem para atendimento.");
+ assert.equal(v.destinations,"Lixeira 1 · sem rota desde a porta · PC 3 · sem rota desde a porta · Lixeira 2 · sem rota desde a porta");
+ assert.equal(v.showDisabled,false);
+ assert.equal(v.showLabel,"Ver bloqueios no salão (3)");
+ assert.equal(v.mapHint,"Lixeira 1, PC 3, Lixeira 2: sem acesso. Abra uma porta ou reorganize o salão.");
+ assert.equal(JSON.stringify(src),original);
+});
+test("lista recebida não fica presa a instantâneo anterior",()=>{
+ const src=[issue("pc",0,"PC 1")],old=serviceAccessStatusSnapshot(src);
+ src.push(issue("bin",0,"Lixeira 1"));
+ const current=serviceAccessStatusSnapshot(src);
+ assert.equal(old.count,1);assert.equal(current.count,2);
+ assert.equal(old.mapHint,"PC 1: sem acesso. Abra uma porta ou reorganize o salão.");
+});
+test("consulta real não altera RNG, caixa, save ou estado importado",()=>{
+ let state=createGame(799,"historical");
+ state.binFill=[80,0];state.pcWear=[0,35,0];
+ const original=JSON.stringify(state),view=serviceAccessStatusSnapshot(serviceAccessIssues(state));
+ assert.equal(JSON.stringify(state),original);
+ state=parseImportedSave(serializeSave(state));
+ assert.equal(isValidSave(state),true);
+ assert.deepEqual(serviceAccessStatusSnapshot(serviceAccessIssues(state)),view);
+});
+test("painel mantém IDs, textos, estados do botão e comportamento sem botão",()=>{
+ const view=serviceAccessStatusSnapshot([issue("bin",0,"Lixeira 1")]),calls=[];
+ const button={disabled:true,textContent:"Anterior"};
+ const dom={querySelector:selector=>{assert.equal(selector,"#show-service-access");return button;}};
+ renderServiceAccessStatus(view,(id,value)=>calls.push([id,value]),dom);
+ assert.deepEqual(calls,[["service-access-summary",view.summary],["service-access-list",view.destinations]]);
+ assert.equal(button.disabled,false);assert.equal(button.textContent,"Ver bloqueios no salão (1)");
+ renderServiceAccessStatus(serviceAccessStatusSnapshot([]),()=>{},dom);
+ assert.equal(button.disabled,true);
+ renderServiceAccessStatus(view,()=>{}, {querySelector:()=>null});
+});
+test("barra do Canvas permanece oculta sem diagnóstico e aparece quando ativa",()=>{
+ const toolbar={hidden:false},updates=[];
+ const dom={getElementById:id=>id==="service-access-toolbar"?toolbar:null};
+ const view=serviceAccessStatusSnapshot([issue("pc",0,"PC 1")]);
+ renderServiceAccessOverlayStatus(view,false,(id,v)=>updates.push([id,v]),dom);
+ assert.equal(toolbar.hidden,true);assert.deepEqual(updates,[]);
+ renderServiceAccessOverlayStatus(view,true,(id,v)=>updates.push([id,v]),dom);
+ assert.equal(toolbar.hidden,false);
+ assert.deepEqual(updates,[["service-access-map-hint",view.mapHint]]);
+ renderServiceAccessOverlayStatus(view,true,()=>{}, {getElementById:()=>null});
+});
+test("motor não conhece UI; main conserva cache de 1600ms e overlay real",()=>{
+ const base=new URL("../src/",import.meta.url);
+ const app=readFileSync(new URL("application/serviceAccessStatusPort.ts",base),"utf8");
+ const ui=readFileSync(new URL("ui/serviceAccessStatusPanel.ts",base),"utf8");
+ const main=readFileSync(new URL("main.ts",base),"utf8");
+ assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
+ assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
+ assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
+ assert.ok(main.includes("renderServiceAccessStatus(serviceAccessStatusSnapshot(issues),setText,document)"));
+ assert.ok(main.includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessCache),serviceAccessVisible,setText,document)"));
+ assert.ok(main.includes("now-serviceAccessAt>1600"));
+ assert.ok(main.includes("renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed)"));
+});
