@@ -95,6 +95,8 @@ import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
 import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
 import {createGpuGamesCatalogPort} from "./application/gpuGamesCatalogPort.js";
 import {renderGpuGamesCatalog} from "./ui/gpuGamesCatalogPanel.js";
+import {createBasicGamesLicenseStatusPort} from "./application/basicGamesLicenseStatusPort.js";
+import {renderBasicGamesLicenseStatus} from "./ui/basicGamesLicenseStatusPanel.js";
 import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
 import {renderClassicGamesCatalog} from "./ui/classicGamesCatalogPanel.js";
 import {pcUnderRepair} from "./sim/services.js";
@@ -860,6 +862,7 @@ const lcdMonitorsPort=createLcdMonitorsPort(()=>game);
 const gpuCatalogPort=createGpuCatalogPort(()=>game);
 const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
 const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
+const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1021,16 +1024,7 @@ function renderUI(liveOnly=false):void {
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
     renderGpuCatalogPanel(gpuPcChoice,gpuList,gpuCatalogPort.snapshot(selectedGpuPc),setText,document,syncPanelChildren);
   }
-  const basicLicensePrice=basicGamesLicenseCost(game);
-  setText("license-status",game.licensedGames
-    ?"Jogos regularizados · licença permanente, sem renovação anual."
-    :"Catálogo sem regularização — risco de multa. Taxa única: "+inCurrency(basicLicensePrice)+".");
-  const basicLicenseButton=document.querySelector<HTMLButtonElement>("#license");
-  if(basicLicenseButton){
-    basicLicenseButton.hidden=game.licensedGames;
-    basicLicenseButton.disabled=game.cash<basicLicensePrice;
-    basicLicenseButton.textContent="Regularizar jogos · "+inCurrency(basicLicensePrice);
-  }
+  renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document);
   if(licensePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","windows")&&panelChanged("licensePanel",[stationRevision],!liveOnly))
    renderWindowsLicensePanel(licensePanel,windowsLicensePort);
   if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly)){

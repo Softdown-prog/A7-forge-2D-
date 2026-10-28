@@ -72,8 +72,13 @@ test("regularizar não cria procura; licenciar título específico gera só o b�
 test("UI oculta contrato concluído e apresenta preços e avisos atualizados",()=>{
   const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
   const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
-  assert.ok(main.includes("basicLicenseButton.hidden=game.licensedGames"));
-  assert.ok(main.includes("basicLicenseButton.disabled=game.cash<basicLicensePrice"));
+  const projection=readFileSync(new URL("../src/application/basicGamesLicenseStatusPort.ts",import.meta.url),"utf8");
+  const visual=readFileSync(new URL("../src/ui/basicGamesLicenseStatusPanel.ts",import.meta.url),"utf8");
+  assert.ok(main.includes("renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document)"));
+  assert.ok(projection.includes("buttonHidden:game.licensedGames"));
+  assert.ok(projection.includes("buttonDisabled:game.cash<fee"));
+  assert.ok(visual.includes("button.hidden=status.buttonHidden"));
+  assert.ok(visual.includes("button.disabled=status.buttonDisabled"));
   assert.ok(main.includes('basicGamesLicenseCost(game)'));
   assert.ok(main.includes('action.textContent="Regularizar jogos · "+basicGamesLicenseCost(game).toLocaleString'));
   assert.ok(html.includes("taxa única para o estabelecimento, sem renovação anual"));

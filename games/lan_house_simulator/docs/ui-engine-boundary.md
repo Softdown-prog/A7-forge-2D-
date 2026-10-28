@@ -253,6 +253,14 @@
 - Testes `tests/gpu-games-catalog-boundary.test.mjs` e testes legados revisados protegem os textos e regras no novo limite arquitetural.
 - Sem alterações nas funções de compra, distribuição gratuita, banda, pausa, RNG, Canvas, controles touch ou estrutura do save.
 
+## Trigésimo segundo recorte: status de regularização de jogos
+
+- `src/application/basicGamesLicenseStatusPort.ts` projeta o custo, saldo e licença única e permanente no modo clássico/histórico sem editar a partida.
+- `src/ui/basicGamesLicenseStatusPanel.ts` atualiza `#license-status` e `#license` mantendo a compra pelo controle existente.
+- `main.ts` continua com os avisos do correio e controles de licenciamento; a apresentação do status de contrato saiu do loop principal.
+- `tests/basic-games-license-status-boundary.test.mjs` tem seis cenários e `tests/basic-games-license.test.mjs` agora valida os novos arquivos.
+- Sem alterar compra, cálculo de IPCA, RNG, saves, Canvas ou controles touch.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
