@@ -220,6 +220,14 @@
 - `tests/pc-operations-boundary.test.mjs` protege a contratação avulsa, bloqueio por ocupação, preço e ano de hardware, passagem de save e renderização de controles.
 - Sem alterar ações de estação, RNG, Canvas, editor de móveis, navegação touch nem formato do save.
 
+## Vigésimo oitavo recorte: catálogo e seleção de monitores LCD
+
+- `src/application/lcdMonitorsPort.ts` projeta estações disponíveis, LCD instalado, bônus, catálogo das cinco gerações e motivos de bloqueio por ano, hardware, ocupação, energia e caixa. Não compra nem altera kits.
+- `src/ui/lcdMonitorsPanel.ts` preserva os mesmos cartões, imagem procedural existente, `data-lcd-select`, `data-lcd-buy`, `aria-pressed` e estado dos botões.
+- `main.ts` conserva `selectedLcdPc`, `panelChanged("computers",...)`, geração cacheada das miniaturas, `syncPanelChildren` e recuperação de foco sem rolagem no mobile.
+- `tests/lcd-monitors-boundary.test.mjs` valida desbloqueios, custos, geração anterior, ocupação, seleção, save e DOM, sem tocar nas compras do motor.
+- Sem alterações no motor econômico, gestos touch, Canvas do salão, regras de compra, RNG ou estrutura de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

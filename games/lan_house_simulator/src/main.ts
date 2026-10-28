@@ -101,7 +101,9 @@ import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
-import {LCD_CATALOG,installedLcd,lcdSpec,stationModelName,stationOccupied,type LcdId} from "./sim/computerModels.js";
+import {stationOccupied,type LcdId} from "./sim/computerModels.js";
+import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
+import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
 import {hardwareFor,buildParts,requiredPsuWatts} from "./sim/hardware.js";
 import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
@@ -856,6 +858,7 @@ const retailPriceStatusPort=createRetailPriceStatusPort(()=>game);
 const deskPricingPort=createDeskPricingPort(()=>game);
 const commerceNetworkPort=createCommerceNetworkPort(()=>game);
 const pcOperationsPort=createPcOperationsPort(()=>game);
+const lcdMonitorsPort=createLcdMonitorsPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1003,42 +1006,7 @@ function renderUI(liveOnly=false):void {
     if(page==="operations")renderPcOperations(maintenance,pcOperationsPort.rows(),document);
     selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
     if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
-    if(page==="monitors"){
-    const kits=document.createElement("section");kits.className="lcd-upgrades";
-    const title=document.createElement("h3");title.textContent="Da era CRT aos LCDs";
-    const hint=document.createElement("p");hint.className="lcd-note";
-    hint.textContent="Escolha a estação para renovar. Kits exigem hardware nível 3. Novas gerações chegam com os anos; a troca custa o valor integral e preserva GPU, licenças e desgaste.";
-    const choices=document.createElement("nav");choices.className="gpu-stations";choices.setAttribute("aria-label","Estação para instalar kit LCD");
-    for(let i=0;i<pcCount(game);i++){
-      const choice=document.createElement("button");choice.type="button";choice.dataset.lcdSelect=String(i);
-      choice.className="gpu-station"+(selectedLcdPc===i?" selected":"");choice.textContent="PC "+(i+1);
-      choice.setAttribute("aria-pressed",String(selectedLcdPc===i));choices.append(choice);
-    }
-    const current=lcdSpec(installedLcd(game,selectedLcdPc));
-    const installed=document.createElement("p");installed.className="lcd-note";
-    installed.textContent="PC "+(selectedLcdPc+1)+" · instalado: "+stationModelName(game,selectedLcdPc)+" · ano "+year;
-    installed.dataset.lcdCurrent="";
-    const catalog=document.createElement("section");catalog.className="lcd-catalog";
-    for(const model of LCD_CATALOG){
-      const locked=year<model.year,owned=current?.id===model.id,older=!!current&&current.year>model.year;
-      const busy=stationOccupied(game,selectedLcdPc)||!!game.repairJobs?.some(job=>job.pc===selectedLcdPc);
-      const isOn=stationPoweredOn(game,selectedLcdPc);
-      const needsHardware=(game.pcTiers?.[selectedLcdPc]??1)<3;
-      const card=document.createElement("article");card.className="lcd-card"+(locked?" lcd-locked":"");
-      const art=document.createElement("img");art.src=lcdPreview(model.id);art.alt="Estação "+model.name;art.width=320;art.height=190;
-      const info=document.createElement("div");info.className="gpu-info";
-      const name=document.createElement("strong");name.textContent=model.year+" · "+model.name;
-      const description=document.createElement("small");description.textContent=model.description;
-      const benefit=document.createElement("small");
-      benefit.textContent="Satisfação +"+Math.round((model.bonus-(current?.bonus??0))*1000)/10+" p.p. · economia de energia em relação ao CRT.";
-      if(owned||older)benefit.textContent="Satisfação do kit: +"+Math.round(model.bonus*1000)/10+" p.p. em relação ao CRT.";
-      const buy=document.createElement("button");buy.type="button";buy.dataset.lcdBuy=model.id;
-      buy.textContent=owned?"Instalado":older?"Geração anterior":locked?"🔒 Chega em "+model.year:needsHardware?"Requer hardware 3":busy?"Estação ocupada":isOn?"Desligue a estação":game.cash<model.cost?"Caixa insuficiente · R$ "+model.cost:"Instalar · R$ "+model.cost;
-      buy.disabled=owned||older||locked||needsHardware||busy||isOn||game.cash<model.cost;
-      info.append(name,description,benefit,buy);card.append(art,info);catalog.append(card);
-    }
-    kits.append(title,hint,choices,installed,catalog);maintenance.append(kits);
-    }
+    if(page==="monitors")renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document);
     presentComputerOperations(computerOperationsSnapshot(game),maintenance);
     decorateControls(maintenance);
     syncPanelChildren(liveMaintenance,maintenance);
