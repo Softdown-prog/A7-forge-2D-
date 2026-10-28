@@ -60,10 +60,10 @@ test("clientes reais registram pedidos, uso e cobranças sem sessão artificial"
  assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });
 test("interface apresenta o histórico real na aba de licenças",()=>{
- const text=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(text,/gpuDemandReport\(game\)/);
- assert.match(text,/observed.premiumRevenue/);
- assert.match(text,/pedidos sem sessão concluída/);
+ const app=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");
+ assert.match(app,/gpuDemandReport\(game\)/);
+ assert.match(app,/observed.premiumRevenue/);
+ assert.match(app,/pedidos sem sessão concluída/);
 });
 
 test("cobertura da licença usa apenas adicional de cada título e não altera o caixa",()=>{
@@ -94,8 +94,8 @@ test("cobertura da licença usa apenas adicional de cada título e não altera o
  assert.deepEqual(parseImportedSave(serializeSave(s)).gpuGameDemand,s.gpuGameDemand);
 });
 test("painel não confunde adicional do jogo solicitado com o máximo de outro jogo",()=>{
- const source=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(source,/gpuGameHourlyRate\(game,i,title.id\)/);
- assert.match(source,/gpuLicenseCoverage\(game,title.id\)/);
- assert.match(source,/Não inclui GPU, Windows, energia ou demais despesas; não é lucro/);
+ const app=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");
+ assert.match(app,/gpuGameHourlyRate\(game,i,title.id\)/);
+ assert.match(app,/gpuLicenseCoverage\(game,title.id\)/);
+ assert.match(app,/Não inclui GPU, Windows, energia ou demais despesas; não é lucro/);
 });

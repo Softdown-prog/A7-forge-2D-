@@ -102,8 +102,9 @@ test("UI mostra popularidade atual, nostalgia, bônus e disponibilidade física"
  const ts=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  const classic=readFileSync(new URL("../src/application/classicGamesCatalogPort.ts",import.meta.url),"utf8");
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
- assert.ok(ts.includes('gamePopularityPercent(title.year,year)'));
- assert.ok(ts.includes('gpuGameAttraction(game,title.id)'));
+ const advanced=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");
+ assert.ok(advanced.includes('gamePopularityPercent(title.year,year)'));
+ assert.ok(advanced.includes('gpuGameAttraction(game,title.id)'));
  assert.ok(classic.includes('bônus atual de procura'));
  assert.ok(classic.includes('popularidade em '));
  assert.ok(html.includes('As licenças não vencem'));

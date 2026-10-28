@@ -90,15 +90,13 @@ import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {unreadNotices,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions} from "./sim/decisions.js";
-import {gameYear,INTERNET_ERAS,WINDOWS_ERAS} from "./sim/era.js";
-import {GPU_CATALOG} from "./sim/gpu.js";
+import {gameYear,INTERNET_ERAS} from "./sim/era.js";
 import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
 import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
-import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob} from "./sim/gpuGames.js";
-import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
+import {createGpuGamesCatalogPort} from "./application/gpuGamesCatalogPort.js";
+import {renderGpuGamesCatalog} from "./ui/gpuGamesCatalogPanel.js";
 import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
 import {renderClassicGamesCatalog} from "./ui/classicGamesCatalogPanel.js";
-import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
@@ -108,7 +106,6 @@ import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
 import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
 import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
-import {stationPoweredOn,stationHasCustomer} from "./sim/stationPower.js";
 
 // Catalog illustrations use the same station renderer as the playable scene.
 // Generate once per model; live admin refreshes reuse these images.
@@ -862,6 +859,7 @@ const pcOperationsPort=createPcOperationsPort(()=>game);
 const lcdMonitorsPort=createLcdMonitorsPort(()=>game);
 const gpuCatalogPort=createGpuCatalogPort(()=>game);
 const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
+const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1039,155 +1037,7 @@ function renderUI(liveOnly=false):void {
    renderClassicGamesCatalog(eraGamePanel,classicGamesCatalogPort.snapshot(),document,syncPanelChildren);
   }
   if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
-    const nextGpuGames=document.createElement("div");
-    if(game.gpuGameInstallJobs?.length){
-      const overview=document.createElement("section");
-      overview.className="gpu-download-overview";
-      overview.setAttribute("aria-label","Downloads de jogos em andamento");
-      const title=document.createElement("strong");
-      title.textContent="Downloads em andamento · "+game.gpuGameInstallJobs.length;
-      const intro=document.createElement("p");
-      intro.textContent="O progresso continua com o painel fechado. Cancele aqui mesmo se a GPU ou o Windows deixar de ser compatível.";
-      const bandwidth=document.createElement("p");
-      bandwidth.dataset.gpuBandwidth="";
-      overview.append(title,intro,bandwidth);
-      for(const job of [...game.gpuGameInstallJobs].sort((a,b)=>a.pc-b.pc)){
-       const record=document.createElement("div");record.className="gpu-download-entry";
-       const spec=GPU_GAME_CATALOG.find(x=>x.id===job.id);
-       const heading=document.createElement("span");
-       heading.textContent="PC "+(job.pc+1)+" · "+(spec?.name??"Jogo avançado");
-       const label=document.createElement("small");
-       label.className="catalog-game-note";
-       label.dataset.gpuDownloadStatus=job.id;
-       label.dataset.gpuGamePc=String(job.pc);
-       const meter=document.createElement("progress");
-       meter.max=job.durationMinutes;meter.value=job.elapsedMinutes;
-       meter.dataset.gpuDownloadProgress=job.id;
-       meter.dataset.gpuGamePc=String(job.pc);
-       meter.setAttribute("aria-label","Resumo do download no PC "+(job.pc+1));
-       const cancel=document.createElement("button");
-       cancel.type="button";cancel.className="slice";
-       cancel.dataset.gpuGameCancel=job.id;
-       cancel.dataset.gpuGamePc=String(job.pc);
-       cancel.textContent="Cancelar · PC "+(job.pc+1);
-       record.append(heading,label,meter,cancel);
-       overview.append(record);
-      }
-      nextGpuGames.append(overview);
-    }
-    if(game.economyVersion!==2||year<2005){
-      const note=document.createElement("p");
-      note.textContent=game.economyVersion!==2
-       ?"Os jogos com GPU são um recurso do modo histórico."
-       :"Novos jogos que exigem placa de vídeo chegam em 2005.";
-      nextGpuGames.append(note);
-    }else for(const title of GPU_GAME_CATALOG){
-      const card=document.createElement("div");card.className="price-control";
-      const heading=document.createElement("strong");
-      heading.textContent=title.name+" · "+title.year;
-      const requirements=document.createElement("p");requirements.className="catalog-game-note";
-      const gpu=GPU_CATALOG.find(x=>x.id===title.minGpu);
-      const os=WINDOWS_ERAS.find(x=>x.id===title.minWindows);
-      requirements.textContent="Requer GPU "+(gpu?.name??title.minGpu)+
-       " ou superior e "+(os?.name??title.minWindows)+" licenciado.";
-      const quote=quoteGpuGame(game,title.id);
-      const status=document.createElement("p");status.className="catalog-game-note";
-      const bought=game.licensedGpuGames?.includes(title.id)===true;
-      status.textContent=(bought?"Licenciado. ":quote.message+" ")+
-       (quote.eligiblePcs.length
-        ?"Compatível com PC(s) "+quote.eligiblePcs.map(i=>i+1).join(", ")+"."
-        :"Nenhuma máquina compatível ainda.")+
-       " Adicional máximo de R$ "+title.hourlyBonus.toFixed(2)+
-       "/h, somente para clientes de jogos avançados e dentro do teto anual."+
-       (year>=title.year?" Popularidade atual: "+gamePopularityPercent(title.year,year)+
-       "% · procura adicional efetiva: +"+(gpuGameAttraction(game,title.id)*100).toLocaleString("pt-BR",{maximumFractionDigits:3})+
-       "% (requer jogo licenciado, instalado e PC compatível ligado).":"");
-      if(bought&&quote.eligiblePcs.length){
-        const enabled=quote.eligiblePcs.filter(i=>gpuGameInstalledOnPc(game,i,title.id));
-        status.textContent+=enabled.length
-         ?" Instalado no(s) PC(s) "+enabled.map(i=>i+1).join(", ")+
-          ". Valor atual por hora: "+
-          enabled.map(i=>"PC "+(i+1)+" R$ "+gpuGameHourlyRate(game,i,title.id).toFixed(2)).join(" · ")+"."
-         :" Nenhuma instalação ativa. Use os botões abaixo para instalar o jogo.";
-      }
-      const action=document.createElement("button");
-      action.type="button";action.className="slice";action.dataset.gpuGameBuy=title.id;
-      action.textContent=bought?"Licenciado":year<title.year
-       ?"🔒 Disponível em "+title.year:"Licenciar · R$ "+title.cost;
-      action.disabled=!quote.ok;
-      action.title=quote.ok?"Licença para todo o estabelecimento, uso restrito a máquinas compatíveis.":quote.message;
-      const measured=document.createElement("p");measured.className="catalog-game-note";
-      const observed=gpuDemandReport(game).find(row=>row.id===title.id)!;
-      measured.textContent=observed.requested
-       ?"Procura observada: "+observed.requested+" pedidos · "+observed.played+
-         " sessões no título · "+observed.basic+" sessões comuns · "+
-         observed.withoutSession+" pedidos sem sessão concluída · adicional recebido "+
-         observed.premiumRevenue.toLocaleString("pt-BR",{style:"currency",currency:"BRL"})+"."
-       :"Procura observada: nenhum pedido registrado nesta partida.";
-      const coverage=gpuLicenseCoverage(game,title.id);
-      const payback=document.createElement("p");payback.className="catalog-game-note";
-      if(coverage){
-       const moneyPaid=(value:number)=>value.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-       payback.textContent="Cobertura da licença por adicionais recebidos: "+
-        moneyPaid(coverage.premiumRevenue)+" de "+moneyPaid(coverage.licenseCost)+
-        " ("+coverage.coveragePercent.toLocaleString("pt-BR")+"%). "+
-        (coverage.covered?"Os adicionais igualaram o custo nominal da licença.":
-         "Faltam "+moneyPaid(coverage.remaining)+" em adicionais para igualar apenas a licença.")+
-        " Não inclui GPU, Windows, energia ou demais despesas; não é lucro.";
-      }
-      card.append(heading,requirements,status,measured);
-      if(coverage)card.append(payback);
-      card.append(action);
-      if(bought&&quote.eligiblePcs.length){
-       const stations=document.createElement("div");stations.className="action-row wrap";
-       stations.setAttribute("aria-label","Instalações de "+title.name+" por computador");
-       for(const i of quote.eligiblePcs){
-        const installed=gpuGameInstalledOnPc(game,i,title.id);
-        const job=gpuGameInstallJob(game,i);
-        const downloading=job?.id===title.id;
-        const control=document.createElement("button");
-        control.type="button";control.className="slice";
-        if(downloading)control.dataset.gpuGameCancel=title.id;
-        else control.dataset.gpuGameInstall=title.id;
-        control.dataset.gpuGamePc=String(i);
-        control.textContent=downloading?"Cancelar download PC "+(i+1):
-         (installed?"Remover do PC ":"Instalar no PC ")+(i+1);
-        const blocked=!stationPoweredOn(game,i)?"Ligue o computador para alterar os jogos.":
-         stationHasCustomer(game,i)?"Aguarde o cliente sair do PC.":
-         game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving")?"Aguarde a manutenção concluir.":"";
-        control.disabled=!downloading&&(!!blocked||!!job);
-        control.title=downloading?"Cancelar a instalação sem custo, preservando a licença.":blocked||
-         (job?"Aguarde o download atual deste PC.":"Instalação e remoção gratuitas; a licença pertence à lan house.");
-        stations.append(control);
-        if(downloading){
-         const status=document.createElement("span");status.className="catalog-game-note";
-         status.dataset.gpuDownloadStatus=title.id;
-         status.dataset.gpuGamePc=String(i);
-         const bar=document.createElement("progress");
-         bar.max=job.durationMinutes;bar.value=job.elapsedMinutes;
-         bar.dataset.gpuDownloadProgress=title.id;
-         bar.dataset.gpuGamePc=String(i);
-         bar.setAttribute("aria-label","Download de "+title.name+" no PC "+(i+1));
-         stations.append(status,bar);
-        }
-       }
-       const pending=quote.eligiblePcs.filter(i=>!gpuGameInstalledOnPc(game,i,title.id));
-       if(pending.length){
-        const ready=pending.filter(i=>!gpuGameInstallJob(game,i)&&stationPoweredOn(game,i)&&!stationHasCustomer(game,i)&&
-         !game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving"));
-        const bulk=document.createElement("button");bulk.type="button";bulk.className="slice";
-        bulk.dataset.gpuGameInstallAll=title.id;
-        bulk.textContent="Instalar nos PCs disponíveis ("+ready.length+"/"+pending.length+")";
-        bulk.disabled=ready.length===0;
-        bulk.title=ready.length?"Distribuir sem cobrança. PCs ocupados/desligados ficam para depois.":
-         "Aguarde PCs livres, ligados e fora de manutenção.";
-        stations.append(bulk);
-       }
-       card.append(stations);
-      }
-      nextGpuGames.append(card);
-    }
-   syncPanelChildren(gpuGamePanel,nextGpuGames);
+   renderGpuGamesCatalog(gpuGamePanel,gpuGamesCatalogPort.snapshot(),document,syncPanelChildren);
   }
   refreshGpuDownloadMeters(gpuGamePanel,adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu"),gpuDownloadMetersPort);
   if(activeAdminTab==="consoles")renderPs1AdminPanel(ps1AdminPort,{

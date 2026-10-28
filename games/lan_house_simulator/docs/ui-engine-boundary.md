@@ -245,6 +245,14 @@
 - O teste estrutural anterior em `tests/era-games-1998-1999.test.mjs` passa a verificar o cálculo na porta, sem deixar de validar o fluxo de compra.
 - Sem alterações em compras, RNG, motor, Canvas, editor, mensalidades ou estrutura de save.
 
+## Trigésimo primeiro recorte: administração de jogos avançados com GPU
+
+- `src/application/gpuGamesCatalogPort.ts` projeta o catálogo de títulos com GPU, pagamentos de licenças, requisitos Windows/GPU, downloads em andamento, condições de instalação, demanda real e cobertura nominal do investimento.
+- `src/ui/gpuGamesCatalogPanel.ts` mantém os mesmos atributos `data-gpu-game-buy`, `data-gpu-game-install`, `data-gpu-game-cancel`, `data-gpu-game-install-all`, indicadores de progresso e reconciliação de nós.
+- `main.ts` conserva o invalidatório da aba, `installGameLicensingControls`, a atualização de downloads em tempo real via `refreshGpuDownloadMeters` e o controle de estado dos saves.
+- Testes `tests/gpu-games-catalog-boundary.test.mjs` e testes legados revisados protegem os textos e regras no novo limite arquitetural.
+- Sem alterações nas funções de compra, distribuição gratuita, banda, pausa, RNG, Canvas, controles touch ou estrutura do save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
