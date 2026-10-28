@@ -45,8 +45,10 @@ test("botões preservam limites inferior e superior do motor",()=>{
  classic.pricePerHour=40;
  assert.equal(port.snapshot().increaseDisabled,true);
  const historical=createGame(9924,"historical"),historicalPort=createHourlyPriceStatusPort(()=>historical);
- historical.pricePerHour=1;
+ historical.pricePerHour=.5;
  assert.equal(historicalPort.snapshot().decreaseDisabled,true);
+ historical.pricePerHour=1;
+ assert.equal(historicalPort.snapshot().decreaseDisabled,false);
  assert.equal(historicalPort.snapshot().increaseDisabled,historical.pricePerHour+.5>allowableHourlyPrice(historical));
 });
 

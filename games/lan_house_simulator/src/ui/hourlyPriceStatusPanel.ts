@@ -1,4 +1,4 @@
-/** Display hourly price controls without reading GameState or calculating tariffs. */
+/** Display hourly controls from prepared values, without simulation calculations. */
 import type {HourlyPriceStatus} from "../application/hourlyPriceStatusPort.js";
 
 export function renderHourlyPriceStatus(
