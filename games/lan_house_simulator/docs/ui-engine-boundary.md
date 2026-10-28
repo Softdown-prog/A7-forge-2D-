@@ -236,6 +236,15 @@
 - `tests/gpu-catalog-boundary.test.mjs` cobre desbloqueio, fonte, geração anterior, saldo, técnico, ocupação, importação de saves e os botões.
 - Sem mudanças em compras, motor, RNG, editor do salão, Canvas ou estrutura dos saves.
 
+## Trigésimo recorte: catálogo de jogos clássicos e de rede local
+
+- `src/application/classicGamesCatalogPort.ts` concentra o resumo de licenças permanentes, status de cada título, popularidade por época, preços e elegibilidade por contrato básico e Windows, sem comprar nada.
+- `src/ui/classicGamesCatalogPanel.ts` gera as mesmas capas, seções por ano, classes, botões `data-era-game-buy` e títulos de indisponibilidade, sem importar o motor.
+- `src/main.ts` mantém os filtros das abas, `panelChanged("eraGamePanel",...)`, `syncPanelChildren` e os handlers em `gameLicensingControls.ts`, preservando foco, rolagem e compatibilidade touch.
+- `tests/classic-games-catalog-boundary.test.mjs` cobre 1998, 1999, a novidade do Eric em 2000, contratos básicos, Windows, nostalgia, saves e fidelidade do DOM.
+- O teste estrutural anterior em `tests/era-games-1998-1999.test.mjs` passa a verificar o cálculo na porta, sem deixar de validar o fluxo de compra.
+- Sem alterações em compras, RNG, motor, Canvas, editor, mensalidades ou estrutura de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

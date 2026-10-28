@@ -96,8 +96,8 @@ import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
 import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
-import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
- ERIC_MULTIPLAYER_GAME_ID,multiplayerGameKnown,multiplayerEligiblePcs} from "./sim/eraGames.js";
+import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
+import {renderClassicGamesCatalog} from "./ui/classicGamesCatalogPanel.js";
 import {gamePopularityPercent} from "./sim/gamePopularity.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
@@ -861,6 +861,7 @@ const commerceNetworkPort=createCommerceNetworkPort(()=>game);
 const pcOperationsPort=createPcOperationsPort(()=>game);
 const lcdMonitorsPort=createLcdMonitorsPort(()=>game);
 const gpuCatalogPort=createGpuCatalogPort(()=>game);
+const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1035,47 +1036,7 @@ function renderUI(liveOnly=false):void {
   if(licensePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","windows")&&panelChanged("licensePanel",[stationRevision],!liveOnly))
    renderWindowsLicensePanel(licensePanel,windowsLicensePort);
   if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly)){
-    const nextEraGames=document.createElement("div");
-    const owned=game.licensedEraGames??[];
-    const summary=document.createElement("p");summary.className="era-game-summary";
-    const visibleTitles=ERA_GAME_CATALOG.filter(title=>title.year<=1999||
-      (year>=2000&&multiplayerGameKnown(game)));
-    summary.textContent=owned.length+" de "+visibleTitles.length+" títulos licenciados · bônus atual de procura: +"+(Math.round((eraGameVisitorMultiplier(game)-1)*10000)/100).toLocaleString("pt-BR")+"%. Novidades atraem mais; títulos antigos conservam 25% de apelo nostálgico. Licenças permanentes.";
-    nextEraGames.append(summary);
-    for(const releaseYear of [1998,1999,...(year>=2000&&multiplayerGameKnown(game)?[2000]:[])]){
-      const section=document.createElement("section");section.className="era-game-section";
-      const groupTitle=document.createElement("h4");
-      const titles=ERA_GAME_CATALOG.filter(title=>title.year===releaseYear);
-      groupTitle.textContent=releaseYear+" · "+titles.filter(title=>owned.some(id=>id===title.id)).length+" de "+titles.length+" jogos";
-      const grid=document.createElement("div");grid.className="era-game-grid";
-      for(const title of titles){
-        const quote=quoteEraGame(game,title.id),bought=owned.some(id=>id===title.id),locked=year<title.year;
-        const multiplayer=title.id===ERIC_MULTIPLAYER_GAME_ID;
-        const card=document.createElement("article");card.className="era-game-card"+(locked?" era-game-locked":"")+(bought?" era-game-owned":"");
-        const cover=document.createElement("div");cover.className="era-game-cover";cover.dataset.theme=title.theme;
-        const release=document.createElement("small");release.className="era-cover-release";release.textContent="SOFTDOWN · "+title.year;
-        const symbol=document.createElement("span");symbol.className="era-cover-symbol";symbol.setAttribute("aria-hidden","true");symbol.textContent=title.symbol;
-        const coverName=document.createElement("strong");coverName.className="era-cover-title";coverName.textContent=title.name;
-        const genre=document.createElement("small");genre.className="era-cover-genre";genre.textContent=title.genre+" · EDIÇÃO PC";
-        cover.append(release,symbol,coverName,genre);
-        const details=document.createElement("div");details.className="era-game-details";
-        const name=document.createElement("strong");name.textContent=title.name;
-        const info=document.createElement("p");info.textContent=title.description;
-        const meta=document.createElement("small");
-       meta.textContent=title.genre+" · "+title.year+" · licença da lan house · R$ "+title.cost+
-        " · "+(locked?"popularidade no lançamento: 100%":"popularidade em "+year+": "+gamePopularityPercent(title.year,year)+"%");
-        const status=document.createElement("small");status.className="era-game-status";
-        status.textContent=(bought?"✓ Licença permanente":quote.ok?"Pronto para licenciar":quote.message)+
-        (locked?"":" · potencial de procura por título: +"+(gamePopularityPercent(title.year,year)*.015).toLocaleString("pt-BR",{maximumFractionDigits:3})+"% (com Windows licenciado)");
-        if(multiplayer)status.textContent+=" · PCs aptos agora: "+multiplayerEligiblePcs(game).length+" (mínimo 2).";
-        const button=document.createElement("button");button.type="button";button.className="slice";button.dataset.eraGameBuy=title.id;
-        button.textContent=bought?"✓ Licenciado":locked?"🔒 Chega em "+title.year:quote.ok?"Licenciar · R$ "+title.cost:"Indisponível";
-        button.disabled=!quote.ok;button.title=quote.message;
-        details.append(name,info,meta,status,button);card.append(cover,details);grid.append(card);
-      }
-      section.append(groupTitle,grid);nextEraGames.append(section);
-    }
-   syncPanelChildren(eraGamePanel,nextEraGames);
+   renderClassicGamesCatalog(eraGamePanel,classicGamesCatalogPort.snapshot(),document,syncPanelChildren);
   }
   if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
     const nextGpuGames=document.createElement("div");
