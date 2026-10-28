@@ -228,6 +228,14 @@
 - `tests/lcd-monitors-boundary.test.mjs` valida desbloqueios, custos, geração anterior, ocupação, seleção, save e DOM, sem tocar nas compras do motor.
 - Sem alterações no motor econômico, gestos touch, Canvas do salão, regras de compra, RNG ou estrutura de save.
 
+## Vigésimo nono recorte: catálogo de placas de vídeo
+
+- `src/application/gpuCatalogPort.ts` consulta somente o estado atual e projeta GPUs por ano, fonte necessária, bônus, preço, bloqueios e placa instalada.
+- `src/ui/gpuCatalogPanel.ts` mantém `data-gpu-select`, `data-gpu-buy`, `aria-pressed`, imagens e reconciliação `syncPanelChildren` sem importar motor.
+- `main.ts` preserva `panelChanged("gpuPcChoice",...)`, seleção sincronizada, callbacks de compra e controle mobile; não calcula mais custos e margens das GPUs.
+- `tests/gpu-catalog-boundary.test.mjs` cobre desbloqueio, fonte, geração anterior, saldo, técnico, ocupação, importação de saves e os botões.
+- Sem mudanças em compras, motor, RNG, editor do salão, Canvas ou estrutura dos saves.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

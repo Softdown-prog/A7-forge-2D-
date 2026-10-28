@@ -91,7 +91,9 @@ import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {unreadNotices,missingWindowsLicenses} from "./sim/notices.js";
 import {decisionOptions} from "./sim/decisions.js";
 import {gameYear,INTERNET_ERAS,WINDOWS_ERAS} from "./sim/era.js";
-import {GPU_CATALOG,installedGpu,gpuSpec} from "./sim/gpu.js";
+import {GPU_CATALOG} from "./sim/gpu.js";
+import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
+import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
 import {GPU_GAME_CATALOG,quoteGpuGame,gpuGameHourlyRate,gpuGameInstalledOnPc,gpuGameAttraction,gpuGameInstallJob} from "./sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "./sim/gpuDemand.js";
 import {ERA_GAME_CATALOG,quoteEraGame,eraGameVisitorMultiplier,
@@ -105,7 +107,6 @@ import {stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
 import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
 import {drawRetroComputer} from "./render/retroComputer.js";
-import {hardwareFor,buildParts,requiredPsuWatts} from "./sim/hardware.js";
 import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
 import {stationPoweredOn,stationHasCustomer} from "./sim/stationPower.js";
 
@@ -859,6 +860,7 @@ const deskPricingPort=createDeskPricingPort(()=>game);
 const commerceNetworkPort=createCommerceNetworkPort(()=>game);
 const pcOperationsPort=createPcOperationsPort(()=>game);
 const lcdMonitorsPort=createLcdMonitorsPort(()=>game);
+const gpuCatalogPort=createGpuCatalogPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1018,42 +1020,7 @@ function renderUI(liveOnly=false):void {
   }
   if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"&&panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly)){
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
-    const nextGpuChoice=document.createElement("div");const nextGpuList=document.createElement("div");
-    for(let i=0;i<pcCount(game);i++){
-      const control=document.createElement("button");control.type="button";
-      control.dataset.gpuSelect=String(i);
-      control.className="gpu-station"+(selectedGpuPc===i?" selected":"");
-      control.textContent="PC "+(i+1)+(stationPoweredOn(game,i)?" · ligado":" · desligado")+(installedGpu(game,i)?" · GPU":" · sem GPU");
-      control.setAttribute("aria-pressed",String(selectedGpuPc===i));
-      nextGpuChoice.append(control);
-    }
-    const current=gpuSpec(installedGpu(game,selectedGpuPc));
-    setText("gpu-replacement-note",current
-      ?"PC "+(selectedGpuPc+1)+": "+current.name+" instalada. Trocar custa o valor integral da nova placa e substitui a antiga sem desconto. Compare o ganho adicional indicado em cada cartão."
-      :"PC "+(selectedGpuPc+1)+" sem GPU dedicada. Cada compra acrescenta satisfação e consumo ao computador selecionado.");
-    for(const model of GPU_CATALOG){
-      const locked=year<model.year,owned=current?.id===model.id;
-      const obsolete=!!current&&current.year>=model.year&&!owned;
-      const card=document.createElement("article");card.className="gpu-card"+(locked?" gpu-locked":"");
-      const art=document.createElement("img");art.src="./assets/gpu/"+model.id+".svg";
-      art.alt="Placa de vídeo "+model.name+" com circuito, dissipador e ventilador";art.loading="lazy";
-      const info=document.createElement("div");info.className="gpu-info";
-      const title=document.createElement("strong");title.textContent=model.name+" · "+model.year;
-      const gain=Math.max(0,model.bonus-(current?.bonus??0));
-      const num=(value:number)=>value.toFixed(3).replace(".",",");
-      const details=document.createElement("small");
-      const neededPsu=requiredPsuWatts(hardwareFor(game,selectedGpuPc),model.id);
-      const powerOk=buildParts(hardwareFor(game,selectedGpuPc)).psu.watts!>=neededPsu;
-      details.textContent="R$ "+model.cost+" · bônus de satisfação "+num(model.bonus)+
-        " · ganho adicional "+num(gain)+" · consumo relativo "+num(model.power)+" · fonte necessária "+neededPsu+" W";
-      const button=document.createElement("button");button.type="button";button.className="slice";
-      button.dataset.gpuBuy=model.id;
-      button.textContent=locked?"🔒 Disponível em "+model.year:owned?"Instalada":obsolete?"Modelo anterior":!powerOk?"Requer fonte de "+neededPsu+" W":"Comprar · R$ "+model.cost;
-      button.disabled=locked||owned||obsolete||!powerOk||stationPoweredOn(game,selectedGpuPc)||stationOccupied(game,selectedGpuPc)||!!game.repairJobs?.some(j=>j.pc===selectedGpuPc)||game.cash<model.cost;
-      info.append(title,details,button);card.append(art,info);nextGpuList.append(card);
-    }
-   syncPanelChildren(gpuPcChoice,nextGpuChoice);
-   syncPanelChildren(gpuList,nextGpuList);
+    renderGpuCatalogPanel(gpuPcChoice,gpuList,gpuCatalogPort.snapshot(selectedGpuPc),setText,document,syncPanelChildren);
   }
   const basicLicensePrice=basicGamesLicenseCost(game);
   setText("license-status",game.licensedGames
