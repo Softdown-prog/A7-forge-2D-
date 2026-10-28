@@ -204,6 +204,14 @@
 - `tests/desk-pricing-boundary.test.mjs` verifica limites, margens, economia clássica/histórica, importação de save e controles DOM.
 - Não foram alterados RNG, motor econômico, cobrança, Canvas, gestos mobile ou estrutura do save.
 
+## Vigésimo sexto recorte: fornecedor, estoque rápido e conexão de internet
+
+- `src/application/commerceNetworkPort.ts` prepara um DTO somente de leitura com o fornecedor atual, custos dos três lotes, estado e tipo de conexão, liberação por ano, custo da melhoria e preço do técnico.
+- `src/ui/commerceNetworkPanel.ts` atualiza os textos e os três botões existentes, sem recriar elementos, instalar listeners ou alterar o foco mobile.
+- `src/main.ts` injeta `()=>game`, preservando a instância após importação e delegando toda ação de fornecedor, estoque, upgrade e reparo ao `serviceActionsPort.ts`.
+- `tests/commerce-network-boundary.test.mjs` cobre os anos 1998/2002/2007, tarifas, falta de caixa, desconexão, técnico, fornecedor parceiro, importação de saves e estabilidade do DOM.
+- Sem alterar regras de contratação, upgrades, despesas, preços, RNG, Canvas, gestos ou esquema de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

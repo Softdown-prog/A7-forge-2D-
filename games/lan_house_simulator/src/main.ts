@@ -28,6 +28,8 @@ import {quotePrinter} from "./sim/printService.js";
 import {quoteDiscCopier,DISC_COPIER_YEAR} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
 import {createDeskPricingPort} from "./application/deskPricingPort.js";
+import {createCommerceNetworkPort} from "./application/commerceNetworkPort.js";
+import {renderCommerceNetworkPanel} from "./ui/commerceNetworkPanel.js";
 import {renderDiscPricing,renderPrintPricing} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
@@ -50,7 +52,7 @@ import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
+import { basicGamesLicenseCost, monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
@@ -853,6 +855,7 @@ const pricingInsightsPort=createPricingInsightsPort(()=>game);
 const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
 const retailPriceStatusPort=createRetailPriceStatusPort(()=>game);
 const deskPricingPort=createDeskPricingPort(()=>game);
+const commerceNetworkPort=createCommerceNetworkPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -982,21 +985,7 @@ function renderUI(liveOnly=false):void {
    if(view)renderPrintPricing(printControls,view,setText,document,syncPanelChildren);
   }
   if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
-  setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");
-  const supplierButton=document.querySelector<HTMLButtonElement>("#supplier-up");
-  if(supplierButton)supplierButton.disabled=supplierLevel(game)===2;
-  setText("stock-soda"," + Bebidas R$ "+wholesaleCost(game,"soda"));
-  setText("stock-candy","+ Doces R$ "+wholesaleCost(game,"candy"));
-  setText("stock-snacks","+ Salgados R$ "+wholesaleCost(game,"snacks"));
-  setText("internet", internetName()+" · Nível "+game.internetTier+(online(game)?" · Online":" · Sem conexão até "+(game.offlineUntil-game.totalMinutes)+" min de jogo"));
-  const internetUp=document.querySelector<HTMLButtonElement>("#internet-up");
-  if(internetUp){
-    const next=INTERNET_ERAS[game.internetTier];
-    internetUp.disabled=!next || year<next.year || game.cash<250*game.internetTier;
-    internetUp.textContent=!next?"Internet no nível máximo":next.name+" · "+(year<next.year?"🔒 Disponível em "+next.year:"R$ "+(250*game.internetTier));
-  }
-  const repair=document.querySelector<HTMLButtonElement>("#internet-repair");
-  if(repair){repair.disabled=online(game);repair.textContent="Chamar técnico · R$ "+(75+25*(game.internetTier-1));}
+  renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
   const broken=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
   const poweredOff=Array.from({length:pcCount(game)},(_,i)=>i).filter(i=>!stationPoweredOn(game,i)).length;
   setText("pc", pcCount(game)+" computadores · "+game.customers.filter(c=>c.stage==="using").length+" ocupados · "+poweredOff+" desligados · "+broken+" em manutenção");
