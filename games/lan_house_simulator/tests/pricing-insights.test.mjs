@@ -43,10 +43,10 @@ test("sem efeito colateral sobre reputação, RNG, receita, fila e saves antigos
 test("painel de preços e render principal integram os três indicadores",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ const ui=readFileSync(resolve(root,"src/ui/pricingInsightsPanel.ts"),"utf8");
  for(const id of ["price-demand-insight","price-satisfaction-insight","price-caution"]){
   assert.ok(html.includes('id="'+id+'"'));
-  assert.ok(main.includes('setText("'+id+'"'));
+  assert.ok(ui.includes('setText("'+id+'"'));
  }
  assert.ok(html.includes("Não é previsão de faturamento"));
 });
@@ -94,11 +94,15 @@ test("painel mostra cenários legíveis e o custo da virada sem ações econômi
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+ const ui=readFileSync(resolve(root,"src/ui/pricingInsightsPanel.ts"),"utf8");
+ const app=readFileSync(resolve(root,"src/application/pricingInsightsPort.ts"),"utf8");
  for(const id of ["price-scenario-lower","price-scenario-current","price-scenario-higher","energy-year-outlook"]){
   assert.ok(html.includes('id="'+id+'"'),"id visual: "+id);
-  assert.ok(main.includes('setText("'+id+'"'),"integração: "+id);
+  assert.ok(ui.includes('setText("'+id+'"'),"integração: "+id);
  }
  assert.match(html,/não prevê lucro, clientes atendidos ou faturamento real/);
- assert.ok(main.includes("hourlyPriceScenarios(game)"));
- assert.ok(main.includes("energyYearOutlook(game)"));
+ assert.ok(app.includes("hourlyPriceScenarios(game)"));
+ assert.ok(app.includes("energyYearOutlook(game)"));
+ assert.ok(main.includes("renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText)"));
+ assert.ok(main.includes("renderEnergyYearOutlook(pricingInsightsPort.energy(),setText)"));
 });

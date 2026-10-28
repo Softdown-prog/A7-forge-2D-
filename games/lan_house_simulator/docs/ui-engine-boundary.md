@@ -169,6 +169,15 @@
 - `tests/staff-status-boundary.test.mjs` verifica contrato, saldo insuficiente, atendimento em andamento, importação de save, progresso e estabilidade do DOM.
 - Ações de contratação e limpeza seguem em `serviceActionsPort.ts`, sem alteração de regras, salários, jornadas, RNG, Canvas ou esquema de save.
 
+## Vigésimo segundo recorte: comparador de preços e energia na virada do ano
+
+- `src/application/pricingInsightsPort.ts` projeta procura relativa, avaliação da tarifa, cautelas, comparação de cenários e tarifa futura de energia consultando a partida corrente.
+- `src/ui/pricingInsightsPanel.ts` atualiza apenas os textos existentes, sem operações sobre o motor e sem recriação de nós ou alteração de gestos mobile.
+- `src/main.ts` preserva o filtro da aba Preços/Análise para as simulações de tarifa; previsão energética continua atualizada como antes.
+- `tests/pricing-insights-boundary.test.mjs` verifica cenários clássicos/históricos, limites, formatação, ausência de mutação, restauração de saves e contratos entre módulos.
+- `tests/pricing-insights.test.mjs` atualiza somente as verificações de integração para o módulo novo, sem reduzir a cobertura numérica do motor.
+- Não altera preço cobrado, RNG, Canvas, relógio, atendimento, esquema de saves ou navegação mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

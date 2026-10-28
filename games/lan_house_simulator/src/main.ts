@@ -58,7 +58,8 @@ import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
-import {hourlyPriceInsight,hourlyPriceScenarios,energyYearOutlook} from "./sim/pricingInsights.js";
+import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
+import {renderHourlyPricingInsights,renderEnergyYearOutlook} from "./ui/pricingInsightsPanel.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
  SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
 import { DAY_MINUTES, type GameState } from "./sim/types.js";
@@ -844,6 +845,7 @@ const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
 const staffStatusPort=createStaffStatusPort(()=>game);
+const pricingInsightsPort=createPricingInsightsPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -976,30 +978,9 @@ function renderUI(liveOnly=false):void {
   if(priceDown instanceof HTMLButtonElement)priceDown.disabled=game.pricePerHour-(historical?.5:2)<(historical?MIN_HOURLY_PRICE:4);
   if(priceUp instanceof HTMLButtonElement)priceUp.disabled=game.pricePerHour+(historical?.5:2)>max;
   if(activeAdminTab==="prices"&&managementPanels.active("prices","insights")){
-  const priceInsight=hourlyPriceInsight(game);
-  const priceDemandLabel=priceInsight.relativeDemandPercent===0?"menos de 1%":priceInsight.relativeDemandPercent+"%";
-  setText("price-demand-insight","Procura relativa pelo modelo: "+priceDemandLabel+" (R$ 12/h = 100%).");
-  setText("price-satisfaction-insight","Avaliação estimada em PC básico, sem espera ou queda: "+priceInsight.assessment+".");
-  setText("price-caution",priceInsight.caution);
-  const scenarios=hourlyPriceScenarios(game);
-  const scenarioLine=(delta:-2|-0.5|0|0.5|2,title:string):string=>{
-    const candidate=scenarios.find(p=>p.delta===delta);
-    return candidate?title+" · R$ "+(historical?candidate.price.toFixed(2):String(candidate.price))+"/h · procura "+candidate.demandIndex+
-      "% · receita bruta potencial "+candidate.grossIntakeIndex+"%":
-      title+" · fora do teto de "+inReais(max)+"/h.";
-  };
-  setText("price-scenario-lower",historical?scenarioLine(-.5,"Reduzir R$ 0,50"):scenarioLine(-2,"Reduzir R$ 2"));
-  setText("price-scenario-current",scenarioLine(0,"Manter"));
-  setText("price-scenario-higher",historical?scenarioLine(.5,"Aumentar R$ 0,50"):scenarioLine(2,"Aumentar R$ 2"));
+   renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText);
   }
-  const nextEnergy=energyYearOutlook(game);
-  setText("energy-year-outlook",historical?
-    "IPCA na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
-    ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
-    "% aplicado ao custo energético e às demais contas indexadas, mantendo as máquinas iguais.":
-    "Energia na virada "+nextEnergy.currentYear+" → "+nextEnergy.nextYear+
-    ": "+(nextEnergy.changePercent>0?"+":"")+nextEnergy.changePercent.toLocaleString("pt-BR")+
-    "% de tarifa, mantendo os mesmos PCs e a carga ociosa. Demais contas fixas não recebem inflação automática.");
+  renderEnergyYearOutlook(pricingInsightsPort.energy(),setText);
   if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
    const nextRetail=document.createElement("div");
    for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
