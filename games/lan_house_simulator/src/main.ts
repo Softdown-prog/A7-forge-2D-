@@ -49,7 +49,7 @@ import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate, productPrice } from "./sim/economy.js";
+import { basicGamesLicenseCost, supplierLevel, wholesaleCost, monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
@@ -62,6 +62,8 @@ import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
 import {renderHourlyPricingInsights,renderEnergyYearOutlook} from "./ui/pricingInsightsPanel.js";
 import {priceIndex,yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
 import {createHourlyPriceStatusPort} from "./application/hourlyPriceStatusPort.js";
+import {createRetailPriceStatusPort} from "./application/retailPriceStatusPort.js";
+import {renderRetailPriceControls} from "./ui/retailPriceControlsPanel.js";
 import {renderHourlyPriceStatus,renderSessionPackages} from "./ui/hourlyPriceStatusPanel.js";
 import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
@@ -848,6 +850,7 @@ const financialBalancePort=createFinancialBalancePort(()=>game);
 const staffStatusPort=createStaffStatusPort(()=>game);
 const pricingInsightsPort=createPricingInsightsPort(()=>game);
 const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
+const retailPriceStatusPort=createRetailPriceStatusPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -961,27 +964,7 @@ function renderUI(liveOnly=false):void {
   }
   renderEnergyYearOutlook(pricingInsightsPort.energy(),setText);
   if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
-   const nextRetail=document.createElement("div");
-   for(const [item,label] of [["soda","Refrigerante"],["candy","Doce"],["snacks","Salgadinho"]] as const){
-    const line=document.createElement("div");line.className="price-control";
-    const name=document.createElement("span");name.textContent=label;name.insertAdjacentHTML("afterbegin",iconMarkup(item));
-    const actions=document.createElement("div");actions.className="price-actions";
-    for(const delta of [-1,1]){
-      const button=document.createElement("button");button.type="button";button.dataset.item=item;
-      button.dataset.delta=String(delta);button.textContent=delta<0?"−":"+";
-      button.setAttribute("aria-label",(delta<0?"Reduzir ":"Aumentar ")+label);
-      if(delta<0)button.disabled=productPrice(game,item)<=1;
-      else button.disabled=productPrice(game,item)>=40;
-      if(delta===1){
-        const amount=document.createElement("strong");amount.textContent=money(productPrice(game,item));actions.append(amount);
-      }
-      actions.append(button);
-    }
-    line.append(name,actions);nextRetail.append(line);
-   }
-   const catalogLink=document.createElement("button");catalogLink.type="button";catalogLink.id="retail-full-catalog";catalogLink.className="slice";
-   catalogLink.textContent="Ver todas as mercadorias e margens no Estoque";nextRetail.append(catalogLink);
-   syncPanelChildren(retailControls,nextRetail);
+   renderRetailPriceControls(retailControls,retailPriceStatusPort.snapshot(),iconMarkup,document,syncPanelChildren);
   }
   const discPanel=document.getElementById("disc-copy-panel");
   if(discPanel)discPanel.hidden=!game.discCopier;

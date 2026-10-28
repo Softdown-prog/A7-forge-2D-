@@ -187,6 +187,15 @@
 - `tests/historical-economy.test.mjs` confere o novo módulo em vez do cálculo legado em `main.ts`.
 - Sem mudanças no fluxo de cobrança, manipulação de preços, RNG, Canvas, gestos mobile ou formato de salvamento.
 
+## Vigésimo quarto recorte: preços rápidos de mercadorias
+
+- `src/application/retailPriceStatusPort.ts` projeta os três preços de venda (refrigerantes, doces e salgadinhos), rótulos e travas entre R$ 1 e R$ 40 a partir da partida atual, sem editar preços.
+- `src/ui/retailPriceControlsPanel.ts` monta o painel provisório com os mesmos atributos `data-item`, `data-delta`, textos, ícones e botão para abrir o catálogo.
+- `main.ts` preserva o cache `panelChanged("retail",...)` e usa o mesmo `syncPanelChildren` para manter o contêiner e o listener delegado de `pricingControls.ts` no mobile.
+- `tests/retail-price-status-boundary.test.mjs` protege preços de motor, travas, save importado, DOM, eventos delegados e separação das camadas.
+- Os testes da 23ª etapa foram corrigidos antes desta alteração: a tarifa histórica mínima real é R$ 0,50 e a verificação de fronteira confundiu um comentário com dependência de código.
+- Sem alterações em preços de compra/venda, margens, faturamento, RNG, Canvas ou formato de save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
