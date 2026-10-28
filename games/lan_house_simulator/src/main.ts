@@ -100,6 +100,8 @@ import {createBasicGamesLicenseStatusPort} from "./application/basicGamesLicense
 import {renderBasicGamesLicenseStatus} from "./ui/basicGamesLicenseStatusPanel.js";
 import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
 import {renderClassicGamesCatalog} from "./ui/classicGamesCatalogPanel.js";
+import {createEventLogPort} from "./application/eventLogPort.js";
+import {renderEventLog} from "./ui/eventLogPanel.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
@@ -865,6 +867,7 @@ const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
 const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
 const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
 const noticeInboxPort=createNoticeInboxPort(()=>game);
+const eventLogPort=createEventLogPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -1039,18 +1042,10 @@ function renderUI(liveOnly=false):void {
    serviceAccessCache.length
     ?serviceAccessCache.map(issue=>issue.label).join(", ")+": sem acesso. Abra uma porta ou reorganize o salão."
     :"Nenhum destino está bloqueado. Você pode fechar as marcações.");
-  const recentEvents=game.eventLog.slice(0,6),eventSignature=JSON.stringify(recentEvents);
-  if(eventSignature!==lastEventSignature){
-  events.replaceChildren();
-  for(const record of recentEvents){
-    const li=document.createElement("li"),text=document.createElement("span");
-    const match=record.match(/^(D\d+ [\d:]+) · (.*)$/);
-    if(match){const time=document.createElement("time");time.textContent=match[1]!;text.append(time,document.createTextNode(match[2]!));}
-    else text.textContent=record;
-    li.innerHTML=iconMarkup(/pagou|Venda/.test(record)?"coins":/internet/i.test(record)?"network":/PC|computador/i.test(record)?"computer":"mail");
-    li.append(text);events.appendChild(li);
-  }
-  lastEventSignature=eventSignature;
+  const eventHistory=eventLogPort.snapshot();
+  if(eventHistory.signature!==lastEventSignature){
+   renderEventLog(events,eventHistory,document,iconMarkup);
+   lastEventSignature=eventHistory.signature;
   }
   controls.setAttribute("aria-expanded",String(adminOpen));
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);

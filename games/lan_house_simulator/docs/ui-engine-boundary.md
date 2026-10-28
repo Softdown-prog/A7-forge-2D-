@@ -269,6 +269,14 @@
 - `tests/notice-inbox-boundary.test.mjs` cobre alertas Windows, jogos, segurança, Bombeiros, propostas, saves e DOM.
 - Sem alterações no sistema de eventos narrativos, fiscalizações, RNG, motor, Canvas ou gestos touch.
 
+## Trigésimo quarto recorte: histórico recente dos acontecimentos
+
+- `src/application/eventLogPort.ts` projeta até seis eventos recentes, preservando ordem e assinatura JSON, além do dia/horário, sem mutar o estado.
+- `src/ui/eventLogPanel.ts` mostra os mesmos itens `li`, ícones, textos e elementos `time`, sem importar simulação ou registrar eventos.
+- `main.ts` conserva o cache `lastEventSignature` e só redesenha o histórico quando os seis registros visíveis mudam.
+- `tests/event-log-boundary.test.mjs` adiciona oito verificações para ícones, datas, limite, integridade do save, importação e DOM.
+- Sem modificar o motor, RNG, áudio, autosave, Canvas, editor ou gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
