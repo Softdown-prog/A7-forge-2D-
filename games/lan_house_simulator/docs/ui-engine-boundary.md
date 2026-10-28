@@ -178,6 +178,15 @@
 - `tests/pricing-insights.test.mjs` atualiza somente as verificações de integração para o módulo novo, sem reduzir a cobertura numérica do motor.
 - Não altera preço cobrado, RNG, Canvas, relógio, atendimento, esquema de saves ou navegação mobile.
 
+## Vigésimo terceiro recorte: controles de tarifa por hora e pacotes
+
+- `src/application/hourlyPriceStatusPort.ts` calcula somente leituras de tarifa atual, teto anual e do hardware, IPCA, bloqueio de botões e preços por duração a partir do save atual.
+- `src/ui/hourlyPriceStatusPanel.ts` apresenta os textos e atualiza os botões existentes sem recriar os controles; recria apenas as linhas da lista de pacotes quando o cache de revisão já permite.
+- `src/main.ts` mantém `clampPriceToEra(game)` e a política de refresh de `panelChanged("durations",...)`, injetando `()=>game` para trocar saves sem referências antigas.
+- `tests/hourly-price-status-boundary.test.mjs` valida modos clássico/histórico, teto de preço, IPCA, pacotes, troca de save, DOM estável e fronteira entre camadas.
+- `tests/historical-economy.test.mjs` confere o novo módulo em vez do cálculo legado em `main.ts`.
+- Sem mudanças no fluxo de cobrança, manipulação de preços, RNG, Canvas, gestos mobile ou formato de salvamento.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -60,8 +60,9 @@ import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
 import {renderHourlyPricingInsights,renderEnergyYearOutlook} from "./ui/pricingInsightsPanel.js";
-import {annualHourlyCeiling,allowableHourlyPrice,priceIndex,yearFromMinutes,
- SESSION_PACKAGES,sessionPrice,clampPriceToEra,ipcaLastYear,MIN_HOURLY_PRICE} from "./sim/historicalEconomy.js";
+import {priceIndex,yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
+import {createHourlyPriceStatusPort} from "./application/hourlyPriceStatusPort.js";
+import {renderHourlyPriceStatus,renderSessionPackages} from "./ui/hourlyPriceStatusPanel.js";
 import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
@@ -846,6 +847,7 @@ const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
 const staffStatusPort=createStaffStatusPort(()=>game);
 const pricingInsightsPort=createPricingInsightsPort(()=>game);
+const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -947,36 +949,13 @@ function renderUI(liveOnly=false):void {
   setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
-  const marketMax=annualHourlyCeiling(year);
-  const max=allowableHourlyPrice(game);
+  const hourlyPriceStatus=hourlyPriceStatusPort.snapshot();
   const inReais=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-  const perHour=inReais(game.pricePerHour);
-  setText("price",perHour+"/h");
-  const migration=document.getElementById("migrate-historical-pricing");
-  if(migration instanceof HTMLButtonElement)migration.hidden=historical;
-  setText("year-price-ceiling",historical?
-    year+" · teto nominal da época "+inReais(marketMax)+"/h":
-    "Modo clássico: tarifa histórica disponível apenas em novas partidas.");
-  setText("equipment-price-ceiling",historical?
-    "Máquinas e Windows instalados: até "+inReais(max)+"/h. Modernizar pode liberar uma tarifa maior.":
-    "Esta partida conserva a economia anterior e seus preços.");
-  setText("annual-ipca",historical?"IPCA anual aplicado aos custos fixos, energia e atacado. Índice acumulado desde 1998: "+
-    ((priceIndex(year)-1)*100).toFixed(1)+"%"+(ipcaLastYear(year)!==null?
-    " · variação do ano anterior "+ipcaLastYear(year)!.toFixed(2)+"%.":" · último ano sem dado oficial: congelado."):
-    "Partida clássica: inflação antiga de energia (+3% ao ano); sem indexação do IPCA.");
+  renderHourlyPriceStatus(hourlyPriceStatus,setText,document);
   const durations=document.getElementById("session-package-prices");
   if(durations&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","hourly")&&panelChanged("durations",[game.pricePerHour,historical],!liveOnly)){
-   durations.replaceChildren();
-   for(const min of (historical?SESSION_PACKAGES:[30,45,60,90])){
-    const li=document.createElement("li");
-    li.textContent=(min<60?min+" minutos":Number(min/60).toLocaleString("pt-BR")+" h")+
-      " — "+inReais(sessionPrice(game.pricePerHour,min));
-    durations.append(li);
-   }
+   renderSessionPackages(hourlyPriceStatus.packages,durations,document);
   }
-  const priceDown=document.getElementById("price-down"),priceUp=document.getElementById("price-up");
-  if(priceDown instanceof HTMLButtonElement)priceDown.disabled=game.pricePerHour-(historical?.5:2)<(historical?MIN_HOURLY_PRICE:4);
-  if(priceUp instanceof HTMLButtonElement)priceUp.disabled=game.pricePerHour+(historical?.5:2)>max;
   if(activeAdminTab==="prices"&&managementPanels.active("prices","insights")){
    renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText);
   }
