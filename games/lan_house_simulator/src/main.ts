@@ -24,10 +24,11 @@ import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
-import {quotePrinter,printPaperInkCost,pagesPrintedToday,PRINT_MAX_PRICE} from "./sim/printService.js";
-import {quoteDiscCopier,discMediaCost,discCopiesToday,DISC_COPIER_YEAR,DISC_COPIES_PER_DAY,MAX_DISC_PRICE} from "./sim/discCopy.js";
+import {quotePrinter} from "./sim/printService.js";
+import {quoteDiscCopier,DISC_COPIER_YEAR} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
-import {printEconomy,discEconomy} from "./sim/serviceEconomy.js";
+import {createDeskPricingPort} from "./application/deskPricingPort.js";
+import {renderDiscPricing,renderPrintPricing} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
@@ -851,6 +852,7 @@ const staffStatusPort=createStaffStatusPort(()=>game);
 const pricingInsightsPort=createPricingInsightsPort(()=>game);
 const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
 const retailPriceStatusPort=createRetailPriceStatusPort(()=>game);
+const deskPricingPort=createDeskPricingPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -966,60 +968,18 @@ function renderUI(liveOnly=false):void {
   if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
    renderRetailPriceControls(retailControls,retailPriceStatusPort.snapshot(),iconMarkup,document,syncPanelChildren);
   }
+  const serviceAvailability=deskPricingPort.installed();
   const discPanel=document.getElementById("disc-copy-panel");
-  if(discPanel)discPanel.hidden=!game.discCopier;
-  if(discControls&&game.discCopier&&activeAdminTab==="prices"&&managementPanels.active("prices","discs")){
-   const nextDiscs=document.createElement("div");
-   for(const kind of ["cd","dvd"] as const){
-    const row=document.createElement("div");row.className="price-control";
-    const name=document.createElement("span");name.innerHTML=iconMarkup("disc");name.append("Cópia de "+kind.toUpperCase());
-    const actions=document.createElement("div");actions.className="price-actions";
-    for(const delta of [-1,1]){
-     if(delta===1){const amount=document.createElement("strong");amount.textContent=inReais(game.discCopier.prices[kind]);actions.append(amount);}
-     const b=document.createElement("button");b.type="button";b.className="slice";b.dataset.discKind=kind;b.dataset.delta=String(delta);b.textContent=delta<0?"−":"+";
-     b.setAttribute("aria-label",(delta<0?"Reduzir":"Aumentar")+" preço da cópia de "+kind.toUpperCase());
-     b.disabled=delta<0?game.discCopier.prices[kind]<=1:game.discCopier.prices[kind]>=MAX_DISC_PRICE;actions.append(b);
-    }
-    const cost=document.createElement("small");cost.className="disc-copy-cost";const margin=game.discCopier.prices[kind]-discMediaCost(game,kind);
-    cost.textContent="Mídia: "+inReais(discMediaCost(game,kind))+" · resultado por cópia: "+inReais(margin)+(margin<0?" · este preço dá prejuízo":"");
-    row.append(name,actions,cost);nextDiscs.append(row);
-   }
-   syncPanelChildren(discControls,nextDiscs);
-   const copier=game.discCopier,report=discEconomy(game)!;
-   setText("disc-copy-summary",copier.cdCopies+" CDs · "+copier.dvdCopies+" DVDs · faturamento "+inReais(copier.revenue)+" · mídias "+inReais(copier.expenses)+" · resultado operacional "+inReais(report.operatingResult)+" · "+
-     (copier.walkIns??0)+(copier.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para cópias.");
-   setText("disc-copy-capacity",discCopiesToday(game)+" de "+DISC_COPIES_PER_DAY+" cópias feitas hoje. "+
-     (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 900 da máquina.")+
-     " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
+  if(discPanel)discPanel.hidden=!serviceAvailability.discs;
+  if(discControls&&serviceAvailability.discs&&activeAdminTab==="prices"&&managementPanels.active("prices","discs")){
+   const view=deskPricingPort.discs();
+   if(view)renderDiscPricing(discControls,view,setText,iconMarkup,document,syncPanelChildren);
   }
   const printPanel=document.getElementById("print-service-panel");
-  if(printPanel)printPanel.hidden=!game.printer;
-  if(printControls&&game.printer&&activeAdminTab==="prices"&&managementPanels.active("prices","printing")){
-   const nextPrint=document.createElement("div");
-   const row=document.createElement("div");row.className="price-control";
-   const label=document.createElement("span");label.textContent="Preço por página";
-   const actions=document.createElement("div");actions.className="price-actions";
-   const printStep=game.economyVersion===2?.5:1;
-   for(const delta of [-printStep,printStep]){
-    if(delta>.0){const amount=document.createElement("strong");amount.textContent=inReais(game.printer.price);actions.append(amount);}
-    const button=document.createElement("button");button.type="button";button.className="slice";
-    button.dataset.printDelta=String(delta);button.textContent=delta<0?"−":"+";
-    button.disabled=delta<0?game.printer.price<=(game.economyVersion===2?.5:1):game.printer.price>=PRINT_MAX_PRICE;
-    button.setAttribute("aria-label",(delta<0?"Reduzir":"Aumentar")+" preço da impressão");
-    actions.append(button);
-   }
-   const expense=document.createElement("small");expense.className="disc-copy-cost";
-   const printMargin=game.printer.price-printPaperInkCost(game);
-   expense.textContent="Papel e tinta: "+inReais(printPaperInkCost(game))+" por página · margem: "+inReais(printMargin)+
-     (printMargin<0?" · atenção: este preço dá prejuízo":printMargin===0?" · sem margem para recuperar a máquina":"");
-   row.append(label,actions,expense);nextPrint.append(row);syncPanelChildren(printControls,nextPrint);
-   const report=printEconomy(game)!;
-   setText("print-service-summary",game.printer.pages+" páginas realizadas · faturamento "+inReais(game.printer.revenue)+
-     " · materiais "+inReais(game.printer.expenses)+" · resultado operacional "+inReais(report.operatingResult)+
-     " · "+(game.printer.walkIns??0)+(game.printer.walkIns===1?" cliente atendido":" clientes atendidos")+" exclusivamente para imprimir.");
-   setText("print-service-capacity",pagesPrintedToday(game)+" de 35 páginas hoje. "+
-     (report.fullyRecovered?"Investimento inicial recuperado; saldo líquido "+inReais(report.netAfterInvestment)+".":"Faltam "+inReais(report.remainingInvestment)+" para recuperar os R$ 320 da impressora.")+
-     " Procura avulsa potencial: "+report.expectedWalkInAttemptsPerDay.toLocaleString("pt-BR")+" entradas/dia antes de filas, orçamento e capacidade; não são vendas garantidas.");
+  if(printPanel)printPanel.hidden=!serviceAvailability.printer;
+  if(printControls&&serviceAvailability.printer&&activeAdminTab==="prices"&&managementPanels.active("prices","printing")){
+   const view=deskPricingPort.printing();
+   if(view)renderPrintPricing(printControls,view,setText,document,syncPanelChildren);
   }
   if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
   setText("supplier-status",supplierLevel(game)===2?"Fornecedor parceiro · 20% de desconto nos novos lotes":"Fornecedor básico · preços de atacado normais");

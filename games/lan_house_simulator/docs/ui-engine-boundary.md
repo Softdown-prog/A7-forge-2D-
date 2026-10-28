@@ -196,6 +196,14 @@
 - Os testes da 23ª etapa foram corrigidos antes desta alteração: a tarifa histórica mínima real é R$ 0,50 e a verificação de fronteira confundiu um comentário com dependência de código.
 - Sem alterações em preços de compra/venda, margens, faturamento, RNG, Canvas ou formato de save.
 
+## Vigésimo quinto recorte: preços de impressão e de cópias
+
+- `src/application/deskPricingPort.ts` fornece projeções de preços, limites, custo dos insumos, resultado operacional e recuperação de investimento.
+- `src/ui/deskPricingPanel.ts` atualiza os botões já conhecidos dos listeners delegados e mantém `syncPanelChildren` para evitar perder rolagem e foco.
+- `src/main.ts` preserva os filtros das subabas e esconde os serviços ainda não comprados.
+- `tests/desk-pricing-boundary.test.mjs` verifica limites, margens, economia clássica/histórica, importação de save e controles DOM.
+- Não foram alterados RNG, motor econômico, cobrança, Canvas, gestos mobile ou estrutura do save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
