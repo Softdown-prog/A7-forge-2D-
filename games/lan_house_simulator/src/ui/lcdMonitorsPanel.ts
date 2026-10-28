@@ -1,9 +1,8 @@
 /** LCD administration only: renders typed values and keeps delegated button attributes. */
-import type {LcdMonitorsView} from "../application/lcdMonitorsPort.js";
-import type {LcdId} from "../sim/computerModels.js";
+import type {LcdMonitorsView,LcdCatalogItem} from "../application/lcdMonitorsPort.js";
 
 export function renderLcdMonitorsPanel(
- host:Element,view:LcdMonitorsView,preview:(id:LcdId)=>string,
+ host:Element,view:LcdMonitorsView,preview:(id:LcdCatalogItem["id"])=>string,
  doc:Pick<Document,"createElement">
 ):void{
  const kits=doc.createElement("section");kits.className="lcd-upgrades";

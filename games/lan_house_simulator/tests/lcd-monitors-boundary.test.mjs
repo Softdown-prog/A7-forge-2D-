@@ -112,7 +112,7 @@ test("camadas não misturam motor, DOM e roteamento mobile",()=>{
  const ui=readFileSync(new URL("ui/lcdMonitorsPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
- assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\/(?!computerModels\.js)/);
+ assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document)"));
  assert.ok(main.includes("createLcdMonitorsPort(()=>game)"));
