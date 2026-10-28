@@ -52,8 +52,9 @@ import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room
 import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
-import { monthlyBills, energyMonthlyEstimate } from "./sim/economy.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
+import {createFinancialAdminOverviewPort} from "./application/financialAdminOverviewPort.js";
+import {renderFinancialAdminTotals,renderFinancialAdminActivity} from "./ui/financialAdminOverviewPanel.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
 import {renderFinancialBalance,renderFinancialBillWatch} from "./ui/financialBalancePanel.js";
@@ -63,7 +64,7 @@ import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
 import {renderHourlyPricingInsights,renderEnergyYearOutlook} from "./ui/pricingInsightsPanel.js";
-import {priceIndex,yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
+import {yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
 import {createHourlyPriceStatusPort} from "./application/hourlyPriceStatusPort.js";
 import {createRetailPriceStatusPort} from "./application/retailPriceStatusPort.js";
 import {renderRetailPriceControls} from "./ui/retailPriceControlsPanel.js";
@@ -854,6 +855,7 @@ const stationLedgerPort=createStationLedgerPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
+const financialAdminOverviewPort=createFinancialAdminOverviewPort(()=>game);
 const staffStatusPort=createStaffStatusPort(()=>game);
 const pricingInsightsPort=createPricingInsightsPort(()=>game);
 const hourlyPriceStatusPort=createHourlyPriceStatusPort(()=>game);
@@ -909,14 +911,8 @@ function renderUI(liveOnly=false):void {
   if(adminOpen){
   const stationRevision=[year,game.cash,game.economyVersion,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)])];
   const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
-  const monetaryIndex=priceIndex(year);
   const historical=game.economyVersion===2;
-  const monthlyRent=Math.round((270+game.expansionLevel*170)*(historical?monetaryIndex:1));
-  const monthlyInternet=Math.round((110+(game.internetTier-1)*85)*(historical?monetaryIndex:1));
-  const monthlyEnergy=game.energyAccrued!==undefined?Math.round(game.energyAccrued):energyMonthlyEstimate(game);
-  const monthlyMaintenance=Math.round((75+game.expansionLevel*35)*(historical?monetaryIndex:1));
-   const wages=game.employeePayrollAccrued??0;
-  const inCurrency=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+  const financialAdminOverview=financialAdminOverviewPort.snapshot();
   renderFinancialBalance(financialBalancePort.balance(),setText,document);
   if(activeAdminTab==="finance"&&managementPanels.active("finance","feedback")){
    const host=document.getElementById("customer-feedback-panel");
@@ -927,13 +923,10 @@ function renderUI(liveOnly=false):void {
   if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
    renderFinancialBillWatch(financialBalancePort.billWatch(),document);
   }
-  setText("admin-bills",money(monthlyBills(game)));
-  setText("admin-served",String(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0)));
-  setText("monthly-breakdown","Contas: aluguel "+money(monthlyRent)+" · internet "+money(monthlyInternet)+" · energia acumulada "+money(monthlyEnergy)+" · manutenção "+money(monthlyMaintenance)+" · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(game))+". Diárias cobradas apenas nos dias com atendimento efetivo.");
+  renderFinancialAdminTotals(financialAdminOverview,setText);
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
   const hourlyPriceStatus=hourlyPriceStatusPort.snapshot();
-  const inReais=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
   renderHourlyPriceStatus(hourlyPriceStatus,setText,document);
   const durations=document.getElementById("session-package-prices");
   if(durations&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","hourly")&&panelChanged("durations",[game.pricePerHour,historical],!liveOnly)){
@@ -1021,17 +1014,10 @@ function renderUI(liveOnly=false):void {
    if(see){see.disabled=issues.length===0;see.textContent="Ver bloqueios no salão ("+issues.length+")";}
   }
   }
-  setText("finance", "Entradas R$ "+game.revenue+" · Saídas R$ "+game.expenses+
-    " · Atendimentos "+(game.served+(game.printer?.walkIns??0)+(game.discCopier?.walkIns??0))+
-    " (PCs "+(game.served-(game.ps1Sessions??0))+
-    ((game.ps1Stations?.length??0)+(game.ps1Sessions??0)>0?
-     " · PlayStation "+(game.ps1Sessions??0):"")+
-    " · Impressões avulsas "+(game.printer?.walkIns??0)+
-    " · Cópias avulsas "+(game.discCopier?.walkIns??0)+")");
+  renderFinancialAdminActivity(financialAdminOverview,setText,activeAdminTab==="finance");
   if(activeAdminTab==="finance"){
   renderMonthlyFinancePanel(monthlyFinancePort.snapshot(),setText,document);
   renderPromotionStatus(promotionStatusPort.snapshot(),setText,document);
-  setText("expansion", "Ampliação "+game.expansionLevel+"/2");
   }
   }
   // Independente do painel administrativo: as marcações continuam visíveis

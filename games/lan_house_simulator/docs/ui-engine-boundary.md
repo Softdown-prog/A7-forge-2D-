@@ -277,6 +277,14 @@
 - `tests/event-log-boundary.test.mjs` adiciona oito verificações para ícones, datas, limite, integridade do save, importação e DOM.
 - Sem modificar o motor, RNG, áudio, autosave, Canvas, editor ou gestos mobile.
 
+## Trigésimo quinto recorte: resumo financeiro e atendimentos
+
+- `src/application/financialAdminOverviewPort.ts` projeta aluguel, internet, manutenção, energia, salários, contas, atendimentos por serviço e entradas/saídas, preservando a inflação e o modo clássico.
+- `src/ui/financialAdminOverviewPanel.ts` atualiza os mesmos nós e rótulos, sem ler o estado do motor nem criar DOM.
+- `main.ts` continua com o demonstrativo, os fechamentos mensais, o editor e as rotinas de cobrança originais.
+- `tests/financial-admin-overview-boundary.test.mjs` inclui oito casos sobre custos históricos, PlayStation, serviços avulsos, troca de save e fronteiras da UI.
+- Sem alterações em RNG, preço cobrado, saves, áudio, Canvas ou gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
