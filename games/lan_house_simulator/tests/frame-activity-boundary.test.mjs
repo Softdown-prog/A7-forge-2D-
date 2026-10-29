@@ -58,11 +58,14 @@ test("fronteira não importa o motor nem DOM; main mantém captura antes do step
  const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(module,/from\s*["']\.\.\/(sim|ui|render|audio)\//);
  assert.doesNotMatch(module,/\b(document|window|GameState|HTMLElement|requestAnimationFrame)\b/);
- assert.ok(main.includes("frameActivitySnapshot({"));
+ const coordinator=readFileSync(new URL("application/frameSimulationCoordinator.ts",root),"utf8");
+ assert.ok(main.includes("frameSimulation.run({"));
  assert.ok(main.includes("beforeCampaignEnd:game.totalMinutes<GAME_LAST_MINUTE"));
- assert.ok(main.includes("if(wasSimulating!==simulating)"));
- const captured=main.indexOf("if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game)");
- const stepped=main.indexOf("if(advanceSimulation)stepGame(game,dt*4.0)");
+ assert.ok(main.includes("captureMotion:()=>sceneMotion.capture(game)"));
+ assert.ok(main.includes("advance:minutes=>stepGame(game,minutes)"));
+ assert.ok(coordinator.includes("if(wasSimulating!==simulating)"));
+ const captured=coordinator.indexOf("actions.captureMotion()");
+ const stepped=coordinator.indexOf("actions.advance(minutes)");
  assert.ok(captured>=0&&stepped>captured);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
  assert.ok(main.includes("installPageSaveLifecycle({win:window,doc:document,every:(callback,ms)=>window.setInterval(callback,ms),save})"));

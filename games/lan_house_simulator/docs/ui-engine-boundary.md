@@ -534,6 +534,15 @@
 - `tests/frame-viewport-state-boundary.test.mjs` adiciona dezesseis testes de interseção, media queries dinâmicas, isolamento e ligação com o bootstrap.
 - Não modifica Canvas, saves, economia, RNG, áudio, colisões, movimentação nem limiares de toque mobile.
 
+## Sexagésimo sexto recorte: coordenação do avanço da simulação
+
+- `src/application/frameSimulationCoordinator.ts` recebe, por callbacks, o reset da interpolação, a captura visual e o passo do motor. O módulo conhece apenas `frameActivitySnapshot`, sem `GameState`, DOM, renderizador ou salvamento.
+- Preservada a ordem original: checar atividade, resetar o movimento quando sua elegibilidade muda, capturar antes do avanço ao atingir um minuto e finalmente avançar em `dt*4.0`.
+- A nova sessão ou partida importada continua sendo consultada por callbacks do `main.ts` em cada frame, sem referência capturada para um save antigo.
+- `tests/frame-simulation-coordinator-boundary.test.mjs` adiciona dezenove testes para pausas do editor, fim da campanha, limiar de minuto, retorno ao menu, importação e propagação de erros.
+- Testes de fonte legados verificam a integração do novo coordenador em vez de exigir as antigas linhas diretamente no `main.ts`.
+- O consumo de correio e eventos continua após o avanço, e não houve mudanças em saves, RNG, regras econômicas, áudio ou limites do Canvas/touch.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

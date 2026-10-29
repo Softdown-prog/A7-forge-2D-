@@ -58,7 +58,7 @@ import {createFrameSchedule} from "./application/frameSchedule.js";
 import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
 import {createFrameViewportState} from "./ui/frameViewportState.js";
 import {installPageSaveLifecycle} from "./ui/pageSaveLifecycle.js";
-import {frameActivitySnapshot} from "./application/frameActivity.js";
+import {createFrameSimulationCoordinator} from "./application/frameSimulationCoordinator.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
 import {dispatchFrameEvents} from "./application/frameEventDispatch.js";
@@ -835,18 +835,19 @@ function renderUI(liveOnly=false):void {
 const frameSchedule=createFrameSchedule();
 const frameViewport=createFrameViewportState(canvas,callback=>new IntersectionObserver(callback),query=>window.matchMedia(query));
 const frameInteraction=installFrameInteractionTracker(document,window,()=>performance.now());
-let wasSimulating=false;
+const frameSimulation=createFrameSimulationCoordinator({
+ resetMotion:()=>sceneMotion.reset(),
+ captureMotion:()=>sceneMotion.capture(game),
+ advance:minutes=>stepGame(game,minutes)
+});
 function frame(timestamp:number):void {
   const {dt,elapsed}=frameSchedule.begin(timestamp);
   const accountOpen=document.getElementById("player-account")?.hasAttribute("open")===true;
-  const {captureMotion:simulating,advanceSimulation}=frameActivitySnapshot({
+  frameSimulation.run({
    playing:isPlaying,accountOpen,beforeCampaignEnd:game.totalMinutes<GAME_LAST_MINUTE,
    editingLayout:layoutEditor.active,placingFurniture:!!placingKind,
    relocatingFurniture:relocating,editingWalls:!!wallMode,installingAnnexPc
-  });
-  if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
-  if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
-  if(advanceSimulation)stepGame(game,dt*4.0);
+  },dt,game.leftoverMinutes);
   // Detect new mail after advancing the simulation; effect ordering is now in application.
   dispatchFrameEvents({
    playing:isPlaying,

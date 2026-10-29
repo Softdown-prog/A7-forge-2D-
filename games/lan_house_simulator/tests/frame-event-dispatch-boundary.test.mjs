@@ -106,6 +106,7 @@ test("módulo não conhece DOM, simulação, dispositivo áudio ou timer de save
  assert.match(main,/countNewMail:\(\)=>consumeNewMail\(knownMailIds,game.notices\)/);
  assert.match(main,/notifyMail:\(\)=>soundscape.mail\(\)/);
  assert.match(main,/feedback:frameFeedback/);
- assert.match(main,/if\(advanceSimulation\)stepGame\(game,dt\*4\.0\)/);
- assert.ok(main.indexOf("dispatchFrameEvents({")>main.indexOf("if(advanceSimulation)stepGame(game,dt*4.0)"));
+ assert.match(main,/frameSimulation\.run\(\{/);
+ assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
+ assert.ok(main.indexOf("dispatchFrameEvents({")>main.indexOf("frameSimulation.run({"));
 });

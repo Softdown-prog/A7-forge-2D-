@@ -474,8 +474,8 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/frameActivitySnapshot\(\{/);
- assert.match(source,/if\(advanceSimulation\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(source,/frameSimulation\.run\(\{/);
+ assert.match(source,/advance:minutes=>stepGame\(game,minutes\)/);
  const frame=readFileSync(resolve(root,"src/application/frameActivity.ts"),"utf8");
  assert.match(frame,/advanceSimulation=input\.playing&&!input\.accountOpen&&!input\.editingLayout/);
  for(const condition of ["placingFurniture","relocatingFurniture","editingWalls","installingAnnexPc"])
@@ -593,8 +593,8 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  assert.match(html,/id="organize-furniture"/);
  assert.match(main,/placementActions\.move\(relocationFrom,slot.id\)/);
  assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/relocateFurniture\(getState\(\),from,to\)/);
- assert.match(main,/frameActivitySnapshot\(\{/);
- assert.match(main,/if\(advanceSimulation\)stepGame\(game,dt\*4\.0\)/);
+ assert.match(main,/frameSimulation\.run\(\{/);
+ assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
  assert.match(main,/relocatingFurniture:relocating,editingWalls:!!wallMode,installingAnnexPc/);
 });
 
