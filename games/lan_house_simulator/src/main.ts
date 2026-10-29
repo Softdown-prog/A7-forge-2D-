@@ -114,24 +114,16 @@ import {renderAdminGpuLicenseSections} from "./ui/adminGpuLicenseSections.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
-import {stationOccupied,type LcdId} from "./sim/computerModels.js";
+import {stationOccupied} from "./sim/computerModels.js";
+import {createLcdPreviewSample} from "./application/lcdPreviewSamplePort.js";
+import {createLcdPreviewCache} from "./ui/lcdPreviewCache.js";
+import {drawLcdPreviewArtwork} from "./render/lcdPreviewArtwork.js";
 import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
 import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
-import {drawRetroComputer} from "./render/retroComputer.js";
 import {renderHardwarePanel,type HardwareTab} from "./ui/hardwarePanel.js";
 
-// Catalog illustrations use the same station renderer as the playable scene.
-// Generate once per model; live admin refreshes reuse these images.
-const lcdPreviews=new Map<LcdId,string>();
-function lcdPreview(id:LcdId):string{
- const cached=lcdPreviews.get(id);if(cached)return cached;
- const surface=document.createElement("canvas");surface.width=320;surface.height=190;
- const context=surface.getContext("2d");if(!context)return "";
- const sample=createGame();sample.pcTiers=[3,3,3];sample.pcLcdModels=[id,null,null];
- context.fillStyle="#dce5cf";context.fillRect(0,0,320,190);
- drawRetroComputer(context,{originX:150,originY:118,zoom:1.25},{x:0,y:0},0,0,true,sample,false);
- const url=surface.toDataURL();lcdPreviews.set(id,url);return url;
-}
+// Disposable LCD catalog art never touches the active save.
+const lcdPreview=createLcdPreviewCache(document,createLcdPreviewSample,drawLcdPreviewArtwork);
 
 const canvas = document.querySelector<HTMLCanvasElement>("#game");
 const admin = document.querySelector<HTMLElement>("#admin");

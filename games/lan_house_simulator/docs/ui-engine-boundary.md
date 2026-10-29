@@ -501,6 +501,14 @@
 - Antes deste recorte, corrigido o bug de `Illegal invocation` no autosave (60º recorte) com callback ligado a `window`, e atualizado o teste antigo da UI do editor.
 - Não foram alterados a simulação, os sons em si, os volumes, os saves, o RNG, os limiares de toque ou o Canvas.
 
+## Sexagésimo segundo recorte: imagens do catálogo de monitores LCD
+
+- `src/application/lcdPreviewSamplePort.ts` prepara um estado descartável para a miniatura do monitor, com as mesmas três máquinas de terceira geração e apenas o LCD selecionado.
+- `src/render/lcdPreviewArtwork.ts` mantém o mesmo preenchimento, dimensões e renderização do computador do salão. `src/ui/lcdPreviewCache.ts` controla o cache de imagens geradas sob demanda, sem importar `GameState`, motor ou regras econômicas.
+- O `main.ts` passa a conectar preparação, renderer e cache em uma única linha, mantendo inalterada a chamada de `renderLcdMonitorsPanel` usada no painel administrativo.
+- `tests/lcd-preview-cache-boundary.test.mjs` acrescenta treze testes de dimensão, cache, modelos, indisponibilidade de Canvas, isolamento e composição.
+- Preservados o save ativo, a lista de monitores, os controles do painel, a lógica de clientes, RNG, viewport e desenho de PCs instalados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
