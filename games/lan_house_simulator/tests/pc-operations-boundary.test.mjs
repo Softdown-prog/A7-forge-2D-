@@ -107,7 +107,8 @@ test("fronteira da aplicação mantém DOM isolado e não muda o fluxo mobile",(
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createPcOperationsPort(()=>game)"));
  assert.ok(main.includes("renderPcOperations(maintenance,pcOperationsPort.rows(),document)"));
- assert.ok(main.includes("syncPanelChildren(liveMaintenance,maintenance)"));
+ assert.ok(main.includes("reconcile:syncPanelChildren"));
+ assert.ok(main.includes("renderPcMaintenancePanel(liveMaintenance"));
  assert.ok(main.includes('panelChanged("computers"'));
  assert.ok(main.includes("installStationControls("));
  assert.doesNotMatch(main,/\bpcWear\(|\bpcBroken\(/);

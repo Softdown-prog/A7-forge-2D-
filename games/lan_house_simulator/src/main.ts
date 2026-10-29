@@ -106,6 +106,7 @@ import {renderEventLog} from "./ui/eventLogPanel.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
+import {renderPcMaintenancePanel} from "./ui/pcMaintenancePanel.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
@@ -963,25 +964,18 @@ function renderUI(liveOnly=false):void {
   const liveMaintenance=document.getElementById("pc-maintenance");
   if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"&&!managementPanels.active("computers","ledger")&&panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly)){
     const page=managementPanels.current("computers");
-    // Build offscreen; update the existing controls without collapsing the panel
-    // or disconnecting the focused category on every sale/wear refresh.
-    const maintenance=document.createElement("div");
-    const focused=document.activeElement;
-    const lcdFocus=focused instanceof HTMLButtonElement&&liveMaintenance.contains(focused)
-      ?focused.id?'#'+focused.id:focused.dataset.lcdBuy!==undefined?'[data-lcd-buy="'+focused.dataset.lcdBuy+'"]'
-      :focused.dataset.lcdSelect!==undefined?'[data-lcd-select="'+focused.dataset.lcdSelect+'"]':null:null;
-    if(page==="operations")renderPcOperations(maintenance,pcOperationsPort.rows(),document);
-    selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
-    if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
-    if(page==="monitors")renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document);
-    presentComputerOperations(computerOperationsSnapshot(game),maintenance);
-    decorateControls(maintenance);
-    syncPanelChildren(liveMaintenance,maintenance);
-    if(lcdFocus&&(!(focused instanceof HTMLButtonElement)||!focused.isConnected||focused.disabled)){
-      const restored=liveMaintenance.querySelector<HTMLButtonElement>(lcdFocus);
-      const fallback=lcdFocus.startsWith("#hardware-")?liveMaintenance.querySelector<HTMLButtonElement>("#hardware-select-"+selectedLcdPc):liveMaintenance.querySelector<HTMLButtonElement>('.lcd-upgrades [aria-pressed="true"]');
-      (restored&&!restored.disabled?restored:fallback)?.focus({preventScroll:true});
-    }
+    renderPcMaintenancePanel(liveMaintenance,{
+     build:maintenance=>{
+      if(page==="operations")renderPcOperations(maintenance,pcOperationsPort.rows(),document);
+      selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
+      if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
+      if(page==="monitors")renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document);
+      presentComputerOperations(computerOperationsSnapshot(game),maintenance);
+     },
+     decorate:decorateControls,
+     reconcile:syncPanelChildren,
+     selectedStation:()=>selectedLcdPc
+    },document);
   }
   if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"&&panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly)){
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);

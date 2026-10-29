@@ -293,6 +293,13 @@
 - `tests/service-access-status-boundary.test.mjs` acrescenta sete verificações para textos, destinos, botões, cache, save e isolamento da interface.
 - Não há mudanças no algoritmo de caminhada, colisões, manutenção, funcionários, RNG ou salvamento.
 
+## Trigésimo sétimo recorte: manutenção sem perda de foco
+
+- `src/ui/pcMaintenancePanel.ts` concentra o ciclo de criação offscreen, decoração e reconciliação dos controles de manutenção, preservando scroll e foco em botões hardware e LCD.
+- `main.ts` continua responsável pelas escolhas de estação, consultas do motor, contexto da página e invalidatório `panelChanged("computers",...)`; as ações reais permanecem em `installStationControls`.
+- Os cenários legados de LCD e operação foram adaptados à nova fronteira; `tests/pc-maintenance-boundary.test.mjs` verifica nove casos de foco, seleção, atualização e ausência de re-renderização de negócio.
+- Não há mudança em preços, instalação de peças, desgaste, rota de técnicos, Canvas, RNG ou estrutura de saves.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

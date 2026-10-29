@@ -116,8 +116,11 @@ test("camadas não misturam motor, DOM e roteamento mobile",()=>{
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document)"));
  assert.ok(main.includes("createLcdMonitorsPort(()=>game)"));
- assert.ok(main.includes("syncPanelChildren(liveMaintenance,maintenance)"));
- assert.ok(main.includes("lcdFocus"));
+ const focus=readFileSync(new URL("ui/pcMaintenancePanel.ts",root),"utf8");
+ assert.ok(main.includes("reconcile:syncPanelChildren"));
+ assert.ok(main.includes("renderPcMaintenancePanel(liveMaintenance"));
+ assert.ok(focus.includes("focusSelector"));
+ assert.ok(focus.includes("host.querySelector<HTMLButtonElement>(focusSelector)"));
  assert.ok(main.includes("installStationControls("));
  assert.ok(!main.includes("for(const model of LCD_CATALOG)"));
 });
