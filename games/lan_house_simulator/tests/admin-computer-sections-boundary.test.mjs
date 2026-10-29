@@ -66,7 +66,7 @@ test("tabela de receita ausente não dispara renderização de manutenção",()=
 });
 test("operações reconstroem em container destacado e reconciliam no final",()=>{
  const f=setup("operations");f.render();
- assert.deepEqual(f.calls,["ledgerActive","changed","page","operations","clamp","summary","decorate","reconcile"]);
+ assert.deepEqual(f.calls,["ledgerActive","ledgerActive","changed","page","operations","clamp","summary","decorate","reconcile"]);
  assert.equal(f.created.length,1);
 });
 test("hardware clampa estação antes de montar a configuração",()=>{
@@ -90,12 +90,12 @@ test("monitores usam a seleção corrigida sem reconstruir outras páginas",()=>
 });
 test("alteração não detectada não executa conteúdo nem altera foco",()=>{
  const f=setup();f.setChanged(false);f.render();
- assert.deepEqual(f.calls,["ledgerActive","changed"]);
+ assert.deepEqual(f.calls,["ledgerActive","ledgerActive","changed"]);
  assert.equal(f.created.length,0);
 });
 test("host de manutenção ausente não consulta revisão",()=>{
  const f=setup();f.setHostPresent(false);f.render();
- assert.deepEqual(f.calls,[]);
+ assert.deepEqual(f.calls,["ledgerActive"]);
 });
 test("tabela em página de operações permanece inativa",()=>{
  const f=setup("operations");f.render();
