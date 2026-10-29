@@ -74,7 +74,9 @@ test("UI oculta contrato concluído e apresenta preços e avisos atualizados",()
   const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
   const projection=readFileSync(new URL("../src/application/basicGamesLicenseStatusPort.ts",import.meta.url),"utf8");
   const visual=readFileSync(new URL("../src/ui/basicGamesLicenseStatusPanel.ts",import.meta.url),"utf8");
-  assert.ok(main.includes("renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document)"));
+  const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
+  assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+  assert.ok(coordinator.includes("renderBasicGamesLicenseStatus(options.basicGames.snapshot(),options.setText,options.doc)"));
   assert.ok(projection.includes("buttonHidden:game.licensedGames"));
   assert.ok(projection.includes("buttonDisabled:game.cash<fee"));
   assert.ok(visual.includes("button.hidden=status.buttonHidden"));
