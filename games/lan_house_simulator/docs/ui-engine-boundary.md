@@ -600,6 +600,13 @@
 - `tests/station-revision-boundary.test.mjs` adiciona 19 regressões para dados, ocupação, reparos, referências vivas, mudança de save e não-mutação.
 - O commit imediatamente anterior corrige o teste de caixa de correio no worker-simulation que falhava com `notices` ainda não inicializado.
 
+## Septuagésimo quarto recorte: revisões dos painéis de administração
+
+- `src/application/adminPanelRevisionsPort.ts` reúne as assinaturas read-only de feedback, pacotes, preços do varejo, desgaste dos PCs, licenças clássicas e jogos GPU, lendo o save ativo a cada chamada.
+- `main.ts` mantém os identificadores de cache, a decisão de forçar atualização e os seletores da interface; só delega as projeções de estado à porta. A revisão anterior de estações continua compartilhada nos painéis de hardware e licenciamento.
+- Preservados: janela do feedback em blocos de 720 minutos, modo histórico, referências de preços, arredondamento e opcionalidade do desgaste, posições dos campos de licenças, projeção dos jobs GPU e estado de conexão.
+- `tests/admin-panel-revisions-boundary.test.mjs` verifica correspondência, atualização após mudança de save, ausência de mutação e fronteiras DOM/motor. Cache JSON, renderização, RNG, progresso, compras e persistência permanecem inalterados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

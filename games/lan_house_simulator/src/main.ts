@@ -59,13 +59,14 @@ import {dispatchFrameEvents} from "./application/frameEventDispatch.js";
 import {SHOP_CATALOG,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {WALL_COST,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
-import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
+import { createGame, displayTime, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createFinancialAdminOverviewPort} from "./application/financialAdminOverviewPort.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {createStationRevisionPort} from "./application/stationRevisionPort.js";
+import {createAdminPanelRevisionsPort} from "./application/adminPanelRevisionsPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
 import {yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
@@ -616,6 +617,7 @@ const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);
 const stationRevisionPort=createStationRevisionPort(()=>game);
+const adminPanelRevisionsPort=createAdminPanelRevisionsPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
@@ -675,8 +677,7 @@ function renderUI(liveOnly=false):void {
    overview:financialAdminOverview,balance:financialBalancePort,
    financeTab:activeAdminTab==="finance",
    pageActive:page=>managementPanels.active("finance",page),
-   feedbackChanged:()=>panelChanged("customerFeedback",
-    [Math.floor(game.totalMinutes/720),game.customerFeedback],!liveOnly),
+   feedbackChanged:()=>panelChanged("customerFeedback",adminPanelRevisionsPort.feedback(),!liveOnly),
    feedback:()=>customerFeedbackSnapshot(game),
    setText,doc:document
   });
@@ -688,8 +689,8 @@ function renderUI(liveOnly=false):void {
    insights:pricingInsightsPort,retail:retailPriceStatusPort,
    pricingTab:activeAdminTab==="prices",
    active:page=>managementPanels.active("prices",page),
-   packagesChanged:()=>panelChanged("durations",[game.pricePerHour,historical],!liveOnly),
-   retailChanged:()=>panelChanged("retail",[game.retailPrices],!liveOnly),
+   packagesChanged:()=>panelChanged("durations",adminPanelRevisionsPort.packages(),!liveOnly),
+   retailChanged:()=>panelChanged("retail",adminPanelRevisionsPort.retail(),!liveOnly),
    retailControls,setText,iconMarkup,doc:document,sync:syncPanelChildren
   });
   renderDeskServicePanels(deskPricingPort,{
@@ -704,7 +705,7 @@ function renderUI(liveOnly=false):void {
    adminOpen,computersTab:activeAdminTab==="computers",
    ledgerActive:()=>managementPanels.active("computers","ledger"),
    currentPage:()=>managementPanels.current("computers"),
-   maintenanceChanged:()=>panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly),
+   maintenanceChanged:()=>panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,adminPanelRevisionsPort.computerWear(managementPanels.active("computers","operations"))],!liveOnly),
    selectedStation:()=>selectedLcdPc,
    clampSelectedStation:()=>{selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);},
    renderLedger:host=>renderStationLedgerRows(host,stationLedgerPort),
@@ -721,8 +722,8 @@ function renderUI(liveOnly=false):void {
    selectedGpuIndex:()=>{selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);return selectedGpuPc;},
    licensePageActive:page=>managementPanels.active("licenses",page),
    windowsChanged:()=>panelChanged("licensePanel",[stationRevision],!liveOnly),
-   classicChanged:()=>panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly),
-   gpuGamesChanged:()=>panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly),
+   classicChanged:()=>panelChanged("eraGamePanel",adminPanelRevisionsPort.classicGames(year,stationRevision),!liveOnly),
+   gpuGamesChanged:()=>panelChanged("gpuGamePanel",adminPanelRevisionsPort.gpuGames(year,stationRevision),!liveOnly),
    gpuCatalog:gpuCatalogPort,basicGames:basicGamesLicenseStatusPort,
    windows:windowsLicensePort,classic:classicGamesCatalogPort,
    gpuGames:gpuGamesCatalogPort,downloads:gpuDownloadMetersPort,
