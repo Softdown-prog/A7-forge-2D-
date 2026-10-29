@@ -1,5 +1,5 @@
 /** Browser preference for menu sound, independent of the game save.
- * Storage access is injected so blocked localStorage never prevents startup.
+ * Storage access is injected so blocked browser storage never prevents startup.
  */
 export interface SoundPreferenceStorage {
  readonly get:(key:string)=>string|null;
