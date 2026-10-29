@@ -97,6 +97,8 @@ test("porta não usa DOM; UI não usa GameState; listeners permanecem no bootstr
  assert.equal(port.includes("document."),false);assert.equal(ui.includes("../sim/"),false);
  assert.equal(ui.includes("GameState"),false);assert.equal(ui.includes("addEventListener"),false);
  assert.ok(main.includes("createNoticeInboxPort(()=>game)"));
- assert.ok(main.includes("renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup)"));
+ const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
+ assert.ok(main.includes("createNoticeWindowRefresh({"));
+ assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
  assert.ok(main.includes("installNoticeControls(noticesList,noticeActions"));
 });

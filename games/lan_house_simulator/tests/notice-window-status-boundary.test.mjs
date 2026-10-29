@@ -76,8 +76,10 @@ test("porta não conhece DOM, painel não conhece motor, ações de correio cont
  assert.doesNotMatch(panel,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(panel,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createNoticeWindowStatusPort(()=>game)"));
- assert.ok(main.includes("renderNoticeWindowStatus(noticeWindowStatusPort.snapshot(noticesOpen),document)"));
- assert.ok(main.includes("renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup)"));
+ const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
+ assert.ok(main.includes("status:noticeWindowStatusPort,inbox:noticeInboxPort"));
+ assert.ok(refresh.includes("renderNoticeWindowStatus(options.status.snapshot(open),options.doc)"));
+ assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
  assert.ok(main.includes('button("open-notices"'));
  assert.ok(main.includes("noticeActions.review()"));
  assert.ok(main.includes("installNoticeControls("));

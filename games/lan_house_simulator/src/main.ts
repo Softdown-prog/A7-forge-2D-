@@ -96,9 +96,9 @@ import {installSoundInputBindings} from "./ui/soundInputBindings.js";
 import {createSoundPreferencePort} from "./ui/soundPreferencePort.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {createNoticeWindowStatusPort} from "./application/noticeWindowStatusPort.js";
-import {renderNoticeWindowStatus} from "./ui/noticeWindowStatusPanel.js";
+import {createNoticeWindowRefresh} from "./ui/noticeWindowRefresh.js";
+import {createNoticeInboxRevisionPort} from "./application/noticeInboxRevisionPort.js";
 import {createNoticeInboxPort} from "./application/noticeInboxPort.js";
-import {renderNoticeInbox} from "./ui/noticeInboxPanel.js";
 import {gameYear,INTERNET_ERAS} from "./sim/era.js";
 import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
 import {createGpuGamesCatalogPort} from "./application/gpuGamesCatalogPort.js";
@@ -633,6 +633,12 @@ const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
 const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
 const noticeInboxPort=createNoticeInboxPort(()=>game);
 const noticeWindowStatusPort=createNoticeWindowStatusPort(()=>game);
+const noticeInboxRevisionPort=createNoticeInboxRevisionPort(()=>game);
+const noticeWindowRefresh=createNoticeWindowRefresh({
+ status:noticeWindowStatusPort,inbox:noticeInboxPort,host:()=>noticesList,
+ changed:force=>panelChanged("notices",noticeInboxRevisionPort.snapshot(),force),
+ doc:document,iconMarkup
+});
 const eventLogPort=createEventLogPort(()=>game);
 const eventLogRefresh=createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup));
 function renderUI(liveOnly=false):void {
@@ -642,10 +648,7 @@ function renderUI(liveOnly=false):void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
   renderAdminWindowVisibility(admin,adminOpen);
-  renderNoticeWindowStatus(noticeWindowStatusPort.snapshot(noticesOpen),document);
-  if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
-    renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup);
-  }
+  noticeWindowRefresh.refresh(noticesOpen,!liveOnly);
   const moving=placementActions.furniture().find(p=>p.slotId===relocationFrom);
   const placementStatus=placementStatusSnapshot({
    placingKind,placingName:placingKind?placementNames[placingKind]:null,

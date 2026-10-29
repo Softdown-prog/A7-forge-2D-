@@ -585,6 +585,13 @@
 - A correcao complementar do video PS1 no commit anterior limita a pintura a cerca de 10 FPS, preserva a duracao de 20 segundos e identifica erros sem esperar o timeout completo.
 - Nenhuma regra de economia, save, RNG, Canvas do jogo ou toque mobile foi alterada.
 
+## Septuagésimo segundo recorte: atualização da caixa de correio e indicador
+
+- `src/ui/noticeWindowRefresh.ts` separa da função `renderUI` a atualização contínua do badge e a renderização condicionada das mensagens. O badge é atualizado mesmo quando a janela está fechada; a lista só é reconstruída se existe, está aberta e houve mudança de revisão ou pedido forçado.
+- `src/application/noticeInboxRevisionPort.ts` extrai a revisão dos sete campos que impactam os botões e textos de correio, sempre consultando o save ativo. O teste de revisão preserva a igualdade por JSON usada no cache anterior.
+- A pintura continua pelos painéis `renderNoticeWindowStatus` e `renderNoticeInbox`, com os mesmos atributos, botões e listeners delegados; nada no motor dos eventos, calendário, RNG ou política de autosave foi alterado.
+- `tests/notice-window-refresh-boundary.test.mjs` adiciona 16 regressões para janela fechada/aberta, marcação forçada, cache, save importado, limpeza de DOM, falhas e fronteiras; os dois testes legados foram adaptados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
