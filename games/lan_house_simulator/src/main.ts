@@ -8,6 +8,8 @@ import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
 import {createPs1AdminPort} from "./application/ps1AdminPort.js";
 import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
 import {createPs1ShopPlacementPort} from "./application/ps1ShopPlacementPort.js";
+import {createPs1ShopOfferPort} from "./application/ps1ShopOfferPort.js";
+import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
@@ -39,8 +41,7 @@ import {renderCommerceNetworkPanel} from "./ui/commerceNetworkPanel.js";
 import {renderDeskServicePanels} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
-import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
- ps1StationPoint} from "./sim/ps1.js";
+import {ps1StationPoint} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
@@ -468,6 +469,7 @@ const ps1Actions=createPs1ActionsPort(()=>game);
 const ps1AdminPort=createPs1AdminPort(()=>game);
 const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
 const ps1ShopPlacementPort=createPs1ShopPlacementPort(()=>game);
+const ps1ShopOfferPort=createPs1ShopOfferPort(()=>game);
 const shopServiceOffersPort=createShopServiceOffersPort(()=>game);
 const shopOverviewPort=createShopOverviewPort(()=>game,()=>layoutEditorPort.objects().length,()=>placementActions.annexSlots().length);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
@@ -736,7 +738,6 @@ function renderShop(force=true):void{
   const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
   const full=item.id==="door"?!(game.interiorWalls?.length):
      item.id==="computer-annex"?!placementActions.availableAnnex().length:
-     item.id==="ps1"?(game.ps1Stations?.length??0)>=PS1_MAX_STATIONS||!ps1PlacementSlots(game).length:
      ext?(game.roomExtensions?.[ext]??0)>=MAX_EXTENSION_LEVEL:
      item.id==="expand"?game.expansionLevel>=2:
      item.id==="computer"?((game.installedPcs??(3+game.expansionLevel*2))>=3+game.expansionLevel*2):
@@ -748,10 +749,7 @@ function renderShop(force=true):void{
    renderShopServiceOffer(button,shopServiceOffersPort.snapshot(item.id));
   }
   if(item.id==="ps1"){
-    button.disabled=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR||full||game.cash<price;
-    button.textContent=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR?
-     "🔒 Disponível em 2002":full?"Sem espaço livre":
-     game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar conjunto · R$ "+price;
+    renderPs1ShopOfferButton(button,ps1ShopOfferPort.snapshot());
     renderPs1ShopPlacement(card,{art,category,title,description,button},
       ps1ShopPlacementPort.snapshot(),selectedPs1PlacementId,id=>{selectedPs1PlacementId=id;},document);
   }else{

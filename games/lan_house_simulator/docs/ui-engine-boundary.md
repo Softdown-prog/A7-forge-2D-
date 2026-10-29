@@ -380,6 +380,14 @@
 - `tests/shop-overview-boundary.test.mjs` verifica textos originais, dinheiro, capacidades, expansão oeste/leste/norte, divisórias, save importado, DOM e limites de dependência.
 - Nenhuma regra de compra, preço, geração de cliente, RNG, save, autosave ou gesto mobile foi alterada.
 
+## Quadragésimo oitavo recorte: oferta da bancada de PlayStation na loja
+
+- `src/application/ps1ShopOfferPort.ts` projeta a disponibilidade e a descrição do botão de compra da bancada PS1 a partir do save ativo: modo histórico, 2002, três bancadas, vagas livres e saldo.
+- `src/ui/ps1ShopOfferButton.ts` atualiza somente o texto e a habilitação do botão, preservando o atributo `data-buy="ps1"` e o evento delegado ao controlador da loja.
+- `main.ts` deixa de calcular essas condições e mantém o seletor de posições e a montagem visual já separados nos recortes anteriores.
+- `tests/ps1-shop-offer-boundary.test.mjs` cobre 14 casos, incluindo ano, modo clássico, dinheiro, limites, vagas ocupadas, saves importados, DOM e dependências.
+- Nenhuma regra do motor, preço, venda, save, RNG, Canvas, autosave ou controle de toque foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
