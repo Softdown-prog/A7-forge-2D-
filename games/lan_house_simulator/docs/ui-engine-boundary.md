@@ -623,6 +623,14 @@
 - `tests/shop-catalog-revision-boundary.test.mjs` adiciona 21 regressões de ordem, identidade, campo opcional, cache JSON, força, categoria, saldo, troca do save e não-mutação.
 - Não alterar preços, regras de compra ou de ampliação, controles PS1, esquema do save, RNG, gestos mobile ou renderização do Canvas.
 
+## Septuagésimo sétimo recorte: revisões dos painéis de hardware
+
+- `src/application/adminPanelRevisionsPort.ts` centraliza agora também a assinatura de cinco campos da manutenção de PCs, a revisão de seleção da GPU e o vetor da licença Windows, recebendo como parâmetros a página/aba selecionada e a revisão de estação. A leitura do desgaste continua viva via `()=>game`.
+- `main.ts` conserva os nomes de cache `computers`, `gpuPcChoice`, `licensePanel`, os gates de visibilidade e o momento de renderizar cada painel. Somente a construção dos vetores foi extraída.
+- `tests/admin-hardware-revisions-boundary.test.mjs` adiciona 20 regressões de ordem, opcionais, cache, arredondamento, identidade, troca do save e não-mutação.
+- Os dois testes legados que falharam no recorte 76 (`menu-scene-preview-boundary.test.mjs` e `runtime-interaction-bindings-boundary.test.mjs`) foram adaptados para verificar as chamadas agora localizadas em `framePresentationCoordinator.ts`. Compilação, cenas e os demais 1.492 testes haviam passado.
+- Preservados o limite de PCs, compra de hardware, preços, gestos mobile, Canvas, RNG, relógio simulado e save.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -90,8 +90,10 @@ test("ordem do loop preserva gate de menu e confirmação somente após desenho"
  assert.match(main,/createMenuPreviewPainter\(elapsed=>menuRenderer\?\.draw\(menuPreview,elapsed\)\)/);
  assert.match(main,/menuPreviewPainter\.paintInitial\(\)/);
  assert.match(main,/previewAvailable:menuPreviewPainter\.available\(\)/);
- assert.match(main,/frameSchedule\.menuPainted\(timestamp\)/);
- assert.match(main,/menuPreviewPainter\.paintFrame\(elapsed,\(\)=>frameSchedule\.menuPainted\(timestamp\)\)/);
+ const frame=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
+ assert.match(main,/paintMenu:painted=>\{if\(menuRenderer\)menuPreviewPainter\.paintFrame\(elapsed,painted\);\}/);
+ assert.match(frame,/schedule\.menu\(input\.timestamp,input\.menuFlags\)/);
+ assert.match(frame,/input\.paintMenu\(\(\)=>schedule\.menuPainted\(input\.timestamp\)\)/);
 });
 test("módulo de apresentação do menu não importa motor, DOM ou simulação",()=>{
  const root=new URL("../src/",import.meta.url);

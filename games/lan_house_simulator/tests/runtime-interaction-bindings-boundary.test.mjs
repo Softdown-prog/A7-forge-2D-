@@ -105,5 +105,7 @@ test("main injeta as ações reais e mantém acesso ao estado atualizado",()=>{
  assert.match(main,/refreshTimeWeather:\(\)=>renderTimeWeatherPanel\(timeWeatherSnapshot\(game\),iconMarkup\)/);
  assert.match(main,/editorOpen:\(\)=>layoutEditor\.active/);
  assert.match(main,/editingPlacement:\(\)=>!!\(placingKind\|\|relocating\|\|wallMode\|\|installingAnnexPc\)/);
- assert.match(main,/if\(frameSchedule\.hud\(timestamp,/);
+ const frame=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
+ assert.match(main,/framePresentation\.render\(\{/);
+ assert.match(frame,/if\(schedule\.hud\(input\.timestamp,input\.hudFlags\)\)input\.refreshHud\(\)/);
 });
