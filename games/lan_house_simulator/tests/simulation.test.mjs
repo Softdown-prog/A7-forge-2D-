@@ -628,11 +628,13 @@ test("UI click audio uses one delegated handler and game money is event-driven",
  assert.match(source,/document.addEventListener\("click",event=>/);
   const feedback=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameFeedbackPort.ts"),"utf8");
   assert.match(source,/createFrameFeedbackPort\(\(\)=>game,soundscape/);
-  assert.match(source,/frameFeedback\.payments\(isPlaying\)/);
+  const dispatch=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameEventDispatch.ts"),"utf8");
+  assert.match(source,/dispatchFrameEvents\(\{/);
+  assert.match(dispatch,/options\.feedback\.payments\(options\.playing\)/);
   assert.match(feedback,/audio\.income\("payment"\)/);
-  assert.match(source,/frameFeedback\.sales\(isPlaying\)/);
+  assert.match(dispatch,/options\.feedback\.sales\(options\.playing\)/);
   assert.match(feedback,/audio\.income\("sale"\)/);
-  assert.match(source,/frameFeedback\.keyboards\(isPlaying\)/);
+  assert.match(dispatch,/options\.feedback\.keyboards\(options\.playing\)/);
   assert.match(feedback,/audio\.keyboard\(\)/);
  assert.doesNotMatch(source,/new Audio\(/);
  assert.doesNotMatch(source,/playOriginalSound/);
