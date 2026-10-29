@@ -13,6 +13,7 @@ import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
+import {createShopCatalogCard,appendStandardShopCatalogCard,appendShopCatalogOwned} from "./ui/shopCatalogCard.js";
 import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
 import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
@@ -34,13 +35,10 @@ import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
-import {drawDiscCopier} from "./render/discCopierArt.js";
 import {createDeskPricingPort} from "./application/deskPricingPort.js";
 import {createCommerceNetworkPort} from "./application/commerceNetworkPort.js";
 import {renderCommerceNetworkPanel} from "./ui/commerceNetworkPanel.js";
 import {renderDeskServicePanels} from "./ui/deskPricingPanel.js";
-import {drawPrinterShop} from "./render/printerArt.js";
-import {drawPs1Station} from "./render/ps1Art.js";
 import {ps1StationPoint} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
@@ -89,7 +87,7 @@ import {renderPromotionStatus} from "./ui/promotionStatusPanel.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
-import {iconMarkup,catalogueIcon,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
+import {iconMarkup,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {shopPlacementStatus,shopPurchaseButtonText} from "./ui/shopGuidance.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
@@ -550,7 +548,6 @@ installStationControls({
  onResult:result=>{applyResult(game,result);renderUI();save();}
 });
 const shopPanels=shop?installShopPanels(shop,()=>renderUI()):null;
-const shopArtwork=new Map<string,string>();
 const nightTournamentHud=installNightTournamentHud();
 const fridayMeetupPanel=installFridayMeetupPanel(admin,()=>game,
  result=>{applyResult(game,result);renderUI();save();});
@@ -705,34 +702,9 @@ function renderShop(force=true):void{
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
   if(shopCategory(item.id)!==shopPanels?.current())continue;
-  const card=document.createElement("article");card.className="shop-card";
-  const art=document.createElement("div");art.className="shop-art";art.dataset.item=item.id;art.setAttribute("aria-hidden","true");art.innerHTML=iconMarkup(catalogueIcon(item.id));
-  if(item.id==="disc-copier"||item.id==="printer"||item.id==="ps1"){
-   art.replaceChildren();
-   if(shopArtwork.has(item.id)){const image=document.createElement("img");image.src=shopArtwork.get(item.id)!;image.alt="";art.append(image);}
-   else{const preview=document.createElement("canvas");
-   preview.width=640;preview.height=360;
-   const ctx=preview.getContext("2d");
-   if(ctx){
-    if(item.id==="printer")drawPrinterShop(ctx,640,360);
-    else if(item.id==="disc-copier")drawDiscCopier(ctx,640,360);
-    else{
-     ctx.fillStyle="#edf1e7";ctx.fillRect(0,0,640,360);
-     const preview={originX:250,originY:125,zoom:1.75};
-     drawPs1Station(ctx,preview,{x:0,y:0},0,true,0);
-    }
-   }
-   shopArtwork.set(item.id,preview.toDataURL());
-   const image=document.createElement("img");image.src=shopArtwork.get(item.id)!;image.alt="";art.append(image);
-   }
-  }
-  const title=document.createElement("h3");title.textContent=item.label;
-  const category=document.createElement("small");category.textContent=item.category;
-  const description=document.createElement("p");description.textContent=item.description;
+  const fields=createShopCatalogCard(item,document);
+  const {card,art,category,title,description,button}=fields;
   const placementHint=shopPlacementStatus(game,item.id);
-  const hint=document.createElement("small");hint.className="shop-purchase-status";
-  if(placementHint)hint.textContent=placementHint;
-  const button=document.createElement("button");button.type="button";button.dataset.buy=item.id;
   const max=(item.id==="poster"||item.id==="plant"||item.id==="table")?furnitureLimit(game,item.id):0;
   const count=game.furniture?.[item.id as FurnitureKind]??0;
   const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
@@ -753,11 +725,9 @@ function renderShop(force=true):void{
     renderPs1ShopPlacement(card,{art,category,title,description,button},
       ps1ShopPlacementPort.snapshot(),selectedPs1PlacementId,id=>{selectedPs1PlacementId=id;},document);
   }else{
-   card.append(art,category,title,description);
-   if(placementHint)card.append(hint);
-   card.append(button);
+   appendStandardShopCatalogCard(fields,placementHint,document);
   }
-  if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
+  if(max>0)appendShopCatalogOwned(card,"Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length,document);
   shopCatalog.append(card);
  }
  renderPs1ShopDiscCatalog(shopCatalog,ps1ShopDiscPort,shopPanels?.current()==="consoles",document);

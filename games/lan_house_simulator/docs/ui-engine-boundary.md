@@ -388,6 +388,14 @@
 - `tests/ps1-shop-offer-boundary.test.mjs` cobre 14 casos, incluindo ano, modo clássico, dinheiro, limites, vagas ocupadas, saves importados, DOM e dependências.
 - Nenhuma regra do motor, preço, venda, save, RNG, Canvas, autosave ou controle de toque foi alterada.
 
+## Quadragésimo nono recorte: montagem visual dos cartões e miniaturas da loja
+
+- `src/ui/shopCatalogCard.ts` cria os mesmos artigos, títulos, rótulos, ícones e botões de compra, além de centralizar o cache das miniaturas em Canvas da impressora, copiadora e PlayStation 1.
+- A interface conserva a ordem dos elementos, `data-buy`, `data-item`, `aria-hidden`, dimensões 640×360 das miniaturas e o seletor de PS1 já separado.
+- `main.ts` continua projetando preços, vagas e elegibilidade, além de gerenciar o clique delegado em `shopControls`, mas deixa de construir nós do catálogo e desenhar miniaturas.
+- `tests/shop-catalog-card-boundary.test.mjs` acrescenta doze testes para montagem DOM, ícones, miniaturas, cache, rótulos, indicadores de móveis e fronteiras das camadas.
+- Sem mudança de compra, economia, save, RNG, simulação, gestos mobile ou arte do jogo.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
