@@ -448,6 +448,15 @@
 - Testes de integração anteriores passam a verificar os métodos nas novas camadas, evitando falsas regressões por mudanças de localização.
 - Sem alteração de preços, licenças, calendário, saves, RNG, Canvas, filas ou gestos mobile.
 
+## Quinquagésimo sexto recorte: consoles, equipe e diagnóstico de acesso
+
+- `src/ui/adminServicesConsoles.ts` reúne a apresentação de PlayStation, estado dos funcionários e relatório de acesso ao salão por portas somente-leitura, sem importar regras do motor.
+- A inspeção de rotas mantém sua chamada **sob demanda**, somente quando Administração > Serviços > Acesso está aberta; o overlay no Canvas permanece externo e não foi alterado.
+- As bancadas PlayStation continuam sendo reconstruídas apenas quando sua subpágina está ativa. Botões já registrados para serviços e PS1 são mantidos.
+- `tests/admin-services-consoles-boundary.test.mjs` acrescenta treze testes das abas, preços, estados, medidores, bloqueios e isolamento do motor.
+- A falha legada do teste de licença básica do 55º recorte foi corrigida no commit imediatamente anterior.
+- Nenhuma economia, IA dos clientes, save, RNG, geometria, arte Canvas ou toque mobile foi modificada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

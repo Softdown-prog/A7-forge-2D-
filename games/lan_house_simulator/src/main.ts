@@ -24,7 +24,7 @@ import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
 import {createWindowsLicensePort} from "./application/windowsLicensePort.js";
-import {renderPs1AdminPanel} from "./ui/ps1AdminPanel.js";
+import {renderAdminServicesConsoles} from "./ui/adminServicesConsoles.js";
 import {createShopActionsPort} from "./application/shopActionsPort.js";
 import {installShopControls} from "./ui/shopControls.js";
 import {createNoticeActionsPort} from "./application/noticeActionsPort.js";
@@ -65,7 +65,6 @@ import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyR
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createFinancialAdminOverviewPort} from "./application/financialAdminOverviewPort.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
-import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
@@ -109,7 +108,7 @@ import {renderAdminComputerSections} from "./ui/adminComputerSections.js";
 import {renderAdminGpuLicenseSections} from "./ui/adminGpuLicenseSections.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
-import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
+import {renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
 import {stationOccupied,type LcdId} from "./sim/computerModels.js";
 import {createLcdMonitorsPort} from "./application/lcdMonitorsPort.js";
 import {renderLcdMonitorsPanel} from "./ui/lcdMonitorsPanel.js";
@@ -825,17 +824,14 @@ function renderUI(liveOnly=false):void {
    gpuGames:gpuGamesCatalogPort,downloads:gpuDownloadMetersPort,
    setText,doc:document,sync:syncPanelChildren
   });
-  if(activeAdminTab==="consoles")renderPs1AdminPanel(ps1AdminPort,{
-   showStations:adminOpen&&managementPanels.active("consoles","stations"),
-   setText,money
+  renderAdminServicesConsoles({
+   consolesTab:activeAdminTab==="consoles",
+   servicesTab:activeAdminTab==="services",
+   showPs1Stations:()=>adminOpen&&managementPanels.active("consoles","stations"),
+   showServiceAccess:()=>adminOpen&&managementPanels.active("services","access"),
+   accessSnapshot:()=>serviceAccessStatusSnapshot(inspectServiceAccess(!liveOnly)),
+   ps1:ps1AdminPort,staff:staffStatusPort,setText,money,doc:document
   });
-  if(activeAdminTab==="services"){
-  renderStaffStatusPanel(staffStatusPort.snapshot(),setText,document);
-  if(adminOpen&&activeAdminTab==="services"&&managementPanels.active("services","access")){
-   const issues=inspectServiceAccess(!liveOnly);
-   renderServiceAccessStatus(serviceAccessStatusSnapshot(issues),setText,document);
-  }
-  }
   renderAdminFinanceActivity({
    overview:financialAdminOverview,monthly:monthlyFinancePort,promotion:promotionStatusPort,
    financeTab:activeAdminTab==="finance",setText,doc:document
