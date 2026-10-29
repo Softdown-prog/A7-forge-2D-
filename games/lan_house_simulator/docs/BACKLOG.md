@@ -7,6 +7,7 @@
 ## Painel atual de execução
 
 ### Entregas consolidadas
+- [x] Refatoração arquitetural consolidada: bootstrap, sessão ativa, portas de aplicação, painéis sem `GameState`, loop e Canvas separados. Ver [arquitetura final](ui-engine-boundary.md) e [validações](architecture-refactor-report.md). Teste em aparelho físico permanece pendente.
 - [x] Jogo HTML5/TypeScript/Canvas, economia, fluxo dos clientes, expansões, equipamentos, eventos e saves.
 - [x] Caminhada aprovada: passada orientada pela distância real percorrida, poses isométricas e cache coerente (PR #36).
 - [x] Auditoria de lotação, fechamento às 22h e recuperação de save durante circulação; manter regressões.
