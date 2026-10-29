@@ -1,4 +1,4 @@
-/** Read-only summary of the existing mail window and unread count. */
+/** Read-only projection of the unread mail badge and visibility. */
 import type {GameState} from "../sim/types.js";
 import {unreadNotices} from "../sim/notices.js";
 
