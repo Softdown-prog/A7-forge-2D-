@@ -517,6 +517,14 @@
 - `tests/sound-preference-port-boundary.test.mjs` acrescenta quatorze testes de estado padrão, persistência, exceções de armazenamento e isolamento entre saves e UI.
 - Nenhum outro controle, áudio, volume, formato de save, RNG, simulação ou evento de toque foi alterado.
 
+## Sexagésimo quarto recorte: teclado e painel de clima na inicialização
+
+- `src/ui/runtimeInteractionBindings.ts` instala os eventos do painel expandido de clima/calendário e da tecla `Escape`. Nenhuma importação de motor ou armazenamento é feita na interface.
+- Mantida a precedência anterior de `Escape`: editor aberto → fechar editor; senão, posicionamento ativo → cancelar colocação; caso contrário → menu, apenas durante a partida.
+- Mantida a atualização imediata do painel ao expandir, consultando o estado atual da partida; fechamento não gera renderização extra, e o HUD continua controlado pelo `frameSchedule`.
+- `tests/runtime-interaction-bindings-boundary.test.mjs` acrescenta dezessete testes de ordem, callbacks, estado dinâmico, ausência de painel e isolamento.
+- Nenhuma lógica de simulação, som, persistência, RNG, economia, Canvas ou limiar de gesto mobile foi modificada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

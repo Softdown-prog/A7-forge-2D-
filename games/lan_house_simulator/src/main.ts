@@ -38,6 +38,7 @@ import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
+import {installRuntimeInteractionBindings} from "./ui/runtimeInteractionBindings.js";
 import {createDeskPricingPort} from "./application/deskPricingPort.js";
 import {createCommerceNetworkPort} from "./application/commerceNetworkPort.js";
 import {renderCommerceNetworkPanel} from "./ui/commerceNetworkPanel.js";
@@ -266,13 +267,16 @@ installMenuControls(menuElements,{
  confirm:message=>window.confirm(message),
  setSound:enabled=>soundPreference.update(enabled,soundscape)
 });
-// Populate the expanded view immediately on touch or keyboard, rather than
-// waiting for the next throttled HUD refresh.
-document.getElementById("time-weather-panel")?.addEventListener("toggle",()=>{
- const panel=document.getElementById("time-weather-panel");
- if(panel?.hasAttribute("open"))renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup);
+// Immediate calendar refresh and Escape priority stay in the DOM adapter.
+installRuntimeInteractionBindings(document,{
+ playing:()=>isPlaying,
+ editorOpen:()=>layoutEditor.active,
+ closeEditor:()=>layoutEditor.close(),
+ editingPlacement:()=>!!(placingKind||relocating||wallMode||installingAnnexPc),
+ stopPlacement:()=>stopPlacement(),
+ showMenu:()=>showMenu(),
+ refreshTimeWeather:()=>renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup)
 });
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&isPlaying){if(layoutEditor.active)layoutEditor.close();else if(placingKind||relocating||wallMode||installingAnnexPc)stopPlacement();else showMenu();}});
 let shopOpen=false;
 let placingKind:FurnitureKind|null=null;
 let wallMode:"build"|"remove"|"door"|null=null;
