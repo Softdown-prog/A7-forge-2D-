@@ -100,11 +100,18 @@ try{
   }
   window.__lhsShowcaseFrame=frame;
   window.__lhsShowcaseDone=false;
+  window.__lhsShowcaseError=null;
   window.__lhsShowcaseStart=()=>{
    const start=performance.now();
+   let lastPaint=-Infinity;
    function loop(now){
     const at=Math.min(total,(now-start)/1000);
-    frame(at);
+    // Still record 20 real seconds; throttle expensive Canvas paint to ~10 FPS.
+    if(at-lastPaint>=.1||at>=total){
+     try{frame(at);}
+     catch(error){window.__lhsShowcaseError=String(error?.stack??error);return;}
+     lastPaint=at;
+    }
     if(at>=total){window.__lhsShowcaseDone=true;return;}
     requestAnimationFrame(loop);
    }
@@ -118,9 +125,11 @@ try{
   await page.locator("canvas").screenshot({path:resolve(output,"ps1_tv_"+titles[i]+".png")});
  }
  await page.evaluate(()=>window.__lhsShowcaseStart());
- // Video capture and detailed Canvas painting can slow Chromium on shared CI runners.
- // Keep the completion assertion; only allow more real time for the 20s showcase.
- await page.waitForFunction(()=>window.__lhsShowcaseDone===true,null,{timeout:90000});
+ // Poll independent of requestAnimationFrame and report an exception immediately.
+ await page.waitForFunction(()=>window.__lhsShowcaseDone===true||window.__lhsShowcaseError!==null,
+  null,{timeout:90000,polling:250});
+ const renderError=await page.evaluate(()=>window.__lhsShowcaseError);
+ if(renderError)throw Error("Falha no showcase PS1: "+renderError);
  if(errors.length)throw Error("Erros no showcase: "+errors.join(" | "));
  const path=await page.video().path();
  await context.close();context=null;
