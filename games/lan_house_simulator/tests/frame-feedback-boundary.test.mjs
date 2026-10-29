@@ -83,8 +83,11 @@ test("aplicação não depende de DOM ou mixer, main preserva a ordem de efeitos
  assert.doesNotMatch(module,/from\s*["']\.\.\/(?:audio|ui|render)\//);
  assert.doesNotMatch(module,/\b(document|window|CanvasRenderingContext2D|Soundscape|HTMLAudioElement)\b/);
  assert.match(main,/createFrameFeedbackPort\(\(\)=>game,soundscape/);
+ const coordinator=readFileSync(new URL("application/frameEventDispatch.ts",root),"utf8");
+ assert.match(main,/dispatchFrameEvents\(\{/);
+ assert.match(main,/feedback:frameFeedback/);
  for(const name of ["payments","sales","prints","keyboards","speech"])
-  assert.match(main,new RegExp("frameFeedback\\."+name+"\\(isPlaying\\)"));
+  assert.match(coordinator,new RegExp("options\\.feedback\\."+name+"\\(options\\.playing\\)"));
  assert.match(main,/consumeNewMail\(knownMailIds,game\.notices\)/);
  assert.match(main,/if\(game\.served>previousServed\)/);
  assert.match(main,/if\(game\.purchases>previousPurchases\)/);

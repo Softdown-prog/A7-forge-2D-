@@ -56,7 +56,9 @@ test("interface dispara após entregar carta; recomeçar e importar redefinem ba
  const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const sound=readFileSync(resolve(root,"src/audio/soundscape.ts"),"utf8");
  assert.ok(main.indexOf("consumeNewMail(knownMailIds,game.notices)")>main.indexOf("stepGame(game,dt*4.0)"));
- assert.match(main,/if\(arrivedMail>0&&!document\.hidden\)soundscape\.mail\(\)/);
+ const coordinator=readFileSync(resolve(root,"src/application/frameEventDispatch.ts"),"utf8");
+ assert.match(main,/notifyMail:\(\)=>soundscape\.mail\(\)/);
+ assert.match(coordinator,/if\(arrivedMail>0&&!options\.isDocumentHidden\(\)\)options\.notifyMail\(\)/);
  assert.ok((main.match(/resetMailAudioBaseline\(\)/g)||[]).length>=5);
  assert.match(sound,/mail:"\.\/assets\/audio\/mail_notification_01\.ogg"/);
 });

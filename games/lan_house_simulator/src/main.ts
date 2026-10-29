@@ -58,6 +58,7 @@ import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
 import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
+import {dispatchFrameEvents} from "./application/frameEventDispatch.js";
 import {SHOP_CATALOG,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {WALL_COST,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
@@ -867,16 +868,16 @@ function frame(timestamp:number):void {
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
   if(advanceSimulation)stepGame(game,dt*4.0);
-  // Detect new mail from every delivery path, not from opening the envelope.
-  const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
-  if(arrivedMail>0&&!document.hidden)soundscape.mail();
-  frameFeedback.payments(isPlaying);
-  if(game.served>previousServed)previousServed=game.served;
-  frameFeedback.sales(isPlaying);
-  frameFeedback.prints(isPlaying);
-  frameFeedback.keyboards(isPlaying);
-  if(game.purchases>previousPurchases)previousPurchases=game.purchases;
-  frameFeedback.speech(isPlaying);
+  // Detect new mail after advancing the simulation; effect ordering is now in application.
+  dispatchFrameEvents({
+   playing:isPlaying,
+   countNewMail:()=>consumeNewMail(knownMailIds,game.notices),
+   isDocumentHidden:()=>document.hidden,
+   notifyMail:()=>soundscape.mail(),
+   feedback:frameFeedback,
+   updateServed:()=>{if(game.served>previousServed)previousServed=game.served;},
+   updatePurchases:()=>{if(game.purchases>previousPurchases)previousPurchases=game.purchases;}
+  });
   const paintScene=frameSchedule.scene(timestamp,{
    playing:isPlaying,accountOpen,visible:sceneVisible,hidden:document.hidden,
    adminOpen,shopOpen,noticesOpen,coarse:coarsePointer.matches

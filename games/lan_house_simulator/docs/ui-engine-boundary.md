@@ -466,6 +466,15 @@
 - O recorte anterior (56º) teve worker pool e deploy Cloudflare aprovados.
 - Não foram modificados os cálculos da simulação, cliente, economia, save, áudio, RNG, geometria ou gestos touch.
 
+## Quinquagésimo oitavo recorte: notificações e efeitos do frame
+
+- `src/application/frameEventDispatch.ts` coordena a ordem já existente entre cartas novas, áudio de correio, pagamentos, atualizações dos totais de clientes, vendas, impressão, teclado, compras e balões de fala.
+- O módulo não importa DOM, motor nem mixer de áudio. A partida ativa, baseline do correio, callbacks de áudio e indicadores de atendimento permanecem no bootstrap.
+- A chegada de cartas continua sendo verificada **depois** de `stepGame`, somente durante a partida; não toca notificação se o documento estiver oculto, mas continua registrando IDs novos.
+- `tests/frame-event-dispatch-boundary.test.mjs` acrescenta quatorze cenários de ordem, filtros, estado, continuidade após novo frame e tratamento de erros.
+- Atualizados testes legados de áudio de correio e feedback que antes exigiam chamadas diretas no `main.ts`.
+- Preservados os limites de popups e o consumo de filas em `frameFeedbackPort`, os sons e suas frequências originais, o multiplicador de tempo, os saves, Canvas, RNG e controles mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
