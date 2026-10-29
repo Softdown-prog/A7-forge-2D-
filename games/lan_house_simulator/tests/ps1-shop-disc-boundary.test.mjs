@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -133,14 +134,13 @@ test("UI não conhece sim; a compra ainda é delegada e o main usa a porta",()=>
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/ps1ShopDiscPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/ps1ShopDiscCatalog.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.match(main,/createPs1ShopDiscPort\(\(\)=>game\)/);
- assert.match(main,/discs:ps1ShopDiscPort/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createPs1ShopDiscPort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/discs:ps1ShopDiscPort/);
  assert.match(catalog,/renderPs1ShopDiscCatalog\(options\.host,options\.discs,options\.currentCategory\(\)==="consoles",options\.doc\)/);
- assert.match(main,/installShopControls\(shopCatalog,createShopActionsPort\(\(\)=>game\)/);
- assert.doesNotMatch(main,/\bps1DiscPrice\(|\bps1DiscCopies\(/);
+ assertSourceCall("ui/runtimeControls.ts","installShopControls",["shopCatalog","ports.shopActions"]);
+ assertCompositionAdaptersExclude(/\bps1DiscPrice\(|\bps1DiscCopies\(/);
 });

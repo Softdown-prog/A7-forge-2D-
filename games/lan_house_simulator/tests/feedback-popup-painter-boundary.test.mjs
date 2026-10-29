@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -164,10 +165,9 @@ test("exceção do Canvas não é ignorada e não redesenha camadas posteriores"
 test("módulo de renderização não conhece o motor nem acessa o navegador",()=>{
  const root=new URL("../src/",import.meta.url);
  const src=readFileSync(new URL("render/feedbackPopupPainter.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(src,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(src,/\b(GameState|stepGame|localStorage|document|window|requestAnimationFrame|Soundscape)\b/);
- assert.match(main,/paintFeedbackPopups\(view!,\(\)=>cameraForGame\(game\),popupQueues,dt,paintScene\)/);
- assert.match(main,/createFrameFeedbackPort\(\(\)=>game,soundscape,popupQueues\)/);
- assert.doesNotMatch(main,/function paintPayments\(/);
+ assertSourceCall("render/gameScene.ts","paintFeedbackPopups",["view","()=>cameraForGame(source())","popupQueues","dt","visible"]);
+ assert.match(sourceModule("application/gameFramePort.ts"),/createFrameFeedbackPort\(getState,audio,popupQueues\)/);
+ assertCompositionAdaptersExclude(/function paintPayments\(/);
 });

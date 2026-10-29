@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,statSync} from "node:fs";
@@ -53,12 +54,12 @@ test("volume é intermediário; áudio desabilitado e cooldown funcionam",()=>{
 });
 test("interface dispara após entregar carta; recomeçar e importar redefinem baseline",()=>{
  const root=resolve(import.meta.dirname,"..");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
+
  const sound=readFileSync(resolve(root,"src/audio/soundscape.ts"),"utf8");
- assert.ok(main.indexOf("consumeNewMail(knownMailIds,game.notices)")>main.indexOf("stepGame(game,dt*4.0)"));
+ assertCallsInOrder("ui/runtimeLoop.ts",["frameSimulation.run","framePort.dispatch"]);
  const coordinator=readFileSync(resolve(root,"src/application/frameEventDispatch.ts"),"utf8");
- assert.match(main,/notifyMail:\(\)=>soundscape\.mail\(\)/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/notifyMail:\(\)=>audio\.mail\(\)/);
  assert.match(coordinator,/if\(arrivedMail>0&&!options\.isDocumentHidden\(\)\)options\.notifyMail\(\)/);
- assert.ok((main.match(/resetMailAudioBaseline\(\)/g)||[]).length>=5);
+ assertSourceCall("application/gameApplication.ts","frame.reset");assertSourceCall("application/gameFramePort.ts","mailBaseline",["getState().notices"]);
  assert.match(sound,/mail:"\.\/assets\/audio\/mail_notification_01\.ogg"/);
 });

@@ -1,10 +1,8 @@
-export {gameYear,INTERNET_ERAS,WINDOWS_ERAS,WindowsEdition,installedWindows,windowsLicenseCost,internetUnlockYear} from "./eraCatalog.js";
-import {gameYear,INTERNET_ERAS,WINDOWS_ERAS,WindowsEdition,installedWindows,windowsLicenseCost,internetUnlockYear} from "./eraCatalog.js";
-import type {GameState,Result} from "./types.js";
-import {stationUpgradeIssue} from "./stationPower.js";
-import {DAY_MINUTES} from "./types.js";
-import {GAME_LAST_YEAR,GAME_FIRST_YEAR,DAYS_PER_YEAR} from "./mailCalendar.js";
-import {windowsHardwareIssues} from "./hardware.js";
+export { gameYear,installedWindows,INTERNET_ERAS,internetUnlockYear,WINDOWS_ERAS,WindowsEdition,windowsLicenseCost } from "./eraCatalog.js";
+import { gameYear,installedWindows,WINDOWS_ERAS,WindowsEdition } from "./eraCatalog.js";
+import { windowsHardwareIssues } from "./hardware.js";
+import { stationUpgradeIssue } from "./stationPower.js";
+import type { GameState,Result } from "./types.js";
 export function licenseWindows(s:GameState,index:number,edition:WindowsEdition):Result{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"PC inexistente."};

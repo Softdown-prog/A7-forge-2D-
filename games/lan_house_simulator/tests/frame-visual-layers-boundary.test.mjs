@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -79,7 +80,6 @@ test("callbacks podem consultar save importado sem o coordenador reter estado",(
 test("coordenador não importa motor, áudio, renderer nem APIs de browser",()=>{
  const root=new URL("../src/",import.meta.url);
  const module=readFileSync(new URL("ui/frameVisualLayers.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(module,/from\s*["']\.\.\/(?:sim|audio|render)\//);
  assert.doesNotMatch(module,/\b(GameState|stepGame|requestAnimationFrame|document|window|CanvasRenderingContext2D|addEventListener)\b/);
  const presentation=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
@@ -88,12 +88,12 @@ test("coordenador não importa motor, áudio, renderer nem APIs de browser",()=>
  assert.match(presentation,/schedule.menu\(input.timestamp,/);
  assert.match(presentation,/schedule.menuPainted\(input.timestamp\)/);
  assert.match(presentation,/schedule.hud\(input.timestamp,/);
- assert.match(main,/createFramePresentationCoordinator\(frameSchedule\)/);
- assert.match(main,/framePresentation.render\(\{/);
- assert.match(main,/frameSimulation\.run\(\{/);
- assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/createFramePresentationCoordinator\(frameSchedule\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/framePresentation.render\(\{/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
+ assertSourceCall("ui/runtimeSessionController.ts","installPageSaveLifecycle",["{win:options.window,doc:document,every:(callback,ms)=>options.window.setInterval(callback,ms),save}"]);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
- assert.match(main,/requestAnimationFrame\(frame\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/requestAnimationFrame\(frame\)/);
 });

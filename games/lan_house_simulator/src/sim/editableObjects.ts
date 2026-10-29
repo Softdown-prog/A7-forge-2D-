@@ -1,15 +1,13 @@
-export {EditableObject,builtPosters,fixedLayoutObjects,editableObjects,objectCorners,objectRect,pointInsideObject,objectTouchesCustomer,layoutGoals,wallCutsObject,layoutPlacementIssue} from "./layoutGeometry.js";
-import {EditableObject,builtPosters,fixedLayoutObjects,editableObjects,objectCorners,objectRect,pointInsideObject,objectTouchesCustomer,layoutGoals,wallCutsObject,layoutPlacementIssue} from "./layoutGeometry.js";
-import type {GameState,Point,Result} from "./types.js";
-import {pcCount,pcPosition,entrance} from "./simulationState.js";
-import {placedObject,turnPoint,counterPoint,vendingMachines,vendingApproach,purchaseApproach,type Rotation} from "./layout.js";
-import {roomBounds} from "./room.js";
-import {computerSeat,counterQueue} from "./route.js";
-import {counterQueueSlot,counterQueueCustomers,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
-import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
-import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
-import {furnitureLocations,furnitureSlots} from "./furnitureLayout.js";
-import {removeFurniture} from "./shop.js";
+export { builtPosters,EditableObject,editableObjects,fixedLayoutObjects,layoutGoals,layoutPlacementIssue,objectCorners,objectRect,objectTouchesCustomer,pointInsideObject,wallCutsObject } from "./layoutGeometry.js";
+import { counterQueueCustomers,counterQueueSlot } from "./checkoutQueue.js";
+import { furnitureLocations,furnitureSlots } from "./furnitureLayout.js";
+import { purchaseApproach,type Rotation } from "./layout.js";
+import { builtPosters,editableObjects,fixedLayoutObjects,layoutGoals,layoutPlacementIssue,objectTouchesCustomer } from "./layoutGeometry.js";
+import { navigableRoute,routesForCurrentCustomers } from "./navigation.js";
+import { activeRetailQueuesReachable,refreshRetailQueues } from "./retailQueue.js";
+import { removeFurniture } from "./shop.js";
+import { entrance } from "./simulationState.js";
+import type { GameState,Point,Result } from "./types.js";
 
 export function validateObjectPlacements(s:GameState):boolean{
  if(s.removedBuiltPosters!==undefined&&(!Array.isArray(s.removedBuiltPosters)||s.removedBuiltPosters.length>7||new Set(s.removedBuiltPosters).size!==s.removedBuiltPosters.length||!s.removedBuiltPosters.every(i=>Number.isInteger(i)&&i>=0&&i<7)))return false;

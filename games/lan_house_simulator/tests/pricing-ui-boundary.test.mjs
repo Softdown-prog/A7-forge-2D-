@@ -1,3 +1,4 @@
+import {assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -85,10 +86,9 @@ test("o controller de UI conhece so a porta, e o main nao altera precos diretame
  const root=new URL("../src/",import.meta.url);
  const controller=readFileSync(new URL("ui/pricingControls.ts",root),"utf8");
  const port=readFileSync(new URL("application/pricingPort.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(controller,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(controller,/from\s*["']\.\.\/render\//);
  assert.doesNotMatch(port,/\bdocument\b|\bwindow\b|\bHTMLElement\b/);
- assert.match(main,/installPricingControls\(createPricingPort\(\(\)=>game\)/);
- assert.doesNotMatch(main,/\b(setHourlyPrice|setPrintPrice|setProductPrice|setDiscCopyPrice|setPs1HourlyPrice)\s*\(/);
+ assertSourceCall("ui/runtimeControls.ts","installPricingControls",["ports.pricingPort"]);
+ assertCompositionAdaptersExclude(/\b(setHourlyPrice|setPrintPrice|setProductPrice|setDiscCopyPrice|setPs1HourlyPrice)\s*\(/);
 });

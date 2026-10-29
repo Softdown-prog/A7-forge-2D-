@@ -15,7 +15,7 @@ import {complaintLine} from "./customerDialogue.js";
 import {recordCustomerFeedback} from "./customerFeedback.js";
 import {recordPaidSession} from "./stationAccounting.js";
 import {ps1Seat,ps1SeatApproach,ps1OpenSeat,ps1SessionPrice} from "./ps1.js";
-import {gpuGameSpec,gpuGamePlayableOnPc,gpuGameSessionPrice,preferredGpuGame} from "./gpuGames.js";
+import {gpuGameSpec,gpuGamePlayableOnPc,gpuGameSessionPrice} from "./gpuGames.js";
 import {recordGpuGameSession} from "./gpuDemand.js";
 import {pcCount,pcPosition,addLog,CLOSING_START_MINUTE,SESSION_FINISH_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel} from "./customerMotion.js";

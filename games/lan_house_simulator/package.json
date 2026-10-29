@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "forge:ps1": "node scripts/render_ps1_scene.mjs out/forge-ps1",
-    "test": "npm run build && node --test tests/*.test.mjs",
+    "test": "npm run build && tsc -p tsconfig.engine.json && node --test tests/*.test.mjs",
     "serve": "node scripts/serve.mjs",
     "audit": "node scripts/audit.mjs",
     "audit:closing": "npm run build && node scripts/verify_closing_circulation.mjs",
@@ -20,7 +20,8 @@
     "audit:promotions": "npm run build && LHS_PROMOTION_PRICING_AUDIT=1 node --test tests/historical-promotion-pricing-roi.test.mjs",
     "audit:staged-hardware": "npm run build && LHS_STAGED_HARDWARE_AUDIT=1 node --test tests/staged-hardware-roi.test.mjs",
     "audit:gpu-licenses": "npm run build && LHS_GPU_LICENSE_AUDIT=1 node --test tests/gpu-license-campaign.test.mjs",
-    "audit:gpu-pricing": "npm run build && LHS_GPU_PRICING_AUDIT=1 node --test tests/gpu-pricing-campaign.test.mjs"
+    "audit:gpu-pricing": "npm run build && LHS_GPU_PRICING_AUDIT=1 node --test tests/gpu-pricing-campaign.test.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.engine.json"
   },
   "devDependencies": {
     "typescript": "5.9.3"

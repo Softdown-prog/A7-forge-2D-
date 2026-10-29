@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
@@ -161,7 +162,6 @@ test("panfletagem acompanha IPCA sem criar visitantes ou pagamentos",()=>{
 });
 test("interface de divulgação exibe valor cotado, não constante clássica",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
- const main=readFileSync(resolve(root,"src","main.ts"),"utf8");
  const application=readFileSync(resolve(root,"src","application","promotionStatusPort.ts"),"utf8");
  const ui=readFileSync(resolve(root,"src","ui","promotionStatusPanel.ts"),"utf8");
  assert.ok(application.includes("promotionCost(state)"));
@@ -170,7 +170,7 @@ test("interface de divulgação exibe valor cotado, não constante clássica",()
  assert.ok(ui.includes('setText("promotion-description"'));
  assert.ok(ui.includes("#launch-promotion"));
  const sections=readFileSync(resolve(root,"src","ui","adminFinanceSections.ts"),"utf8");
- assert.ok(main.includes("renderAdminFinanceActivity({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceActivity({"));
  assert.ok(sections.includes("renderPromotionStatus(options.promotion.snapshot(),options.setText,options.doc)"));
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  assert.ok(html.includes('id="promotion-description"'));

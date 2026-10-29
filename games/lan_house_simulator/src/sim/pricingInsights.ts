@@ -2,8 +2,7 @@ import type {GameState} from "./types.js";
 import {customerSatisfactionDelta,demandFactor,energyCostPerMinute,sessionRevenue} from "./economy.js";
 import {gameYear} from "./eraCatalog.js";
 import {DAY_MINUTES} from "./types.js";
-import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,
- normalizedHourlyPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";
+import {allowableHourlyPrice,normalizedHourlyPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";
 /** Informação do motor para a UI: não altera renda, clientes, RNG ou estado. */
 export function hourlyPriceInsight(s:Pick<GameState,"pricePerHour"|"reputation"|"weather"|"totalMinutes"|"offlineUntil">):{
  relativeDemandPercent:number;

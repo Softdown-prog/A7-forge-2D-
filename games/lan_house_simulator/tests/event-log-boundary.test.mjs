@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -72,14 +73,13 @@ test("UI não importa motor nem mexe no áudio; main mantém invalidatório de D
  const base=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/eventLogPort.ts",base),"utf8");
  const ui=readFileSync(new URL("ui/eventLogPanel.ts",base),"utf8");
- const main=readFileSync(new URL("main.ts",base),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createEventLogPort(()=>game)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createEventLogPort(getState)"));
  const refreshed=readFileSync(new URL("ui/eventLogRefresh.ts",base),"utf8");
- assert.ok(main.includes("createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup))"));
- assert.ok(main.includes("eventLogRefresh.refresh()"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup))"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("eventLogRefresh.refresh()"));
  assert.ok(refreshed.includes("value.signature===lastSignature"));
  assert.ok(refreshed.indexOf("render(value)")<refreshed.indexOf("lastSignature=value.signature"));
 });

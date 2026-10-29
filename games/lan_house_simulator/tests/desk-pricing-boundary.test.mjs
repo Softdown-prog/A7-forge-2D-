@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -97,16 +98,15 @@ test("porta sem DOM e apresentação sem dependência de simulação",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/deskPricingPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/deskPricingPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createDeskPricingPort(()=>game)"));
- assert.ok(main.includes('isActive:page=>managementPanels.active("prices",page)'));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createDeskPricingPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("isActive:page=>managementPanels.active(\"prices\",page)"));
  assert.ok(ui.includes('options.isActive("discs")'));
  assert.ok(ui.includes('options.isActive("printing")'));
- assert.ok(main.includes("renderDeskServicePanels(deskPricingPort,{"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderDeskServicePanels(deskPricingPort,{"));
  assert.ok(ui.includes("renderDiscPricing(options.discControls,view,options.setText,options.iconMarkup,options.doc,options.sync)"));
  assert.ok(ui.includes("renderPrintPricing(options.printControls,view,options.setText,options.doc,options.sync)"));
- assert.doesNotMatch(main,/\bprintEconomy\(|\bdiscEconomy\(/);
+ assertCompositionAdaptersExclude(/\bprintEconomy\(|\bdiscEconomy\(/);
 });

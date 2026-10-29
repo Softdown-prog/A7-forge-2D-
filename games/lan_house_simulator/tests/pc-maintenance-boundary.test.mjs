@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -95,14 +96,13 @@ test("sem controle substituto a atualização não lança exceções",()=>{
 test("separação não desloca motor nem listeners, main mantém invalidatório e saves",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/pcMaintenancePanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminComputerSections.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes('panelChanged("computers"'));
- assert.ok(main.includes("renderAdminComputerSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("panelChanged(\"computers\""));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminComputerSections({"));
  assert.ok(sections.includes("renderPcMaintenancePanel(host"));
- assert.ok(main.includes("renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page)"));
- assert.ok(main.includes("renderLcdMonitorsPanel(host,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document)"));
- assert.ok(main.includes("installStationControls("));
+ assertSourceCall("ui/gamePanels.ts","renderHardwarePanel",["hardwarePanelPort.snapshot(state.selection.selectedLcdPc,state.selection.selectedHardwareTab,page)"]);
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderLcdMonitorsPanel(host,lcdMonitorsPort.snapshot(state.selection.selectedLcdPc),lcdPreview,document)"));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installStationControls("));
 });

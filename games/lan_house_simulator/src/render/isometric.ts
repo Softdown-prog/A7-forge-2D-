@@ -38,7 +38,7 @@ export function polygon(ctx: CanvasRenderingContext2D, vertices: Point[], fill: 
 export function cuboid(ctx: CanvasRenderingContext2D, camera: Projection, x: number, y: number,
   w: number, d: number, h: number, colors: [string, string, string]): void {
   if(camera.rotation){raisedCuboid(ctx,camera,x,y,w,d,0,h,colors);return;}
-  const a=iso({x,y},camera), b=iso({x:x+w,y},camera), c=iso({x:x+w,y:y+d},camera), e=iso({x,y:y+d},camera);
+  const b=iso({x:x+w,y},camera), c=iso({x:x+w,y:y+d},camera), e=iso({x,y:y+d},camera);
   const at=iso({x,y},camera,h), bt=iso({x:x+w,y},camera,h),
     ct=iso({x:x+w,y:y+d},camera,h), et=iso({x,y:y+d},camera,h);
   polygon(ctx,[e,c,ct,et],colors[1],"#273046");

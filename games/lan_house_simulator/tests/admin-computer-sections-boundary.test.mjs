@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -117,14 +118,13 @@ test("seleção da estação é consultada pelo callback após construir",()=>{
 });
 test("UI não importa o motor e o main mantém os controladores existentes",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/adminComputerSections.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|save\(|addEventListener|localStorage/);
- assert.match(main,/renderAdminComputerSections\(\{/);
- assert.match(main,/maintenanceChanged:\(\)=>panelChanged\("computers",/);
- assert.match(main,/renderHardwarePanel\(game,selectedLcdPc,year,selectedHardwareTab,page\)/);
- assert.match(main,/renderLcdMonitorsPanel\(host,lcdMonitorsPort.snapshot\(selectedLcdPc\),lcdPreview,document\)/);
- assert.match(main,/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
- assert.match(main,/installStationControls\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminComputerSections\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/maintenanceChanged:\(\)=>panelChanged\("computers",/);
+ assertSourceCall("ui/gamePanels.ts","renderHardwarePanel",["hardwarePanelPort.snapshot(state.selection.selectedLcdPc,state.selection.selectedHardwareTab,page)"]);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderLcdMonitorsPanel\(host,lcdMonitorsPort.snapshot\(state\.selection\.selectedLcdPc\),lcdPreview,document\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installStationControls\(/);
 });

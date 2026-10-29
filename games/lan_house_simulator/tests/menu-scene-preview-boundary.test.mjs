@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -85,19 +86,18 @@ test("falha do desenho inicial não interfere no save existente",()=>{
 });
 test("ordem do loop preserva gate de menu e confirmação somente após desenho",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
- assert.match(main,/createMenuScenePreview\(\)/);
- assert.match(main,/createMenuPreviewPainter\(elapsed=>menuRenderer\?\.draw\(menuPreview,elapsed\)\)/);
- assert.match(main,/menuPreviewPainter\.paintInitial\(\)/);
- assert.match(main,/previewAvailable:menuPreviewPainter\.available\(\)/);
+ assert.match(sourceModule("render/gameScene.ts"),/createMenuScenePreview\(\)/);
+ assert.match(sourceModule("render/gameScene.ts"),/createMenuPreviewPainter\(elapsed=>menuRenderer\?\.draw\(menuPreview,elapsed\)\)/);
+ assert.match(sourceModule("render/gameScene.ts"),/menuPreviewPainter\.paintInitial\(\)/);
+ assertSourceCall("ui/runtimeLoop.ts","scene.menuAvailable");
  const frame=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
- assert.match(main,/paintMenu:painted=>\{if\(menuRenderer\)menuPreviewPainter\.paintFrame\(elapsed,painted\);\}/);
+ assertSourceCall("ui/runtimeLoop.ts","scene.paintMenu",["elapsed","painted"]);assertSourceCall("render/gameScene.ts","menuPreviewPainter.paintFrame",["elapsed","painted"]);
  assert.match(frame,/schedule\.menu\(input\.timestamp,input\.menuFlags\)/);
  assert.match(frame,/input\.paintMenu\(\(\)=>schedule\.menuPainted\(input\.timestamp\)\)/);
 });
 test("módulo de apresentação do menu não importa motor, DOM ou simulação",()=>{
  const root=new URL("../src/",import.meta.url);
- const module=readFileSync(new URL("ui/menuPreviewPainter.ts",root),"utf8");
+ const module=readFileSync(new URL("render/menuPreviewPainter.ts",root),"utf8");
  const app=readFileSync(new URL("application/menuScenePreviewPort.ts",root),"utf8");
  assert.doesNotMatch(module,/from\s*["']\.\.\/(?:sim|application|render|audio)\//);
  assert.doesNotMatch(module,/\b(GameState|document|window|SceneRenderer|requestAnimationFrame|stepGame|localStorage)\b/);

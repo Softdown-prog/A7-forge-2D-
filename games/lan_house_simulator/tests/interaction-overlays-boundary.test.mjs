@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -91,18 +92,14 @@ test("renderizador não modifica saldo, RNG, relógio nem save importado",()=>{
 test("orquestração fica no render; main preserva popups, ordem e controles touch",()=>{
  const root=new URL("../src/",import.meta.url);
  const render=readFileSync(new URL("render/interactionOverlays.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(render,/\b(document|window|addEventListener|requestAnimationFrame|stepGame)\b/);
- assert.match(main,/drawLayoutEditorOverlay\(renderer,game,elapsed/);
- assert.match(main,/drawPlacementInteractionOverlays\(renderer,game/);
- assert.match(main,/paintFeedbackPopups\(view!,\(\)=>cameraForGame\(game\),popupQueues,dt,paintScene\)/);
- const early=main.indexOf("drawLayoutEditorOverlay(renderer,game,elapsed");
- const popups=main.indexOf("paintFeedbackPopups(view!,()=>cameraForGame(game),popupQueues,dt,paintScene)");
- const late=main.indexOf("drawPlacementInteractionOverlays(renderer,game");
- assert.ok(early>=0&&popups>early&&late>popups);
- assert.match(main,/canvas\.addEventListener\("pointermove"/);
- assert.match(main,/canvas\.addEventListener\("click"/);
+ assertSourceCall("render/gameScene.ts","drawLayoutEditorOverlay",["renderer","source()","elapsed","input"]);
+ assertSourceCall("render/gameScene.ts","drawPlacementInteractionOverlays",["renderer","source()","input"]);
+ assertSourceCall("render/gameScene.ts","paintFeedbackPopups",["view","()=>cameraForGame(source())","popupQueues","dt","visible"]);
+ assertCallsInOrder("ui/frameVisualLayers.ts",["layers.drawEditorOverlay","layers.drawEffects","layers.drawPlacementOverlay"]);
+ assert.match(sourceModule("ui/placementController.ts"),/canvas\.addEventListener\("pointermove"/);
+ assert.match(sourceModule("ui/placementController.ts"),/canvas\.addEventListener\("click"/);
  const saveAdapter=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/installPageSaveLifecycle\(\{/);
  assert.match(saveAdapter,/options\.every\(options\.save,8000\)/);
 });

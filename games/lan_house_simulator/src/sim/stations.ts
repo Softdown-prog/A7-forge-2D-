@@ -1,11 +1,10 @@
-export {AnnexComputerSlot,ANNEX_PC_COST,annexComputerSlots,annexComputerPosition,availableAnnexComputers,validAnnexComputers} from "./stationLayout.js";
-import {AnnexComputerSlot,ANNEX_PC_COST,annexComputerSlots,annexComputerPosition,availableAnnexComputers,validAnnexComputers} from "./stationLayout.js";
-import {fixedLayoutObjects,layoutPlacementIssue} from "./layoutGeometry.js";
-import type {GameState,Result} from "./types.js";
-import type {PlacedPoint} from "./layout.js";
-import {computerSeat,counterQueue} from "./route.js";
-import {navigableRoute} from "./navigation.js";
-import {emptyStationAccount} from "./stationAccounting.js";
+export { ANNEX_PC_COST,annexComputerPosition,AnnexComputerSlot,annexComputerSlots,availableAnnexComputers,validAnnexComputers } from "./stationLayout.js";
+import { fixedLayoutObjects,layoutPlacementIssue } from "./layoutGeometry.js";
+import { navigableRoute } from "./navigation.js";
+import { computerSeat,counterQueue } from "./route.js";
+import { emptyStationAccount } from "./stationAccounting.js";
+import { ANNEX_PC_COST,annexComputerSlots,availableAnnexComputers } from "./stationLayout.js";
+import type { GameState,Result } from "./types.js";
 export function installAnnexComputer(s:GameState,slotId:string):Result{
  if(!availableAnnexComputers(s).some(slot=>slot.id===slotId))
    return {ok:false,message:"Posição de PC indisponível nesta ampliação."};

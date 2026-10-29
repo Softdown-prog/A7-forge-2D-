@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -127,14 +128,13 @@ test("categorias inativas mantêm as portas sem chamadas",()=>{
 test("interfaces usam ports; main preserva guardas e não executa compra",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|addEventListener|save\(|localStorage/);
- assert.match(main,/renderAdminGpuLicenseSections\(\{/);
- assert.match(main,/gpuChanged:\(\)=>panelChanged\("gpuPcChoice",/);
- assert.match(main,/windowsChanged:\(\)=>panelChanged\("licensePanel",/);
- assert.match(main,/classicChanged:\(\)=>panelChanged\("eraGamePanel",/);
- assert.match(main,/gpuGamesChanged:\(\)=>panelChanged\("gpuGamePanel",/);
- assert.match(main,/installGameLicensingControls\(/);
- assert.match(main,/installStationControls\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminGpuLicenseSections\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/gpuChanged:\(\)=>panelChanged\("gpuPcChoice",/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/windowsChanged:\(\)=>panelChanged\("licensePanel",/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/classicChanged:\(\)=>panelChanged\("eraGamePanel",/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/gpuGamesChanged:\(\)=>panelChanged\("gpuGamePanel",/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installGameLicensingControls\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installStationControls\(/);
 });

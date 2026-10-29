@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
@@ -91,21 +92,20 @@ test("virada de ano mantém índice das contas do mês encerrado e libera teto d
 });
 test("a interface da nova partida oferece períodos e teto histórico, sem apagar salvar clássico",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  for(const id of ["year-price-ceiling","equipment-price-ceiling","annual-ipca","session-package-prices"])
   assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(main,/newGameForPlayer\(72421,"historical"\)/);
+ assertSourceCall("application/gameApplication.ts","sessionPort.newGame",["72421","mode","options.mailSeed(72421)"]);
   const session=readFileSync(resolve(root,"src/application/gameSessionPort.ts"),"utf8");
-  assert.match(main,/createGameSessionPort\(/);
+  assert.match(sourceModule("application/gameApplication.ts"),/createGameSessionPort\(/);
   assert.match(session,/const fresh=createGame\(seed,mode\)/);
- assert.match(main,/crypto\.getRandomValues/);
+ assert.match(sourceModule("bootstrap/browserServices.ts"),/crypto\.getRandomValues/);
  const pricing=readFileSync(resolve(root,"src/application/hourlyPriceStatusPort.ts"),"utf8");
  const display=readFileSync(resolve(root,"src/ui/hourlyPriceStatusPanel.ts"),"utf8");
  assert.ok(pricing.includes("allowableHourlyPrice(game)"));
  assert.ok(display.includes("session-package-prices")===false);
  const pricingArea=readFileSync(resolve(root,"src/ui/adminPricingSections.ts"),"utf8");
- assert.ok(main.includes("renderAdminPricingSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminPricingSections({"));
  assert.ok(pricingArea.includes("renderSessionPackages(options.hourly.packages,durations,options.doc)"));
  // Save local agora é decodificado em localSave.ts; o estado recuperado
  // passa pelo ajuste de teto (que não altera o modo clássico).

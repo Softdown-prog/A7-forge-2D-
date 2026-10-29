@@ -1,14 +1,14 @@
-export {BIN_SPOTS,binSpots,BinStatus,binStatus,binStates} from "./serviceLayout.js";
-import {BIN_SPOTS,binSpots,BinStatus,binStatus,binStates} from "./serviceLayout.js";
-import {placedObject} from "./layout.js";
-import type {GameState,Result,Point} from "./types.js";
-import {pcCount,pcPosition,entrance} from "./simulationState.js";
-import {workerRoute} from "./workerNavigation.js";
-import {serviceVisitCost} from "./historicalEconomy.js";
-import {employeeHired,accrueEmployeeDay} from "./staff.js";
-import {directionFromDelta,type ActorDirection} from "./direction.js";
-import {canTraverseLocalStep} from "./navigation.js";
-import {technicianWorkPoint,technicianContactPoint,cleanerWorkPoint} from "./staffWorksites.js";
+export { BIN_SPOTS,binSpots,binStates,BinStatus,binStatus } from "./serviceLayout.js";
+export { pcUnderRepair } from "./stationPower.js";
+import { directionFromDelta,type ActorDirection } from "./direction.js";
+import { serviceVisitCost } from "./historicalEconomy.js";
+import { canTraverseLocalStep } from "./navigation.js";
+import { binSpots } from "./serviceLayout.js";
+import { entrance,pcCount,pcPosition } from "./simulationState.js";
+import { accrueEmployeeDay,employeeHired } from "./staff.js";
+import { cleanerWorkPoint,technicianContactPoint,technicianWorkPoint } from "./staffWorksites.js";
+import type { GameState,Point,Result } from "./types.js";
+import { workerRoute } from "./workerNavigation.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean;binIndex?:number}
 export const REPAIR_DURATION=24;
@@ -39,7 +39,6 @@ export function startRepair(s:GameState,pc:number):Result{
  accrueEmployeeDay(s);
  return {ok:true,message:"Técnico chamado para o PC "+(pc+1)+(cost?": -R$ "+cost:": visita coberta pelo contrato")+". Computador interditado até o fim do reparo."};
 }
-export {pcUnderRepair} from "./stationPower.js";
 export function addWaste(s:GameState,amount=1):void{
  if(!Number.isFinite(amount)||amount<=0)return;
  const bins=s.binFill??(s.binFill=[0,0]);

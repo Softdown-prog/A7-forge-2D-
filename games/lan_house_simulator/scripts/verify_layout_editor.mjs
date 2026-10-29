@@ -94,7 +94,14 @@ try{
   const restored=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));
   assert.equal(restored.furniture.poster,0);assert.equal(restored.furniturePlacements.length,0);assert.deepEqual(restored.removedBuiltPosters,[0]);assert.equal(restored.interiorWalls.length,0);assert.equal(restored.interiorDoors.length,0);
   assert.equal(await page.locator('#layout-object option[value="'+decorId+'"]').count(),0);assert.equal(await page.locator('#layout-object option[value="built-poster:0"]').count(),0);
-  assert.deepEqual(errors,[]);results.push({width,zoom,bounds,placement:placed,wallConfirmed:true,wallRemoved:true,doorRemoved:true,decorRemoved:true,removalCancelPreserved:true,errors});await context.close();
+  if(width<700){
+   await page.setViewportSize({width:950,height:width});
+   await page.waitForFunction(()=>document.querySelector("#game").getBoundingClientRect().width>0&&document.documentElement.scrollWidth<=innerWidth+3);
+   assert.equal(await page.locator("#layout-editor").isVisible(),true,"orientation keeps the editor open");
+   await page.setViewportSize({width,height:950});
+   await page.waitForFunction(()=>document.documentElement.scrollWidth<=innerWidth+3);
+  }
+  assert.deepEqual(errors,[]);results.push({width,zoom,bounds,placement:placed,wallConfirmed:true,wallRemoved:true,doorRemoved:true,decorRemoved:true,removalCancelPreserved:true,orientationChecked:width<700,errors});await context.close();
  }
  await writeFile(resolve(output,"layout_ui_validation.json"),JSON.stringify(results,null,2));console.log(JSON.stringify(results));
 }finally{await browser?.close();server.kill();}

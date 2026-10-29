@@ -1,6 +1,6 @@
 import {merchandisePrice,setMerchandisePrice,orderMerchandise,sellMerchandise,quoteOrder,CLASSIC_PRICES,CLASSIC_WHOLESALE,PRODUCTS} from "./merchandise.js";
 import type { GameState, Inventory, Item, Result } from "./types.js";
-import { SESSION_MINUTES } from "./types.js";
+import {SESSION_MINUTES} from "./types.js";
 import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./eraCatalog.js";
 import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
 import {startRepair} from "./services.js";
@@ -185,16 +185,4 @@ export function cloneInventory(stock: Inventory): Inventory {
 export function repairComputer(state:GameState,index:number):Result {
  // Reparo físico agora exige visita do técnico; compatibilidade do comando existente.
  return startRepair(state,index);
-}
-/* old direct repair retired */
-function legacyRepairComputer(state:GameState,index:number):Result {
- const count=Math.max(3,Math.min(3+state.expansionLevel*2,state.installedPcs??(3+state.expansionLevel*2)))+(state.annexPcs?.length??0);
- if(!Number.isInteger(index)||index<0||index>=count)return {ok:false,message:"Computador inexistente."};
- const wear=Math.max(0,Math.min(100,state.pcWear?.[index]??0));
- if(wear<1)return {ok:false,message:"PC "+(index+1)+" não precisa de reparo."};
- const cost=20+Math.ceil(wear*0.7);
- if(state.cash<cost)return {ok:false,message:"Caixa insuficiente para reparar PC "+(index+1)+": R$ "+cost+"."};
- state.cash-=cost;state.expenses+=cost;
- (state.pcWear??=[])[index]=0;
- return {ok:true,message:"PC "+(index+1)+" reparado: -R$ "+cost+"."};
 }

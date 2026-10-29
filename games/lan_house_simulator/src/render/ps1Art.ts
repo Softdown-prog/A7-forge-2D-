@@ -1,7 +1,7 @@
 import type {Point} from "../sim/types.js";
 import type {Ps1DiscId} from "../sim/ps1.js";
 import {drawPs1MiniGame} from "./ps1MiniGames.js";
-import {cuboid,iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
+import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 
 /** Movimento determinístico para a telinha minúscula do CRT.
  * Os valores são normalizados e não dependem de FPS ou da partida. */

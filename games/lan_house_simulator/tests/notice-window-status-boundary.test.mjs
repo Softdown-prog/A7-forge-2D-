@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -71,16 +72,15 @@ test("porta não conhece DOM, painel não conhece motor, ações de correio cont
  const root=new URL("../src/",import.meta.url);
  const port=readFileSync(new URL("application/noticeWindowStatusPort.ts",root),"utf8");
  const panel=readFileSync(new URL("ui/noticeWindowStatusPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(port,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(panel,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(panel,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createNoticeWindowStatusPort(()=>game)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createNoticeWindowStatusPort(getState)"));
  const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
- assert.ok(main.includes("status:noticeWindowStatusPort,inbox:noticeInboxPort"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("status:noticeWindowStatusPort,inbox:noticeInboxPort"));
  assert.ok(refresh.includes("renderNoticeWindowStatus(options.status.snapshot(open),options.doc)"));
  assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
- assert.ok(main.includes('button("open-notices"'));
- assert.ok(main.includes("noticeActions.review()"));
- assert.ok(main.includes("installNoticeControls("));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("button(\"open-notices\""));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("noticeActions.review()"));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installNoticeControls("));
 });

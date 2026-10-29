@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -102,16 +103,15 @@ test("disclosure administrativo conserva o atributo aria-expanded",()=>{
 });
 test("main delega apenas o DOM; UI não altera motor, listeners ou save",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/adminShell.ts",root),"utf8");
  const offerTest=readFileSync(new URL("../tests/shop-catalog-offers-boundary.test.mjs",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|addEventListener|save\(|localStorage|requestAnimationFrame/);
- assert.match(main,/const setText=createVisibleAdminTextWriter\(document\)/);
- assert.match(main,/formatAdminMoney/);
- assert.match(main,/renderAdminWindowVisibility\(admin,adminOpen\)/);
- assert.match(main,/renderShopWindowVisibility\(shop,shopOpen,document\)/);
- assert.match(main,/renderAdminDisclosure\(controls,adminOpen\)/);
- assert.doesNotMatch(main,/const setText=\(id:string,value:string\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/const setText=createVisibleAdminTextWriter\(document\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/formatAdminMoney/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminWindowVisibility\(admin,state\.windows\.adminOpen\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderShopWindowVisibility\(shop,state\.windows\.shopOpen,document\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminDisclosure\(controls,state\.windows\.adminOpen\)/);
+ assertCompositionAdaptersExclude(/const setText=\(id:string,value:string\)/);
  assert.match(offerTest,/x\.game\.expansionLevel=1;x\.game\.installedPcs=3/);
 });

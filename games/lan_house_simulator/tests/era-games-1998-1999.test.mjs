@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -68,16 +69,15 @@ test("modo clássico também desbloqueia, sem GPU; bônus depende de PC licencia
 });
 test("UI mostra dois anos e mantém jogos GPU 2005+",()=>{
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
- const ts=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  const css=readFileSync(new URL("../style.css",import.meta.url),"utf8");
  assert.ok(html.includes('id="era-game-catalog"'));
  assert.ok(html.includes('id="gpu-game-catalog"'));
  const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
- assert.ok(ts.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
  assert.ok(coordinator.includes("renderClassicGamesCatalog(options.eraGamePanel,"));
  const projection=readFileSync(new URL("../src/application/classicGamesCatalogPort.ts",import.meta.url),"utf8");
  assert.ok(projection.includes("quoteEraGame(game,title.id)"));
- assert.ok(ts.includes("installGameLicensingControls("));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installGameLicensingControls("));
  assert.ok(readFileSync(new URL("../src/application/gameLicensingPort.ts",import.meta.url),"utf8").includes("licenseEraGame(getState(),id)"));
  assert.ok(css.includes(".era-game-cover"));
 });

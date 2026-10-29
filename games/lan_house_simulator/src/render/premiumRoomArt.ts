@@ -60,7 +60,6 @@ export function drawPremiumPosterPlate(c:CanvasRenderingContext2D,index:PremiumP
  sky.addColorStop(1,["#ef7999","#d578a9","#df866f"][index]!);
  c.fillStyle=sky;c.fillRect(7,7,82,77);
  c.save();c.beginPath();c.rect(7,7,82,76);c.clip();
- const phase=index*.4;
  for(let i=0;i<18;i++){
   let x=11+((i*31+index*13)%75),y=11+((i*19+index*7)%40);
   rad(x,y,i%5===0?1.05:.48,i%4===0?neon:"#e7f6ff");

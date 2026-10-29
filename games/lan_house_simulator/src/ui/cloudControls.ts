@@ -1,9 +1,6 @@
-import type {GameState} from "../sim/types.js";
-import {parseImportedSave,serializeSave} from "../sim/saveTransfer.js";
-import {COOKIE_COSMETICS,cosmeticsOwned,setVerifiedCosmetics,toggleVerifiedCosmetic,type CookieCosmeticId} from "../sim/premiumCosmetics.js";
-import {vipProductThumbnail} from "./vipProductArt.js";
-import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import {createAccountClient,type AccountClient,type AccountProfile} from "./accountClient.js";
+import type { AccountCosmetic,AccountGamePort,CookieCosmeticId } from "../application/accountGamePort.js";
+import { createAccountClient,type AccountClient,type AccountProfile } from "./accountClient.js";
+import { vipProductThumbnail } from "./vipProductArt.js";
 
 interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
 interface WalletEntry {id:string;type:string;delta:number;itemId:string|null;at:string|null;mode?:string}
@@ -28,8 +25,9 @@ function line(text:string,cls=""):HTMLElement{
  const node=document.createElement("p");node.className=cls;node.textContent=text;return node;
 }
 export function mountCloudControls(
- _anchor:HTMLElement,getState:()=>GameState,restore:(state:GameState)=>void
+ _anchor:HTMLElement,port:AccountGamePort
 ):void{
+ const COOKIE_COSMETICS=port.catalog;
  const dialog=document.createElement("dialog");
  dialog.id="player-account";dialog.className="account-dialog";
  dialog.setAttribute("aria-labelledby","account-heading");
@@ -108,7 +106,7 @@ export function mountCloudControls(
  const donate=find("#account-donate"),cloudState=find("#account-cloud-state");
  let config:CloudConfig|null=null,store:StoreConfig|null=null,client:AccountClient|null=null;
  let account:Account|null=null,revision:string|null|undefined;
- let tab:Tab="summary",loading=false,openOfflineReason="A conexão de conta ainda não está disponível nesta versão.";
+ let loading=false,openOfflineReason="A conexão de conta ainda não está disponível nesta versão.";
  const unequipped=new Set<CookieCosmeticId>();
  const controls=Array.from(dialog.querySelectorAll<HTMLButtonElement>("button"));
  const cosmeticName=(id:string)=>COOKIE_COSMETICS.find(i=>i.id===id)?.name??"Item "+id;
@@ -117,7 +115,6 @@ export function mountCloudControls(
   alert.textContent=message;alert.dataset.kind=kind;
  };
  function switchTab(next:Tab){
-  tab=next;
   for(const section of Array.from(dialog.querySelectorAll<HTMLElement>("[data-account-page]")))
    section.hidden=section.dataset.accountPage!==next;
   for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
@@ -137,12 +134,12 @@ export function mountCloudControls(
  }
  function clearAccount(){
   client?.signOut();account=null;revision=undefined;
-  setVerifiedCosmetics([]);unequipped.clear();
+  port.verifyCosmetics([]);unequipped.clear();
  }
  function synchronizeAccount(next:Account){
   account=next;
-  setVerifiedCosmetics(Array.isArray(next.entitlements)?next.entitlements:[]);
-  for(const id of unequipped)toggleVerifiedCosmetic(id,false);
+  port.verifyCosmetics(Array.isArray(next.entitlements)?next.entitlements:[]);
+  for(const id of unequipped)port.toggleCosmetic(id,false);
   render();
  }
  const refresh=async()=>{
@@ -153,14 +150,14 @@ export function mountCloudControls(
   status("Saldo, itens e movimentações atualizados.","success");
  };
  async function connected(profile:AccountProfile){
-  if(!profile.emailVerified){account=null;setVerifiedCosmetics([]);throw Error("Confirme seu email para acessar os Cookies. Use Minha conta no site para reenviar a confirmação.");}
+  if(!profile.emailVerified){account=null;port.verifyCosmetics([]);throw Error("Confirme seu email para acessar os Cookies. Use Minha conta no site para reenviar a confirmação.");}
   revision=undefined;unequipped.clear();await refresh();authBox.open=false;
  }
  async function api(path:string,body?:object):Promise<unknown>{
   if(!client||!isConfigured())throw Error("Entre na conta primeiro.");
   return client.api(path,body);
  }
- function createCosmeticCard(item:typeof COOKIE_COSMETICS[number],isOwned:boolean){
+ function createCosmeticCard(item:AccountCosmetic,isOwned:boolean){
   const el=document.createElement("article");el.className="account-item";
   const icon=document.createElement("div");
   icon.className="account-item-art";
@@ -180,14 +177,14 @@ export function mountCloudControls(
   const desc=line(item.description,"account-item-description");
   info.append(name,detail,desc);
   const control=document.createElement("div");control.className="account-item-control";
-  const usable=yearFromMinutes(getState().totalMinutes)>=item.unlockYear;
+  const usable=port.year()>=item.unlockYear;
   if(isOwned){
    const label=document.createElement("label");label.className="account-toggle";
    const check=document.createElement("input");check.type="checkbox";
    check.checked=!unequipped.has(item.id);
    check.dataset.premiumCosmetic=item.id;
    check.addEventListener("change",()=>{
-    if(!toggleVerifiedCosmetic(item.id,check.checked)){
+    if(!port.toggleCosmetic(item.id,check.checked)){
      check.checked=false;return;
     }
     if(check.checked)unequipped.delete(item.id);else unequipped.add(item.id);
@@ -274,9 +271,9 @@ export function mountCloudControls(
   revision=result.revision;
   if(!result.save){cloudState.textContent="Não há save nesta posição da nuvem.";return;}
   if(restoreGame){
-   const state=parseImportedSave(JSON.stringify(result.save));
+   const restore=port.prepareRestore(JSON.stringify(result.save));
    if(window.confirm(backup?"Restaurar o backup neste navegador?":"Restaurar a partida da nuvem neste navegador?"))
-    restore(state);
+    restore();
   }
   cloudState.textContent=restoreGame?"Consulta concluída.":"Save encontrado na nuvem; revisão consultada. Restauração não foi automática.";
  }
@@ -308,7 +305,7 @@ export function mountCloudControls(
  find("#account-cloud-save").addEventListener("click",()=>void action(async()=>{
   if(revision===undefined)throw Error("Consulte a nuvem antes de salvar.");
   const result=await api("/v1/saves/main",{expectedRevision:revision,
-   save:JSON.parse(serializeSave(getState()))}) as {revision:string};
+   save:JSON.parse(port.exportSaveText())}) as {revision:string};
   revision=result.revision;
   cloudState.textContent="Save confirmado na nuvem. O save local permanece preservado.";
  }));

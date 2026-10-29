@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -107,12 +108,11 @@ test("UI delega cliques de hardware, GPU e Windows sem acessar o motor",()=>{
 
 test("main nao chama diretamente acoes de hardware; UI nao importa sim",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/stationControls.ts",root),"utf8");
  const application=readFileSync(new URL("application/stationActionsPort.ts",root),"utf8");
- assert.match(main,/installStationControls\(/);
- assert.match(main,/createStationActionsPort\(\(\)=>game\)/);
- assert.doesNotMatch(main,/\b(buyPart|buyPlatform|buyGpu|buyLcdKit|licenseWindows|toggleStationPower|repairComputer|upgradeComputer)\s*\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installStationControls\(/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createStationActionsPort\(getState\)/);
+ assertCompositionAdaptersExclude(/\b(buyPart|buyPlatform|buyGpu|buyLcdKit|licenseWindows|toggleStationPower|repairComputer|upgradeComputer)\s*\(/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/render\//);
  assert.doesNotMatch(application,/\bwindow\b|\bdocument\b|\bHTMLElement\b/);

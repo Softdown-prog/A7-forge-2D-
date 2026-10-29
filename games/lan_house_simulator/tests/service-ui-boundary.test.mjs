@@ -1,3 +1,4 @@
+import {assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -101,10 +102,9 @@ test("UI só conhece porta de aplicação e main não chama as ações extraída
  const root=new URL("../src/",import.meta.url);
  const component=readFileSync(new URL("ui/serviceControls.ts",root),"utf8");
  const port=readFileSync(new URL("application/serviceActionsPort.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(component,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(component,/from\s*["']\.\.\/render\//);
  assert.doesNotMatch(port,/\bdocument\b|\bwindow\b|\bHTMLElement\b/);
- assert.match(main,/installServiceControls\(createServiceActionsPort\(\(\)=>game\)/);
- assert.doesNotMatch(main,/\b(stockItem|contractSupplier|launchPromotion|upgradeInternet|repairInternet|licenseGames|requestCleaning|hireEmployee|dismissEmployee)\s*\(/);
+ assertSourceCall("ui/runtimeControls.ts","installServiceControls",["ports.serviceActions"]);
+ assertCompositionAdaptersExclude(/\b(stockItem|contractSupplier|launchPromotion|upgradeInternet|repairInternet|licenseGames|requestCleaning|hireEmployee|dismissEmployee)\s*\(/);
 });

@@ -1,6 +1,6 @@
 import type {GameState,Point,Result} from "./types.js";
 import {entrance,pcCount,pcPosition} from "./simulationState.js";
-import {hallwayRoute,COUNTER_QUEUE,computerSeat} from "./route.js";
+import {hallwayRoute,computerSeat} from "./route.js";
 import {vendingApproach,purchaseApproach} from "./layout.js";
 import {roomBounds} from "./room.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";

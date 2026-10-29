@@ -2,9 +2,7 @@
  * Views receive DTOs and commands, never mutable GameState or domain functions.
  */
 import type {GameState,Result} from "../sim/types.js";
-import {PRODUCTS,SUPPLIERS,availableProducts,merchandiseStock,merchandisePrice,
- averageProductCost,orderMerchandise,setMerchandisePrice,quoteOrder,productSpec,
- productQuality,type ProductId,type SupplierId} from "../sim/merchandise.js";
+import {PRODUCTS,SUPPLIERS,availableProducts,merchandiseStock,merchandisePrice,averageProductCost,orderMerchandise,setMerchandisePrice,quoteOrder,productSpec,productQuality} from "../sim/merchandise.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 
 export type MerchandiseCategory="soda"|"candy"|"snacks";

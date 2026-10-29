@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -153,14 +154,13 @@ test("ofertas são atualizadas em toda renderização sem cache próprio",()=>{
 });
 test("a composição usa apenas DTOs e nenhuma regra de compra ou save",()=>{
  const src=readFileSync(new URL("../src/ui/shopCatalogRenderer.ts",import.meta.url),"utf8");
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.doesNotMatch(src,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(src,/\b(GameState|buyComputer|applyResult|localStorage|requestAnimationFrame|stepGame)\b/);
- assert.match(main,/renderShopCatalog\(\{/);
- assert.match(main,/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
- assert.match(main,/service:id=>shopServiceOffersPort\.snapshot\(id\)/);
- assert.match(main,/items:SHOP_CATALOG/);
- assert.match(main,/changed:\(revision,force\)=>panelChanged\("shop",revision,force\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderShopCatalog\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/service:id=>shopServiceOffersPort\.snapshot\(id\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/items:SHOP_CATALOG/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/changed:\(revision,force\)=>panelChanged\("shop",revision,force\)/);
  const refresh=readFileSync(new URL("../src/ui/shopCatalogRefresh.ts",import.meta.url),"utf8");
  assert.match(refresh,/options\.changed\(options\.revision\(\),force\)/);
 });

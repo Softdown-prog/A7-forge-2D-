@@ -1,25 +1,10 @@
+export { NightPrizePresentation,nightPrizePresentation,prizeAmountText } from "../application/nightPresentation.js";
+import { nightPrizePresentation,prizeAmountText } from "../application/nightPresentation.js";
 /** Comprovante visual da premiação já paga pelo motor exatamente às 7h.
  * É leitura de GameState, não um novo sistema financeiro ou uma transferência.
  */
-import type {GameState} from "../sim/types.js";
-import {NIGHT_MORNING_EXIT_OFFSET} from "../sim/futureNightClock.js";
-import {iso,type Projection} from "./isometric.js";
-
-export type NightPrizePresentation={
- fridayDay:number;winnerId:number;amount:number;elapsed:number;ageMinutes:number;
-};
-export function nightPrizePresentation(s:GameState):NightPrizePresentation|undefined{
- const n=s.nightMeetup,t=n?.tournament;
- if(!n||!t||!t.settled||n.phase!=="leaving"||
-    n.elapsed<NIGHT_MORNING_EXIT_OFFSET||n.elapsed>NIGHT_MORNING_EXIT_OFFSET+10||
-    t.winnerId===undefined||!n.paidIds.includes(t.winnerId)||
-    (t.prizePaid===undefined||!Number.isFinite(t.prizePaid)||t.prizePaid<=0))return undefined;
- return {fridayDay:n.fridayDay,winnerId:t.winnerId,
-  amount:t.prizePaid!,elapsed:n.elapsed,ageMinutes:n.elapsed-NIGHT_MORNING_EXIT_OFFSET};
-}
-export function prizeAmountText(amount:number):string{
- return "R$ "+amount.toFixed(2).replace(".",",");
-}
+import type { GameState } from "../sim/types.js";
+import { iso,type Projection } from "./isometric.js";
 /** Medalha e comprovante presos à posição do verdadeiro vencedor no Canvas.
  * A posição acompanha o cliente enquanto ele deixa o estabelecimento.
  */

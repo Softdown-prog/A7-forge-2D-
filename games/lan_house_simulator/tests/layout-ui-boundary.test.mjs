@@ -1,3 +1,4 @@
+import {assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -54,7 +55,8 @@ test("retirar decoração e divisória mantém os estados atuais e não custa di
  assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });
 
-test("toques intencionais selecionam, enquanto arrasto e scroll não executam comandos",()=>{
+test("toques intencionais selecionam, enquanto arrasto e scroll não executam comandos",t=>{
+ let now=10000;t.mock.method(performance,"now",()=>now);
  const globals={document:globalThis.document,window:globalThis.window};
  const eventListeners={};const elementListeners={};
  const viewport={scrollLeft:0,scrollTop:0};
@@ -95,7 +97,12 @@ test("toques intencionais selecionam, enquanto arrasto e scroll não executam co
   send("pointerup",2,hit.x,hit.y);
   assert.equal(editor.selected,null,"scroll horizontal não deve selecionar");
   viewport.scrollLeft=0;
+  send("pointerdown",20,hit.x,hit.y);viewport.scrollTop=4;
+  send("pointerup",20,hit.x,hit.y);assert.equal(editor.selected,null,"scroll vertical não deve selecionar");viewport.scrollTop=0;
+  send("pointerdown",21,hit.x,hit.y);send("pointercancel",21,hit.x,hit.y);
+  send("pointerup",21,hit.x,hit.y);assert.equal(editor.selected,null,"cancelamento não confirma seleção");
   send("pointerdown",3,hit.x,hit.y);
+  now+=1800; // A stationary long press is still a deliberate tap.
   send("pointerup",3,hit.x,hit.y);
   assert.equal(editor.selected,"pc:0");
   assert.ok(editor.draft);
@@ -108,8 +115,11 @@ test("toques intencionais selecionam, enquanto arrasto e scroll não executam co
   assert.equal(editor.draft.y,3);
   elementListeners.click();
   assert.equal(changed,1);
+  assert.deepEqual(s.objectPlacements.find(p=>p.id==="pc:0"),{id:"pc:0",x:2.5,y:3,rotation:0});
   assert.equal(editor.selected,null);
   assert.equal(isValidSave(s),true);
+  editor.reset();assert.equal(editor.active,false);assert.equal(editor.draft,null);
+  assert.equal(changed,1,"descartar rascunho em troca de save não executa uma ação da partida");
  }finally{
   for(const [name,value] of Object.entries(globals)){
    if(value===undefined)delete globalThis[name];else globalThis[name]=value;
@@ -121,12 +131,11 @@ test("UI do editor não depende de GameState; pointer handlers conservam seus co
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/layoutEditor.ts",root),"utf8");
  const port=readFileSync(new URL("application/layoutEditorPort.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|\bgetState\(/);
  assert.doesNotMatch(port,/\bwindow\b|\bdocument\b|\bHTMLCanvasElement\b/);
- assert.match(main,/createLayoutEditorPort\(\(\)=>game,cameraForGame\)/);
- assert.match(main,/createLayoutEditor\(canvas,layoutEditorPort/);
+ assertSourceCall("application/gamePorts.ts","createLayoutEditorPort",["getState","cameraForState"]);
+ assertSourceCall("bootstrap/bootstrapGame.ts","createLayoutEditor",["elements.canvas","application.ports.layoutEditorPort"]);
  for(const [pattern,name] of [
   [/Math\.hypot\(e\.clientX-start\.x,e\.clientY-start\.y\)>10/,"arrasto de 10px"],
   [/scrollLeft\?\?0\)-start\.left\)>3/,"rolagem horizontal"],

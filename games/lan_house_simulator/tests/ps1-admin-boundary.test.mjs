@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -97,13 +98,12 @@ test("UI não conhece simulação; main injeta porta tipada e controles PS1 exis
  const src=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/ps1AdminPanel.ts",src),"utf8");
  const app=readFileSync(new URL("application/ps1AdminPort.ts",src),"utf8");
- const main=readFileSync(new URL("main.ts",src),"utf8");
  const sections=readFileSync(new URL("ui/adminServicesConsoles.ts",src),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
- assert.match(main,/createPs1AdminPort\(\(\)=>game\)/);
- assert.match(main,/renderAdminServicesConsoles\(\{/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createPs1AdminPort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminServicesConsoles\(\{/);
  assert.match(sections,/renderPs1AdminPanel\(options.ps1/);
- assert.doesNotMatch(main,/\bps1PlayableDisc\(/);
+ assertCompositionAdaptersExclude(/\bps1PlayableDisc\(/);
  assert.match(readFileSync(new URL("ui/ps1Controls.ts",src),"utf8"),/dataset\.ps1Slot/);
 });

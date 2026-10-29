@@ -4,6 +4,7 @@
 export interface ServiceAccessInspectionCache<I> {
  inspect(force?:boolean):readonly I[];
  snapshot():readonly I[];
+ invalidate():void;
 }
 export function createServiceAccessInspectionCache<I>(
  compute:()=>readonly I[],
@@ -22,6 +23,7 @@ export function createServiceAccessInspectionCache<I>(
    }
    return cached;
   },
-  snapshot:()=>cached
+  snapshot:()=>cached,
+  invalidate(){cached=[];updatedAt=-10000;}
  };
 }

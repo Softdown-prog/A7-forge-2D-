@@ -2,11 +2,7 @@
  * no movimento dos NPCs nem no processamento de minutos do motor.
  * Só aparece quando a noite escolhida é um torneio.
  */
-import type {GameState} from "../sim/types.js";
-import {tournamentStandings} from "../sim/nightTournament.js";
-import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
-import {nightPrizePresentation,prizeAmountText} from "../render/nightPrizePresentation.js";
-import {nightReopeningPresentation} from "../render/nightReopening.js";
+import type { NightTournamentHudView } from "../application/nightTournamentHudPort.js";
 export function installNightTournamentHud(){
  const viewport=document.getElementById("scene-viewport");
  const hud=document.createElement("details");
@@ -29,53 +25,23 @@ export function installNightTournamentHud(){
  reopening.setAttribute("aria-live","off");reopening.hidden=true;
  prizeNotice.insertAdjacentElement("afterend",reopening);
  return {
-  render:(state:GameState)=>{
-   const transition=nightReopeningPresentation(state);
-   reopening.hidden=!transition;
-   reopening.dataset.phase=transition?.phase??"";
-   const transitionLabel=transition?transition.title+" · "+transition.details:"";
+  render:(view:NightTournamentHudView)=>{
+   reopening.hidden=!view.transition;reopening.dataset.phase=view.transition?.phase??"";
+   const transitionLabel=view.transition?.label??"";
    if(reopening.textContent!==transitionLabel)reopening.textContent=transitionLabel;
-   const payment=nightPrizePresentation(state);
-   prizeNotice.hidden=!payment;
-   const paymentLabel=payment?"🏆 7h · Prêmio pago ao jogador "+payment.winnerId+
-     ": "+prizeAmountText(payment.amount)+". Registrado no caixa.":"";
-   if(prizeNotice.textContent!==paymentLabel)prizeNotice.textContent=paymentLabel;
-   const n=state.nightMeetup,t=n?.tournament;
-   hud.hidden=!n||!t;
-   if(!n||!t)return;
-   const standings=tournamentStandings(t);
-   matches.hidden=t.mode!=="knockout";
-   if(t.mode==="knockout"){
-    const games=t.bracket?.matches??[];
-    matches.replaceChildren(...games.map((game,i)=>{
-     const item=document.createElement("li");
-     const label=game.stage==="qualifier"?"Classificatória":"Final";
-     item.textContent=label+" · jogador "+game.playerIds[0]+" x jogador "+
-      game.playerIds[1]+" · "+game.points.join("–")+" · "+
-      game.rounds+"/"+(game.stage==="qualifier"?8:12)+" rodadas"+
-      (game.winnerId!==undefined?" · vencedor: "+game.winnerId:" · em andamento");
-     return item;
-    }));
-    if(games.length===0)matches.textContent="Aguardando os participantes sentarem.";
-   }else matches.replaceChildren();
-   const duel=t.mode==="knockout"?knockoutCurrentMatch(t):undefined;
-   const leader=standings[0];
-   const label=leader?"líder: jogador "+leader.id+" ("+leader.points+" pts)":"aguardando";
-   summary.textContent=t.settled
-    ?(t.winnerId!==undefined?"🏆 Setor Zero · campeão: jogador "+t.winnerId:
-      "Setor Zero · campeonato não concluído")+" · prêmio R$ "+(t.prizePaid??0).toFixed(2)
-    :duel
-     ?"Setor Zero · "+(duel.stage==="qualifier"?"classificatória":"final")+
-       " · "+duel.playerIds.join(" x ")+" · "+duel.points.join("–")+
-       " ("+duel.rounds+"/"+(duel.stage==="qualifier"?8:12)+")"
-     :t.mode==="knockout"&&t.bracket?.winnerId
-      ?"Setor Zero · final encerrada · jogador "+t.bracket.winnerId+" venceu"
-      :"Setor Zero · "+t.scores.length+"/"+n.seats+" inscritos · "+label;
-   rows.replaceChildren(...standings.map((row,i)=>{
-    const item=document.createElement("li");
-    item.textContent=(i+1)+"º · jogador "+row.id+" · "+row.points+" pontos · "+row.rounds+" rodadas jogadas";
-    return item;
-   }));
+   prizeNotice.hidden=!view.paymentLabel;
+   if(prizeNotice.textContent!==view.paymentLabel)prizeNotice.textContent=view.paymentLabel;
+   hud.hidden=!view.visible;if(!view.visible)return;
+   matches.hidden=!view.knockout;
+   const matchSignature=JSON.stringify([view.knockout,view.matches]);
+   if(matches.dataset.revision!==matchSignature){
+    matches.dataset.revision=matchSignature;
+    matches.replaceChildren(...view.matches.map(label=>{const item=document.createElement("li");item.textContent=label;return item;}));
+    if(view.knockout&&view.matches.length===0)matches.textContent="Aguardando os participantes sentarem.";
+   }
+   if(summary.textContent!==view.summary)summary.textContent=view.summary;
+   const signature=JSON.stringify(view.standings);
+   if(rows.dataset.revision!==signature){rows.dataset.revision=signature;rows.replaceChildren(...view.standings.map(label=>{const item=document.createElement("li");item.textContent=label;return item;}));}
   }
  };
 }

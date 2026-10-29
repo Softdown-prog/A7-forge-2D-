@@ -1,3 +1,4 @@
+import {assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -116,13 +117,12 @@ test("PS1 conserva cartão vazio para o seletor de posição existente",()=>{
 });
 test("somente apresentação: sem motor, sem listeners e mesmos pontos de integração",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopCatalogCard.ts",root),"utf8");
  const controls=readFileSync(new URL("ui/shopControls.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|buyPs1Station|shopPrice|addEventListener|localStorage/);
- assert.doesNotMatch(main,/\bshopArtwork\b|\bdrawPrinterShop\b|\bdrawDiscCopier\b|\bdrawPs1Station\b|\bcatalogueIcon\b/);
+ assertCompositionAdaptersExclude(/\bshopArtwork\b|\bdrawPrinterShop\b|\bdrawDiscCopier\b|\bdrawPs1Station\b|\bcatalogueIcon\b/);
  assert.match(catalog,/createShopCatalogCard\(item,options\.doc\)/);
  assert.match(catalog,/appendStandardShopCatalogCard\(fields,placementHint,options\.doc\)/);
  assert.match(catalog,/appendShopCatalogOwned\(card,/);

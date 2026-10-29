@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -117,12 +118,11 @@ test("camadas seguem independentes e main não calcula fornecedor ou upgrade",()
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/commerceNetworkPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/commerceNetworkPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener|replaceChildren|innerHTML/);
- assert.ok(main.includes("createCommerceNetworkPort(()=>game)"));
- assert.ok(main.includes("renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document)"));
- assert.doesNotMatch(main,/\bwholesaleCost\(|\bsupplierLevel\(/);
- assert.ok(main.includes('installServiceControls(createServiceActionsPort(()=>game)'));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createCommerceNetworkPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document)"));
+ assertCompositionAdaptersExclude(/\bwholesaleCost\(|\bsupplierLevel\(/);
+ assertSourceCall("ui/runtimeControls.ts","installServiceControls",["ports.serviceActions"]);
 });

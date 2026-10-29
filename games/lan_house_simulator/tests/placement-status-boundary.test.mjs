@@ -1,3 +1,4 @@
+import {assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -86,12 +87,12 @@ test("fronteiras mantêm motor, handlers mobile e autorização de parede no mai
  const root=new URL("../src/",import.meta.url);
  const port=readFileSync(new URL("application/placementStatusPort.ts",root),"utf8");
  const panel=readFileSync(new URL("ui/placementStatusPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(port,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(panel,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(panel,/\bGameState\b|addEventListener/);
- for(const sample of ["placementStatusSnapshot(","renderPlacementStatus(",
-  "placementActions.canBuild(pendingWall)","placementActions.confirmWall(wallMode,wall)",
-  'canvas.addEventListener("pointermove"','canvas.addEventListener("click"'])
-  assert.ok(main.includes(sample));
+ assertSourceCall("ui/gamePanels.ts","placementStatusSnapshot");
+ assertSourceCall("ui/gamePanels.ts","renderPlacementStatus");
+ assertSourceCall("ui/gamePanels.ts","placementActions.canBuild",["state.placement.pendingWall"]);
+ assertSourceCall("ui/placementController.ts","placementActions.confirmWall",["state.placement.wallMode","wall"]);
+ for(const event of ["pointermove","click"])assertSourceCall("ui/placementController.ts","canvas.addEventListener",[JSON.stringify(event)]);
 });

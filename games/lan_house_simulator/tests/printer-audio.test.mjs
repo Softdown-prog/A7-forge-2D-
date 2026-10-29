@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -88,13 +89,12 @@ test("reprodução respeita chance, tempo, cache, caixa prioritário e áudio de
 });
 test("sons não aparecem por frame nem por CD/DVD",()=>{
  const root=resolve(import.meta.dirname,"..");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const engine=readFileSync(resolve(root,"src/sim/engine.ts"),"utf8");
  const decisions=readFileSync(resolve(root,"src/sim/customerDecisions.ts"),"utf8");
  const saves=readFileSync(resolve(root,"src/sim/saveTransfer.ts"),"utf8");
  const feedback=readFileSync(resolve(root,"src/application/frameFeedbackPort.ts"),"utf8");
  const dispatch=readFileSync(resolve(root,"src/application/frameEventDispatch.ts"),"utf8");
- assert.match(main,/dispatchFrameEvents\(\{/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/dispatchFrameEvents\(\{/);
  assert.match(dispatch,/options\.feedback\.prints\(options\.playing\)/);
  assert.match(feedback,/getState\(\)\.printEffects\?\.splice\(0\)/);
  assert.match(feedback,/audio\.printer\(\)/);

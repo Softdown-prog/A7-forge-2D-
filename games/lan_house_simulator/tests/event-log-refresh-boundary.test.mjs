@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -68,8 +69,7 @@ test("limite de arquitetura sem simulação, DOM ou armazenamento",()=>{
  for(const forbidden of ["GameState","document","localStorage","requestAnimationFrame","setInterval","stepGame"])assert.equal(file.includes(forbidden),false);
 });
 test("main liga o cache por callback e não guarda a assinatura",()=>{
- const file=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.ok(file.includes("createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup))"));
- assert.ok(file.includes("eventLogRefresh.refresh()"));
- assert.ok(!file.includes("lastEventSignature"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup))"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("eventLogRefresh.refresh()"));
+ assertCompositionAdaptersExclude("lastEventSignature");
 });

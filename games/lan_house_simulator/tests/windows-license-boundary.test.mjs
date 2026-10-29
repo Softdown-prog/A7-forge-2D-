@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -54,7 +55,6 @@ test("a porta acompanha o save substituído e mantém o serializador",()=>{
 });
 test("UI Windows desacoplada do motor e dados de clique preservados",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/windowsLicensePanel.ts",root),"utf8");
  const app=readFileSync(new URL("application/windowsLicensePort.ts",root),"utf8");
@@ -63,8 +63,8 @@ test("UI Windows desacoplada do motor e dados de clique preservados",()=>{
  assert.match(ui,/dataset\.winPc/);
  assert.match(ui,/dataset\.winEdition/);
  assert.match(ui,/syncPanelChildren\(panel,next\)/);
- assert.match(main,/createWindowsLicensePort\(\(\)=>game\)/);
- assert.match(main,/renderAdminGpuLicenseSections\(\{/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createWindowsLicensePort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminGpuLicenseSections\(\{/);
  assert.match(sections,/renderWindowsLicensePanel\(options.licensePanel,options.windows\)/);
- assert.doesNotMatch(main,/\bwindowsHardwareIssues\(/);
+ assertCompositionAdaptersExclude(/\bwindowsHardwareIssues\(/);
 });

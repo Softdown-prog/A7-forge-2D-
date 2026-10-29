@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -68,17 +69,16 @@ test("motor não conhece UI; main conserva cache de 1600ms e overlay real",()=>{
  const base=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/serviceAccessStatusPort.ts",base),"utf8");
  const ui=readFileSync(new URL("ui/serviceAccessStatusPanel.ts",base),"utf8");
- const main=readFileSync(new URL("main.ts",base),"utf8");
  const sections=readFileSync(new URL("ui/adminServicesConsoles.ts",base),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("renderAdminServicesConsoles({"));
- assert.ok(main.includes("accessSnapshot:()=>serviceAccessStatusSnapshot(inspectServiceAccess(!liveOnly))"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminServicesConsoles({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("accessSnapshot:()=>serviceAccessStatusSnapshot(inspectServiceAccess(!liveOnly))"));
  assert.ok(sections.includes("renderServiceAccessStatus(options.accessSnapshot(),options.setText,options.doc)"));
- assert.ok(main.includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessInspection.snapshot()),serviceAccessVisible,setText,document)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessInspection.snapshot()),state.serviceAccessVisible,setText,document)"));
  const cache=readFileSync(new URL("ui/serviceAccessInspectionCache.ts",base),"utf8");
  assert.ok(cache.includes("current-updatedAt>1600"));
- assert.ok(main.includes("createServiceAccessInspectionCache(()=>serviceAccessIssues(game),()=>performance.now())"));
- assert.ok(main.includes("renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed)"));
+ assertSourceCall("bootstrap/bootstrapGame.ts","createServiceAccessInspectionCache",["application.ports.accessIssues","()=>performance.now()"] );
+ assertSourceCall("render/gameScene.ts","renderer.drawServiceAccessOverlay",["source()","issues","elapsed"] );
 });

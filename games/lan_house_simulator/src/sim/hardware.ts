@@ -1,9 +1,9 @@
-import type {GameState,Result} from "./types.js";
-import {stationUpgradeIssue} from "./stationPower.js";
-import {gameYear,type WindowsEdition} from "./eraCatalog.js";
-import {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,type HardwareKind,type HardwarePart,type PcComponents} from "./hardwareCatalog.js";
-export {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,describePart,formatMemory} from "./hardwareCatalog.js";
-export type {HardwareKind,HardwarePart,PcComponents} from "./hardwareCatalog.js";
+import { gameYear,type WindowsEdition } from "./eraCatalog.js";
+import { HARDWARE_CATALOG,PLATFORM_KITS,hardwarePart,type HardwareKind,type HardwarePart,type PcComponents } from "./hardwareCatalog.js";
+import { stationUpgradeIssue } from "./stationPower.js";
+import type { GameState,Result } from "./types.js";
+export { HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,describePart,formatMemory,hardwarePart } from "./hardwareCatalog.js";
+export type { HardwareKind,HardwarePart,PcComponents } from "./hardwareCatalog.js";
 
 const kinds:HardwareKind[]=["cpu","ram","storage","motherboard","psu"];
 const gpuWatts:Record<string,number>={gpu05:40,gpu07:75,gpu09:100,gpu11:125,gpu13:150};

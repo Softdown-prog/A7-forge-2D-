@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -124,9 +125,8 @@ test("sem acesso ao motor, save ou APIs de tempo",()=>{
  assert.doesNotMatch(source,/\b(GameState|localStorage|document|window|stepGame|setInterval|requestAnimationFrame)\b/);
 });
 test("main injeta seleção, sincroniza área e mantém chamada inicial",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(main,/createAdminAreaTabs\(admin,tab=>\{/);
- assert.match(main,/activeAdminTab=tab;managementPanels\.syncArea\(tab\)/);
- assert.match(main,/function activateAdminTab\(tab:string\):void\{adminTabs\.activate\(tab\);\}/);
- assert.match(main,/activateAdminTab\(activeAdminTab\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/createAdminAreaTabs\(admin,tab=>\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/activeAdminTab=tab;managementPanels\.syncArea\(tab\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/function activateAdminTab\(tab:string\):void\{adminTabs\.activate\(tab\);\}/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/activateAdminTab\(state\.windows\.activeAdminTab\)/);
 });

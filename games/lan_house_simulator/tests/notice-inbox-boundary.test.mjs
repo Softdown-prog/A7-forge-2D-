@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -93,12 +94,11 @@ test("porta não usa DOM; UI não usa GameState; listeners permanecem no bootstr
  const root=new URL("../src/",import.meta.url);
  const port=readFileSync(new URL("application/noticeInboxPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/noticeInboxPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.equal(port.includes("document."),false);assert.equal(ui.includes("../sim/"),false);
  assert.equal(ui.includes("GameState"),false);assert.equal(ui.includes("addEventListener"),false);
- assert.ok(main.includes("createNoticeInboxPort(()=>game)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createNoticeInboxPort(getState)"));
  const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
- assert.ok(main.includes("createNoticeWindowRefresh({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("createNoticeWindowRefresh({"));
  assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
- assert.ok(main.includes("installNoticeControls(noticesList,noticeActions"));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installNoticeControls(noticesList,noticeActions"));
 });

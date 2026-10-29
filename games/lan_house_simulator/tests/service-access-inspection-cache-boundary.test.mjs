@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -97,11 +98,10 @@ test("cada instância possui cache e instante independentes",()=>{
 test("interface não importa motor, DOM nem timers e main usa o cache",()=>{
  const root=new URL("../src/",import.meta.url);
  const source=readFileSync(new URL("ui/serviceAccessInspectionCache.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(source,/from\s*["']\.\.\/(?:sim|application|render|audio)\//);
  assert.doesNotMatch(source,/\b(GameState|document|window|localStorage|CanvasRenderingContext2D|setInterval|requestAnimationFrame|stepGame)\b/);
- assert.match(main,/createServiceAccessInspectionCache\(\(\)=>serviceAccessIssues\(game\),\(\)=>performance\.now\(\)\)/);
- assert.match(main,/inspectServiceAccess\(force=false\)/);
- assert.match(main,/serviceAccessInspection\.snapshot\(\)/);
- assert.match(main,/renderer\.drawServiceAccessOverlay\(game,inspectServiceAccess\(\),elapsed\)/);
+ assertSourceCall("bootstrap/bootstrapGame.ts","createServiceAccessInspectionCache",["application.ports.accessIssues","()=>performance.now()"] );
+ assertSourceCall("ui/gamePanels.ts","serviceAccessInspection.inspect",["force"]);
+ assert.match(sourceModule("ui/gamePanels.ts"),/serviceAccessInspection\.snapshot\(\)/);
+ assertSourceCall("render/gameScene.ts","renderer.drawServiceAccessOverlay",["source()","issues","elapsed"] );
 });

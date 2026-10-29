@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -121,13 +122,12 @@ test("a porta não manipula DOM, persistência, temporizadores ou gameplay",()=>
   assert.equal(text.includes(forbidden),false,forbidden);
 });
 test("a composição do main usa a porta sem duplicar cálculo de revisões",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.ok(main.includes("createAdminPanelRevisionsPort(()=>game)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createAdminPanelRevisionsPort(getState)"));
  for(const method of ["feedback()","packages()","retail()","computerMaintenance(","classicGames(year,stationRevision)","gpuGames(year,stationRevision)"])
-  assert.ok(main.includes("adminPanelRevisionsPort."+method),method);
+  assert.ok(sourceModule("ui/gamePanels.ts").includes("adminPanelRevisionsPort."+method),method);
  const port=readFileSync(new URL("../src/application/adminPanelRevisionsPort.ts",import.meta.url),"utf8");
  assert.ok(port.includes("this.computerWear(operationsActive)"));
- assert.ok(!main.includes("Math.floor(game.totalMinutes/720),game.customerFeedback"));
- assert.ok(!main.includes("game.gpuGameInstallJobs?.map"));
- assert.ok(!main.includes("game.pcWear?.map(Math.round)"));
+ assertCompositionAdaptersExclude("Math.floor(game.totalMinutes/720),game.customerFeedback");
+ assertCompositionAdaptersExclude("game.gpuGameInstallJobs?.map");
+ assertCompositionAdaptersExclude("game.pcWear?.map(Math.round)");
 });

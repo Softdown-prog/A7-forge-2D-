@@ -2,16 +2,10 @@
  * Rascunho gratuito, confirmação sem pagamento adiantado e relatório
  * real da última madrugada; noite física executada em nightMeetup.ts.
  */
-import type {GameState,Result} from "../sim/types.js";
-import {campaignDate,currentCampaignDay} from "../sim/campaignWeek.js";
-import {firstFridayEligibility,draftFridayMeetup,cancelFridayMeetupDraft} from "../sim/fridayMeetup.js";
-import {confirmFridayMeetup} from "../sim/nightMeetup.js";
-import {selectNightTournament,tournamentStandings} from "../sim/nightTournament.js";
-import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
-import {summarizeNightTrophies} from "../sim/nightTrophyStats.js";
-
+import type { ActionResult } from "../application/contracts.js";
+import type { FridayMeetupPort,FridayMeetupSnapshot } from "../application/fridayMeetupPort.js";
 export function installFridayMeetupPanel(
- admin:HTMLElement,getGame:()=>GameState,onResult:(result:Result)=>void
+ admin:HTMLElement,port:FridayMeetupPort,onResult:(result:ActionResult)=>void
 ){
  const section=document.createElement("section");
  section.id="first-meetup-panel";
@@ -43,50 +37,30 @@ export function installFridayMeetupPanel(
  trophyList.id="first-meetup-trophies-list";
  gallery.append(trophyTitle,trophyRecords,trophyChampions,trophyList,trophyMore);
  let showAllTrophies=false,renderedTrophies="";
- const renderTrophies=(state:GameState)=>{
-  const trophies=state.nightTournamentTrophies??[];
-  gallery.hidden=trophies.length===0;
-  const signature=(showAllTrophies?"all":"recent")+"|"+
-   trophies.map(t=>t.fridayDay+":"+t.winnerId+":"+t.participants).join("|");
-  if(signature===renderedTrophies)return;
-  renderedTrophies=signature;
-  const stats=summarizeNightTrophies(trophies);
-  trophyTitle.textContent="🏆 Galeria digital · "+stats.total+
-   (stats.total===1?" conquista":" conquistas");
-  trophyRecords.textContent=stats.uniqueChampions+
-   (stats.uniqueChampions===1?" campeão diferente":" campeões diferentes")+
-   " · "+stats.finalsTwo+(stats.finalsTwo===1?" final":" finais")+" com 2 jogadores · "+
-   stats.finalsThree+(stats.finalsThree===1?" final":" finais")+" com 3 jogadores";
-  trophyChampions.replaceChildren(...stats.champions.slice(0,3).map((record,i)=>{
-   const item=document.createElement("li");
-   const name=document.createElement("strong");
-   name.textContent=(i+1)+"º jogador "+record.winnerId;
-   const result=document.createElement("span");
-   result.textContent=record.titles+(record.titles===1?" título":" títulos")+
-    " · último em "+campaignDate(record.lastFridayDay);
-   item.append(name,result);
-   return item;
+ const renderTrophies=(trophies:FridayMeetupSnapshot["trophies"])=>{
+  gallery.hidden=trophies.total===0;
+  const signature=(showAllTrophies?"all":"recent")+"|"+trophies.signature;
+  if(signature===renderedTrophies)return;renderedTrophies=signature;
+  trophyTitle.textContent=trophies.title;trophyRecords.textContent=trophies.records;
+  trophyChampions.replaceChildren(...trophies.champions.map(record=>{
+   const item=document.createElement("li"),name=document.createElement("strong"),result=document.createElement("span");
+   name.textContent=record.name;result.textContent=record.result;item.append(name,result);return item;
   }));
-  const visible=showAllTrophies?trophies:trophies.slice(-4);
+  const visible=showAllTrophies?trophies.items:trophies.items.slice(-4);
   trophyList.replaceChildren(...[...visible].reverse().map(t=>{
    const item=document.createElement("li");item.className="night-trophy-item";
-   const symbol=document.createElement("span");symbol.className="night-trophy-symbol";
-   symbol.textContent="🏆";symbol.setAttribute("aria-hidden","true");
+   const symbol=document.createElement("span");symbol.className="night-trophy-symbol";symbol.textContent="🏆";symbol.setAttribute("aria-hidden","true");
    const detail=document.createElement("span");detail.className="night-trophy-detail";
-   const date=document.createElement("strong");date.textContent="Sexta "+campaignDate(t.fridayDay);
-   const champion=document.createElement("span");
-   champion.textContent="Campeão: jogador "+t.winnerId+" · "+t.participants+" participantes";
-   detail.append(date,champion);item.append(symbol,detail);
-   return item;
+   const date=document.createElement("strong");date.textContent=t.date;
+   const champion=document.createElement("span");champion.textContent=t.champion;
+   detail.append(date,champion);item.append(symbol,detail);return item;
   }));
-  trophyMore.hidden=trophies.length<=4;
-  trophyMore.textContent=showAllTrophies?"Mostrar apenas recentes":
-   "Ver todas as "+trophies.length+" conquistas";
+  trophyMore.hidden=trophies.total<=4;trophyMore.textContent=showAllTrophies?"Mostrar apenas recentes":"Ver todas as "+trophies.total+" conquistas";
   trophyMore.setAttribute("aria-expanded",String(showAllTrophies));
  };
  trophyMore.addEventListener("click",()=>{
   showAllTrophies=!showAllTrophies;
-  renderTrophies(getGame());
+  renderTrophies(port.snapshot().trophies);
  });
  const confirm=document.createElement("button");confirm.type="button";confirm.className="slice primary";confirm.id="first-meetup-confirm";confirm.textContent="Confirmar encontro de sexta";
  const cancel=document.createElement("button");cancel.type="button";cancel.className="slice";cancel.id="first-meetup-cancel";cancel.textContent="Descartar rascunho";
@@ -95,64 +69,18 @@ export function installFridayMeetupPanel(
  actions.append(two,three,format,confirm,cancel);
  section.append(heading,description,status,info,ranking,gallery,actions,caution);
  admin.querySelector("#section-finance")?.append(section);
- two.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),2)));
- three.addEventListener("click",()=>onResult(draftFridayMeetup(getGame(),3)));
- format.addEventListener("click",()=>{
-  const current=getGame().fridayMeetupDraft?.format;
-  onResult(selectNightTournament(getGame(),current==="tournament"?"knockout":
-   current==="knockout"?"free":"tournament"));
- });
- confirm.addEventListener("click",()=>onResult(confirmFridayMeetup(getGame())));
- cancel.addEventListener("click",()=>onResult(cancelFridayMeetupDraft(getGame())));
+ two.addEventListener("click",()=>onResult(port.draft(2)));
+ three.addEventListener("click",()=>onResult(port.draft(3)));
+ format.addEventListener("click",()=>onResult(port.cycleFormat()));
+ confirm.addEventListener("click",()=>onResult(port.confirm()));
+ cancel.addEventListener("click",()=>onResult(port.cancel()));
  return {
   render:()=>{
-   const s=getGame(),q=firstFridayEligibility(s),draft=s.fridayMeetupDraft;
-   status.textContent=s.nightMeetup
-    ?"Corujão em andamento — "+s.nightMeetup.paidIds.length+" pagamentos; "+s.nightMeetup.phase+"."
-    :draft
-     ?(draft.status==="confirmed"?"Encontro CONFIRMADO. ":"Rascunho salvo. ")+
-       draft.seats+" vagas · sexta "+campaignDate(draft.fridayDay)
-     :s.lastNightMeetup?"Último corujão: "+s.lastNightMeetup.paid+
-       " participantes, R$ "+(s.lastNightMeetup.revenue+s.lastNightMeetup.retailRevenue).toFixed(2)+
-       " de receita."
-     :q.ready?"Tony pode preparar a próxima sexta.":"A oportunidade ainda está amadurecendo.";
-   info.textContent="Próxima sexta: "+q.date+" · "+q.pcs.length+
-    " PC(s) livre(s) e compatível(is). "+
-    (q.reasons.length?q.reasons.join(" "):"Há capacidade para planejar sem ocupar PCs agora.");
-   const tournament=s.nightMeetup?.tournament;
-   const last=s.lastNightMeetup?.tournament;
-   const duel=tournament?.mode==="knockout"?knockoutCurrentMatch(tournament):undefined;
-   ranking.textContent=tournament
-    ?(tournament.mode==="knockout"?"Eliminatória":"Torneio por pontos")+" · "+
-      tournament.scores.length+"/"+(s.nightMeetup?.seats??0)+" inscritos · "+
-      (duel
-       ?(duel.stage==="qualifier"?"Classificatória":"Final")+" · "+
-         duel.playerIds.join(" x ")+" · placar "+duel.points.join("–")+
-         " · "+duel.rounds+"/"+(duel.stage==="qualifier"?8:12)+" rodadas"
-       :tournament.mode==="knockout"&&tournament.bracket?.winnerId
-        ?"Final encerrada · campeão jogador "+tournament.bracket.winnerId
-        :tournamentStandings(tournament).map((x,i)=>(i+1)+"º jogador "+x.id+
-          " — "+x.points+" pts ("+x.rounds+" rodadas)").join(" · ")||
-          "aguardando pagamentos")
-    :last
-     ?(last.mode==="knockout"?"Última eliminatória":"Último torneio")+" · "+last.rankings.map((x,i)=>(i+1)+"º jogador "+x.id+" — "+x.points+" pontos").join(" · ")+
-      (last.bracket?.matches?.length?" · confrontos: "+last.bracket.matches.map(m=>
-        (m.stage==="qualifier"?"Classificatória":"Final")+" "+m.playerIds.join(" x ")+
-        " ("+m.points.join("–")+")").join(" · "):"")+
-      " · campeão: "+(last.winnerId??"sem vencedor")+" · prêmio R$ "+last.prizePaid.toFixed(2)
-     :draft?.format==="knockout"
-      ?"Eliminatórias: 2 amigos disputam uma final; com 3, dois disputam uma classificatória e o terceiro aguarda a final. Só vale ponto jogando nos PCs."
-      :draft?.format==="tournament"
-       ?"Torneio por pontos: placar por rodadas reais. Prêmio máximo R$ 40 ao campeão."
-       :"Encontro livre. Também é possível escolher torneio por pontos ou eliminatórias.";
-   renderTrophies(s);
-   format.textContent=draft?.format==="tournament"?"Ativar eliminatórias":
-    draft?.format==="knockout"?"Usar encontro livre":"Ativar torneio por pontos";
-   format.disabled=!draft||draft.status!=="draft"||!!s.nightMeetup;
-   two.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<2;
-   three.disabled=!!s.nightMeetup||!!draft||!q.ready||q.pcs.length<3;
-   confirm.disabled=!!s.nightMeetup||!draft||draft.status!=="draft"||draft.fridayDay<currentCampaignDay(s);
-   cancel.disabled=!!s.nightMeetup||!draft;
+   const view=port.snapshot();
+   status.textContent=view.status;info.textContent=view.info;ranking.textContent=view.ranking;
+   renderTrophies(view.trophies);format.textContent=view.formatLabel;
+   format.disabled=view.formatDisabled;two.disabled=view.twoDisabled;three.disabled=view.threeDisabled;
+   confirm.disabled=view.confirmDisabled;cancel.disabled=view.cancelDisabled;
   }
  };
 }

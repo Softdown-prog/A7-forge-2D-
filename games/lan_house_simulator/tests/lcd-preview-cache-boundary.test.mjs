@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -112,8 +113,7 @@ test("apresentação não importa motor nem mantém save",()=>{
  assert.match(render,/drawRetroComputer\(context,/);
 });
 test("main injeta o renderer e mantém o mesmo painel administrativo",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(main,/const lcdPreview=createLcdPreviewCache\(document,createLcdPreviewSample,drawLcdPreviewArtwork\)/);
- assert.match(main,/renderLcdMonitorsPanel\(host,lcdMonitorsPort\.snapshot\(selectedLcdPc\),lcdPreview,document\)/);
- assert.doesNotMatch(main,/const lcdPreviews=new Map/);
+ assert.match(sourceModule("bootstrap/bootstrapGame.ts"),/const lcdPreview=createLcdPreviewCache\(document,createLcdPreviewSample,drawLcdPreviewArtwork\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderLcdMonitorsPanel\(host,lcdMonitorsPort\.snapshot\(state\.selection\.selectedLcdPc\),lcdPreview,document\)/);
+ assertCompositionAdaptersExclude(/const lcdPreviews=new Map/);
 });

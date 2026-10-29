@@ -1,20 +1,19 @@
-export {FurnitureKind,furnitureLimit,PlacementSlot,FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations} from "./furnitureLayout.js";
-import {FurnitureKind,furnitureLimit,PlacementSlot,FURNITURE_SLOTS,furnitureSlots,occupiedFurnitureSlots,furnitureLocations} from "./furnitureLayout.js";
-import type {EditableObject} from "./editableObjects.js";
-import {stationPoweredOn} from "./stationPower.js";
-import {layoutGoals} from "./layoutGeometry.js";
-import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
-import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
-import {entrance} from "./simulationState.js";
-import {fixedLayoutObjects,pointInsideObject,objectTouchesCustomer,builtPosters,layoutPlacementIssue} from "./layoutGeometry.js";
-import type {GameState,Result} from "./types.js";
-import {roomBounds,expansionPrice} from "./room.js";
-import {WALL_COST} from "./walls.js";
-import {annexComputerSlots,ANNEX_PC_COST,availableAnnexComputers} from "./stations.js";
-import {installedLcd} from "./computerModels.js";
-import {emptyStationAccount} from "./stationAccounting.js";
-import {DISC_COPIER_COST} from "./discCopy.js";
-import {PRINTER_COST} from "./printService.js";
+export { FURNITURE_SLOTS,FurnitureKind,furnitureLimit,furnitureLocations,furnitureSlots,occupiedFurnitureSlots,PlacementSlot } from "./furnitureLayout.js";
+import { installedLcd } from "./computerModels.js";
+import { DISC_COPIER_COST } from "./discCopy.js";
+import type { EditableObject } from "./editableObjects.js";
+import { FurnitureKind,furnitureLimit,furnitureLocations,furnitureSlots,occupiedFurnitureSlots,PlacementSlot } from "./furnitureLayout.js";
+import { builtPosters,fixedLayoutObjects,layoutGoals,layoutPlacementIssue,objectTouchesCustomer,pointInsideObject } from "./layoutGeometry.js";
+import { navigableRoute,routesForCurrentCustomers } from "./navigation.js";
+import { PRINTER_COST } from "./printService.js";
+import { activeRetailQueuesReachable,refreshRetailQueues } from "./retailQueue.js";
+import { expansionPrice } from "./room.js";
+import { entrance } from "./simulationState.js";
+import { emptyStationAccount } from "./stationAccounting.js";
+import { stationPoweredOn } from "./stationPower.js";
+import { ANNEX_PC_COST } from "./stations.js";
+import type { GameState,Result } from "./types.js";
+import { WALL_COST } from "./walls.js";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar área principal",category:"Expansão",description:"Aumenta em duas faixas a largura da área principal, sempre no mesmo sentido (sem sorteio). Libera duas vagas de PC e aumenta os custos fixos mensais."},
  {id:"computer",label:"Instalar PC na área principal",category:"Computadores",description:"Computador completo com mesa e cadeira, instalado automaticamente na próxima vaga da área principal. Para abrir duas vagas, use Ampliar área principal."},

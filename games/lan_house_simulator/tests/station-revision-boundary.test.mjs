@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -93,10 +94,9 @@ test("o aplicativo não contém DOM, timers ou escrita no save",()=>{
  for(const term of ["stepGame","applyResult","saveGame"])assert.equal(source.includes(term),false);
 });
 test("o main injeta o save atual e utiliza snapshot nos dois painéis",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.ok(main.includes("createStationRevisionPort(()=>game)"));
- assert.ok(main.includes("const stationRevision=stationRevisionPort.snapshot(year);"));
- assert.ok(main.includes("maintenanceChanged:()=>panelChanged"));
- assert.ok(main.includes("gpuChanged:()=>panelChanged"));
- assert.ok(!main.includes("stationOccupied(game,i)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createStationRevisionPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("const stationRevision=stationRevisionPort.snapshot(year);"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("maintenanceChanged:()=>panelChanged"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("gpuChanged:()=>panelChanged"));
+ assertCompositionAdaptersExclude("stationOccupied(game,i)");
 });

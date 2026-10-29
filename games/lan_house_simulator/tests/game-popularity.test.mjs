@@ -99,7 +99,6 @@ test("GPU não gera bônus no clássico ou com licença sem hardware compatível
 });
 
 test("UI mostra popularidade atual, nostalgia, bônus e disponibilidade física",()=>{
- const ts=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  const classic=readFileSync(new URL("../src/application/classicGamesCatalogPort.ts",import.meta.url),"utf8");
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
  const advanced=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");

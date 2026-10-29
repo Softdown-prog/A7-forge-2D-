@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -155,16 +156,15 @@ test("PlayStation e serviços nunca modificam a barra de diagnóstico no Canvas"
 });
 test("camada de UI não importa simulação, e main mantém seleção e inspeção sob demanda",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/adminServicesConsoles.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|save\(|addEventListener|localStorage/);
- assert.match(main,/renderAdminServicesConsoles\(\{/);
- assert.match(main,/accessSnapshot:\(\)=>serviceAccessStatusSnapshot\(inspectServiceAccess\(!liveOnly\)\)/);
- assert.match(main,/showServiceAccess:\(\)=>adminOpen&&managementPanels.active\("services","access"\)/);
- assert.match(main,/renderServiceAccessOverlayStatus\(serviceAccessStatusSnapshot\(serviceAccessInspection\.snapshot\(\)\),serviceAccessVisible,setText,document\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminServicesConsoles\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/accessSnapshot:\(\)=>serviceAccessStatusSnapshot\(inspectServiceAccess\(!liveOnly\)\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/showServiceAccess:\(\)=>state\.windows\.adminOpen&&managementPanels.active\("services","access"\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderServiceAccessOverlayStatus\(serviceAccessStatusSnapshot\(serviceAccessInspection\.snapshot\(\)\),state\.serviceAccessVisible,setText,document\)/);
  const cache=readFileSync(new URL("ui/serviceAccessInspectionCache.ts",root),"utf8");
  assert.match(cache,/current-updatedAt>1600/);
- assert.match(main,/installPs1Controls\(/);
- assert.match(main,/installServiceControls\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installPs1Controls\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installServiceControls\(/);
 });

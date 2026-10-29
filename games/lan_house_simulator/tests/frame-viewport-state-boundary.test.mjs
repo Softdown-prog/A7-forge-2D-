@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -89,10 +90,9 @@ test("nenhuma mutação da simulação ou chamada de render é feita no adaptado
  assert.doesNotMatch(src,/\b(GameState|stepGame|requestAnimationFrame|localStorage|drawScene)\b/);
 });
 test("bootstrap injeta APIs no receptor certo e usa informações vivas no frame",()=>{
- const src=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(src,/createFrameViewportState\(canvas,callback=>new IntersectionObserver\(callback\),query=>window\.matchMedia\(query\)\)/);
- assert.match(src,/visible:frameViewport\.visible\(\)/);
- assert.match(src,/coarse:frameViewport\.coarsePointer\(\)/);
- assert.match(src,/reduceMotion:frameViewport\.reducedMotion\(\)/);
- assert.match(src,/hidden:document\.hidden/);
+ assertSourceCall("ui/runtimeLoop.ts","createFrameViewportState",["canvas","callback=>new IntersectionObserver(callback)","query=>win.matchMedia(query)"]);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/visible:frameViewport\.visible\(\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/coarse:frameViewport\.coarsePointer\(\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/reduceMotion:frameViewport\.reducedMotion\(\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/hidden:document\.hidden/);
 });

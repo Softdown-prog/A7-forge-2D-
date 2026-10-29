@@ -8,7 +8,7 @@ import {roomBounds} from "./room.js";
 import {shouldShowCustomerSpeech,SPEECH_COOLDOWN_MINUTES} from "./customerDialogue.js";
 import {crowdRoute} from "./crowdNavigation.js";
 import {stationReadyForSessions} from "./stationPower.js";
-import {gpuGamePlayableOnPc,gpuGameHourlyRate,preferredGpuGame} from "./gpuGames.js";
+import {gpuGamePlayableOnPc,gpuGameHourlyRate} from "./gpuGames.js";
 import {pcCount,entrance,pcPosition} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
 
