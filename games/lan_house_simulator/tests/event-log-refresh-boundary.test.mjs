@@ -64,8 +64,8 @@ test("refresh não modifica o conteúdo da partida",()=>{
 });
 test("limite de arquitetura sem simulação, DOM ou armazenamento",()=>{
  const file=readFileSync(new URL("../src/ui/eventLogRefresh.ts",import.meta.url),"utf8");
- assert.doesNotMatch(file,/from\\s*["']\\.\\.\\/sim\\//);
- assert.doesNotMatch(file,/\\b(GameState|document|localStorage|requestAnimationFrame|setInterval|stepGame)\\b/);
+ assert.equal(file.includes('from "../sim/'),false);
+ for(const forbidden of ["GameState","document","localStorage","requestAnimationFrame","setInterval","stepGame"])assert.equal(file.includes(forbidden),false);
 });
 test("main liga o cache por callback e não guarda a assinatura",()=>{
  const file=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
