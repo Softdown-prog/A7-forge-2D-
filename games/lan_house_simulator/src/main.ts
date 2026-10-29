@@ -65,6 +65,7 @@ import {createFinancialAdminOverviewPort} from "./application/financialAdminOver
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
+import {createStationRevisionPort} from "./application/stationRevisionPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
 import {yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
@@ -116,7 +117,6 @@ import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.j
 import {createServiceAccessInspectionCache} from "./ui/serviceAccessInspectionCache.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
-import {stationOccupied} from "./sim/computerModels.js";
 import {createLcdPreviewSample} from "./application/lcdPreviewSamplePort.js";
 import {createLcdPreviewCache} from "./ui/lcdPreviewCache.js";
 import {drawLcdPreviewArtwork} from "./render/lcdPreviewArtwork.js";
@@ -615,6 +615,7 @@ function renderShop(force=true):void{
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);
+const stationRevisionPort=createStationRevisionPort(()=>game);
 const monthlyFinancePort=createMonthlyFinancePort(()=>game);
 const promotionStatusPort=createPromotionStatusPort(()=>game);
 const financialBalancePort=createFinancialBalancePort(()=>game);
@@ -666,7 +667,7 @@ function renderUI(liveOnly=false):void {
   const year=gameYear(game);
   const setText=createVisibleAdminTextWriter(document);
   if(adminOpen){
-  const stationRevision=[year,game.cash,game.economyVersion,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)])];
+  const stationRevision=stationRevisionPort.snapshot(year);
   const money=formatAdminMoney;
   const historical=game.economyVersion===2;
   const financialAdminOverview=financialAdminOverviewPort.snapshot();

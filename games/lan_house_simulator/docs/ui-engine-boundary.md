@@ -592,6 +592,14 @@
 - A pintura continua pelos painéis `renderNoticeWindowStatus` e `renderNoticeInbox`, com os mesmos atributos, botões e listeners delegados; nada no motor dos eventos, calendário, RNG ou política de autosave foi alterado.
 - `tests/notice-window-refresh-boundary.test.mjs` adiciona 16 regressões para janela fechada/aberta, marcação forçada, cache, save importado, limpeza de DOM, falhas e fronteiras; os dois testes legados foram adaptados.
 
+## Septuagésimo terceiro recorte: revisão das estações e licenças
+
+- `src/application/stationRevisionPort.ts` fornece o mesmo vetor de doze entradas que alimenta as invalidações das telas de computadores, GPU, licenças, LCD e manutenção, lendo a partida ativa a cada atualização.
+- O cálculo de ocupação por estação e a fase/progresso dos reparos deixam o `main.ts`, que agora injeta `()=>game` e consulta `stationRevisionPort.snapshot(year)`.
+- Preservadas as posições dos campos e os valores opcionais; a assinatura ainda é comparada pelo mesmo `panelChanged`, sem atualizar regras de preços, custos ou gameplay.
+- `tests/station-revision-boundary.test.mjs` adiciona 19 regressões para dados, ocupação, reparos, referências vivas, mudança de save e não-mutação.
+- O commit imediatamente anterior corrige o teste de caixa de correio no worker-simulation que falhava com `notices` ainda não inicializado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
