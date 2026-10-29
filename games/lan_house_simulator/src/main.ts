@@ -67,6 +67,7 @@ import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {createStationRevisionPort} from "./application/stationRevisionPort.js";
 import {createShopCatalogRevisionPort} from "./application/shopCatalogRevisionPort.js";
+import {createShopCatalogRefresh} from "./ui/shopCatalogRefresh.js";
 import {createAdminPanelRevisionsPort} from "./application/adminPanelRevisionsPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
@@ -598,12 +599,13 @@ canvas.addEventListener("click",e=>{
 });
 const panelChanged=createPanelRevisionCache();
 const shopCatalogRevisionPort=createShopCatalogRevisionPort(()=>game);
-function renderShop(force=true):void{
- if(!shopOpen)return;
- if(!shopCatalog)return;
- if(!panelChanged("shop",shopCatalogRevisionPort.snapshot(shopPanels?.current()),force))return;
- renderShopCatalog({
-  host:shopCatalog,doc:document,items:SHOP_CATALOG,
+const shopCatalogRefresh=createShopCatalogRefresh({
+ isOpen:()=>shopOpen,
+ host:()=>shopCatalog,
+ revision:()=>shopCatalogRevisionPort.snapshot(shopPanels?.current()),
+ changed:(revision,force)=>panelChanged("shop",revision,force),
+ render:host=>renderShopCatalog({
+  host,doc:document,items:SHOP_CATALOG,
   currentCategory:()=>shopPanels?.current(),
   renderOverview:()=>renderShopOverview(shopOverviewPort.snapshot(),document),
   offer:id=>shopCatalogOffersPort.snapshot(id),
@@ -613,8 +615,9 @@ function renderShop(force=true):void{
   selectedPs1Slot:()=>selectedPs1PlacementId,
   selectPs1Slot:id=>{selectedPs1PlacementId=id;},
   discs:ps1ShopDiscPort
- });
-}
+ })
+});
+function renderShop(force=true):void{shopCatalogRefresh.refresh(force);}
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);
 const stationLedgerPort=createStationLedgerPort(()=>game);

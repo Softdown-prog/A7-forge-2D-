@@ -160,5 +160,7 @@ test("a composição usa apenas DTOs e nenhuma regra de compra ou save",()=>{
  assert.match(main,/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
  assert.match(main,/service:id=>shopServiceOffersPort\.snapshot\(id\)/);
  assert.match(main,/items:SHOP_CATALOG/);
- assert.match(main,/if\(!panelChanged\("shop",/);
+ assert.match(main,/changed:\(revision,force\)=>panelChanged\("shop",revision,force\)/);
+ const refresh=readFileSync(new URL("../src/ui/shopCatalogRefresh.ts",import.meta.url),"utf8");
+ assert.match(refresh,/options\.changed\(options\.revision\(\),force\)/);
 });

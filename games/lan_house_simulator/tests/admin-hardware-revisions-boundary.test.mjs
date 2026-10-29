@@ -111,6 +111,5 @@ test("UI ainda controla nomes de cache, escolha de abas e renderização",()=>{
 });
 test("a fronteira não importa DOM nem altera sistema ou persistência",()=>{
  const app=readFileSync(new URL("../src/application/adminPanelRevisionsPort.ts",import.meta.url),"utf8");
- for(const forbidden of ["document","window","HTMLElement","requestAnimationFrame","setInterval","localStorage","stepGame","applyResult","saveGame"])
-  assert.equal(app.includes(forbidden),false,forbidden);
+ assert.doesNotMatch(app,/\b(document|window|HTMLElement|requestAnimationFrame|setInterval|localStorage|stepGame|applyResult|saveGame)\b/);
 });

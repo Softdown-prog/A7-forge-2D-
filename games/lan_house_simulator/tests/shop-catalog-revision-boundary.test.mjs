@@ -125,7 +125,8 @@ test("porta não depende de DOM, cronômetros, persistência nem compras",()=>{
 test("main fornece a categoria atual e ainda delega o renderizador original",()=>{
  const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.ok(main.includes("createShopCatalogRevisionPort(()=>game)"));
- assert.ok(main.includes('if(!panelChanged("shop",shopCatalogRevisionPort.snapshot(shopPanels?.current()),force))return;'));
+ assert.ok(main.includes('revision:()=>shopCatalogRevisionPort.snapshot(shopPanels?.current())'));
+ assert.ok(main.includes('changed:(revision,force)=>panelChanged("shop",revision,force)'));
  assert.ok(main.includes("renderShopCatalog({"));
  assert.ok(main.includes("currentCategory:()=>shopPanels?.current()"));
  assert.ok(main.includes("offer:id=>shopCatalogOffersPort.snapshot(id)"));

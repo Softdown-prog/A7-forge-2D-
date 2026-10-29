@@ -123,8 +123,10 @@ test("a porta não manipula DOM, persistência, temporizadores ou gameplay",()=>
 test("a composição do main usa a porta sem duplicar cálculo de revisões",()=>{
  const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.ok(main.includes("createAdminPanelRevisionsPort(()=>game)"));
- for(const method of ["feedback()","packages()","retail()","computerWear(","classicGames(year,stationRevision)","gpuGames(year,stationRevision)"])
+ for(const method of ["feedback()","packages()","retail()","computerMaintenance(","classicGames(year,stationRevision)","gpuGames(year,stationRevision)"])
   assert.ok(main.includes("adminPanelRevisionsPort."+method),method);
+ const port=readFileSync(new URL("../src/application/adminPanelRevisionsPort.ts",import.meta.url),"utf8");
+ assert.ok(port.includes("this.computerWear(operationsActive)"));
  assert.ok(!main.includes("Math.floor(game.totalMinutes/720),game.customerFeedback"));
  assert.ok(!main.includes("game.gpuGameInstallJobs?.map"));
  assert.ok(!main.includes("game.pcWear?.map(Math.round)"));

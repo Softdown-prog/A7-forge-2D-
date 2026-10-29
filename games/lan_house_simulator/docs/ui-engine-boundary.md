@@ -631,6 +631,14 @@
 - Os dois testes legados que falharam no recorte 76 (`menu-scene-preview-boundary.test.mjs` e `runtime-interaction-bindings-boundary.test.mjs`) foram adaptados para verificar as chamadas agora localizadas em `framePresentationCoordinator.ts`. Compilação, cenas e os demais 1.492 testes haviam passado.
 - Preservados o limite de PCs, compra de hardware, preços, gestos mobile, Canvas, RNG, relógio simulado e save.
 
+## Septuagésimo oitavo recorte: atualização da vitrine da loja
+
+- `src/ui/shopCatalogRefresh.ts` assume a ordem das guardas da vitrine: loja aberta, host disponível, assinatura do catálogo, comparação pelo cache e pintura. O módulo é genérico, não possui DOM, motor, Canvas ou listeners e recebe callbacks vivos do bootstrap.
+- `main.ts` mantém `renderShop(force)`, o catálogo `SHOP_CATALOG`, as ofertas de serviços/PS1, a seleção de vaga e todos os handlers de compra; o método apenas delega para `shopCatalogRefresh.refresh(force)`.
+- `tests/shop-catalog-refresh-boundary.test.mjs` adiciona 20 regressões sobre a ordem e os gates, cache JSON, troca de categoria e save, força de atualização, host novo, erros e ausência de mutação.
+- Corrigidos também dois testes legados do recorte 77: a verificação de fronteira passou a exigir palavras inteiras (para não confundir `windows` com `window`), e a leitura de desgaste agora é verificada em `computerMaintenance`, após a extração.
+- Nenhuma compra, regra de expansão, preço, gesto mobile, atualização de tempo simulado ou save foi modificada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
