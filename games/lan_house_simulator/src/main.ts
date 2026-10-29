@@ -6,6 +6,8 @@ import {createGameLicensingPort} from "./application/gameLicensingPort.js";
 import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
 import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
 import {createPs1AdminPort} from "./application/ps1AdminPort.js";
+import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
+import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
 import {refreshGpuDownloadMeters} from "./ui/gpuDownloadMeters.js";
 import {createWindowsLicensePort} from "./application/windowsLicensePort.js";
@@ -34,7 +36,7 @@ import {renderDeskServicePanels} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
- ps1StationPoint,PS1_CD_CATALOG,ps1DiscPrice,ps1DiscCopies,
+ ps1StationPoint,
  ps1PlacementLabel} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
@@ -461,6 +463,7 @@ button("organize-furniture",()=>layoutEditor.open());
 
 const ps1Actions=createPs1ActionsPort(()=>game);
 const ps1AdminPort=createPs1AdminPort(()=>game);
+const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
   if(id==="computer-annex"){
@@ -808,55 +811,8 @@ function renderShop(force=true):void{
   if(max>0){const owned=document.createElement("span");owned.textContent="Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length;card.append(owned);}
   shopCatalog.append(card);
  }
- // CDs físicos do PS1: não são licenças nem são vendidos ao cliente final.
- // Uma cópia pode alimentar apenas uma bancada por vez.
- if(shopPanels?.current()==="consoles"&&game.economyVersion===2&&gameYear(game)>=PS1_UNLOCK_YEAR){
-  const label=document.createElement("h3");label.className="ps1-shop-heading";
-  label.textContent="Jogos de PlayStation 1 · CDs físicos";
-  shopCatalog.append(label);
-  const note=document.createElement("p");note.className="catalog-game-note ps1-shop-note";
-  note.textContent="Compre um CD definitivo para começar a atender. Cada cópia equipa apenas uma bancada por vez; os títulos são fictícios e não exigem licenciamento por PC.";
-  shopCatalog.append(note);
-  for(const disc of PS1_CD_CATALOG){
-   const price=ps1DiscPrice(game,disc.id);
-   const copies=ps1DiscCopies(game,disc.id);
-   const card=document.createElement("article");card.className="shop-card ps1-cd-shop-card";
-   const art=document.createElement("div");art.className="ps1-cd-art";
-   art.setAttribute("aria-hidden","true");
-   const jewel=document.createElement("div");jewel.className="ps1-cd-jewel";
-   const cover=document.createElement("img");cover.className="ps1-cd-cover";
-   cover.src="assets/ps1/covers/"+disc.id+".svg";
-   cover.alt="";cover.loading="lazy";cover.decoding="async";
-   cover.width=420;cover.height=560;
-   const spine=document.createElement("span");spine.className="ps1-cd-spine";
-   jewel.append(cover,spine);
-   art.append(jewel);
-   const category=document.createElement("small");category.textContent="CD de PS1 · "+disc.genre;
-   const title=document.createElement("h3");title.textContent=disc.title;
-   const description=document.createElement("p");
-   description.textContent="Cópias no acervo: "+copies+
-    " · compra definitiva, sem renovação.";
-   const button=document.createElement("button");button.type="button";
-   button.dataset.buyPs1Disc=disc.id;
-   const unavailable=!(game.ps1Stations?.length);
-   const full=copies>=PS1_MAX_STATIONS;
-   button.disabled=unavailable||full||game.cash<price;
-   button.textContent=unavailable?"Instale uma bancada primeiro":full?
-    "Acervo completo":game.cash<price?"Caixa insuficiente · "+price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}):
-    "Comprar CD · "+price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-   card.append(art,category,title,description,button);
-   shopCatalog.append(card);
-  }
-  // CDs perto do console, e não escondidos após todas as decorações/expansões.
-  const consoleCard=shopCatalog.querySelector('button[data-buy="ps1"]')?.closest(".shop-card");
-  if(consoleCard){
-   let previous=consoleCard;
-   for(const child of Array.from(shopCatalog.querySelectorAll(".ps1-shop-heading, .ps1-shop-note, .ps1-cd-shop-card"))){
-    previous.after(child);
-    previous=child;
-   }
-  }
- }
+ renderPs1ShopDiscCatalog(shopCatalog,ps1ShopDiscPort,shopPanels?.current()==="consoles",document);
+
 }
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);

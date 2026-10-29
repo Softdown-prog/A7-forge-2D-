@@ -348,6 +348,14 @@
 - `tests/frame-interaction-tracker-boundary.test.mjs` adiciona treze verificações dos sinais mobile, ordem e opções de eventos, integridade de saves e limites originais de 450/160/120 ms para atualizar o HUD.
 - Gestos touch do editor, cancelamento, `click` de compatibilidade, tempo da simulação, FPS, RNG e formato do save não foram modificados.
 
+## Quadragésimo quarto recorte: catálogo de CDs físicos do PS1
+
+- `src/application/ps1ShopDiscPort.ts` fornece uma projeção somente-leitura dos CDs físicos, preços reais, cópias, elegibilidade, dinheiro e limites; acompanha o save importado.
+- `src/ui/ps1ShopDiscCatalog.ts` renderiza os cinco cartões, capas SVG e botões `data-buy-ps1-disc` com o mesmo `dataset.buyPs1Disc` e os mantém imediatamente após a bancada PS1.
+- `main.ts` deixa de construir os cartões e mantém as compras delegadas ao `shopControls` existente, sem instalar listeners adicionais.
+- `tests/ps1-shop-disc-boundary.test.mjs` cobre doze casos de desbloqueio, valores, limite, importação, estrutura DOM e ligação entre camadas.
+- Nenhuma regra de compras, demanda, ano 2002, preço, save, RNG ou Canvas foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
