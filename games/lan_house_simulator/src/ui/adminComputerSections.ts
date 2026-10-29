@@ -8,7 +8,7 @@ export interface AdminComputerSectionsOptions {
  readonly adminOpen:boolean;
  readonly computersTab:boolean;
  readonly ledgerActive:()=>boolean;
- readonly currentPage:()=>string;
+ readonly currentPage:()=>string|undefined;
  readonly maintenanceChanged:()=>boolean;
  readonly selectedStation:()=>number;
  readonly clampSelectedStation:()=>void;
