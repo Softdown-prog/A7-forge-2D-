@@ -12,7 +12,7 @@ class Node {
  }
  setAttribute(key,value){this.attrs[key]=value;}
  append(...items){this.children.push(...items);}
- replaceChildren(...items){this.children=[...items];}
+ replaceChildren(...items){this.children=[...items];this.innerHTML="";this.textContent="";}
  getContext(type){
   assert.equal(this.tag,"canvas");assert.equal(type,"2d");
   return null;

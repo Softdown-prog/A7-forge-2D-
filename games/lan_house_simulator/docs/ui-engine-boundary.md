@@ -396,6 +396,16 @@
 - `tests/shop-catalog-card-boundary.test.mjs` acrescenta doze testes para montagem DOM, ícones, miniaturas, cache, rótulos, indicadores de móveis e fronteiras das camadas.
 - Sem mudança de compra, economia, save, RNG, simulação, gestos mobile ou arte do jogo.
 
+## Quinquagésimo recorte: ofertas comuns da loja e correção de regressão
+
+- `src/application/shopCatalogOffersPort.ts` projeta de forma somente-leitura as ofertas comuns da loja: preço, dinheiro, disponibilidade, limites de PC principal, vagas em anexos, direções de expansão, divisórias e decoração; acompanha a instância ativa do save.
+- `src/application/shopCatalogGuidance.ts` guarda as mensagens e rótulos existentes; `src/ui/shopGuidance.ts` mantém exportações compatíveis com consumidores e testes antigos.
+- `src/ui/shopCatalogOfferButton.ts` aplica somente texto e estado do botão, sem importar o motor; as ofertas especializadas de PS1, copiadora e impressora continuam com prioridade.
+- `main.ts` apenas compõe as portas, mantém a ordem dos cartões e o clique delegado ao `shopControls`, sem calcular os limites no renderizador.
+- `tests/shop-catalog-offers-boundary.test.mjs` inclui dezesseis verificações de equivalência com o cálculo anterior, expansões, saldos, vagas, móveis, serviços, save importado e fronteiras entre camadas.
+- Corrigido o stub de DOM de `tests/shop-catalog-card-boundary.test.mjs` para reproduzir `replaceChildren()`, que limpa conteúdo e `innerHTML` no navegador real; isso resolve a falha de um teste no 49º recorte.
+- Nenhuma regra de compra, colisão, RNG, autosave, desenho da cena ou gesto mobile foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

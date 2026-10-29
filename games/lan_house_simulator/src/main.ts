@@ -13,6 +13,8 @@ import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
+import {createShopCatalogOffersPort} from "./application/shopCatalogOffersPort.js";
+import {renderShopCatalogOfferButton} from "./ui/shopCatalogOfferButton.js";
 import {createShopCatalogCard,appendStandardShopCatalogCard,appendShopCatalogOwned} from "./ui/shopCatalogCard.js";
 import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
 import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
@@ -55,8 +57,7 @@ import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
 import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
-import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
-import {MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
+import {SHOP_CATALOG,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
 import {WALL_COST,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
@@ -89,7 +90,6 @@ import { roomWidth,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
 import {iconMarkup,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
-import {shopPlacementStatus,shopPurchaseButtonText} from "./ui/shopGuidance.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
 import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
@@ -469,6 +469,7 @@ const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
 const ps1ShopPlacementPort=createPs1ShopPlacementPort(()=>game);
 const ps1ShopOfferPort=createPs1ShopOfferPort(()=>game);
 const shopServiceOffersPort=createShopServiceOffersPort(()=>game);
+const shopCatalogOffersPort=createShopCatalogOffersPort(()=>game,()=>placementActions.availableAnnex().length);
 const shopOverviewPort=createShopOverviewPort(()=>game,()=>layoutEditorPort.objects().length,()=>placementActions.annexSlots().length);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
@@ -704,19 +705,9 @@ function renderShop(force=true):void{
   if(shopCategory(item.id)!==shopPanels?.current())continue;
   const fields=createShopCatalogCard(item,document);
   const {card,art,category,title,description,button}=fields;
-  const placementHint=shopPlacementStatus(game,item.id);
-  const max=(item.id==="poster"||item.id==="plant"||item.id==="table")?furnitureLimit(game,item.id):0;
-  const count=game.furniture?.[item.id as FurnitureKind]??0;
-  const ext=item.id.startsWith("extend-")?item.id.slice(7) as ExtensionDirection:null;
-  const full=item.id==="door"?!(game.interiorWalls?.length):
-     item.id==="computer-annex"?!placementActions.availableAnnex().length:
-     ext?(game.roomExtensions?.[ext]??0)>=MAX_EXTENSION_LEVEL:
-     item.id==="expand"?game.expansionLevel>=2:
-     item.id==="computer"?((game.installedPcs??(3+game.expansionLevel*2))>=3+game.expansionLevel*2):
-     max>0&&(count>=max||!availablePlacementSlots(game,item.id as FurnitureKind).length);
-  const price=shopPrice(game,item.id);
-  button.disabled=full||game.cash<price;
-  button.textContent=shopPurchaseButtonText(item.id,full,game.cash<price,price,max>0);
+  const offer=shopCatalogOffersPort.snapshot(item.id);
+  const placementHint=offer.placementHint;
+  renderShopCatalogOfferButton(button,offer);
   if(item.id==="printer"||item.id==="disc-copier"){
    renderShopServiceOffer(button,shopServiceOffersPort.snapshot(item.id));
   }
@@ -727,7 +718,7 @@ function renderShop(force=true):void{
   }else{
    appendStandardShopCatalogCard(fields,placementHint,document);
   }
-  if(max>0)appendShopCatalogOwned(card,"Instalados: "+count+" · posições livres: "+availablePlacementSlots(game,item.id as FurnitureKind).length,document);
+  if(offer.ownedText!==null)appendShopCatalogOwned(card,offer.ownedText,document);
   shopCatalog.append(card);
  }
  renderPs1ShopDiscCatalog(shopCatalog,ps1ShopDiscPort,shopPanels?.current()==="consoles",document);
