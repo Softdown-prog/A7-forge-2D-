@@ -80,6 +80,7 @@ test("fronteira separa cálculos de negócio e DOM sem recriar elementos",()=>{
  const app=readFileSync(new URL("application/monthlyFinancePort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/monthlyFinancePanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/replaceChildren|innerHTML/);
@@ -88,6 +89,7 @@ test("fronteira separa cálculos de negócio e DOM sem recriar elementos",()=>{
   "last-bill-wages","last-bill-total","monthly-statement","capacity-advice"])
   assert.ok(ui.includes('"'+id+'"'));
  assert.match(main,/createMonthlyFinancePort\(\(\)=>game\)/);
- assert.match(main,/renderMonthlyFinancePanel\(monthlyFinancePort\.snapshot\(\),setText,document\)/);
+ assert.match(main,/renderAdminFinanceActivity\(\{/);
+ assert.match(sections,/renderMonthlyFinancePanel\(options.monthly.snapshot\(\),options.setText,options.doc\)/);
  assert.doesNotMatch(main,/computerOccupancyPercent\(/);
 });

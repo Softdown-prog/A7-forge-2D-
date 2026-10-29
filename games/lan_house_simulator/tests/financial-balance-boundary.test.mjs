@@ -101,6 +101,7 @@ test("application sem DOM e UI sem motor: main mantém filtros de abas",()=>{
  const app=readFileSync(new URL("application/financialBalancePort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/financialBalancePanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/replaceChildren|innerHTML/);
@@ -109,8 +110,9 @@ test("application sem DOM e UI sem motor: main mantém filtros de abas",()=>{
   "bill-watch-title","bill-watch-status","bill-watch"])
   assert.ok(ui.includes('"'+id+'"'));
  assert.ok(main.includes("createFinancialBalancePort(()=>game)"));
- assert.ok(main.includes("renderFinancialBalance(financialBalancePort.balance(),setText,document)"));
- assert.ok(main.includes("renderFinancialBillWatch(financialBalancePort.billWatch(),document)"));
+ assert.ok(main.includes("renderAdminFinanceSummary({"));
+ assert.ok(sections.includes("renderFinancialBalance(options.balance.balance(),options.setText,options.doc)"));
+ assert.ok(sections.includes("renderFinancialBillWatch(options.balance.billWatch(),options.doc)"));
  assert.doesNotMatch(main,/\bfinancialSnapshot\(/);
  assert.doesNotMatch(main,/\bmonthlyClosingSnapshot\(/);
 });

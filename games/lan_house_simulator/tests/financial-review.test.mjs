@@ -77,5 +77,7 @@ test("indicadores estão visíveis na aba Finanças do jogo",()=>{
   assert.match(html,new RegExp('id="'+id+'"'));
   assert.ok(ui.includes('setText("'+id+'"'));
  }
- assert.match(main,/renderMonthlyFinancePanel\(monthlyFinancePort\.snapshot\(\),setText,document\)/);
+ const sections=readFileSync(resolve(root,"src/ui/adminFinanceSections.ts"),"utf8");
+ assert.match(main,/renderAdminFinanceActivity\(\{/);
+ assert.match(sections,/renderMonthlyFinancePanel\(options.monthly.snapshot\(\),options.setText,options.doc\)/);
 });
