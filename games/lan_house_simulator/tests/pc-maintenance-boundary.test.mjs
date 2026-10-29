@@ -96,11 +96,13 @@ test("separação não desloca motor nem listeners, main mantém invalidatório 
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/pcMaintenancePanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminComputerSections.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes('panelChanged("computers"'));
- assert.ok(main.includes("renderPcMaintenancePanel(liveMaintenance"));
+ assert.ok(main.includes("renderAdminComputerSections({"));
+ assert.ok(sections.includes("renderPcMaintenancePanel(host"));
  assert.ok(main.includes("renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page)"));
- assert.ok(main.includes("renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document)"));
+ assert.ok(main.includes("renderLcdMonitorsPanel(host,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document)"));
  assert.ok(main.includes("installStationControls("));
 });

@@ -63,6 +63,7 @@ test("fronteira mantém simulação fora do DOM e formato de tabela legado",()=>
  assert.match(ui,/toLocaleString\("pt-BR"/);
  assert.match(ui,/syncPanelChildren\(host,next\)/);
  assert.match(main,/createStationLedgerPort\(\(\)=>game\)/);
- assert.match(main,/renderStationLedgerRows\(stationLedgerRows,stationLedgerPort\)/);
+ assert.match(main,/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
+ assert.match(main,/renderAdminComputerSections\(\{/);
  assert.doesNotMatch(main,/\bstationAccountingSummary\(/);
 });

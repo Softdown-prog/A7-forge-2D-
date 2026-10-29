@@ -102,13 +102,15 @@ test("fronteira da aplicação mantém DOM isolado e não muda o fluxo mobile",(
  const app=readFileSync(new URL("application/pcOperationsPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/pcOperationsPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminComputerSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createPcOperationsPort(()=>game)"));
- assert.ok(main.includes("renderPcOperations(maintenance,pcOperationsPort.rows(),document)"));
+ assert.ok(main.includes("renderPcOperations(host,pcOperationsPort.rows(),document)"));
  assert.ok(main.includes("reconcile:syncPanelChildren"));
- assert.ok(main.includes("renderPcMaintenancePanel(liveMaintenance"));
+ assert.ok(main.includes("renderAdminComputerSections({"));
+ assert.ok(sections.includes("renderPcMaintenancePanel(host"));
  assert.ok(main.includes('panelChanged("computers"'));
  assert.ok(main.includes("installStationControls("));
  assert.doesNotMatch(main,/\bpcWear\(|\bpcBroken\(/);
