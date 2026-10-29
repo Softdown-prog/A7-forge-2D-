@@ -1,4 +1,4 @@
-/** DOM and cached Canvas previews for the shop catalog, independent of GameState. */
+/** DOM and cached Canvas previews for the shop catalog, without simulation dependencies. */
 import {drawDiscCopier} from "../render/discCopierArt.js";
 import {drawPrinterShop} from "../render/printerArt.js";
 import {drawPs1Station} from "../render/ps1Art.js";
