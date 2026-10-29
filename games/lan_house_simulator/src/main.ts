@@ -30,7 +30,7 @@ import {drawDiscCopier} from "./render/discCopierArt.js";
 import {createDeskPricingPort} from "./application/deskPricingPort.js";
 import {createCommerceNetworkPort} from "./application/commerceNetworkPort.js";
 import {renderCommerceNetworkPanel} from "./ui/commerceNetworkPanel.js";
-import {renderDiscPricing,renderPrintPricing} from "./ui/deskPricingPanel.js";
+import {renderDeskServicePanels} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
@@ -937,19 +937,11 @@ function renderUI(liveOnly=false):void {
   if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
    renderRetailPriceControls(retailControls,retailPriceStatusPort.snapshot(),iconMarkup,document,syncPanelChildren);
   }
-  const serviceAvailability=deskPricingPort.installed();
-  const discPanel=document.getElementById("disc-copy-panel");
-  if(discPanel)discPanel.hidden=!serviceAvailability.discs;
-  if(discControls&&serviceAvailability.discs&&activeAdminTab==="prices"&&managementPanels.active("prices","discs")){
-   const view=deskPricingPort.discs();
-   if(view)renderDiscPricing(discControls,view,setText,iconMarkup,document,syncPanelChildren);
-  }
-  const printPanel=document.getElementById("print-service-panel");
-  if(printPanel)printPanel.hidden=!serviceAvailability.printer;
-  if(printControls&&serviceAvailability.printer&&activeAdminTab==="prices"&&managementPanels.active("prices","printing")){
-   const view=deskPricingPort.printing();
-   if(view)renderPrintPricing(printControls,view,setText,document,syncPanelChildren);
-  }
+  renderDeskServicePanels(deskPricingPort,{
+   pricingTab:activeAdminTab==="prices",
+   isActive:page=>managementPanels.active("prices",page),
+   discControls,printControls,setText,iconMarkup,doc:document,sync:syncPanelChildren
+  });
   if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
   renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
   setText("pc",pcOperationsPort.summary());

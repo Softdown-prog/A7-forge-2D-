@@ -316,6 +316,14 @@
 - `tests/notice-window-status-boundary.test.mjs` adiciona oito verificações para contagem, abertura, fechamento, estado importado e DOM.
 - Sem alterar o calendário das cartas, o motor, o RNG, as compras ou o Canvas.
 
+## Quadragésimo recorte: exibição e controles de serviços do balcão
+
+- `src/ui/deskPricingPanel.ts` assume a exibição dos setores de CDs/DVDs e impressão, reaproveitando as projeções de `deskPricingPort` e os renderizadores de botões já testados.
+- `main.ts` informa apenas qual aba está selecionada, quais hosts DOM existem e quais mecanismos de reconciliação usar. Relatórios e controles só são calculados quando o serviço está instalado e a aba correspondente está ativa.
+- `tests/desk-pricing-services-boundary.test.mjs` acrescenta onze verificações sobre serviços ausentes, páginas fechadas, preços reais, importação de saves, DOM e fronteira de dependências.
+- `tests/desk-pricing-boundary.test.mjs` continua validando a apresentação dos dois preços e aponta para o novo ponto de integração.
+- Nenhuma regra de preço, compra, material, demanda avulsa, limite diário, RNG, Canvas ou save foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

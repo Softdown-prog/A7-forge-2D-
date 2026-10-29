@@ -1,5 +1,5 @@
 /** Preserve delegated click handlers by reconciling child nodes in place. */
-import type {DiscPricingView,PrintPricingView} from "../application/deskPricingPort.js";
+import type {DeskPricingPort,DiscPricingView,PrintPricingView} from "../application/deskPricingPort.js";
 export function renderDiscPricing(
  host:Element,view:DiscPricingView,setText:(id:string,value:string)=>void,
  iconMarkup:(id:string)=>string,doc:Pick<Document,"createElement">,
@@ -46,4 +46,31 @@ export function renderPrintPricing(
  row.append(label,actions,expense);next.append(row);sync(host,next);
  setText("print-service-summary",view.summary);
  setText("print-service-capacity",view.capacity);
+}
+
+/** Show only the installed desk services, without rebuilding hidden price controls. */
+export interface DeskServicePanelsOptions {
+ readonly pricingTab:boolean;
+ readonly isActive:(page:"discs"|"printing")=>boolean;
+ readonly discControls:Element|null;
+ readonly printControls:Element|null;
+ readonly setText:(id:string,value:string)=>void;
+ readonly iconMarkup:(id:string)=>string;
+ readonly doc:Pick<Document,"getElementById"|"createElement">;
+ readonly sync:(current:Element,next:Element)=>void;
+}
+export function renderDeskServicePanels(port:DeskPricingPort,options:DeskServicePanelsOptions):void{
+ const installed=port.installed();
+ const discPanel=options.doc.getElementById("disc-copy-panel");
+ if(discPanel)discPanel.hidden=!installed.discs;
+ if(options.discControls&&installed.discs&&options.pricingTab&&options.isActive("discs")){
+  const view=port.discs();
+  if(view)renderDiscPricing(options.discControls,view,options.setText,options.iconMarkup,options.doc,options.sync);
+ }
+ const printPanel=options.doc.getElementById("print-service-panel");
+ if(printPanel)printPanel.hidden=!installed.printer;
+ if(options.printControls&&installed.printer&&options.pricingTab&&options.isActive("printing")){
+  const view=port.printing();
+  if(view)renderPrintPricing(options.printControls,view,options.setText,options.doc,options.sync);
+ }
 }

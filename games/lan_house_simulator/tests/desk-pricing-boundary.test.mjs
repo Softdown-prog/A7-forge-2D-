@@ -7,7 +7,7 @@ import {buyDiscCopier,setDiscCopyPrice,discMediaCost,DISC_COPIES_PER_DAY} from "
 import {printEconomy,discEconomy} from "../dist/js/sim/serviceEconomy.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {createDeskPricingPort} from "../dist/js/application/deskPricingPort.js";
-import {renderDiscPricing,renderPrintPricing} from "../dist/js/ui/deskPricingPanel.js";
+import {renderDiscPricing,renderPrintPricing,renderDeskServicePanels} from "../dist/js/ui/deskPricingPanel.js";
 
 const currency=n=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 const starting=(mode="historical")=>{const s=createGame(6151,mode);s.cash=5000;s.totalMinutes=3*360*720;return s;};
@@ -104,7 +104,8 @@ test("porta sem DOM e apresentação sem dependência de simulação",()=>{
  assert.ok(main.includes("createDeskPricingPort(()=>game)"));
  assert.ok(main.includes('managementPanels.active("prices","discs")'));
  assert.ok(main.includes('managementPanels.active("prices","printing")'));
- assert.ok(main.includes("renderDiscPricing(discControls,view,setText,iconMarkup,document,syncPanelChildren)"));
- assert.ok(main.includes("renderPrintPricing(printControls,view,setText,document,syncPanelChildren)"));
+ assert.ok(main.includes("renderDeskServicePanels(deskPricingPort,{"));
+ assert.ok(ui.includes("renderDiscPricing(options.discControls,view,options.setText,options.iconMarkup,options.doc,options.sync)"));
+ assert.ok(ui.includes("renderPrintPricing(options.printControls,view,options.setText,options.doc,options.sync)"));
  assert.doesNotMatch(main,/\bprintEconomy\(|\bdiscEconomy\(/);
 });
