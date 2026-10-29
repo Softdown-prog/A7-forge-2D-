@@ -91,6 +91,7 @@ import {createMenuPreviewPainter} from "./ui/menuPreviewPainter.js";
 import {iconMarkup,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
+import {createAdminAreaTabs} from "./ui/adminAreaTabs.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
 import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
 import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.js";
@@ -462,15 +463,10 @@ const nightTournamentHud=installNightTournamentHud();
 const fridayMeetupPanel=installFridayMeetupPanel(admin,()=>game,
  result=>{applyResult(game,result);renderUI();save();});
 const managementPanels=installManagementPanels(admin,()=>renderUI(),()=>yearFromMinutes(game.totalMinutes));
-const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]"));
-const adminSections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
-function activateAdminTab(tab:string):void{
- activeAdminTab=tab;
- managementPanels.syncArea(tab);
- for(const button of tabs){const active=button.dataset.adminTab===tab;button.classList.toggle("active",active);button.setAttribute("aria-selected",String(active));button.tabIndex=active?0:-1;}
- for(const section of adminSections)section.hidden=section.dataset.section!==tab;
-}
-for(const tab of tabs)tab.addEventListener("click",()=>{activateAdminTab(tab.dataset.adminTab??"prices");admin.scrollTop=0;renderUI();});
+const adminTabs=createAdminAreaTabs(admin,tab=>{
+ activeAdminTab=tab;managementPanels.syncArea(tab);
+},()=>renderUI());
+function activateAdminTab(tab:string):void{adminTabs.activate(tab);}
 const merchandisePanel=installMerchandisePanel(createMerchandisePort(()=>game),r=>{applyResult(game,r);renderUI();save();});
 installPricingControls(createPricingPort(()=>game),{
  onResult:result=>{applyResult(game,result);renderUI();save();},

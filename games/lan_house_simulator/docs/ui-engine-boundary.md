@@ -561,6 +561,14 @@
 - Teste anterior de sobreposições atualizado para inspecionar a nova chamada mantendo a ordem editor → balões → prévia de móveis.
 - A simulação, receitas, RNG, save, áudio e limites de toques mobile não foram alterados.
 
+## Sexagésimo nono recorte: navegação das abas administrativas
+
+- `src/ui/adminAreaTabs.ts` controla somente os botões e as seções do painel administrativo. A mudança de área continua passando por `managementPanels.syncArea`, injetado pelo `main.ts`.
+- A aba ativa mantém `class="active"`, `aria-selected="true"` e `tabIndex=0`; as outras recebem `aria-selected="false"`, `tabIndex=-1` e têm as seções ocultas.
+- Clique em uma aba preserva a ordem anterior: selecionar área, sincronizar botões/seções, restaurar `scrollTop=0` e solicitar `renderUI`; ativação programática não zera a rolagem nem força renderização extra.
+- `tests/admin-area-tabs-boundary.test.mjs` adiciona dezenove testes, cobrindo atributos de acessibilidade, navegação, clique, seleção programática, ausência de seções e isolamento entre DOM e motor.
+- Motor, preços, saves, RNG, controles mobile, renderização de Canvas e estado da partida permanecem inalterados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
