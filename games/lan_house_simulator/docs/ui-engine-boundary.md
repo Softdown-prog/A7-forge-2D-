@@ -439,6 +439,15 @@
 - Corrigido antes deste recorte o teste legado de panfletagem que ainda exigia o renderizador financeiro dentro de `main.ts`.
 - Nenhuma lógica de compra, manutenção, desgaste, energia, saves, RNG, renderização Canvas ou toque foi modificada.
 
+## Quinquagésimo quinto recorte: GPU e licenças de jogos
+
+- `src/ui/adminGpuLicenseSections.ts` coordena as telas da GPU, licenças Windows, catálogo clássico, catálogo de jogos avançados e atualizações de download a partir de portas somente-leitura, mantendo os elementos e seletores existentes.
+- `main.ts` guarda o estado da partida, seleção de PC e as assinaturas de revisão, mas não organiza diretamente a apresentação desses catálogos.
+- Os controles de compra de GPU, instalação, licenciamento e cancelamento continuam nas portas e handlers delegados existentes; os downloads continuam a progredir com o painel fechado.
+- `tests/admin-gpu-license-sections-boundary.test.mjs` cobre doze casos de abas, revisão, seleção, limites, progresso e fronteira UI/motor.
+- Testes de integração anteriores passam a verificar os métodos nas novas camadas, evitando falsas regressões por mudanças de localização.
+- Sem alteração de preços, licenças, calendário, saves, RNG, Canvas, filas ou gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

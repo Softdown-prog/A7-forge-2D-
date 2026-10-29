@@ -23,9 +23,7 @@ import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
 import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
-import {refreshGpuDownloadMeters} from "./ui/gpuDownloadMeters.js";
 import {createWindowsLicensePort} from "./application/windowsLicensePort.js";
-import {renderWindowsLicensePanel} from "./ui/windowsLicensePanel.js";
 import {renderPs1AdminPanel} from "./ui/ps1AdminPanel.js";
 import {createShopActionsPort} from "./application/shopActionsPort.js";
 import {installShopControls} from "./ui/shopControls.js";
@@ -99,19 +97,16 @@ import {createNoticeInboxPort} from "./application/noticeInboxPort.js";
 import {renderNoticeInbox} from "./ui/noticeInboxPanel.js";
 import {gameYear,INTERNET_ERAS} from "./sim/era.js";
 import {createGpuCatalogPort} from "./application/gpuCatalogPort.js";
-import {renderGpuCatalogPanel} from "./ui/gpuCatalogPanel.js";
 import {createGpuGamesCatalogPort} from "./application/gpuGamesCatalogPort.js";
-import {renderGpuGamesCatalog} from "./ui/gpuGamesCatalogPanel.js";
 import {createBasicGamesLicenseStatusPort} from "./application/basicGamesLicenseStatusPort.js";
-import {renderBasicGamesLicenseStatus} from "./ui/basicGamesLicenseStatusPanel.js";
 import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
-import {renderClassicGamesCatalog} from "./ui/classicGamesCatalogPanel.js";
 import {createEventLogPort} from "./application/eventLogPort.js";
 import {renderEventLog} from "./ui/eventLogPanel.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
 import {renderAdminComputerSections} from "./ui/adminComputerSections.js";
+import {renderAdminGpuLicenseSections} from "./ui/adminGpuLicenseSections.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
@@ -816,20 +811,20 @@ function renderUI(liveOnly=false):void {
    renderComputerSummary:host=>presentComputerOperations(computerOperationsSnapshot(game),host),
    decorate:decorateControls,reconcile:syncPanelChildren,doc:document
   });
-  if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"&&panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly)){
-    selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
-    renderGpuCatalogPanel(gpuPcChoice,gpuList,gpuCatalogPort.snapshot(selectedGpuPc),setText,document,syncPanelChildren);
-  }
-  renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document);
-  if(licensePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","windows")&&panelChanged("licensePanel",[stationRevision],!liveOnly))
-   renderWindowsLicensePanel(licensePanel,windowsLicensePort);
-  if(eraGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","classic")&&panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly)){
-   renderClassicGamesCatalog(eraGamePanel,classicGamesCatalogPort.snapshot(),document,syncPanelChildren);
-  }
-  if(gpuGamePanel&&adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu")&&panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly)){
-   renderGpuGamesCatalog(gpuGamePanel,gpuGamesCatalogPort.snapshot(),document,syncPanelChildren);
-  }
-  refreshGpuDownloadMeters(gpuGamePanel,adminOpen&&activeAdminTab==="licenses"&&managementPanels.active("licenses","gpu"),gpuDownloadMetersPort);
+  renderAdminGpuLicenseSections({
+   adminOpen,gpuTab:activeAdminTab==="gpus",licensesTab:activeAdminTab==="licenses",
+   gpuPcChoice,gpuList,licensePanel,eraGamePanel,gpuGamePanel,
+   gpuChanged:()=>panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly),
+   selectedGpuIndex:()=>{selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);return selectedGpuPc;},
+   licensePageActive:page=>managementPanels.active("licenses",page),
+   windowsChanged:()=>panelChanged("licensePanel",[stationRevision],!liveOnly),
+   classicChanged:()=>panelChanged("eraGamePanel",[year,stationRevision,game.licensedGames,game.licensedEraGames,game.ericSecondMailDelivered],!liveOnly),
+   gpuGamesChanged:()=>panelChanged("gpuGamePanel",[year,stationRevision,game.licensedGames,game.licensedGpuGames,game.pcPoweredOff,game.gpuGameInstalls,game.gpuGameInstallJobs?.map(j=>[j.pc,j.id,j.durationMinutes]),game.gpuGameDemand,online(game)],!liveOnly),
+   gpuCatalog:gpuCatalogPort,basicGames:basicGamesLicenseStatusPort,
+   windows:windowsLicensePort,classic:classicGamesCatalogPort,
+   gpuGames:gpuGamesCatalogPort,downloads:gpuDownloadMetersPort,
+   setText,doc:document,sync:syncPanelChildren
+  });
   if(activeAdminTab==="consoles")renderPs1AdminPanel(ps1AdminPort,{
    showStations:adminOpen&&managementPanels.active("consoles","stations"),
    setText,money
