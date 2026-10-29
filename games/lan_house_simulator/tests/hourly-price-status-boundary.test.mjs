@@ -105,12 +105,14 @@ test("projeção não importa DOM; UI não conhece motor, e main mantém cache e
  const app=readFileSync(new URL("application/hourlyPriceStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/hourlyPriceStatusPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const section=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener|innerHTML/);
  assert.match(main,/clampPriceToEra\(game\)/);
- assert.match(main,/renderHourlyPriceStatus\(hourlyPriceStatus,setText,document\)/);
- assert.match(main,/renderSessionPackages\(hourlyPriceStatus\.packages,durations,document\)/);
+ assert.match(main,/renderAdminPricingSections\(\{/);
+ assert.match(section,/renderHourlyPriceStatus\(options.hourly,options.setText,options.doc\)/);
+ assert.match(section,/renderSessionPackages\(options.hourly.packages,durations,options.doc\)/);
  assert.match(main,/panelChanged\("durations",\[game\.pricePerHour,historical\],!liveOnly\)/);
  assert.doesNotMatch(main,/\bannualHourlyCeiling\(/);
  assert.doesNotMatch(main,/\bsessionPrice\(/);

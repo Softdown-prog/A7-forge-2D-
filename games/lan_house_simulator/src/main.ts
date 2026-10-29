@@ -13,6 +13,7 @@ import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
+import {renderAdminPricingSections} from "./ui/adminPricingSections.js";
 import {createVisibleAdminTextWriter,formatAdminMoney,renderAdminWindowVisibility,renderShopWindowVisibility,renderAdminDisclosure} from "./ui/adminShell.js";
 import {createShopCatalogOffersPort} from "./application/shopCatalogOffersPort.js";
 import {renderShopCatalogOfferButton} from "./ui/shopCatalogOfferButton.js";
@@ -73,12 +74,9 @@ import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
-import {renderHourlyPricingInsights,renderEnergyYearOutlook} from "./ui/pricingInsightsPanel.js";
 import {yearFromMinutes,clampPriceToEra} from "./sim/historicalEconomy.js";
 import {createHourlyPriceStatusPort} from "./application/hourlyPriceStatusPort.js";
 import {createRetailPriceStatusPort} from "./application/retailPriceStatusPort.js";
-import {renderRetailPriceControls} from "./ui/retailPriceControlsPanel.js";
-import {renderHourlyPriceStatus,renderSessionPackages} from "./ui/hourlyPriceStatusPanel.js";
 import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
@@ -793,18 +791,15 @@ function renderUI(liveOnly=false):void {
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
   const hourlyPriceStatus=hourlyPriceStatusPort.snapshot();
-  renderHourlyPriceStatus(hourlyPriceStatus,setText,document);
-  const durations=document.getElementById("session-package-prices");
-  if(durations&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","hourly")&&panelChanged("durations",[game.pricePerHour,historical],!liveOnly)){
-   renderSessionPackages(hourlyPriceStatus.packages,durations,document);
-  }
-  if(activeAdminTab==="prices"&&managementPanels.active("prices","insights")){
-   renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText);
-  }
-  renderEnergyYearOutlook(pricingInsightsPort.energy(),setText);
-  if(retailControls&&adminOpen&&activeAdminTab==="prices"&&managementPanels.active("prices","retail")&&panelChanged("retail",[game.retailPrices],!liveOnly)){
-   renderRetailPriceControls(retailControls,retailPriceStatusPort.snapshot(),iconMarkup,document,syncPanelChildren);
-  }
+  renderAdminPricingSections({
+   hourly:hourlyPriceStatus,
+   insights:pricingInsightsPort,retail:retailPriceStatusPort,
+   pricingTab:activeAdminTab==="prices",
+   active:page=>managementPanels.active("prices",page),
+   packagesChanged:()=>panelChanged("durations",[game.pricePerHour,historical],!liveOnly),
+   retailChanged:()=>panelChanged("retail",[game.retailPrices],!liveOnly),
+   retailControls,setText,iconMarkup,doc:document,sync:syncPanelChildren
+  });
   renderDeskServicePanels(deskPricingPort,{
    pricingTab:activeAdminTab==="prices",
    isActive:page=>managementPanels.active("prices",page),

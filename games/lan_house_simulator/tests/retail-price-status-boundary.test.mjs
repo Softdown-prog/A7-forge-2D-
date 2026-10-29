@@ -109,11 +109,13 @@ test("application sem DOM, UI sem motor e main mantém guarda de revisão",()=>{
  const app=readFileSync(new URL("application/retailPriceStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/retailPriceControlsPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const section=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createRetailPriceStatusPort(()=>game)"));
- assert.ok(main.includes("renderRetailPriceControls(retailControls,retailPriceStatusPort.snapshot(),iconMarkup,document,syncPanelChildren)"));
+ assert.ok(section.includes("renderRetailPriceControls(options.retailControls,options.retail.snapshot(),"));
+ assert.match(main,/renderAdminPricingSections\(\{/);
  assert.ok(main.includes('panelChanged("retail",[game.retailPrices],!liveOnly)'));
  assert.doesNotMatch(main,/\bproductPrice\(/);
 });

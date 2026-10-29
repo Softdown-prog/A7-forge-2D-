@@ -77,13 +77,15 @@ test("separação das camadas conserva a aba e o cálculo de demanda no motor",(
  const app=readFileSync(new URL("application/pricingInsightsPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/pricingInsightsPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const section=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|replaceChildren|innerHTML|addEventListener/);
- assert.ok(main.includes('managementPanels.active("prices","insights")'));
+ assert.ok(main.includes('active:page=>managementPanels.active("prices",page)'));
+ assert.ok(section.includes('options.active("insights")'));
  assert.ok(main.includes("createPricingInsightsPort(()=>game)"));
- assert.ok(main.includes("renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText)"));
- assert.ok(main.includes("renderEnergyYearOutlook(pricingInsightsPort.energy(),setText)"));
+ assert.ok(section.includes("renderHourlyPricingInsights(options.insights.hourly(),options.setText)"));
+ assert.ok(section.includes("renderEnergyYearOutlook(options.insights.energy(),options.setText)"));
  assert.doesNotMatch(main,/\bhourlyPriceInsight\(/);
  assert.doesNotMatch(main,/\bhourlyPriceScenarios\(/);
  assert.doesNotMatch(main,/\benergyYearOutlook\(/);

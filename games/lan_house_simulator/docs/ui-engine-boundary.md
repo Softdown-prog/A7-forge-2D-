@@ -414,6 +414,14 @@
 - Corrigido `tests/shop-catalog-offers-boundary.test.mjs`: o cenário que exige botão de PC disponível agora cria primeiro uma vaga na área principal, removendo a falsa expectativa responsável pelo único teste falho do recorte 50.
 - Não foram alterados o motor, a lógica de vendas, os saves, a geração aleatória, o Canvas, os preços ou os gestos mobile.
 
+## Quinquagésimo segundo recorte: renderizador administrativo de preços
+
+- `src/ui/adminPricingSections.ts` agrupa as atualizações de preço por hora, pacotes, análise da tarifa, projeção de energia e preços rápidos de produtos com as mesmas condições de aba ativa, disponibilidade de elementos e revisão de dados.
+- `main.ts` mantém o ajuste de tarifas de saves legados (`clampPriceToEra`), os ports do save atual, o controle de revisão e a seção de impressão/copiadora, mas delega a apresentação dos preços a um único módulo tipado.
+- `tests/admin-pricing-sections-boundary.test.mjs` acrescenta doze testes de subpáginas, reconstrução condicional, textos, botões, ícones, variação histórica/clássica e preservação das fronteiras UI/motor.
+- Os testes arquiteturais de hora, cenários de tarifa e varejo passam a verificar a nova localização dos renderizadores, mantendo as mesmas exigências de integração e de revisão.
+- Nenhum cálculo de economia, regra de compra, estado de save, gesto mobile ou desenho de Canvas foi alterado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
