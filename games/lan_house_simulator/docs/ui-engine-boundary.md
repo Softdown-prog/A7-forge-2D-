@@ -430,6 +430,15 @@
 - `tests/admin-finance-sections-boundary.test.mjs` acrescenta doze testes de visibilidade, ordem, acessibilidade, preservação dos nós e limites de dependência.
 - Nenhuma regra da economia, save, aleatoriedade, Canvas, compras ou interface de toque foi alterada.
 
+## Quinquagésimo quarto recorte: páginas de operação, manutenção e hardware dos computadores
+
+- `src/ui/adminComputerSections.ts` coordena a tabela de receita por PC, as páginas de operação, hardware, Windows e monitores, preservando o container destacado, a reconciliação DOM e o foco do painel `pcMaintenancePanel`.
+- `main.ts` continua com os cálculos, a instância ativa, a revisão dos painéis, a seleção da estação e os controladores delegados; a interface usa apenas callbacks para montar as páginas.
+- `tests/admin-computer-sections-boundary.test.mjs` acrescenta quatorze casos de abas abertas/fechadas, ledger, revisões, seleção, montagem destacada, reconciliação e fronteiras entre UI e motor.
+- Os testes antigos de integração de PC, LCD e receita por estação devem apontar para o novo módulo sem perder as verificações de foco e compatibilidade.
+- Corrigido antes deste recorte o teste legado de panfletagem que ainda exigia o renderizador financeiro dentro de `main.ts`.
+- Nenhuma lógica de compra, manutenção, desgaste, energia, saves, RNG, renderização Canvas ou toque foi modificada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

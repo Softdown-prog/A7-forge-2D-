@@ -111,7 +111,7 @@ import {renderEventLog} from "./ui/eventLogPanel.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
-import {renderPcMaintenancePanel} from "./ui/pcMaintenancePanel.js";
+import {renderAdminComputerSections} from "./ui/adminComputerSections.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessStatus,renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
@@ -802,25 +802,20 @@ function renderUI(liveOnly=false):void {
   if(adminOpen&&activeAdminTab==="stock")merchandisePanel.render();
   renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
   setText("pc",pcOperationsPort.summary());
-  const stationLedgerRows=document.querySelector<HTMLTableSectionElement>("#station-ledger-rows");
-  if(stationLedgerRows&&adminOpen&&activeAdminTab==="computers"&&managementPanels.active("computers","ledger"))
-    renderStationLedgerRows(stationLedgerRows,stationLedgerPort);
-  const liveMaintenance=document.getElementById("pc-maintenance");
-  if(liveMaintenance&&adminOpen&&activeAdminTab==="computers"&&!managementPanels.active("computers","ledger")&&panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly)){
-    const page=managementPanels.current("computers");
-    renderPcMaintenancePanel(liveMaintenance,{
-     build:maintenance=>{
-      if(page==="operations")renderPcOperations(maintenance,pcOperationsPort.rows(),document);
-      selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);
-      if(page==="hardware"||page==="windows")maintenance.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page));
-      if(page==="monitors")renderLcdMonitorsPanel(maintenance,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document);
-      presentComputerOperations(computerOperationsSnapshot(game),maintenance);
-     },
-     decorate:decorateControls,
-     reconcile:syncPanelChildren,
-     selectedStation:()=>selectedLcdPc
-    },document);
-  }
+  renderAdminComputerSections({
+   adminOpen,computersTab:activeAdminTab==="computers",
+   ledgerActive:()=>managementPanels.active("computers","ledger"),
+   currentPage:()=>managementPanels.current("computers"),
+   maintenanceChanged:()=>panelChanged("computers",[managementPanels.current("computers"),selectedLcdPc,selectedHardwareTab,stationRevision,managementPanels.active("computers","operations")?game.pcWear?.map(Math.round):null],!liveOnly),
+   selectedStation:()=>selectedLcdPc,
+   clampSelectedStation:()=>{selectedLcdPc=Math.min(selectedLcdPc,pcCount(game)-1);},
+   renderLedger:host=>renderStationLedgerRows(host,stationLedgerPort),
+   renderOperations:host=>renderPcOperations(host,pcOperationsPort.rows(),document),
+   renderHardware:(host,page)=>host.append(renderHardwarePanel(game,selectedLcdPc,year,selectedHardwareTab,page)),
+   renderMonitors:host=>renderLcdMonitorsPanel(host,lcdMonitorsPort.snapshot(selectedLcdPc),lcdPreview,document),
+   renderComputerSummary:host=>presentComputerOperations(computerOperationsSnapshot(game),host),
+   decorate:decorateControls,reconcile:syncPanelChildren,doc:document
+  });
   if(gpuPcChoice&&gpuList&&adminOpen&&activeAdminTab==="gpus"&&panelChanged("gpuPcChoice",[stationRevision,selectedGpuPc],!liveOnly)){
     selectedGpuPc=Math.min(selectedGpuPc,pcCount(game)-1);
     renderGpuCatalogPanel(gpuPcChoice,gpuList,gpuCatalogPort.snapshot(selectedGpuPc),setText,document,syncPanelChildren);
