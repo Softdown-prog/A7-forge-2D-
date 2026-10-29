@@ -324,6 +324,14 @@
 - `tests/desk-pricing-boundary.test.mjs` continua validando a apresentação dos dois preços e aponta para o novo ponto de integração.
 - Nenhuma regra de preço, compra, material, demanda avulsa, limite diário, RNG, Canvas ou save foi alterada.
 
+## Quadragésimo primeiro recorte: elegibilidade do frame e pausa durante edição
+
+- `src/application/frameActivity.ts` isola os critérios puros que permitem avançar a simulação e capturar movimento enquanto a partida está aberta, sem DOM, Canvas ou motor.
+- `main.ts` conserva a ordem original: calcula a elegibilidade, reinicia interpolação quando a condição muda, captura posições antes de `stepGame`, e mantém áudio, HUD e salvamento existentes.
+- Correção dos dois testes da 40ª etapa: verificação de abas refatoradas e copiadora adquirida somente após desbloqueio histórico, sem alterações de regras de jogo.
+- `tests/frame-activity-boundary.test.mjs` adiciona dez testes, incluindo todas as 256 combinações dos oito estados e a distinção entre fim do movimento e finalização da campanha.
+- Sem alteração de FPS, velocidade do relógio, eventos, RNG, política de autosave, formato de save ou gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

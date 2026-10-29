@@ -47,6 +47,7 @@ import {createGameSessionPort} from "./application/gameSessionPort.js";
 import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {createFrameSchedule} from "./application/frameSchedule.js";
+import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
@@ -1019,10 +1020,14 @@ const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   const {dt,elapsed}=frameSchedule.begin(timestamp);
   const accountOpen=document.getElementById("player-account")?.hasAttribute("open")===true;
-  const simulating=isPlaying&&!accountOpen&&game.totalMinutes<GAME_LAST_MINUTE&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc;
+  const {captureMotion:simulating,advanceSimulation}=frameActivitySnapshot({
+   playing:isPlaying,accountOpen,beforeCampaignEnd:game.totalMinutes<GAME_LAST_MINUTE,
+   editingLayout:layoutEditor.active,placingFurniture:!!placingKind,
+   relocatingFurniture:relocating,editingWalls:!!wallMode,installingAnnexPc
+  });
   if(wasSimulating!==simulating){sceneMotion.reset();wasSimulating=simulating;}
   if(simulating&&game.leftoverMinutes+dt*4.0>=1)sceneMotion.capture(game);
-  if(isPlaying&&!accountOpen&&!layoutEditor.active&&!placingKind&&!relocating&&!wallMode&&!installingAnnexPc)stepGame(game,dt*4.0);
+  if(advanceSimulation)stepGame(game,dt*4.0);
   // Detect new mail from every delivery path, not from opening the envelope.
   const arrivedMail=isPlaying?consumeNewMail(knownMailIds,game.notices):0;
   if(arrivedMail>0&&!document.hidden)soundscape.mail();
