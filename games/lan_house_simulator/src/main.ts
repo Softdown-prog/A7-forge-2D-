@@ -66,6 +66,7 @@ import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {createStationRevisionPort} from "./application/stationRevisionPort.js";
+import {createShopCatalogRevisionPort} from "./application/shopCatalogRevisionPort.js";
 import {createAdminPanelRevisionsPort} from "./application/adminPanelRevisionsPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
@@ -596,10 +597,11 @@ canvas.addEventListener("click",e=>{
   if(renderer.hitOwner(x,y)){soundscape.click();adminOpen=!adminOpen;if(adminOpen)shopOpen=false;renderUI();}
 });
 const panelChanged=createPanelRevisionCache();
+const shopCatalogRevisionPort=createShopCatalogRevisionPort(()=>game);
 function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
- if(!panelChanged("shop",[shopPanels?.current(),game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
+ if(!panelChanged("shop",shopCatalogRevisionPort.snapshot(shopPanels?.current()),force))return;
  renderShopCatalog({
   host:shopCatalog,doc:document,items:SHOP_CATALOG,
   currentCategory:()=>shopPanels?.current(),

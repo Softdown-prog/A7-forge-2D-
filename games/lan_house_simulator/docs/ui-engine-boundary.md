@@ -616,6 +616,13 @@
 - Corrigidas as três asserções desatualizadas de preço identificadas no worker-simulation do recorte 74; continuavam procurando as assinaturas inline anteriores ao `adminPanelRevisionsPort`. A compilação do 74 havia passado.
 - Sem mudanças em RNG, autosave, preços, compras, tempo simulado ou gestos mobile.
 
+## Septuagésimo sexto recorte: invalidação do catálogo da loja
+
+- `src/application/shopCatalogRevisionPort.ts` extrai do `main.ts` a assinatura read-only de dezessete campos usada pela loja: categoria ativa, caixa, serviços, PS1, ano, ampliações, PCs, móveis e paredes/portas.
+- `renderShop(force)` permanece no mesmo ponto da interface, preservando as verificações `shopOpen`, host do catálogo, `panelChanged("shop",...,force)` e a montagem de `renderShopCatalog`. Somente a leitura do estado foi movida para uma porta que recebe `()=>game` e consulta o save ativo em toda chamada.
+- `tests/shop-catalog-revision-boundary.test.mjs` adiciona 21 regressões de ordem, identidade, campo opcional, cache JSON, força, categoria, saldo, troca do save e não-mutação.
+- Não alterar preços, regras de compra ou de ampliação, controles PS1, esquema do save, RNG, gestos mobile ou renderização do Canvas.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
