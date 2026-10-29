@@ -356,6 +356,14 @@
 - `tests/ps1-shop-disc-boundary.test.mjs` cobre doze casos de desbloqueio, valores, limite, importação, estrutura DOM e ligação entre camadas.
 - Nenhuma regra de compras, demanda, ano 2002, preço, save, RNG ou Canvas foi alterada.
 
+## Quadragésimo quinto recorte: seleção da posição de PS1 na loja
+
+- `src/application/ps1ShopPlacementPort.ts` projeta os pontos livres da bancada e nomes compreensíveis, consultando sempre o save corrente.
+- `src/ui/ps1ShopPlacementPicker.ts` renderiza setas, o seletor oculto `ps1-placement`, o texto acessível e a orientação do salão, sem conhecer o motor.
+- O `main.ts` conserva a elegibilidade e a cobrança histórica; o `shopControls` mantém o mesmo clique de compra e o mesmo ID técnico de destino.
+- `tests/ps1-shop-placement-boundary.test.mjs` adiciona doze verificações de setas, re-render, espaço ocupado, expansão, importação e separação de dependências.
+- Nenhuma regra de venda, saldo, preço, save, RNG, simulação ou gesto mobile foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

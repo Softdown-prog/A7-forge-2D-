@@ -7,6 +7,8 @@ import {installGameLicensingControls} from "./ui/gameLicensingControls.js";
 import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
 import {createPs1AdminPort} from "./application/ps1AdminPort.js";
 import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
+import {createPs1ShopPlacementPort} from "./application/ps1ShopPlacementPort.js";
+import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
 import {refreshGpuDownloadMeters} from "./ui/gpuDownloadMeters.js";
@@ -36,8 +38,7 @@ import {renderDeskServicePanels} from "./ui/deskPricingPanel.js";
 import {drawPrinterShop} from "./render/printerArt.js";
 import {drawPs1Station} from "./render/ps1Art.js";
 import {PS1_UNLOCK_YEAR,PS1_MAX_STATIONS,ps1PlacementSlots,
- ps1StationPoint,
- ps1PlacementLabel} from "./sim/ps1.js";
+ ps1StationPoint} from "./sim/ps1.js";
 import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
@@ -464,6 +465,7 @@ button("organize-furniture",()=>layoutEditor.open());
 const ps1Actions=createPs1ActionsPort(()=>game);
 const ps1AdminPort=createPs1AdminPort(()=>game);
 const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
+const ps1ShopPlacementPort=createPs1ShopPlacementPort(()=>game);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
   if(id==="computer-annex"){
@@ -757,52 +759,12 @@ function renderShop(force=true):void{
    button.textContent=game.discCopier?"Adquirida · serviço ativo":gameYear(game)<DISC_COPIER_YEAR?"🔒 Disponível em 2001":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
   }
   if(item.id==="ps1"){
-    const free=ps1PlacementSlots(game),placement=document.createElement("select");
-    placement.id="ps1-placement";
-    placement.hidden=true; // valor técnico apenas para a compra, nunca exibido ao jogador
-    if(!free.some(spot=>spot.id===selectedPs1PlacementId))
-      selectedPs1PlacementId=free[0]?.id??null;
-    for(const spot of free){
-     const option=document.createElement("option");option.value=spot.id;
-     option.textContent=ps1PlacementLabel(spot);
-     placement.append(option);
-    }
-    placement.value=selectedPs1PlacementId??"";
-    const locationSelector=document.createElement("div");
-    locationSelector.className="ps1-location-selector";
-    const locationName=document.createElement("output");
-    locationName.id="ps1-location-name";
-    locationName.className="ps1-location-name";
-    locationName.setAttribute("aria-live","polite");
-    const previous=document.createElement("button");
-    previous.type="button";previous.className="slice ps1-location-arrow";
-    previous.textContent="◀";
-    previous.setAttribute("aria-label","Escolher o local anterior para a bancada");
-    const next=document.createElement("button");
-    next.type="button";next.className="slice ps1-location-arrow";
-    next.textContent="▶";
-    next.setAttribute("aria-label","Escolher o próximo local para a bancada");
-    const updateLocation=(offset:number):void=>{
-      if(!free.length)return;
-      const index=Math.max(0,free.findIndex(spot=>spot.id===selectedPs1PlacementId));
-      const spot=free[(index+offset+free.length)%free.length]!;
-      selectedPs1PlacementId=spot.id;
-      placement.value=spot.id;
-      locationName.textContent=ps1PlacementLabel(spot);
-    };
-    previous.disabled=free.length<2;next.disabled=free.length<2;
-    previous.addEventListener("click",()=>updateLocation(-1));
-    next.addEventListener("click",()=>updateLocation(1));
-    updateLocation(0);
-    locationSelector.append(previous,locationName,next);
     button.disabled=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR||full||game.cash<price;
     button.textContent=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR?
      "🔒 Disponível em 2002":full?"Sem espaço livre":
      game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar conjunto · R$ "+price;
-    const locationHelp=document.createElement("small");
-    locationHelp.className="ps1-placement-help";
-    locationHelp.textContent="Escolha um local no salão: norte é o fundo, sul é a entrada, oeste é a esquerda e leste é a direita.";
-    card.append(art,category,title,description,placement,locationSelector,locationHelp,button);
+    renderPs1ShopPlacement(card,{art,category,title,description,button},
+      ps1ShopPlacementPort.snapshot(),selectedPs1PlacementId,id=>{selectedPs1PlacementId=id;},document);
   }else{
    card.append(art,category,title,description);
    if(placementHint)card.append(hint);
