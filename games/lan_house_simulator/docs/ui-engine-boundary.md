@@ -475,6 +475,15 @@
 - Atualizados testes legados de áudio de correio e feedback que antes exigiam chamadas diretas no `main.ts`.
 - Preservados os limites de popups e o consumo de filas em `frameFeedbackPort`, os sons e suas frequências originais, o multiplicador de tempo, os saves, Canvas, RNG e controles mobile.
 
+## Quinquagésimo nono recorte: inicialização e falhas da prévia do menu
+
+- `src/application/menuScenePreviewPort.ts` monta a cena ornamental com a mesma semente fixa (98) e as duas posições de cadeira, sem tocar na partida ativa. A criação do cenário simulado sai do bootstrap visual `main.ts`.
+- `src/ui/menuPreviewPainter.ts` isola os erros de Canvas, oferece pintura inicial a tempo zero e informa a conclusão da pintura ao agendador. Falhas desativam apenas a prévia e nunca bloqueiam o menu ou o jogo.
+- `frameSchedule.menu` continua decidindo quando desenhar; `menuPainted` continua sendo chamado apenas após um desenho sem erro. Não foram alterados os intervalos de 90ms, o ritmo de simulação ou os limites de HUD e toque.
+- `tests/menu-scene-preview-boundary.test.mjs` acrescenta treze testes de isolamento, posições, falhas de Canvas, callback de relógio e fronteira apresentação/motor.
+- Os quatro testes legados de efeitos do 58º recorte foram atualizados no commit imediatamente anterior.
+- Nenhum save, RNG da partida, compras, áudio, movimentação de clientes ou interface mobile foi modificado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

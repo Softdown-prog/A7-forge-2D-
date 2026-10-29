@@ -81,8 +81,9 @@ import {SceneMotion} from "./render/motion.js";
 import {renderFrameVisualLayers} from "./ui/frameVisualLayers.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import { cameraForGame, iso } from "./render/isometric.js";
-import { roomWidth,pcPosition } from "./sim/engine.js";
-import {computerSeat} from "./sim/route.js";
+import { roomWidth } from "./sim/engine.js";
+import {createMenuScenePreview} from "./application/menuScenePreviewPort.js";
+import {createMenuPreviewPainter} from "./ui/menuPreviewPainter.js";
 import {iconMarkup,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
 import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
@@ -144,17 +145,10 @@ const renderer = new SceneRenderer(view);
 const sceneMotion=new SceneMotion();
 const menuCanvas=document.querySelector<HTMLCanvasElement>("#menu-scene"),menuView=menuCanvas?.getContext("2d");
 const menuRenderer=menuView?new SceneRenderer(menuView):null;
-// Presentation-only preview: the player's save is never simulated by the menu.
-const menuPreview=createGame(98);
-menuPreview.customers=[0,1].map(i=>{
- const seat=computerSeat(pcPosition(i,menuPreview));
- return {id:i+1,x:seat.x,y:seat.y,target:seat,route:[],stage:"using",costume:"regular",pcIndex:i,
-  facing:"north",usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
-});
-// A arte do menu é ornamental: um erro no Canvas nunca pode bloquear
-// os botões de continuar, abrir partida, exportar ou acessar as configurações.
-let menuPreviewAvailable=true;
-try{menuRenderer?.draw(menuPreview,0);}catch{menuPreviewAvailable=false;}
+// The menu is decorative and never simulates the player's active save.
+const menuPreview=createMenuScenePreview();
+const menuPreviewPainter=createMenuPreviewPainter(elapsed=>menuRenderer?.draw(menuPreview,elapsed));
+menuPreviewPainter.paintInitial();
 
 /** O correio ganha um sorteio novo por partida; o RNG da simulação continua independente. */
 const sessionPort=createGameSessionPort({
@@ -892,12 +886,10 @@ function frame(timestamp:number):void {
    drawMenuPreview:()=>{
     if(frameSchedule.menu(timestamp,{
      playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,
-     previewAvailable:menuPreviewAvailable,
+     previewAvailable:menuPreviewPainter.available(),
      hidden:document.hidden,reduceMotion:reduceMotion.matches
-    })&&menuRenderer){
-     try{menuRenderer.draw(menuPreview,elapsed);frameSchedule.menuPainted(timestamp);}
-     catch{menuPreviewAvailable=false;}
-    }
+    })&&menuRenderer)
+     menuPreviewPainter.paintFrame(elapsed,()=>frameSchedule.menuPainted(timestamp));
    },
    drawEffects:()=>{if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}},
    drawPlacementOverlay:()=>drawPlacementInteractionOverlays(renderer,game,{
