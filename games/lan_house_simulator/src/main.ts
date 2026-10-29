@@ -40,6 +40,8 @@ import {installGameViewport} from "./ui/gameViewport.js";
 import {createLayoutEditor} from "./ui/layoutEditor.js";
 import {createLayoutEditorPort} from "./application/layoutEditorPort.js";
 import {createPlacementActionsPort} from "./application/placementActionsPort.js";
+import {placementStatusSnapshot} from "./application/placementStatusPort.js";
+import {renderPlacementStatus} from "./ui/placementStatusPanel.js";
 import {editableObjects} from "./sim/editableObjects.js";
 import {createGameSessionPort} from "./application/gameSessionPort.js";
 import {installSaveFileControls} from "./ui/saveFileControls.js";
@@ -887,21 +889,15 @@ function renderUI(liveOnly=false):void {
   if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
     renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup);
   }
-  if(placementToolbar)placementToolbar.hidden=!(placingKind||relocating||wallMode||installingAnnexPc);
-  const rotateButton=document.querySelector<HTMLButtonElement>("#rotate-furniture");
   const moving=placementActions.furniture().find(p=>p.slotId===relocationFrom);
-  if(rotateButton){rotateButton.hidden=!(placingKind&&placingKind!=="poster")&&(!relocating||!moving);rotateButton.disabled=placingKind?placingKind==="poster":!moving||moving.kind==="poster";}
- const confirmWall=document.querySelector<HTMLButtonElement>("#confirm-wall"),turnWall=document.querySelector<HTMLButtonElement>("#turn-wall");
- if(confirmWall){confirmWall.hidden=!wallMode;confirmWall.disabled=!pendingWall||(wallMode==="build"&&!placementActions.canBuild(pendingWall));}if(turnWall){turnWall.hidden=wallMode!=="build";turnWall.disabled=!pendingWall;}
-
-  if(stage)stage.classList.toggle("placing",Boolean(placingKind||relocating||wallMode||installingAnnexPc));
-  if(placementHelp)placementHelp.textContent=installingAnnexPc?
-    (placementNotice||"Escolha um círculo verde numa área ampliada (esquerda, direita ou fundos). PC completo: R$ "+ANNEX_PC_COST+". A cobrança só ocorre ao selecionar a vaga."):
-    wallMode?
-    (placementNotice||(wallMode==="build"?"Selecione a borda, confira a prévia e confirme. Cada segmento custa R$ "+WALL_COST+".":"Toque numa divisória para "+(wallMode==="door"?"instalar uma porta: R$ 80.":"remover parede ou porta."))):
-    relocating?
-    (placementNotice||(relocationFrom?"Escolha o destino verde ou toque em Girar para mudar a orientação.":"Toque no móvel em dourado e escolha a nova posição. Sem custos.")):
-    placingKind?(placementNotice||"Escolha uma posição verde para "+placementNames[placingKind]+". Clique para comprar e instalar; cancelar não cobra nada."):"";
+  const placementStatus=placementStatusSnapshot({
+   placingKind,placingName:placingKind?placementNames[placingKind]:null,
+   relocating,relocationFrom,selectedFurnitureKind:moving?.kind??null,
+   wallMode,hasPendingWall:!!pendingWall,
+   canBuildPendingWall:wallMode==="build"&&!!pendingWall&&placementActions.canBuild(pendingWall),
+   installingAnnexPc,notice:placementNotice,wallCost:WALL_COST,annexPcCost:ANNEX_PC_COST
+  });
+  renderPlacementStatus(placementStatus,{toolbar:placementToolbar,stage,help:placementHelp},document);
   if(shop)shop.hidden=!shopOpen;
   const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
   if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));

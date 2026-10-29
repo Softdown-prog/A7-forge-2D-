@@ -300,6 +300,14 @@
 - Os cenários legados de LCD e operação foram adaptados à nova fronteira; `tests/pc-maintenance-boundary.test.mjs` verifica nove casos de foco, seleção, atualização e ausência de re-renderização de negócio.
 - Não há mudança em preços, instalação de peças, desgaste, rota de técnicos, Canvas, RNG ou estrutura de saves.
 
+## Trigésimo oitavo recorte: mensagens e botões da organização do salão
+
+- `src/application/placementStatusPort.ts` projeta estado dos botões e textos para colocar móveis, girar, reorganizar, construir divisórias, portas e instalar PCs anexos, sem mutações.
+- `src/ui/placementStatusPanel.ts` aplica os textos e os estados na barra, nos controles existentes e na classe do palco sem tratar compras ou colisões.
+- `main.ts` conserva a validação `placementActions.canBuild`, os comandos do Canvas, os gestos touch, preços originais e chamadas de save.
+- `tests/placement-status-boundary.test.mjs` adiciona dez verificações de modos, botões, DOM, economia, save e limites arquiteturais.
+- Sem mudanças nas regras de giro, compra, instalação, colisão, RNG ou cronologia.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
