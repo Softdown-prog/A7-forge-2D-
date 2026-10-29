@@ -95,9 +95,9 @@ test("orquestração fica no render; main preserva popups, ordem e controles tou
  assert.doesNotMatch(render,/\b(document|window|addEventListener|requestAnimationFrame|stepGame)\b/);
  assert.match(main,/drawLayoutEditorOverlay\(renderer,game,elapsed/);
  assert.match(main,/drawPlacementInteractionOverlays\(renderer,game/);
- assert.match(main,/paintPayments\(dt,paintScene\)/);
+ assert.match(main,/paintFeedbackPopups\(view!,\(\)=>cameraForGame\(game\),popupQueues,dt,paintScene\)/);
  const early=main.indexOf("drawLayoutEditorOverlay(renderer,game,elapsed");
- const popups=main.indexOf("paintPayments(dt,paintScene)");
+ const popups=main.indexOf("paintFeedbackPopups(view!,()=>cameraForGame(game),popupQueues,dt,paintScene)");
  const late=main.indexOf("drawPlacementInteractionOverlays(renderer,game");
  assert.ok(early>=0&&popups>early&&late>popups);
  assert.match(main,/canvas\.addEventListener\("pointermove"/);

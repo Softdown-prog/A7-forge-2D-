@@ -552,6 +552,15 @@
 - O teste legado `service-access-status-boundary.test.mjs` passa a verificar o novo módulo, sem perder a verificação do intervalo e do painel de acesso.
 - Nenhuma mudança em saves, RNG, preços, rota dos funcionários, economia, áudio, gestos ou renderização do Canvas.
 
+## Sexagésimo oitavo recorte: pintor dos efeitos visuais de feedback
+
+- `src/render/feedbackPopupPainter.ts` extrai do `main.ts` o desenho dos balões transitórios de pagamentos, vendas e comentários de clientes.
+- Preservadas as três camadas na ordem original, os valores de `globalAlpha`, fontes, cores, altura projetada, geometria isométrica, limiares de expiração de 1,35s/2,6s e a limpeza de efeitos mesmo quando a cena não está visível.
+- O `main.ts` entrega o mesmo objeto de filas ao `createFrameFeedbackPort` e ao pintor Canvas. A câmera é obtida a cada camada, evitando referências antigas à partida após importação de saves.
+- `tests/feedback-popup-painter-boundary.test.mjs` cobre ordem, envelhecimento, projeção, limpeza com Canvas invisível, aplicação de estilos, falhas do contexto e fronteira entre motor e renderização.
+- Teste anterior de sobreposições atualizado para inspecionar a nova chamada mantendo a ordem editor → balões → prévia de móveis.
+- A simulação, receitas, RNG, save, áudio e limites de toques mobile não foram alterados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

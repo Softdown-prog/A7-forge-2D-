@@ -81,6 +81,7 @@ import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {drawLayoutEditorOverlay,drawPlacementInteractionOverlays} from "./render/interactionOverlays.js";
 import {SceneMotion} from "./render/motion.js";
+import {paintFeedbackPopups} from "./render/feedbackPopupPainter.js";
 import {renderFrameVisualLayers} from "./ui/frameVisualLayers.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import { cameraForGame, iso } from "./render/isometric.js";
@@ -313,69 +314,8 @@ let lastEventSignature="";
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const speechPopups:Array<{text:string;x:number;y:number;kind:"complaint"|"praise";age:number}>=[];
-const frameFeedback=createFrameFeedbackPort(()=>game,soundscape,{
- payments:paymentPopups,sales:salePopups,speech:speechPopups
-});
-function paintPayments(dt:number,visible=true):void {
-  const camera=cameraForGame(game);
-  for(let i=paymentPopups.length-1;i>=0;i--){
-    const effect=paymentPopups[i]!;
-    effect.age+=dt;
-    if(effect.age>=1.35){paymentPopups.splice(i,1);continue;}
-    if(!visible)continue;
-    const at=iso({x:effect.x,y:effect.y},camera,94);
-    const alpha=Math.min(1,(1.35-effect.age)/0.4);
-    view!.save();view!.globalAlpha=alpha;
-    view!.textAlign="center";view!.lineWidth=3.2;
-    view!.font="bold 20px system-ui,sans-serif";
-    const label="+R$ "+effect.amount;
-    const height=effect.age*43;
-    view!.strokeStyle="#103622";view!.fillStyle="#70F0A6";
-    view!.strokeText(label,at.x,at.y-height);
-    view!.fillText(label,at.x,at.y-height);
-    view!.restore();
-  }
-}
-
-function paintSales(dt:number,visible=true):void {
- const camera=cameraForGame(game);
- for(let i=salePopups.length-1;i>=0;i--){
-  const effect=salePopups[i]!;
-  effect.age+=dt;
-  if(effect.age>=1.35){salePopups.splice(i,1);continue;}
-  if(!visible)continue;
-  const at=iso({x:effect.x,y:effect.y},camera,110);
-  view!.save();
-  view!.globalAlpha=Math.min(1,(1.35-effect.age)/0.4);
-  view!.textAlign="center";view!.lineWidth=3;
-  view!.font="bold 17px system-ui,sans-serif";
-  view!.strokeStyle="#103622";view!.fillStyle="#70F0A6";
-  const label="+R$ "+effect.amount,y=at.y-effect.age*38;
-  view!.strokeText(label,at.x,y);view!.fillText(label,at.x,y);
-  view!.restore();
- }
-}
-
-function paintSpeech(dt:number,visible=true):void {
- const camera=cameraForGame(game);
- for(let i=speechPopups.length-1;i>=0;i--){
-  const b=speechPopups[i]!;
-  b.age+=dt;if(b.age>=2.6){speechPopups.splice(i,1);continue;}
-  if(!visible)continue;
-  const p=iso({x:b.x,y:b.y},camera,146);
-  const alpha=Math.min(1,(2.6-b.age)/0.4);
-  view!.save();view!.globalAlpha=alpha;view!.font="bold 13px system-ui,sans-serif";
-  const width=Math.min(190,view!.measureText(b.text).width+20);
-  const x=p.x-width/2,y=p.y-b.age*12-25;
-  view!.fillStyle=b.kind==="praise"?"#e3f9e9":"#fff2df";
-  view!.strokeStyle=b.kind==="praise"?"#227348":"#9c5238";
-  view!.lineWidth=2;
-  view!.beginPath();view!.roundRect(x,y,width,27,8);view!.fill();view!.stroke();
-  view!.fillStyle="#26302c";view!.textAlign="center";
-  view!.fillText(b.text,p.x,y+18,width-12);
-  view!.restore();
- }
-}
+const popupQueues={payments:paymentPopups,sales:salePopups,speech:speechPopups};
+const frameFeedback=createFrameFeedbackPort(()=>game,soundscape,popupQueues);
 const internetNames = INTERNET_ERAS.map(x=>x.name);
 function internetName(): string { return internetNames[game.internetTier-1] ?? "Desconhecida"; }
 function save(): void {
@@ -873,7 +813,7 @@ function frame(timestamp:number):void {
     })&&menuRenderer)
      menuPreviewPainter.paintFrame(elapsed,()=>frameSchedule.menuPainted(timestamp));
    },
-   drawEffects:()=>{if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}},
+   drawEffects:()=>{if(isPlaying)paintFeedbackPopups(view!,()=>cameraForGame(game),popupQueues,dt,paintScene);},
    drawPlacementOverlay:()=>drawPlacementInteractionOverlays(renderer,game,{
     visible:paintScene,editWall:layoutEditor.active?layoutEditor.wall:null,
     placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
