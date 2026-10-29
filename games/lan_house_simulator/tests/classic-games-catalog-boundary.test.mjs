@@ -116,11 +116,13 @@ test("componente apenas apresenta dados e main não realiza a cotação do catá
  const app=readFileSync(new URL("application/classicGamesCatalogPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/classicGamesCatalogPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createClassicGamesCatalogPort(()=>game)"));
- assert.ok(main.includes("renderClassicGamesCatalog(eraGamePanel,classicGamesCatalogPort.snapshot(),document,syncPanelChildren)"));
+ assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sections.includes("renderClassicGamesCatalog(options.eraGamePanel,options.classic.snapshot(),options.doc,options.sync)"));
  assert.ok(main.includes("installGameLicensingControls("));
  assert.ok(main.includes("panelChanged(\"eraGamePanel\""));
  assert.ok(!main.includes("quoteEraGame(game,title.id)"));

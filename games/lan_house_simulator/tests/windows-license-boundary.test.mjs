@@ -55,6 +55,7 @@ test("a porta acompanha o save substituído e mantém o serializador",()=>{
 test("UI Windows desacoplada do motor e dados de clique preservados",()=>{
  const root=new URL("../src/",import.meta.url);
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/windowsLicensePanel.ts",root),"utf8");
  const app=readFileSync(new URL("application/windowsLicensePort.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
@@ -63,6 +64,7 @@ test("UI Windows desacoplada do motor e dados de clique preservados",()=>{
  assert.match(ui,/dataset\.winEdition/);
  assert.match(ui,/syncPanelChildren\(panel,next\)/);
  assert.match(main,/createWindowsLicensePort\(\(\)=>game\)/);
- assert.match(main,/renderWindowsLicensePanel\(licensePanel,windowsLicensePort\)/);
+ assert.match(main,/renderAdminGpuLicenseSections\(\{/);
+ assert.match(sections,/renderWindowsLicensePanel\(options.licensePanel,options.windows\)/);
  assert.doesNotMatch(main,/\bwindowsHardwareIssues\(/);
 });

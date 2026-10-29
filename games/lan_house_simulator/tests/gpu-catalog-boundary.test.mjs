@@ -95,12 +95,14 @@ test("componente sem motor, porta sem DOM e integração no main",()=>{
  const app=readFileSync(new URL("application/gpuCatalogPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/gpuCatalogPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.equal(app.includes("document."),false);
  assert.equal(ui.includes("../sim/"),false);
  assert.equal(ui.includes("GameState"),false);
  assert.equal(ui.includes("addEventListener"),false);
  assert.ok(main.includes("createGpuCatalogPort(()=>game)"));
- assert.ok(main.includes("renderGpuCatalogPanel(gpuPcChoice,gpuList,gpuCatalogPort.snapshot(selectedGpuPc),setText,document,syncPanelChildren)"));
+ assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sections.includes("renderGpuCatalogPanel(options.gpuPcChoice,options.gpuList,"));
  assert.ok(main.includes('panelChanged("gpuPcChoice"'));
  assert.ok(main.includes("installStationControls("));
  assert.equal(main.includes("for(const model of GPU_CATALOG)"),false);

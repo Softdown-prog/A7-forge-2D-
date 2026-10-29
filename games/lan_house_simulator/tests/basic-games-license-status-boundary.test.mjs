@@ -64,12 +64,14 @@ test("UI desacoplada do motor; fluxo de compra original continua no main",()=>{
  const app=readFileSync(new URL("application/basicGamesLicenseStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/basicGamesLicenseStatusPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.equal(app.includes("document."),false);
  assert.equal(ui.includes("../sim/"),false);
  assert.equal(ui.includes("GameState"),false);
  assert.equal(ui.includes("addEventListener"),false);
  assert.ok(main.includes("createBasicGamesLicenseStatusPort(()=>game)"));
- assert.ok(main.includes("renderBasicGamesLicenseStatus(basicGamesLicenseStatusPort.snapshot(),setText,document)"));
+ assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sections.includes("renderBasicGamesLicenseStatus(options.basicGames.snapshot(),options.setText,options.doc)"));
  assert.ok(main.includes("installGameLicensingControls("));
  const inbox=readFileSync(new URL("application/noticeInboxPort.ts",root),"utf8");
  assert.ok(inbox.includes("basicGamesLicenseCost(s).toLocaleString"));
