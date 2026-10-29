@@ -91,5 +91,7 @@ test("aplicação não depende de DOM ou mixer, main preserva a ordem de efeitos
  assert.match(main,/consumeNewMail\(knownMailIds,game\.notices\)/);
  assert.match(main,/if\(game\.served>previousServed\)/);
  assert.match(main,/if\(game\.purchases>previousPurchases\)/);
- assert.match(main,/setInterval\(save,8000\)/);
+ const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
+ assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:setInterval,save\}\)/);
+ assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
 });

@@ -99,7 +99,9 @@ test("fronteiras de UI preservam simulação, Canvas e listeners do editor mobil
  assert.match(main,/installFrameInteractionTracker\(document,window,\(\)=>performance\.now\(\)\)/);
  assert.match(main,/frameSchedule\.hud\(timestamp,\{playing:isPlaying,accountOpen,\.\.\.frameInteraction\.snapshot\(\)\}\)/);
  assert.match(main,/new IntersectionObserver/);
- assert.match(main,/setInterval\(save,8000\)/);
+ const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
+ assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:setInterval,save\}\)/);
+ assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
  assert.match(editor,/canvas\.addEventListener\("pointerup"/);
  assert.match(editor,/canvas\.addEventListener\("pointercancel"/);
 });

@@ -484,6 +484,14 @@
 - Os quatro testes legados de efeitos do 58º recorte foram atualizados no commit imediatamente anterior.
 - Nenhum save, RNG da partida, compras, áudio, movimentação de clientes ou interface mobile foi modificado.
 
+## Sexagésimo recorte: ciclo de vida do salvamento local
+
+- `src/ui/pageSaveLifecycle.ts` registra os mesmos quatro gatilhos de salvamento local que antes estavam no bootstrap: timer de **8 segundos**, `beforeunload`, `pagehide` e `visibilitychange` com aba oculta.
+- O callback `save`, o armazenamento, o estado da partida e a política de recuperação permanecem inalterados no `main.ts` e no módulo de sessão; o novo adaptador apenas instala listeners sem salvar imediatamente.
+- `tests/page-save-lifecycle-boundary.test.mjs` acrescenta treze testes para ordem, callbacks, ocultação da aba, descarte mobile, novo save importado e ausência de duplicações.
+- Os cinco testes legados de frame passam a verificar o adaptador e a injeção de `setInterval`, em vez da posição física da linha no `main.ts`.
+- A falha do teste da vitrine do 59º recorte foi corrigida no commit anterior. Nenhuma regra econômica, RNG, cena Canvas, gesto mobile ou formato de save foi modificada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

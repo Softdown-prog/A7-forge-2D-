@@ -55,6 +55,7 @@ import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {createFrameSchedule} from "./application/frameSchedule.js";
 import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
+import {installPageSaveLifecycle} from "./ui/pageSaveLifecycle.js";
 import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
@@ -903,12 +904,8 @@ function frame(timestamp:number):void {
    renderUI(true);
   requestAnimationFrame(frame);
 }
-setInterval(save,8000);
-window.addEventListener("beforeunload",save);
-// Em celulares, a aba pode ser descartada sem disparar beforeunload.
-// Persistência permanece local: nenhuma requisição para a nuvem.
-window.addEventListener("pagehide",save);
-document.addEventListener("visibilitychange",()=>{if(document.hidden)save();});
+// Local persistence callbacks remain the same; registration lives in the UI adapter.
+installPageSaveLifecycle({win:window,doc:document,every:setInterval,save});
 decorateControls();installWindowNavigation();
 showMenu();
 requestAnimationFrame(frame);
