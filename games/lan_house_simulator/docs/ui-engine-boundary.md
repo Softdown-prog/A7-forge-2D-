@@ -364,6 +364,14 @@
 - `tests/ps1-shop-placement-boundary.test.mjs` adiciona doze verificações de setas, re-render, espaço ocupado, expansão, importação e separação de dependências.
 - Nenhuma regra de venda, saldo, preço, save, RNG, simulação ou gesto mobile foi alterada.
 
+## Quadragésimo sexto recorte: ofertas dos serviços na loja
+
+- `src/application/shopServiceOffersPort.ts` consulta o save corrente, preços e cotações da impressora e copiadora e projeta somente o estado do botão, rótulo e explicação.
+- `src/ui/shopServiceOfferButton.ts` aplica as propriedades ao botão existente sem importar o motor.
+- `main.ts` preserva os cartões, ilustrações e o clique delegado ao `shopControls`, mas deixa de consultar diretamente as cotações dos dois serviços.
+- `tests/shop-service-offers-boundary.test.mjs` cobre 1998/2001, limites de saldo, compra única, modo clássico, importação e independência entre interface e motor.
+- Nenhuma regra de compra, preço, RNG, save, Canvas ou gesto mobile foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

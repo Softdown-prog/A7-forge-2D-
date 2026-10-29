@@ -8,6 +8,8 @@ import {createPs1ActionsPort} from "./application/ps1ActionsPort.js";
 import {createPs1AdminPort} from "./application/ps1AdminPort.js";
 import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
 import {createPs1ShopPlacementPort} from "./application/ps1ShopPlacementPort.js";
+import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
+import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
 import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
@@ -28,8 +30,6 @@ import {timeWeatherSnapshot} from "./application/timeWeatherSnapshot.js";
 import {liveStatusSnapshot,computerOperationsSnapshot} from "./application/presentationModels.js";
 import {mountCloudControls} from "./ui/cloudControls.js";
 import {renderTimeWeatherPanel} from "./ui/timeWeatherPanel.js";
-import {quotePrinter} from "./sim/printService.js";
-import {quoteDiscCopier,DISC_COPIER_YEAR} from "./sim/discCopy.js";
 import {drawDiscCopier} from "./render/discCopierArt.js";
 import {createDeskPricingPort} from "./application/deskPricingPort.js";
 import {createCommerceNetworkPort} from "./application/commerceNetworkPort.js";
@@ -466,6 +466,7 @@ const ps1Actions=createPs1ActionsPort(()=>game);
 const ps1AdminPort=createPs1AdminPort(()=>game);
 const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
 const ps1ShopPlacementPort=createPs1ShopPlacementPort(()=>game);
+const shopServiceOffersPort=createShopServiceOffersPort(()=>game);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
   if(id==="computer-annex"){
@@ -750,13 +751,8 @@ function renderShop(force=true):void{
   const price=shopPrice(game,item.id);
   button.disabled=full||game.cash<price;
   button.textContent=shopPurchaseButtonText(item.id,full,game.cash<price,price,max>0);
-  if(item.id==="printer"){
-   const quote=quotePrinter(game);button.disabled=!quote.ok;button.title=quote.message;
-   button.textContent=game.printer?"Adquirida · serviço ativo":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
-  }
-  if(item.id==="disc-copier"){
-   const quote=quoteDiscCopier(game);button.disabled=!quote.ok;button.title=quote.message;
-   button.textContent=game.discCopier?"Adquirida · serviço ativo":gameYear(game)<DISC_COPIER_YEAR?"🔒 Disponível em 2001":game.cash<price?"Caixa insuficiente · R$ "+price:"Comprar · R$ "+price;
+  if(item.id==="printer"||item.id==="disc-copier"){
+   renderShopServiceOffer(button,shopServiceOffersPort.snapshot(item.id));
   }
   if(item.id==="ps1"){
     button.disabled=game.economyVersion!==2||gameYear(game)<PS1_UNLOCK_YEAR||full||game.cash<price;
