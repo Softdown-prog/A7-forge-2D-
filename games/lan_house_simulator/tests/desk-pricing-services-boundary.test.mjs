@@ -86,6 +86,7 @@ test("página sem host mantém preços intactos e não calcula relatório",()=>{
 });
 test("copiadora real continua gerando dois controles e relatórios corretos",()=>{
  const x=setup(),s=createGame(9601,"historical");s.cash=4000;
+ s.totalMinutes=3*360*720; // copiadora disponível após 2001, como no cenário legado.
  assert.equal(buyDiscCopier(s).ok,true);
  const before=JSON.stringify(s),port=createDeskPricingPort(()=>s);
  renderDeskServicePanels(port,{...x.options,isActive:page=>page==="discs"});

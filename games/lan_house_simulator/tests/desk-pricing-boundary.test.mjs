@@ -102,8 +102,9 @@ test("porta sem DOM e apresentação sem dependência de simulação",()=>{
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createDeskPricingPort(()=>game)"));
- assert.ok(main.includes('managementPanels.active("prices","discs")'));
- assert.ok(main.includes('managementPanels.active("prices","printing")'));
+ assert.ok(main.includes('isActive:page=>managementPanels.active("prices",page)'));
+ assert.ok(ui.includes('options.isActive("discs")'));
+ assert.ok(ui.includes('options.isActive("printing")'));
  assert.ok(main.includes("renderDeskServicePanels(deskPricingPort,{"));
  assert.ok(ui.includes("renderDiscPricing(options.discControls,view,options.setText,options.iconMarkup,options.doc,options.sync)"));
  assert.ok(ui.includes("renderPrintPricing(options.printControls,view,options.setText,options.doc,options.sync)"));
