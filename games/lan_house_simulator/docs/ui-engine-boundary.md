@@ -457,6 +457,15 @@
 - A falha legada do teste de licença básica do 55º recorte foi corrigida no commit imediatamente anterior.
 - Nenhuma economia, IA dos clientes, save, RNG, geometria, arte Canvas ou toque mobile foi modificada.
 
+## Quinquagésimo sétimo recorte: camadas visuais do loop de animação
+
+- `src/ui/frameVisualLayers.ts` separa a ordem da apresentação por quadro: salão, diagnóstico de acesso, editor, prévia do menu, efeitos e sobreposições de posicionamento.
+- O motor, `frameSchedule`, o intervalo de simulação `dt*4.0`, os limiares mobile, a captura de interpolação e o autosave permanecem em `main.ts`, sem alterações de frequência.
+- As marcações de edição continuam recebendo o sinal de visibilidade mesmo se o salão estiver oculto. O preview do menu mantém o tratamento local de falhas do Canvas, sem impedir os botões.
+- `tests/frame-visual-layers-boundary.test.mjs` acrescenta doze testes de ordem, visibilidade, callbacks, mudanças entre frames e isolamento entre apresentação e motor.
+- O recorte anterior (56º) teve worker pool e deploy Cloudflare aprovados.
+- Não foram modificados os cálculos da simulação, cliente, economia, save, áudio, RNG, geometria ou gestos touch.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

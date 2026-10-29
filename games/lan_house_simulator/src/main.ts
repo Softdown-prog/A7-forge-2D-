@@ -77,6 +77,7 @@ import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
 import {drawLayoutEditorOverlay,drawPlacementInteractionOverlays} from "./render/interactionOverlays.js";
 import {SceneMotion} from "./render/motion.js";
+import {renderFrameVisualLayers} from "./ui/frameVisualLayers.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth,pcPosition } from "./sim/engine.js";
@@ -880,22 +881,31 @@ function frame(timestamp:number):void {
    playing:isPlaying,accountOpen,visible:sceneVisible,hidden:document.hidden,
    adminOpen,shopOpen,noticesOpen,coarse:coarsePointer.matches
   });
-  if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
-  if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
-  drawLayoutEditorOverlay(renderer,game,elapsed,{visible:paintScene,active:layoutEditor.active,selected:layoutEditor.selected,draft:layoutEditor.draft});
-  if(frameSchedule.menu(timestamp,{
-   playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,previewAvailable:menuPreviewAvailable,
-   hidden:document.hidden,reduceMotion:reduceMotion.matches
-  })&&menuRenderer){
-   try{menuRenderer.draw(menuPreview,elapsed);frameSchedule.menuPainted(timestamp);}
-   catch{menuPreviewAvailable=false;}
-  }
-  if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}
-  drawPlacementInteractionOverlays(renderer,game,{
-   visible:paintScene,editWall:layoutEditor.active?layoutEditor.wall:null,
-   placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
-   wallMode,pendingWall,hoveredWall,installingAnnexPc,hoveredAnnexPc
+  renderFrameVisualLayers({
+   sceneVisible:paintScene,accessVisible:serviceAccessVisible,
+   drawScene:()=>renderer.draw(sceneMotion.sample(game),elapsed),
+   drawAccessOverlay:()=>renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed),
+   drawEditorOverlay:()=>drawLayoutEditorOverlay(renderer,game,elapsed,{
+    visible:paintScene,active:layoutEditor.active,selected:layoutEditor.selected,draft:layoutEditor.draft
+   }),
+   drawMenuPreview:()=>{
+    if(frameSchedule.menu(timestamp,{
+     playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,
+     previewAvailable:menuPreviewAvailable,
+     hidden:document.hidden,reduceMotion:reduceMotion.matches
+    })&&menuRenderer){
+     try{menuRenderer.draw(menuPreview,elapsed);frameSchedule.menuPainted(timestamp);}
+     catch{menuPreviewAvailable=false;}
+    }
+   },
+   drawEffects:()=>{if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}},
+   drawPlacementOverlay:()=>drawPlacementInteractionOverlays(renderer,game,{
+    visible:paintScene,editWall:layoutEditor.active?layoutEditor.wall:null,
+    placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
+    wallMode,pendingWall,hoveredWall,installingAnnexPc,hoveredAnnexPc
+   })
   });
+
   if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,...frameInteraction.snapshot()}))
    renderUI(true);
   requestAnimationFrame(frame);
