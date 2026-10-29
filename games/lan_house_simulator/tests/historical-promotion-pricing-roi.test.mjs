@@ -169,7 +169,9 @@ test("interface de divulgação exibe valor cotado, não constante clássica",()
  assert.ok(application.includes("promotionCanAttractVisitors(state)"));
  assert.ok(ui.includes('setText("promotion-description"'));
  assert.ok(ui.includes("#launch-promotion"));
- assert.ok(main.includes("renderPromotionStatus(promotionStatusPort.snapshot(),setText,document)"));
+ const sections=readFileSync(resolve(root,"src","ui","adminFinanceSections.ts"),"utf8");
+ assert.ok(main.includes("renderAdminFinanceActivity({"));
+ assert.ok(sections.includes("renderPromotionStatus(options.promotion.snapshot(),options.setText,options.doc)"));
  const html=readFileSync(resolve(root,"index.html"),"utf8");
  assert.ok(html.includes('id="promotion-description"'));
  assert.equal(html.includes("Uma campanha custa R$ 120"),false);
