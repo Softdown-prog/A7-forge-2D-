@@ -47,6 +47,7 @@ import {createGameSessionPort} from "./application/gameSessionPort.js";
 import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {createFrameSchedule} from "./application/frameSchedule.js";
+import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
 import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
@@ -1009,12 +1010,9 @@ function renderUI(liveOnly=false):void {
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
 const frameSchedule=createFrameSchedule();
-let lastScroll=-1000,lastInput=-1000,uiPointerHeld=false,sceneVisible=true;
+let sceneVisible=true;
 new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
-document.addEventListener("scroll",()=>{lastScroll=performance.now();},{capture:true,passive:true});
-document.addEventListener("pointerdown",()=>{uiPointerHeld=true;lastInput=performance.now();},{capture:true,passive:true});
-for(const type of ["pointerup","pointercancel"])document.addEventListener(type,()=>{uiPointerHeld=false;lastInput=performance.now();},{capture:true,passive:true});
-window.addEventListener("blur",()=>{uiPointerHeld=false;});
+const frameInteraction=installFrameInteractionTracker(document,window,()=>performance.now());
 let wasSimulating=false;
 const coarsePointer=window.matchMedia("(pointer:coarse)");
 const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -1059,7 +1057,7 @@ function frame(timestamp:number):void {
    placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
    wallMode,pendingWall,hoveredWall,installingAnnexPc,hoveredAnnexPc
   });
-  if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,lastScroll,pointerHeld:uiPointerHeld,lastInput}))
+  if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,...frameInteraction.snapshot()}))
    renderUI(true);
   requestAnimationFrame(frame);
 }

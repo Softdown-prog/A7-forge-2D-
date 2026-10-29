@@ -341,6 +341,13 @@
 - `tests/simulation.test.mjs` foi atualizado em commit anterior para verificar a porta `frameActivitySnapshot` sem exigir a expressão antiga de pausa no bootstrap.
 - Nenhum limite de colisão, posição, cobrança, RNG, save, autosave ou tempo simulado foi modificado.
 
+## Quadragésimo terceiro recorte: monitor de interação para o HUD
+
+- `src/ui/frameInteractionTracker.ts` recebe os mesmos eventos de rolagem, `pointerdown`, `pointerup`, `pointercancel` e perda de foco, mantendo captura, listeners passivos e relógio `performance.now()`.
+- `main.ts` continua responsável por agendamento, simulação, observador de visibilidade do Canvas e salvamento, mas consulta um snapshot de atividade visual em vez de manter três variáveis e seus listeners diretamente no bootstrap.
+- `tests/frame-interaction-tracker-boundary.test.mjs` adiciona treze verificações dos sinais mobile, ordem e opções de eventos, integridade de saves e limites originais de 450/160/120 ms para atualizar o HUD.
+- Gestos touch do editor, cancelamento, `click` de compatibilidade, tempo da simulação, FPS, RNG e formato do save não foram modificados.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
