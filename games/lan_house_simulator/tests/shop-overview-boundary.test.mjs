@@ -35,14 +35,14 @@ test("o resumo mantém todos os textos atuais, sem alterar o save",()=>{
 test("o texto de caixa acompanha o valor atualizado, inclusive centavos",()=>{
  const x=createHarness();
  x.game.cash=1234.5;
- assert.match(x.port.snapshot().cashText,/Caixa R\\$ 1234\\.5/);
+ assert.match(x.port.snapshot().cashText,/Caixa R\$ 1234\.5/);
  x.game.cash=0;
- assert.match(x.port.snapshot().cashText,/Caixa R\\$ 0 · PCs/);
+ assert.match(x.port.snapshot().cashText,/Caixa R\$ 0 · PCs/);
 });
 test("salão original mantém tamanho e setores sem expansão",()=>{
  const x=createHarness(),v=x.port.snapshot();
  assert.match(v.cashText,/Tamanho do salão 8×6/);
- assert.match(v.cashText,/esquerda 0\\/5 · direita 0\\/5 · fundos 0\\/5/);
+ assert.match(v.cashText,/esquerda 0\/5 · direita 0\/5 · fundos 0\/5/);
  assert.equal(v.cashText,oldSummary(x.game));
 });
 test("expansões reais oeste, leste e norte atualizam vagas e medidas",()=>{
@@ -51,14 +51,14 @@ test("expansões reais oeste, leste e norte atualizam vagas e medidas",()=>{
  const v=x.port.snapshot();
  assert.equal(v.cashText,oldSummary(s));
  assert.match(v.cashText,/Tamanho do salão 12×8/);
- assert.match(v.cashText,/esquerda 1\\/5 · direita 1\\/5 · fundos 1\\/5/);
- assert.match(v.cashText,/PCs 3\\/6/);
+ assert.match(v.cashText,/esquerda 1\/5 · direita 1\/5 · fundos 1\/5/);
+ assert.match(v.cashText,/PCs 3\/6/);
  assert.equal(isValidSave(s),true);
 });
 test("ampliação principal e PC novo mantêm o cálculo de capacidade",()=>{
  const x=createHarness(),s=x.game;
  s.expansionLevel=1;s.installedPcs=3;
- assert.match(x.port.snapshot().cashText,/PCs 3\\/5/);
+ assert.match(x.port.snapshot().cashText,/PCs 3\/5/);
  assert.equal(x.port.snapshot().cashText,oldSummary(s));
 });
 test("divisória e porta existentes mantêm total e botão habilitado",()=>{
@@ -88,9 +88,9 @@ test("contagem dos objetos usa a consulta atual e não é armazenada",()=>{
 test("consulta de vagas anexas é dinâmica e independente de compras",()=>{
  let capacity=0;
  const game=createGame(4703),port=createShopOverviewPort(()=>game,()=>0,()=>capacity);
- assert.match(port.snapshot().cashText,/PCs 3\\/3/);
+ assert.match(port.snapshot().cashText,/PCs 3\/3/);
  capacity=3;
- assert.match(port.snapshot().cashText,/PCs 3\\/6/);
+ assert.match(port.snapshot().cashText,/PCs 3\/6/);
 });
 test("troca de partida importada altera apenas a instância ativa",()=>{
  const x=createHarness(),old=x.game,before=JSON.stringify(old);
@@ -98,7 +98,7 @@ test("troca de partida importada altera apenas a instância ativa",()=>{
  imported.cash=85;
  x.setGame(imported);
  assert.equal(x.port.snapshot().cashText,oldSummary(imported));
- assert.match(x.port.snapshot().cashText,/Caixa R\\$ 85/);
+ assert.match(x.port.snapshot().cashText,/Caixa R\$ 85/);
  assert.equal(JSON.stringify(old),before);
  assert.equal(isValidSave(imported),true);
 });
@@ -134,12 +134,12 @@ test("a interface não conhece o motor e main conserva os handlers",()=>{
  const app=readFileSync(new URL("application/shopOverviewPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopOverviewPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
- assert.doesNotMatch(app,/\\b(document|window|HTMLElement|HTMLButtonElement)\\b/);
- assert.doesNotMatch(ui,/from\\s*["']\\.\\.\\/sim\\//);
- assert.doesNotMatch(ui,/\\bGameState\\b|roomBounds|pcCount|wallZoneCount/);
- assert.match(main,/createShopOverviewPort\\(\\(\\)=>game/);
- assert.match(main,/renderShopOverview\\(shopOverviewPort\\.snapshot\\(\\),document\\)/);
- assert.match(main,/button\\("organize-furniture",\\(\\)=>layoutEditor\\.open\\(\\)\\)/);
- assert.match(main,/button\\("demolish-walls"/);
- assert.doesNotMatch(main,/\\broomBounds\\b|\\bwallZoneCount\\b/);
+ assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
+ assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
+ assert.doesNotMatch(ui,/\bGameState\b|roomBounds|pcCount|wallZoneCount/);
+ assert.match(main,/createShopOverviewPort\(\(\)=>game/);
+ assert.match(main,/renderShopOverview\(shopOverviewPort\.snapshot\(\),document\)/);
+ assert.match(main,/button\("organize-furniture",\(\)=>layoutEditor\.open\(\)\)/);
+ assert.match(main,/button\("demolish-walls"/);
+ assert.doesNotMatch(main,/\broomBounds\b|\bwallZoneCount\b/);
 });
