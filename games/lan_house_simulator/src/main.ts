@@ -115,6 +115,7 @@ import {renderPcOperations} from "./ui/pcOperationsPanel.js";
 import {renderAdminComputerSections} from "./ui/adminComputerSections.js";
 import {renderAdminGpuLicenseSections} from "./ui/adminGpuLicenseSections.js";
 import {serviceAccessIssues,type ServiceAccessIssue} from "./sim/serviceAccess.js";
+import {createServiceAccessInspectionCache} from "./ui/serviceAccessInspectionCache.js";
 import {serviceAccessStatusSnapshot} from "./application/serviceAccessStatusPort.js";
 import {renderServiceAccessOverlayStatus} from "./ui/serviceAccessStatusPanel.js";
 import {stationOccupied} from "./sim/computerModels.js";
@@ -300,15 +301,10 @@ let adminOpen = false;
 let noticesOpen=false;
 let activeAdminTab="prices";
 // Diagnóstico visual transitório: nunca entra no GameState nem no save.
-let serviceAccessVisible=false,serviceAccessAt=-10000;
-let serviceAccessCache:ServiceAccessIssue[]=[];
+let serviceAccessVisible=false;
+const serviceAccessInspection=createServiceAccessInspectionCache(()=>serviceAccessIssues(game),()=>performance.now());
 function inspectServiceAccess(force=false):readonly ServiceAccessIssue[]{
- const now=performance.now();
- if(force||now-serviceAccessAt>1600){
-  serviceAccessCache=serviceAccessIssues(game);
-  serviceAccessAt=now;
- }
- return serviceAccessCache;
+ return serviceAccessInspection.inspect(force);
 }
 let previousServed = game.served;
 let previousPurchases = game.purchases;
@@ -823,7 +819,7 @@ function renderUI(liveOnly=false):void {
   }
   // Independente do painel administrativo: as marcações continuam visíveis
   // depois de fechar Administração para inspecionar o salão no Canvas.
-  renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessCache),serviceAccessVisible,setText,document);
+  renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessInspection.snapshot()),serviceAccessVisible,setText,document);
   const eventHistory=eventLogPort.snapshot();
   if(eventHistory.signature!==lastEventSignature){
    renderEventLog(events,eventHistory,document,iconMarkup);

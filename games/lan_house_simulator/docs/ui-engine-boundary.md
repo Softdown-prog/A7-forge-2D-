@@ -543,6 +543,15 @@
 - Testes de fonte legados verificam a integração do novo coordenador em vez de exigir as antigas linhas diretamente no `main.ts`.
 - O consumo de correio e eventos continua após o avanço, e não houve mudanças em saves, RNG, regras econômicas, áudio ou limites do Canvas/touch.
 
+## Sexagésimo sétimo recorte: cache do diagnóstico de acesso dos funcionários
+
+- `src/ui/serviceAccessInspectionCache.ts` centraliza o cache de diagnóstico de acesso a computadores e lixeiras. O adaptador é genérico, recebe por injeção tanto a consulta de problemas quanto o relógio e não guarda uma instância de `GameState`.
+- O `main.ts` continua usando `serviceAccessIssues(game)` e `performance.now()`, mas o prazo estritamente maior que 1600ms, o cache inicial vazio, a consulta forçada e a leitura do último resultado agora ficam fora da inicialização.
+- A consulta de rotas do motor e os overlays do Canvas não foram modificados. Uma partida importada continua sendo lida pela função injetada no próximo diagnóstico.
+- `tests/service-access-inspection-cache-boundary.test.mjs` adiciona dezoito testes de prazo, força, histórico do cache, troca de partida, falhas e isolamento.
+- O teste legado `service-access-status-boundary.test.mjs` passa a verificar o novo módulo, sem perder a verificação do intervalo e do painel de acesso.
+- Nenhuma mudança em saves, RNG, preços, rota dos funcionários, economia, áudio, gestos ou renderização do Canvas.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

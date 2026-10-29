@@ -76,7 +76,9 @@ test("motor não conhece UI; main conserva cache de 1600ms e overlay real",()=>{
  assert.ok(main.includes("renderAdminServicesConsoles({"));
  assert.ok(main.includes("accessSnapshot:()=>serviceAccessStatusSnapshot(inspectServiceAccess(!liveOnly))"));
  assert.ok(sections.includes("renderServiceAccessStatus(options.accessSnapshot(),options.setText,options.doc)"));
- assert.ok(main.includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessCache),serviceAccessVisible,setText,document)"));
- assert.ok(main.includes("now-serviceAccessAt>1600"));
+ assert.ok(main.includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessInspection.snapshot()),serviceAccessVisible,setText,document)"));
+ const cache=readFileSync(new URL("ui/serviceAccessInspectionCache.ts",base),"utf8");
+ assert.ok(cache.includes("current-updatedAt>1600"));
+ assert.ok(main.includes("createServiceAccessInspectionCache(()=>serviceAccessIssues(game),()=>performance.now())"));
  assert.ok(main.includes("renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed)"));
 });
