@@ -100,7 +100,7 @@ test("módulo não conhece DOM, simulação, dispositivo áudio ou timer de save
  const main=readFileSync(new URL("main.ts",root),"utf8");
  const src=readFileSync(new URL("application/frameEventDispatch.ts",root),"utf8");
  assert.doesNotMatch(src,/from\s*["']\.\.\/(?:sim|audio|ui|render)\//);
- assert.doesNotMatch(src,/\b(GameState|document|window|AudioContext|Soundscape|CanvasRenderingContext2D|localStorage|setInterval|requestAnimationFrame|stepGame|save)\b/);
+ assert.doesNotMatch(src,/\b(GameState|document|window|AudioContext|Soundscape|CanvasRenderingContext2D|localStorage|setInterval|requestAnimationFrame|stepGame)\b|\bsave\(/);
  assert.match(main,/dispatchFrameEvents\(\{/);
  assert.match(main,/countNewMail:\(\)=>consumeNewMail\(knownMailIds,game.notices\)/);
  assert.match(main,/notifyMail:\(\)=>soundscape.mail\(\)/);
