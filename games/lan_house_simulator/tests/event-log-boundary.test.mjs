@@ -77,7 +77,9 @@ test("UI não importa motor nem mexe no áudio; main mantém invalidatório de D
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.ok(main.includes("createEventLogPort(()=>game)"));
- assert.ok(main.includes("renderEventLog(events,eventHistory,document,iconMarkup)"));
- assert.ok(main.includes("eventHistory.signature!==lastEventSignature"));
- assert.ok(main.includes("lastEventSignature=eventHistory.signature"));
+ const refreshed=readFileSync(new URL("ui/eventLogRefresh.ts",base),"utf8");
+ assert.ok(main.includes("createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup))"));
+ assert.ok(main.includes("eventLogRefresh.refresh()"));
+ assert.ok(refreshed.includes("value.signature===lastSignature"));
+ assert.ok(refreshed.indexOf("render(value)")<refreshed.indexOf("lastSignature=value.signature"));
 });

@@ -577,6 +577,14 @@
 - `tests/shop-catalog-renderer-boundary.test.mjs` adiciona vinte e um testes de filtro, ordenação, serviço próprio, PS1, seleção de vaga, CDs e cache de renderização.
 - As verificações legadas de fronteira foram adaptadas para procurar a montagem no novo compositor, sem alterar compras, RNG, save, gesto móvel ou Canvas.
 
+## Septuagesimo primeiro recorte: atualizacao incremental do historico
+
+- `src/ui/eventLogRefresh.ts` recebe um snapshot vivo e um renderizador injetados, mantendo a ultima assinatura localmente. Nao importa GameState, DOM ou persistencia.
+- `main.ts` substitui o armazenamento `lastEventSignature` e o bloco de invalidacao por `eventLogRefresh.refresh()`, preservando sua posicao entre overlay de acesso e disclosure.
+- `tests/event-log-refresh-boundary.test.mjs` adiciona treze testes para cache, atualizacao, importacao de save, falhas e nao-mutacao.
+- A correcao complementar do video PS1 no commit anterior limita a pintura a cerca de 10 FPS, preserva a duracao de 20 segundos e identifica erros sem esperar o timeout completo.
+- Nenhuma regra de economia, save, RNG, Canvas do jogo ou toque mobile foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

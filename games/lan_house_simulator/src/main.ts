@@ -106,6 +106,7 @@ import {createBasicGamesLicenseStatusPort} from "./application/basicGamesLicense
 import {createClassicGamesCatalogPort} from "./application/classicGamesCatalogPort.js";
 import {createEventLogPort} from "./application/eventLogPort.js";
 import {renderEventLog} from "./ui/eventLogPanel.js";
+import {createEventLogRefresh} from "./ui/eventLogRefresh.js";
 import {pcUnderRepair} from "./sim/services.js";
 import {createPcOperationsPort} from "./application/pcOperationsPort.js";
 import {renderPcOperations} from "./ui/pcOperationsPanel.js";
@@ -305,7 +306,6 @@ function inspectServiceAccess(force=false):readonly ServiceAccessIssue[]{
 }
 let previousServed = game.served;
 let previousPurchases = game.purchases;
-let lastEventSignature="";
 // Playback is handled by the shared Soundscape. No repeated HTMLAudioElements.
 const paymentPopups:Array<{amount:number;x:number;y:number;age:number}>=[];
 const salePopups:Array<{amount:number;x:number;y:number;age:number}>=[];
@@ -634,6 +634,7 @@ const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
 const noticeInboxPort=createNoticeInboxPort(()=>game);
 const noticeWindowStatusPort=createNoticeWindowStatusPort(()=>game);
 const eventLogPort=createEventLogPort(()=>game);
+const eventLogRefresh=createEventLogRefresh(()=>eventLogPort.snapshot(),snapshot=>renderEventLog(events,snapshot,document,iconMarkup));
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
   if(adminOpen&&activeAdminTab==="finance"&&managementPanels.active("finance","events"))
@@ -739,11 +740,7 @@ function renderUI(liveOnly=false):void {
   // Independente do painel administrativo: as marcações continuam visíveis
   // depois de fechar Administração para inspecionar o salão no Canvas.
   renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessInspection.snapshot()),serviceAccessVisible,setText,document);
-  const eventHistory=eventLogPort.snapshot();
-  if(eventHistory.signature!==lastEventSignature){
-   renderEventLog(events,eventHistory,document,iconMarkup);
-   lastEventSignature=eventHistory.signature;
-  }
+  eventLogRefresh.refresh();
   renderAdminDisclosure(controls,adminOpen);
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
