@@ -625,7 +625,9 @@ test("UI click audio uses one delegated handler and game money is event-driven",
  const {resolve,dirname}=await import("node:path");
  const {fileURLToPath}=await import("node:url");
  const source=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/main.ts"),"utf8");
- assert.match(source,/document.addEventListener\("click",event=>/);
+ const audioUi=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/ui/soundInputBindings.ts"),"utf8");
+ assert.match(source,/installSoundInputBindings\(document,soundscape\)/);
+ assert.match(audioUi,/doc\.addEventListener\("click",event=>/);
   const feedback=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameFeedbackPort.ts"),"utf8");
   assert.match(source,/createFrameFeedbackPort\(\(\)=>game,soundscape/);
   const dispatch=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameEventDispatch.ts"),"utf8");

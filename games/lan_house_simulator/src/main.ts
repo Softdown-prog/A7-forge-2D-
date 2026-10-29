@@ -93,6 +93,7 @@ import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
 import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
+import {installSoundInputBindings} from "./ui/soundInputBindings.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {createNoticeWindowStatusPort} from "./application/noticeWindowStatusPort.js";
 import {renderNoticeWindowStatus} from "./ui/noticeWindowStatusPanel.js";
@@ -180,21 +181,8 @@ let soundEnabled=true;
 try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
 soundToggle.checked=soundEnabled;
 const soundscape=new Soundscape(soundEnabled);
-soundscape.preload();
-// Reuse a single mixer for dynamic controls and keyboard activation alike.
-document.addEventListener("pointerdown",()=>soundscape.unlock(),{capture:true});
-document.addEventListener("keydown",e=>{
- if(e.key==="Enter"||e.key===" ")soundscape.unlock();
-},{capture:true});
-document.addEventListener("click",event=>{
- const target=event.target;
- if(!(target instanceof Element))return;
- const control=target.closest("button");
- if(control instanceof HTMLButtonElement&&!control.disabled)soundscape.click();
-},{capture:true});
-document.addEventListener("visibilitychange",()=>{
- if(document.hidden)soundscape.stopKeyboard();
-});
+// One mixer shared by controls, gameplay and transient sound effects.
+installSoundInputBindings(document,soundscape);
 continueButton.disabled=!hasSavedGame;
 const importFile=document.querySelector<HTMLInputElement>("#save-import-file");
 const saveMessage=document.querySelector<HTMLElement>("#save-message");

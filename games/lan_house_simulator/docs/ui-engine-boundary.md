@@ -492,6 +492,15 @@
 - Os cinco testes legados de frame passam a verificar o adaptador e a injeção de `setInterval`, em vez da posição física da linha no `main.ts`.
 - A falha do teste da vitrine do 59º recorte foi corrigida no commit anterior. Nenhuma regra econômica, RNG, cena Canvas, gesto mobile ou formato de save foi modificada.
 
+## Sexagésimo primeiro recorte: eventos de áudio da interface
+
+- `src/ui/soundInputBindings.ts` instala em um único local os eventos de `pointerdown`, `keydown`, `click` delegado e `visibilitychange` que antes eram registrados diretamente no `main.ts`.
+- O `Soundscape` continua compartilhado entre os efeitos de jogo, menus e controles; `preload` permanece antes do registro dos eventos. O toque e o teclado continuam desbloqueando o áudio na fase de captura, com click apenas em botão habilitado.
+- `tests/sound-input-bindings-boundary.test.mjs` cobre dezesseis casos de gesto, teclado, botões, visibilidade, listeners e fronteira UI/motor.
+- O teste legado de áudio por click foi adaptado para inspecionar o módulo extraído.
+- Antes deste recorte, corrigido o bug de `Illegal invocation` no autosave (60º recorte) com callback ligado a `window`, e atualizado o teste antigo da UI do editor.
+- Não foram alterados a simulação, os sons em si, os volumes, os saves, o RNG, os limiares de toque ou o Canvas.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
