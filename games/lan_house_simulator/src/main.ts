@@ -14,6 +14,7 @@ import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.j
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
 import {renderAdminPricingSections} from "./ui/adminPricingSections.js";
+import {renderAdminFinanceSummary,renderAdminFinanceActivity} from "./ui/adminFinanceSections.js";
 import {createVisibleAdminTextWriter,formatAdminMoney,renderAdminWindowVisibility,renderShopWindowVisibility,renderAdminDisclosure} from "./ui/adminShell.js";
 import {createShopCatalogOffersPort} from "./application/shopCatalogOffersPort.js";
 import {renderShopCatalogOfferButton} from "./ui/shopCatalogOfferButton.js";
@@ -65,12 +66,9 @@ import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
 import {createFinancialAdminOverviewPort} from "./application/financialAdminOverviewPort.js";
-import {renderFinancialAdminTotals,renderFinancialAdminActivity} from "./ui/financialAdminOverviewPanel.js";
 import {createStaffStatusPort} from "./application/staffStatusPort.js";
 import {renderStaffStatusPanel} from "./ui/staffStatusPanel.js";
-import {renderFinancialBalance,renderFinancialBillWatch} from "./ui/financialBalancePanel.js";
 import {createMonthlyFinancePort} from "./application/monthlyFinancePort.js";
-import {renderMonthlyFinancePanel} from "./ui/monthlyFinancePanel.js";
 import {createStationLedgerPort} from "./application/stationLedgerPort.js";
 import {renderStationLedgerRows} from "./ui/stationLedgerPanel.js";
 import {createPricingInsightsPort} from "./application/pricingInsightsPort.js";
@@ -83,7 +81,6 @@ import { SceneRenderer } from "./render/scene.js";
 import {drawLayoutEditorOverlay,drawPlacementInteractionOverlays} from "./render/interactionOverlays.js";
 import {SceneMotion} from "./render/motion.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
-import {renderPromotionStatus} from "./ui/promotionStatusPanel.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth,pcPosition } from "./sim/engine.js";
 import {computerSeat} from "./sim/route.js";
@@ -92,7 +89,6 @@ import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
 import {installNightTournamentHud} from "./ui/nightTournamentHud.js";
-import {renderCustomerFeedback} from "./ui/customerFeedbackPanel.js";
 import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.js";
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
@@ -777,17 +773,15 @@ function renderUI(liveOnly=false):void {
   const money=formatAdminMoney;
   const historical=game.economyVersion===2;
   const financialAdminOverview=financialAdminOverviewPort.snapshot();
-  renderFinancialBalance(financialBalancePort.balance(),setText,document);
-  if(activeAdminTab==="finance"&&managementPanels.active("finance","feedback")){
-   const host=document.getElementById("customer-feedback-panel");
-   if(host&&panelChanged("customerFeedback",
-     [Math.floor(game.totalMinutes/720),game.customerFeedback],!liveOnly))
-    renderCustomerFeedback(host,customerFeedbackSnapshot(game));
-  }
-  if(activeAdminTab==="finance"&&managementPanels.active("finance","balance")){
-   renderFinancialBillWatch(financialBalancePort.billWatch(),document);
-  }
-  renderFinancialAdminTotals(financialAdminOverview,setText);
+  renderAdminFinanceSummary({
+   overview:financialAdminOverview,balance:financialBalancePort,
+   financeTab:activeAdminTab==="finance",
+   pageActive:page=>managementPanels.active("finance",page),
+   feedbackChanged:()=>panelChanged("customerFeedback",
+    [Math.floor(game.totalMinutes/720),game.customerFeedback],!liveOnly),
+   feedback:()=>customerFeedbackSnapshot(game),
+   setText,doc:document
+  });
   // Compatibilidade: saves de épocas anteriores podem ter valores antigos.
   clampPriceToEra(game);
   const hourlyPriceStatus=hourlyPriceStatusPort.snapshot();
@@ -852,11 +846,10 @@ function renderUI(liveOnly=false):void {
    renderServiceAccessStatus(serviceAccessStatusSnapshot(issues),setText,document);
   }
   }
-  renderFinancialAdminActivity(financialAdminOverview,setText,activeAdminTab==="finance");
-  if(activeAdminTab==="finance"){
-  renderMonthlyFinancePanel(monthlyFinancePort.snapshot(),setText,document);
-  renderPromotionStatus(promotionStatusPort.snapshot(),setText,document);
-  }
+  renderAdminFinanceActivity({
+   overview:financialAdminOverview,monthly:monthlyFinancePort,promotion:promotionStatusPort,
+   financeTab:activeAdminTab==="finance",setText,doc:document
+  });
   }
   // Independente do painel administrativo: as marcações continuam visíveis
   // depois de fechar Administração para inspecionar o salão no Canvas.

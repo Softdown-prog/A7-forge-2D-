@@ -422,6 +422,14 @@
 - Os testes arquiteturais de hora, cenários de tarifa e varejo passam a verificar a nova localização dos renderizadores, mantendo as mesmas exigências de integração e de revisão.
 - Nenhum cálculo de economia, regra de compra, estado de save, gesto mobile ou desenho de Canvas foi alterado.
 
+## Quinquagésimo terceiro recorte: composição dos painéis de Finanças
+
+- `src/ui/adminFinanceSections.ts` coordena apresentação de caixa, despesas, balanço, opiniões dos clientes, contas mensais, atividade e panfletagem por meio de portas somente-leitura.
+- Mantidas duas fases de atualização: resumo do caixa antes de preços e computadores; atividade e mensalidade depois das demais áreas.
+- Opiniões só são consultadas quando Finanças > Opiniões está ativa e a revisão mudou; aviso de fechamento só é consultado na página Balanço.
+- `tests/admin-finance-sections-boundary.test.mjs` acrescenta doze testes de visibilidade, ordem, acessibilidade, preservação dos nós e limites de dependência.
+- Nenhuma regra da economia, save, aleatoriedade, Canvas, compras ou interface de toque foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
