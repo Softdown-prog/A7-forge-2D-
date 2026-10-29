@@ -308,6 +308,14 @@
 - `tests/placement-status-boundary.test.mjs` adiciona dez verificações de modos, botões, DOM, economia, save e limites arquiteturais.
 - Sem mudanças nas regras de giro, compra, instalação, colisão, RNG ou cronologia.
 
+## Trigésimo nono recorte: visibilidade e contador de correspondência
+
+- `src/application/noticeWindowStatusPort.ts` lê a contagem original de cartas não lidas e projeta a janela aberta/fechada sem modificar o estado.
+- `src/ui/noticeWindowStatusPanel.ts` atualiza os IDs `notices`, `notices-count` e `open-notices`, mantendo `hidden` e `aria-expanded`.
+- `main.ts` preserva a leitura e as decisões, a ação de abrir o Correio, o painel de cartas, os listeners e o save anterior.
+- `tests/notice-window-status-boundary.test.mjs` adiciona oito verificações para contagem, abertura, fechamento, estado importado e DOM.
+- Sem alterar o calendário das cartas, o motor, o RNG, as compras ou o Canvas.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

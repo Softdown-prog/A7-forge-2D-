@@ -91,7 +91,8 @@ import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.j
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
-import {unreadNotices} from "./sim/notices.js";
+import {createNoticeWindowStatusPort} from "./application/noticeWindowStatusPort.js";
+import {renderNoticeWindowStatus} from "./ui/noticeWindowStatusPanel.js";
 import {createNoticeInboxPort} from "./application/noticeInboxPort.js";
 import {renderNoticeInbox} from "./ui/noticeInboxPanel.js";
 import {gameYear,INTERNET_ERAS} from "./sim/era.js";
@@ -874,6 +875,7 @@ const classicGamesCatalogPort=createClassicGamesCatalogPort(()=>game);
 const gpuGamesCatalogPort=createGpuGamesCatalogPort(()=>game);
 const basicGamesLicenseStatusPort=createBasicGamesLicenseStatusPort(()=>game);
 const noticeInboxPort=createNoticeInboxPort(()=>game);
+const noticeWindowStatusPort=createNoticeWindowStatusPort(()=>game);
 const eventLogPort=createEventLogPort(()=>game);
 function renderUI(liveOnly=false):void {
   nightTournamentHud.render(game);
@@ -882,10 +884,7 @@ function renderUI(liveOnly=false):void {
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
   admin.hidden=!adminOpen;
-  const mailbox=document.getElementById("notices");if(mailbox)mailbox.hidden=!noticesOpen;
-  const unread=unreadNotices(game),badge=document.getElementById("notices-count");
-  if(badge){badge.hidden=unread===0;badge.textContent=String(unread);}
-  document.getElementById("open-notices")?.setAttribute("aria-expanded",String(noticesOpen));
+  renderNoticeWindowStatus(noticeWindowStatusPort.snapshot(noticesOpen),document);
   if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
     renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup);
   }
