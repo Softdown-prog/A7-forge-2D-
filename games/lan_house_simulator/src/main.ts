@@ -94,6 +94,7 @@ import {customerFeedbackSnapshot} from "./application/customerFeedbackSnapshot.j
 import {syncPanelChildren} from "./ui/panelChildren.js";
 import { Soundscape } from "./audio/soundscape.js";
 import {installSoundInputBindings} from "./ui/soundInputBindings.js";
+import {createSoundPreferencePort} from "./ui/soundPreferencePort.js";
 import {consumeNewMail,mailBaseline} from "./audio/mailNotification.js";
 import {createNoticeWindowStatusPort} from "./application/noticeWindowStatusPort.js";
 import {renderNoticeWindowStatus} from "./ui/noticeWindowStatusPanel.js";
@@ -169,8 +170,12 @@ const soundToggle=document.querySelector<HTMLInputElement>("#option-sound");
 if(!startScreen||!gameApp||!continueButton||!settingsPanel||!soundToggle)throw new Error("Menu inicial incompleto");
 let isPlaying=false;
 let hasSavedGame=startupSave.source!=="none";
-let soundEnabled=true;
-try{soundEnabled=localStorage.getItem("lhs.sound")!=="off";}catch{}
+// The sound setting is independent from the player's simulation save.
+const soundPreference=createSoundPreferencePort({
+ get:key=>localStorage.getItem(key),
+ set:(key,value)=>localStorage.setItem(key,value)
+});
+const soundEnabled=soundPreference.read();
 soundToggle.checked=soundEnabled;
 const soundscape=new Soundscape(soundEnabled);
 // One mixer shared by controls, gameplay and transient sound effects.
@@ -259,10 +264,7 @@ installMenuControls(menuElements,{
  continueCampaign:beginPlay,
  leaveGame:showMenu,
  confirm:message=>window.confirm(message),
- setSound:enabled=>{
-  soundEnabled=enabled;soundscape.setEnabled(enabled);
-  try{localStorage.setItem("lhs.sound",enabled?"on":"off");}catch{}
- }
+ setSound:enabled=>soundPreference.update(enabled,soundscape)
 });
 // Populate the expanded view immediately on touch or keyboard, rather than
 // waiting for the next throttled HUD refresh.

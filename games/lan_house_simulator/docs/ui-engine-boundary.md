@@ -509,6 +509,14 @@
 - `tests/lcd-preview-cache-boundary.test.mjs` acrescenta treze testes de dimensão, cache, modelos, indisponibilidade de Canvas, isolamento e composição.
 - Preservados o save ativo, a lista de monitores, os controles do painel, a lógica de clientes, RNG, viewport e desenho de PCs instalados.
 
+## Sexagésimo terceiro recorte: preferência de áudio isolada do jogo
+
+- `src/ui/soundPreferencePort.ts` reúne a leitura e persistência do único ajuste de som do menu, `lhs.sound`, sem importar motor, Canvas, mixer concreto ou save.
+- O `main.ts` apenas injeta as funções de armazenamento do navegador e envia mudanças ao mesmo `Soundscape` usado no jogo. O som continua ligado por padrão; somente a preferência `off` o desativa na inicialização.
+- Falhas do armazenamento (navegação privada, permissão ou quota) continuam sendo toleradas: o menu abre normalmente e o mixer ainda pode ser ativado ou silenciado. A ordem anterior — ajustar mixer antes da gravação — está preservada.
+- `tests/sound-preference-port-boundary.test.mjs` acrescenta quatorze testes de estado padrão, persistência, exceções de armazenamento e isolamento entre saves e UI.
+- Nenhum outro controle, áudio, volume, formato de save, RNG, simulação ou evento de toque foi alterado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
