@@ -372,6 +372,14 @@
 - `tests/shop-service-offers-boundary.test.mjs` cobre 1998/2001, limites de saldo, compra única, modo clássico, importação e independência entre interface e motor.
 - Nenhuma regra de compra, preço, RNG, save, Canvas ou gesto mobile foi alterada.
 
+## Quadragésimo sétimo recorte: resumo da loja e do salão
+
+- `src/application/shopOverviewPort.ts` centraliza a projeção somente-leitura da quantidade de objetos organizáveis, divisórias/portas removíveis, dinheiro, PCs, medidas do salão, ampliação por direção e número de salas. Consulta o save ativo em cada atualização.
+- `src/ui/shopOverviewPanel.ts` atualiza os mesmos IDs `organize-furniture`, `demolish-walls` e `shop-cash`, sem importar o motor ou registrar ouvintes.
+- `main.ts` conserva `panelChanged("shop")`, os eventos de organização/demolição, a compra, a rolagem e o Canvas, delegando apenas o texto e estado do resumo.
+- `tests/shop-overview-boundary.test.mjs` verifica textos originais, dinheiro, capacidades, expansão oeste/leste/norte, divisórias, save importado, DOM e limites de dependência.
+- Nenhuma regra de compra, preço, geração de cliente, RNG, save, autosave ou gesto mobile foi alterada.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

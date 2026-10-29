@@ -9,6 +9,8 @@ import {createPs1AdminPort} from "./application/ps1AdminPort.js";
 import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
 import {createPs1ShopPlacementPort} from "./application/ps1ShopPlacementPort.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
+import {createShopOverviewPort} from "./application/shopOverviewPort.js";
+import {renderShopOverview} from "./ui/shopOverviewPanel.js";
 import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
 import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
@@ -55,8 +57,8 @@ import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
 import {createFrameFeedbackPort} from "./application/frameFeedbackPort.js";
 import {SHOP_CATALOG,shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind,type PlacementSlot} from "./sim/shop.js";
-import {roomBounds,MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
-import {WALL_COST,wallZoneCount,type WallSegment} from "./sim/walls.js";
+import {MAX_EXTENSION_LEVEL,type ExtensionDirection} from "./sim/room.js";
+import {WALL_COST,type WallSegment} from "./sim/walls.js";
 import {ANNEX_PC_COST,type AnnexComputerSlot} from "./sim/stations.js";
 import { createGame, displayTime, online, pcCount, stepGame, isValidSave, applyResult } from "./sim/engine.js";
 import {createFinancialBalancePort} from "./application/financialBalancePort.js";
@@ -467,6 +469,7 @@ const ps1AdminPort=createPs1AdminPort(()=>game);
 const ps1ShopDiscPort=createPs1ShopDiscPort(()=>game);
 const ps1ShopPlacementPort=createPs1ShopPlacementPort(()=>game);
 const shopServiceOffersPort=createShopServiceOffersPort(()=>game);
+const shopOverviewPort=createShopOverviewPort(()=>game,()=>layoutEditorPort.objects().length,()=>placementActions.annexSlots().length);
 installShopControls(shopCatalog,createShopActionsPort(()=>game),{
  onPlacement:id=>{
   if(id==="computer-annex"){
@@ -696,17 +699,7 @@ function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
  if(!panelChanged("shop",[shopPanels?.current(),game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
- const organize=document.querySelector<HTMLButtonElement>("#organize-furniture");
- if(organize){const count=layoutEditorPort.objects().length;organize.disabled=false;organize.textContent="Organizar salão: "+count+" objetos";}
- const demolish=document.querySelector<HTMLButtonElement>("#demolish-walls");
- if(demolish){const count=(game.interiorWalls?.length??0)+(game.interiorDoors?.length??0);
-  demolish.disabled=!count;demolish.textContent="Remover paredes e portas ("+count+")";}
- const cash=document.getElementById("shop-cash");
- if(cash){
-   const b=roomBounds(game),e=game.roomExtensions??{west:0,east:0,south:0};
-   cash.textContent="Caixa R$ "+game.cash+" · PCs "+pcCount(game)+"/"+(3+game.expansionLevel*2+placementActions.annexSlots().length)+
-     " · Tamanho do salão "+(b.maxX-b.minX)+"×"+(b.maxY-b.minY)+" · Ampliações: esquerda "+e.west+"/5 · direita "+e.east+"/5 · fundos "+(e.north??0)+"/5 · Salas "+wallZoneCount(game);
- }
+ renderShopOverview(shopOverviewPort.snapshot(),document);
  shopCatalog.replaceChildren();
  for(const item of SHOP_CATALOG){
   if(shopCategory(item.id)!==shopPanels?.current())continue;
