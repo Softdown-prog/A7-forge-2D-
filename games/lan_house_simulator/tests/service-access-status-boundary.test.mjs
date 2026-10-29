@@ -69,10 +69,13 @@ test("motor não conhece UI; main conserva cache de 1600ms e overlay real",()=>{
  const app=readFileSync(new URL("application/serviceAccessStatusPort.ts",base),"utf8");
  const ui=readFileSync(new URL("ui/serviceAccessStatusPanel.ts",base),"utf8");
  const main=readFileSync(new URL("main.ts",base),"utf8");
+ const sections=readFileSync(new URL("ui/adminServicesConsoles.ts",base),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("renderServiceAccessStatus(serviceAccessStatusSnapshot(issues),setText,document)"));
+ assert.ok(main.includes("renderAdminServicesConsoles({"));
+ assert.ok(main.includes("accessSnapshot:()=>serviceAccessStatusSnapshot(inspectServiceAccess(!liveOnly))"));
+ assert.ok(sections.includes("renderServiceAccessStatus(options.accessSnapshot(),options.setText,options.doc)"));
  assert.ok(main.includes("renderServiceAccessOverlayStatus(serviceAccessStatusSnapshot(serviceAccessCache),serviceAccessVisible,setText,document)"));
  assert.ok(main.includes("now-serviceAccessAt>1600"));
  assert.ok(main.includes("renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed)"));

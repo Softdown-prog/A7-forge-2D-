@@ -112,11 +112,13 @@ test("UI desacoplada da simulação e o main preserva controle de aba e acesso",
  const app=readFileSync(new URL("application/staffStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/staffStatusPanel.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminServicesConsoles.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLProgressElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/replaceChildren|innerHTML|addEventListener/);
  assert.ok(main.includes("createStaffStatusPort(()=>game)"));
- assert.ok(main.includes("renderStaffStatusPanel(staffStatusPort.snapshot(),setText,document)"));
+ assert.ok(main.includes("renderAdminServicesConsoles({"));
+ assert.ok(sections.includes("renderStaffStatusPanel(options.staff.snapshot(),options.setText,options.doc)"));
  assert.ok(main.includes('managementPanels.active("services","access")'));
  for(const id of ["clean-bins","hire-technician","clean-bins-now",
   "staff-summary","cleaner-activity","technician-activity","cleaner-progress","technician-progress","bin-status"])
