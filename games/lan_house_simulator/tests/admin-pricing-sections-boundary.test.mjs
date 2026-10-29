@@ -154,7 +154,7 @@ test("render repetido não multiplica listeners nem utiliza GameState",()=>{
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|save\(|addEventListener|localStorage/);
  assert.match(main,/renderAdminPricingSections\(\{/);
- assert.match(main,/packagesChanged:\(\)=>panelChanged\("durations",\[game.pricePerHour,historical\],!liveOnly\)/);
- assert.match(main,/retailChanged:\(\)=>panelChanged\("retail",\[game.retailPrices\],!liveOnly\)/);
+ assert.match(main,/packagesChanged:\(\)=>panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
+ assert.match(main,/retailChanged:\(\)=>panelChanged\("retail",adminPanelRevisionsPort\.retail\(\),!liveOnly\)/);
  assert.match(main,/renderDeskServicePanels\(deskPricingPort,\{/);
 });

@@ -607,6 +607,15 @@
 - Preservados: janela do feedback em blocos de 720 minutos, modo histórico, referências de preços, arredondamento e opcionalidade do desgaste, posições dos campos de licenças, projeção dos jobs GPU e estado de conexão.
 - `tests/admin-panel-revisions-boundary.test.mjs` verifica correspondência, atualização após mudança de save, ausência de mutação e fronteiras DOM/motor. Cache JSON, renderização, RNG, progresso, compras e persistência permanecem inalterados.
 
+## Septuagésimo quinto recorte: coordenação da pintura por quadro
+
+- `src/ui/framePresentationCoordinator.ts` centraliza os gates de cena, prévia do menu e HUD com a ordem existente das camadas. Recebe callbacks vivos sem importar motor, DOM ou Canvas.
+- O `main.ts` entrega a situação do menu, visibilidade, scroll, pointer, editor e os pintores existentes. A simulação e o despacho do correio continuam antes da renderização; `frameSchedule` mantém as mesmas janelas de tempo.
+- Permanecem: cena mobile a 30 FPS, menu a cada mais de 90 ms, HUD após mais de 450 ms, suspensão durante toque e rolagem, marcação do menu somente após desenho, e ordem cena → acesso → editor → menu → efeitos → prévia → HUD.
+- `tests/frame-presentation-coordinator-boundary.test.mjs` acrescenta 20 regressões; testes legados de agendamento e frame passam a validar o novo ponto de coordenação.
+- Corrigidas as três asserções desatualizadas de preço identificadas no worker-simulation do recorte 74; continuavam procurando as assinaturas inline anteriores ao `adminPanelRevisionsPort`. A compilação do 74 havia passado.
+- Sem mudanças em RNG, autosave, preços, compras, tempo simulado ou gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

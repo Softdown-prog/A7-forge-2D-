@@ -97,7 +97,9 @@ test("fronteiras de UI preservam simulação, Canvas e listeners do editor mobil
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\b(GameState|stepGame|requestAnimationFrame)\b/);
  assert.match(main,/installFrameInteractionTracker\(document,window,\(\)=>performance\.now\(\)\)/);
- assert.match(main,/frameSchedule\.hud\(timestamp,\{playing:isPlaying,accountOpen,\.\.\.frameInteraction\.snapshot\(\)\}\)/);
+ const painter=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
+ assert.match(main,/hudFlags:\{playing:isPlaying,accountOpen,\.\.\.frameInteraction\.snapshot\(\)\}/);
+ assert.match(painter,/schedule\.hud\(input.timestamp,input.hudFlags\)/);
  assert.match(main,/new IntersectionObserver/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
  assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);

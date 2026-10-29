@@ -116,6 +116,6 @@ test("application sem DOM, UI sem motor e main mantém guarda de revisão",()=>{
  assert.ok(main.includes("createRetailPriceStatusPort(()=>game)"));
  assert.ok(section.includes("renderRetailPriceControls(options.retailControls,options.retail.snapshot(),"));
  assert.match(main,/renderAdminPricingSections\(\{/);
- assert.ok(main.includes('panelChanged("retail",[game.retailPrices],!liveOnly)'));
+ assert.ok(main.includes('panelChanged("retail",adminPanelRevisionsPort.retail(),!liveOnly)'));
  assert.doesNotMatch(main,/\bproductPrice\(/);
 });

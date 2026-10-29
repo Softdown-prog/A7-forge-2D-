@@ -78,10 +78,12 @@ test("o agendador não importa DOM/motor e main preserva simulação e autosave"
   assert.doesNotMatch(source,/\b(document|window|HTMLElement|requestAnimationFrame|GameState)\b/);
  }
  assert.match(main,/frameSchedule\.begin\(timestamp\)/);
- assert.match(main,/frameSchedule\.scene\(timestamp/);
- assert.match(main,/frameSchedule\.menu\(timestamp/);
- assert.match(main,/frameSchedule\.menuPainted\(timestamp\)/);
- assert.match(main,/frameSchedule\.hud\(timestamp/);
+ const painter=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
+ assert.match(painter,/schedule\.scene\(input.timestamp/);
+ assert.match(painter,/schedule\.menu\(input.timestamp/);
+ assert.match(painter,/schedule\.menuPainted\(input.timestamp\)/);
+ assert.match(painter,/schedule\.hud\(input.timestamp/);
+ assert.match(main,/createFramePresentationCoordinator\(frameSchedule\)/);
  assert.match(main,/createPanelRevisionCache\(\)/);
  assert.match(main,/requestAnimationFrame\(frame\)/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");

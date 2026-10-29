@@ -113,7 +113,7 @@ test("projeção não importa DOM; UI não conhece motor, e main mantém cache e
  assert.match(main,/renderAdminPricingSections\(\{/);
  assert.match(section,/renderHourlyPriceStatus\(options.hourly,options.setText,options.doc\)/);
  assert.match(section,/renderSessionPackages\(options.hourly.packages,durations,options.doc\)/);
- assert.match(main,/panelChanged\("durations",\[game\.pricePerHour,historical\],!liveOnly\)/);
+ assert.match(main,/panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
  assert.doesNotMatch(main,/\bannualHourlyCeiling\(/);
  assert.doesNotMatch(main,/\bsessionPrice\(/);
 });

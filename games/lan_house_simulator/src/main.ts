@@ -78,7 +78,7 @@ import { SceneRenderer } from "./render/scene.js";
 import {drawLayoutEditorOverlay,drawPlacementInteractionOverlays} from "./render/interactionOverlays.js";
 import {SceneMotion} from "./render/motion.js";
 import {paintFeedbackPopups} from "./render/feedbackPopupPainter.js";
-import {renderFrameVisualLayers} from "./ui/frameVisualLayers.js";
+import {createFramePresentationCoordinator} from "./ui/framePresentationCoordinator.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import { cameraForGame, iso } from "./render/isometric.js";
 import { roomWidth } from "./sim/engine.js";
@@ -750,6 +750,7 @@ function renderUI(liveOnly=false):void {
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
 const frameSchedule=createFrameSchedule();
+const framePresentation=createFramePresentationCoordinator(frameSchedule);
 const frameViewport=createFrameViewportState(canvas,callback=>new IntersectionObserver(callback),query=>window.matchMedia(query));
 const frameInteraction=installFrameInteractionTracker(document,window,()=>performance.now());
 const frameSimulation=createFrameSimulationCoordinator({
@@ -775,35 +776,33 @@ function frame(timestamp:number):void {
    updateServed:()=>{if(game.served>previousServed)previousServed=game.served;},
    updatePurchases:()=>{if(game.purchases>previousPurchases)previousPurchases=game.purchases;}
   });
-  const paintScene=frameSchedule.scene(timestamp,{
-   playing:isPlaying,accountOpen,visible:frameViewport.visible(),hidden:document.hidden,
-   adminOpen,shopOpen,noticesOpen,coarse:frameViewport.coarsePointer()
-  });
-  renderFrameVisualLayers({
-   sceneVisible:paintScene,accessVisible:serviceAccessVisible,
+  framePresentation.render({
+   timestamp,
+   sceneFlags:{
+    playing:isPlaying,accountOpen,visible:frameViewport.visible(),hidden:document.hidden,
+    adminOpen,shopOpen,noticesOpen,coarse:frameViewport.coarsePointer()
+   },
+   menuFlags:{
+    playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,
+    previewAvailable:menuPreviewPainter.available(),
+    hidden:document.hidden,reduceMotion:frameViewport.reducedMotion()
+   },
+   hudFlags:{playing:isPlaying,accountOpen,...frameInteraction.snapshot()},
+   accessVisible:serviceAccessVisible,
    drawScene:()=>renderer.draw(sceneMotion.sample(game),elapsed),
    drawAccessOverlay:()=>renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed),
-   drawEditorOverlay:()=>drawLayoutEditorOverlay(renderer,game,elapsed,{
+   drawEditorOverlay:paintScene=>drawLayoutEditorOverlay(renderer,game,elapsed,{
     visible:paintScene,active:layoutEditor.active,selected:layoutEditor.selected,draft:layoutEditor.draft
    }),
-   drawMenuPreview:()=>{
-    if(frameSchedule.menu(timestamp,{
-     playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,
-     previewAvailable:menuPreviewPainter.available(),
-     hidden:document.hidden,reduceMotion:frameViewport.reducedMotion()
-    })&&menuRenderer)
-     menuPreviewPainter.paintFrame(elapsed,()=>frameSchedule.menuPainted(timestamp));
-   },
-   drawEffects:()=>{if(isPlaying)paintFeedbackPopups(view!,()=>cameraForGame(game),popupQueues,dt,paintScene);},
-   drawPlacementOverlay:()=>drawPlacementInteractionOverlays(renderer,game,{
+   paintMenu:painted=>{if(menuRenderer)menuPreviewPainter.paintFrame(elapsed,painted);},
+   drawEffects:paintScene=>{if(isPlaying)paintFeedbackPopups(view!,()=>cameraForGame(game),popupQueues,dt,paintScene);},
+   drawPlacementOverlay:paintScene=>drawPlacementInteractionOverlays(renderer,game,{
     visible:paintScene,editWall:layoutEditor.active?layoutEditor.wall:null,
     placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
     wallMode,pendingWall,hoveredWall,installingAnnexPc,hoveredAnnexPc
-   })
+   }),
+   refreshHud:()=>renderUI(true)
   });
-
-  if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,...frameInteraction.snapshot()}))
-   renderUI(true);
   requestAnimationFrame(frame);
 }
 // Local persistence callbacks remain the same; registration lives in the UI adapter.
