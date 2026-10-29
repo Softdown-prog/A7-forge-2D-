@@ -1,5 +1,5 @@
 import type {GameState,Result} from "./types.js";
-import {gameYear,installedWindows,WINDOWS_ERAS} from "./era.js";
+import {gameYear,installedWindows,WINDOWS_ERAS} from "./eraCatalog.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
 import {stationReadyForSessions,stationPowerCount} from "./stationPower.js";
 

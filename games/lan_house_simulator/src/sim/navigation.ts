@@ -1,7 +1,7 @@
 import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {hallwayRoute} from "./route.js";
-import {editableObjects,objectRect} from "./editableObjects.js";
+import {editableObjects,objectRect} from "./layoutGeometry.js";
 
 /** Free-layout routing uses half-tile cells and tests every connecting segment. */
 function furnishedRoute(s:GameState,from:Point,to:Point):Point[]|null{

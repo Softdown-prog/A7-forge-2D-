@@ -1,7 +1,7 @@
 import {merchandisePrice,setMerchandisePrice,orderMerchandise,sellMerchandise,quoteOrder,CLASSIC_PRICES,CLASSIC_WHOLESALE,PRODUCTS} from "./merchandise.js";
 import type { GameState, Inventory, Item, Result } from "./types.js";
 import { SESSION_MINUTES } from "./types.js";
-import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./era.js";
+import {gameYear,INTERNET_ERAS,internetUnlockYear} from "./eraCatalog.js";
 import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
 import {startRepair} from "./services.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";

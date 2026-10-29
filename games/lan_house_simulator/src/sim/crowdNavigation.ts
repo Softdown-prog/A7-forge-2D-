@@ -1,11 +1,11 @@
-import {editableObjects,objectRect} from "./editableObjects.js";
+import {editableObjects,objectRect} from "./layoutGeometry.js";
 import type {Customer,GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {localStepValidator} from "./navigation.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
-import {pcCount,pcPosition} from "./engine.js";
+import {pcCount,pcPosition} from "./simulationState.js";
 import {vendingMachines,VENDING_WIDTH,VENDING_DEPTH} from "./layout.js";
-import {furnitureLocations,furnitureSlots} from "./shop.js";
+import {furnitureLocations,furnitureSlots} from "./furnitureLayout.js";
 
 const NEIGHBOR_STEPS=[[1,0],[-1,0],[0,1],[0,-1]] as const;
 

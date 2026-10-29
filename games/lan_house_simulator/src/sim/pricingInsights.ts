@@ -1,6 +1,6 @@
 import type {GameState} from "./types.js";
 import {customerSatisfactionDelta,demandFactor,energyCostPerMinute,sessionRevenue} from "./economy.js";
-import {gameYear} from "./era.js";
+import {gameYear} from "./eraCatalog.js";
 import {DAY_MINUTES} from "./types.js";
 import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,
  normalizedHourlyPrice,MIN_HOURLY_PRICE} from "./historicalEconomy.js";

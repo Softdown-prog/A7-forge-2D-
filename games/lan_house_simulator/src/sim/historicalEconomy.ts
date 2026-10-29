@@ -3,7 +3,7 @@ import {DAY_MINUTES} from "./types.js";
 import {GAME_LAST_YEAR,GAME_FIRST_YEAR,DAYS_PER_YEAR} from "./mailCalendar.js";
 import {hardwareFor} from "./hardware.js";
 import {hardwarePart} from "./hardwareCatalog.js";
-import {installedWindows,WINDOWS_ERAS} from "./era.js";
+import {installedWindows,WINDOWS_ERAS} from "./eraCatalog.js";
 import {gpuSpec,installedGpu} from "./gpu.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";
 

@@ -1,0 +1,134 @@
+[
+  {
+    "mode": "classic",
+    "seed": 72421,
+    "actions": [
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 650."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 1100."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      }
+    ],
+    "hash": "45ae66150530d98e627742290278b403c9b200e3cc078bc6f6eb9f238650ca71",
+    "minutes": 2160,
+    "pcs": 7
+  },
+  {
+    "mode": "classic",
+    "seed": 1543,
+    "actions": [
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 650."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 1100."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      }
+    ],
+    "hash": "7b568d7784b7753213810c0544ca6b48513e2e554498261c134f349aef2c04e6",
+    "minutes": 2160,
+    "pcs": 7
+  },
+  {
+    "mode": "historical",
+    "seed": 72421,
+    "actions": [
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 650."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 1100."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      }
+    ],
+    "hash": "02c0d35efe94920e5036549dc0152f973fe3525943496d8cc973bb2fa1e053fd",
+    "minutes": 2160,
+    "pcs": 7
+  },
+  {
+    "mode": "historical",
+    "seed": 1543,
+    "actions": [
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 650."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Salão ampliado: duas posições para novos computadores! -R$ 1100."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      },
+      {
+        "ok": true,
+        "message": "Novo PC instalado: -R$ 320."
+      }
+    ],
+    "hash": "c3c6b9d321ee31c1ac5b8c7deaf0674d14067cebc11c5008e0dceebf4ddedd09",
+    "minutes": 2160,
+    "pcs": 7
+  }
+]

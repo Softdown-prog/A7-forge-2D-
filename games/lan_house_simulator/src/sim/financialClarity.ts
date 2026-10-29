@@ -1,11 +1,10 @@
+export {INITIAL_CASH} from "./gameDefaults.js";
+import {INITIAL_CASH} from "./gameDefaults.js";
 import type {GameState} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import {monthlyBills,energyMonthlyEstimate} from "./economy.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {GAME_END_DAY} from "./mailCalendar.js";
-
-/** Capital inicial da partida padrão; os saves anteriores mantêm seu caixa. */
-export const INITIAL_CASH=850;
 
 export interface FinancialSnapshot {
  openingCash:number;

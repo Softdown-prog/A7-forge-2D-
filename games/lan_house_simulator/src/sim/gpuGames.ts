@@ -1,6 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {GPU_CATALOG,installedGpu,type GpuId} from "./gpu.js";
-import {WINDOWS_ERAS,installedWindows} from "./era.js";
+import {WINDOWS_ERAS,installedWindows} from "./eraCatalog.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
 import {stationPowerCount,stationPoweredOn,stationHasCustomer,stationReadyForSessions} from "./stationPower.js";
 import {gamePopularityWeight} from "./gamePopularity.js";

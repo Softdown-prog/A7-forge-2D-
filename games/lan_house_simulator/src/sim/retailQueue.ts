@@ -1,13 +1,13 @@
 import type {GameState,Item,Point} from "./types.js";
 import {purchaseApproach,vendingMachines,placedObject} from "./layout.js";
 import {roomBounds} from "./room.js";
-import {editableObjects,objectRect} from "./editableObjects.js";
+import {editableObjects,objectRect} from "./layoutGeometry.js";
 import {counterQueueSlot,MAX_COUNTER_QUEUE,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute} from "./navigation.js";
 import {crowdRoute} from "./crowdNavigation.js";
-import {layoutGoals} from "./editableObjects.js";
+import {layoutGoals} from "./layoutGeometry.js";
 import {AISLE_Y} from "./route.js";
-import {entrance} from "./engine.js";
+import {entrance} from "./simulationState.js";
 
 const cache=new WeakMap<GameState,{key:string;slots:Map<Item,Point[]>}>();
 /** Encaixes separados para cada atendimento, sem tomar assentos ou lugares do caixa. */

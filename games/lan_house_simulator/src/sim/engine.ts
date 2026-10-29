@@ -25,7 +25,7 @@ import {recordStationMinute,validStationLedger} from "./stationAccounting.js";
 import {validLcdModels} from "./computerModels.js";
 import {validHardwareState} from "./hardware.js";
 import {stationReadyForSessions,validStationPower} from "./stationPower.js";
-import {WINDOWS_ERAS} from "./era.js";
+import {WINDOWS_ERAS} from "./eraCatalog.js";
 import {clampPriceToEra,normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps1StationAvailable,ps1EnergyCostPerMinute,ps1HourPrice,validPs1State} from "./ps1.js";
 import {validGpuGameLicenses,validGpuGameInstalls,validGpuGameInstallJobs,tickGpuGameInstallations,gpuGameSpec,preferredGpuGame,gpuGameVisitorMultiplier} from "./gpuGames.js";

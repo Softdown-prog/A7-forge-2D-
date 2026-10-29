@@ -1,6 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {stationUpgradeIssue} from "./stationPower.js";
-import {gameYear,type WindowsEdition} from "./era.js";
+import {gameYear,type WindowsEdition} from "./eraCatalog.js";
 import {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,type HardwareKind,type HardwarePart,type PcComponents} from "./hardwareCatalog.js";
 export {HARDWARE_CATALOG,HARDWARE_LABELS,PLATFORM_KITS,hardwarePart,describePart,formatMemory} from "./hardwareCatalog.js";
 export type {HardwareKind,HardwarePart,PcComponents} from "./hardwareCatalog.js";

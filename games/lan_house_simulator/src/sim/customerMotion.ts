@@ -1,7 +1,7 @@
 /** customerMotion.ts: módulo do runtime LHS; lógica executada por minuto do jogo. */
 import type {Customer,GameState,Point} from "./types.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
-import {directionFromDelta} from "../render/direction.js";
+import {directionFromDelta} from "./direction.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {roomBounds} from "./room.js";
 import {crowdRoute,crowdSideStep} from "./crowdNavigation.js";

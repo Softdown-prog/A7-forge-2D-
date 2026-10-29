@@ -1,23 +1,16 @@
+export {BIN_SPOTS,binSpots,BinStatus,binStatus,binStates} from "./serviceLayout.js";
+import {BIN_SPOTS,binSpots,BinStatus,binStatus,binStates} from "./serviceLayout.js";
 import {placedObject} from "./layout.js";
 import type {GameState,Result,Point} from "./types.js";
-import {pcCount,pcPosition,entrance} from "./engine.js";
+import {pcCount,pcPosition,entrance} from "./simulationState.js";
 import {workerRoute} from "./workerNavigation.js";
 import {serviceVisitCost} from "./historicalEconomy.js";
 import {employeeHired,accrueEmployeeDay} from "./staff.js";
-import {directionFromDelta,type ActorDirection} from "../render/direction.js";
+import {directionFromDelta,type ActorDirection} from "./direction.js";
 import {canTraverseLocalStep} from "./navigation.js";
 import {technicianWorkPoint,technicianContactPoint,cleanerWorkPoint} from "./staffWorksites.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean;binIndex?:number}
-export const BIN_SPOTS:Point[]=[{x:1.1,y:3.1},{x:5.65,y:4.65}];
-export function binSpots(s:GameState):Point[]{return BIN_SPOTS.map((p,i)=>placedObject(s,"bin:"+i,p));}
-export type BinStatus="empty"|"filling"|"full";
-export function binStatus(fill:number):BinStatus{
- return fill>=100?"full":fill>0?"filling":"empty";
-}
-export function binStates(s:GameState):BinStatus[]{
- return BIN_SPOTS.map((_,i)=>binStatus(s.binFill?.[i]??0));
-}
 export const REPAIR_DURATION=24;
 function approach(a:{x:number;y:number},b:Point,speed:number):boolean{
  const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
@@ -46,7 +39,7 @@ export function startRepair(s:GameState,pc:number):Result{
  accrueEmployeeDay(s);
  return {ok:true,message:"Técnico chamado para o PC "+(pc+1)+(cost?": -R$ "+cost:": visita coberta pelo contrato")+". Computador interditado até o fim do reparo."};
 }
-export function pcUnderRepair(s:GameState,index:number):boolean{return !!s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving");}
+export {pcUnderRepair} from "./stationPower.js";
 export function addWaste(s:GameState,amount=1):void{
  if(!Number.isFinite(amount)||amount<=0)return;
  const bins=s.binFill??(s.binFill=[0,0]);

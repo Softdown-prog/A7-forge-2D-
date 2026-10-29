@@ -1,6 +1,6 @@
 import type {GameState} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
-import {pcCount} from "./engine.js";
+import {pcCount} from "./simulationState.js";
 
 /** Contabiliza um minuto real da simulação — minutos-PC usados/capacidade instalada.
  * A capacidade é acumulada a cada minuto, sem supor que a quantidade de PCs

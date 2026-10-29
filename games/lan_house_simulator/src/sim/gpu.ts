@@ -1,6 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {stationUpgradeIssue} from "./stationPower.js";
-import {gameYear} from "./era.js";
+import {gameYear} from "./eraCatalog.js";
 import {hardwareFor,buildParts,requiredPsuWatts} from "./hardware.js";
 
 export const GPU_CATALOG=[

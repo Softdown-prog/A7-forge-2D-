@@ -1,7 +1,7 @@
 import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
-import {pcCount,pcPosition} from "./engine.js";
-import {furnitureLocations,furnitureSlots} from "./shop.js";
+import {pcCount,pcPosition} from "./simulationState.js";
+import {furnitureLocations,furnitureSlots} from "./furnitureLayout.js";
 import {vendingMachines,counterPoint} from "./layout.js";
 import {canTraverseLocalStep} from "./navigation.js";
 /** Grade para funcionários: desvios em torno de bancadas, PCs, máquinas, móveis e divisórias.
