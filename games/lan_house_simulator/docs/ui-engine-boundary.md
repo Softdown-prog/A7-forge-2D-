@@ -332,6 +332,15 @@
 - `tests/frame-activity-boundary.test.mjs` adiciona dez testes, incluindo todas as 256 combinações dos oito estados e a distinção entre fim do movimento e finalização da campanha.
 - Sem alteração de FPS, velocidade do relógio, eventos, RNG, política de autosave, formato de save ou gestos mobile.
 
+## Quadragésimo segundo recorte: prévias e camadas de desenho do salão
+
+- `src/render/interactionOverlays.ts` centraliza somente a apresentação das prévias de móveis, reposicionamento, divisórias, portas, PCs anexos e destaque do editor, sem mutar o estado do motor.
+- A pintura continua em duas fases: o destaque do editor aparece antes dos popups, enquanto as prévias de compra, giro, parede e PC anexo permanecem depois, conservando a ordem visual.
+- `main.ts` conserva gestos touch, `pointermove`, `click`, estado da seleção, comandos da simulação, `SceneRenderer` e controle de FPS.
+- `tests/interaction-overlays-boundary.test.mjs` cobre treze cenários de visibilidade, ordem, orientação, fallback de parede, demolição, PC anexo e compatibilidade de saves.
+- `tests/simulation.test.mjs` foi atualizado em commit anterior para verificar a porta `frameActivitySnapshot` sem exigir a expressão antiga de pausa no bootstrap.
+- Nenhum limite de colisão, posição, cobrança, RNG, save, autosave ou tempo simulado foi modificado.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

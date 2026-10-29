@@ -75,6 +75,7 @@ import {renderHourlyPriceStatus,renderSessionPackages} from "./ui/hourlyPriceSta
 import { DAY_MINUTES, type GameState } from "./sim/types.js";
 import {GAME_LAST_MINUTE} from "./sim/mailCalendar.js";
 import { SceneRenderer } from "./render/scene.js";
+import {drawLayoutEditorOverlay,drawPlacementInteractionOverlays} from "./render/interactionOverlays.js";
 import {SceneMotion} from "./render/motion.js";
 import {createPromotionStatusPort} from "./application/promotionStatusPort.js";
 import {renderPromotionStatus} from "./ui/promotionStatusPanel.js";
@@ -1044,7 +1045,7 @@ function frame(timestamp:number):void {
   });
   if(paintScene)renderer.draw(sceneMotion.sample(game),elapsed);
   if(paintScene&&serviceAccessVisible)renderer.drawServiceAccessOverlay(game,inspectServiceAccess(),elapsed);
-  if(paintScene&&layoutEditor.active)renderer.drawLayoutOverlay(game,layoutEditor.selected,layoutEditor.draft,elapsed);
+  drawLayoutEditorOverlay(renderer,game,elapsed,{visible:paintScene,active:layoutEditor.active,selected:layoutEditor.selected,draft:layoutEditor.draft});
   if(frameSchedule.menu(timestamp,{
    playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,previewAvailable:menuPreviewAvailable,
    hidden:document.hidden,reduceMotion:reduceMotion.matches
@@ -1053,14 +1054,11 @@ function frame(timestamp:number):void {
    catch{menuPreviewAvailable=false;}
   }
   if(isPlaying){paintPayments(dt,paintScene);paintSales(dt,paintScene);paintSpeech(dt,paintScene);}
-  if(paintScene&&layoutEditor.active&&layoutEditor.wall)renderer.drawWallPreview(game,layoutEditor.wall,true);
-  if(paintScene&&placingKind)renderer.drawPlacementCandidates(game,placingKind,hoveredPlacement,purchaseRotation);
-  if(paintScene&&relocating)renderer.drawRelocationCandidates(game,relocationFrom,hoveredPlacement);
-  if(paintScene&&wallMode){
-    if(wallMode==="door")renderer.drawDoorCandidates(game,pendingWall??hoveredWall);
-    else renderer.drawWallPreview(game,pendingWall??hoveredWall,wallMode==="remove");
-  }
-  if(paintScene&&installingAnnexPc)renderer.drawAnnexPcCandidates(game,hoveredAnnexPc);
+  drawPlacementInteractionOverlays(renderer,game,{
+   visible:paintScene,editWall:layoutEditor.active?layoutEditor.wall:null,
+   placingKind,hoveredPlacement,purchaseRotation,relocating,relocationFrom,
+   wallMode,pendingWall,hoveredWall,installingAnnexPc,hoveredAnnexPc
+  });
   if(frameSchedule.hud(timestamp,{playing:isPlaying,accountOpen,lastScroll,pointerHeld:uiPointerHeld,lastInput}))
    renderUI(true);
   requestAnimationFrame(frame);
