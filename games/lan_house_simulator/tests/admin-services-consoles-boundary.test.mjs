@@ -162,7 +162,9 @@ test("camada de UI não importa simulação, e main mantém seleção e inspeç�
  assert.match(main,/renderAdminServicesConsoles\(\{/);
  assert.match(main,/accessSnapshot:\(\)=>serviceAccessStatusSnapshot\(inspectServiceAccess\(!liveOnly\)\)/);
  assert.match(main,/showServiceAccess:\(\)=>adminOpen&&managementPanels.active\("services","access"\)/);
- assert.match(main,/renderServiceAccessOverlayStatus\(serviceAccessStatusSnapshot\(serviceAccessCache\),serviceAccessVisible,setText,document\)/);
+ assert.match(main,/renderServiceAccessOverlayStatus\(serviceAccessStatusSnapshot\(serviceAccessInspection\.snapshot\(\)\),serviceAccessVisible,setText,document\)/);
+ const cache=readFileSync(new URL("ui/serviceAccessInspectionCache.ts",root),"utf8");
+ assert.match(cache,/current-updatedAt>1600/);
  assert.match(main,/installPs1Controls\(/);
  assert.match(main,/installServiceControls\(/);
 });
