@@ -51,5 +51,7 @@ test("a vitrine mantém a imagem de salão sem instanciar outro renderizador pes
  const site=readFileSync(new URL("../website/site.mjs",import.meta.url),"utf8");
  assert.doesNotMatch(site,/\/game\/js\/render\/scene\.js/);
  const menu=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(menu,/menuPreviewAvailable/);
+ const painter=readFileSync(new URL("../src/ui/menuPreviewPainter.ts",import.meta.url),"utf8");
+ assert.match(menu,/menuPreviewPainter\.available\(\)/);
+ assert.match(painter,/catch\s*\{/);
 });
