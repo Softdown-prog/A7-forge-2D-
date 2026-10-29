@@ -104,7 +104,9 @@ test("a interface da nova partida oferece períodos e teto histórico, sem apaga
  const display=readFileSync(resolve(root,"src/ui/hourlyPriceStatusPanel.ts"),"utf8");
  assert.ok(pricing.includes("allowableHourlyPrice(game)"));
  assert.ok(display.includes("session-package-prices")===false);
- assert.ok(main.includes("renderSessionPackages(hourlyPriceStatus.packages,durations,document)"));
+ const pricingArea=readFileSync(resolve(root,"src/ui/adminPricingSections.ts"),"utf8");
+ assert.ok(main.includes("renderAdminPricingSections({"));
+ assert.ok(pricingArea.includes("renderSessionPackages(options.hourly.packages,durations,options.doc)"));
  // Save local agora é decodificado em localSave.ts; o estado recuperado
  // passa pelo ajuste de teto (que não altera o modo clássico).
   assert.match(session,/loadLocalSave\(store\)/);

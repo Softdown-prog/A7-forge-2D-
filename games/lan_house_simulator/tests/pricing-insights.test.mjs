@@ -103,6 +103,8 @@ test("painel mostra cenários legíveis e o custo da virada sem ações econômi
  assert.match(html,/não prevê lucro, clientes atendidos ou faturamento real/);
  assert.ok(app.includes("hourlyPriceScenarios(game)"));
  assert.ok(app.includes("energyYearOutlook(game)"));
- assert.ok(main.includes("renderHourlyPricingInsights(pricingInsightsPort.hourly(),setText)"));
- assert.ok(main.includes("renderEnergyYearOutlook(pricingInsightsPort.energy(),setText)"));
+ const pricingArea=readFileSync(resolve(root,"src/ui/adminPricingSections.ts"),"utf8");
+ assert.ok(main.includes("renderAdminPricingSections({"));
+ assert.ok(pricingArea.includes("renderHourlyPricingInsights(options.insights.hourly(),options.setText)"));
+ assert.ok(pricingArea.includes("renderEnergyYearOutlook(options.insights.energy(),options.setText)"));
 });
