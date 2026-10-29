@@ -99,7 +99,7 @@ test("revisão contém somente os sete campos originais do main",()=>{
 });
 test("mudança na lista de cartas altera revisão de JSON",()=>{
  const s=createGame(4816),port=createNoticeInboxRevisionPort(()=>s);
- const before=JSON.stringify(port.snapshot());s.notices.push({id:"test",title:"x",body:"x",day:1,severity:"info",read:false});
+ const before=JSON.stringify(port.snapshot());s.notices??=[];s.notices.push({id:"test",title:"x",body:"x",day:1,severity:"info",read:false});
  assert.notEqual(JSON.stringify(port.snapshot()),before);
 });
 test("cache e janela são independentes da simulação e de saves",()=>{
