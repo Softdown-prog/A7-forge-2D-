@@ -56,6 +56,7 @@ import {installSaveFileControls} from "./ui/saveFileControls.js";
 import {createMenuScreens,installMenuControls,type GameCampaignMode} from "./ui/gameMenuControls.js";
 import {createFrameSchedule} from "./application/frameSchedule.js";
 import {installFrameInteractionTracker} from "./ui/frameInteractionTracker.js";
+import {createFrameViewportState} from "./ui/frameViewportState.js";
 import {installPageSaveLifecycle} from "./ui/pageSaveLifecycle.js";
 import {frameActivitySnapshot} from "./application/frameActivity.js";
 import {createPanelRevisionCache} from "./application/panelRevisionCache.js";
@@ -832,12 +833,9 @@ function renderUI(liveOnly=false):void {
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
 const frameSchedule=createFrameSchedule();
-let sceneVisible=true;
-new IntersectionObserver(entries=>{sceneVisible=entries[0]?.isIntersecting??false;}).observe(canvas);
+const frameViewport=createFrameViewportState(canvas,callback=>new IntersectionObserver(callback),query=>window.matchMedia(query));
 const frameInteraction=installFrameInteractionTracker(document,window,()=>performance.now());
 let wasSimulating=false;
-const coarsePointer=window.matchMedia("(pointer:coarse)");
-const reduceMotion=window.matchMedia("(prefers-reduced-motion: reduce)");
 function frame(timestamp:number):void {
   const {dt,elapsed}=frameSchedule.begin(timestamp);
   const accountOpen=document.getElementById("player-account")?.hasAttribute("open")===true;
@@ -860,8 +858,8 @@ function frame(timestamp:number):void {
    updatePurchases:()=>{if(game.purchases>previousPurchases)previousPurchases=game.purchases;}
   });
   const paintScene=frameSchedule.scene(timestamp,{
-   playing:isPlaying,accountOpen,visible:sceneVisible,hidden:document.hidden,
-   adminOpen,shopOpen,noticesOpen,coarse:coarsePointer.matches
+   playing:isPlaying,accountOpen,visible:frameViewport.visible(),hidden:document.hidden,
+   adminOpen,shopOpen,noticesOpen,coarse:frameViewport.coarsePointer()
   });
   renderFrameVisualLayers({
    sceneVisible:paintScene,accessVisible:serviceAccessVisible,
@@ -874,7 +872,7 @@ function frame(timestamp:number):void {
     if(frameSchedule.menu(timestamp,{
      playing:isPlaying,accountOpen,hasRenderer:!!menuRenderer,
      previewAvailable:menuPreviewPainter.available(),
-     hidden:document.hidden,reduceMotion:reduceMotion.matches
+     hidden:document.hidden,reduceMotion:frameViewport.reducedMotion()
     })&&menuRenderer)
      menuPreviewPainter.paintFrame(elapsed,()=>frameSchedule.menuPainted(timestamp));
    },

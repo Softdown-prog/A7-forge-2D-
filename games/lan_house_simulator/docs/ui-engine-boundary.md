@@ -525,6 +525,15 @@
 - `tests/runtime-interaction-bindings-boundary.test.mjs` acrescenta dezessete testes de ordem, callbacks, estado dinâmico, ausência de painel e isolamento.
 - Nenhuma lógica de simulação, som, persistência, RNG, economia, Canvas ou limiar de gesto mobile foi modificada.
 
+## Sexagésimo quinto recorte: sinais visuais de viewport no loop
+
+- `src/ui/frameViewportState.ts` acompanha a visibilidade do Canvas via `IntersectionObserver`, o tipo de ponteiro via `matchMedia("(pointer:coarse)")` e a preferência de movimento reduzido. Não importa o motor do jogo.
+- O `main.ts` injeta as funções do navegador preservando o contexto nativo de `window.matchMedia`, em vez de passar diretamente o método do navegador (o que poderia provocar `Illegal invocation`).
+- A cena continua inicialmente visível, ficando oculta quando a primeira entrada de interseção não indicar visibilidade; as duas media queries continuam sendo lidas ao vivo em cada frame, sem valores congelados.
+- `frameSchedule.scene`, `frameSchedule.menu` e a leitura independente de `document.hidden` permanecem no mesmo lugar. Não há mudança no rateio de tempo do jogo ou nos critérios de desenho.
+- `tests/frame-viewport-state-boundary.test.mjs` adiciona dezesseis testes de interseção, media queries dinâmicas, isolamento e ligação com o bootstrap.
+- Não modifica Canvas, saves, economia, RNG, áudio, colisões, movimentação nem limiares de toque mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
