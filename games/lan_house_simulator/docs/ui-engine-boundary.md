@@ -406,6 +406,14 @@
 - Corrigido o stub de DOM de `tests/shop-catalog-card-boundary.test.mjs` para reproduzir `replaceChildren()`, que limpa conteúdo e `innerHTML` no navegador real; isso resolve a falha de um teste no 49º recorte.
 - Nenhuma regra de compra, colisão, RNG, autosave, desenho da cena ou gesto mobile foi alterada.
 
+## Quinquagésimo primeiro recorte: atualização e acessibilidade do shell administrativo
+
+- `src/ui/adminShell.ts` centraliza a atualização dos rótulos visíveis em Administração, com as mesmas verificações de subpágina oculta, elemento inexistente e texto inalterado. Mantém o formato monetário brasileiro e o estado `hidden`/`aria-expanded` das janelas.
+- `main.ts` deixa de manter a função DOM de `setText`, o formatador de valores e as atribuições diretas de visibilidade/atributos, mas conserva ordem, condições de render, eventos, abas e todos os ports de simulação.
+- `tests/admin-shell-boundary.test.mjs` acrescenta doze testes de DOM, subpáginas ocultas, atualização sem repetição, formato `pt-BR`, acessibilidade e fronteira UI/motor.
+- Corrigido `tests/shop-catalog-offers-boundary.test.mjs`: o cenário que exige botão de PC disponível agora cria primeiro uma vaga na área principal, removendo a falsa expectativa responsável pelo único teste falho do recorte 50.
+- Não foram alterados o motor, a lógica de vendas, os saves, a geração aleatória, o Canvas, os preços ou os gestos mobile.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

@@ -141,7 +141,8 @@ test("importação de save usa instância substituída e preserva a antiga",()=>
  assert.equal(JSON.stringify(old),before);
 });
 test("render de botão não altera o data-buy nem cria listeners",()=>{
- const x=harness(),button={disabled:true,textContent:"",dataset:{buy:"computer"},title:""};
+ const x=harness();x.game.expansionLevel=1;x.game.installedPcs=3;
+ const button={disabled:true,textContent:"",dataset:{buy:"computer"},title:""};
  renderShopCatalogOfferButton(button,x.port.snapshot("computer"));
  assert.equal(button.disabled,false);
  assert.equal(button.textContent,x.port.snapshot("computer").text);

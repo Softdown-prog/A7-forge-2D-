@@ -13,6 +13,7 @@ import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
+import {createVisibleAdminTextWriter,formatAdminMoney,renderAdminWindowVisibility,renderShopWindowVisibility,renderAdminDisclosure} from "./ui/adminShell.js";
 import {createShopCatalogOffersPort} from "./application/shopCatalogOffersPort.js";
 import {renderShopCatalogOfferButton} from "./ui/shopCatalogOfferButton.js";
 import {createShopCatalogCard,appendStandardShopCatalogCard,appendShopCatalogOwned} from "./ui/shopCatalogCard.js";
@@ -752,7 +753,7 @@ function renderUI(liveOnly=false):void {
    fridayMeetupPanel.render();
   // TypeScript não propaga a checagem inicial de nulidade para callbacks posteriores.
   if (!status || !admin || !events || !controls) return;
-  admin.hidden=!adminOpen;
+  renderAdminWindowVisibility(admin,adminOpen);
   renderNoticeWindowStatus(noticeWindowStatusPort.snapshot(noticesOpen),document);
   if(noticesList&&noticesOpen&&panelChanged("notices",[game.cash,game.notices,game.contentFilterInstalled,game.pcWindowsLicenses,game.licensedGames,game.electricalDeadlineDay,game.electricalInspectionFineApplied],!liveOnly)){
     renderNoticeInbox(noticesList,noticeInboxPort.snapshot(),document,iconMarkup);
@@ -766,18 +767,16 @@ function renderUI(liveOnly=false):void {
    installingAnnexPc,notice:placementNotice,wallCost:WALL_COST,annexPcCost:ANNEX_PC_COST
   });
   renderPlacementStatus(placementStatus,{toolbar:placementToolbar,stage,help:placementHelp},document);
-  if(shop)shop.hidden=!shopOpen;
-  const shopButton=document.querySelector<HTMLButtonElement>("#open-shop");
-  if(shopButton)shopButton.setAttribute("aria-expanded",String(shopOpen));
+  renderShopWindowVisibility(shop,shopOpen,document);
   renderShop(!liveOnly);
   activateAdminTab(activeAdminTab);
   if(adminOpen)managementPanels.syncUnlocks();
   renderTimeWeatherPanel(timeWeatherSnapshot(game),iconMarkup);
   const year=gameYear(game);
-  const setText=(id:string,value:string):void=>{const node=document.getElementById(id);if(node&&!node.closest(".admin-section[hidden],.management-page[hidden]")&&node.textContent!==value)node.textContent=value;};
+  const setText=createVisibleAdminTextWriter(document);
   if(adminOpen){
   const stationRevision=[year,game.cash,game.economyVersion,game.pcTiers,game.pcWindows,game.pcWindowsLicenses,game.pcPoweredOff,game.pcGpus,game.pcLcdModels,game.pcComponents,Array.from({length:pcCount(game)},(_,i)=>stationOccupied(game,i)),game.repairJobs?.map(j=>[j.pc,j.phase,Math.floor(j.progress/j.duration*4)])];
-  const money=(n:number):string=>"R$ "+n.toLocaleString("pt-BR");
+  const money=formatAdminMoney;
   const historical=game.economyVersion===2;
   const financialAdminOverview=financialAdminOverviewPort.snapshot();
   renderFinancialBalance(financialBalancePort.balance(),setText,document);
@@ -872,7 +871,7 @@ function renderUI(liveOnly=false):void {
    renderEventLog(events,eventHistory,document,iconMarkup);
    lastEventSignature=eventHistory.signature;
   }
-  controls.setAttribute("aria-expanded",String(adminOpen));
+  renderAdminDisclosure(controls,adminOpen);
   presentLiveState(liveStatusSnapshot(game,internetName()),adminOpen?activeAdminTab:null);
 }
 const frameSchedule=createFrameSchedule();
