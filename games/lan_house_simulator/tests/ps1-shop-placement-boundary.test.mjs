@@ -99,11 +99,13 @@ test("limite de camadas: UI sem motor e compra delegada ao shopControls",()=>{
  const app=readFileSync(new URL("application/ps1ShopPlacementPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/ps1ShopPlacementPicker.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const controls=readFileSync(new URL("ui/shopControls.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|buyPs1Station|stepGame/);
  assert.match(main,/createPs1ShopPlacementPort\(\(\)=>game\)/);
- assert.match(main,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
+ assert.match(main,/ps1Slots:\(\)=>ps1ShopPlacementPort\.snapshot\(\)/);
+ assert.match(catalog,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
  assert.match(controls,/querySelector<HTMLSelectElement>\("#ps1-placement"\)/);
 });

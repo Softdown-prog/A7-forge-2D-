@@ -117,14 +117,15 @@ test("PS1 conserva cartão vazio para o seletor de posição existente",()=>{
 test("somente apresentação: sem motor, sem listeners e mesmos pontos de integração",()=>{
  const root=new URL("../src/",import.meta.url);
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopCatalogCard.ts",root),"utf8");
  const controls=readFileSync(new URL("ui/shopControls.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|buyPs1Station|shopPrice|addEventListener|localStorage/);
  assert.doesNotMatch(main,/\bshopArtwork\b|\bdrawPrinterShop\b|\bdrawDiscCopier\b|\bdrawPs1Station\b|\bcatalogueIcon\b/);
- assert.match(main,/createShopCatalogCard\(item,document\)/);
- assert.match(main,/appendStandardShopCatalogCard\(fields,placementHint,document\)/);
- assert.match(main,/appendShopCatalogOwned\(card,/);
- assert.match(main,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
+ assert.match(catalog,/createShopCatalogCard\(item,options\.doc\)/);
+ assert.match(catalog,/appendStandardShopCatalogCard\(fields,placementHint,options\.doc\)/);
+ assert.match(catalog,/appendShopCatalogOwned\(card,/);
+ assert.match(catalog,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
  assert.match(controls,/querySelector<HTMLSelectElement>\("#ps1-placement"\)/);
 });

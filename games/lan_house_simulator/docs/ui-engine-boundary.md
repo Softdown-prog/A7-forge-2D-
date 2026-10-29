@@ -569,6 +569,14 @@
 - `tests/admin-area-tabs-boundary.test.mjs` adiciona dezenove testes, cobrindo atributos de acessibilidade, navegação, clique, seleção programática, ausência de seções e isolamento entre DOM e motor.
 - Motor, preços, saves, RNG, controles mobile, renderização de Canvas e estado da partida permanecem inalterados.
 
+## Septuagésimo recorte: catálogo da loja em um compositor DOM isolado
+
+- `src/ui/shopCatalogRenderer.ts` concentra a construção de cartões e botões para equipamentos, serviços, construção, decoração e PS1, recebendo `ShopCatalogCardItem` e portas read-only de aplicação, sem importar `sim/`.
+- Mantida a invalidação do painel via `panelChanged("shop", ...)` no `main.ts`, assim como a consulta de `shopPanels?.current()` durante cada passo da montagem e a renderização do cabeçalho antes de reconstruir a árvore.
+- Preservados IDs e seletores delegados (`data-buy` e `data-buy-ps1-disc`), os avisos de encaixe, preço e posse, o seletor de posições PS1 e a ordem dos CDs. A seleção do local PS1 continua no estado do `main.ts`, inclusive após importação da partida.
+- `tests/shop-catalog-renderer-boundary.test.mjs` adiciona vinte e um testes de filtro, ordenação, serviço próprio, PS1, seleção de vaga, CDs e cache de renderização.
+- As verificações legadas de fronteira foram adaptadas para procurar a montagem no novo compositor, sem alterar compras, RNG, save, gesto móvel ou Canvas.
+
 ## Cuidados
 
 - Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.

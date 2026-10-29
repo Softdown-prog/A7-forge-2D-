@@ -109,12 +109,14 @@ test("fronteira: render sem motor; compra permanece delegada",()=>{
  const app=readFileSync(new URL("application/shopServiceOffersPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopServiceOfferButton.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const shop=readFileSync(new URL("ui/shopControls.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|quotePrinter|quoteDiscCopier|buyPrinter|buyDiscCopier/);
  assert.match(main,/createShopServiceOffersPort\(\(\)=>game\)/);
- assert.match(main,/renderShopServiceOffer\(button,shopServiceOffersPort\.snapshot\(item\.id\)\)/);
+ assert.match(main,/service:id=>shopServiceOffersPort\.snapshot\(id\)/);
+ assert.match(catalog,/renderShopServiceOffer\(button,options\.service\(item\.id\)\)/);
  assert.doesNotMatch(main,/\bquotePrinter\b|\bquoteDiscCopier\b/);
  assert.match(shop,/port\.purchase\(id,ps1Slot\)/);
 });

@@ -9,7 +9,6 @@ import {createPs1AdminPort} from "./application/ps1AdminPort.js";
 import {createPs1ShopDiscPort} from "./application/ps1ShopDiscPort.js";
 import {createPs1ShopPlacementPort} from "./application/ps1ShopPlacementPort.js";
 import {createPs1ShopOfferPort} from "./application/ps1ShopOfferPort.js";
-import {renderPs1ShopOfferButton} from "./ui/ps1ShopOfferButton.js";
 import {createShopServiceOffersPort} from "./application/shopServiceOffersPort.js";
 import {createShopOverviewPort} from "./application/shopOverviewPort.js";
 import {renderShopOverview} from "./ui/shopOverviewPanel.js";
@@ -17,11 +16,6 @@ import {renderAdminPricingSections} from "./ui/adminPricingSections.js";
 import {renderAdminFinanceSummary,renderAdminFinanceActivity} from "./ui/adminFinanceSections.js";
 import {createVisibleAdminTextWriter,formatAdminMoney,renderAdminWindowVisibility,renderShopWindowVisibility,renderAdminDisclosure} from "./ui/adminShell.js";
 import {createShopCatalogOffersPort} from "./application/shopCatalogOffersPort.js";
-import {renderShopCatalogOfferButton} from "./ui/shopCatalogOfferButton.js";
-import {createShopCatalogCard,appendStandardShopCatalogCard,appendShopCatalogOwned} from "./ui/shopCatalogCard.js";
-import {renderShopServiceOffer} from "./ui/shopServiceOfferButton.js";
-import {renderPs1ShopPlacement} from "./ui/ps1ShopPlacementPicker.js";
-import {renderPs1ShopDiscCatalog} from "./ui/ps1ShopDiscCatalog.js";
 import {createGpuDownloadMetersPort} from "./application/gpuDownloadMetersPort.js";
 import {createWindowsLicensePort} from "./application/windowsLicensePort.js";
 import {renderAdminServicesConsoles} from "./ui/adminServicesConsoles.js";
@@ -89,7 +83,8 @@ import { roomWidth } from "./sim/engine.js";
 import {createMenuScenePreview} from "./application/menuScenePreviewPort.js";
 import {createMenuPreviewPainter} from "./ui/menuPreviewPainter.js";
 import {iconMarkup,decorateControls,presentLiveState,presentComputerOperations,syncWindowChrome,installWindowNavigation} from "./ui/presentation.js";
-import {installShopPanels,shopCategory} from "./ui/shopPanels.js";
+import {installShopPanels} from "./ui/shopPanels.js";
+import {renderShopCatalog} from "./ui/shopCatalogRenderer.js";
 import {installManagementPanels} from "./ui/managementPanels.js";
 import {createAdminAreaTabs} from "./ui/adminAreaTabs.js";
 import {installFridayMeetupPanel} from "./ui/fridayMeetupPanel.js";
@@ -604,30 +599,18 @@ function renderShop(force=true):void{
  if(!shopOpen)return;
  if(!shopCatalog)return;
  if(!panelChanged("shop",[shopPanels?.current(),game.cash,game.discCopier,game.printer,game.ps1Stations,game.ps1Discs,gameYear(game),game.expansionLevel,game.installedPcs,game.annexPcs,game.roomExtensions,game.furniture,game.furniturePlacements,game.objectPlacements,game.removedBuiltPosters,game.interiorWalls,game.interiorDoors],force))return;
- renderShopOverview(shopOverviewPort.snapshot(),document);
- shopCatalog.replaceChildren();
- for(const item of SHOP_CATALOG){
-  if(shopCategory(item.id)!==shopPanels?.current())continue;
-  const fields=createShopCatalogCard(item,document);
-  const {card,art,category,title,description,button}=fields;
-  const offer=shopCatalogOffersPort.snapshot(item.id);
-  const placementHint=offer.placementHint;
-  renderShopCatalogOfferButton(button,offer);
-  if(item.id==="printer"||item.id==="disc-copier"){
-   renderShopServiceOffer(button,shopServiceOffersPort.snapshot(item.id));
-  }
-  if(item.id==="ps1"){
-    renderPs1ShopOfferButton(button,ps1ShopOfferPort.snapshot());
-    renderPs1ShopPlacement(card,{art,category,title,description,button},
-      ps1ShopPlacementPort.snapshot(),selectedPs1PlacementId,id=>{selectedPs1PlacementId=id;},document);
-  }else{
-   appendStandardShopCatalogCard(fields,placementHint,document);
-  }
-  if(offer.ownedText!==null)appendShopCatalogOwned(card,offer.ownedText,document);
-  shopCatalog.append(card);
- }
- renderPs1ShopDiscCatalog(shopCatalog,ps1ShopDiscPort,shopPanels?.current()==="consoles",document);
-
+ renderShopCatalog({
+  host:shopCatalog,doc:document,items:SHOP_CATALOG,
+  currentCategory:()=>shopPanels?.current(),
+  renderOverview:()=>renderShopOverview(shopOverviewPort.snapshot(),document),
+  offer:id=>shopCatalogOffersPort.snapshot(id),
+  service:id=>shopServiceOffersPort.snapshot(id),
+  ps1Offer:()=>ps1ShopOfferPort.snapshot(),
+  ps1Slots:()=>ps1ShopPlacementPort.snapshot(),
+  selectedPs1Slot:()=>selectedPs1PlacementId,
+  selectPs1Slot:id=>{selectedPs1PlacementId=id;},
+  discs:ps1ShopDiscPort
+ });
 }
 const gpuDownloadMetersPort=createGpuDownloadMetersPort(()=>game);
 const windowsLicensePort=createWindowsLicensePort(()=>game);

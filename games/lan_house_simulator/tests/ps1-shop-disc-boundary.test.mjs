@@ -134,11 +134,13 @@ test("UI não conhece sim; a compra ainda é delegada e o main usa a porta",()=>
  const app=readFileSync(new URL("application/ps1ShopDiscPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/ps1ShopDiscCatalog.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
  assert.match(main,/createPs1ShopDiscPort\(\(\)=>game\)/);
- assert.match(main,/renderPs1ShopDiscCatalog\(shopCatalog,ps1ShopDiscPort,shopPanels\?\.current\(\)==="consoles",document\)/);
+ assert.match(main,/discs:ps1ShopDiscPort/);
+ assert.match(catalog,/renderPs1ShopDiscCatalog\(options\.host,options\.discs,options\.currentCategory\(\)==="consoles",options\.doc\)/);
  assert.match(main,/installShopControls\(shopCatalog,createShopActionsPort\(\(\)=>game\)/);
  assert.doesNotMatch(main,/\bps1DiscPrice\(|\bps1DiscCopies\(/);
 });

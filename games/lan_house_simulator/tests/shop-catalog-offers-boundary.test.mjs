@@ -155,6 +155,7 @@ test("render de botão não altera o data-buy nem cria listeners",()=>{
 test("UI continua sem dependência do motor e as compras usam controlador",()=>{
  const root=new URL("../src/",import.meta.url);
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopCatalogOfferButton.ts",root),"utf8");
  const legacy=readFileSync(new URL("ui/shopGuidance.ts",root),"utf8");
  const port=readFileSync(new URL("application/shopCatalogOffersPort.ts",root),"utf8");
@@ -166,9 +167,9 @@ test("UI continua sem dependência do motor e as compras usam controlador",()=>{
  assert.doesNotMatch(port,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.match(main,/createShopCatalogOffersPort\(\(\)=>game,\(\)=>placementActions\.availableAnnex\(\)\.length\)/);
- assert.match(main,/const offer=shopCatalogOffersPort\.snapshot\(item\.id\)/);
- assert.match(main,/renderShopCatalogOfferButton\(button,offer\)/);
- assert.match(main,/renderShopServiceOffer\(button,shopServiceOffersPort\.snapshot\(item\.id\)\)/);
- assert.match(main,/renderPs1ShopOfferButton\(button,ps1ShopOfferPort\.snapshot\(\)\)/);
+ assert.match(main,/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
+ assert.match(catalog,/renderShopCatalogOfferButton\(button,offer\)/);
+ assert.match(catalog,/renderShopServiceOffer\(button,options\.service\(item\.id\)\)/);
+ assert.match(catalog,/renderPs1ShopOfferButton\(button,options\.ps1Offer\(\)\)/);
  assert.match(controls,/port\.purchase\(id,ps1Slot\)/);
 });

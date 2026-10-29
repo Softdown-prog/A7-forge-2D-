@@ -116,13 +116,15 @@ test("UI sem motor, main sem regras PS1, compra no controlador existente",()=>{
  const app=readFileSync(new URL("application/ps1ShopOfferPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/ps1ShopOfferButton.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const shop=readFileSync(new URL("ui/shopControls.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|buyPs1Station|stepGame|shopPrice/);
  assert.match(main,/createPs1ShopOfferPort\(\(\)=>game\)/);
- assert.match(main,/renderPs1ShopOfferButton\(button,ps1ShopOfferPort\.snapshot\(\)\)/);
+ assert.match(main,/ps1Offer:\(\)=>ps1ShopOfferPort\.snapshot\(\)/);
+ assert.match(catalog,/renderPs1ShopOfferButton\(button,options\.ps1Offer\(\)\)/);
  assert.doesNotMatch(main,/\bPS1_UNLOCK_YEAR\b|\bPS1_MAX_STATIONS\b|\bps1PlacementSlots\b/);
- assert.match(main,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
+ assert.match(catalog,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
  assert.match(shop,/port\.purchase\(id,ps1Slot\)/);
 });
