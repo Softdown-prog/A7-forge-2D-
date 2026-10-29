@@ -102,5 +102,7 @@ test("orquestração fica no render; main preserva popups, ordem e controles tou
  assert.ok(early>=0&&popups>early&&late>popups);
  assert.match(main,/canvas\.addEventListener\("pointermove"/);
  assert.match(main,/canvas\.addEventListener\("click"/);
- assert.match(main,/setInterval\(save,8000\)/);
+ const saveAdapter=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
+ assert.match(main,/installPageSaveLifecycle\(\{/);
+ assert.match(saveAdapter,/options\.every\(options\.save,8000\)/);
 });

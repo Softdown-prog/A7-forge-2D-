@@ -89,7 +89,7 @@ test("coordenador não importa motor, áudio, renderer nem APIs de browser",()=>
  assert.match(main,/frameSchedule.hud\(timestamp,/);
  assert.match(main,/if\(advanceSimulation\)stepGame\(game,dt\*4\.0\)/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:setInterval,save\}\)/);
+ assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
  assert.match(main,/requestAnimationFrame\(frame\)/);
 });

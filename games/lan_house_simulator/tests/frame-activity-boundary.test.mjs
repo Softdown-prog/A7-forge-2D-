@@ -65,7 +65,7 @@ test("fronteira não importa o motor nem DOM; main mantém captura antes do step
  const stepped=main.indexOf("if(advanceSimulation)stepGame(game,dt*4.0)");
  assert.ok(captured>=0&&stepped>captured);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.ok(main.includes("installPageSaveLifecycle({win:window,doc:document,every:setInterval,save})"));
+ assert.ok(main.includes("installPageSaveLifecycle({win:window,doc:document,every:(callback,ms)=>window.setInterval(callback,ms),save})"));
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
  assert.ok(main.includes("requestAnimationFrame(frame)"));
 });

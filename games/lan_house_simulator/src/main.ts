@@ -905,7 +905,7 @@ function frame(timestamp:number):void {
   requestAnimationFrame(frame);
 }
 // Local persistence callbacks remain the same; registration lives in the UI adapter.
-installPageSaveLifecycle({win:window,doc:document,every:setInterval,save});
+installPageSaveLifecycle({win:window,doc:document,every:(callback,ms)=>window.setInterval(callback,ms),save});
 decorateControls();installWindowNavigation();
 showMenu();
 requestAnimationFrame(frame);

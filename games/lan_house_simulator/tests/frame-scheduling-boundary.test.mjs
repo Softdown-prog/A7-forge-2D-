@@ -85,7 +85,7 @@ test("o agendador não importa DOM/motor e main preserva simulação e autosave"
  assert.match(main,/createPanelRevisionCache\(\)/);
  assert.match(main,/requestAnimationFrame\(frame\)/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:setInterval,save\}\)/);
+ assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
  assert.match(main,/stepGame\(game,dt\*4\.0\)/);
  assert.match(main,/new IntersectionObserver/);

@@ -76,6 +76,19 @@ test("erro do callback permanece visível ao fluxo de salvamento existente",()=>
  });
  assert.throws(()=>actions[0][1](),/storage blocked/);
 });
+test("temporizador mantém o contexto nativo de Window ao ser injetado",()=>{
+ const calls=[],win={
+  setInterval(callback,ms){
+   if(this!==win)throw Error("Illegal invocation");
+   calls.push(["interval",ms]);return 1;
+  },
+  addEventListener:()=>{}
+ };
+ const doc={hidden:false,addEventListener:()=>{}};
+ const every=(callback,ms)=>win.setInterval(callback,ms);
+ assert.doesNotThrow(()=>installPageSaveLifecycle({win,doc,every,save:()=>{}}));
+ assert.deepEqual(calls,[["interval",8000]]);
+});
 test("coordenador não acessa estado, serialização, RNG ou APIs cloud",()=>{
  const root=new URL("../src/",import.meta.url);
  const src=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
@@ -84,6 +97,6 @@ test("coordenador não acessa estado, serialização, RNG ou APIs cloud",()=>{
  assert.doesNotMatch(src,/\b(GameState|localStorage|sessionStorage|fetch|stepGame|JSON\.stringify|requestAnimationFrame)\b/);
  assert.match(src,/options\.every\(options\.save,8000\)/);
  assert.match(src,/addEventListener\("pagehide",options\.save\)/);
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:setInterval,save\}\)/);
+ assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
  assert.match(main,/requestAnimationFrame\(frame\)/);
 });
