@@ -54,9 +54,11 @@ test("fronteira mantém UI independente da simulação e sem recriação do cat�
  const ui=readFileSync(new URL("ui/gpuDownloadMeters.ts",root),"utf8");
  const app=readFileSync(new URL("application/gpuDownloadMetersPort.ts",root),"utf8");
  const main=readFileSync(new URL("main.ts",root),"utf8");
+ const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLProgressElement)\b/);
  assert.doesNotMatch(ui,/\breplaceChildren\(|\binnerHTML\b/);
  assert.match(main,/createGpuDownloadMetersPort\(\(\)=>game\)/);
- assert.match(main,/refreshGpuDownloadMeters\(gpuGamePanel/);
+ assert.match(main,/renderAdminGpuLicenseSections\(\{/);
+ assert.match(sections,/refreshGpuDownloadMeters\(options.gpuGamePanel/);
 });

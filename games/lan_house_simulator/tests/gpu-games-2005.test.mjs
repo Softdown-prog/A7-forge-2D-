@@ -123,7 +123,9 @@ test("interface mostra jogos 2005+ na aba de licenças com motivos e bloqueios",
  assert.ok(html.includes('id="gpu-game-catalog"'));
  const port=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");
  const ui=readFileSync(new URL("../src/ui/gpuGamesCatalogPanel.ts",import.meta.url),"utf8");
- assert.ok(ts.includes("renderGpuGamesCatalog("));
+ const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
+ assert.ok(ts.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(coordinator.includes("renderGpuGamesCatalog("));
  assert.ok(port.includes("quoteGpuGame(game,title.id)"));
  assert.ok(ts.includes("installGameLicensingControls("));
  assert.ok(readFileSync(new URL("../src/application/gameLicensingPort.ts",import.meta.url),"utf8").includes("licenseGpuGame(getState(),id)"));

@@ -72,7 +72,9 @@ test("UI mostra dois anos e mantém jogos GPU 2005+",()=>{
  const css=readFileSync(new URL("../style.css",import.meta.url),"utf8");
  assert.ok(html.includes('id="era-game-catalog"'));
  assert.ok(html.includes('id="gpu-game-catalog"'));
- assert.ok(ts.includes("renderClassicGamesCatalog(eraGamePanel,"));
+ const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
+ assert.ok(ts.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(coordinator.includes("renderClassicGamesCatalog(options.eraGamePanel,"));
  const projection=readFileSync(new URL("../src/application/classicGamesCatalogPort.ts",import.meta.url),"utf8");
  assert.ok(projection.includes("quoteEraGame(game,title.id)"));
  assert.ok(ts.includes("installGameLicensingControls("));
