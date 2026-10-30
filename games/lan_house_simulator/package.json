@@ -7,6 +7,8 @@
     "build": "node scripts/build.mjs",
     "forge:ps1": "node scripts/render_ps1_scene.mjs out/forge-ps1",
     "forge:ps2": "node scripts/render_ps2_prototype.mjs out/forge-ps2",
+    "forge:ps2:integrated": "node scripts/verify_ps2_gameplay.mjs out/ps2-integrated",
+    "audit:ps2": "node scripts/audit_ps2_campaign.mjs out/ps2-integrated",
     "test": "npm run build && tsc -p tsconfig.engine.json && node --test tests/*.test.mjs",
     "serve": "node scripts/serve.mjs",
     "audit": "node scripts/audit.mjs",
