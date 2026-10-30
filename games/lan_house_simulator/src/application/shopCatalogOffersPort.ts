@@ -1,6 +1,6 @@
 /** Read-only catalog offers for ordinary shop items, using the active save. */
 import type {GameState} from "../sim/types.js";
-import {shopPrice,furnitureLimit,availablePlacementSlots,type FurnitureKind} from "../sim/shop.js";
+import {shopPrice,furnitureLimit,availablePlacementSlots,nextComputerPlacementIssue,type FurnitureKind} from "../sim/shop.js";
 import {MAX_EXTENSION_LEVEL,type ExtensionDirection} from "../sim/room.js";
 import {shopPlacementStatus,shopPurchaseButtonText} from "./shopCatalogGuidance.js";
 
@@ -32,10 +32,13 @@ export function createShopCatalogOffersPort(
    id==="computer"?(s.installedPcs??(3+s.expansionLevel*2))>=3+s.expansionLevel*2:
    max>0&&(count>=max||!slots);
   const price=shopPrice(s,id),poor=s.cash<price;
+  // A vaga numérica pode estar livre mesmo que móveis ou circulação impeçam a instalação.
+  const placementIssue=id==="computer"&&!full?nextComputerPlacementIssue(s):null;
+  const hint=shopPlacementStatus(s,id);
   return {
-   disabled:full||poor,
-   text:shopPurchaseButtonText(id,full,poor,price,max>0),
-   placementHint:shopPlacementStatus(s,id),
+   disabled:full||poor||placementIssue!==null,
+   text:full||poor||placementIssue===null?shopPurchaseButtonText(id,full,poor,price,max>0):"Posição do próximo PC bloqueada",
+   placementHint:placementIssue?(hint?hint+" ":"")+placementIssue:hint,
    ownedText:max>0?"Instalados: "+count+" · posições livres: "+slots:null
   };
  }};
