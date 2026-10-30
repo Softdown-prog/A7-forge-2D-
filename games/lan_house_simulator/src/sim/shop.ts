@@ -42,15 +42,35 @@ export function shopPrice(s:GameState,id:string):number{
  if(id==="extend-north")return expansionPrice(s,"north");
  return id==="expand"?650+s.expansionLevel*450:id==="computer"?320:id==="poster"?45:id==="plant"?85:id==="table"?140:0;
 }
+/** Previews the same candidate and shifted annex station IDs as a real purchase.
+ * Never mutates the active save, changes RNG or charges money.
+ */
+function plannedMainComputer(s:GameState,count:number):{
+ shifted:GameState["objectPlacements"];issue:string|null;
+}{
+ const shifted=s.objectPlacements?.map(p=>p.id.startsWith("pc:")&&Number(p.id.slice(3))>=count?{...p,id:"pc:"+(Number(p.id.slice(3))+1)}:p);
+ const candidate={...s,installedPcs:count+1,objectPlacements:shifted};
+ const nextPc=fixedLayoutObjects(candidate).find(o=>o.id==="pc:"+count);
+ if(!nextPc)return {shifted,issue:"Não foi possível localizar a próxima vaga do computador."};
+ const placement=layoutPlacementIssue(candidate,nextPc);
+ if(placement)return {shifted,issue:"Próximo PC sem encaixe: "+placement+" Reorganize o salão."};
+ if(layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p)))
+  return {shifted,issue:"O próximo PC bloquearia uma passagem. Reorganize o salão."};
+ return {shifted,issue:null};
+}
+/** Read-only placement quote, shared by the shop and actual purchase. */
+export function nextComputerPlacementIssue(s:GameState):string|null{
+ const count=s.installedPcs??(3+s.expansionLevel*2),capacity=3+s.expansionLevel*2;
+ if(count>=capacity)return "Amplie o salão antes de instalar outro PC.";
+ return plannedMainComputer(s,count).issue;
+}
 export function buyComputer(s:GameState):Result{
  const count=s.installedPcs??(3+s.expansionLevel*2),capacity=3+s.expansionLevel*2;
  if(count>=capacity)return {ok:false,message:"Amplie o salão antes de instalar outro PC."};
  const cost=shopPrice(s,"computer");
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para o PC."};
- const shifted=s.objectPlacements?.map(p=>p.id.startsWith("pc:")&&Number(p.id.slice(3))>=count?{...p,id:"pc:"+(Number(p.id.slice(3))+1)}:p);
- const candidate={...s,installedPcs:count+1,objectPlacements:shifted};
- const nextPc=fixedLayoutObjects(candidate).find(o=>o.id==="pc:"+count)!;
- if(layoutPlacementIssue(candidate,nextPc)||layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p)))return {ok:false,message:"O encaixe do novo PC está bloqueado. Reorganize o salão antes de instalar."};
+ const {shifted,issue}=plannedMainComputer(s,count);
+ if(issue)return {ok:false,message:issue};
  if(shifted)s.objectPlacements=shifted;
  // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;

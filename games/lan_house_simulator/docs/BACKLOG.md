@@ -4,6 +4,13 @@
 
 > **Prioridades atualizadas em 20/10/2026.** As fases abaixo preservam o histórico; checkboxes antigas podem ter sido superadas por entregas posteriores. Antes de abrir um sistema novo, consultar este painel e a seção datada mais recente. A prioridade é **terminar o jogo sem burocracia desnecessária**.
 
+### Melhoria de jogabilidade: prévia de instalação dos PCs principais (29/10/2026)
+
+- [x] A loja verifica **o encaixe físico e as rotas reais do próximo PC** antes de habilitar a compra. Quando uma vaga numérica existe, mas móveis, divisórias ou circulação impedem a instalação, o cartão orienta a reorganizar o salão.
+- [x] A cotação e a compra compartilham a mesma simulação temporária de instalação, incluindo deslocamento de índices de PCs anexos. A prévia não cobra, não altera RNG, não modifica o save e não tenta comprar automaticamente.
+- [x] Regressões adicionais cobrem a compra bloqueada, liberação por reorganização, a progressão de 3 para 5 e 7 PCs, a mudança de save e a preservação de instalações anexas.
+- [ ] Conferir a mensagem no catálogo real em desktop e aparelho mobile físico; validação automatizada não equivale à aprovação visual.
+
 ## Painel atual de execução
 
 ### Entregas consolidadas
