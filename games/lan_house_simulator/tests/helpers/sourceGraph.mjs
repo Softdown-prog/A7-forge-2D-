@@ -1,4 +1,4 @@
-import ts from 'typescript';
+import ts from '@typescript/typescript6';
 import {readFileSync,readdirSync} from 'node:fs';
 import {resolve,dirname,relative} from 'node:path';
 export function sourceGraph(root=new URL('../../src/',import.meta.url)){
