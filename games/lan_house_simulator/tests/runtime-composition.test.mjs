@@ -5,7 +5,7 @@ import {createRuntimeUiState,resetPlacementUi} from '../dist/js/ui/runtimeUiStat
 import {locateGameElements} from '../dist/js/ui/gameElements.js';
 import {sourceGraph} from './helpers/sourceGraph.mjs';
 import {assertSourceCall} from "./helpers/composition.mjs";
-import ts from 'typescript';
+import ts from '@typescript/typescript6';
 import {browserSaveStore} from '../dist/js/bootstrap/browserServices.js';
 import {createSoundPreferencePort} from '../dist/js/ui/soundPreferencePort.js';
 import {loadLocalSave} from '../dist/js/sim/localSave.js';
