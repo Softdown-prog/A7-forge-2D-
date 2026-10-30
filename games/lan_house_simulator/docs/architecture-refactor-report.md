@@ -33,6 +33,8 @@ Os comandos de build não substituem a suíte. Os nove casos ignorados são camp
 
 O workflow existente **Lan House Simulator - worker pool** roda no PR em três jobs: simulação, cena/site/Chromium e Forge. O resultado do head publicado fica registrado nos checks do PR e é informado na entrega; a tabela acima registra as execuções locais. Não foram alterados workflows de publicação, VPS, credenciais ou configuração de produção.
 
+O primeiro CI do PR encontrou um bloqueio de ambiente no workflow de navegação da conta: `ubuntu-latest` selecionou Ubuntu 26.04, incompatível com Playwright 1.56.1. O build e os 31 testes Node desse job passaram, mas o navegador não chegou a instalar. O runner **desse teste** foi fixado em Ubuntu 24.04, a mesma versão já usada pelos jobs Canvas/mobile. Não houve atualização de Playwright nem mudança em deploy.
+
 ## Problemas encontrados e tratados
 
 - Dependência de `sim/` em `render/direction` e ciclos envolvendo eras, hardware, layout e comandos: consultas/fundamentos puros foram extraídos com reexports de compatibilidade. Grafo executável agora acíclico.
@@ -156,6 +158,7 @@ Módulos TypeScript: **77**, sendo **29 criados** e **48 modificados**. Nenhum m
 
 ### Configuração e validação
 
+- `.github/workflows/lhs-account-navigation.yml`: runner de testes fixado em Ubuntu 24.04 para compatibilidade com o Playwright existente.
 - `tsconfig.engine.json` e `types/headless-runtime.d.ts`: compilação sem navegador.
 - `tsconfig.json`: flags de declarações e parâmetros sem uso.
 - `package.json`: comando `typecheck`; teste inclui a compilação sem DOM.
