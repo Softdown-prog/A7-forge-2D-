@@ -4,11 +4,11 @@ import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 import {drawPs2MiniGame} from "./ps2MiniGames.js";
 
 /** PS2-like original geometric set. No texture, photo, sprite or external asset.
- * Visual prototype only, not yet a purchased or simulated station.
+ * Used by the integrated scene and procedural shop preview.
  */
 export function drawPs2Station(
  ctx:CanvasRenderingContext2D,cam:Projection,pos:Point,wear:number,
- active:boolean,seconds:number,gameId:Ps2GameId|null=null,twoSeats=false
+ active:boolean,seconds:number,gameId:Ps2GameId|null=null,twoSeats=false,poweredOff=false
 ):void{
  const {x,y}=pos,z=cam.zoom,center=iso({x:x+.56,y:y+.54},cam);
  ctx.save();
@@ -28,8 +28,8 @@ export function drawPs2Station(
   polygon(ctx,[screen(u,v),screen(u+w,v),screen(u+w,v+h),screen(u,v+h)],color);
  };
  pixel(0,0,1,1,"#14273b");
- if(active&&gameId)drawPs2MiniGame(pixel,gameId,seconds);
- else{
+ if(active&&gameId&&!poweredOff)drawPs2MiniGame(pixel,gameId,seconds);
+ else if(!poweredOff){
   pixel(.14,.22,.72,.06,"#4f7d98");pixel(.25,.40,.5,.06,"#799ba7");
   pixel(.40,.58,.20,.04,"#45667c");
  }
@@ -37,7 +37,7 @@ export function drawPs2Station(
  raisedCuboid(ctx,cam,x+.82,y+.14,.18,.29,32,19,["#263341","#101c27","#1b2935"]);
  raisedCuboid(ctx,cam,x+.84,y+.16,.04,.26,51,2,["#536b81","#263f51","#364a5d"]);
  const power=iso({x:x+.98,y:y+.42},cam,51);
- ctx.fillStyle="#82c9af";ctx.beginPath();ctx.arc(power.x,power.y,2.1*z,0,2*Math.PI);ctx.fill();
+ ctx.fillStyle=poweredOff?"#714949":"#82c9af";ctx.beginPath();ctx.arc(power.x,power.y,2.1*z,0,2*Math.PI);ctx.fill();
  const name=iso({x:x+.98,y:y+.51},cam,34);
  ctx.font="bold "+Math.max(8,9*z)+"px system-ui";ctx.textAlign="center";
  ctx.fillStyle="#e5eaf0";ctx.fillText("PS2",name.x,name.y);
@@ -48,6 +48,15 @@ export function drawPs2Station(
   raisedCuboid(ctx,cam,x+offset,y+.62,width,.32,18,7,["#38505c","#1c313d","#2a414d"]);
   raisedCuboid(ctx,cam,x+offset,y+.91,width,.085,21,26,["#2f4653","#192d3a","#253b48"]);
  }
+ // Unused controls rest on the front edge of the table, still connected.
+ if(!active)for(const n of (twoSeats?[0,1]:[0])){
+  const pad=iso({x:x+.43+n*.27,y:y+.54},cam,34),port=iso({x:x+.88+n*.06,y:y+.435},cam,35);
+  ctx.strokeStyle="#263441";ctx.lineWidth=Math.max(1,z);ctx.beginPath();ctx.moveTo(port.x,port.y);
+  ctx.quadraticCurveTo(pad.x+8*z,pad.y+8*z,pad.x,pad.y);ctx.stroke();
+  ctx.fillStyle="#202e3b";ctx.strokeStyle="#8398a8";ctx.beginPath();ctx.ellipse(pad.x,pad.y,8*z,3.5*z,.18,0,2*Math.PI);ctx.fill();ctx.stroke();
+  ctx.fillStyle="#b9c8d0";ctx.fillRect(pad.x-4*z,pad.y-z,3*z,z);ctx.fillRect(pad.x-3*z,pad.y-2*z,z,3*z);
+  ctx.fillStyle="#a9c8de";ctx.beginPath();ctx.arc(pad.x+4*z,pad.y,.9*z,0,2*Math.PI);ctx.fill();
+ }
  if(wear>=100){
   const warn=iso({x:x+.58,y:y+.20},cam,88);
   ctx.font="bold "+Math.max(10,11*z)+"px system-ui";
@@ -55,14 +64,19 @@ export function drawPs2Station(
  }
  ctx.restore();
 }
-export function ps2ControllerAnchor(seat:Point):{point:Point;height:number}{
+export function ps2ControllerAnchor(seat:Point,station?:Point):{point:Point;height:number}{
+ if(station){
+  const dx=station.x+.44-seat.x,dy=station.y+.395-seat.y,length=Math.hypot(dx,dy)||1;
+  return {point:{x:seat.x+dx/length*.22,y:seat.y+dy/length*.22},height:27};
+ }
  return {point:{x:seat.x+.12,y:seat.y-.08},height:24};
 }
 export function drawPs2Controller(
- ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,seconds:number,number:0|1=0
+ ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,seconds:number,number:0|1=0,station?:Point,skin="#d6ad88"
 ):void{
- const anchor=ps2ControllerAnchor(seat),p=iso(anchor.point,cam,anchor.height);
- const cable=iso({x:seat.x+(number===1?.17:.40),y:seat.y-.35},cam,35),z=cam.zoom*.85;
+ const anchor=ps2ControllerAnchor(seat,station),p=iso(anchor.point,cam,anchor.height);
+ const cable=iso(station?{x:station.x+.88+number*.06,y:station.y+.435}:
+  {x:seat.x+(number===1?.17:.40),y:seat.y-.35},cam,35),z=cam.zoom*.85;
  ctx.save();
  ctx.strokeStyle="#27323d";ctx.lineWidth=Math.max(1,1.35*z);
  ctx.beginPath();ctx.moveTo(cable.x,cable.y);
@@ -82,7 +96,7 @@ export function drawPs2Controller(
    [4,0,"#8fc7a1"],[6,2,"#9ab8de"]] as const){
   ctx.fillStyle=color;ctx.beginPath();ctx.arc(px*z,py*z,1.1*z,0,2*Math.PI);ctx.fill();
  }
- ctx.fillStyle="#d6ad88";
+ ctx.fillStyle=skin;
  for(const side of [-1,1]){
   ctx.beginPath();ctx.ellipse(side*13*z,3.2*z,4*z,3.1*z,side*.15,0,2*Math.PI);ctx.fill();
  }

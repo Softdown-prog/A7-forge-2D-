@@ -8,6 +8,8 @@ import {renderShopServiceOffer} from "./shopServiceOfferButton.js";
 import {renderPs1ShopOfferButton} from "./ps1ShopOfferButton.js";
 import {renderPs1ShopPlacement} from "./ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ps1ShopDiscCatalog.js";
+import {renderPs2ShopCatalog} from "./ps2Panels.js";
+import type {Ps2Port} from "../application/ps2Port.js";
 import {shopCategory} from "./shopPanels.js";
 import type {ShopCatalogOffer} from "../application/shopCatalogOffersPort.js";
 import type {ShopServiceOffer,ShopServiceOfferId} from "../application/shopServiceOffersPort.js";
@@ -28,6 +30,7 @@ export interface ShopCatalogRenderOptions {
  readonly selectedPs1Slot:()=>string|null;
  readonly selectPs1Slot:(id:string|null)=>void;
  readonly discs:Ps1ShopDiscPort;
+ readonly ps2?:Ps2Port;
 }
 
 export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
@@ -54,4 +57,5 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
   options.host.append(card);
  }
  renderPs1ShopDiscCatalog(options.host,options.discs,options.currentCategory()==="consoles",options.doc);
+ if(options.ps2&&options.currentCategory()==="consoles")renderPs2ShopCatalog(options.host,options.ps2,options.doc);
 }

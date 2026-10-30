@@ -18,7 +18,8 @@ export function installShopControls(catalog:HTMLElement|null,port:ShopActionsPor
    if(port.canPlace(id))events.onPlacement(id);
    return;
   }
-  const ps1Slot=catalog.querySelector<HTMLSelectElement>("#ps1-placement")?.value??"";
+  const ps1Slot=id==="ps2"?catalog.querySelector<HTMLSelectElement>("#ps2-placement")?.value??"":
+   catalog.querySelector<HTMLSelectElement>("#ps1-placement")?.value??"";
   events.onPurchase(port.purchase(id,ps1Slot),id);
  });
 }

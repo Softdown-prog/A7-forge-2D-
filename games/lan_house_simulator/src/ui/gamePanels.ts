@@ -8,6 +8,7 @@ import { renderAdminComputerSections } from "./adminComputerSections.js";
 import { renderAdminFinanceActivity,renderAdminFinanceSummary } from "./adminFinanceSections.js";
 import { renderAdminGpuLicenseSections } from "./adminGpuLicenseSections.js";
 import { renderAdminPricingSections } from "./adminPricingSections.js";
+import {renderPs2AdminPanel} from "./ps2Panels.js";
 import { renderAdminServicesConsoles } from "./adminServicesConsoles.js";
 import { createVisibleAdminTextWriter,formatAdminMoney,renderAdminDisclosure,renderAdminWindowVisibility,renderShopWindowVisibility } from "./adminShell.js";
 import { renderCommerceNetworkPanel } from "./commerceNetworkPanel.js";
@@ -69,7 +70,7 @@ const shopCatalogRefresh=createShopCatalogRefresh({
   ps1Slots:()=>ps1ShopPlacementPort.snapshot(),
   selectedPs1Slot:()=>state.selection.selectedPs1PlacementId,
   selectPs1Slot:id=>{state.selection.selectedPs1PlacementId=id;},
-  discs:ps1ShopDiscPort
+  discs:ps1ShopDiscPort,ps2:ports.ps2Port
  })
 });
 function renderShop(force=true):void{shopCatalogRefresh.refresh(force);}
@@ -163,6 +164,7 @@ function renderUI(liveOnly=false):void {
    gpuGames:gpuGamesCatalogPort,downloads:gpuDownloadMetersPort,
    setText,doc:document,sync:syncPanelChildren
   });
+  if(state.windows.adminOpen&&state.windows.activeAdminTab==="consoles")renderPs2AdminPanel(ports.ps2Port,managementPanels.active("consoles","stations"),document);
   renderAdminServicesConsoles({
    consolesTab:state.windows.activeAdminTab==="consoles",
    servicesTab:state.windows.activeAdminTab==="services",

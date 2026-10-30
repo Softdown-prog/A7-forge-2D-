@@ -110,6 +110,10 @@ export class SceneMotion {
    const facing=directionFromDelta(c.x-prev.x,c.y-prev.y,c.facing??prev.facing);
    return {...c,...at,stage,facing,renderMotion,pcIndex:changed&&alpha<1?prev.pcIndex:c.pcIndex,
     poseMinutes:lerp(prev.poseMinutes??0,endPose,alpha),
+    ps1StationIndex:changed&&alpha<1?prev.ps1StationIndex:c.ps1StationIndex,
+    ps1SeatIndex:changed&&alpha<1?prev.ps1SeatIndex:c.ps1SeatIndex,
+    ps2StationIndex:changed&&alpha<1?prev.ps2StationIndex:c.ps2StationIndex,
+    ps2SeatIndex:changed&&alpha<1?prev.ps2SeatIndex:c.ps2SeatIndex,
     // The renderer points the actor along the motion being presented, rather
     // than turning early toward the next simulation waypoint.
     target:{x:c.x,y:c.y}};

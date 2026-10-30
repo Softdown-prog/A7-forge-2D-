@@ -16,7 +16,11 @@ export function installGameViewport(canvas:HTMLCanvasElement):void{
  document.getElementById("scene-zoom-out")?.addEventListener("click",()=>{zoom=Math.max(.6,Math.round((zoom-.2)*10)/10);update();});
  document.getElementById("scene-fit")?.addEventListener("click",()=>{zoom=Math.min(1,viewport.clientHeight*1000/(viewport.clientWidth*610));update(false);viewport.scrollTo({left:0,top:0});});
  if(full){full.hidden=!document.fullscreenEnabled;full.addEventListener("click",async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await stage.requestFullscreen();}catch{full.textContent="Tela cheia indisponível";}});}
- new ResizeObserver(()=>update()).observe(viewport);
+ let resizePending=false;
+ new ResizeObserver(()=>{
+  if(resizePending)return;resizePending=true;
+  requestAnimationFrame(()=>{resizePending=false;update();});
+ }).observe(viewport);
  // Scrolling the map must never turn a swipe into a purchase or selection.
  let start:{x:number;y:number;left:number;top:number}|null=null,moved=false;
  viewport.addEventListener("pointerdown",e=>{start={x:e.clientX,y:e.clientY,left:viewport.scrollLeft,top:viewport.scrollTop};moved=false;},{capture:true});
