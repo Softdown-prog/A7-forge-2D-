@@ -25,7 +25,8 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.engine.json"
   },
   "devDependencies": {
-    "typescript": "5.9.3"
+    "typescript": "7.0.2",
+    "@typescript/typescript6": "6.0.2"
   },
   "engines": {
     "node": ">=22"

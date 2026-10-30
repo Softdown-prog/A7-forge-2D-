@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import ts from 'typescript';
+import ts from '@typescript/typescript6';
 
 // Structural checks refer to the adapter that owns the behavior. Runtime tests
 // exercise the contracts independently of these source-location assertions.
