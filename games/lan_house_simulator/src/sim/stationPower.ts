@@ -47,3 +47,5 @@ export function toggleStationPower(s:GameState,index:number):Result{
  s.pcPoweredOff[index]=false;
  return {ok:true,message:"PC "+(index+1)+" ligado e disponível para clientes."};
 }
+
+export function pcUnderRepair(s:GameState,index:number):boolean{return !!s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving");}

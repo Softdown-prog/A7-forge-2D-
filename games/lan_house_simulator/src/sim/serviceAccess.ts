@@ -1,5 +1,5 @@
 import type {GameState,Point} from "./types.js";
-import {entrance,pcCount,pcPosition} from "./engine.js";
+import {entrance,pcCount,pcPosition} from "./simulationState.js";
 import {binSpots} from "./services.js";
 import {canTraverseLocalStep} from "./navigation.js";
 import {technicianWorkPoint,technicianContactPoint,cleanerWorkPoint} from "./staffWorksites.js";

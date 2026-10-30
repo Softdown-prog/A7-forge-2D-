@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -142,12 +143,11 @@ test("módulo de interface não importa motor, browser, Canvas nem salva",()=>{
  assert.doesNotMatch(src,/\b(GameState|stepGame|requestAnimationFrame|document|window|localStorage|CanvasRenderingContext2D)\b/);
 });
 test("main mantém simulação e correio antes da pintura",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  const ui=readFileSync(new URL("../src/ui/framePresentationCoordinator.ts",import.meta.url),"utf8");
- assert.ok(main.includes("createFramePresentationCoordinator(frameSchedule)"));
- assert.ok(main.includes("framePresentation.render({"));
- assert.ok(main.indexOf("frameSimulation.run({")<main.indexOf("dispatchFrameEvents({"));
- assert.ok(main.indexOf("dispatchFrameEvents({")<main.indexOf("framePresentation.render({"));
- assert.ok(main.includes("paintMenu:painted=>{if(menuRenderer)menuPreviewPainter.paintFrame(elapsed,painted);}"));
+ assert.ok(sourceModule("ui/runtimeLoop.ts").includes("createFramePresentationCoordinator(frameSchedule)"));
+ assert.ok(sourceModule("ui/runtimeLoop.ts").includes("framePresentation.render({"));
+ assertCallsInOrder("ui/runtimeLoop.ts",["frameSimulation.run","framePort.dispatch","framePresentation.render"]);
+ assertCallsInOrder("ui/runtimeLoop.ts",["frameSimulation.run","framePort.dispatch","framePresentation.render"]);
+ assertSourceCall("ui/runtimeLoop.ts","scene.paintMenu",["elapsed","painted"]);assertSourceCall("render/gameScene.ts","menuPreviewPainter.paintFrame",["elapsed","painted"]);
  assert.ok(ui.includes("schedule.menuPainted(input.timestamp)"));
 });

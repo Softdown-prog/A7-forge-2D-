@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -79,7 +80,6 @@ test("fronteira separa cálculos de negócio e DOM sem recriar elementos",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/monthlyFinancePort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/monthlyFinancePanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
@@ -88,8 +88,8 @@ test("fronteira separa cálculos de negócio e DOM sem recriar elementos",()=>{
   "last-bill-rent","last-bill-internet","last-bill-energy","last-bill-maintenance",
   "last-bill-wages","last-bill-total","monthly-statement","capacity-advice"])
   assert.ok(ui.includes('"'+id+'"'));
- assert.match(main,/createMonthlyFinancePort\(\(\)=>game\)/);
- assert.match(main,/renderAdminFinanceActivity\(\{/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createMonthlyFinancePort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
  assert.match(sections,/renderMonthlyFinancePanel\(options.monthly.snapshot\(\),options.setText,options.doc\)/);
- assert.doesNotMatch(main,/computerOccupancyPercent\(/);
+ assertCompositionAdaptersExclude(/computerOccupancyPercent\(/);
 });

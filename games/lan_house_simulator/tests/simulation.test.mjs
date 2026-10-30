@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import {withStationOff} from "./station-power-fixture.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -472,16 +473,15 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
- assert.match(source,/frameSimulation\.run\(\{/);
- assert.match(source,/advance:minutes=>stepGame\(game,minutes\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
  const frame=readFileSync(resolve(root,"src/application/frameActivity.ts"),"utf8");
  assert.match(frame,/advanceSimulation=input\.playing&&!input\.accountOpen&&!input\.editingLayout/);
  for(const condition of ["placingFurniture","relocatingFurniture","editingWalls","installingAnnexPc"])
   assert.ok(frame.includes("!input."+condition),condition);
- assert.match(source,/if\(!isPlaying\)return;/);
- assert.match(source,/showMenu\(\);\r?\nrequestAnimationFrame\(frame\);/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/if\(!state\.isPlaying\)return;/);
+ assertCallsInOrder("bootstrap/bootstrapGame.ts",["session.showMenu","loop.start"]);
 });
 
 test("exportação e importação preservam a partida e rejeitam JSON inválido",async()=>{
@@ -589,13 +589,12 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="organize-furniture"/);
- assert.match(main,/placementActions\.move\(relocationFrom,slot.id\)/);
+ assert.match(sourceModule("ui/placementController.ts"),/placementActions\.move\(state\.placement\.relocationFrom,slot.id\)/);
  assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/relocateFurniture\(getState\(\),from,to\)/);
- assert.match(main,/frameSimulation\.run\(\{/);
- assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
- assert.match(main,/relocatingFurniture:relocating,editingWalls:!!wallMode,installingAnnexPc/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/relocatingFurniture:state.placement.relocating,editingWalls:!!state.placement.wallMode,installingAnnexPc:state.placement.installingAnnexPc/);
 });
 
 test("audio uses independent volume hierarchy and a bounded gentle typing phrase",async()=>{
@@ -624,22 +623,21 @@ test("UI click audio uses one delegated handler and game money is event-driven",
  const {readFileSync}=await import("node:fs");
  const {resolve,dirname}=await import("node:path");
  const {fileURLToPath}=await import("node:url");
- const source=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/main.ts"),"utf8");
  const audioUi=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/ui/soundInputBindings.ts"),"utf8");
- assert.match(source,/installSoundInputBindings\(document,soundscape\)/);
+ assert.match(sourceModule("bootstrap/bootstrapGame.ts"),/installSoundInputBindings\(document,soundscape\)/);
  assert.match(audioUi,/doc\.addEventListener\("click",event=>/);
   const feedback=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameFeedbackPort.ts"),"utf8");
-  assert.match(source,/createFrameFeedbackPort\(\(\)=>game,soundscape/);
+  assert.match(sourceModule("application/gameFramePort.ts"),/createFrameFeedbackPort\(getState,audio/);
   const dispatch=readFileSync(resolve(dirname(fileURLToPath(import.meta.url)),"../src/application/frameEventDispatch.ts"),"utf8");
-  assert.match(source,/dispatchFrameEvents\(\{/);
+  assert.match(sourceModule("application/gameFramePort.ts"),/dispatchFrameEvents\(\{/);
   assert.match(dispatch,/options\.feedback\.payments\(options\.playing\)/);
   assert.match(feedback,/audio\.income\("payment"\)/);
   assert.match(dispatch,/options\.feedback\.sales\(options\.playing\)/);
   assert.match(feedback,/audio\.income\("sale"\)/);
   assert.match(dispatch,/options\.feedback\.keyboards\(options\.playing\)/);
   assert.match(feedback,/audio\.keyboard\(\)/);
- assert.doesNotMatch(source,/new Audio\(/);
- assert.doesNotMatch(source,/playOriginalSound/);
+ assertCompositionAdaptersExclude(/new Audio\(/);
+ assertCompositionAdaptersExclude(/playOriginalSound/);
 });
 
 test("mapa amplia 10 tiles norte, leste e oeste; porta sul não muda",async()=>{
@@ -711,12 +709,11 @@ test("interfaces responsivas possuem expansão direcional e controle de rotaçã
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const source=readFileSync(resolve(root,"src/main.ts"),"utf8");
  assert.match(html,/id="rotate-furniture"/);
- assert.match(source,/installShopControls\(shopCatalog,createShopActionsPort/);
+ assertSourceCall("ui/runtimeControls.ts","installShopControls",["shopCatalog","ports.shopActions"]);
   const port=readFileSync(resolve(root,"src/application/shopActionsPort.ts"),"utf8");
   assert.match(port,/expandDirection\(s,direction\)/);
- assert.match(source,/placementActions\.rotate\(relocationFrom\)/);
+ assert.match(sourceModule("ui/placementController.ts"),/placementActions\.rotate\(state\.placement\.relocationFrom\)/);
   assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/rotateFurniture\(getState\(\),id\)/);
  // The grid may change with the visual identity. capture_identity.mjs verifies
  // actual overflow and interaction at 1440, 414 and 360 pixels in Chromium.

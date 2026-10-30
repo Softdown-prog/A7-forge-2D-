@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -79,19 +80,18 @@ test("o adaptador consome a partida importada e não a instância anterior",()=>
 test("aplicação não depende de DOM ou mixer, main preserva a ordem de efeitos",()=>{
  const root=new URL("../src/",import.meta.url);
  const module=readFileSync(new URL("application/frameFeedbackPort.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(module,/from\s*["']\.\.\/(?:audio|ui|render)\//);
  assert.doesNotMatch(module,/\b(document|window|CanvasRenderingContext2D|Soundscape|HTMLAudioElement)\b/);
- assert.match(main,/createFrameFeedbackPort\(\(\)=>game,soundscape/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/createFrameFeedbackPort\(getState,audio/);
  const coordinator=readFileSync(new URL("application/frameEventDispatch.ts",root),"utf8");
- assert.match(main,/dispatchFrameEvents\(\{/);
- assert.match(main,/feedback:frameFeedback/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/dispatchFrameEvents\(\{/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/notifyMail:\(\)=>audio.mail\(\),feedback,/);
  for(const name of ["payments","sales","prints","keyboards","speech"])
   assert.match(coordinator,new RegExp("options\\.feedback\\."+name+"\\(options\\.playing\\)"));
- assert.match(main,/consumeNewMail\(knownMailIds,game\.notices\)/);
- assert.match(main,/if\(game\.served>previousServed\)/);
- assert.match(main,/if\(game\.purchases>previousPurchases\)/);
+ assertSourceCall("application/gameFramePort.ts","consumeNewMail",["knownMailIds","getState().notices"]);
+ assert.match(sourceModule("application/gameFramePort.ts"),/if\(getState\(\).served>previousServed\)/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/if\(getState\(\).purchases>previousPurchases\)/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
+ assertSourceCall("ui/runtimeSessionController.ts","installPageSaveLifecycle",["{win:options.window,doc:document,every:(callback,ms)=>options.window.setInterval(callback,ms),save}"]);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
 });

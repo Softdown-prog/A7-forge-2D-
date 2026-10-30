@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -74,15 +75,14 @@ test("UI não depende de simulação nem registra eventos; main mantém painéis
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/financialAdminOverviewPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/financialAdminOverviewPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createFinancialAdminOverviewPort(()=>game)"));
- assert.ok(main.includes("renderAdminFinanceSummary({"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createFinancialAdminOverviewPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceSummary({"));
  assert.ok(sections.includes("renderFinancialAdminTotals(options.overview,options.setText)"));
- assert.ok(main.includes("renderAdminFinanceActivity({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceActivity({"));
  assert.ok(sections.includes("renderFinancialAdminActivity(options.overview,options.setText,options.financeTab)"));
  assert.ok(sections.includes("renderFinancialBalance(options.balance.balance(),options.setText,options.doc)"));
  assert.ok(sections.includes("renderMonthlyFinancePanel(options.monthly.snapshot(),options.setText,options.doc)"));

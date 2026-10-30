@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -85,12 +86,11 @@ test("PC anexo so instala apos ampliacao, com cobranca e save validos",()=>{
 
 test("eventos do Canvas e toque continuam na interface; main nao executa os comandos",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const adapter=readFileSync(new URL("application/placementActionsPort.ts",root),"utf8");
- assert.match(main,/createPlacementActionsPort\(\(\)=>game\)/);
- assert.match(main,/placementActions\.confirmWall\(wallMode,wall\)/);
- assert.match(main,/canvas\.addEventListener\("pointermove"/);
- assert.match(main,/canvas\.addEventListener\("click"/);
- assert.doesNotMatch(main,/\b(buildWall|removeWall|installInteriorDoor|removeInteriorDoor|relocateFurniture|placeFurniture|installAnnexComputer|rotateFurniture)\s*\(/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createPlacementActionsPort\(getState\)/);
+ assert.match(sourceModule("ui/placementController.ts"),/placementActions\.confirmWall\(state\.placement\.wallMode,wall\)/);
+ assert.match(sourceModule("ui/placementController.ts"),/canvas\.addEventListener\("pointermove"/);
+ assert.match(sourceModule("ui/placementController.ts"),/canvas\.addEventListener\("click"/);
+ assertCompositionAdaptersExclude(/\b(buildWall|removeWall|installInteriorDoor|removeInteriorDoor|relocateFurniture|placeFurniture|installAnnexComputer|rotateFurniture)\s*\(/);
  assert.doesNotMatch(adapter,/\b(document|window|HTMLCanvasElement|pointermove|pointerup)\b/);
 });

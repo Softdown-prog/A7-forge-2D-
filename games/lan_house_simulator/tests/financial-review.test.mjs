@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
@@ -71,13 +72,12 @@ test("relatórios sobrevivem save/export, campos antigos permanecem opcionais",(
 test("indicadores estão visíveis na aba Finanças do jogo",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const ui=readFileSync(resolve(root,"src/ui/monthlyFinancePanel.ts"),"utf8");
  for(const id of ["pc-utilization","previous-occupancy","monthly-statement","capacity-advice"]){
   assert.match(html,new RegExp('id="'+id+'"'));
   assert.ok(ui.includes('setText("'+id+'"'));
  }
  const sections=readFileSync(resolve(root,"src/ui/adminFinanceSections.ts"),"utf8");
- assert.match(main,/renderAdminFinanceActivity\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
  assert.match(sections,/renderMonthlyFinancePanel\(options.monthly.snapshot\(\),options.setText,options.doc\)/);
 });

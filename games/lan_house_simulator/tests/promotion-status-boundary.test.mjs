@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -81,18 +82,17 @@ test("fronteiras UI/aplicação e composição no main",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/promotionStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/promotionStatusPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b/);
  assert.doesNotMatch(ui,/replaceChildren|innerHTML|addEventListener/);
- assert.match(main,/createPromotionStatusPort\(\(\)=>game\)/);
- assert.match(main,/renderAdminFinanceActivity\(\{/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createPromotionStatusPort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
  assert.match(sections,/renderPromotionStatus\(options.promotion.snapshot\(\),options.setText,options.doc\)/);
  assert.match(ui,/promotion-description/);
  assert.match(ui,/promotion-status/);
  assert.match(ui,/#launch-promotion/);
- assert.doesNotMatch(main,/\bpromotionCost\(/);
- assert.doesNotMatch(main,/\bisPromotionActive\(/);
+ assertCompositionAdaptersExclude(/\bpromotionCost\(/);
+ assertCompositionAdaptersExclude(/\bisPromotionActive\(/);
 });

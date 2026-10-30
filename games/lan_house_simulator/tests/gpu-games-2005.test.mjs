@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import {withStationOff} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -119,17 +120,16 @@ test("perfil de cliente é determinístico e só começa em 2005",()=>{
 });
 test("interface mostra jogos 2005+ na aba de licenças com motivos e bloqueios",()=>{
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
- const ts=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.ok(html.includes('id="gpu-game-catalog"'));
  const port=readFileSync(new URL("../src/application/gpuGamesCatalogPort.ts",import.meta.url),"utf8");
  const ui=readFileSync(new URL("../src/ui/gpuGamesCatalogPanel.ts",import.meta.url),"utf8");
  const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
- assert.ok(ts.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
  assert.ok(coordinator.includes("renderGpuGamesCatalog("));
  assert.ok(port.includes("quoteGpuGame(game,title.id)"));
- assert.ok(ts.includes("installGameLicensingControls("));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installGameLicensingControls("));
  assert.ok(readFileSync(new URL("../src/application/gameLicensingPort.ts",import.meta.url),"utf8").includes("licenseGpuGame(getState(),id)"));
- assert.ok(ts.includes('activeAdminTab==="licenses"'));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("activeAdminTab===\"licenses\""));
  assert.ok(port.includes("buyDisabled:!quote.ok"));
  assert.ok(ui.includes("buy.disabled=game.buyDisabled"));
 });

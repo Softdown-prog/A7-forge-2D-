@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -123,7 +124,6 @@ test("correio segue prioridade da decisão, leitura, contratação e navegação
 
 test("controladores não importam o motor e main somente compõe as portas",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  for(const p of ["ui/shopControls.ts","ui/noticeControls.ts"]){
   const txt=readFileSync(new URL(p,root),"utf8");
   assert.doesNotMatch(txt,/from\s*["']\.\.\/sim\//);
@@ -133,7 +133,7 @@ test("controladores não importam o motor e main somente compõe as portas",()=>
   const txt=readFileSync(new URL(p,root),"utf8");
   assert.doesNotMatch(txt,/\bdocument\b|\bwindow\b|\bHTMLElement\b/);
  }
- assert.match(main,/installShopControls\(shopCatalog,createShopActionsPort\(\(\)=>game\)/);
- assert.match(main,/installNoticeControls\(noticesList,noticeActions/);
- assert.doesNotMatch(main,/\b(buyComputer|buyPrinter|buyDiscCopier|expandShop|expandDirection|chooseDecision|hireContentProgrammer|readNotice|reviewNotices)\s*\(/);
+ assertSourceCall("ui/runtimeControls.ts","installShopControls",["shopCatalog","ports.shopActions"]);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installNoticeControls\(noticesList,noticeActions/);
+ assertCompositionAdaptersExclude(/\b(buyComputer|buyPrinter|buyDiscCopier|expandShop|expandDirection|chooseDecision|hireContentProgrammer|readNotice|reviewNotices)\s*\(/);
 });

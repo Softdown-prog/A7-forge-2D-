@@ -23,7 +23,8 @@ permissions:
   contents: read
 jobs:
   navigation:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 supports 24.04; ubuntu-latest can advance independently.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     defaults:
       run:

@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -150,11 +151,10 @@ test("render repetido não multiplica listeners nem utiliza GameState",()=>{
  assert.deepEqual(x.calls.sync,[]);
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|save\(|addEventListener|localStorage/);
- assert.match(main,/renderAdminPricingSections\(\{/);
- assert.match(main,/packagesChanged:\(\)=>panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
- assert.match(main,/retailChanged:\(\)=>panelChanged\("retail",adminPanelRevisionsPort\.retail\(\),!liveOnly\)/);
- assert.match(main,/renderDeskServicePanels\(deskPricingPort,\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminPricingSections\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/packagesChanged:\(\)=>panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/retailChanged:\(\)=>panelChanged\("retail",adminPanelRevisionsPort\.retail\(\),!liveOnly\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderDeskServicePanels\(deskPricingPort,\{/);
 });

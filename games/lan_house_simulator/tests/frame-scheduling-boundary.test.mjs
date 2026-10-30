@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -71,26 +72,25 @@ test("cache de painéis ignora revisões iguais e mantém forçar redesenho",()=
 
 test("o agendador não importa DOM/motor e main preserva simulação e autosave",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  for(const file of ["application/frameSchedule.ts","application/panelRevisionCache.ts"]){
   const source=readFileSync(new URL(file,root),"utf8");
   assert.doesNotMatch(source,/from\s*["']\.\.\/sim\//);
   assert.doesNotMatch(source,/\b(document|window|HTMLElement|requestAnimationFrame|GameState)\b/);
  }
- assert.match(main,/frameSchedule\.begin\(timestamp\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSchedule\.begin\(timestamp\)/);
  const painter=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
  assert.match(painter,/schedule\.scene\(input.timestamp/);
  assert.match(painter,/schedule\.menu\(input.timestamp/);
  assert.match(painter,/schedule\.menuPainted\(input.timestamp\)/);
  assert.match(painter,/schedule\.hud\(input.timestamp/);
- assert.match(main,/createFramePresentationCoordinator\(frameSchedule\)/);
- assert.match(main,/createPanelRevisionCache\(\)/);
- assert.match(main,/requestAnimationFrame\(frame\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/createFramePresentationCoordinator\(frameSchedule\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/createPanelRevisionCache\(\)/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/requestAnimationFrame\(frame\)/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
+ assertSourceCall("ui/runtimeSessionController.ts","installPageSaveLifecycle",["{win:options.window,doc:document,every:(callback,ms)=>options.window.setInterval(callback,ms),save}"]);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
- assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
  const step=readFileSync(new URL("application/frameSimulationCoordinator.ts",root),"utf8");
  assert.match(step,/const minutes=dt\*4\.0/);
- assert.match(main,/new IntersectionObserver/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/new IntersectionObserver/);
 });

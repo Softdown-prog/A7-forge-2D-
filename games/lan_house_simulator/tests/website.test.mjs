@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {deleteLocalData,DATA_KEYS} from "../website/data-controls.mjs";
@@ -50,8 +51,7 @@ test("a vitrine mantém a imagem de salão sem instanciar outro renderizador pes
  const {readFileSync}=await import("node:fs");
  const site=readFileSync(new URL("../website/site.mjs",import.meta.url),"utf8");
  assert.doesNotMatch(site,/\/game\/js\/render\/scene\.js/);
- const menu=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- const painter=readFileSync(new URL("../src/ui/menuPreviewPainter.ts",import.meta.url),"utf8");
- assert.match(menu,/menuPreviewPainter\.available\(\)/);
+ const painter=readFileSync(new URL("../src/render/menuPreviewPainter.ts",import.meta.url),"utf8");
+ assert.match(sourceModule("render/gameScene.ts"),/menuPreviewPainter\.available\(\)/);
  assert.match(painter,/catch\s*\{/);
 });

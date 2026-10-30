@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -54,7 +55,6 @@ test("fronteira mantém simulação fora do DOM e formato de tabela legado",()=>
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/stationLedgerPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/stationLedgerPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLTableSectionElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b/);
@@ -62,8 +62,8 @@ test("fronteira mantém simulação fora do DOM e formato de tabela legado",()=>
  assert.match(ui,/\.scope="row"/);
  assert.match(ui,/toLocaleString\("pt-BR"/);
  assert.match(ui,/syncPanelChildren\(host,next\)/);
- assert.match(main,/createStationLedgerPort\(\(\)=>game\)/);
- assert.match(main,/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
- assert.match(main,/renderAdminComputerSections\(\{/);
- assert.doesNotMatch(main,/\bstationAccountingSummary\(/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createStationLedgerPort\(getState\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminComputerSections\(\{/);
+ assertCompositionAdaptersExclude(/\bstationAccountingSummary\(/);
 });

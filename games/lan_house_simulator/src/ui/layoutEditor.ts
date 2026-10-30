@@ -25,7 +25,8 @@ export function createLayoutEditor(canvas:HTMLCanvasElement,port:LayoutEditorPor
  select?.addEventListener("change",()=>choose(select.value||null));
  document.getElementById("layout-rotate")?.addEventListener("click",()=>{if(draft&&draft.surface!=="wall"){draft={...draft,rotation:((draft.rotation+1)%4) as 0|1|2|3};update();}});
  document.getElementById("layout-deselect")?.addEventListener("click",()=>choose(null));
- const close=()=>{active=false;selected=null;draft=null;removalPending=false;update();onChange();};
+ const reset=()=>{active=false;selected=null;draft=null;removalPending=false;update();};
+ const close=()=>{reset();onChange();};
  document.getElementById("layout-close")?.addEventListener("click",close);
  remove?.addEventListener("click",()=>{if(!selected||remove.disabled)return;removalPending=true;update();});
  document.getElementById("layout-removal-cancel")?.addEventListener("click",()=>{removalPending=false;update();});
@@ -101,5 +102,5 @@ export function createLayoutEditor(canvas:HTMLCanvasElement,port:LayoutEditorPor
    panel?.scrollIntoView({block:"nearest",behavior:"instant"});
    select?.focus({preventScroll:true});
   }
- },close};
+ },close,reset};
 }

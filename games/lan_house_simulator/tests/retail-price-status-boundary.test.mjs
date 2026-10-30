@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -108,14 +109,13 @@ test("application sem DOM, UI sem motor e main mantém guarda de revisão",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/retailPriceStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/retailPriceControlsPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const section=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createRetailPriceStatusPort(()=>game)"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createRetailPriceStatusPort(getState)"));
  assert.ok(section.includes("renderRetailPriceControls(options.retailControls,options.retail.snapshot(),"));
- assert.match(main,/renderAdminPricingSections\(\{/);
- assert.ok(main.includes('panelChanged("retail",adminPanelRevisionsPort.retail(),!liveOnly)'));
- assert.doesNotMatch(main,/\bproductPrice\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminPricingSections\(\{/);
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("panelChanged(\"retail\",adminPanelRevisionsPort.retail(),!liveOnly)"));
+ assertCompositionAdaptersExclude(/\bproductPrice\(/);
 });

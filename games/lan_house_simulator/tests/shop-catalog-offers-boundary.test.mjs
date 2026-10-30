@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -154,7 +155,6 @@ test("render de botão não altera o data-buy nem cria listeners",()=>{
 });
 test("UI continua sem dependência do motor e as compras usam controlador",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const catalog=readFileSync(new URL("ui/shopCatalogRenderer.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopCatalogOfferButton.ts",root),"utf8");
  const legacy=readFileSync(new URL("ui/shopGuidance.ts",root),"utf8");
@@ -166,8 +166,8 @@ test("UI continua sem dependência do motor e as compras usam controlador",()=>{
  assert.doesNotMatch(legacy,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(port,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
- assert.match(main,/createShopCatalogOffersPort\(\(\)=>game,\(\)=>placementActions\.availableAnnex\(\)\.length\)/);
- assert.match(main,/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createShopCatalogOffersPort\(getState,\(\)=>placementActions\.availableAnnex\(\)\.length\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
  assert.match(catalog,/renderShopCatalogOfferButton\(button,offer\)/);
  assert.match(catalog,/renderShopServiceOffer\(button,options\.service\(item\.id\)\)/);
  assert.match(catalog,/renderPs1ShopOfferButton\(button,options\.ps1Offer\(\)\)/);

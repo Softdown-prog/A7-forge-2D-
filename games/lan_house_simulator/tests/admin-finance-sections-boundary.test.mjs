@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -109,11 +110,10 @@ test("resumo mantém caixa antes de total de contas",()=>{
 test("UI financeira sem importação do motor; bootstrap mantém a revisão",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/adminFinanceSections.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|stepGame|localStorage|addEventListener|save\(/);
- assert.match(main,/renderAdminFinanceSummary\(\{/);
- assert.match(main,/renderAdminFinanceActivity\(\{/);
- assert.match(main,/feedbackChanged:\(\)=>panelChanged\("customerFeedback",/);
- assert.match(main,/feedback:\(\)=>customerFeedbackSnapshot\(game\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceSummary\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/feedbackChanged:\(\)=>panelChanged\("customerFeedback",/);
+ assertSourceCall("ui/gamePanels.ts","ports.feedback");
 });

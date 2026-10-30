@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import {withStationOff} from "./station-power-fixture.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -11,12 +12,11 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 const year=(s,y)=>{s.totalMinutes=(y-1998)*360*DAY_MINUTES;};
 test("interface informa diferença de satisfação e custo integral de troca",()=>{
  const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
- const source=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  const presentation=readFileSync(new URL("../src/ui/gpuCatalogPanel.ts",import.meta.url),"utf8");
  const projection=readFileSync(new URL("../src/application/gpuCatalogPort.ts",import.meta.url),"utf8");
  assert.match(html,/id="gpu-replacement-note"/);
  const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
- assert.ok(source.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
  assert.ok(coordinator.includes("renderGpuCatalogPanel("));
  assert.ok(presentation.includes('setText("gpu-replacement-note"'));
  assert.ok(projection.includes("sem desconto"));

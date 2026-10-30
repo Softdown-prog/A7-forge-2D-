@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -104,16 +105,15 @@ test("projeção não importa DOM; UI não conhece motor, e main mantém cache e
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/hourlyPriceStatusPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/hourlyPriceStatusPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const section=readFileSync(new URL("ui/adminPricingSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener|innerHTML/);
- assert.match(main,/clampPriceToEra\(game\)/);
- assert.match(main,/renderAdminPricingSections\(\{/);
+ assertSourceCall("application/gamePorts.ts","clampPriceToEra",["getState()"] );
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminPricingSections\(\{/);
  assert.match(section,/renderHourlyPriceStatus\(options.hourly,options.setText,options.doc\)/);
  assert.match(section,/renderSessionPackages\(options.hourly.packages,durations,options.doc\)/);
- assert.match(main,/panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
- assert.doesNotMatch(main,/\bannualHourlyCeiling\(/);
- assert.doesNotMatch(main,/\bsessionPrice\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/panelChanged\("durations",adminPanelRevisionsPort\.packages\(\),!liveOnly\)/);
+ assertCompositionAdaptersExclude(/\bannualHourlyCeiling\(/);
+ assertCompositionAdaptersExclude(/\bsessionPrice\(/);
 });

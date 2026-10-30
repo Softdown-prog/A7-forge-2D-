@@ -1,655 +1,153 @@
-# Separação progressiva: interface x motor (LHS)
+# Arquitetura do Lan House Simulator
 
-## Limite de responsabilidades
+Esta é a arquitetura consolidada após a revisão da `main` em `b73c5aa` (recorte 78). Substitui o histórico incremental desta página. O histórico dos recortes continua disponível no Git.
 
-- `src/sim/`: regras, simulação, economia, save e validações. **Sem DOM** e sem depender dos componentes visuais.
-- `src/render/`: Canvas 2D e geometria. Continua usando o estado da simulação no loop atual; a migração do render é independente da migração dos painéis.
-- `src/application/`: adaptadores e *read models* tipados. É a única camada permitida a invocar mutações do motor para painéis já migrados. Não importa DOM.
-- `src/ui/`: apresentação e eventos do usuário. Nos painéis migrados, recebe apenas DTOs e comandos, nunca `GameState` ou módulos `sim/*`.
-- `src/main.ts`: composição, ciclo de vida, save e loop por enquanto; extração desse orquestrador fica para etapas seguintes.
+## Responsabilidades e dependências
 
-## Primeiro recorte implementado
+| Camada | Responsabilidade | Dependências permitidas |
+| --- | --- | --- |
+| `sim/` | Estado, relógio, economia, clientes, filas, serviços, eventos, colisões e validação de saves | Somente outros módulos de `sim/`; bibliotecas padrão sem navegador |
+| `application/` | Casos de uso, consultas tipadas, comandos validados, sessão ativa e coordenação da simulação | `sim/` e outros contratos de aplicação |
+| `ui/` | DOM, abas, seleção, gestos, janelas, estado visual e atualização seletiva | Contratos de aplicação; projeção pura e contratos do adaptador Canvas quando necessários |
+| `render/` | Canvas 2D isométrico, câmera, sprites, interpolação, efeitos e sobreposições | Leitura da simulação, modelos de apresentação e projeção; nenhum controle de tempo do motor |
+| `audio/` | Reprodução e mistura dos efeitos autorizados | APIs de áudio do navegador; eventos recebidos por portas |
+| `bootstrap/` | Composição dos adaptadores e capacidades do navegador | As camadas acima, sem implementar regras do jogo |
+| `main.ts` | Importar e executar `bootstrapGame()` | Somente a composição |
 
-1. Mercadorias: `createMerchandisePort(() => game)` recebe um getter, importante quando um save é importado ou a nuvem troca a instância do estado. A UI consulta opções, preços, pedidos e resultados via contrato; não invoca `setMerchandisePrice` nem `orderMerchandise` diretamente.
-2. Calendário/clima: `timeWeatherSnapshot(game)` projeta um DTO de leitura, e `renderTimeWeatherPanel` só mexe no DOM recebido.
-3. HUD e manutenção dos PCs: `liveStatusSnapshot(game, internetName)` e `computerOperationsSnapshot(game)` fazem todos os cálculos de negócio fora de `ui/presentation.ts`; o módulo de apresentação só atualiza o DOM.
-4. O tipo `ActorDirection` pertence a `sim/types.ts`; o renderizador continua reexportando o tipo para compatibilidade, sem que o motor importe o renderizador.
-5. Os DTOs contêm primitivas e listas recém-construídas. Um componente não recebe a referência mutável de `game`.
-6. `tests/ui-engine-boundary.test.mjs` protege os contratos e proíbe imports de `sim/` ou `render/` nos três módulos de UI migrados.
+```mermaid
+flowchart TD
+  Entry["main.ts"] --> Bootstrap["bootstrapGame"]
+  Bootstrap --> Application["Aplicação e sessão"]
+  Bootstrap --> UI["DOM e controles"]
+  Bootstrap --> Canvas["Canvas e áudio"]
+  UI --> Application
+  Canvas --> Application
+  Application --> Engine["Motor de simulação"]
+  Canvas --> Engine
+```
 
-## Segunda etapa: precificação e eventos
+O grafo de imports de runtime não contém ciclos. Imports apenas de tipos não introduzem dependências executáveis. Os testes inspecionam a AST de TypeScript, e a compilação `tsconfig.engine.json` cobre **motor e aplicação sem a biblioteca DOM**. Não há import de `sim/` nos componentes de `ui/`.
 
-- `src/application/pricingPort.ts` encapsula as ações de alterar a hora, a tarifa da PS1, preços de impressão, cópia de CD/DVD e produtos básicos, além da mudança irreversível de economia clássica para histórica.
-- `src/ui/pricingControls.ts` registra eventos DOM e solicita comandos tipados pela porta; não conhece `GameState`, serviços da simulação nem salvamento.
-- `src/main.ts` só injeta `() => game` e orquestra notificação, renderização e `save()`. Isso preserva saves substituídos por importação ou pela nuvem.
-- As constantes de DOM `retailControls`, `printControls` e `discControls` permanecem no renderizador atual de `main.ts` até a extração das projeções desses painéis.
-- `tests/pricing-ui-boundary.test.mjs` verifica deltas, valores inválidos, reentrada no histórico, save importado e ausência de imports diretos para simulação na UI.
-- Não houve alterações na engine, na geometria do Canvas nem nos IDs de controles, inclusive os botões delegados usados no celular.
+## Composição e posse do estado
 
-## Terceiro recorte: opiniões dos clientes
+`bootstrap/bootstrapGame.ts` valida os elementos por `ui/gameElements.ts`, monta armazenamento e preferência de som, cria a aplicação, a cena, os caches, o editor, os painéis, os controladores e o loop. `browserServices.ts` adapta Storage de forma tardia: até o getter de `localStorage` pode falhar sem impedir a recuperação prevista pela aplicação. A geração de entropia para uma nova campanha fica nessa borda.
 
-- `src/application/customerFeedbackSnapshot.ts` transforma a lista de avaliações e os totais de reputação em DTOs de apresentação.
-- `src/ui/customerFeedbackPanel.ts` recebe somente `FeedbackSnapshot`, sem importar `GameState` ou funções de simulação.
-- `src/main.ts` injeta o snapshot quando o painel de Finanças > Opiniões está ativo.
-- O teste de fronteira garante ausência de imports diretos no presenter e que alterações nos DTOs não modificam a partida.
+`application/gameApplication.ts` é o único proprietário da instância ativa de `GameState`. `gamePorts.ts` monta uma única vez as portas existentes e as novas portas de hardware, encontro de sexta e HUD noturno. Todas recebem o **mesmo getter vivo `getState`**. A UI recebe `GamePorts`, não recebe esse getter nem a estrutura completa da partida.
 
-## Quarto recorte: estações e hardware
+Somente `render/gameScene.ts` recebe `renderSource`, para adaptar os renderizadores Canvas existentes. Esse acesso não pertence à API dos painéis e não permite avançar o relógio. O adaptador consulta a instância atual em cada captura/desenho.
 
-- `src/application/stationActionsPort.ts` centraliza a compra de kits de plataforma, peças, GPU, LCD, licenças Windows, reparo, upgrade CRT e energia, validando índice da estação e IDs de catálogo antes de chamar o motor.
-- `src/ui/stationControls.ts` escuta os botões já existentes das abas de manutenção, GPUs e licenças; a UI só conhece uma porta tipada e callbacks de seleção/notificação.
-- `src/main.ts` injeta `()=>game` para sempre alcançar a instância atual, inclusive após importar ou recuperar partidas da nuvem. Também preserva a sincronização entre seleção de GPU e estação.
-- `tests/station-ui-boundary.test.mjs` cobre índices inválidos, catálogo, power toggle com save/restauração, delegação DOM e ausência de dependência direta da simulação.
-- Os renderizadores Canvas, o layout de móveis, o formato do save e as regras de compra não foram modificados.
+`ui/runtimeUiState.ts` mantém, por sessão de navegador:
 
-## Quinto recorte: serviços e funcionários
+- Partida ativa ou menu e disponibilidade de save.
+- Administração, loja, correio e aba ativa.
+- Seleção de PC/GPU/monitor/hardware e posição de PS1.
+- Colocação, giro, móveis em movimento, paredes, portas, PC anexo e prévias.
+- Visibilidade do diagnóstico de circulação.
 
-- `src/application/serviceActionsPort.ts` isola reposição de estoque rápido, fornecedor, panfletagem, internet, jogos, contratação/demissão e limpeza. Recebe `()=>game` para alcançar partidas importadas/restauradas.
-- `src/ui/serviceControls.ts` associa os IDs atuais dos botões à porta, sem importar `sim/` nem calcular preços/folha de pagamento.
-- Política legada de salvamento preservada: botões de contratação e demissão só persistem no êxito; as demais tentativas continuam notificando, redesenhando e salvando como anteriormente.
-- `tests/service-ui-boundary.test.mjs` cobre migração de save, validação de entradas, ano de internet, conexão offline, botões desabilitados e política de persistência.
-- Não foram alterados Canvas, navegação dos funcionários, RNG, conteúdo de saves ou lógica econômica.
+Nada desse estado visual é acrescentado ao save. O editor mantém seu rascunho local; `reset()` o descarta sem disparar uma ação ou salvamento.
 
-## Sexto recorte: jogos por era e bancadas PlayStation
+## Sessão, persistência e troca de partida
 
-- `src/application/gameLicensingPort.ts`: contrato de aplicação para licenças de jogos por época e GPU, distribuição dos jogos entre computadores, instalação/remover e cancelamento de downloads. As validações definitivas e os débitos continuam no motor.
-- `src/ui/gameLicensingControls.ts`: só associa os botões já existentes aos comandos, preservando a prioridade cancelar > instalar em todos > instalar/remover > licenciar.
-- `src/application/ps1ActionsPort.ts`: compra de bancada, CD físico, troca de disco, segunda cadeira e manutenção. `discAt(index)` fornece apenas o valor atual para restaurar um seletor inválido.
-- `src/ui/ps1Controls.ts`: manipula clique do CD na vitrine, seleção de disco e botões das bancadas. Ações das bancadas salvam somente em caso de sucesso; tentativas de compra continuam com salvamento e renderização como antes.
-- `main.ts` apenas compõe os adaptadores e continua responsável pelo loop e pelo salvamento, sem passar `GameState` à UI migrada.
-- `tests/game-console-ui-boundary.test.mjs`: cobre IDs inválidos, licenciamento e download, saves substituídos, compras e manutenção de PS1, além de delegação de eventos DOM. Os testes legados de GPU/jogos foram ajustados para exigir a porta, e não chamadas diretas do motor no `main.ts`.
+`gameSessionPort.ts` continua usando os serializadores e as regras de backup já existentes em `sim/localSave.ts` e `sim/saveTransfer.ts`. As chaves `lhs-save-v1`, seu backup e a preferência independente `lhs.sound` não mudaram. O envelope de exportação e os campos persistidos não sofreram migração.
 
-## Sétimo recorte: compras da loja e correspondência
+A substituição de partida segue esta ordem:
 
-- `src/application/shopActionsPort.ts` centraliza computador, expansões, impressora, copiadora e bancada PS1; valida direções e consulta espaço livre antes de iniciar a colocação.
-- `src/ui/shopControls.ts` apenas delega os botões `data-buy` ao motor via porta, ou ao estado visual de colocação. Preserva a navegação no celular e o listener separado de CDs da PS1.
-- `src/application/noticeActionsPort.ts` oferece ações de abrir/revisar correio, decidir, ler e contratar programador, sempre lendo `()=>game`.
-- `src/ui/noticeControls.ts` encapsula cliques e navegação do correio sem importar `sim/`.
-- Layout, toque mobile, pathfinding, render Canvas, esquema de save e valores econômicos inalterados.
+1. Validar e preparar a candidata sem aplicá-la; a UI pode pedir a confirmação existente.
+2. Persistir a candidata com `sessionPort.replace`.
+3. Trocar a referência ativa somente depois do sucesso da persistência.
+4. Reinicializar o baseline de correio, os efeitos transitórios e as filas de popups.
+5. Notificar os adaptadores com o motivo da troca, sem entregar `GameState` à UI.
+6. Descartar rascunhos e prévias do editor, reiniciar seleções, interpolação, áudio de teclado e cache de circulação.
 
-## Oitavo recorte: editor de móveis e divisórias
+Importação local, restauração cloud e nova campanha usam esse mesmo caminho. Se o armazenamento falhar, referências, portas, eventos, UI e campanha anterior continuam intactos. `accountGamePort.ts` transporta saves opacos e comandos de cosméticos para a UI de conta; autenticação e transporte continuam no adaptador existente.
 
-- `src/application/layoutEditorPort.ts` disponibiliza objetos editáveis, divisórias, posições, limites do salão, validações e comandos de mover e remover. Busca sempre a partida corrente e delega a validação ao motor.
-- `src/ui/layoutEditor.ts` recebe apenas essa porta tipada. Não importa nem acessa `GameState`, `sim/editableObjects`, `sim/walls` ou `sim/shop`.
-- `src/main.ts` injeta o callback de câmera `cameraForGame`, preservando a projeção isométrica no render. A camada de aplicação não depende do Canvas.
-- O bloco de `pointerdown`, `pointercancel`, `pointerup` e `click` foi preservado **byte a byte**: o limite de 10 pixels, o controle de scroll e a prevenção do click duplicado de 650 ms continuam iguais.
-- A escolha de coordenadas para móveis e paredes mantém as fórmulas existentes. Nenhum arquivo da simulação nem formato de save foi alterado.
+`runtimeSessionController.ts` cuida de menu, mensagens, arquivos e ciclo da página. Mantém autosave a cada 8 segundos, save imediato antes de voltar ao menu, `pagehide`, `beforeunload` e `visibilitychange`. Exportar, continuar e importar usam a partida atual. A preferência de som continua independente e tolera armazenamento bloqueado.
 
-## Nono recorte: construção e instalação
+## Motor independente
 
-- `src/application/placementActionsPort.ts` concentra comandos de colocar, girar e reposicionar decoração, construir/remover paredes, instalar/remover portas e instalar PCs nos anexos.
-- `src/main.ts` mantém o mesmo canvas, hit testing, raio de toque, zoom e eventos do editor móvel. Agora só chama a porta tipada para operações e consultas de segmentos.
-- Os custos, validações de colisão, circulação, disponibilidade e salvamento continuam no motor original. A porta usa `()=>game` após importar saves.
+As regras foram preservadas. A separação entre consultas geométricas e comandos rompe os ciclos antigos:
 
-## Décimo recorte: sessão e arquivos de partida
+| Módulo puro | Conteúdo | Comandos mantidos em |
+| --- | --- | --- |
+| `direction.ts` | Direção no mundo, sem projeção Canvas | Movimento dos clientes/funcionários |
+| `gameDefaults.ts` | Constantes iniciais compartilhadas | Criação da simulação |
+| `eraCatalog.ts` | Anos, catálogo de eras/Windows e consultas de licença | `era.ts` |
+| `stationLayout.ts` | Vagas, posições e limites dos PCs anexos | `stations.ts` |
+| `serviceLayout.ts` | Posições e consultas de lixeiras | `services.ts` |
+| `furnitureLayout.ts` | Vagas, posições, tipos e limites de decoração | `shop.ts` |
+| `layoutGeometry.ts` | Objetos, footprints, colisões e consultas de colocação | `editableObjects.ts` |
 
-- `src/application/gameSessionPort.ts` coordena leitura do armazenamento local, recuperação do backup, clamp ao carregar saves antigos, criação de campanhas, persistência, substituição atômica, validação de importação JSON e preparação de exportação. Continua delegando as regras originais a `sim/localSave.ts` e `sim/saveTransfer.ts`.
-- `src/ui/saveFileControls.ts` trata clique de download, seletor de arquivos, tamanho máximo de 2 MB e mensagens. Não importa `GameState` nem módulos `sim/`.
-- `src/main.ts` preserva transições de menu, animações, notificação, confirmação antes de substituir e o contrato de save local/nuvem. Todo comando acessa a partida atual via `()=>game`.
-- A troca explícita grava no navegador antes de atribuir `game`. Falhas não substituem a partida visível, nem removem backups fora das políticas existentes.
+`stationPower.ts` oferece a consulta de reparo; não precisa importar o serviço que inicia visitas. As APIs anteriores continuam exportadas pelos módulos de origem para os consumidores existentes. Consultas internas usam o módulo de estado/geometria, sem importar um barrel de comandos de volta.
 
-## Décimo primeiro recorte: menu e transições de partida
+O motor não conhece HTML, menus, som, Canvas, estrutura da página ou componentes. `createGame`, `stepGame` e os comandos podem executar em Node. As mesmas sementes de jogo e correio, o mesmo estado inicial e as mesmas ações produzem a mesma simulação. A data da exportação é metadado de arquivo, não relógio da partida.
 
-- `src/ui/gameMenuControls.ts` registra eventos dos botões Nova Partida, Continuar, Reiniciar, Opções, Som e Voltar ao menu. Ele apenas manipula DOM e chama callbacks, sem acessar `sim/` ou `GameState`.
-- `createMenuScreens` gerencia visibilidade do menu/jogo, disponibilidade de Continuar/Exportar e painéis auxiliares. `main.ts` mantém parada de áudio, persistência antes de sair, reinício das animações e baseline de correspondência.
-- Nova partida histórica e reinício clássico continuam distintos, incluindo confirmação e tratamento de falha de armazenamento. `sessionPort.replace` persiste antes da troca de `game`.
-- Eventos de Canvas, touch, autosave, áudio do jogo e esquema de salvamento permanecem iguais.
+## Administração e loja
 
-## Décimo segundo recorte: relógio de frames e revisão de painéis
+Os módulos corretamente extraídos nos recortes anteriores foram reaproveitados. `ui/gamePanels.ts` somente coordena a apresentação e o cache; `runtimeControls.ts` instala as ações delegadas. As regras finais de preço, desbloqueio, capacidade, compra e débito continuam no motor.
 
-- `src/application/frameSchedule.ts` controla exclusivamente as cadências visuais: delta máximo de 80 ms, tempo acumulado, pintura de até 30 FPS no celular, prévia ornamental do menu com intervalo superior a 90 ms e atualização do HUD após 450 ms sem rolagem/toque recente.
-- `src/application/panelRevisionCache.ts` mantém a igualdade por `JSON.stringify` dos painéis de loja, avisos, hardware e licenças, incluindo opção de forçar atualização.
-- `src/main.ts` continua responsável pelo `requestAnimationFrame`, pelo `stepGame`, pela captura do estado de movimento, pelos sons, pela renderização Canvas e pelo autosave a cada 8 segundos.
-- Eventos de toque e os limiares mobile não foram modificados. O relógio da prévia do menu só é atualizado após desenho bem-sucedido.
-- Seis testes em `tests/frame-scheduling-boundary.test.mjs` cobrem FPS, tempo, modal, rolagem, toque, cache, menu e fronteira de dependências.
+| Área | Consultas e comandos de aplicação | Apresentação |
+| --- | --- | --- |
+| Finanças e clientes | `financialBalancePort`, `financialAdminOverviewPort`, `monthlyFinancePort`, `customerFeedbackSnapshot`, `promotionStatusPort` | `adminFinanceSections`, `financialBalancePanel`, `customerFeedbackPanel` |
+| Preços e pacotes | `pricingPort`, `hourlyPriceStatusPort`, `retailPriceStatusPort`, `pricingInsightsPort`, `deskPricingPort` | `adminPricingSections`, `pricingControls`, painéis de preços |
+| PCs e hardware | `stationActionsPort`, `pcOperationsPort`, `stationLedgerPort`, `hardwarePanelPort`, `lcdMonitorsPort` | `adminComputerSections`, `hardwarePanel`, `lcdMonitorsPanel`, `stationControls` |
+| GPUs e licenças | `gpuCatalogPort`, `gpuGamesCatalogPort`, `gpuDownloadMetersPort`, `windowsLicensePort`, `classicGamesCatalogPort`, `basicGamesLicenseStatusPort`, `gameLicensingPort` | `adminGpuLicenseSections`, catálogos e controles de licenças |
+| Serviços e funcionários | `serviceActionsPort`, `staffStatusPort`, `commerceNetworkPort`, `serviceAccessStatusPort` | `adminServicesConsoles`, `serviceControls`, diagnósticos |
+| Estoque | `merchandisePort`, `retailPriceStatusPort` | `merchandisePanel`, fornecedores e preços |
+| PS1 e CDs | `ps1ActionsPort`, `ps1AdminPort`, `ps1ShopDiscPort`, `ps1ShopOfferPort`, `ps1ShopPlacementPort` | `ps1AdminPanel`, `ps1Controls` e cartões da loja |
+| Encontro de sexta | `fridayMeetupPort`, `nightTournamentHudPort`, `nightPresentation` | `fridayMeetupPanel`, `nightTournamentHud` e apresentação Canvas |
+| Correio e histórico | `noticeActionsPort`, `noticeInboxPort`, `noticeWindowStatusPort`, `noticeInboxRevisionPort`, `eventLogPort` | `noticeControls`, `noticeWindowRefresh`, `eventLogRefresh` |
+| Catálogo da loja | `shopActionsPort`, `shopCatalogOffersPort`, `shopServiceOffersPort`, `shopOverviewPort`, `shopCatalogRevisionPort` | `shopCatalogRefresh`, `shopCatalogRenderer`, cartões e categorias |
 
-## Décimo terceiro recorte: feedback de áudio e efeitos de quadros
-
-- `src/application/frameFeedbackPort.ts` drena eventos de pagamento, venda, impressão, teclado e falas por uma API tipada que recebe as filas visuais e uma interface mínima de áudio.
-- `src/main.ts` mantém a ordem anterior dos efeitos, os contadores, a detecção de novas cartas, desenho do Canvas e as regras de pausa e salvamento.
-- São mantidos 12 popups financeiros e 8 falas. Uma venda confirmada toca o áudio mesmo com posição visual ausente. Impressora e teclado validam IDs inteiros.
-- A porta usa `()=>game` para acompanhar restores de save, sem acoplar ao objeto de `Soundscape`. Não foram alterados RNG, economia, formato do save ou gestos mobile.
-- Testes em `tests/frame-feedback-boundary.test.mjs` protegem esses contratos.
+A UI de hardware agora recebe `HardwarePanelView`; fórmulas, cotações, permissões e texto de status são consultados pela aplicação. O painel de sexta recebe consultas/comandos estreitos. O HUD noturno recebe um DTO, sem navegar por torneios ou clientes no `GameState`.
 
-## Décimo quarto recorte: administração PS1
-
-- `src/application/ps1AdminPort.ts` produz snapshots somente-leitura de preço por hora, bancadas, CDs, sessões, desgaste, ocupação, segunda cadeira e ações habilitadas. O estado é resolvido via `()=>game`, inclusive depois de importar saves.
-- `src/ui/ps1AdminPanel.ts` renderiza a aba Console/Estações só a partir dessa projeção. Mantém IDs, classes e atributos `data-ps1-repair`, `data-ps1-slot`, `data-ps1-second-seat` usados nos cliques.
-- `src/main.ts` passa apenas a porta e callbacks de apresentação, preservando os outros painéis, a política de abas, Canvas e mobile. Nenhuma mudança nas regras de PS1 ou esquema de save.
+`createPanelRevisionCache`, `adminPanelRevisionsPort`, `stationRevisionPort`, `syncPanelChildren` e o fluxo incremental da loja permanecem ativos. O render de frame não reconstrói todos os painéis. Controles e foco são preservados. Medidores de download e informações vivas mantêm seus caminhos seletivos. A normalização de preços legados continua explícita como comando de aplicação no mesmo ponto de compatibilidade anterior.
 
-## Décimo quinto recorte: indicadores de download dos jogos GPU
+## Ordem do frame
 
-- `src/application/gpuDownloadMetersPort.ts` calcula, a partir do save corrente, banda disponível, downloads ativos, pausas e progresso sem mutação.
-- `src/ui/gpuDownloadMeters.ts` atualiza apenas os elementos `data-gpu-download-status`, `data-gpu-download-progress` e `data-gpu-bandwidth`; não recria o catálogo e preserva foco, toque e rolagem no celular.
-- `main.ts` injeta a nova porta de leitura. Instalação, cancelamento, preços, simulação, RNG e esquema de save não foram alterados.
-- `tests/gpu-download-ui-boundary.test.mjs` cobre progresso, pausa, importação de save, aba oculta e a fronteira de dependências.
+`ui/runtimeLoop.ts` é o adaptador de RAF. Usa os coordenadores existentes, sem duplicar as políticas de frequência:
 
-## Décimo sexto recorte: licenças Windows por computador
+1. `frameSchedule.begin(timestamp)` limita `dt` a 0–0,08 segundo e acumula tempo visual.
+2. Capturar a elegibilidade e a fração pendente da instância ativa.
+3. `frameSimulationCoordinator.run`: resetar interpolação quando a elegibilidade muda; capturar posições **antes** do passo inteiro; avançar com `dt * 4.0`.
+4. `gameFramePort.dispatch`: correio, pagamentos, vendas, impressão, teclado e falas, na ordem de `frameEventDispatch`.
+5. `framePresentationCoordinator`: cena, diagnóstico de circulação, editor, prévia de menu, efeitos e prévias de colocação, na ordem de `frameVisualLayers`.
+6. Atualizar o HUD se o gate de interação permitir.
+7. Solicitar o próximo RAF. `start` é idempotente e `stop` cancela a solicitação pendente.
 
-- `src/application/windowsLicensePort.ts` projeta licenças, compatibilidade, custos e bloqueios por ano, energia, ocupação, manutenção e saldo a partir da partida corrente.
-- `src/ui/windowsLicensePanel.ts` apresenta os controles com os mesmos `data-win-pc` / `data-win-edition` e aplica `syncPanelChildren`, preservando o comportamento do painel mobile.
-- O `main.ts` conserva o gatilho por aba e `panelChanged`; as regras de compra, estado do motor e formato do save permanecem intactos.
+Menu, conta, edição e colocação continuam pausando a simulação conforme `frameActivity`. Abrir Administração não altera essa política. A distinção entre finalizar campanha e capturar movimento após o último minuto foi preservada.
 
-## Décimo sétimo recorte: contabilidade financeira por computador
+A cena mobile continua limitada a 30 FPS; HUD exige mais de 450 ms, sem ponteiro mantido e respeitando 160 ms após scroll e 120 ms após entrada. Prévia de menu usa intervalo estrito superior a 90 ms e respeita redução de movimento. Aba oculta ou Canvas fora da viewport afetam a pintura, sem acelerar ou compensar artificialmente o relógio.
 
-- `src/application/stationLedgerPort.ts` projeta sessões, sessões VIP, minutos ocupados, faturamento, rateio de energia e saldo por PC sem entregar referências mutáveis do save.
-- `src/ui/stationLedgerPanel.ts` conserva a tabela acessível (`th scope="row"`), formatação pt-BR e `syncPanelChildren`, sem ler diretamente a simulação.
-- `main.ts` só injeta a porta e chama o renderizador quando Computadores > Contabilidade está ativo. Nenhuma mudança nas regras financeiras, no Canvas, toque, RNG ou esquema de save.
-- `tests/station-ledger-boundary.test.mjs` verifica dados, importação de partida, cópias primitivas e dependências das camadas.
-
-## Décimo oitavo recorte: indicadores financeiros do mês
+## Canvas e entrada mobile
 
-- `src/application/monthlyFinancePort.ts` consulta a partida atual e projeta ocupação, último comprovante pago, histórico mensal e recomendação de expansão, sem alterar valores ou saves.
-- `src/ui/monthlyFinancePanel.ts` atualiza apenas os nós existentes, mantendo IDs e a apresentação original e sem recriar controles nem modificar a navegação mobile.
-- `main.ts` injeta `()=>game` e usa o renderizador somente na aba Finanças, preservando o filtro de visibilidade de `setText`.
-- `tests/monthly-finance-boundary.test.mjs` verifica formatação, totais, save substituído, DOM estável e separação das camadas. O teste financeiro legado passa a verificar o novo apresentador.
-- Simulação, RNG, cobranças, Canvas, autosave e formato de save permanecem inalterados.
-
-## Décimo nono recorte: status e custo da panfletagem
+`render/gameScene.ts` monta `SceneRenderer`, `SceneMotion`, a amostra ornamental de menu e os overlays. `render/scenePicking.ts` traduz coordenadas e seleciona vagas, móveis, paredes e PCs anexos; os handlers ficam em `ui/placementController.ts`. O editor consulta objetos e aplica comandos por `layoutEditorPort`.
 
-- `src/application/promotionStatusPort.ts` projeta custo, condição de contratação e mensagens a partir da partida ativa, sem modificar a economia.
-- `src/ui/promotionStatusPanel.ts` atualiza `promotion-description`, `promotion-status` e o mesmo botão `#launch-promotion`, sem recriar o DOM nem trocar seu listener.
-- `src/main.ts` continua responsável pela aba de Finanças e injeta a porta com `()=>game` para reconhecer saves importados.
-- As ações de compra continuam em `serviceActionsPort` e `serviceControls`, com a política anterior de save.
-- `tests/promotion-status-boundary.test.mjs` verifica preço clássico/histórico, caixa, 20h29/20h30, encerramento, save importado, botão persistente e fronteira sem dependência do motor.
-- Não se alteraram motor, RNG, preços, calendário, Canvas, navegação mobile ou formato de save.
-
-## Vigésimo recorte: demonstrativo de caixa e aviso da fatura
+Os desenhos, sprites, oclusão, câmera 2:1, pontos de ancoragem e regras de interpolação existentes foram mantidos. `render/direction.ts` continua expondo a API visual; a direção no mundo pertence ao motor. Helpers de apresentação noturna compartilhados agora pertencem à aplicação. Os exports antigos de prévia de menu e identidade de correio continuam disponíveis para compatibilidade.
 
-- `src/application/financialBalancePort.ts` projeta saldo, entradas, saídas, reconciliação e próxima fatura sem modificar o save, consultando os serviços existentes do motor.
-- `src/ui/financialBalancePanel.ts` atualiza os elementos existentes e preserva classes de prejuízo, avisos de discrepância e alerta de fatura a até sete dias da cobrança.
-- `main.ts` mantém o filtro de abas, o estado injetado por `()=>game`, o Canvas e os demais painéis sem alteração de regra.
-- `tests/financial-balance-boundary.test.mjs` cobre caixa, dívida, formato pt-BR, alerta, datas, restauração de saves e dependências de camadas.
-- Antes deste recorte foi corrigido o teste legado `historical-promotion-pricing-roi.test.mjs`: o worker-simulation da etapa anterior falhava por procurar um trecho removido intencionalmente de `main.ts` na 19ª etapa.
-
-## Vigésimo primeiro recorte: equipe, atividade e limpeza
+Não foram alterados os limiares dos gestos: deslocamento superior a 10 px ou scroll superior a 3 px cancela toque no editor; click sintético é suprimido por 650 ms. O viewport continua distinguindo arrasto acima de 8 px e scroll acima de 3 px. Arrastar o mapa não compra nem move um objeto. Selecionar/destinar/confirmar pelo toque continua funcionando, inclusive após toque prolongado estacionário, giro e recarga de save.
 
-- `src/application/staffStatusPort.ts` reúne o estado somente-leitura de funcionários, diárias, trabalhos, progresso, lixeiras, caixa e custo da limpeza, sempre a partir da partida corrente.
-- `src/ui/staffStatusPanel.ts` usa exclusivamente o snapshot para atualizar os controles existentes, os indicadores de progresso e textos, mantendo os listeners e a rolagem mobile.
-- `src/main.ts` injeta `()=>game`, preserva a entrada na aba Serviços e mantém o painel de rotas de acesso separado.
-- `tests/staff-status-boundary.test.mjs` verifica contrato, saldo insuficiente, atendimento em andamento, importação de save, progresso e estabilidade do DOM.
-- Ações de contratação e limpeza seguem em `serviceActionsPort.ts`, sem alteração de regras, salários, jornadas, RNG, Canvas ou esquema de save.
-
-## Vigésimo segundo recorte: comparador de preços e energia na virada do ano
+## Verificação e extensão
 
-- `src/application/pricingInsightsPort.ts` projeta procura relativa, avaliação da tarifa, cautelas, comparação de cenários e tarifa futura de energia consultando a partida corrente.
-- `src/ui/pricingInsightsPanel.ts` atualiza apenas os textos existentes, sem operações sobre o motor e sem recriação de nós ou alteração de gestos mobile.
-- `src/main.ts` preserva o filtro da aba Preços/Análise para as simulações de tarifa; previsão energética continua atualizada como antes.
-- `tests/pricing-insights-boundary.test.mjs` verifica cenários clássicos/históricos, limites, formatação, ausência de mutação, restauração de saves e contratos entre módulos.
-- `tests/pricing-insights.test.mjs` atualiza somente as verificações de integração para o módulo novo, sem reduzir a cobertura numérica do motor.
-- Não altera preço cobrado, RNG, Canvas, relógio, atendimento, esquema de saves ou navegação mobile.
+```sh
+npm ci
+npm run build
+npm run typecheck
+npm test
+npm run build:site
+npm run check:site
+```
 
-## Vigésimo terceiro recorte: controles de tarifa por hora e pacotes
+`npm test` também compila motor/aplicação sem DOM. A configuração principal aplica `noUnusedLocals` e `noUnusedParameters`. Não foram adicionados frameworks nem dependências de produção.
 
-- `src/application/hourlyPriceStatusPort.ts` calcula somente leituras de tarifa atual, teto anual e do hardware, IPCA, bloqueio de botões e preços por duração a partir do save atual.
-- `src/ui/hourlyPriceStatusPanel.ts` apresenta os textos e atualiza os botões existentes sem recriar os controles; recria apenas as linhas da lista de pacotes quando o cache de revisão já permite.
-- `src/main.ts` mantém `clampPriceToEra(game)` e a política de refresh de `panelChanged("durations",...)`, injetando `()=>game` para trocar saves sem referências antigas.
-- `tests/hourly-price-status-boundary.test.mjs` valida modos clássico/histórico, teto de preço, IPCA, pacotes, troca de save, DOM estável e fronteira entre camadas.
-- `tests/historical-economy.test.mjs` confere o novo módulo em vez do cálculo legado em `main.ts`.
-- Sem mudanças no fluxo de cobrança, manipulação de preços, RNG, Canvas, gestos mobile ou formato de salvamento.
+- `simulation-foundation-boundary.test.mjs`: quatro campanhas de três dias com hash integral capturado em `b73c5aa`, sexto/sétimo PC, imports do motor e ausência de ciclos.
+- `application-composition.test.mjs`: portas retidas após troca de save, atomicidade em falha de Storage, nuvem, transientes, anexos e consultas sem mutação.
+- `runtime-composition.test.mjs`: ordem real dos coordenadores, cap de tempo, pausas, visibilidade/mobile, ponteiro mantido, bootstrap e Storage restrito.
+- `remaining-panel-contracts.test.mjs`: DTOs de hardware, encontro/HUD noturno, restauração preparada e isolamento de todos os componentes DOM.
+- Testes estruturais legados agora consultam o adaptador responsável e usam AST para ligações/ordem quando necessário; os testes funcionais existentes continuam ativos.
+- `verify_layout_editor.mjs`: PC movido/girado, paredes, remoções, recarga e orientação, em 1440/414/360 px.
+- `verify_mobile_interface.mjs`: scroll nativo, controle estável, áudio e ausência de pintura escondida em desktop/mobile, com CPU 4× mais lenta nos celulares emulados.
+- `verify_save_on_menu.mjs`, `verify_hardware_ui.mjs` e `verify_integrated_engine_campaign.mjs`: save imediato, hardware de 2000/2024 e campanha real de 35 dias.
 
-## Vigésimo quarto recorte: preços rápidos de mercadorias
+O workflow existente `Lan House Simulator - worker pool` valida simulação, site, Canvas, painéis, touch e Forge no PR. As nove auditorias extensas opcionais da suíte padrão permanecem condicionadas às flags já existentes; isso não é falha nem substitui os testes obrigatórios. Os resultados e limites desta entrega estão em [architecture-refactor-report.md](architecture-refactor-report.md).
 
-- `src/application/retailPriceStatusPort.ts` projeta os três preços de venda (refrigerantes, doces e salgadinhos), rótulos e travas entre R$ 1 e R$ 40 a partir da partida atual, sem editar preços.
-- `src/ui/retailPriceControlsPanel.ts` monta o painel provisório com os mesmos atributos `data-item`, `data-delta`, textos, ícones e botão para abrir o catálogo.
-- `main.ts` preserva o cache `panelChanged("retail",...)` e usa o mesmo `syncPanelChildren` para manter o contêiner e o listener delegado de `pricingControls.ts` no mobile.
-- `tests/retail-price-status-boundary.test.mjs` protege preços de motor, travas, save importado, DOM, eventos delegados e separação das camadas.
-- Os testes da 23ª etapa foram corrigidos antes desta alteração: a tarifa histórica mínima real é R$ 0,50 e a verificação de fronteira confundiu um comentário com dependência de código.
-- Sem alterações em preços de compra/venda, margens, faturamento, RNG, Canvas ou formato de save.
-
-## Vigésimo quinto recorte: preços de impressão e de cópias
-
-- `src/application/deskPricingPort.ts` fornece projeções de preços, limites, custo dos insumos, resultado operacional e recuperação de investimento.
-- `src/ui/deskPricingPanel.ts` atualiza os botões já conhecidos dos listeners delegados e mantém `syncPanelChildren` para evitar perder rolagem e foco.
-- `src/main.ts` preserva os filtros das subabas e esconde os serviços ainda não comprados.
-- `tests/desk-pricing-boundary.test.mjs` verifica limites, margens, economia clássica/histórica, importação de save e controles DOM.
-- Não foram alterados RNG, motor econômico, cobrança, Canvas, gestos mobile ou estrutura do save.
-
-## Vigésimo sexto recorte: fornecedor, estoque rápido e conexão de internet
-
-- `src/application/commerceNetworkPort.ts` prepara um DTO somente de leitura com o fornecedor atual, custos dos três lotes, estado e tipo de conexão, liberação por ano, custo da melhoria e preço do técnico.
-- `src/ui/commerceNetworkPanel.ts` atualiza os textos e os três botões existentes, sem recriar elementos, instalar listeners ou alterar o foco mobile.
-- `src/main.ts` injeta `()=>game`, preservando a instância após importação e delegando toda ação de fornecedor, estoque, upgrade e reparo ao `serviceActionsPort.ts`.
-- `tests/commerce-network-boundary.test.mjs` cobre os anos 1998/2002/2007, tarifas, falta de caixa, desconexão, técnico, fornecedor parceiro, importação de saves e estabilidade do DOM.
-- Sem alterar regras de contratação, upgrades, despesas, preços, RNG, Canvas, gestos ou esquema de save.
-
-## Vigésimo sétimo recorte: operação e manutenção por computador
-
-- `src/application/pcOperationsPort.ts` calcula somente snapshots de estado ligado, desgaste, reparos, disponibilidade de upgrades, custo do técnico e progresso do atendimento.
-- `src/ui/pcOperationsPanel.ts` gera os mesmos controles `data-pc-power`, `data-pc-repair` e `data-pc-upgrade`, incluindo progresso e `data-panel-key`.
-- `main.ts` continua responsável por `panelChanged("computers",...)`, `syncPanelChildren`, troca de abas e recuperação de foco após atualização LCD.
-- `tests/pc-operations-boundary.test.mjs` protege a contratação avulsa, bloqueio por ocupação, preço e ano de hardware, passagem de save e renderização de controles.
-- Sem alterar ações de estação, RNG, Canvas, editor de móveis, navegação touch nem formato do save.
-
-## Vigésimo oitavo recorte: catálogo e seleção de monitores LCD
-
-- `src/application/lcdMonitorsPort.ts` projeta estações disponíveis, LCD instalado, bônus, catálogo das cinco gerações e motivos de bloqueio por ano, hardware, ocupação, energia e caixa. Não compra nem altera kits.
-- `src/ui/lcdMonitorsPanel.ts` preserva os mesmos cartões, imagem procedural existente, `data-lcd-select`, `data-lcd-buy`, `aria-pressed` e estado dos botões.
-- `main.ts` conserva `selectedLcdPc`, `panelChanged("computers",...)`, geração cacheada das miniaturas, `syncPanelChildren` e recuperação de foco sem rolagem no mobile.
-- `tests/lcd-monitors-boundary.test.mjs` valida desbloqueios, custos, geração anterior, ocupação, seleção, save e DOM, sem tocar nas compras do motor.
-- Sem alterações no motor econômico, gestos touch, Canvas do salão, regras de compra, RNG ou estrutura de save.
-
-## Vigésimo nono recorte: catálogo de placas de vídeo
-
-- `src/application/gpuCatalogPort.ts` consulta somente o estado atual e projeta GPUs por ano, fonte necessária, bônus, preço, bloqueios e placa instalada.
-- `src/ui/gpuCatalogPanel.ts` mantém `data-gpu-select`, `data-gpu-buy`, `aria-pressed`, imagens e reconciliação `syncPanelChildren` sem importar motor.
-- `main.ts` preserva `panelChanged("gpuPcChoice",...)`, seleção sincronizada, callbacks de compra e controle mobile; não calcula mais custos e margens das GPUs.
-- `tests/gpu-catalog-boundary.test.mjs` cobre desbloqueio, fonte, geração anterior, saldo, técnico, ocupação, importação de saves e os botões.
-- Sem mudanças em compras, motor, RNG, editor do salão, Canvas ou estrutura dos saves.
-
-## Trigésimo recorte: catálogo de jogos clássicos e de rede local
-
-- `src/application/classicGamesCatalogPort.ts` concentra o resumo de licenças permanentes, status de cada título, popularidade por época, preços e elegibilidade por contrato básico e Windows, sem comprar nada.
-- `src/ui/classicGamesCatalogPanel.ts` gera as mesmas capas, seções por ano, classes, botões `data-era-game-buy` e títulos de indisponibilidade, sem importar o motor.
-- `src/main.ts` mantém os filtros das abas, `panelChanged("eraGamePanel",...)`, `syncPanelChildren` e os handlers em `gameLicensingControls.ts`, preservando foco, rolagem e compatibilidade touch.
-- `tests/classic-games-catalog-boundary.test.mjs` cobre 1998, 1999, a novidade do Eric em 2000, contratos básicos, Windows, nostalgia, saves e fidelidade do DOM.
-- O teste estrutural anterior em `tests/era-games-1998-1999.test.mjs` passa a verificar o cálculo na porta, sem deixar de validar o fluxo de compra.
-- Sem alterações em compras, RNG, motor, Canvas, editor, mensalidades ou estrutura de save.
-
-## Trigésimo primeiro recorte: administração de jogos avançados com GPU
-
-- `src/application/gpuGamesCatalogPort.ts` projeta o catálogo de títulos com GPU, pagamentos de licenças, requisitos Windows/GPU, downloads em andamento, condições de instalação, demanda real e cobertura nominal do investimento.
-- `src/ui/gpuGamesCatalogPanel.ts` mantém os mesmos atributos `data-gpu-game-buy`, `data-gpu-game-install`, `data-gpu-game-cancel`, `data-gpu-game-install-all`, indicadores de progresso e reconciliação de nós.
-- `main.ts` conserva o invalidatório da aba, `installGameLicensingControls`, a atualização de downloads em tempo real via `refreshGpuDownloadMeters` e o controle de estado dos saves.
-- Testes `tests/gpu-games-catalog-boundary.test.mjs` e testes legados revisados protegem os textos e regras no novo limite arquitetural.
-- Sem alterações nas funções de compra, distribuição gratuita, banda, pausa, RNG, Canvas, controles touch ou estrutura do save.
-
-## Trigésimo segundo recorte: status de regularização de jogos
-
-- `src/application/basicGamesLicenseStatusPort.ts` projeta o custo, saldo e licença única e permanente no modo clássico/histórico sem editar a partida.
-- `src/ui/basicGamesLicenseStatusPanel.ts` atualiza `#license-status` e `#license` mantendo a compra pelo controle existente.
-- `main.ts` continua com os avisos do correio e controles de licenciamento; a apresentação do status de contrato saiu do loop principal.
-- `tests/basic-games-license-status-boundary.test.mjs` tem seis cenários e `tests/basic-games-license.test.mjs` agora valida os novos arquivos.
-- Sem alterar compra, cálculo de IPCA, RNG, saves, Canvas ou controles touch.
-
-## Trigésimo terceiro recorte: caixa de correspondências
-
-- `src/application/noticeInboxPort.ts` projeta cartas, botões e motivos de indisponibilidade sem modificar o estado.
-- `src/ui/noticeInboxPanel.ts` conserva as classes, os ícones, o botão de leitura e os identificadores das ações e das decisões.
-- O fluxo `installNoticeControls` continua responsável por compras, decisões, leitura e salvamento; `main.ts` preserva os avisos de cartas não lidas e o cache de atualização.
-- `tests/notice-inbox-boundary.test.mjs` cobre alertas Windows, jogos, segurança, Bombeiros, propostas, saves e DOM.
-- Sem alterações no sistema de eventos narrativos, fiscalizações, RNG, motor, Canvas ou gestos touch.
-
-## Trigésimo quarto recorte: histórico recente dos acontecimentos
-
-- `src/application/eventLogPort.ts` projeta até seis eventos recentes, preservando ordem e assinatura JSON, além do dia/horário, sem mutar o estado.
-- `src/ui/eventLogPanel.ts` mostra os mesmos itens `li`, ícones, textos e elementos `time`, sem importar simulação ou registrar eventos.
-- `main.ts` conserva o cache `lastEventSignature` e só redesenha o histórico quando os seis registros visíveis mudam.
-- `tests/event-log-boundary.test.mjs` adiciona oito verificações para ícones, datas, limite, integridade do save, importação e DOM.
-- Sem modificar o motor, RNG, áudio, autosave, Canvas, editor ou gestos mobile.
-
-## Trigésimo quinto recorte: resumo financeiro e atendimentos
-
-- `src/application/financialAdminOverviewPort.ts` projeta aluguel, internet, manutenção, energia, salários, contas, atendimentos por serviço e entradas/saídas, preservando a inflação e o modo clássico.
-- `src/ui/financialAdminOverviewPanel.ts` atualiza os mesmos nós e rótulos, sem ler o estado do motor nem criar DOM.
-- `main.ts` continua com o demonstrativo, os fechamentos mensais, o editor e as rotinas de cobrança originais.
-- `tests/financial-admin-overview-boundary.test.mjs` inclui oito casos sobre custos históricos, PlayStation, serviços avulsos, troca de save e fronteiras da UI.
-- Sem alterações em RNG, preço cobrado, saves, áudio, Canvas ou gestos mobile.
-
-## Trigésimo sexto recorte: avisos de circulação no salão
-
-- `src/application/serviceAccessStatusPort.ts` recebe as ocorrências já calculadas pelo motor e prepara o número de bloqueios, destinos e orientação para abrir passagens.
-- `src/ui/serviceAccessStatusPanel.ts` atualiza o painel administrativo, o botão de inspeção e a barra de marcações sobre o Canvas, sem modificar as rotas.
-- `main.ts` preserva o cache de 1,6 s, o comando para inspecionar o salão e o desenho real de bloqueios no Canvas.
-- `tests/service-access-status-boundary.test.mjs` acrescenta sete verificações para textos, destinos, botões, cache, save e isolamento da interface.
-- Não há mudanças no algoritmo de caminhada, colisões, manutenção, funcionários, RNG ou salvamento.
-
-## Trigésimo sétimo recorte: manutenção sem perda de foco
-
-- `src/ui/pcMaintenancePanel.ts` concentra o ciclo de criação offscreen, decoração e reconciliação dos controles de manutenção, preservando scroll e foco em botões hardware e LCD.
-- `main.ts` continua responsável pelas escolhas de estação, consultas do motor, contexto da página e invalidatório `panelChanged("computers",...)`; as ações reais permanecem em `installStationControls`.
-- Os cenários legados de LCD e operação foram adaptados à nova fronteira; `tests/pc-maintenance-boundary.test.mjs` verifica nove casos de foco, seleção, atualização e ausência de re-renderização de negócio.
-- Não há mudança em preços, instalação de peças, desgaste, rota de técnicos, Canvas, RNG ou estrutura de saves.
-
-## Trigésimo oitavo recorte: mensagens e botões da organização do salão
-
-- `src/application/placementStatusPort.ts` projeta estado dos botões e textos para colocar móveis, girar, reorganizar, construir divisórias, portas e instalar PCs anexos, sem mutações.
-- `src/ui/placementStatusPanel.ts` aplica os textos e os estados na barra, nos controles existentes e na classe do palco sem tratar compras ou colisões.
-- `main.ts` conserva a validação `placementActions.canBuild`, os comandos do Canvas, os gestos touch, preços originais e chamadas de save.
-- `tests/placement-status-boundary.test.mjs` adiciona dez verificações de modos, botões, DOM, economia, save e limites arquiteturais.
-- Sem mudanças nas regras de giro, compra, instalação, colisão, RNG ou cronologia.
-
-## Trigésimo nono recorte: visibilidade e contador de correspondência
-
-- `src/application/noticeWindowStatusPort.ts` lê a contagem original de cartas não lidas e projeta a janela aberta/fechada sem modificar o estado.
-- `src/ui/noticeWindowStatusPanel.ts` atualiza os IDs `notices`, `notices-count` e `open-notices`, mantendo `hidden` e `aria-expanded`.
-- `main.ts` preserva a leitura e as decisões, a ação de abrir o Correio, o painel de cartas, os listeners e o save anterior.
-- `tests/notice-window-status-boundary.test.mjs` adiciona oito verificações para contagem, abertura, fechamento, estado importado e DOM.
-- Sem alterar o calendário das cartas, o motor, o RNG, as compras ou o Canvas.
-
-## Quadragésimo recorte: exibição e controles de serviços do balcão
-
-- `src/ui/deskPricingPanel.ts` assume a exibição dos setores de CDs/DVDs e impressão, reaproveitando as projeções de `deskPricingPort` e os renderizadores de botões já testados.
-- `main.ts` informa apenas qual aba está selecionada, quais hosts DOM existem e quais mecanismos de reconciliação usar. Relatórios e controles só são calculados quando o serviço está instalado e a aba correspondente está ativa.
-- `tests/desk-pricing-services-boundary.test.mjs` acrescenta onze verificações sobre serviços ausentes, páginas fechadas, preços reais, importação de saves, DOM e fronteira de dependências.
-- `tests/desk-pricing-boundary.test.mjs` continua validando a apresentação dos dois preços e aponta para o novo ponto de integração.
-- Nenhuma regra de preço, compra, material, demanda avulsa, limite diário, RNG, Canvas ou save foi alterada.
-
-## Quadragésimo primeiro recorte: elegibilidade do frame e pausa durante edição
-
-- `src/application/frameActivity.ts` isola os critérios puros que permitem avançar a simulação e capturar movimento enquanto a partida está aberta, sem DOM, Canvas ou motor.
-- `main.ts` conserva a ordem original: calcula a elegibilidade, reinicia interpolação quando a condição muda, captura posições antes de `stepGame`, e mantém áudio, HUD e salvamento existentes.
-- Correção dos dois testes da 40ª etapa: verificação de abas refatoradas e copiadora adquirida somente após desbloqueio histórico, sem alterações de regras de jogo.
-- `tests/frame-activity-boundary.test.mjs` adiciona dez testes, incluindo todas as 256 combinações dos oito estados e a distinção entre fim do movimento e finalização da campanha.
-- Sem alteração de FPS, velocidade do relógio, eventos, RNG, política de autosave, formato de save ou gestos mobile.
-
-## Quadragésimo segundo recorte: prévias e camadas de desenho do salão
-
-- `src/render/interactionOverlays.ts` centraliza somente a apresentação das prévias de móveis, reposicionamento, divisórias, portas, PCs anexos e destaque do editor, sem mutar o estado do motor.
-- A pintura continua em duas fases: o destaque do editor aparece antes dos popups, enquanto as prévias de compra, giro, parede e PC anexo permanecem depois, conservando a ordem visual.
-- `main.ts` conserva gestos touch, `pointermove`, `click`, estado da seleção, comandos da simulação, `SceneRenderer` e controle de FPS.
-- `tests/interaction-overlays-boundary.test.mjs` cobre treze cenários de visibilidade, ordem, orientação, fallback de parede, demolição, PC anexo e compatibilidade de saves.
-- `tests/simulation.test.mjs` foi atualizado em commit anterior para verificar a porta `frameActivitySnapshot` sem exigir a expressão antiga de pausa no bootstrap.
-- Nenhum limite de colisão, posição, cobrança, RNG, save, autosave ou tempo simulado foi modificado.
-
-## Quadragésimo terceiro recorte: monitor de interação para o HUD
-
-- `src/ui/frameInteractionTracker.ts` recebe os mesmos eventos de rolagem, `pointerdown`, `pointerup`, `pointercancel` e perda de foco, mantendo captura, listeners passivos e relógio `performance.now()`.
-- `main.ts` continua responsável por agendamento, simulação, observador de visibilidade do Canvas e salvamento, mas consulta um snapshot de atividade visual em vez de manter três variáveis e seus listeners diretamente no bootstrap.
-- `tests/frame-interaction-tracker-boundary.test.mjs` adiciona treze verificações dos sinais mobile, ordem e opções de eventos, integridade de saves e limites originais de 450/160/120 ms para atualizar o HUD.
-- Gestos touch do editor, cancelamento, `click` de compatibilidade, tempo da simulação, FPS, RNG e formato do save não foram modificados.
-
-## Quadragésimo quarto recorte: catálogo de CDs físicos do PS1
-
-- `src/application/ps1ShopDiscPort.ts` fornece uma projeção somente-leitura dos CDs físicos, preços reais, cópias, elegibilidade, dinheiro e limites; acompanha o save importado.
-- `src/ui/ps1ShopDiscCatalog.ts` renderiza os cinco cartões, capas SVG e botões `data-buy-ps1-disc` com o mesmo `dataset.buyPs1Disc` e os mantém imediatamente após a bancada PS1.
-- `main.ts` deixa de construir os cartões e mantém as compras delegadas ao `shopControls` existente, sem instalar listeners adicionais.
-- `tests/ps1-shop-disc-boundary.test.mjs` cobre doze casos de desbloqueio, valores, limite, importação, estrutura DOM e ligação entre camadas.
-- Nenhuma regra de compras, demanda, ano 2002, preço, save, RNG ou Canvas foi alterada.
-
-## Quadragésimo quinto recorte: seleção da posição de PS1 na loja
-
-- `src/application/ps1ShopPlacementPort.ts` projeta os pontos livres da bancada e nomes compreensíveis, consultando sempre o save corrente.
-- `src/ui/ps1ShopPlacementPicker.ts` renderiza setas, o seletor oculto `ps1-placement`, o texto acessível e a orientação do salão, sem conhecer o motor.
-- O `main.ts` conserva a elegibilidade e a cobrança histórica; o `shopControls` mantém o mesmo clique de compra e o mesmo ID técnico de destino.
-- `tests/ps1-shop-placement-boundary.test.mjs` adiciona doze verificações de setas, re-render, espaço ocupado, expansão, importação e separação de dependências.
-- Nenhuma regra de venda, saldo, preço, save, RNG, simulação ou gesto mobile foi alterada.
-
-## Quadragésimo sexto recorte: ofertas dos serviços na loja
-
-- `src/application/shopServiceOffersPort.ts` consulta o save corrente, preços e cotações da impressora e copiadora e projeta somente o estado do botão, rótulo e explicação.
-- `src/ui/shopServiceOfferButton.ts` aplica as propriedades ao botão existente sem importar o motor.
-- `main.ts` preserva os cartões, ilustrações e o clique delegado ao `shopControls`, mas deixa de consultar diretamente as cotações dos dois serviços.
-- `tests/shop-service-offers-boundary.test.mjs` cobre 1998/2001, limites de saldo, compra única, modo clássico, importação e independência entre interface e motor.
-- Nenhuma regra de compra, preço, RNG, save, Canvas ou gesto mobile foi alterada.
-
-## Quadragésimo sétimo recorte: resumo da loja e do salão
-
-- `src/application/shopOverviewPort.ts` centraliza a projeção somente-leitura da quantidade de objetos organizáveis, divisórias/portas removíveis, dinheiro, PCs, medidas do salão, ampliação por direção e número de salas. Consulta o save ativo em cada atualização.
-- `src/ui/shopOverviewPanel.ts` atualiza os mesmos IDs `organize-furniture`, `demolish-walls` e `shop-cash`, sem importar o motor ou registrar ouvintes.
-- `main.ts` conserva `panelChanged("shop")`, os eventos de organização/demolição, a compra, a rolagem e o Canvas, delegando apenas o texto e estado do resumo.
-- `tests/shop-overview-boundary.test.mjs` verifica textos originais, dinheiro, capacidades, expansão oeste/leste/norte, divisórias, save importado, DOM e limites de dependência.
-- Nenhuma regra de compra, preço, geração de cliente, RNG, save, autosave ou gesto mobile foi alterada.
-
-## Quadragésimo oitavo recorte: oferta da bancada de PlayStation na loja
-
-- `src/application/ps1ShopOfferPort.ts` projeta a disponibilidade e a descrição do botão de compra da bancada PS1 a partir do save ativo: modo histórico, 2002, três bancadas, vagas livres e saldo.
-- `src/ui/ps1ShopOfferButton.ts` atualiza somente o texto e a habilitação do botão, preservando o atributo `data-buy="ps1"` e o evento delegado ao controlador da loja.
-- `main.ts` deixa de calcular essas condições e mantém o seletor de posições e a montagem visual já separados nos recortes anteriores.
-- `tests/ps1-shop-offer-boundary.test.mjs` cobre 14 casos, incluindo ano, modo clássico, dinheiro, limites, vagas ocupadas, saves importados, DOM e dependências.
-- Nenhuma regra do motor, preço, venda, save, RNG, Canvas, autosave ou controle de toque foi alterada.
-
-## Quadragésimo nono recorte: montagem visual dos cartões e miniaturas da loja
-
-- `src/ui/shopCatalogCard.ts` cria os mesmos artigos, títulos, rótulos, ícones e botões de compra, além de centralizar o cache das miniaturas em Canvas da impressora, copiadora e PlayStation 1.
-- A interface conserva a ordem dos elementos, `data-buy`, `data-item`, `aria-hidden`, dimensões 640×360 das miniaturas e o seletor de PS1 já separado.
-- `main.ts` continua projetando preços, vagas e elegibilidade, além de gerenciar o clique delegado em `shopControls`, mas deixa de construir nós do catálogo e desenhar miniaturas.
-- `tests/shop-catalog-card-boundary.test.mjs` acrescenta doze testes para montagem DOM, ícones, miniaturas, cache, rótulos, indicadores de móveis e fronteiras das camadas.
-- Sem mudança de compra, economia, save, RNG, simulação, gestos mobile ou arte do jogo.
-
-## Quinquagésimo recorte: ofertas comuns da loja e correção de regressão
-
-- `src/application/shopCatalogOffersPort.ts` projeta de forma somente-leitura as ofertas comuns da loja: preço, dinheiro, disponibilidade, limites de PC principal, vagas em anexos, direções de expansão, divisórias e decoração; acompanha a instância ativa do save.
-- `src/application/shopCatalogGuidance.ts` guarda as mensagens e rótulos existentes; `src/ui/shopGuidance.ts` mantém exportações compatíveis com consumidores e testes antigos.
-- `src/ui/shopCatalogOfferButton.ts` aplica somente texto e estado do botão, sem importar o motor; as ofertas especializadas de PS1, copiadora e impressora continuam com prioridade.
-- `main.ts` apenas compõe as portas, mantém a ordem dos cartões e o clique delegado ao `shopControls`, sem calcular os limites no renderizador.
-- `tests/shop-catalog-offers-boundary.test.mjs` inclui dezesseis verificações de equivalência com o cálculo anterior, expansões, saldos, vagas, móveis, serviços, save importado e fronteiras entre camadas.
-- Corrigido o stub de DOM de `tests/shop-catalog-card-boundary.test.mjs` para reproduzir `replaceChildren()`, que limpa conteúdo e `innerHTML` no navegador real; isso resolve a falha de um teste no 49º recorte.
-- Nenhuma regra de compra, colisão, RNG, autosave, desenho da cena ou gesto mobile foi alterada.
-
-## Quinquagésimo primeiro recorte: atualização e acessibilidade do shell administrativo
-
-- `src/ui/adminShell.ts` centraliza a atualização dos rótulos visíveis em Administração, com as mesmas verificações de subpágina oculta, elemento inexistente e texto inalterado. Mantém o formato monetário brasileiro e o estado `hidden`/`aria-expanded` das janelas.
-- `main.ts` deixa de manter a função DOM de `setText`, o formatador de valores e as atribuições diretas de visibilidade/atributos, mas conserva ordem, condições de render, eventos, abas e todos os ports de simulação.
-- `tests/admin-shell-boundary.test.mjs` acrescenta doze testes de DOM, subpáginas ocultas, atualização sem repetição, formato `pt-BR`, acessibilidade e fronteira UI/motor.
-- Corrigido `tests/shop-catalog-offers-boundary.test.mjs`: o cenário que exige botão de PC disponível agora cria primeiro uma vaga na área principal, removendo a falsa expectativa responsável pelo único teste falho do recorte 50.
-- Não foram alterados o motor, a lógica de vendas, os saves, a geração aleatória, o Canvas, os preços ou os gestos mobile.
-
-## Quinquagésimo segundo recorte: renderizador administrativo de preços
-
-- `src/ui/adminPricingSections.ts` agrupa as atualizações de preço por hora, pacotes, análise da tarifa, projeção de energia e preços rápidos de produtos com as mesmas condições de aba ativa, disponibilidade de elementos e revisão de dados.
-- `main.ts` mantém o ajuste de tarifas de saves legados (`clampPriceToEra`), os ports do save atual, o controle de revisão e a seção de impressão/copiadora, mas delega a apresentação dos preços a um único módulo tipado.
-- `tests/admin-pricing-sections-boundary.test.mjs` acrescenta doze testes de subpáginas, reconstrução condicional, textos, botões, ícones, variação histórica/clássica e preservação das fronteiras UI/motor.
-- Os testes arquiteturais de hora, cenários de tarifa e varejo passam a verificar a nova localização dos renderizadores, mantendo as mesmas exigências de integração e de revisão.
-- Nenhum cálculo de economia, regra de compra, estado de save, gesto mobile ou desenho de Canvas foi alterado.
-
-## Quinquagésimo terceiro recorte: composição dos painéis de Finanças
-
-- `src/ui/adminFinanceSections.ts` coordena apresentação de caixa, despesas, balanço, opiniões dos clientes, contas mensais, atividade e panfletagem por meio de portas somente-leitura.
-- Mantidas duas fases de atualização: resumo do caixa antes de preços e computadores; atividade e mensalidade depois das demais áreas.
-- Opiniões só são consultadas quando Finanças > Opiniões está ativa e a revisão mudou; aviso de fechamento só é consultado na página Balanço.
-- `tests/admin-finance-sections-boundary.test.mjs` acrescenta doze testes de visibilidade, ordem, acessibilidade, preservação dos nós e limites de dependência.
-- Nenhuma regra da economia, save, aleatoriedade, Canvas, compras ou interface de toque foi alterada.
-
-## Quinquagésimo quarto recorte: páginas de operação, manutenção e hardware dos computadores
-
-- `src/ui/adminComputerSections.ts` coordena a tabela de receita por PC, as páginas de operação, hardware, Windows e monitores, preservando o container destacado, a reconciliação DOM e o foco do painel `pcMaintenancePanel`.
-- `main.ts` continua com os cálculos, a instância ativa, a revisão dos painéis, a seleção da estação e os controladores delegados; a interface usa apenas callbacks para montar as páginas.
-- `tests/admin-computer-sections-boundary.test.mjs` acrescenta quatorze casos de abas abertas/fechadas, ledger, revisões, seleção, montagem destacada, reconciliação e fronteiras entre UI e motor.
-- Os testes antigos de integração de PC, LCD e receita por estação devem apontar para o novo módulo sem perder as verificações de foco e compatibilidade.
-- Corrigido antes deste recorte o teste legado de panfletagem que ainda exigia o renderizador financeiro dentro de `main.ts`.
-- Nenhuma lógica de compra, manutenção, desgaste, energia, saves, RNG, renderização Canvas ou toque foi modificada.
-
-## Quinquagésimo quinto recorte: GPU e licenças de jogos
-
-- `src/ui/adminGpuLicenseSections.ts` coordena as telas da GPU, licenças Windows, catálogo clássico, catálogo de jogos avançados e atualizações de download a partir de portas somente-leitura, mantendo os elementos e seletores existentes.
-- `main.ts` guarda o estado da partida, seleção de PC e as assinaturas de revisão, mas não organiza diretamente a apresentação desses catálogos.
-- Os controles de compra de GPU, instalação, licenciamento e cancelamento continuam nas portas e handlers delegados existentes; os downloads continuam a progredir com o painel fechado.
-- `tests/admin-gpu-license-sections-boundary.test.mjs` cobre doze casos de abas, revisão, seleção, limites, progresso e fronteira UI/motor.
-- Testes de integração anteriores passam a verificar os métodos nas novas camadas, evitando falsas regressões por mudanças de localização.
-- Sem alteração de preços, licenças, calendário, saves, RNG, Canvas, filas ou gestos mobile.
-
-## Quinquagésimo sexto recorte: consoles, equipe e diagnóstico de acesso
-
-- `src/ui/adminServicesConsoles.ts` reúne a apresentação de PlayStation, estado dos funcionários e relatório de acesso ao salão por portas somente-leitura, sem importar regras do motor.
-- A inspeção de rotas mantém sua chamada **sob demanda**, somente quando Administração > Serviços > Acesso está aberta; o overlay no Canvas permanece externo e não foi alterado.
-- As bancadas PlayStation continuam sendo reconstruídas apenas quando sua subpágina está ativa. Botões já registrados para serviços e PS1 são mantidos.
-- `tests/admin-services-consoles-boundary.test.mjs` acrescenta treze testes das abas, preços, estados, medidores, bloqueios e isolamento do motor.
-- A falha legada do teste de licença básica do 55º recorte foi corrigida no commit imediatamente anterior.
-- Nenhuma economia, IA dos clientes, save, RNG, geometria, arte Canvas ou toque mobile foi modificada.
-
-## Quinquagésimo sétimo recorte: camadas visuais do loop de animação
-
-- `src/ui/frameVisualLayers.ts` separa a ordem da apresentação por quadro: salão, diagnóstico de acesso, editor, prévia do menu, efeitos e sobreposições de posicionamento.
-- O motor, `frameSchedule`, o intervalo de simulação `dt*4.0`, os limiares mobile, a captura de interpolação e o autosave permanecem em `main.ts`, sem alterações de frequência.
-- As marcações de edição continuam recebendo o sinal de visibilidade mesmo se o salão estiver oculto. O preview do menu mantém o tratamento local de falhas do Canvas, sem impedir os botões.
-- `tests/frame-visual-layers-boundary.test.mjs` acrescenta doze testes de ordem, visibilidade, callbacks, mudanças entre frames e isolamento entre apresentação e motor.
-- O recorte anterior (56º) teve worker pool e deploy Cloudflare aprovados.
-- Não foram modificados os cálculos da simulação, cliente, economia, save, áudio, RNG, geometria ou gestos touch.
-
-## Quinquagésimo oitavo recorte: notificações e efeitos do frame
-
-- `src/application/frameEventDispatch.ts` coordena a ordem já existente entre cartas novas, áudio de correio, pagamentos, atualizações dos totais de clientes, vendas, impressão, teclado, compras e balões de fala.
-- O módulo não importa DOM, motor nem mixer de áudio. A partida ativa, baseline do correio, callbacks de áudio e indicadores de atendimento permanecem no bootstrap.
-- A chegada de cartas continua sendo verificada **depois** de `stepGame`, somente durante a partida; não toca notificação se o documento estiver oculto, mas continua registrando IDs novos.
-- `tests/frame-event-dispatch-boundary.test.mjs` acrescenta quatorze cenários de ordem, filtros, estado, continuidade após novo frame e tratamento de erros.
-- Atualizados testes legados de áudio de correio e feedback que antes exigiam chamadas diretas no `main.ts`.
-- Preservados os limites de popups e o consumo de filas em `frameFeedbackPort`, os sons e suas frequências originais, o multiplicador de tempo, os saves, Canvas, RNG e controles mobile.
-
-## Quinquagésimo nono recorte: inicialização e falhas da prévia do menu
-
-- `src/application/menuScenePreviewPort.ts` monta a cena ornamental com a mesma semente fixa (98) e as duas posições de cadeira, sem tocar na partida ativa. A criação do cenário simulado sai do bootstrap visual `main.ts`.
-- `src/ui/menuPreviewPainter.ts` isola os erros de Canvas, oferece pintura inicial a tempo zero e informa a conclusão da pintura ao agendador. Falhas desativam apenas a prévia e nunca bloqueiam o menu ou o jogo.
-- `frameSchedule.menu` continua decidindo quando desenhar; `menuPainted` continua sendo chamado apenas após um desenho sem erro. Não foram alterados os intervalos de 90ms, o ritmo de simulação ou os limites de HUD e toque.
-- `tests/menu-scene-preview-boundary.test.mjs` acrescenta treze testes de isolamento, posições, falhas de Canvas, callback de relógio e fronteira apresentação/motor.
-- Os quatro testes legados de efeitos do 58º recorte foram atualizados no commit imediatamente anterior.
-- Nenhum save, RNG da partida, compras, áudio, movimentação de clientes ou interface mobile foi modificado.
-
-## Sexagésimo recorte: ciclo de vida do salvamento local
-
-- `src/ui/pageSaveLifecycle.ts` registra os mesmos quatro gatilhos de salvamento local que antes estavam no bootstrap: timer de **8 segundos**, `beforeunload`, `pagehide` e `visibilitychange` com aba oculta.
-- O callback `save`, o armazenamento, o estado da partida e a política de recuperação permanecem inalterados no `main.ts` e no módulo de sessão; o novo adaptador apenas instala listeners sem salvar imediatamente.
-- `tests/page-save-lifecycle-boundary.test.mjs` acrescenta treze testes para ordem, callbacks, ocultação da aba, descarte mobile, novo save importado e ausência de duplicações.
-- Os cinco testes legados de frame passam a verificar o adaptador e a injeção de `setInterval`, em vez da posição física da linha no `main.ts`.
-- A falha do teste da vitrine do 59º recorte foi corrigida no commit anterior. Nenhuma regra econômica, RNG, cena Canvas, gesto mobile ou formato de save foi modificada.
-
-## Sexagésimo primeiro recorte: eventos de áudio da interface
-
-- `src/ui/soundInputBindings.ts` instala em um único local os eventos de `pointerdown`, `keydown`, `click` delegado e `visibilitychange` que antes eram registrados diretamente no `main.ts`.
-- O `Soundscape` continua compartilhado entre os efeitos de jogo, menus e controles; `preload` permanece antes do registro dos eventos. O toque e o teclado continuam desbloqueando o áudio na fase de captura, com click apenas em botão habilitado.
-- `tests/sound-input-bindings-boundary.test.mjs` cobre dezesseis casos de gesto, teclado, botões, visibilidade, listeners e fronteira UI/motor.
-- O teste legado de áudio por click foi adaptado para inspecionar o módulo extraído.
-- Antes deste recorte, corrigido o bug de `Illegal invocation` no autosave (60º recorte) com callback ligado a `window`, e atualizado o teste antigo da UI do editor.
-- Não foram alterados a simulação, os sons em si, os volumes, os saves, o RNG, os limiares de toque ou o Canvas.
-
-## Sexagésimo segundo recorte: imagens do catálogo de monitores LCD
-
-- `src/application/lcdPreviewSamplePort.ts` prepara um estado descartável para a miniatura do monitor, com as mesmas três máquinas de terceira geração e apenas o LCD selecionado.
-- `src/render/lcdPreviewArtwork.ts` mantém o mesmo preenchimento, dimensões e renderização do computador do salão. `src/ui/lcdPreviewCache.ts` controla o cache de imagens geradas sob demanda, sem importar `GameState`, motor ou regras econômicas.
-- O `main.ts` passa a conectar preparação, renderer e cache em uma única linha, mantendo inalterada a chamada de `renderLcdMonitorsPanel` usada no painel administrativo.
-- `tests/lcd-preview-cache-boundary.test.mjs` acrescenta treze testes de dimensão, cache, modelos, indisponibilidade de Canvas, isolamento e composição.
-- Preservados o save ativo, a lista de monitores, os controles do painel, a lógica de clientes, RNG, viewport e desenho de PCs instalados.
-
-## Sexagésimo terceiro recorte: preferência de áudio isolada do jogo
-
-- `src/ui/soundPreferencePort.ts` reúne a leitura e persistência do único ajuste de som do menu, `lhs.sound`, sem importar motor, Canvas, mixer concreto ou save.
-- O `main.ts` apenas injeta as funções de armazenamento do navegador e envia mudanças ao mesmo `Soundscape` usado no jogo. O som continua ligado por padrão; somente a preferência `off` o desativa na inicialização.
-- Falhas do armazenamento (navegação privada, permissão ou quota) continuam sendo toleradas: o menu abre normalmente e o mixer ainda pode ser ativado ou silenciado. A ordem anterior — ajustar mixer antes da gravação — está preservada.
-- `tests/sound-preference-port-boundary.test.mjs` acrescenta quatorze testes de estado padrão, persistência, exceções de armazenamento e isolamento entre saves e UI.
-- Nenhum outro controle, áudio, volume, formato de save, RNG, simulação ou evento de toque foi alterado.
-
-## Sexagésimo quarto recorte: teclado e painel de clima na inicialização
-
-- `src/ui/runtimeInteractionBindings.ts` instala os eventos do painel expandido de clima/calendário e da tecla `Escape`. Nenhuma importação de motor ou armazenamento é feita na interface.
-- Mantida a precedência anterior de `Escape`: editor aberto → fechar editor; senão, posicionamento ativo → cancelar colocação; caso contrário → menu, apenas durante a partida.
-- Mantida a atualização imediata do painel ao expandir, consultando o estado atual da partida; fechamento não gera renderização extra, e o HUD continua controlado pelo `frameSchedule`.
-- `tests/runtime-interaction-bindings-boundary.test.mjs` acrescenta dezessete testes de ordem, callbacks, estado dinâmico, ausência de painel e isolamento.
-- Nenhuma lógica de simulação, som, persistência, RNG, economia, Canvas ou limiar de gesto mobile foi modificada.
-
-## Sexagésimo quinto recorte: sinais visuais de viewport no loop
-
-- `src/ui/frameViewportState.ts` acompanha a visibilidade do Canvas via `IntersectionObserver`, o tipo de ponteiro via `matchMedia("(pointer:coarse)")` e a preferência de movimento reduzido. Não importa o motor do jogo.
-- O `main.ts` injeta as funções do navegador preservando o contexto nativo de `window.matchMedia`, em vez de passar diretamente o método do navegador (o que poderia provocar `Illegal invocation`).
-- A cena continua inicialmente visível, ficando oculta quando a primeira entrada de interseção não indicar visibilidade; as duas media queries continuam sendo lidas ao vivo em cada frame, sem valores congelados.
-- `frameSchedule.scene`, `frameSchedule.menu` e a leitura independente de `document.hidden` permanecem no mesmo lugar. Não há mudança no rateio de tempo do jogo ou nos critérios de desenho.
-- `tests/frame-viewport-state-boundary.test.mjs` adiciona dezesseis testes de interseção, media queries dinâmicas, isolamento e ligação com o bootstrap.
-- Não modifica Canvas, saves, economia, RNG, áudio, colisões, movimentação nem limiares de toque mobile.
-
-## Sexagésimo sexto recorte: coordenação do avanço da simulação
-
-- `src/application/frameSimulationCoordinator.ts` recebe, por callbacks, o reset da interpolação, a captura visual e o passo do motor. O módulo conhece apenas `frameActivitySnapshot`, sem `GameState`, DOM, renderizador ou salvamento.
-- Preservada a ordem original: checar atividade, resetar o movimento quando sua elegibilidade muda, capturar antes do avanço ao atingir um minuto e finalmente avançar em `dt*4.0`.
-- A nova sessão ou partida importada continua sendo consultada por callbacks do `main.ts` em cada frame, sem referência capturada para um save antigo.
-- `tests/frame-simulation-coordinator-boundary.test.mjs` adiciona dezenove testes para pausas do editor, fim da campanha, limiar de minuto, retorno ao menu, importação e propagação de erros.
-- Testes de fonte legados verificam a integração do novo coordenador em vez de exigir as antigas linhas diretamente no `main.ts`.
-- O consumo de correio e eventos continua após o avanço, e não houve mudanças em saves, RNG, regras econômicas, áudio ou limites do Canvas/touch.
-
-## Sexagésimo sétimo recorte: cache do diagnóstico de acesso dos funcionários
-
-- `src/ui/serviceAccessInspectionCache.ts` centraliza o cache de diagnóstico de acesso a computadores e lixeiras. O adaptador é genérico, recebe por injeção tanto a consulta de problemas quanto o relógio e não guarda uma instância de `GameState`.
-- O `main.ts` continua usando `serviceAccessIssues(game)` e `performance.now()`, mas o prazo estritamente maior que 1600ms, o cache inicial vazio, a consulta forçada e a leitura do último resultado agora ficam fora da inicialização.
-- A consulta de rotas do motor e os overlays do Canvas não foram modificados. Uma partida importada continua sendo lida pela função injetada no próximo diagnóstico.
-- `tests/service-access-inspection-cache-boundary.test.mjs` adiciona dezoito testes de prazo, força, histórico do cache, troca de partida, falhas e isolamento.
-- O teste legado `service-access-status-boundary.test.mjs` passa a verificar o novo módulo, sem perder a verificação do intervalo e do painel de acesso.
-- Nenhuma mudança em saves, RNG, preços, rota dos funcionários, economia, áudio, gestos ou renderização do Canvas.
-
-## Sexagésimo oitavo recorte: pintor dos efeitos visuais de feedback
-
-- `src/render/feedbackPopupPainter.ts` extrai do `main.ts` o desenho dos balões transitórios de pagamentos, vendas e comentários de clientes.
-- Preservadas as três camadas na ordem original, os valores de `globalAlpha`, fontes, cores, altura projetada, geometria isométrica, limiares de expiração de 1,35s/2,6s e a limpeza de efeitos mesmo quando a cena não está visível.
-- O `main.ts` entrega o mesmo objeto de filas ao `createFrameFeedbackPort` e ao pintor Canvas. A câmera é obtida a cada camada, evitando referências antigas à partida após importação de saves.
-- `tests/feedback-popup-painter-boundary.test.mjs` cobre ordem, envelhecimento, projeção, limpeza com Canvas invisível, aplicação de estilos, falhas do contexto e fronteira entre motor e renderização.
-- Teste anterior de sobreposições atualizado para inspecionar a nova chamada mantendo a ordem editor → balões → prévia de móveis.
-- A simulação, receitas, RNG, save, áudio e limites de toques mobile não foram alterados.
-
-## Sexagésimo nono recorte: navegação das abas administrativas
-
-- `src/ui/adminAreaTabs.ts` controla somente os botões e as seções do painel administrativo. A mudança de área continua passando por `managementPanels.syncArea`, injetado pelo `main.ts`.
-- A aba ativa mantém `class="active"`, `aria-selected="true"` e `tabIndex=0`; as outras recebem `aria-selected="false"`, `tabIndex=-1` e têm as seções ocultas.
-- Clique em uma aba preserva a ordem anterior: selecionar área, sincronizar botões/seções, restaurar `scrollTop=0` e solicitar `renderUI`; ativação programática não zera a rolagem nem força renderização extra.
-- `tests/admin-area-tabs-boundary.test.mjs` adiciona dezenove testes, cobrindo atributos de acessibilidade, navegação, clique, seleção programática, ausência de seções e isolamento entre DOM e motor.
-- Motor, preços, saves, RNG, controles mobile, renderização de Canvas e estado da partida permanecem inalterados.
-
-## Septuagésimo recorte: catálogo da loja em um compositor DOM isolado
-
-- `src/ui/shopCatalogRenderer.ts` concentra a construção de cartões e botões para equipamentos, serviços, construção, decoração e PS1, recebendo `ShopCatalogCardItem` e portas read-only de aplicação, sem importar `sim/`.
-- Mantida a invalidação do painel via `panelChanged("shop", ...)` no `main.ts`, assim como a consulta de `shopPanels?.current()` durante cada passo da montagem e a renderização do cabeçalho antes de reconstruir a árvore.
-- Preservados IDs e seletores delegados (`data-buy` e `data-buy-ps1-disc`), os avisos de encaixe, preço e posse, o seletor de posições PS1 e a ordem dos CDs. A seleção do local PS1 continua no estado do `main.ts`, inclusive após importação da partida.
-- `tests/shop-catalog-renderer-boundary.test.mjs` adiciona vinte e um testes de filtro, ordenação, serviço próprio, PS1, seleção de vaga, CDs e cache de renderização.
-- As verificações legadas de fronteira foram adaptadas para procurar a montagem no novo compositor, sem alterar compras, RNG, save, gesto móvel ou Canvas.
-
-## Septuagesimo primeiro recorte: atualizacao incremental do historico
-
-- `src/ui/eventLogRefresh.ts` recebe um snapshot vivo e um renderizador injetados, mantendo a ultima assinatura localmente. Nao importa GameState, DOM ou persistencia.
-- `main.ts` substitui o armazenamento `lastEventSignature` e o bloco de invalidacao por `eventLogRefresh.refresh()`, preservando sua posicao entre overlay de acesso e disclosure.
-- `tests/event-log-refresh-boundary.test.mjs` adiciona treze testes para cache, atualizacao, importacao de save, falhas e nao-mutacao.
-- A correcao complementar do video PS1 no commit anterior limita a pintura a cerca de 10 FPS, preserva a duracao de 20 segundos e identifica erros sem esperar o timeout completo.
-- Nenhuma regra de economia, save, RNG, Canvas do jogo ou toque mobile foi alterada.
-
-## Septuagésimo segundo recorte: atualização da caixa de correio e indicador
-
-- `src/ui/noticeWindowRefresh.ts` separa da função `renderUI` a atualização contínua do badge e a renderização condicionada das mensagens. O badge é atualizado mesmo quando a janela está fechada; a lista só é reconstruída se existe, está aberta e houve mudança de revisão ou pedido forçado.
-- `src/application/noticeInboxRevisionPort.ts` extrai a revisão dos sete campos que impactam os botões e textos de correio, sempre consultando o save ativo. O teste de revisão preserva a igualdade por JSON usada no cache anterior.
-- A pintura continua pelos painéis `renderNoticeWindowStatus` e `renderNoticeInbox`, com os mesmos atributos, botões e listeners delegados; nada no motor dos eventos, calendário, RNG ou política de autosave foi alterado.
-- `tests/notice-window-refresh-boundary.test.mjs` adiciona 16 regressões para janela fechada/aberta, marcação forçada, cache, save importado, limpeza de DOM, falhas e fronteiras; os dois testes legados foram adaptados.
-
-## Septuagésimo terceiro recorte: revisão das estações e licenças
-
-- `src/application/stationRevisionPort.ts` fornece o mesmo vetor de doze entradas que alimenta as invalidações das telas de computadores, GPU, licenças, LCD e manutenção, lendo a partida ativa a cada atualização.
-- O cálculo de ocupação por estação e a fase/progresso dos reparos deixam o `main.ts`, que agora injeta `()=>game` e consulta `stationRevisionPort.snapshot(year)`.
-- Preservadas as posições dos campos e os valores opcionais; a assinatura ainda é comparada pelo mesmo `panelChanged`, sem atualizar regras de preços, custos ou gameplay.
-- `tests/station-revision-boundary.test.mjs` adiciona 19 regressões para dados, ocupação, reparos, referências vivas, mudança de save e não-mutação.
-- O commit imediatamente anterior corrige o teste de caixa de correio no worker-simulation que falhava com `notices` ainda não inicializado.
-
-## Septuagésimo quarto recorte: revisões dos painéis de administração
-
-- `src/application/adminPanelRevisionsPort.ts` reúne as assinaturas read-only de feedback, pacotes, preços do varejo, desgaste dos PCs, licenças clássicas e jogos GPU, lendo o save ativo a cada chamada.
-- `main.ts` mantém os identificadores de cache, a decisão de forçar atualização e os seletores da interface; só delega as projeções de estado à porta. A revisão anterior de estações continua compartilhada nos painéis de hardware e licenciamento.
-- Preservados: janela do feedback em blocos de 720 minutos, modo histórico, referências de preços, arredondamento e opcionalidade do desgaste, posições dos campos de licenças, projeção dos jobs GPU e estado de conexão.
-- `tests/admin-panel-revisions-boundary.test.mjs` verifica correspondência, atualização após mudança de save, ausência de mutação e fronteiras DOM/motor. Cache JSON, renderização, RNG, progresso, compras e persistência permanecem inalterados.
-
-## Septuagésimo quinto recorte: coordenação da pintura por quadro
-
-- `src/ui/framePresentationCoordinator.ts` centraliza os gates de cena, prévia do menu e HUD com a ordem existente das camadas. Recebe callbacks vivos sem importar motor, DOM ou Canvas.
-- O `main.ts` entrega a situação do menu, visibilidade, scroll, pointer, editor e os pintores existentes. A simulação e o despacho do correio continuam antes da renderização; `frameSchedule` mantém as mesmas janelas de tempo.
-- Permanecem: cena mobile a 30 FPS, menu a cada mais de 90 ms, HUD após mais de 450 ms, suspensão durante toque e rolagem, marcação do menu somente após desenho, e ordem cena → acesso → editor → menu → efeitos → prévia → HUD.
-- `tests/frame-presentation-coordinator-boundary.test.mjs` acrescenta 20 regressões; testes legados de agendamento e frame passam a validar o novo ponto de coordenação.
-- Corrigidas as três asserções desatualizadas de preço identificadas no worker-simulation do recorte 74; continuavam procurando as assinaturas inline anteriores ao `adminPanelRevisionsPort`. A compilação do 74 havia passado.
-- Sem mudanças em RNG, autosave, preços, compras, tempo simulado ou gestos mobile.
-
-## Septuagésimo sexto recorte: invalidação do catálogo da loja
-
-- `src/application/shopCatalogRevisionPort.ts` extrai do `main.ts` a assinatura read-only de dezessete campos usada pela loja: categoria ativa, caixa, serviços, PS1, ano, ampliações, PCs, móveis e paredes/portas.
-- `renderShop(force)` permanece no mesmo ponto da interface, preservando as verificações `shopOpen`, host do catálogo, `panelChanged("shop",...,force)` e a montagem de `renderShopCatalog`. Somente a leitura do estado foi movida para uma porta que recebe `()=>game` e consulta o save ativo em toda chamada.
-- `tests/shop-catalog-revision-boundary.test.mjs` adiciona 21 regressões de ordem, identidade, campo opcional, cache JSON, força, categoria, saldo, troca do save e não-mutação.
-- Não alterar preços, regras de compra ou de ampliação, controles PS1, esquema do save, RNG, gestos mobile ou renderização do Canvas.
-
-## Septuagésimo sétimo recorte: revisões dos painéis de hardware
-
-- `src/application/adminPanelRevisionsPort.ts` centraliza agora também a assinatura de cinco campos da manutenção de PCs, a revisão de seleção da GPU e o vetor da licença Windows, recebendo como parâmetros a página/aba selecionada e a revisão de estação. A leitura do desgaste continua viva via `()=>game`.
-- `main.ts` conserva os nomes de cache `computers`, `gpuPcChoice`, `licensePanel`, os gates de visibilidade e o momento de renderizar cada painel. Somente a construção dos vetores foi extraída.
-- `tests/admin-hardware-revisions-boundary.test.mjs` adiciona 20 regressões de ordem, opcionais, cache, arredondamento, identidade, troca do save e não-mutação.
-- Os dois testes legados que falharam no recorte 76 (`menu-scene-preview-boundary.test.mjs` e `runtime-interaction-bindings-boundary.test.mjs`) foram adaptados para verificar as chamadas agora localizadas em `framePresentationCoordinator.ts`. Compilação, cenas e os demais 1.492 testes haviam passado.
-- Preservados o limite de PCs, compra de hardware, preços, gestos mobile, Canvas, RNG, relógio simulado e save.
-
-## Septuagésimo oitavo recorte: atualização da vitrine da loja
-
-- `src/ui/shopCatalogRefresh.ts` assume a ordem das guardas da vitrine: loja aberta, host disponível, assinatura do catálogo, comparação pelo cache e pintura. O módulo é genérico, não possui DOM, motor, Canvas ou listeners e recebe callbacks vivos do bootstrap.
-- `main.ts` mantém `renderShop(force)`, o catálogo `SHOP_CATALOG`, as ofertas de serviços/PS1, a seleção de vaga e todos os handlers de compra; o método apenas delega para `shopCatalogRefresh.refresh(force)`.
-- `tests/shop-catalog-refresh-boundary.test.mjs` adiciona 20 regressões sobre a ordem e os gates, cache JSON, troca de categoria e save, força de atualização, host novo, erros e ausência de mutação.
-- Corrigidos também dois testes legados do recorte 77: a verificação de fronteira passou a exigir palavras inteiras (para não confundir `windows` com `window`), e a leitura de desgaste agora é verificada em `computerMaintenance`, após a extração.
-- Nenhuma compra, regra de expansão, preço, gesto mobile, atualização de tempo simulado ou save foi modificada.
-
-## Cuidados
-
-- Não alterar IDs de elementos, esquema do save, RNG, tempo simulado ou política de autosave.
-- Não adicionar Angular nem frameworks de interface nesta etapa: o contrato deve ser consumível por qualquer framework.
-- Manter renderização de Canvas e posição das estações intactas.
-- Novos painéis devem aceitar uma porta tipada (consulta/ação) em vez de chamar serviços do motor dentro de manipuladores de clique.
-- Testar troca da instância de jogo, restrições de compra, UI de calendário com painel fechado/aberto, importação de saves e execução de testes completos.
-
-## Próximos recortes
-
-- Incrementar testes automatizados de toque mobile e projeção isométrica no editor sem alterar seus limiares de gesto nem o canvas.
-- Projeções do HUD e das áreas de administração sem `GameState` nos componentes; dividir o renderizador administrativo grande em atualizações menores.
-- Concluir a separação do loop (efeitos/audio/render), do bootstrap e dos renderizadores administrativos, preservando o motor e o save.
-- Somente depois disso, considerar Angular, sem reescrever a simulação.
+Testes em Chromium com viewport mobile não equivalem a aprovação em aparelho físico. Aprovação artística, balanceamento de campanhas opcionais e serviços online autenticados continuam sujeitos aos respectivos fluxos próprios; não houve mudança de infraestrutura para esta refatoração.

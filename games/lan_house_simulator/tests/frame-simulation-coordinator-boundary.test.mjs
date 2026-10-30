@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -114,14 +115,13 @@ test("cada coordenador mantém seu estado de transição isolado",()=>{
 test("fronteira não importa engine, render, DOM ou save",()=>{
  const root=new URL("../src/",import.meta.url);
  const coordinator=readFileSync(new URL("application/frameSimulationCoordinator.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(coordinator,/from\s*["']\.\.\/(?:sim|render|ui|audio)\//);
  assert.doesNotMatch(coordinator,/\b(GameState|document|window|localStorage|CanvasRenderingContext2D|requestAnimationFrame|setInterval|stepGame)\b/);
  assert.match(coordinator,/frameActivitySnapshot\(activity\)/);
  assert.ok(coordinator.indexOf("actions.captureMotion()")<coordinator.indexOf("actions.advance(minutes)"));
- assert.match(main,/const frameSimulation=createFrameSimulationCoordinator\(\{/);
- assert.match(main,/captureMotion:\(\)=>sceneMotion\.capture\(game\)/);
- assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
- assert.match(main,/frameSimulation\.run\(\{/);
- assert.ok(main.indexOf("dispatchFrameEvents({")>main.indexOf("frameSimulation.run({"));
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/const frameSimulation=createFrameSimulationCoordinator\(\{/);
+ assertSourceCall("render/gameScene.ts","sceneMotion.capture",["source()"] );
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
+ assertCallsInOrder("ui/runtimeLoop.ts",["frameSimulation.run","framePort.dispatch","framePresentation.render"]);
 });

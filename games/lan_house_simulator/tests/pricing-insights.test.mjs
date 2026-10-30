@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -93,7 +94,6 @@ test("virada anual: +3% de tarifa energética até teto, sem modificar economia 
 test("painel mostra cenários legíveis e o custo da virada sem ações econômicas automáticas",()=>{
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const ui=readFileSync(resolve(root,"src/ui/pricingInsightsPanel.ts"),"utf8");
  const app=readFileSync(resolve(root,"src/application/pricingInsightsPort.ts"),"utf8");
  for(const id of ["price-scenario-lower","price-scenario-current","price-scenario-higher","energy-year-outlook"]){
@@ -104,7 +104,7 @@ test("painel mostra cenários legíveis e o custo da virada sem ações econômi
  assert.ok(app.includes("hourlyPriceScenarios(game)"));
  assert.ok(app.includes("energyYearOutlook(game)"));
  const pricingArea=readFileSync(resolve(root,"src/ui/adminPricingSections.ts"),"utf8");
- assert.ok(main.includes("renderAdminPricingSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminPricingSections({"));
  assert.ok(pricingArea.includes("renderHourlyPricingInsights(options.insights.hourly(),options.setText)"));
  assert.ok(pricingArea.includes("renderEnergyYearOutlook(options.insights.energy(),options.setText)"));
 });

@@ -1,6 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {stationUpgradeIssue} from "./stationPower.js";
-import {gameYear} from "./era.js";
+import {gameYear} from "./eraCatalog.js";
 
 /** Fictional station kits: release years belong to the game's progression. */
 export const LCD_CATALOG=[

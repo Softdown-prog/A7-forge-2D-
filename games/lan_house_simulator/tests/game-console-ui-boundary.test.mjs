@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -147,7 +148,6 @@ test("eventos de GPU, jogos por era e console mantem seletores e prioridades",()
 
 test("componentes migrados não importam motor e main compõe os dois adaptadores",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  for(const file of ["ui/gameLicensingControls.ts","ui/ps1Controls.ts"]){
   const src=readFileSync(new URL(file,root),"utf8");
   assert.doesNotMatch(src,/from\s*["']\.\.\/sim\//);
@@ -157,9 +157,9 @@ test("componentes migrados não importam motor e main compõe os dois adaptadore
   const src=readFileSync(new URL(file,root),"utf8");
   assert.doesNotMatch(src,/\bdocument\b|\bwindow\b|\bHTMLElement\b/);
  }
- assert.match(main,/installGameLicensingControls\(/);
- assert.match(main,/installPs1Controls\(/);
- assert.match(main,/createGameLicensingPort\(\(\)=>game\)/);
- assert.match(main,/createPs1ActionsPort\(\(\)=>game\)/);
- assert.doesNotMatch(main,/\b(licenseEraGame|licenseGpuGame|buyPs1Disc|setPs1StationDisc|buyPs1SecondSeat|repairPs1Controls)\s*\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installGameLicensingControls\(/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installPs1Controls\(/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createGameLicensingPort\(getState\)/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createPs1ActionsPort\(getState\)/);
+ assertCompositionAdaptersExclude(/\b(licenseEraGame|licenseGpuGame|buyPs1Disc|setPs1StationDisc|buyPs1SecondSeat|repairPs1Controls)\s*\(/);
 });

@@ -1,5 +1,4 @@
 import type {GameState,Point,Result} from "./types.js";
-import {DAY_MINUTES} from "./types.js";
 import {availablePlacementSlots,furnitureSlots,shopPrice} from "./shop.js";
 import {annualHourlyCeiling,isHistorical,yearFromMinutes,priceIndex} from "./historicalEconomy.js";
 import {roomBounds} from "./room.js";

@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -105,10 +106,9 @@ test("mudança na lista de cartas altera revisão de JSON",()=>{
 test("cache e janela são independentes da simulação e de saves",()=>{
  const r=readFileSync(new URL("../src/ui/noticeWindowRefresh.ts",import.meta.url),"utf8");
  const p=readFileSync(new URL("../src/application/noticeInboxRevisionPort.ts",import.meta.url),"utf8");
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  assert.equal(r.includes("../sim/"),false);assert.equal(r.includes("GameState"),false);
  assert.equal(p.includes("document."),false);assert.equal(p.includes("window."),false);
- assert.ok(main.includes("createNoticeWindowRefresh({"));
- assert.ok(main.includes("noticeWindowRefresh.refresh(noticesOpen,!liveOnly)"));
- assert.ok(main.includes('panelChanged("notices",noticeInboxRevisionPort.snapshot(),force)'));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("createNoticeWindowRefresh({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("noticeWindowRefresh.refresh(state.windows.noticesOpen,!liveOnly)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("panelChanged(\"notices\",noticeInboxRevisionPort.snapshot(),force)"));
 });

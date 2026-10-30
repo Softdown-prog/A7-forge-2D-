@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -81,11 +82,10 @@ test("não cria listeners nem consulta save, sim ou Canvas",()=>{
  assert.doesNotMatch(src,/\b(GameState|localStorage|document|window|CanvasRenderingContext2D|addEventListener|stepGame)\b/);
 });
 test("main mantém Soundscape compartilhado e delega somente preferência ao port",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(main,/const soundPreference=createSoundPreferencePort\(\{/);
- assert.match(main,/const soundEnabled=soundPreference\.read\(\)/);
- assert.match(main,/const soundscape=new Soundscape\(soundEnabled\)/);
- assert.match(main,/soundPreference\.update\(enabled,soundscape\)/);
- assert.match(main,/installSoundInputBindings\(document,soundscape\)/);
- assert.doesNotMatch(main,/localStorage\.setItem\("lhs\.sound"/);
+ assertSourceCall("bootstrap/bootstrapGame.ts","createSoundPreferencePort");
+ assertSourceCall("bootstrap/bootstrapGame.ts","preference.read");
+ assert.match(sourceModule("bootstrap/bootstrapGame.ts"),/new Soundscape\(enabled\)/);
+ assertSourceCall("bootstrap/bootstrapGame.ts","preference.update",["value","soundscape"]);
+ assert.match(sourceModule("bootstrap/bootstrapGame.ts"),/installSoundInputBindings\(document,soundscape\)/);
+ assertCompositionAdaptersExclude(/localStorage\.setItem\("lhs\.sound"/);
 });

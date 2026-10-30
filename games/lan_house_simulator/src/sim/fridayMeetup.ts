@@ -3,7 +3,7 @@
  * Uma simples intenção não bloqueia estações nem cria pessoas.
  */
 import type {GameState,Result} from "./types.js";
-import {gameYear} from "./era.js";
+import {gameYear} from "./eraCatalog.js";
 import {GAME_END_DAY} from "./mailCalendar.js";
 import {ERIC_MULTIPLAYER_GAME_ID,multiplayerEligiblePcs} from "./eraGames.js";
 import {entrance,pcPosition} from "./simulationState.js";

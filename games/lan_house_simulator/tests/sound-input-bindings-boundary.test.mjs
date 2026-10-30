@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -99,10 +100,9 @@ test("o mesmo mixer recebe todos eventos e preserva contagem",()=>check(f=>{
 test("UI de áudio não conhece motor nem salva partidas",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/soundInputBindings.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/(?:sim|application|render|audio)\//);
  assert.doesNotMatch(ui,/\b(GameState|stepGame|save\(|localStorage|requestAnimationFrame|new Audio)\b/);
- assert.match(main,/installSoundInputBindings\(document,soundscape\)/);
+ assert.match(sourceModule("bootstrap/bootstrapGame.ts"),/installSoundInputBindings\(document,soundscape\)/);
  assert.match(ui,/doc\.addEventListener\("click",event=>/);
  assert.match(ui,/control instanceof HTMLButtonElement&&!control\.disabled/);
 });

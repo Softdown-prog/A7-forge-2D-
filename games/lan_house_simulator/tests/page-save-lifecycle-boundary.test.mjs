@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -92,11 +93,10 @@ test("temporizador mantém o contexto nativo de Window ao ser injetado",()=>{
 test("coordenador não acessa estado, serialização, RNG ou APIs cloud",()=>{
  const root=new URL("../src/",import.meta.url);
  const src=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(src,/from\s*["']\.\.\/(sim|audio|application|render)\//);
  assert.doesNotMatch(src,/\b(GameState|localStorage|sessionStorage|fetch|stepGame|JSON\.stringify|requestAnimationFrame)\b/);
  assert.match(src,/options\.every\(options\.save,8000\)/);
  assert.match(src,/addEventListener\("pagehide",options\.save\)/);
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
- assert.match(main,/requestAnimationFrame\(frame\)/);
+ assertSourceCall("ui/runtimeSessionController.ts","installPageSaveLifecycle",["{win:options.window,doc:document,every:(callback,ms)=>options.window.setInterval(callback,ms),save}"]);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/requestAnimationFrame\(frame\)/);
 });

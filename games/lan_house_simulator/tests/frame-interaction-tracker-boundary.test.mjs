@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -92,17 +93,16 @@ test("monitoramento visual não altera partida nem save importado",()=>{
 test("fronteiras de UI preservam simulação, Canvas e listeners do editor mobile",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/frameInteractionTracker.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const editor=readFileSync(new URL("ui/layoutEditor.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\b(GameState|stepGame|requestAnimationFrame)\b/);
- assert.match(main,/installFrameInteractionTracker\(document,window,\(\)=>performance\.now\(\)\)/);
+ assertSourceCall("ui/runtimeLoop.ts","installFrameInteractionTracker",["document","win","()=>performance.now()"] );
  const painter=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
- assert.match(main,/hudFlags:\{playing:isPlaying,accountOpen,\.\.\.frameInteraction\.snapshot\(\)\}/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/hudFlags:\{playing:state\.isPlaying,accountOpen,\.\.\.frameInteraction\.snapshot\(\)\}/);
  assert.match(painter,/schedule\.hud\(input.timestamp,input.hudFlags\)/);
- assert.match(main,/new IntersectionObserver/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/new IntersectionObserver/);
  const lifecycle=readFileSync(new URL("ui/pageSaveLifecycle.ts",root),"utf8");
- assert.match(main,/installPageSaveLifecycle\(\{win:window,doc:document,every:\(callback,ms\)=>window\.setInterval\(callback,ms\),save\}\)/);
+ assertSourceCall("ui/runtimeSessionController.ts","installPageSaveLifecycle",["{win:options.window,doc:document,every:(callback,ms)=>options.window.setInterval(callback,ms),save}"]);
  assert.match(lifecycle,/options\.every\(options\.save,8000\)/);
  assert.match(editor,/canvas\.addEventListener\("pointerup"/);
  assert.match(editor,/canvas\.addEventListener\("pointercancel"/);

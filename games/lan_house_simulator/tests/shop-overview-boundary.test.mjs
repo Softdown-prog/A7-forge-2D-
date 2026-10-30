@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -133,13 +134,12 @@ test("a interface não conhece o motor e main conserva os handlers",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/shopOverviewPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/shopOverviewPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|roomBounds|pcCount|wallZoneCount/);
- assert.match(main,/createShopOverviewPort\(\(\)=>game/);
- assert.match(main,/renderShopOverview\(shopOverviewPort\.snapshot\(\),document\)/);
- assert.match(main,/button\("organize-furniture",\(\)=>layoutEditor\.open\(\)\)/);
- assert.match(main,/button\("demolish-walls"/);
- assert.doesNotMatch(main,/\broomBounds\b|\bwallZoneCount\b/);
+ assert.match(sourceModule("application/gamePorts.ts"),/createShopOverviewPort\(getState/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderShopOverview\(shopOverviewPort\.snapshot\(\),document\)/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/button\("organize-furniture",\(\)=>layoutEditor\.open\(\)\)/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/button\("demolish-walls"/);
+ assertCompositionAdaptersExclude(/\broomBounds\b|\bwallZoneCount\b/);
 });

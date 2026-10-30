@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall,assertCallsInOrder} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -97,16 +98,15 @@ test("falha no consumidor de vendas não processa impressão nem speech",()=>{
 });
 test("módulo não conhece DOM, simulação, dispositivo áudio ou timer de save",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const src=readFileSync(new URL("application/frameEventDispatch.ts",root),"utf8");
  assert.doesNotMatch(src,/from\s*["']\.\.\/(?:sim|audio|ui|render)\//);
  const runtime=src.replace(/\/\*[\s\S]*?\*\//g,"");
  assert.doesNotMatch(runtime,/\b(GameState|document|window|AudioContext|Soundscape|CanvasRenderingContext2D|localStorage|setInterval|requestAnimationFrame|stepGame)\b|\bsave\(/);
- assert.match(main,/dispatchFrameEvents\(\{/);
- assert.match(main,/countNewMail:\(\)=>consumeNewMail\(knownMailIds,game.notices\)/);
- assert.match(main,/notifyMail:\(\)=>soundscape.mail\(\)/);
- assert.match(main,/feedback:frameFeedback/);
- assert.match(main,/frameSimulation\.run\(\{/);
- assert.match(main,/advance:minutes=>stepGame\(game,minutes\)/);
- assert.ok(main.indexOf("dispatchFrameEvents({")>main.indexOf("frameSimulation.run({"));
+ assert.match(sourceModule("application/gameFramePort.ts"),/dispatchFrameEvents\(\{/);
+ assertSourceCall("application/gameFramePort.ts","consumeNewMail",["knownMailIds","getState().notices"]);
+ assert.match(sourceModule("application/gameFramePort.ts"),/notifyMail:\(\)=>audio.mail\(\)/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/notifyMail:\(\)=>audio.mail\(\),feedback,/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
+ assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
+ assertCallsInOrder("ui/runtimeLoop.ts",["frameSimulation.run","framePort.dispatch","framePresentation.render"]);
 });

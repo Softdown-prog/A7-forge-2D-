@@ -736,7 +736,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
 /** Fone com arco anatômico, conchas separadas e microfone articulado.
  * Em perspectiva de costas e perfil preserva os mesmos pontos de ancoragem. */
 function drawNeonHeadset(ctx:ActorContext,headX:number,
- headY:number,back:boolean,sideways:boolean,time:number):void{
+ headY:number,_back:boolean,sideways:boolean,time:number):void{
  ctx.save();ctx.translate(headX,headY);
  // Proporções calibradas para não engolir a cabeça de um ator em zoom alto.
  ctx.scale(.80,.82);

@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -89,14 +90,13 @@ test("componentes não importam motor, main conserva controles e atualização i
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/gpuGamesCatalogPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/gpuGamesCatalogPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(main.includes("createGpuGamesCatalogPort(()=>game)"));
- assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createGpuGamesCatalogPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
  assert.ok(sections.includes("renderGpuGamesCatalog(options.gpuGamePanel,options.gpuGames.snapshot(),options.doc,options.sync)"));
  assert.ok(sections.includes("refreshGpuDownloadMeters(options.gpuGamePanel,"));
- assert.ok(main.includes("installGameLicensingControls("));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installGameLicensingControls("));
 });

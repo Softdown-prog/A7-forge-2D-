@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -132,12 +133,11 @@ test("renderização repetida não modifica caixa, clientes ou RNG",()=>{
  assert.equal(JSON.stringify(x.game()),before);
 });
 test("main mantém ofertas e controles, delegando apenas a atualização",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.match(main,/createShopCatalogRefresh\(\{/);
- assert.match(main,/function renderShop\(force=true\):void\{shopCatalogRefresh\.refresh\(force\);\}/);
- assert.match(main,/renderShopCatalog\(\{/);
- assert.match(main,/items:SHOP_CATALOG/);
- assert.match(main,/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
- assert.match(main,/selectedPs1Slot:\(\)=>selectedPs1PlacementId/);
- assert.match(main,/changed:\(revision,force\)=>panelChanged\("shop",revision,force\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/createShopCatalogRefresh\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/function renderShop\(force=true\):void\{shopCatalogRefresh\.refresh\(force\);\}/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/renderShopCatalog\(\{/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/items:SHOP_CATALOG/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/selectedPs1Slot:\(\)=>state\.selection\.selectedPs1PlacementId/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/changed:\(revision,force\)=>panelChanged\("shop",revision,force\)/);
 });

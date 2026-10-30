@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -123,12 +124,11 @@ test("porta não depende de DOM, cronômetros, persistência nem compras",()=>{
   assert.equal(source.includes(forbidden),false,forbidden);
 });
 test("main fornece a categoria atual e ainda delega o renderizador original",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
- assert.ok(main.includes("createShopCatalogRevisionPort(()=>game)"));
- assert.ok(main.includes('revision:()=>shopCatalogRevisionPort.snapshot(shopPanels?.current())'));
- assert.ok(main.includes('changed:(revision,force)=>panelChanged("shop",revision,force)'));
- assert.ok(main.includes("renderShopCatalog({"));
- assert.ok(main.includes("currentCategory:()=>shopPanels?.current()"));
- assert.ok(main.includes("offer:id=>shopCatalogOffersPort.snapshot(id)"));
- assert.ok(!main.includes("game.removedBuiltPosters,game.interiorWalls,game.interiorDoors"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createShopCatalogRevisionPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("revision:()=>shopCatalogRevisionPort.snapshot(shopPanels?.current())"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("changed:(revision,force)=>panelChanged(\"shop\",revision,force)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderShopCatalog({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("currentCategory:()=>shopPanels?.current()"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("offer:id=>shopCatalogOffersPort.snapshot(id)"));
+ assertCompositionAdaptersExclude("game.removedBuiltPosters,game.interiorWalls,game.interiorDoors");
 });

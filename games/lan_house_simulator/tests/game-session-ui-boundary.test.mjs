@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -148,13 +149,12 @@ test("importação de arquivos e exportação mantêm limite, controles e mensag
 
 test("UI de arquivos não conhece estado do motor e main injeta a porta",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/saveFileControls.ts",root),"utf8");
  const app=readFileSync(new URL("application/gameSessionPort.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b/);
  assert.doesNotMatch(app,/\bwindow\b|\bdocument\b|\blocalStorage\b|\bHTMLElement\b/);
- assert.match(main,/createGameSessionPort\(/);
- assert.match(main,/installSaveFileControls\(/);
- assert.doesNotMatch(main,/\b(?:loadLocalSave|writeLocalSave|replaceLocalSave|parseImportedSave|serializeSave)\s*\(/);
+ assert.match(sourceModule("application/gameApplication.ts"),/createGameSessionPort\(/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/installSaveFileControls\(/);
+ assertCompositionAdaptersExclude(/\b(?:loadLocalSave|writeLocalSave|replaceLocalSave|parseImportedSave|serializeSave)\s*\(/);
 });

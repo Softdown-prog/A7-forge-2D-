@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -99,15 +100,14 @@ test("consultas não alteram relógio, RNG ou save",()=>{
  assert.equal(JSON.stringify(x.state()),old);
 });
 test("UI ainda controla nomes de cache, escolha de abas e renderização",()=>{
- const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
  for(const key of ["computers","gpuPcChoice","licensePanel"]){
-  assert.ok(main.includes('panelChanged("'+key+'"'),key);
+  assert.ok(sourceModule("ui/gamePanels.ts").includes('panelChanged("'+key+'"'),key);
  }
- assert.match(main,/adminPanelRevisionsPort\.computerMaintenance\(/);
- assert.match(main,/adminPanelRevisionsPort\.gpuChoice\(/);
- assert.match(main,/adminPanelRevisionsPort\.windows\(/);
- assert.ok(main.includes("renderAdminComputerSections({"));
- assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.match(sourceModule("ui/gamePanels.ts"),/adminPanelRevisionsPort\.computerMaintenance\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/adminPanelRevisionsPort\.gpuChoice\(/);
+ assert.match(sourceModule("ui/gamePanels.ts"),/adminPanelRevisionsPort\.windows\(/);
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminComputerSections({"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
 });
 test("a fronteira não importa DOM nem altera sistema ou persistência",()=>{
  const app=readFileSync(new URL("../src/application/adminPanelRevisionsPort.ts",import.meta.url),"utf8");

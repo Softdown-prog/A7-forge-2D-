@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {Soundscape,AUDIO_LEVELS,SODA_CHANCE,SODA_COOLDOWN_SECONDS,SODA_AFTER_SALE_DELAY_SECONDS,shouldPlaySodaSound} from "../dist/js/audio/soundscape.js";
@@ -67,16 +68,15 @@ test("amostras OGG originais são diferentes e copiadas intactas no build",()=>{
 test("som aprovado toca apenas no fluxo de venda e não cria botão de teste na produção",()=>{
  const root=resolve(import.meta.dirname,"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- const main=readFileSync(resolve(root,"src/main.ts"),"utf8");
  const engine=readFileSync(resolve(root,"src/audio/soundscape.ts"),"utf8");
  const css=readFileSync(resolve(root,"style.css"),"utf8");
  assert.doesNotMatch(html,/preview-soda-sfx|preview-soda-status|sound-preview/);
- assert.doesNotMatch(main,/preview-soda-sfx|previewSoda/);
+ assertCompositionAdaptersExclude(/preview-soda-sfx|previewSoda/);
  assert.doesNotMatch(engine,/previewSoda/);
  assert.doesNotMatch(css,/sound-preview/);
  const feedback=readFileSync(resolve(root,"src/application/frameFeedbackPort.ts"),"utf8");
  const dispatch=readFileSync(resolve(root,"src/application/frameEventDispatch.ts"),"utf8");
- assert.match(main,/dispatchFrameEvents\(\{/);
+ assert.match(sourceModule("application/gameFramePort.ts"),/dispatchFrameEvents\(\{/);
  assert.match(dispatch,/options\.feedback\.sales\(options\.playing\)/);
  assert.match(feedback,/if\(e\.item==="soda"\)audio\.soda\(\)/);
  assert.equal(AUDIO_LEVELS.soda,0.085);

@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import assert from "node:assert/strict";
 import test from "node:test";
 import {readFileSync} from "node:fs";
@@ -70,12 +71,11 @@ test("regularizar não cria procura; licenciar título específico gera só o b�
 });
 
 test("UI oculta contrato concluído e apresenta preços e avisos atualizados",()=>{
-  const main=readFileSync(new URL("../src/main.ts",import.meta.url),"utf8");
   const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
   const projection=readFileSync(new URL("../src/application/basicGamesLicenseStatusPort.ts",import.meta.url),"utf8");
   const visual=readFileSync(new URL("../src/ui/basicGamesLicenseStatusPanel.ts",import.meta.url),"utf8");
   const coordinator=readFileSync(new URL("../src/ui/adminGpuLicenseSections.ts",import.meta.url),"utf8");
-  assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+  assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
   assert.ok(coordinator.includes("renderBasicGamesLicenseStatus(options.basicGames.snapshot(),options.setText,options.doc)"));
   assert.ok(projection.includes("buttonHidden:game.licensedGames"));
   assert.ok(projection.includes("buttonDisabled:game.cash<fee"));

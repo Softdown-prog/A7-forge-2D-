@@ -1,11 +1,11 @@
 /** simulationState.ts: módulo do runtime LHS; lógica executada por minuto do jogo. */
 import type {Costume,GameState,Point,Result} from "./types.js";
 import {DAY_MINUTES,OPEN_HOUR} from "./types.js";
-import {INITIAL_CASH} from "./financialClarity.js";
+import {INITIAL_CASH} from "./gameDefaults.js";
 import {type PlacedPoint} from "./layout.js";
 import {futureNightClock} from "./futureNightClock.js";
-import {annexComputerPosition} from "./stations.js";
-import {pcUnderRepair} from "./services.js";
+import {annexComputerPosition} from "./stationLayout.js";
+import {pcUnderRepair} from "./stationPower.js";
 
 export const COSTUMES: Costume[] = ["regular", "regular", "female", "female-bob", "female-ponytail", "regular", "clown", "vampire", "stitched-monster", "rabbit", "mouse-mascot"];
 /** Encerrar de forma gradual: últimos visitantes até 20h30, início da saída às 21h. */

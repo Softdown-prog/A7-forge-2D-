@@ -1,3 +1,4 @@
+import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -97,14 +98,13 @@ test("reiniciar continua clássico; continuar exige partida; controles de som e 
 test("controles permanecem sem sim e a interface preserva integração com a sessão",()=>{
  const root=new URL("../src/",import.meta.url);
  const ui=readFileSync(new URL("ui/gameMenuControls.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|\blocalStorage\b|\bwindow\b/);
- assert.match(main,/createMenuScreens\(menuElements\)/);
- assert.match(main,/installMenuControls\(menuElements/);
- assert.match(main,/sessionPort\.replace\(fresh\)/);
- assert.match(main,/if\(isPlaying\)save\(\)/);
- assert.match(main,/menuScreens\.showMenu\(hasSavedGame\)/);
- assert.match(main,/menuScreens\.showGame\(\)/);
- assert.doesNotMatch(main,/document\.getElementById\("menu-new"\)\?\.addEventListener/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/createMenuScreens\(menuElements\)/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/installMenuControls\(menuElements/);
+ assertSourceCall("application/gameApplication.ts","sessionPort.replace",["state"]);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/if\(state\.isPlaying\)save\(\)/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/menuScreens\.showMenu\(state\.hasSavedGame\)/);
+ assert.match(sourceModule("ui/runtimeSessionController.ts"),/menuScreens\.showGame\(\)/);
+ assertCompositionAdaptersExclude(/document\.getElementById\("menu-new"\)\?\.addEventListener/);
 });

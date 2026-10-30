@@ -1,3 +1,4 @@
+import {sourceModule,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -100,12 +101,11 @@ test("a interface não importa a simulação, Canvas, save ou áudio",()=>{
 });
 test("main injeta as ações reais e mantém acesso ao estado atualizado",()=>{
  const root=new URL("../src/",import.meta.url);
- const main=readFileSync(new URL("main.ts",root),"utf8");
- assert.match(main,/installRuntimeInteractionBindings\(document,\{/);
- assert.match(main,/refreshTimeWeather:\(\)=>renderTimeWeatherPanel\(timeWeatherSnapshot\(game\),iconMarkup\)/);
- assert.match(main,/editorOpen:\(\)=>layoutEditor\.active/);
- assert.match(main,/editingPlacement:\(\)=>!!\(placingKind\|\|relocating\|\|wallMode\|\|installingAnnexPc\)/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/installRuntimeInteractionBindings\(document,\{/);
+ assertSourceCall("ui/runtimeControls.ts","renderTimeWeatherPanel",["ports.timeWeather()","iconMarkup"]);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/editorOpen:\(\)=>layoutEditor\.active/);
+ assert.match(sourceModule("ui/runtimeControls.ts"),/editingPlacement:\(\)=>!!\(state\.placement\.placingKind\|\|state\.placement\.relocating\|\|state\.placement\.wallMode\|\|state\.placement\.installingAnnexPc\)/);
  const frame=readFileSync(new URL("ui/framePresentationCoordinator.ts",root),"utf8");
- assert.match(main,/framePresentation\.render\(\{/);
+ assert.match(sourceModule("ui/runtimeLoop.ts"),/framePresentation\.render\(\{/);
  assert.match(frame,/if\(schedule\.hud\(input\.timestamp,input\.hudFlags\)\)input\.refreshHud\(\)/);
 });

@@ -1,3 +1,4 @@
+import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -94,16 +95,15 @@ test("componente sem motor, porta sem DOM e integração no main",()=>{
  const root=new URL("../src/",import.meta.url);
  const app=readFileSync(new URL("application/gpuCatalogPort.ts",root),"utf8");
  const ui=readFileSync(new URL("ui/gpuCatalogPanel.ts",root),"utf8");
- const main=readFileSync(new URL("main.ts",root),"utf8");
  const sections=readFileSync(new URL("ui/adminGpuLicenseSections.ts",root),"utf8");
  assert.equal(app.includes("document."),false);
  assert.equal(ui.includes("../sim/"),false);
  assert.equal(ui.includes("GameState"),false);
  assert.equal(ui.includes("addEventListener"),false);
- assert.ok(main.includes("createGpuCatalogPort(()=>game)"));
- assert.ok(main.includes("renderAdminGpuLicenseSections({"));
+ assert.ok(sourceModule("application/gamePorts.ts").includes("createGpuCatalogPort(getState)"));
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminGpuLicenseSections({"));
  assert.ok(sections.includes("renderGpuCatalogPanel(options.gpuPcChoice,options.gpuList,"));
- assert.ok(main.includes('panelChanged("gpuPcChoice"'));
- assert.ok(main.includes("installStationControls("));
- assert.equal(main.includes("for(const model of GPU_CATALOG)"),false);
+ assert.ok(sourceModule("ui/gamePanels.ts").includes("panelChanged(\"gpuPcChoice\""));
+ assert.ok(sourceModule("ui/runtimeControls.ts").includes("installStationControls("));
+ assert.doesNotMatch(sourceModule("ui/gamePanels.ts"),/for\(const model of GPU_CATALOG\)/);
 });

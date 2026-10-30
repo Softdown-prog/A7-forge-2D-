@@ -5,7 +5,7 @@ import type {Customer,GameState} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
 import {sessionPlan} from "./customerChoices.js";
 import {sessionRevenue} from "./economy.js";
-import {gameYear} from "./era.js";
+import {gameYear} from "./eraCatalog.js";
 import {ERIC_MULTIPLAYER_GAME_ID,multiplayerEligiblePcs} from "./eraGames.js";
 import {spawnMultiplayerFriend} from "./customerArrival.js";
 import {entrance,pcPosition,addLog,localMinute,SESSION_FINISH_MINUTE} from "./simulationState.js";
