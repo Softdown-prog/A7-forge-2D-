@@ -58,6 +58,7 @@ export function furnitureSlots(s:GameState):PlacementSlot[]{
 export function occupiedFurnitureSlots(s:GameState):Set<string>{
  const occupied=new Set((s.furniturePlacements??[]).map(p=>p.slotId));
  for(const station of s.ps1Stations??[])occupied.add(station.slotId);
+ for(const station of s.ps2Stations??[])occupied.add(station.slotId);
  for(const kind of ["poster","plant","table"] as const){
   const positioned=(s.furniturePlacements??[]).filter(p=>p.kind===kind).length;
   const legacy=Math.max(0,(s.furniture?.[kind]??0)-positioned);
