@@ -27,6 +27,11 @@ jobs:
           # Refresh the lockfile from explicit patched-range overrides.
           npm install --package-lock-only --ignore-scripts --no-audit --no-fund
           npm ci --ignore-scripts --no-audit --no-fund
+          # Backend HTTP tests import the shared, compiled game save modules.
+          cd ..
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          cd backend
           node --test tests/*.test.mjs
           npm audit --omit=dev
       - name: Commit verified backend lockfile only
