@@ -3,11 +3,6 @@ name: LHS MCP repository index
 on:
   push:
     branches: ["feat/lhs-angular-ui-foundation"]
-    paths:
-      - "tools/lhs-mcp/**"
-      - ".github/workflows/lhs-mcp-index.yml"
-      - "games/lan_house_simulator/src/**"
-      - "games/lan_house_simulator/frontend-angular/src/**"
   workflow_dispatch:
     inputs:
       scope:

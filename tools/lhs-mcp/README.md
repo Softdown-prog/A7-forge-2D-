@@ -1,22 +1,23 @@
 # LHS Repository MCP — navegação e manutenção de código
 
-Servidor MCP real no transporte \`stdio\` (JSON-RPC), sem dependências npm.
+Servidor MCP real no transporte `stdio` (JSON-RPC), sem dependências npm.
 Usa Node.js 22 e lê arquivos rastreados pelo Git. Por padrão pesquisa
-\`games/lan_house_simulator\`; \`--scope .\` permite o monorepo inteiro.
+`games/lan_house_simulator`; `--scope .` permite o monorepo inteiro.
 O índice identifica caminhos, extensões, tamanhos, símbolos e imports
 sem armazenar conteúdo integral dos arquivos no artefato. Busca textual
 e leitura por linhas acontecem sob demanda, com limites de resultados.
 
 ## GitHub Actions
 
-O workflow \`.github/workflows/lhs-mcp-index.yml\` executa testes de protocolo
-e segurança, cria \`out/lhs-mcp-index/catalog.json\` e \`summary.json\`
-e publica o artefato \`lhs-mcp-catalog\`. Permissão \`contents: read\`.
+O workflow `.github/workflows/lhs-mcp-index.yml` executa testes de protocolo
+e segurança, cria `out/lhs-mcp-index/catalog.json` e `summary.json`
+e publica o artefato `lhs-mcp-catalog`. Permissão `contents: read`.
 GitHub Actions é **efêmero**: um processo MCP iniciado pelo job é encerrado
 ao fim do workflow. Não existe servidor HTTP permanente, conexão direta ao
 ChatGPT ou acesso remoto automático a partir desse artefato.
 
-O workflow roda na branch Angular quando MCP ou código do jogo muda.
+O workflow atualiza o catálogo a cada push na branch Angular, inclusive quando
+arquivos de outros diretórios mudam.
 Outras alterações podem ser indexadas ao rodar o workflow manualmente
 (quando disponível na branch padrão) ou ampliando seus filtros.
 Nenhum push, PR, merge ou deploy é feito pelo processo MCP.
@@ -25,15 +26,15 @@ Nenhum push, PR, merge ou deploy é feito pelo processo MCP.
 
 No diretório raiz do repositório:
 
-\`\`\`bash
+```bash
 node tools/lhs-mcp/index.mjs --scope . --output out/lhs-mcp-index/catalog.json
 node tools/lhs-mcp/server.mjs --scope games/lan_house_simulator
-\`\`\`
+```
 
 Exemplo de configuração de cliente MCP (ajustar para seu checkout e
 diretório de execução):
 
-\`\`\`json
+```json
 {
   "mcpServers": {
     "lhs-repository": {
@@ -42,23 +43,23 @@ diretório de execução):
     }
   }
 }
-\`\`\`
+```
 
-Com \`--scope .\` o MCP pode navegar todo o repositório. Para reutilizar
-um índice válido do mesmo commit e escopo: \`--index out/lhs-mcp-index/catalog.json\`.
+Com `--scope .` o MCP pode navegar todo o repositório. Para reutilizar
+um índice válido do mesmo commit e escopo: `--index out/lhs-mcp-index/catalog.json`.
 Clientes que não podem executar um subprocesso não se conectam diretamente
 ao MCP apenas por causa do workflow. Para acesso contínuo seria necessária
 uma hospedagem separada e transporte compatível.
 
 ## Ferramentas
 
-- \`project_status\`, \`list_directory\`, \`find_files\`, \`find_symbols\`,
-  \`search_content\`, \`file_info\`, \`read_file\`, \`refresh_index\`.
-- \`edit_file\`, \`create_file\`, \`move_file\`, \`delete_file\`: **prévia por
-  padrão**. Para aplicar num checkout local, iniciar com \`--allow-write\`
-  e enviar \`dry_run:false\` no pedido.
-- Editar, mover ou excluir exige \`expected_sha256\` devolvido por
-  \`read_file\`, bloqueando alterações se o arquivo mudou. Editar exige
+- `project_status`, `list_directory`, `find_files`, `find_symbols`,
+  `search_content`, `file_info`, `read_file`, `refresh_index`.
+- `edit_file`, `create_file`, `move_file`, `delete_file`: **prévia por
+  padrão**. Para aplicar num checkout local, iniciar com `--allow-write`
+  e enviar `dry_run:false` no pedido.
+- Editar, mover ou excluir exige `expected_sha256` devolvido por
+  `read_file`, bloqueando alterações se o arquivo mudou. Editar exige
   ocorrência exata única. Caminhos escapando do repositório, segredos
   e symlinks são rejeitados.
 - Mudanças são locais, não são automaticamente enviadas ao GitHub.
@@ -71,5 +72,5 @@ e não substitui o GitHub MCP: o conector GitHub continua responsável
 pelos commits remotos, PRs e revisão. O novo MCP organiza caminhos, símbolos
 e edições controladas num checkout.
 
-Pastas como \`node_modules\`, \`dist\`, \`out\` e chaves de acesso não são
+Pastas como `node_modules`, `dist`, `out` e chaves de acesso não são
 indexadas. Binários grandes só entram como metadados (caminho, tamanho).
