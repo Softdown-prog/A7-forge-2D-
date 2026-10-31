@@ -19,7 +19,7 @@ type Area=keyof typeof TASKS;
 abstract class Workspace implements OnInit,OnDestroy{
  abstract readonly area:Area;
  readonly selected=signal('');
- private readonly sync=(e:Event)=>{
+ private readonly sync=(e:Event):void=>{
   const detail=(e as CustomEvent<{area:string;page:string}>).detail;
   if(detail?.area===this.area&&TASKS[this.area].some(task=>task.id===detail.page))
    this.selected.set(detail.page);

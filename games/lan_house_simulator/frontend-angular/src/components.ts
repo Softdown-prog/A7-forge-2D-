@@ -56,7 +56,7 @@ export class ShopCategoriesComponent implements OnInit,OnDestroy {
   readonly categories=SHOP_CATEGORIES;
   readonly current=signal('equipment');
   private nav:HTMLElement|null=null;
-  private readonly selected=(event:Event)=>{
+  private readonly selected=(event:Event):void=>{
     const value=(event as CustomEvent<string>).detail;
     if(SHOP_CATEGORIES.some(x=>x.id===value))this.current.set(value);
   };
@@ -120,8 +120,8 @@ export class ShopSearchComponent implements OnInit,OnDestroy {
   readonly counts=signal({visible:0,total:0});
   private host:HTMLElement|null=null;
   private nav:HTMLElement|null=null;
-  private readonly updated=()=>this.apply();
-  private readonly categorySelected=()=>{
+  private readonly updated=():void=>this.apply();
+  private readonly categorySelected=():void=>{
     this.query.set('');
     this.apply();
   };
