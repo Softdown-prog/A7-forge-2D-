@@ -17,11 +17,25 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json',
  '.png':'image/png','.webp':'image/webp','.wav':'audio/wav','.ogg':'audio/ogg'};
 const original=await readFile(resolve(gameRoot,'index.html'),'utf8');
+// Rehearse real Angular save/options components, without altering production HTML.
+// Keeping all original IDs allows the same native TypeScript event controllers.
+const saveStart=original.indexOf('<div class="save-actions" aria-label="Transferir progresso">');
+const saveMessage=original.indexOf('<p id="save-message"',saveStart);
+const saveEnd=original.indexOf('</p>',saveMessage)+4;
+const settingsStart=original.indexOf('<div id="menu-settings"',saveEnd);
+const settingsEnd=original.indexOf('</div>',settingsStart)+6;
+assert.ok(saveStart>0&&saveMessage>saveStart&&saveEnd>saveMessage,'Native save controls found');
+assert.ok(settingsStart>saveEnd&&settingsEnd>settingsStart,'Native sound options found');
+const nativeSaveMarkup=original.slice(saveStart,saveEnd);
+const nativeSettingsMarkup=original.slice(settingsStart,settingsEnd);
+const cutoverShell=original
+ .replace(nativeSaveMarkup,'<div id="angular-save-transfer"></div>')
+ .replace(nativeSettingsMarkup,'<div id="angular-menu-preferences"></div>');
 const reactEntry='<script type="module" src="./js/react-entry.js"></script>';
 const shopEntry='<div id="shop-catalog" class="shop-grid"></div>';
 assert.equal(original.split(reactEntry).length,2,'One React bootstrap expected');
 assert.equal(original.split(shopEntry).length,2,'One native catalogue expected');
-const index=original.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+const index=cutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
@@ -64,6 +78,13 @@ try{
   const persisted=()=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+  assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
+   'Angular export button mounted before native bootstrap');
+  assert.equal(await page.locator('#angular-save-transfer #save-import-file').count(),1,
+   'Angular file picker retains stable input ID');
+  assert.equal(await page.locator('#angular-menu-preferences #option-sound').count(),1,
+   'Angular sound component owns the preferences');
+  assert.equal(await page.locator('#save-export').count(),1,'No duplicate save DOM IDs');
   await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
   await press(page.locator('#menu-continue'));
   await page.locator('#game-app').waitFor({state:'visible'});
@@ -122,6 +143,13 @@ try{
   await page.screenshot({path:resolve(output,'integrated-'+width+'.png'),fullPage:true});
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+  assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
+   'Angular export button mounted before native bootstrap');
+  assert.equal(await page.locator('#angular-save-transfer #save-import-file').count(),1,
+   'Angular file picker retains stable input ID');
+  assert.equal(await page.locator('#angular-menu-preferences #option-sound').count(),1,
+   'Angular sound component owns the preferences');
+  assert.equal(await page.locator('#save-export').count(),1,'No duplicate save DOM IDs');
   await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
   await press(page.locator('#menu-continue'));
   await press(page.locator('#open-shop'));
@@ -189,6 +217,7 @@ try{
   reports.push({width,mobile,ps1Position,ps2Position,ps1Stations:restored.ps1Stations.length,
    ps2Stations:restored.ps2Stations.length,cash:restored.cash,
    adminNavigation:true,soundPreference:true,saveFileRoundtrip:true,
+   angularMenuComponents:true,
    runtimeErrors:errors.length});
   await context.close();
  }
@@ -217,6 +246,13 @@ try{
   const press=async target=>mobile?target.tap():target.click();
   await page.goto(origin,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+  assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
+   'Angular export button mounted before native bootstrap');
+  assert.equal(await page.locator('#angular-save-transfer #save-import-file').count(),1,
+   'Angular file picker retains stable input ID');
+  assert.equal(await page.locator('#angular-menu-preferences #option-sound').count(),1,
+   'Angular sound component owns the preferences');
+  assert.equal(await page.locator('#save-export').count(),1,'No duplicate save DOM IDs');
   await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
   await press(page.locator('#menu-continue'));
   await press(page.locator('#open-shop'));

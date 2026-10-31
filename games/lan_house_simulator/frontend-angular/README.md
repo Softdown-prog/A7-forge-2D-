@@ -139,3 +139,14 @@ altera a preferência de som, exporta o JSON real via download do navegador,
 valida o envelope e as cópias físicas PS1/PS2, e importa esse arquivo via o
 controle nativo (incluindo confirmação), comprovando que o progresso foi
 preservado. Nenhum componente Angular acessa as regras da simulação.
+
+## Simulação isolada do corte para componentes de menu Angular
+
+O servidor E2E agora também substitui (somente na resposta HTTP de teste)
+os nós antigos do formulário de save e das opções pelos hosts
+`angular-save-transfer` e `angular-menu-preferences`. O Angular monta
+os controles com os mesmos IDs antes do bootstrap nativo TypeScript.
+O teste verifica a inexistência de IDs duplicados e realiza download,
+importação de arquivo e mudança do som **nesses componentes Angular reais**,
+sem redirecionar eventos artificialmente. O HTML versionado da produção
+continua com seus controles originais.
