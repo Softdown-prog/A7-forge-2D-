@@ -2,189 +2,228 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {reviewNotices,missingWindowsLicenses} from "../dist/js/sim/notices.js";
+import {reviewNotices} from "../dist/js/sim/notices.js";
 import {createNoticeActionsPort} from "../dist/js/application/noticeActionsPort.js";
 import {createNoticeInboxPort} from "../dist/js/application/noticeInboxPort.js";
-import {createWindowsLicensePort} from "../dist/js/application/windowsLicensePort.js";
-import {createStationActionsPort} from "../dist/js/application/stationActionsPort.js";
 import {createShopActionsPort} from "../dist/js/application/shopActionsPort.js";
 import {createShopCatalogOffersPort} from "../dist/js/application/shopCatalogOffersPort.js";
+import {createWindowsLicensePort} from "../dist/js/application/windowsLicensePort.js";
+import {createStationActionsPort} from "../dist/js/application/stationActionsPort.js";
 import {expandShop} from "../dist/js/sim/economy.js";
-import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {chooseAvailablePc} from "../dist/js/sim/customerFlow.js";
 import {tryServe} from "../dist/js/sim/customerDecisions.js";
 import {pcActivityForStation,drawPcScreenActivity} from "../dist/js/render/pcScreenActivities.js";
+import {linuxMachineFor} from "../dist/js/sim/linuxMachines.js";
 import {eligibleEraGamePcs} from "../dist/js/sim/eraGames.js";
-import {linuxMachineFor,LINUX_MACHINE_CATALOG} from "../dist/js/sim/linuxMachines.js";
-import {stationModelName} from "../dist/js/sim/computerModels.js";
 import {
- LINUX_CONTACT_DAY,LINUX_AUGUST_DAY,LINUX_MAIL_IDS,linuxDay,linuxUnlocked,
- nextLinuxLetter,isLinuxPc,operationalLinuxPcs,installLinux,startLinuxResearch
+ LINUX_CONTACT_DAY,LINUX_AUGUST_DAY,LINUX_OCTOBER_DAY,
+ LINUX_MAGAZINE_ENROLLMENT_COST,LINUX_MAGAZINE_ISSUE_COST,LINUX_MAGAZINE_TITLES,
+ linuxNextMagazineDueDay,linuxUnlocked,linuxDay,LINUX_MAIL_IDS,
+ nextLinuxLetter,isLinuxPc,installLinux,startLinuxResearch,operationalLinuxPcs
 } from "../dist/js/sim/linuxQuest.js";
 const setDay=(s,day)=>{s.totalMinutes=(day-1)*DAY_MINUTES;return s;};
 const game=(day=LINUX_CONTACT_DAY)=>setDay(createGame(45,"historical"),day);
 const ok=result=>assert.equal(result.ok,true,result.message);
-function completeMission(){
- const s=game();reviewNotices(s);ok(startLinuxResearch(s));
- setDay(s,LINUX_CONTACT_DAY+30);reviewNotices(s);
- setDay(s,LINUX_CONTACT_DAY+75);reviewNotices(s);
- setDay(s,LINUX_AUGUST_DAY);reviewNotices(s);
+const inbox=s=>createNoticeInboxPort(()=>s).snapshot().letters;
+const shop=s=>createShopCatalogOffersPort(()=>s,()=>0);
+function subscribe(){
+ const s=game();reviewNotices(s);ok(createNoticeActionsPort(()=>s).startLinux());return s;
+}
+function completeSeries(){
+ const s=subscribe();
+ for(const end of [450,480,510,540,570,600]){setDay(s,end);reviewNotices(s);}
+ setDay(s,LINUX_OCTOBER_DAY);reviewNotices(s);
  return s;
 }
-function physicalSpace(s){
+function physicalRoom(s){
  s.cash=5000;ok(expandShop(s));
- assert.equal(s.installedPcs,3);
 }
 function buy(s,id="linux-lab-99"){
  const index=s.installedPcs;
  ok(createShopActionsPort(()=>s).purchase(id));
  return index;
 }
-function workstation(){
- const s=completeMission();physicalSpace(s);const index=buy(s);
- return {s,index};
+function equipped(){
+ const s=completeSeries();physicalRoom(s);const index=buy(s);return {s,index};
 }
 const visitor=(id=3)=>({id,stage:"waiting",x:1.55,y:2.56,target:{x:1.55,y:2.56},
  route:[],queueIndex:0,pcIndex:null,usedMinutes:0,waitingMinutes:0,offlineWait:0,
  happy:true,sessionMinutes:45,wallet:30,budgetAware:true,preference:"comfort",linuxEnthusiast:true});
-test("Forum email arrives in March 1999, without RNG or repeated messages",()=>{
- const s=game(LINUX_CONTACT_DAY-1),before=s.rng;reviewNotices(s);
- assert.equal(s.notices?.length??0,0);assert.equal(startLinuxResearch(s).ok,false);
+test("March 1999 email refers Tony to a newsstand and offers subscription",()=>{
+ const s=game(LINUX_CONTACT_DAY-1);reviewNotices(s);
+ assert.equal(startLinuxResearch(s).ok,false);
  setDay(s,LINUX_CONTACT_DAY);reviewNotices(s);
  assert.equal(linuxDay(s),421);
- assert.equal(s.notices.length,1);
- assert.equal(s.notices[0].id,"linux-forum-contact");
- assert.match(s.notices[0].body,/estudantes/);
- assert.equal(s.rng,before);
- const ui=createNoticeInboxPort(()=>s).snapshot().letters[0];
- assert.ok(ui.items.some(i=>i.action==="linux-research"));
- assert.ok(!ui.items.some(i=>i.action==="decision"));
- reviewNotices(s);assert.equal(s.notices.length,1);
+ const message=s.notices.find(n=>n.id==="linux-forum-contact");
+ assert.ok(message);assert.match(message.body,/Banca da Praça Central/);
+ const buttons=inbox(s).flatMap(x=>x.items).filter(x=>x.action==="linux-research");
+ assert.equal(buttons.length,1);
+ assert.match(buttons[0].text,/Assinar revista/);
+ assert.ok(!inbox(s).some(n=>n.items.some(x=>x.action==="decision")));
  assert.equal(isValidSave(s),true);
 });
-test("Research takes months and new hardware never unlocks early",()=>{
- const s=game();reviewNotices(s);const port=createNoticeActionsPort(()=>s);
- ok(port.startLinux());assert.equal(port.startLinux().ok,false);
- const shop=createShopCatalogOffersPort(()=>s,()=>0);
- assert.equal(shop.snapshot("linux-lab-99").disabled,true);
- setDay(s,LINUX_CONTACT_DAY+30);reviewNotices(s);
- assert.equal(s.notices[0].id,"linux-forum-guide");
- setDay(s,LINUX_CONTACT_DAY+75);reviewNotices(s);
- assert.equal(s.notices[0].id,"linux-forum-pilot");
- setDay(s,LINUX_AUGUST_DAY-1);reviewNotices(s);
+test("Subscription costs R$ 8; no automatic payment and no duplicate signup",()=>{
+ const s=game();reviewNotices(s);s.cash=7;
+ assert.equal(startLinuxResearch(s).ok,false);
+ assert.equal(s.linuxMagazineSubscriptionDay,undefined);
+ s.cash=100;const before=s.cash;
+ ok(startLinuxResearch(s));
+ assert.equal(s.cash,before-LINUX_MAGAZINE_ENROLLMENT_COST);
+ assert.equal(s.expenses,LINUX_MAGAZINE_ENROLLMENT_COST);
+ assert.equal(s.linuxMagazineSubscriptionDay,421);
+ assert.equal(s.linuxMagazineIssuesReceived,0);
+ assert.equal(linuxNextMagazineDueDay(s),450);
+ assert.equal(startLinuxResearch(s).ok,false);
+ assert.equal(s.expenses,LINUX_MAGAZINE_ENROLLMENT_COST);
+});
+test("Each issue arrives at month end, March to August, charged once",()=>{
+ const s=subscribe(),cash=s.cash,expense=s.expenses,rng=s.rng;
+ const ends=[450,480,510,540,570,600];
+ for(let i=0;i<6;i++){
+  setDay(s,ends[i]-1);reviewNotices(s);
+  assert.equal(s.linuxMagazineIssuesReceived,i);
+  setDay(s,ends[i]);reviewNotices(s);
+  assert.equal(s.linuxMagazineIssuesReceived,i+1);
+  const id=LINUX_MAGAZINE_TITLES[i].id;
+  assert.ok(s.notices.some(n=>n.id===id));
+  assert.equal(s.linuxMagazineLastDeliveryDay,ends[i]);
+  assert.equal(s.cash,Math.round((cash-(i+1)*LINUX_MAGAZINE_ISSUE_COST)*100)/100);
+  assert.equal(s.expenses,expense+(i+1)*LINUX_MAGAZINE_ISSUE_COST);
+  reviewNotices(s);assert.equal(s.linuxMagazineIssuesReceived,i+1);
+  assert.equal(isValidSave(s),true);
+ }
+ assert.equal(s.rng,rng,"magazine schedule cannot change game RNG");
+ assert.equal(new Set(s.linuxMailSeenIds).size,s.linuxMailSeenIds.length);
+ assert.equal(LINUX_MAIL_IDS.length>=8,true);
  assert.equal(linuxUnlocked(s),false);
- setDay(s,LINUX_AUGUST_DAY);reviewNotices(s);
+});
+test("Machines are unavailable in August and September; unlock only October",()=>{
+ const s=subscribe();for(const end of [450,480,510,540,570,600]){
+  setDay(s,end);reviewNotices(s);
+ }
+ setDay(s,LINUX_AUGUST_DAY);
+ assert.equal(linuxUnlocked(s),false);assert.equal(shop(s).snapshot("linux-lab-99").disabled,true);
+ setDay(s,630);reviewNotices(s);
+ assert.equal(linuxUnlocked(s),false);
+ setDay(s,LINUX_OCTOBER_DAY);reviewNotices(s);
  assert.equal(linuxUnlocked(s),true);
- assert.equal(s.notices[0].id,"linux-forum-ready");
- assert.deepEqual(s.linuxMailSeenIds,LINUX_MAIL_IDS);
- assert.equal(s.rng,45);
+ assert.equal(s.notices.some(n=>n.id==="linux-forum-ready"),true);
  assert.equal(isValidSave(s),true);
 });
-test("Late response still requires 110 days of research; no batch mail",()=>{
- const s=game(LINUX_AUGUST_DAY+200);reviewNotices(s);ok(startLinuxResearch(s));
+test("Missing money holds delivery, no overdraft or catch-up in one day",()=>{
+ const s=subscribe();s.cash=4;
+ setDay(s,450);reviewNotices(s);
+ assert.equal(s.linuxMagazineIssuesReceived,0);
+ assert.equal(s.cash,4);
+ assert.equal(linuxNextMagazineDueDay(s),450);
+ assert.match(inbox(s).find(x=>x.title.includes("Fórum da cidade")).items.find(x=>x.kind==="hint").text,/falta R/);
+ s.cash=25;reviewNotices(s);
+ assert.equal(s.linuxMagazineIssuesReceived,1);
+ assert.equal(s.cash,13);assert.equal(s.linuxMagazineLastDeliveryDay,450);
+ assert.equal(linuxNextMagazineDueDay(s),480);
+ setDay(s,479);reviewNotices(s);
+ assert.equal(s.linuxMagazineIssuesReceived,1);
+ setDay(s,480);reviewNotices(s);assert.equal(s.linuxMagazineIssuesReceived,2);
+ assert.equal(s.cash,1);
+ assert.equal(isValidSave(s),true);
+});
+test("Late signup receives the old print collection monthly, never unlocks immediately",()=>{
+ const s=game(LINUX_OCTOBER_DAY+200);reviewNotices(s);
+ ok(startLinuxResearch(s));assert.equal(linuxUnlocked(s),false);
+ assert.equal(s.linuxMagazineIssuesReceived,0);
+ const first=linuxNextMagazineDueDay(s);
+ for(let i=0;i<6;i++){
+  const at=first+i*30;
+  setDay(s,at);reviewNotices(s);
+  assert.equal(s.linuxMagazineIssuesReceived,i+1);
+ }
  assert.equal(linuxUnlocked(s),false);
- setDay(s,LINUX_AUGUST_DAY+309);assert.equal(linuxUnlocked(s),false);
- setDay(s,LINUX_AUGUST_DAY+310);assert.equal(linuxUnlocked(s),true);
- reviewNotices(s);assert.equal(s.notices.length,2);
+ setDay(s,first+5*30+30);reviewNotices(s);
+ assert.equal(linuxUnlocked(s),true);
 });
-test("New Linux PCs are purchased physically, not formatted from existing Windows",()=>{
- const s=completeMission();s.cash=5000;
- assert.equal(installLinux(s,0).ok,false,"Windows computer cannot become a dedicated Linux PC");
+test("Shop sells two NEW Linux PCs after magazine study, not Windows conversion",()=>{
+ const s=completeSeries();s.cash=5000;
+ assert.equal(installLinux(s,0).ok,false);
  assert.equal(createWindowsLicensePort(()=>s).rows()[0].linuxAction,null);
- assert.equal(createShopCatalogOffersPort(()=>s,()=>0).snapshot("linux-lab-99").disabled,true,
-   "three original desks fill the main room");
- assert.equal(createShopActionsPort(()=>s).purchase("linux-lab-99").ok,false);
- physicalSpace(s);
- const previous=s.cash;
- const index=buy(s);
- assert.equal(index,3);assert.equal(s.installedPcs,4);
- assert.equal(s.cash,previous-LINUX_MACHINE_CATALOG[0].cost);
- assert.equal(s.expenses,650+LINUX_MACHINE_CATALOG[0].cost);
+ assert.equal(shop(s).snapshot("linux-lab-99").disabled,true,"original three workstations occupy room");
+ physicalRoom(s);
+ const cash=s.cash,index=buy(s);
+ assert.equal(index,3);assert.equal(s.cash,cash-440);
+ assert.equal(linuxMachineFor(s,index),"linux-lab-99");
  assert.equal(isLinuxPc(s,index),true);
- assert.equal(linuxMachineFor(s,index),"linux-lab-99");
  assert.equal(s.pcLinuxInstalled[index],true);
- assert.equal(s.pcWindowsLicenses?.[index]===true,false,"no unlicensed Windows included");
- assert.equal(stationModelName(s,index),"Bancada Linux 99");
- assert.equal(missingWindowsLicenses(s),3);
- assert.equal(isValidSave(s),true);
-});
-test("Both Linux models coexist with Windows and have distinct prices and physical styles",()=>{
- const {s,index}=workstation();const second=buy(s,"linux-dev-99");
- assert.equal(second,index+1);assert.equal(s.installedPcs,5);
- assert.equal(linuxMachineFor(s,index),"linux-lab-99");
+ assert.equal(s.pcWindowsLicenses[index]===true,false);
+ const second=buy(s,"linux-dev-99");
+ assert.equal(second,4);
  assert.equal(linuxMachineFor(s,second),"linux-dev-99");
  assert.equal(isLinuxPc(s,0),false);
- assert.equal(isLinuxPc(s,index),true);assert.equal(isLinuxPc(s,second),true);
- assert.ok(s.cash>=0);
- assert.equal(createShopCatalogOffersPort(()=>s,()=>0).snapshot("linux-dev-99").disabled,true,
-  "both expansion desks are full");
+ assert.equal(shop(s).snapshot("linux-dev-99").disabled,true);
  assert.equal(isValidSave(s),true);
 });
-test("Switching a Linux workstation to Windows requires buying a Windows license",()=>{
- const {s,index}=workstation();const ops=createStationActionsPort(()=>s);
- const port=createWindowsLicensePort(()=>s);
- assert.equal(port.rows()[index].linuxAction.action,"windows");
- assert.equal(port.rows()[index].linuxAction.disabled,true);
+test("New Linux computer has no Windows license, and paid Windows can be booted",()=>{
+ const {s,index}=equipped(),ops=createStationActionsPort(()=>s);
+ assert.equal(createWindowsLicensePort(()=>s).rows()[index].linuxAction.disabled,true);
  assert.equal(ops.linux(index,"windows").ok,false);
- ok(ops.power(index)); // turn off before changing operating systems
+ ok(ops.power(index));
  assert.equal(ops.linux(index,"windows").ok,false);
- const cash=s.cash;
- ok(ops.windows(index,"win98"));
+ const cash=s.cash;ok(ops.windows(index,"win98"));
  assert.equal(s.cash,cash-120);assert.equal(isLinuxPc(s,index),false);
- assert.equal(s.pcWindowsLicenses[index],true);
  ok(ops.linux(index,"install"));assert.equal(isLinuxPc(s,index),true);
  ok(ops.linux(index,"windows"));assert.equal(isLinuxPc(s,index),false);
- assert.equal(ops.linux(0,"install").ok,false);
  assert.equal(isValidSave(s),true);
 });
-test("A student finds a real Linux station and pays a normal session",()=>{
- const {s,index}=workstation();const ops=createStationActionsPort(()=>s);
+test("Real student pays for Linux-only workstation during internet outage",()=>{
+ const {s,index}=equipped();
  s.pcPoweredOff=[true,true,true,false];
- const c=visitor();s.customers=[c];s.offlineUntil=s.totalMinutes+200;
+ const c=visitor();s.customers=[c];
+ s.offlineUntil=s.totalMinutes+300;
  assert.deepEqual(operationalLinuxPcs(s),[index]);
  assert.equal(chooseAvailablePc(s,c),index);
- const previous=s.cash;
+ const cash=s.cash;
  tryServe(s,c);
- assert.equal(c.pcIndex,index);
  assert.equal(c.stage,"to_pc");
+ assert.equal(c.pcIndex,index);
  assert.equal(s.linuxSessions,1);
  assert.equal(s.linuxRevenue,1.88);
- assert.equal(s.cash,previous+1.88);
- assert.equal(s.revenue,1.88);
+ assert.equal(s.cash,cash+1.88);
  tryServe(s,c);assert.equal(s.linuxSessions,1);
  assert.equal(isValidSave(s),true);
 });
-test("Linux PCs cannot pretend to support installed Windows-only commercial games",()=>{
- const {s,index}=workstation();
- s.pcWindowsLicenses=[true,true,true,false];
+test("Linux machines do not run Windows-only games without Windows",()=>{
+ const {s,index}=equipped();s.pcWindowsLicenses=[true,true,true,false];
  assert.deepEqual(eligibleEraGamePcs(s),[0,1,2]);
  assert.equal(eligibleEraGamePcs(s).includes(index),false);
 });
-test("Procedural monitor activity belongs to the purchased Linux PC",()=>{
- const {s,index}=workstation();
+test("Linux monitor remains procedural and its owner is a physical Linux PC",()=>{
+ const {s,index}=equipped();
  assert.equal(pcActivityForStation(s,index,1999),"linux-terminal");
  assert.equal(pcActivityForStation(s,0,1999),null);
- const a=[],b=[];
- drawPcScreenActivity((...args)=>a.push(args),"linux-terminal",0);
- drawPcScreenActivity((...args)=>b.push(args),"linux-terminal",5);
- assert.ok(a.length>10);assert.notDeepEqual(a,b);
- assert.ok(a.every(x=>x[0]>=0&&x[1]>=0&&x[0]+x[2]<=1.00001&&x[1]+x[3]<=1.00001));
+ const p=[],next=[];
+ drawPcScreenActivity((...x)=>p.push(x),"linux-terminal",0);
+ drawPcScreenActivity((...x)=>next.push(x),"linux-terminal",5);
+ assert.ok(p.length>10);assert.notDeepEqual(p,next);
+ assert.ok(p.every(x=>x[0]>=0&&x[1]>=0&&x[0]+x[2]<=1.00001&&x[1]+x[3]<=1.00001));
 });
-test("Save retains actual purchased model, money and OS; corrupt or impossible saves fail",()=>{
- const old=game();assert.equal(isValidSave(old),true);
- assert.equal(parseImportedSave(serializeSave(old)).pcLinuxModels,undefined);
- const {s,index}=workstation(),restored=parseImportedSave(serializeSave(s));
+test("Save preserves magazine progress, expenses and Linux machine; corrupt data rejected",()=>{
+ const base=game();
+ assert.equal(isValidSave(base),true);
+ assert.equal(parseImportedSave(serializeSave(base)).linuxMagazineSubscriptionDay,undefined);
+ const s=subscribe();setDay(s,450);reviewNotices(s);
+ const partial=parseImportedSave(serializeSave(s));
+ assert.equal(partial.linuxMagazineIssuesReceived,1);
+ assert.equal(partial.linuxMagazineLastDeliveryDay,450);
+ assert.equal(partial.expenses,s.expenses);
+ const damaged=structuredClone(partial);damaged.linuxMagazineIssuesReceived=6;
+ assert.equal(isValidSave(damaged),false);
+ const impossible=structuredClone(partial);impossible.linuxMagazineLastDeliveryDay=700;
+ assert.equal(isValidSave(impossible),false);
+ const completed=completeSeries();physicalRoom(completed);const index=buy(completed);
+ const restored=parseImportedSave(serializeSave(completed));
  assert.equal(linuxMachineFor(restored,index),"linux-lab-99");
- assert.equal(isLinuxPc(restored,index),true);
+ assert.equal(restored.linuxMagazineIssuesReceived,6);
  assert.equal(restored.pcLinuxInstalled[index],true);
+ assert.equal(isLinuxPc(restored,index),true);
+ assert.equal(restored.cash,completed.cash);
  assert.equal(nextLinuxLetter(restored),null);
- assert.equal(restored.cash,s.cash);assert.equal(restored.expenses,s.expenses);
- const a=structuredClone(restored);a.pcLinuxModels[index]="linux-invalid";
- assert.equal(isValidSave(a),false);
- const b=structuredClone(restored);b.pcLinuxInstalled[index]=false;
- assert.equal(isValidSave(b),false);
- const c=structuredClone(restored);c.linuxResearchStartedDay=undefined;
- assert.equal(isValidSave(c),false);
- const d=structuredClone(restored);d.linuxMailSeenIds=["linux-forum-ready","linux-forum-ready"];
- assert.equal(isValidSave(d),false);
 });

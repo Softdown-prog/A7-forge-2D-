@@ -1,29 +1,45 @@
-# Fórum Linux — março a agosto de 1999
+# Fórum Linux — revistas impressas (março–agosto de 1999) e máquinas novas (outubro)
 
-## História
-Tony recebe em março de 1999 uma mensagem de um fórum fictício de estudantes de programação. Em vez de substituir máquinas Windows, passa meses pesquisando o que o grupo precisa, até desbloquear **computadores Linux novos** à venda.
+## História e progressão
 
-O jogo usa 12 meses de 30 dias:
-- 1999/03/01 (dia 421): chega o pedido dos estudantes.
-- +30 dias após aceitar a pesquisa: explicações sobre software livre e sistemas Linux.
-- +75 dias: escolha de bancadas, hardware e preparação do espaço.
-- 1999/08/01 (dia 571): catálogo de máquinas Linux liberado, se a pesquisa já tem 110 dias. Se Tony começou depois, terá que cumprir os 110 dias a partir do início.
+Tony recebe em março de 1999 a mensagem de um fórum fictício de entusiastas de Linux da cidade. O grupo indica uma banca também fictícia, **Banca da Praça Central**, e a assinatura da revista impressa **Informática Livre**. O personagem não conhece Linux ainda; ele aprende por leitura e prática durante meses, sem conhecimento instantâneo ou escolhas artificiais.
 
-## Estações de uma linha diferente
-O catálogo da loja na categoria **Computadores e serviços** passa a oferecer dois modelos fictícios:
-- **Bancada Linux 99** (R$ 440): mesa técnica, CRT, gabinete de aço, teclado e cadeira. Conforto adicional de 1,5%.
-- **Estação Programador 99** (R$ 610): bancada e gabinete reforçado, CRT grafite, periféricos e cadeira. Conforto adicional de 5%.
+A assinatura custa **R$ 8 de adesão** mais **R$ 12 por exemplar entregue**, em valores de design do modo histórico (não são preços reais de uma revista histórica). O jogador ativa a assinatura explicitamente na Correspondência. Não há cobrança se não assinou, e uma revista nunca é cobrada duas vezes. Quando o caixa não tem R$ 12, a entrega fica pendente até haver dinheiro; as edições seguintes chegam com pelo menos 30 dias de separação. A revista não exige internet funcionando.
 
-Custos e nomes são **decisões de game design**, não preços de mercado históricos.
+| Data do calendário do jogo | Edição | Assunto |
+|---|---|---|
+| 30 de março de 1999 — dia 450 | 1/6 | Software livre, distribuições e o que é Linux |
+| 30 de abril — dia 480 | 2/6 | Processadores, memórias e hardware para programação |
+| 30 de maio — dia 510 | 3/6 | Terminal, arquivos, diretórios e comandos |
+| 30 de junho — dia 540 | 4/6 | Usuários, permissões e segurança |
+| 30 de julho — dia 570 | 5/6 | Editores, compilação e ferramentas |
+| 30 de agosto — dia 600 | 6/6 | Laboratório Linux, rede local e estações prontas |
 
-Cada compra cria **um computador físico adicional** na próxima vaga real do salão principal: ocupa espaço, entra nas filas, energia, desgaste, economia por estação e save. A compra é bloqueada sem vaga, dinheiro ou conclusão da pesquisa, assim como uma compra de PC tradicional. Para comprar mais PCs, é necessário ampliar a área principal.
+**Setembro:** Tony continua estudando a coleção completa; a liberação não é antecipada, mesmo que tenha dinheiro suficiente.
 
-As máquinas são fornecidas **com Linux pré-instalado**, sem licença Windows. A função de instalar Linux nos PCs Windows existentes foi retirada: pesquisar Linux libera hardware, não formatação gratuita dos PCs atuais. Instalar Windows posteriormente numa bancada Linux exige comprar licença específica; o Linux da bancada fica disponível para reinício posterior.
+**Outubro:** a partir do dia 631 (1º de outubro de 1999), e desde que seis revistas tenham sido entregues e tenha transcorrido ao menos um mês de estudo desde a última, o correio anuncia a conclusão e a loja libera máquinas Linux físicas.
 
-## Programação e público
-Estudantes podem pedir **especificamente uma estação Linux operacional**. São clientes reais na fila e pagam por sessões, não geram renda passiva. Os gabinetes, monitores e a bancada Linux têm peças e cores distintas, implementadas no renderizador **Canvas 2D procedural**, sem sprites ou imagens geradas. O monitor mostra programação em terminal mesmo se a conexão externa cair.
+A janela março–agosto vale para assinaturas feitas em março. Quem começa a missão depois (inclusive saves carregados em anos futuros) recebe os exemplares da coleção como material de arquivo em entregas mensais, e desbloqueia somente depois de completar os seis exemplares e o intervalo de estudo. Portanto, a missão não desaparece permanentemente para jogadores atrasados.
 
-**Não existe nesta versão** uma sala nova, fórum navegável, editor de código completo ou eventos em grupo. Essas possibilidades ficam como próximos passos do tema de programação; não confundir a programação apresentada no CRT com um compilador funcional.
+## Máquinas novas, não formatação de Windows
 
-## Validação
-Verificar com `npm test` (inclui os testes da missão), build do TypeScript, screenshot real do salão e botões da loja no Android. Manter PR #44 em rascunho até confirmar; verificar regressões de Windows, expansão, PS1/PS2, saves anteriores e inserção de um PC principal antes de PCs nos anexos.
+O catálogo oferece duas estações físicas distintas, já equipadas com Linux:
+- **Bancada Linux 99 — R$ 440.** Mesa técnica, CRT, gabinete metálico e cadeira.
+- **Estação Programador 99 — R$ 610.** Bancada reforçada, CRT grafite e gabinete diferente, com bônus de conforto.
+
+Cada compra ocupa uma nova vaga física na área principal e custa dinheiro de verdade; são usados a fila, atendimento, iluminação, manutenção, desgaste e save existentes. O Windows dos computadores antigos não é substituído. O computador Linux novo não vem com Windows; adquirir Windows exige licença. Os desenhos são Canvas 2D procedural, inclusive as prévias da loja.
+
+Clientes que procuram programação usam PCs Linux existentes, pagam por sessões reais e exibem terminal procedural, mesmo se a internet estiver indisponível. Não existe geração fictícia de receita apenas por assinar revistas.
+
+## Critérios de validação antes da mesclagem
+
+- E-mail de março com banca fictícia e proposta de assinatura.
+- Adesão apenas sob confirmação, com caixa suficiente.
+- Exatamente seis revistas, entregues mensalmente, preços deduzidos apenas uma vez e visualização no correio.
+- Sem dinheiro, entrega pendente e sem aceleração da pesquisa.
+- Nenhuma bancada Linux comprável em agosto ou setembro; liberação em outubro para assinantes de março sem atrasos.
+- Saves antigos e novos importados sem corrupção, inclusive caixa e estado de assinatura.
+- Dois modelos físicos com geometria procedural e compra de verdade; PS1/PS2 e Windows inalterados.
+- Testes automatizados completos, CI e validação em navegador desktop e Android antes de mesclar PR #44.
+
+**Não reintroduzir** a coleção rejeitada de 33 acontecimentos anuais do PR #40. Este é um acontecimento específico definido pelo criador.
