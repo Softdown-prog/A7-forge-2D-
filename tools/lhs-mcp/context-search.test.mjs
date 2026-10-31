@@ -72,7 +72,9 @@ test("incremental indexing invalidates contextual terms after a dirty edit",t=>{
  const changed=buildIndex(root,{scope,previousIndex:cached});
  assert.equal(changed.buildStats.scanned,1);
  assert.equal(changed.buildStats.reused,Object.keys(files).length-1);
- assert.equal(searchContext(changed,"comprar ps2").some(x=>x.path===ps2),false);
+ const stale=searchContext(changed,"comprar ps2").find(x=>x.path===ps2);
+ assert.equal(stale?.matchedTerms,1,"File name may still match PS2, but purchase context must be gone");
+ assert.equal(changed.files.find(x=>x.path===ps2).contextTerms.purchase,undefined);
  assert.ok(searchContext(changed,"clima").some(x=>x.path===ps2));
 });
 test("MCP protocol serves contextual search and rejects empty questions",t=>{

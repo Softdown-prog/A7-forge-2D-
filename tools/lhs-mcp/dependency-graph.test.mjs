@@ -83,7 +83,7 @@ test("Graph results are available through JSON-RPC and bounded",t=>{
  });
  assert.equal(proc.status,0,proc.stderr);
  const responses=proc.stdout.trim().split("\n").map(JSON.parse);
- assert.equal(responses[1].result.tools.length,15);
+ assert.equal(responses[1].result.tools.length,16);
  assert.match(responses[2].result.content[0].text,/engine.ts/);
  assert.match(responses[3].result.content[0].text,/panel.ts/);
  assert.equal(responses[4].result.structuredContent.result.affected.length,2);
