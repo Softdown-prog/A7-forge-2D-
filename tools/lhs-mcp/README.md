@@ -77,7 +77,7 @@ indexadas. Binários grandes só entram como metadados (caminho, tamanho).
 
 ## Grafo de dependências e análise de impacto
 
-O índice v3 resolve imports **relativos estáticos** (incluindo `.js` que
+O índice v4 resolve imports **relativos estáticos** (incluindo `.js` que
 aponta para módulos TypeScript) em arquivos TS/JS rastreados pelo Git.
 As ferramentas `file_dependencies`, `find_dependents` e `impact_analysis`
 indicam arquivos que importam o módulo e outros consumidores indiretos,
@@ -95,7 +95,7 @@ Um índice do Actions pode ser reutilizado num checkout local **somente se**
 o SHA, a versão do esquema, o escopo e a árvore de arquivos rastreados
 estiverem consistentes; se o workspace foi alterado, o MCP reindexa.
 
-## Indexação incremental (índice v3)
+## Indexação incremental (índice v4)
 
 Cada entrada rastreada registra o identificador **Git blob OID** e modo do
 Git index. Quando o commit muda, o indexador compara esses identificadores
@@ -122,3 +122,21 @@ A etapa de verificação do GitHub Actions também cria um segundo índice
 incremental no mesmo checkout e compara as entradas arquivo a arquivo,
 exigindo 100% de reaproveitamento quando não há alterações. O resumo
 principal continua registrando o reaproveitamento real **entre execuções**.
+
+## Busca contextual de código (índice v4)
+
+A ferramenta `search_context` aceita perguntas curtas em português ou inglês,
+por exemplo `comprar PS2`, `fila de clientes` e `salvar partida`.
+Usa dicionário pequeno de termos comuns da lan house, correspondência
+de identificadores em camelCase, nomes de arquivos, comentários e frequência
+de palavras em código. Os resultados vêm ordenados por relevância e
+informam os termos encontrados, a origem da correspondência e símbolos
+associados para abrir no `read_file`.
+
+**Não usa embeddings, modelos de IA, rede ou custo por consulta.**
+É uma busca lexical contextual, não compreende perfeitamente linguagem
+natural; novas palavras e sinônimos precisam ser adicionados ao dicionário
+com testes. O catálogo não publica o conteúdo completo dos fontes:
+somente vocabulário limitado por arquivo e até três títulos/comentários
+de contexto. Literais entre aspas não entram no vocabulário. O índice
+continua incremental, com cache versionado `v4` no GitHub Actions.

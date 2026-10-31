@@ -182,7 +182,7 @@ test("index CLI --previous produces same results with reuse and ignores invalid 
  });
  assert.equal(invoke(null).status,0);
  const first=JSON.parse(fs.readFileSync(path.join(dir,output),"utf8"));
- assert.equal(first.schemaVersion,3);
+ assert.equal(first.schemaVersion,4);
  assert.equal(invoke(output).status,0);
  const second=JSON.parse(fs.readFileSync(path.join(dir,output),"utf8"));
  assert.equal(second.buildStats.reused,2);

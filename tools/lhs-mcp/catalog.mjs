@@ -8,10 +8,11 @@ import {createHash} from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {extractImportSpecifiers,resolveImportGraph} from "./dependency-graph.mjs";
 import {trackedFingerprints,cacheEntry} from "./incremental.mjs";
+import {contextFromSource} from "./context-search.mjs";
 
 const MAX_INDEXED_BYTES=256*1024;
 export const MAX_EDIT_BYTES=1024*1024;
-export const VERSION=3;
+export const VERSION=4;
 const ignoreDirectories=new Set([".git","node_modules","dist","out",".angular-browser-tools",".next","coverage","build",".cache"]);
 const secretNames=/^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|id_rsa|id_ed25519|credentials(?:\..*)?|.*\.(?:pem|key|p12|pfx))$/i;
 const textExt=new Set([".ts",".tsx",".js",".mjs",".cjs",".jsx",".json",".jsonc",".css",".scss",".html",".md",".mdx",".txt",".yaml",".yml",".xml",".svg",".go",".rs",".py",".toml",".sh",".sql",".gitignore"]);
@@ -92,15 +93,17 @@ export function buildIndex(root,{scope=".",previousIndex=null}={}){
   const previous=cacheEntry(past.get(rel),rel,staged.mode,staged.oid,state.dirty.has(rel));
   // Reusing record metadata does not skip graph resolution: dependencies can
   // change when a newly added or deleted target makes an import resolvable.
-  if(previous&&previous.bytes===stat.size){
+  if(previous&&previous.bytes===stat.size&&previous.contextTerms&&
+     Array.isArray(previous.contextHeadings)){
    files.push({path:rel,bytes:stat.size,ext:previous.ext,mode:staged.mode,
-    blobOid:staged.oid,symbols:previous.symbols,imports:previous.imports});
+    blobOid:staged.oid,symbols:previous.symbols,imports:previous.imports,
+    contextTerms:previous.contextTerms,contextHeadings:previous.contextHeadings});
    reused++;
    continue;
   }
   const ext=path.posix.extname(rel).toLowerCase();
   const record={path:rel,bytes:stat.size,ext,mode:staged.mode,blobOid:staged.oid,
-   symbols:[],imports:[]};
+   symbols:[],imports:[],contextTerms:{},contextHeadings:[]};
   if(stat.size<=MAX_INDEXED_BYTES&&(textExt.has(ext)||path.basename(rel)==="Dockerfile")){
    try{
     const buf=fs.readFileSync(absolute);
@@ -108,6 +111,9 @@ export function buildIndex(root,{scope=".",previousIndex=null}={}){
      const content=buf.toString("utf8");
      record.symbols=extractSymbols(content,ext);
      record.imports=extractImportSpecifiers(content,ext).slice(0,120);
+     const context=contextFromSource(content,ext);
+     record.contextTerms=context.terms;
+     record.contextHeadings=context.headings;
     }
    }catch{}
   }
@@ -123,6 +129,7 @@ export function buildIndex(root,{scope=".",previousIndex=null}={}){
   buildStats:{reused,scanned,deleted,previousFiles:validPrevious?.files.length??0,
    cacheUsed:Boolean(validPrevious)},
   statistics:{files:files.length,symbols:files.reduce((n,f)=>n+f.symbols.length,0),
+   contextualFiles:files.filter(f=>Object.keys(f.contextTerms??{}).length>0).length,
    dependencyEdges:files.reduce((n,f)=>n+(f.dependencies?.length??0),0),
    unresolvedLocalImports:files.reduce((n,f)=>n+(f.unresolvedLocalImports?.length??0),0),
    totalBytes:files.reduce((n,f)=>n+f.bytes,0)}

@@ -36,9 +36,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: out/lhs-mcp-cache/catalog.json
-          key: lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          key: lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-
+            lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-
       - name: Generate machine-readable repository index
         shell: bash
         run: |
@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: out/lhs-mcp-cache/catalog.json
-          key: lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          key: lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
       - name: Verify live MCP tools against checked out game
         if: ${{ inputs.scope != 'game' }}
         run: node tools/lhs-mcp/smoke.mjs

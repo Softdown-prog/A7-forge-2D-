@@ -7,6 +7,7 @@ import {randomUUID} from "node:crypto";
 import {repositoryRoot,buildIndex,searchIndex,searchContent,listFolder,
  validatedPath,digest,MAX_EDIT_BYTES,git,VERSION} from "./catalog.mjs";
 import {directDependencies,directDependents,impactAnalysis} from "./dependency-graph.mjs";
+import {searchContext} from "./context-search.mjs";
 
 const args=process.argv.slice(2);
 function option(name,fallback=""){const i=args.indexOf(name);return i<0?fallback:args[i+1]??fallback;}
@@ -98,6 +99,7 @@ const tools=[
  {name:"find_files",description:"Rank filenames and paths by search keywords.",inputSchema:{...properties({query:str("Filename or keywords"),prefix:str("Optional folder prefix"),limit:int}),required:["query"]}},
  {name:"find_symbols",description:"Locate declarations across TypeScript, JavaScript, Go, Rust and Python.",inputSchema:{...properties({query:str("Function/class/type name"),prefix:str("Optional folder prefix"),limit:int}),required:["query"]}},
  {name:"search_content",description:"Search code text with line numbers, results limited.",inputSchema:{...properties({query:str("Literal code substring"),prefix:str("Folder prefix"),limit:int,caseSensitive:{type:"boolean"}}),required:["query"]}},
+ {name:"search_context",description:"Find modules by purpose in Portuguese or English using ranked source vocabulary, identifiers and documentation; no paid model.",inputSchema:{...properties({query:str("Intent e.g. comprar PS2, salvar partida, fila de clientes"),prefix:str("Optional repo-relative directory"),limit:int}),required:["query"]}},
  {name:"file_info",description:"File digest, size, symbol declarations and imports.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
  {name:"read_file",description:"Read a bounded line range with SHA256 for safe later edits.",inputSchema:{...properties({path:str("Repo-relative path"),start_line:int,line_count:int}),required:["path"]}},
  {name:"file_dependencies",description:"List resolved local imports and unresolved paths for a tracked file.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
@@ -118,6 +120,7 @@ function call(name,a={}){
   case "find_files":return searchIndex(index,a.query,{prefix:a.prefix,limit:a.limit,mode:"files"});
   case "find_symbols":return searchIndex(index,a.query,{prefix:a.prefix,limit:a.limit,mode:"symbols"});
   case "search_content":return searchContent(root,index,a.query,{prefix:a.prefix,limit:a.limit,caseSensitive:a.caseSensitive});
+  case "search_context":return searchContext(index,a.query,{prefix:a.prefix,limit:a.limit});
   case "file_info":{
    const f=fileContents(a.path);const entry=index.files.find(x=>x.path===f.relative);
    return {path:f.relative,bytes:f.buffer.length,sha256:f.sha256,symbols:entry?.symbols??[],imports:entry?.imports??[]};
