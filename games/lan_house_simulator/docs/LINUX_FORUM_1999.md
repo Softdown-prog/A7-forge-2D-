@@ -43,3 +43,13 @@ Clientes que procuram programação usam PCs Linux existentes, pagam por sessõe
 - Testes automatizados completos, CI e validação em navegador desktop e Android antes de mesclar PR #44.
 
 **Não reintroduzir** a coleção rejeitada de 33 acontecimentos anuais do PR #40. Este é um acontecimento específico definido pelo criador.
+
+## Carteiro procedural — entrega das seis revistas
+
+Há agora um **NPC carteiro brasileiro fictício**, com camisa amarela, calça azul, bota preta, boné azul e bolsa lateral de couro, desenhado com o mesmo sistema de personagens Canvas 2D do LHS, sem sprites ou logotipos externos.
+
+Nos dias **30 de março a agosto de 1999**, se a assinatura está ativa e há dinheiro para pagar o exemplar, um carteiro entra pela porta do salão, caminha por uma rota física que respeita as divisórias e os móveis, aproxima-se do balcão e faz um gesto de retirar a revista da bolsa e estendê-la ao Tony. Tony reage com gesto de receber. A entrega leva cinco minutos de simulação e só **ao fim desse encontro** registra a revista no correio e desconta R$ 12. Então o carteiro sai pela entrada. O serviço não ocupa uma vaga de cliente nem gera renda.
+
+A visita e suas fases (`arriving`, `handing`, `leaving`) são persistidas no save. A caminhada é suavizada apenas na apresentação, sem usar RNG nem avançar a missão artificialmente. Se a caixa estiver insuficiente, a visita só é disparada após reunir dinheiro para a edição; a cobrança não é antecipada.
+
+O carteiro foi desenvolvido como personagem independente dos dois funcionários contratados; seu tipo de entrega poderá ser reutilizado para outras encomendas futuramente.

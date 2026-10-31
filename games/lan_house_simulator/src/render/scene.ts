@@ -706,7 +706,8 @@ export class SceneRenderer {
     const printAt=s?.printer?.lastPrintedMinute??-1,copyAt=s?.discCopier?.lastCopiedMinute??-1;
     // Prioridade ao serviço pago mais recente; ambos os equipamentos animam independente.
     const pose=s&&copyingAnimationActive(s)&&copyAt>=printAt?"copying":
-      s&&printingAnimationActive(s)?"printing":"idle";
+      s&&printingAnimationActive(s)?"printing":
+      s?.postmanDelivery?.phase==="handing"?"receiving":"idle";
     drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,
       direction:(["south","west","north","east"] as const)[r],
       premiumCyber:!!s&&cosmeticAvailable("tony-cyber",yearFromMinutes(s.totalMinutes))});

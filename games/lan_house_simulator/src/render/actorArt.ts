@@ -6,7 +6,7 @@ import {workerMotion} from "./workerMotion.js";
 
 type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
 
-export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing" | "delivering";
+export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing" | "delivering" | "receiving";
 export type ActorKind = Costume | "owner" | "cleaner" | "technician" | "postman";
 export interface ActorStyle {
   shirt: string; dark: string; highlight: string;
@@ -440,7 +440,8 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   const arm=(side:number):void=>{
     const printing=a.kind==="owner"&&pose==="printing";
     const copying=a.kind==="owner"&&pose==="copying";
-    const serving=a.kind==="owner"&&(pose==="idle"||printing||copying);
+    const receiving=a.kind==="owner"&&pose==="receiving";
+    const serving=a.kind==="owner"&&(pose==="idle"||printing||copying||receiving);
     const handing=a.kind==="postman"&&pose==="delivering";
     const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
     const angledWalk=profileWalk||screenRig;
@@ -460,11 +461,12 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
     const handX=celebrating?side*22:
       angledWalk?shoulderX+side*2+armSwing*axis.x:
-      movingHand?movingHand.x:handing&&side===1?25+Math.sin(a.time*6)*1.3:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
+      movingHand?movingHand.x:receiving&&side===1?19+Math.sin(a.time*4)*.9:handing&&side===1?25+Math.sin(a.time*6)*1.3:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
     const handY=celebrating?-72+headShift+Math.sin(a.time*6+side)*2:
       disappointed?-17+headShift:
       angledWalk?-25+headShift+armSwing*axis.y:
-      movingHand?movingHand.y:handing&&side===1?-43+headShift+Math.sin(a.time*6)*1.2:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
+      movingHand?movingHand.y:receiving&&side===1?-43+headShift+Math.sin(a.time*4)*1.0:
+       handing&&side===1?-43+headShift+Math.sin(a.time*6)*1.2:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
     // Borda da manga e luz discreta: o braço continua legível de costas.
