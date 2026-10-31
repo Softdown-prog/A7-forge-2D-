@@ -50,6 +50,24 @@ jobs:
           node tools/lhs-mcp/index.mjs --scope "$SCOPE" --previous out/lhs-mcp-cache/catalog.json --output out/lhs-mcp-index/catalog.json
           mkdir -p out/lhs-mcp-cache
           cp out/lhs-mcp-index/catalog.json out/lhs-mcp-cache/catalog.json
+          echo "LHS_MCP_SCOPE=$SCOPE" >> "$GITHUB_ENV"
+      - name: Verify warm incremental index matches full catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/lhs-mcp/index.mjs --scope "$LHS_MCP_SCOPE" \
+            --previous out/lhs-mcp-index/catalog.json \
+            --output out/lhs-mcp-verify/catalog.json > /dev/null
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const cold=JSON.parse(fs.readFileSync("out/lhs-mcp-index/catalog.json","utf8"));
+            const warm=JSON.parse(fs.readFileSync("out/lhs-mcp-verify/catalog.json","utf8"));
+            assert.deepEqual(warm.files,cold.files,"Incremental and full catalogs differ");
+            assert.equal(warm.buildStats.reused,cold.statistics.files);
+            assert.equal(warm.buildStats.scanned,0);
+            console.log(JSON.stringify({incrementalVerified:true,...warm.buildStats}));
+          '
       - name: Cache updated catalog for next push
         if: ${{ steps.cache-index.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4

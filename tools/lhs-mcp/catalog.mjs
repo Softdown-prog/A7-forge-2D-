@@ -115,7 +115,8 @@ export function buildIndex(root,{scope=".",previousIndex=null}={}){
   scanned++;
  }
  resolveImportGraph(files);
- const deleted=(validPrevious?.files??[]).filter(f=>!files.some(x=>x.path===f.path)).length;
+ const currentPaths=new Set(files.map(f=>f.path));
+ const deleted=(validPrevious?.files??[]).filter(f=>!currentPaths.has(f.path)).length;
  return {
   schemaVersion:VERSION,scope,head:git(root,["rev-parse","HEAD"]),
   files,

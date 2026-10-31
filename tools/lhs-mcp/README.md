@@ -99,21 +99,26 @@ estiverem consistentes; se o workspace foi alterado, o MCP reindexa.
 
 Cada entrada rastreada registra o identificador **Git blob OID** e modo do
 Git index. Quando o commit muda, o indexador compara esses identificadores
-com o catálogo anterior, além de inspecionar o \`git diff\` da árvore de
+com o catálogo anterior, além de inspecionar o `git diff` da árvore de
 trabalho para detectar alterações não commitadas. Reaproveita declarações
 e imports apenas nos arquivos intactos; lê e reprocessa os alterados.
 O grafo é **sempre recalculado** para refletir a remoção e adição de módulos.
-Relata \`buildStats.reused\`, \`scanned\` e \`deleted\`; para conferir a
-economia de trabalho, consulte o log ou o \`summary.json\`.
+Relata `buildStats.reused`, `scanned` e `deleted`; para conferir a
+economia de trabalho, consulte o log ou o `summary.json`.
 
-O GitHub Actions usa \`actions/cache\` com chave por SHA e prefixo na branch
+O GitHub Actions usa `actions/cache` com chave por SHA e prefixo na branch
 para recuperar o índice anterior. Uma execução sem cache faz indexação
 completa; a seguinte pode reaproveitar registros. O artefato de download
 continua contendo o catálogo atualizado completo, não apenas um delta.
-No terminal, use \`--previous caminho/para/catalog.json\` no comando
-\`index.mjs\`. O servidor \`--index\` reconcilia o catálogo com o checkout
+No terminal, use `--previous caminho/para/catalog.json` no comando
+`index.mjs`. O servidor `--index` reconcilia o catálogo com o checkout
 atual, mesmo que o arquivo de cache tenha outro SHA.
 
 **Limites:** o cache depende dos IDs do Git index. Alterações ocultadas
-por configurações Git como \`assume-unchanged\` não podem ser detectadas
+por configurações Git como `assume-unchanged` não podem ser detectadas
 com segurança; desative essas flags antes de indexar o projeto.
+
+A etapa de verificação do GitHub Actions também cria um segundo índice
+incremental no mesmo checkout e compara as entradas arquivo a arquivo,
+exigindo 100% de reaproveitamento quando não há alterações. O resumo
+principal continua registrando o reaproveitamento real **entre execuções**.
