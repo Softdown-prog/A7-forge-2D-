@@ -187,3 +187,22 @@ test('Angular strict compiler flags and ESLint enforce the requested quality gat
   assert.ok(pkg.devDependencies['typescript-eslint']);
   assert.match(workflow,/npm run lint --prefix frontend-angular/);
 });
+
+test('Angular workspace lockfile is complete and CI installs with npm ci',()=>{
+  const pkg=JSON.parse(file(root+'package.json'));
+  const lock=JSON.parse(file(root+'package-lock.json'));
+  const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+  assert.equal(lock.lockfileVersion,3);
+  assert.equal(lock.name,pkg.name);
+  assert.deepEqual(lock.packages[''].dependencies,pkg.dependencies);
+  assert.deepEqual(lock.packages[''].devDependencies,pkg.devDependencies);
+  for(const mod of ['node_modules/@angular/core','node_modules/@angular/cli',
+    'node_modules/typescript','node_modules/eslint','node_modules/typescript-eslint']){
+    assert.ok(lock.packages[mod]?.version,mod);
+    assert.ok(lock.packages[mod]?.integrity || mod==='node_modules/typescript',mod+' integrity');
+  }
+  assert.match(workflow,/npm ci --prefix frontend-angular --no-audit --no-fund/);
+  assert.match(workflow,/cache-dependency-path: games\/lan_house_simulator\/frontend-angular\/package-lock.json/);
+  assert.doesNotMatch(workflow,/npm install --prefix frontend-angular/);
+  assert.doesNotMatch(workflow,/LHS_RESOLVED_LOCK/);
+});

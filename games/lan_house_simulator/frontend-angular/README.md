@@ -8,10 +8,18 @@ O motor usa TypeScript 7.0.2; Angular 22 aceita TypeScript 6.0.x. Por isso este 
 
 Requisitos: Node.js 22.22.3+ compatível com Angular 22. Dentro de frontend-angular execute:
 
-- npm install
+- npm ci
+- npm run lint
 - npm run build
 
 O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estático, sem servidor Next.js, Node em produção, Zone.js ou acesso direto ao motor. A integração na página do jogo só acontecerá após checagens de CI, navegador, controles e mobile.
+
+## Dependências reproduzíveis
+
+`package-lock.json` foi gerado pelo npm no runner do GitHub Actions, versionado
+junto do workspace Angular e validado em CI. Instalar com `npm ci`, que falha
+se o manifesto e o lockfile divergirem, em vez de resolver versões novas a
+cada compilação. O workflow usa cache do npm pela assinatura do lockfile.
 
 ## Regras rígidas de qualidade
 
