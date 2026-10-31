@@ -1,7 +1,7 @@
 /** Read-only projection of the inbox. No notice or decision is changed here. */
 import type {GameState} from "../sim/types.js";
 import {missingWindowsLicenses} from "../sim/notices.js";
-import {linuxDay,linuxUnlocked,LINUX_AUGUST_DAY} from "../sim/linuxQuest.js";
+import {linuxUnlocked,LINUX_AUGUST_DAY} from "../sim/linuxQuest.js";
 import {decisionOptions} from "../sim/decisions.js";
 import {basicGamesLicenseCost} from "../sim/economy.js";
 
