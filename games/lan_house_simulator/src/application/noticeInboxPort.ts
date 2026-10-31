@@ -1,12 +1,13 @@
 /** Read-only projection of the inbox. No notice or decision is changed here. */
 import type {GameState} from "../sim/types.js";
 import {missingWindowsLicenses} from "../sim/notices.js";
+import {linuxDay,linuxUnlocked,LINUX_AUGUST_DAY} from "../sim/linuxQuest.js";
 import {decisionOptions} from "../sim/decisions.js";
 import {basicGamesLicenseCost} from "../sim/economy.js";
 
 export interface NoticeActionButton{
  readonly kind:"button";
- readonly action:"read"|"programmer"|"windows"|"games"|"decision";
+ readonly action:"read"|"programmer"|"windows"|"games"|"decision"|"linux-research";
  readonly text:string;readonly disabled:boolean;
  readonly noticeId?:string;readonly choiceId?:string;readonly title?:string;
 }
@@ -25,6 +26,19 @@ export function createNoticeInboxPort(getState:()=>GameState):NoticeInboxPort {
   return {letters:(s.notices??[]).map(n=>{
    const items:NoticePresentationItem[]=[];
    if(!n.read)items.push({kind:"button",action:"read",noticeId:n.id,text:"Marcar como lida",disabled:false});
+   if(n.id==="linux-forum-contact"){
+    if(s.linuxResearchStartedDay===undefined)
+     items.push({kind:"button",action:"linux-research",text:"Tony vai pesquisar Linux",disabled:false,
+      title:"Iniciar pesquisa com o fórum. A instalação só será possível em agosto de 1999."});
+    else items.push({kind:"hint",text:linuxUnlocked(s)?
+     "Pesquisa concluída! Desligue um computador e instale Linux em Administração → Windows / Licenças.":
+     "Pesquisa em andamento desde o dia "+s.linuxResearchStartedDay+
+     ". Os próximos e-mails chegarão com o passar dos meses. Agosto de 1999 começa no dia "+LINUX_AUGUST_DAY+"."});
+   }
+   if(n.id==="linux-forum-ready")
+    items.push({kind:"resolved",text:linuxUnlocked(s)?
+     "✓ Linux liberado. Administração → Windows / Licenças → Instalar Linux (PC desligado).":
+     "Aguarde a pesquisa terminar."});
    if(n.id==="safety"&&!s.contentFilterInstalled)
     items.push({kind:"button",action:"programmer",text:"Contratar programador · R$ 320",disabled:s.cash<320});
    if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(s)>0)

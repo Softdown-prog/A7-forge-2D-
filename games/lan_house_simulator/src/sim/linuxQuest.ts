@@ -13,7 +13,7 @@ export interface LinuxLetter {id:LinuxMailId;title:string;body:string}
 export const linuxDay=(s:Pick<GameState,"totalMinutes">):number=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 export function linuxUnlocked(s:GameState):boolean{
  const day=s.linuxResearchStartedDay;
- return s.economyVersion===2&&Number.isInteger(day)&&day!>=LINUX_CONTACT_DAY&&
+ return s.economyVersion===2&&Number.isInteger(day)&&day!==undefined&&day>=LINUX_CONTACT_DAY&&
   linuxDay(s)>=Math.max(LINUX_AUGUST_DAY,day!+110);
 }
 export const isLinuxPc=(s:Pick<GameState,"pcOperatingSystems">,index:number):boolean=>s.pcOperatingSystems?.[index]==="linux";

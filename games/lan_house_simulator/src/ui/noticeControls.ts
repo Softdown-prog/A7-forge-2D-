@@ -14,6 +14,7 @@ export function installNoticeControls(root:HTMLElement|null,port:NoticeActionsPo
   if(d.decision&&d.choice)cb.onResult(port.choose(d.decision,d.choice));
   else if(d.noticeRead){port.markRead(d.noticeRead);cb.onRead();}
   else if(d.noticeAction==="programmer")cb.onResult(port.hireProgrammer());
+  else if(d.noticeAction==="linux-research")cb.onResult(port.startLinux());
   else if(d.noticeAction==="windows"||d.noticeAction==="games")cb.navigate(d.noticeAction);
  });
 }
