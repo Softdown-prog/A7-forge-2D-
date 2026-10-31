@@ -133,9 +133,63 @@ try{
   assert.equal(restored.ps2Stations?.length,1,'PS2 bench persisted');
   assert.equal(restored.ps2Games?.['cidade-em-fuga'],1,'PS2 game persisted');
   assert.ok(restored.cash<=afterPurchase,'Cash was not reset after reload');
+  // Exercise actual Angular admin navigation while retaining native management
+  // controller as the only authority for selected area and task panels.
+  await press(page.locator('#close-shop'));
+  await press(page.locator('#open-admin'));
+  const area=page.locator('#angular-admin-area-navigation');
+  await press(area.locator('[data-angular-admin-tab="services"]'));
+  assert.equal(await page.locator('#admin .admin-tabs [data-admin-tab="services"]')
+   .getAttribute('aria-selected'),'true','Angular tabs delegate to native admin state');
+  await page.locator('#section-services').waitFor({state:'visible'});
+  await press(page.locator('#angular-service-workspace [data-angular-task="network"]'));
+  assert.equal(await page.locator('#page-services-network').isVisible(),true,
+   'Angular services task delegates to native management view');
+  await press(area.locator('[data-angular-admin-tab="computers"]'));
+  await press(page.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
+  assert.equal(await page.locator('#page-computers-hardware').isVisible(),true,
+   'Angular computers task opens native hardware panel');
+  await press(page.locator('#close-admin'));
+
+  // Save export/import must use the original TypeScript serializer/validator,
+  // never serialize game state from an Angular component.
+  await press(page.locator('#open-menu'));
+  await page.locator('#start-screen').waitFor({state:'visible'});
+  await press(page.locator('#menu-options'));
+  assert.equal(await page.locator('#menu-settings').isVisible(),true);
+  await page.locator('#option-sound').check();
+  assert.equal(await page.evaluate(()=>localStorage.getItem('lhs.sound')),'on',
+   'Sound settings are persisted by the original preference port');
+  const downloadPromise=page.waitForEvent('download');
+  await press(page.locator('#save-export'));
+  const download=await downloadPromise;
+  assert.match(download.suggestedFilename(),/^lan-house-simulator-dia-\\d+\\.json$/);
+  const exported=JSON.parse(await readFile(await download.path(),'utf8'));
+  assert.equal(exported.format,'softdown-lan-house-save');
+  assert.equal(exported.exportVersion,1);
+  assert.equal(exported.state.ps1Stations?.length,1);
+  assert.equal(exported.state.ps1Discs?.['turbo-circuito'],1);
+  assert.equal(exported.state.ps2Stations?.length,1);
+  assert.equal(exported.state.ps2Games?.['cidade-em-fuga'],1);
+
+  // Exercise the actual import button and browser file chooser, not a
+  // direct game engine import or handcrafted storage write.
+  const fileChooserPromise=page.waitForEvent('filechooser');
+  await press(page.locator('#save-import'));
+  const chooser=await fileChooserPromise;
+  page.once('dialog',dialog=>dialog.accept());
+  await chooser.setFiles({name:'partida-integrada.json',mimeType:'application/json',
+   buffer:Buffer.from(JSON.stringify(exported),'utf8')});
+  await page.waitForFunction(()=>
+   document.getElementById('save-message')?.textContent?.includes('Partida importada com sucesso'));
+  const restoredFromFile=await persisted();
+  assert.equal(restoredFromFile.ps1Stations?.length,1,'PS1 survives real file import');
+  assert.equal(restoredFromFile.ps2Stations?.length,1,'PS2 survives real file import');
   assert.deepEqual(errors,[],'No runtime JS errors');
   reports.push({width,mobile,ps1Position,ps2Position,ps1Stations:restored.ps1Stations.length,
-   ps2Stations:restored.ps2Stations.length,cash:restored.cash,runtimeErrors:errors.length});
+   ps2Stations:restored.ps2Stations.length,cash:restored.cash,
+   adminNavigation:true,soundPreference:true,saveFileRoundtrip:true,
+   runtimeErrors:errors.length});
   await context.close();
  }
 

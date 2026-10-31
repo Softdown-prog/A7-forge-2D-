@@ -129,3 +129,13 @@ e JSON. Não substitui homologação de toda a interface para o corte final.
 Inclui cenários reais de bloqueio: PS2 indisponível em 2002 e compra
 indisponível sem caixa em 2006, verificando que nenhum console foi adquirido
 por cliques programáticos em controles desabilitados.
+
+## QA integrado de administração e arquivos de save
+
+O mesmo teste E2E integrado verifica, em desktop e celular, os cliques das abas
+Angular de Administração e das tarefas de Computadores/Serviços, conferindo que
+o painel TypeScript original abriu a seção correta. Também navega pelo menu,
+altera a preferência de som, exporta o JSON real via download do navegador,
+valida o envelope e as cópias físicas PS1/PS2, e importa esse arquivo via o
+controle nativo (incluindo confirmação), comprovando que o progresso foi
+preservado. Nenhum componente Angular acessa as regras da simulação.
