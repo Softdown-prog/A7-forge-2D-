@@ -3,12 +3,15 @@
  * Sends read-only presentation snapshots and mounts a tiny native controller
  * fixture to check event forwarding. It does not claim to run game simulation.
  */
-import {chromium} from 'playwright';
+import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 
+// Playwright is deliberately isolated from the locked Angular workspace.
+const requireBrowserTools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
+const {chromium}=requireBrowserTools('playwright');
 const root=resolve(import.meta.dirname,'../dist/game-ui/browser');
 const output=resolve(import.meta.dirname,'../../out/angular-catalog-browser');
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css',

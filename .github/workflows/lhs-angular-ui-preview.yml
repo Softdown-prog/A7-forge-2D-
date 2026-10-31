@@ -42,8 +42,8 @@ jobs:
         run: npm run build --prefix frontend-angular
       - name: Install Playwright for real Angular browser QA
         run: |
-          npm install --prefix frontend-angular --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          ./frontend-angular/node_modules/.bin/playwright install --with-deps chromium
+          npm install --prefix .angular-browser-tools --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          ./.angular-browser-tools/node_modules/.bin/playwright install --with-deps chromium
       - name: Validate Angular catalogue interactions in Chromium desktop and mobile
         run: node frontend-angular/scripts/verify_catalog_preview.mjs
       - name: Upload Angular catalogue screenshots and browser report
