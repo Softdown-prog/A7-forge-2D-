@@ -1118,3 +1118,53 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  background:#fff7dc;color:#51411f}
 .night-reopening-announcement[hidden]{display:none}
 @media(max-width:650px){.night-reopening-announcement{font-size:11px;padding:6px 8px}}
+
+
+/* React navigation / opening tour — same CRT-inspired identity, cleaner hierarchy. */
+:root{--react-lime:#d8edb8;--react-accent:#e6b77a}
+.start-screen{background:
+ radial-gradient(ellipse at 78% 42%,#66846a35,transparent 49%),
+ radial-gradient(ellipse at 14% 80%,#1e3d3620,transparent 43%),var(--ink)}
+.menu-topline{border-bottom-color:#b1c49a37}
+.menu-content h2{text-wrap:balance;text-shadow:0 8px 40px #060e0b50}
+.menu-actions#react-menu-actions button{position:relative;isolation:isolate}
+.menu-actions#react-menu-actions button.primary{
+ border-radius:12px;background:linear-gradient(110deg,#c8e6a9,#e0f2c8);
+ box-shadow:0 5px 0 #142c1f,0 15px 35px #091b1166;
+ font-size:15px;letter-spacing:.01em;transition:transform .18s,box-shadow .18s,filter .18s}
+.menu-actions#react-menu-actions button.primary:hover:not(:disabled){
+ background:linear-gradient(110deg,#e6f5cd,#d7ebba);filter:brightness(1.03);
+ box-shadow:0 6px 0 #142c1f,0 19px 36px #091b1177}
+.menu-actions#react-menu-actions button:not(.primary){background:#304b404f;border-color:#72917755}
+.menu-actions#react-menu-actions button:not(.primary):hover{background:#3e5e4d}
+.react-menu-tour{width:100%;max-width:485px;margin:14px 0 22px}
+.react-chapters{border:1px solid #738e735b;border-radius:15px;padding:15px 17px;
+ background:linear-gradient(145deg,#2b494080,#1d3731cc);box-shadow:0 10px 29px #10221a50}
+.react-chapters-heading{display:flex;gap:12px;align-items:center;color:var(--react-accent);
+ font:700 10px/1.3 "Courier New",monospace;letter-spacing:.15em}
+.react-chapters-rule{height:1px;background:#9cb39d4d;flex:1}
+.react-chapters-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;padding:3px;
+ border-radius:9px;background:#11272090}
+.react-chapters-tabs button.react-chapter-tab{font-size:10px;flex:1;min-width:105px;
+ min-height:34px;padding:6px;border:1px solid transparent;background:transparent;
+ border-radius:7px;font-weight:700;color:#b8cbb8}
+.react-chapters-tabs button.react-chapter-tab.active{background:#b7d89d;color:#19332c;border-color:#d1e9ba}
+.react-chapters-tabs button.react-chapter-tab:hover:not(.active){background:#315147}
+.react-chapter-detail{display:flex;align-items:flex-start;gap:13px;padding:13px 3px 3px;animation:react-in .22s ease-out}
+.react-chapter-marker{display:grid;place-items:center;flex:0 0 33px;height:33px;
+ background:#59744d4a;border:1px solid #8ead7f62;border-radius:10px;color:#edbc7b}
+.react-chapter-detail strong{font-size:13px;color:#f4f4df}
+.react-chapter-detail p{margin:5px 0 7px;font-size:11px;line-height:1.55;color:#b5cbbd}
+.react-chapter-note{font:700 9px "Courier New",monospace;letter-spacing:.045em;color:#c1daa8}
+#react-topbar-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+#react-topbar-actions button{border-radius:9px;transition:background .18s,transform .18s}
+#react-topbar-actions #open-admin{background:linear-gradient(115deg,#c2e2ac,#e3f0c5);
+ border-color:#c5e3b3;box-shadow:0 3px 0 #16281c50}
+@keyframes react-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1000px){#react-topbar-actions{gap:5px}#react-topbar-actions button{padding:8px 10px}}
+@media(max-width:700px){.react-menu-tour{max-width:none}
+ .react-chapters-tabs{flex-direction:column}.react-chapters-tabs button.react-chapter-tab{min-width:0;text-align:left;justify-content:flex-start}
+ #react-topbar-actions{width:100%;justify-content:stretch}
+ #react-topbar-actions button{flex:1;min-width:0}
+ #react-topbar-actions .keyboard-hint{display:none}}
+@media(prefers-reduced-motion:reduce){.react-chapter-detail{animation:none}}
