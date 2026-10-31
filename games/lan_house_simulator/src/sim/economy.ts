@@ -6,6 +6,7 @@ import {gpuBonus,gpuSpec,installedGpu} from "./gpu.js";
 import {startRepair} from "./services.js";
 import {lcdSpec,installedLcd} from "./computerModels.js";
 import {buyPlatform,componentSatisfactionBonus,hardwareFor,hardwareLoadWatts} from "./hardware.js";
+import {linuxMachineSpec,linuxMachineFor} from "./linuxMachines.js";
 import {stationUpgradeIssue,stationPoweredOn} from "./stationPower.js";
 import {allowableHourlyPrice,annualHourlyCeiling,priceIndex,yearFromMinutes,
   sessionPrice,MIN_HOURLY_PRICE,isHistorical} from "./historicalEconomy.js";
@@ -32,7 +33,8 @@ export function upgradeComputer(s:GameState,index:number):Result {
 /** Hardware de maior nível melhora a experiência, com bônus modesto e limitado. */
 export function hardwareSatisfactionBonus(state:GameState,index:number):number {
  const tier=state.pcTiers?.[index]??1;
- return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+gpuBonus(state,index)+
+ return (Number.isInteger(tier)?componentSatisfactionBonus(state,index):0)+
+  (linuxMachineSpec(linuxMachineFor(state,index)??"")?.bonus??0)+gpuBonus(state,index)+
    (lcdSpec(installedLcd(state,index))?.bonus??0);
 }
 export const ITEM_WHOLESALE: Record<Item, number> = CLASSIC_WHOLESALE;

@@ -7,10 +7,11 @@ import {installedLcd,type LcdId} from "../sim/computerModels.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import {isLinuxPc} from "../sim/linuxQuest.js";
+import {linuxMachineFor,type LinuxMachineId} from "../sim/linuxMachines.js";
 import {drawPcScreenActivity,pcActivityForStation,pcScreenFrame,type PcScreenActivity} from "./pcScreenActivities.js";
 
 type ComputerMode="ready"|"busy"|"offline"|"maintenance"|"powered-off";
-interface ComputerAppearance{tier:number;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number;activity:PcScreenActivity|null;activityFrame:number}
+interface ComputerAppearance{tier:number;linuxModel:LinuxMachineId|null;occupied:boolean;mode:ComputerMode;pulse:number;gpu:string|null;lcd:LcdId|null;premiumChair:boolean;premiumKeyboard:boolean;keyboardPhase:number;activity:PcScreenActivity|null;activityFrame:number}
 const lcdMaterials:Record<LcdId,{top:string;front:string;side:string;accent:string}>={
  lcd05:{top:"#d4dcd9",front:"#a5b6b5",side:"#71888a",accent:"#75a5a8"},
  lcd08:{top:"#535d60",front:"#39474b",side:"#26383d",accent:"#98b9b7"},
@@ -108,8 +109,8 @@ function lcdMonitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:Computer
 function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerAppearance):void{
  const {tier,mode,pulse}=a,z=cam.zoom;
  const mx=p.x+.22,my=p.y-.05,mw=.46,md=.36,mz=36,mh=39;
- const top=tier===3?"#d3dedb":tier===2?"#eee0bc":"#f0e6d0";
- const side=tier===3?"#879fa0":tier===2?"#b9a57c":"#b7b1a0";
+ const top=a.linuxModel==="linux-dev-99"?"#607986":a.linuxModel?"#a6bfb8":tier===3?"#d3dedb":tier===2?"#eee0bc":"#f0e6d0";
+ const side=a.linuxModel==="linux-dev-99"?"#405866":a.linuxModel?"#688b7d":tier===3?"#879fa0":tier===2?"#b9a57c":"#b7b1a0";
  const at=(x:number,y:number,h:number)=>iso({x,y},cam,h);
  if(cam.rotation===1||cam.rotation===2){
   raisedBox(c,cam,mx,my,mw,md,mz,mh,top,side,side);
@@ -126,7 +127,7 @@ function monitor(c:CanvasRenderingContext2D,cam:Projection,p:Point,a:ComputerApp
   at(mx+mw-.015,my+.095+i*.045,mz+26)],"#747e75",.9*z);
  raisedBox(c,cam,mx+.09,my+.12,.29,.27,34.5,3,"#dcd3bc","#a69f8a","#8f968a");
  plane(c,cam,mx,my+md+.005,mw,mz,mh,()=>{
-  const bezel=tier===3?"#c6d6d3":tier===2?"#e4d4ac":"#e8deca";
+  const bezel=a.linuxModel==="linux-dev-99"?"#576f80":a.linuxModel?"#a8c8b5":tier===3?"#c6d6d3":tier===2?"#e4d4ac":"#e8deca";
   round(c,0,0,96,100,7,bezel,"#807b6c");
   path(c,[{x:6,y:89},{x:6,y:8},{x:86,y:8}],"#fff4df",2);
   path(c,[{x:91,y:13},{x:91,y:91},{x:13,y:91}],"#b6af99",2);
@@ -254,6 +255,7 @@ export function drawNeonChair(c:CanvasRenderingContext2D,cam:Projection,p:Point,
 function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:number,a:ComputerAppearance):void{
  const {tier,occupied,mode,gpu,lcd}=a,z=cam.zoom;
  const kit=lcd?lcdMaterials[lcd]:null;
+ const linux=!!a.linuxModel,dev=a.linuxModel==="linux-dev-99";
  const accent=kit?.accent??(tier===3?"#619493":tier===2?"#bca16b":"#a99c7d");
  const at=(x:number,y:number,h=0)=>iso({x:p.x+x,y:p.y+y},cam,h);
  c.save();c.lineJoin="round";
@@ -261,20 +263,23 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
  c.beginPath();c.ellipse(ground.x,ground.y,37*z,15*z,0,0,Math.PI*2);c.fill();
  // A real tabletop, four legs and an under-desk drawer instead of a solid block.
  for(const [x,y] of [[-.13,-.13],[.68,-.13],[-.13,.47],[.68,.47]])
-  cuboid(c,cam,p.x+x!,p.y+y!,.075,.085,31,["#b49673","#685b50","#8b735c"]);
+  cuboid(c,cam,p.x+x!,p.y+y!,.075,.085,31,linux?["#a8bab4","#526c70","#597879"]:["#b49673","#685b50","#8b735c"]);
  raisedBox(c,cam,p.x-.12,p.y+.03,.24,.47,6,23,"#c4a180","#9c765d","#7c6657");
  path(c,[at(-.09,.505,20),at(.10,.505,20)],"#795d4e",1*z);
  path(c,[at(-.04,.51,23),at(.055,.51,23)],"#c8b790",1.6*z);
- raisedBox(c,cam,p.x-.16,p.y-.18,.95,.78,31,3,"#dfbd91","#9c795c","#b9936d");
+ raisedBox(c,cam,p.x-.16,p.y-.18,.95,.78,31,3,
+  dev?"#879cab":linux?"#a4c1ae":"#dfbd91",
+  dev?"#435c68":linux?"#598075":"#9c795c",
+  dev?"#607a84":linux?"#7a998b":"#b9936d");
  path(c,[at(-.15,.602,34),at(.78,.602,34)],"#f0d2a7",1*z);
  // Contact shadows keep the peripherals grounded on the wood.
  polygon(c,[at(.17,.0,34.1),at(.73,.0,34.1),at(.73,.35,34.1),at(.17,.35,34.1)],"rgba(43,54,45,.15)");
  path(c,[at(.22,.38,35),at(.07,.19,35),at(-.02,.22,35)],"#6b7161",1.2*z);
- raisedBox(c,cam,p.x-.12,p.y+.06,.22,.34,35,20,
-  kit?.top??(tier===3?"#ccd7ce":tier===2?"#e8d7ae":"#e7deca"),
-  kit?.front??(tier===3?"#9eb5a8":tier===2?"#c6ad7f":"#c4b89d"),
-  kit?.side??(tier===3?"#718d83":tier===2?"#a08d6d":"#a59e8b"));
- plane(c,cam,p.x-.12,p.y+.403,.22,35,20,()=>{
+ raisedBox(c,cam,p.x-.12,p.y+.06,dev?.23:.22,.34,35,dev?24:20,
+  linux?(dev?"#708997":"#bfd2c8"):kit?.top??(tier===3?"#ccd7ce":tier===2?"#e8d7ae":"#e7deca"),
+  linux?(dev?"#344c59":"#608678"):kit?.front??(tier===3?"#9eb5a8":tier===2?"#c6ad7f":"#c4b89d"),
+  linux?(dev?"#526e7b":"#88a79a"):kit?.side??(tier===3?"#718d83":tier===2?"#a08d6d":"#a59e8b"));
+ plane(c,cam,p.x-.12,p.y+.403,.22,35,dev?24:20,()=>{
   if(!lcd||lcd==="lcd05"||lcd==="lcd08"){
    round(c,8,9,80,17,2,kit?.top??"#b1aa96","#7d8171");c.fillStyle="#657264";c.fillRect(17,17,54,3);
    round(c,14,33,65,8,2,kit?.side??"#9c9c89");
@@ -290,9 +295,22 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
   if(!lcd||lcd==="lcd05"||lcd==="lcd08")for(let row=0;row<3;row++){c.fillStyle="#889580";c.fillRect(15,54+row*7,44,2);}
   c.fillStyle=mode==="powered-off"?"#536963":mode==="maintenance"?"#b68449":mode==="offline"?"#b1a070":"#8fc090";c.fillRect(72,68,7,7);
   if(tier>1){c.fillStyle=accent;c.fillRect(65,44,15,14);}
+  if(linux){
+   // Actual case vents and drive bays, visible when Linux PC is off.
+   c.fillStyle=dev?"#253b48":"#386457";c.fillRect(8,46,78,5);
+   for(let i=0;i<(dev?7:4);i++){c.fillStyle="#b5dbc2";c.fillRect(14+i*10,62,5,3);}
+   c.fillStyle="#9cdeaf";c.fillRect(65,81,9,8);
+  }
  });
  if(gpu){const label=at(.108,.22,44);c.fillStyle=gpuColors[gpu];c.beginPath();c.ellipse(label.x,label.y,3*z,4*z,-.3,0,Math.PI*2);c.fill();}
  if(lcd)lcdMonitor(c,cam,p,a);else monitor(c,cam,p,a);
+ if(linux){
+  // Additional on-desk I/O module. Distinct silhouette, within existing footprint.
+  raisedBox(c,cam,p.x+.60,p.y+.025,.13,.18,34.2,dev?11:7,
+   dev?"#5c7886":"#90b6a4",dev?"#293f50":"#4f7b69",dev?"#3e5d6d":"#6c9180");
+  const indicator=at(.68,.21,dev?42:38);
+  c.fillStyle="#b5f0bd";c.beginPath();c.arc(indicator.x,indicator.y,2*z,0,Math.PI*2);c.fill();
+ }
  // O mesmo teclado físico, tecla a tecla, com identidade premium RGB.
  // Posição do objeto e da digitação preservada para todos os modelos de PC.
  const keyX=p.x+.15,keyY=p.y+.38;
@@ -343,7 +361,7 @@ function paintComputer(c:CanvasRenderingContext2D,cam:Projection,p:Point,index:n
  path(c,[{x:mouse.x-1*z,y:mouse.y-2.5*z},{x:mouse.x+1.2*z,y:mouse.y-.5*z}],"#9a9c86",.7*z);
  // Physical station label on the desk's front rail.
  plane(c,cam,p.x+.40,p.y+.603,.24,30,4,()=>{
-  c.fillStyle="#486b5d";c.fillRect(0,0,96,100);c.fillStyle="#eee2b4";c.textAlign="center";
+  c.fillStyle=dev?"#38576d":linux?"#2e675c":"#486b5d";c.fillRect(0,0,96,100);c.fillStyle="#eee2b4";c.textAlign="center";
   c.font="bold 68px Arial,sans-serif";c.fillText(String(index+1).padStart(2,"0"),48,78);
  });
  if(mode==="powered-off"){
@@ -398,7 +416,7 @@ export function drawRetroComputer(ctx:CanvasRenderingContext2D,camera:Projection
  // só ocorre entre sessões. Nenhuma alteração do RNG ou do save.
  const activity=mode==="busy"||(mode==="ready"&&isLinuxPc(s,index))?candidate:null;
  const activityFrame=activity?pcScreenFrame(t):0;
- const appearance:ComputerAppearance={tier,occupied,mode,
+ const appearance:ComputerAppearance={tier,linuxModel:linuxMachineFor(s,index),occupied,mode,
   pulse:mode==="busy"||premiumChair?Math.floor(t*1.7+index)%2:0,
   gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair,premiumKeyboard,keyboardPhase,
   activity,activityFrame};
