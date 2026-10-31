@@ -5,12 +5,14 @@ on:
     paths:
       - "games/lan_house_simulator/frontend-angular/**"
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - ".github/workflows/lhs-angular-ui-preview.yml"
   push:
     branches: ["feat/lhs-angular-ui-foundation"]
     paths:
       - "games/lan_house_simulator/frontend-angular/**"
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - ".github/workflows/lhs-angular-ui-preview.yml"
 
 permissions:
@@ -29,7 +31,7 @@ jobs:
         with:
           node-version: "22"
       - name: Verify Angular UI boundaries
-        run: node --test tests/angular-ui-foundation.test.mjs
+        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs
       - name: Install isolated Angular dependencies
         run: npm install --prefix frontend-angular --no-audit --no-fund
       - name: Build Angular AOT preview

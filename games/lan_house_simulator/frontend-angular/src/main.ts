@@ -8,6 +8,7 @@ import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
   MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent, ShopSearchComponent
 } from './components';
+import {ComputerWorkspaceComponent,ServiceWorkspaceComponent} from './workspaces';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -18,7 +19,9 @@ async function mountUi():Promise<void> {
     ['react-quick-deck',QuickDeckComponent],
     ['react-shop-categories',ShopCategoriesComponent],
     ['react-shop-search',ShopSearchComponent],
-    ['react-admin-shortcuts',AdminShortcutsComponent]
+    ['react-admin-shortcuts',AdminShortcutsComponent],
+    ['angular-computer-workspace',ComputerWorkspaceComponent],
+    ['angular-service-workspace',ServiceWorkspaceComponent]
   ] as const;
   for(const [id,component] of islands){
     const host=document.getElementById(id);

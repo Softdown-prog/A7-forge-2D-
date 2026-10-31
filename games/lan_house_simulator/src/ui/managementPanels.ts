@@ -16,7 +16,9 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  function mount(area:string,pages:Page[],dynamic?:HTMLElement){
   const root=$('section-'+area),nav=document.createElement('nav');
   nav.className='management-pages';nav.setAttribute('aria-label','Painéis de '+(root.querySelector('h3')?.textContent??area));
-  root.querySelector('h3')?.after(nav);
+  const angularRoot=area==='computers'?root.querySelector('#angular-computer-workspace'):
+   area==='services'?root.querySelector('#angular-service-workspace'):null;
+  (angularRoot??root.querySelector('h3'))?.after(nav);
   const controls:HTMLButtonElement[]=[],panes:HTMLElement[]=[];
   const isLocked=(page:Page)=>page.unlockYear!==undefined&&getYear()<page.unlockYear;
   const lockHint=area==='stock'?document.createElement('p'):null;
@@ -48,6 +50,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
     if(active&&dynamic&&chosen.id!=='ledger')pane.append(dynamic);
    }
    if(dynamic)dynamic.hidden=chosen.id==='ledger';
+   document.dispatchEvent(new CustomEvent('lhs:management-page-selected',{detail:{area,page:chosen.id}}));
   }
   lockRefreshers.push(()=>{
    for(const [i,page] of pages.entries()){
@@ -94,7 +97,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  ],$('pc-maintenance'));
  const serviceRoot=$('section-services'),access=serviceRoot.querySelector('.service-access-review')!;
  const network=following($('internet'));
- const staff=Array.from(serviceRoot.children).filter(node=>node!==serviceRoot.querySelector('h3')&&node!==access&&!network.includes(node));
+ const staff=Array.from(serviceRoot.children).filter(node=>node!==serviceRoot.querySelector('h3')&&node.id!=='angular-service-workspace'&&node!==access&&!network.includes(node));
  mount('services',[
   {id:'staff',label:'Equipe e limpeza',nodes:staff},
   {id:'network',label:'Internet e contrato',nodes:network},

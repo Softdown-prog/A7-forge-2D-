@@ -17,7 +17,9 @@
             "polyfills": [],
             "tsConfig": "tsconfig.app.json",
             "assets": [],
-            "styles": []
+            "styles": [
+              "src/workspace.css"
+            ]
           },
           "configurations": {
             "production": {
