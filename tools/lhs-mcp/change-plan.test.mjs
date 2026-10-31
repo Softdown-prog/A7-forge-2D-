@@ -24,7 +24,8 @@ test("plan identifies owner, dependent and test importing compiled source",()=>{
  const plan=planChange(index,"simulação PS2",{owners:2});
  assert.equal(plan.status,"review-only");
  assert.equal(plan.owners[0].path,owner);
- assert.ok(plan.reviewFiles.some(x=>x.path===view&&x.role==="direct-dependent"));
+ assert.ok(plan.reviewFiles.some(x=>x.path===view&&
+  x.roles.includes("direct-dependent")&&x.roles.includes("candidate-owner")));
  assert.ok(plan.suggestedTests.some(t=>t.path.endsWith("ps2-usage.test.mjs")&&
   t.evidence==="imports-candidate"));
  assert.ok(!plan.suggestedTests.some(t=>t.path.endsWith("weather.test.mjs")));

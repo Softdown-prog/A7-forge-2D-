@@ -70,8 +70,16 @@ export function planChange(index,query,{prefix=sourceRoot,owners=3,depth=2,
  const candidates=traced.candidates;
  const fileMap=new Map();
  function add(file,role,via){
-  if(!file||!graph.byPath.has(file)||fileMap.has(file)||fileMap.size>=reviewMax)return;
-  fileMap.set(file,{path:file,role,via});
+  if(!file||!graph.byPath.has(file))return;
+  const prior=fileMap.get(file);
+  if(prior){
+   if(!prior.roles.includes(role))prior.roles.push(role);
+   if(via&&!prior.relatedVia.includes(via))prior.relatedVia.push(via);
+   return;
+  }
+  if(fileMap.size>=reviewMax)return;
+  fileMap.set(file,{path:file,role,roles:[role],via,
+   relatedVia:via?[via]:[]});
  }
  for(const candidate of candidates)add(candidate.path,"candidate-owner",null);
  for(const candidate of candidates){
