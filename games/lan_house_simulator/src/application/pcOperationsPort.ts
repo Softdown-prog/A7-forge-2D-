@@ -30,7 +30,7 @@ export function createPcOperationsPort(getState:()=>GameState):PcOperationsPort{
    const game=getState(),count=pcCount(game);
    const broken=Array.from({length:count},(_,i)=>i).filter(i=>pcBroken(game,i)).length;
    const poweredOff=Array.from({length:count},(_,i)=>i).filter(i=>!stationPoweredOn(game,i)).length;
-   return count+" computadores · "+game.customers.filter(c=>c.stage==="using").length+
+   return count+" computadores · "+game.customers.filter(c=>c.stage==="using"&&c.ps1StationIndex===undefined&&c.ps2StationIndex===undefined).length+
     " ocupados · "+poweredOff+" desligados · "+broken+" em manutenção";
   },
   rows(){

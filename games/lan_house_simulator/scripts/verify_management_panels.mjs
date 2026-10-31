@@ -5,6 +5,7 @@ import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {selectAdminArea,selectTask} from './management_navigation.mjs';
 import {createGame} from '../dist/js/sim/engine.js';
+import {SHOP_CATALOG} from '../dist/js/sim/shop.js';
 import {GAME_SAVE_KEY,DAY_MINUTES} from '../dist/js/sim/types.js';
 const output=resolve(process.argv[2]??'out/management');await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,'serve.mjs')],{stdio:['ignore','pipe','inherit']});let browser;
@@ -115,7 +116,8 @@ try{
    products.push(...await page.locator('[data-buy]').evaluateAll(nodes=>nodes.map(n=>n.dataset.buy)));
    assert.ok(await page.locator('#shop-catalog .shop-card').count()<25,'One category is built at a time');
   }
-  assert.equal(new Set(products).size,14,'Every existing shop item remains accessible');
+  assert.deepEqual([...new Set(products)].sort(),[...SHOP_CATALOG.map(item=>item.id),'ps2'].sort(),
+   'Every existing shop item and the new PS2 bench remain accessible');
   await press(page.locator('#close-shop'));await page.locator('#scene-viewport').scrollIntoViewIfNeeded();
   await page.evaluate(async()=>{const {SceneRenderer}=await import('./js/render/scene.js');const old=SceneRenderer.prototype.draw;window.drawSamples=[];SceneRenderer.prototype.draw=function(...args){if(this.ctx.canvas.id==='game')window.drawSamples.push(performance.now());return old.apply(this,args);};});
   // Repeated map scroll events used to suppress every scene draw for 120 ms.

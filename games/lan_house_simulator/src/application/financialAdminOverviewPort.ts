@@ -18,7 +18,7 @@ export function createFinancialAdminOverviewPort(getState:()=>GameState):Financi
   const maintenance=Math.round((75+s.expansionLevel*35)*index);
   const wages=s.employeePayrollAccrued??0;
   const printer=s.printer?.walkIns??0,discs=s.discCopier?.walkIns??0;
-  const attended=s.served+printer+discs,ps1=s.ps1Sessions??0;
+  const attended=s.served+printer+discs,ps1=s.ps1Sessions??0,ps2=s.ps2Sessions??0;
   return {
    bills:money(monthlyBills(s)),served:String(attended),
    breakdown:"Contas: aluguel "+money(rent)+" · internet "+money(internet)+
@@ -26,8 +26,9 @@ export function createFinancialAdminOverviewPort(getState:()=>GameState):Financi
     " · salários acumulados "+money(wages)+" · projeção energia/mês "+money(energyMonthlyEstimate(s))+
     ". Diárias cobradas apenas nos dias com atendimento efetivo.",
    activity:"Entradas R$ "+s.revenue+" · Saídas R$ "+s.expenses+
-    " · Atendimentos "+attended+" (PCs "+(s.served-ps1)+
+    " · Atendimentos "+attended+" (PCs "+(s.served-ps1-ps2)+
     ((s.ps1Stations?.length??0)+ps1>0?" · PlayStation "+ps1:"")+
+    ((s.ps2Stations?.length??0)+ps2>0?" · PS2 "+ps2:"")+
     " · Impressões avulsas "+printer+" · Cópias avulsas "+discs+")",
    expansion:"Ampliação "+s.expansionLevel+"/2"
   };

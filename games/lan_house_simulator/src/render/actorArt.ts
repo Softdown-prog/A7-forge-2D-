@@ -51,6 +51,8 @@ export interface ActorRender {
   transition?: number;
   /** Cliente usando controle de console; anima mãos sem alterar poses de PC. */
   gamepad?: boolean;
+  modernGamepad?: boolean;
+  gamepadGrip?: {x:number;y:number};
   /** Proporções do agachamento diante da cadeira de videogame. */
   consoleSeat?: boolean;
   /** Só passa true com entitlement verificado no backend; exclusivo de sessão PC. */
@@ -450,10 +452,10 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
       angledWalk?-36+headShift+armSwing*axis.y*.5:
       work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
-    const handX=celebrating?side*22:
+    const handX=gamepadActive&&a.modernGamepad?(a.gamepadGrip?.x??12.8)+side*11.05:celebrating?side*22:
       angledWalk?shoulderX+side*2+armSwing*axis.x:
       movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
-    const handY=celebrating?-72+headShift+Math.sin(a.time*6+side)*2:
+    const handY=gamepadActive&&a.modernGamepad?(a.gamepadGrip?.y??-22.72)+2.72+Math.sin(a.time*7)*.4:celebrating?-72+headShift+Math.sin(a.time*6+side)*2:
       disappointed?-17+headShift:
       angledWalk?-25+headShift+armSwing*axis.y:
       movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);

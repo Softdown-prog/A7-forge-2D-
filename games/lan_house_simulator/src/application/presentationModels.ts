@@ -23,7 +23,7 @@ export function liveStatusSnapshot(s:GameState,internetName:string):LiveStatusSn
  for(const p of PRODUCTS)stock[p.category]+=merchandiseStock(s,p.id);
  return {
   cash:s.cash,reputation:s.reputation,internetName,connected:online(s),
-  occupied:s.customers.filter(c=>c.stage==="using").length,
+  occupied:s.customers.filter(c=>c.stage==="using"&&c.ps1StationIndex===undefined&&c.ps2StationIndex===undefined).length,
   computerCount:pcCount(s),customerCount:s.customers.length,stock,
   promotionActive:isPromotionActive(s),
   occupancyPercent:computerOccupancyPercent(s.monthPcUsedMinutes??0,s.monthPcCapacityMinutes??0)

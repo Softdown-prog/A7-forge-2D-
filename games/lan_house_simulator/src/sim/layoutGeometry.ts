@@ -7,6 +7,7 @@ import {computerSeat,counterQueue} from "./route.js";
 import {CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {furnitureLocations,furnitureSlots} from "./furnitureLayout.js";
 import {binSpots} from "./serviceLayout.js";
+import {consoleFootprints,consoleApproaches} from "./consoleLayout.js";
 
 export interface EditableObject extends Point{id:string;label:string;kind:"pc"|"counter"|"soda"|"candy"|"shelf"|"bin"|"poster"|"plant"|"table";rotation:Rotation;w:number;d:number;index?:number;surface:"floor"|"wall";axis?:"x"|"y";span?:number;posterKind?:"terminal"|"arcade"|"coaster"|"tactical"|"golf"|"artillery"|"city"}
 
@@ -58,7 +59,8 @@ export function objectTouchesCustomer(o:EditableObject,p:Point):boolean{
  return Math.hypot(p.x-nearX,p.y-nearY)<CUSTOMER_COLLISION_RADIUS;
 }
 
-export function layoutGoals(s:GameState):Point[]{return [counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];}
+export function layoutGoals(s:GameState):Point[]{return [counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s),
+ ...consoleApproaches(s)];}
 
 function overlap(a:EditableObject,b:EditableObject):boolean{
  const r=objectRect(a),q=objectRect(b),gap=.03;
@@ -85,7 +87,7 @@ export function layoutPlacementIssue(s:GameState,o:EditableObject):string|null{
  }
  const r=objectRect(o);
  if(r.minX<b.minX+.03||r.maxX>b.maxX-.03||r.minY<b.minY+.03||r.maxY>b.maxY-.03)return "O objeto precisa caber inteiro no salão.";
- if(editableObjects(s).some(other=>other.id!==o.id&&other.surface==="floor"&&overlap(o,other)))return "Esta posição está ocupada por outro objeto.";
+ if([...editableObjects(s),...consoleFootprints(s,true)].some(other=>other.id!==o.id&&other.surface==="floor"&&overlap(o,other)))return "Esta posição está ocupada por outro objeto.";
  if([...(s.interiorWalls??[]),...(s.interiorDoors??[])].some(w=>wallCutsObject(w,o)))return "O objeto atravessa uma divisória ou porta.";
  if(pointInsideObject(o,entrance(s),.3))return "Mantenha a entrada livre.";
  const ownGoal=o.kind==="counter"?0:o.kind==="pc"?1+o.index!:o.kind==="soda"?1+pcCount(s):o.kind==="candy"?2+pcCount(s):o.kind==="shelf"?3+pcCount(s):-1;
