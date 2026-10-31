@@ -88,38 +88,76 @@ export function contextFromSource(content,ext){
  return {terms,headings};
 }
 const groupsIn=s=>[...new Set(tokenize(s).map(canonical))];
+// Cache is per index object, never persisted in the GitHub artifact. A refreshed
+// buildIndex creates a new object. Do not mutate index.files in place after use.
+const preparedIndexes=new WeakMap();
+function scoped(pathname,prefix){
+ return !prefix||pathname===prefix||pathname.startsWith(prefix+"/");
+}
+export function prepareContextSearch(index){
+ if(!index||typeof index!=="object"||!Array.isArray(index.files))
+  throw Error("A valid indexed catalog is required");
+ const cached=preparedIndexes.get(index);
+ if(cached?.files===index.files&&cached.length===index.files.length)return cached;
+ const postings=new Map();
+ for(let id=0;id<index.files.length;id++){
+  const file=index.files[id];
+  const name=new Set(groupsIn(path.posix.basename(file.path)));
+  const folder=new Set(groupsIn(path.posix.dirname(file.path).split("/").slice(-2).join(" ")));
+  const symbols=new Set((file.symbols??[]).flatMap(s=>groupsIn(s.name)));
+  const terms=new Set([...name,...folder,...symbols,...Object.keys(file.contextTerms??{})]);
+  for(const term of terms){
+   const tf=Object.hasOwn(file.contextTerms??{},term)?Number(file.contextTerms[term]):0;
+   const record={id,tf:Number.isFinite(tf)&&tf>0?tf:0,
+    filename:name.has(term),symbol:symbols.has(term),directory:folder.has(term)};
+   const list=postings.get(term);
+   if(list)list.push(record);
+   else postings.set(term,[record]);
+  }
+ }
+ const prepared={files:index.files,length:index.files.length,postings};
+ preparedIndexes.set(index,prepared);
+ return prepared;
+}
 export function searchContext(index,query,{prefix="",limit=15}={}){
- const requested=queryTerms(query),max=Math.min(50,Math.max(1,Number(limit)||15));
- const files=index.files.filter(f=>!prefix||f.path===prefix||f.path.startsWith(prefix+"/"));
- const df=new Map(requested.map(t=>[t,0])),total=Math.max(1,files.length);
- const fields=files.map(f=>({
-  file:f,
-  name:new Set(groupsIn(path.posix.basename(f.path))),
-  folder:new Set(groupsIn(path.posix.dirname(f.path).split("/").slice(-2).join(" "))),
-  symbols:new Set((f.symbols??[]).flatMap(s=>groupsIn(s.name)))
- }));
- for(const {file,name,symbols,folder} of fields)for(const t of requested){
-  if(file.contextTerms?.[t]||name.has(t)||symbols.has(t)||folder.has(t))
-   df.set(t,df.get(t)+1);
+ const requested=queryTerms(query);
+ const max=Math.min(50,Math.max(1,Number(limit)||15));
+ const prepared=prepareContextSearch(index);
+ const total=prefix?index.files.reduce((n,f)=>n+(scoped(f.path,prefix)?1:0),0):index.files.length;
+ if(!total)return [];
+ // Each posting is a single matching file/term pair. Only walk relevant files:
+ // no per-query CamelCase tokenization and no scanning all symbols.
+ const candidates=new Map(),df=new Map();
+ for(const term of requested){
+  let documentFrequency=0;
+  for(const posting of prepared.postings.get(term)??[]){
+   const file=index.files[posting.id];
+   if(!scoped(file.path,prefix))continue;
+   documentFrequency++;
+   let matches=candidates.get(posting.id);
+   if(!matches){matches=new Map();candidates.set(posting.id,matches);}
+   matches.set(term,posting);
+  }
+  df.set(term,documentFrequency);
  }
  const results=[];
- for(const {file,name,symbols,folder} of fields){
-  let score=0,matched=0;
+ for(const [id,matches] of candidates){
+  const file=index.files[id];
+  let score=0;
   const evidence=[];
-  for(const t of requested){
-   const count=Number(file.contextTerms?.[t]??0);
-   const filename=name.has(t),symbol=symbols.has(t),directory=folder.has(t);
-   if(!count&&!filename&&!symbol&&!directory)continue;
-   matched++;
-   const idf=1+Math.log(1+(total-(df.get(t)??0)+0.5)/((df.get(t)??0)+0.5));
-   score+=idf*(Math.log2(1+count)*1.8+(filename?5:0)+(symbol?3:0)+(directory?0.6:0));
-   evidence.push({term:t,where:filename?"filename":symbol?"symbol":count?"source":"folder"});
+  for(const term of requested){
+   const match=matches.get(term);
+   if(!match)continue;
+   const {tf,filename,symbol,directory}=match;
+   const idf=1+Math.log(1+(total-(df.get(term)??0)+0.5)/((df.get(term)??0)+0.5));
+   score+=idf*(Math.log2(1+tf)*1.8+(filename?5:0)+(symbol?3:0)+(directory?0.6:0));
+   evidence.push({term,where:filename?"filename":symbol?"symbol":tf?"source":"folder"});
   }
-  if(!matched)continue;
+  const matched=matches.size;
   score*=matched===requested.length?1.55:matched/requested.length;
   results.push({path:file.path,score:Math.round(score*100)/100,
    matchedTerms:matched,queryTerms:requested.length,evidence,
-   symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>requested.includes(t))).slice(0,5),
+   symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>matches.has(t))).slice(0,5),
    description:file.contextHeadings?.[0]??null});
  }
  return results.sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||

@@ -178,3 +178,13 @@ do Git, tempo de indexação, quantidade reaproveitada, heap, RSS final e
 pico observado de RSS. Desempenho medido em runners compartilhados
 não representa SLA e os fontes sintéticos não replicam a complexidade
 de cada módulo real da lan house.
+
+## Busca contextual acelerada
+
+A partir desta etapa, `prepareContextSearch` prepara, por objeto de índice,
+um mapa invertido de termos para arquivos. A consulta `search_context`
+inspeciona somente os candidatos relacionados aos termos pedidos, sem
+repetir a extração de palavras de todos os nomes/símbolos. Um novo
+`buildIndex`/refresh cria novo índice e descarta naturalmente a cache
+antiga (armazenada por `WeakMap`). Não editar `index.files` no mesmo
+objeto depois de preparar a busca. A cache **não** entra no artefato Git.

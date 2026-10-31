@@ -99,3 +99,30 @@ test("MCP protocol serves contextual search and rejects empty questions",t=>{
  assert.match(messages[2].result.content[0].text,/ps2Shop/);
  assert.equal(messages[3].result.isError,true);
 });
+
+
+test("inverted postings are memoized per immutable index; refresh invalidates cache",async t=>{
+ const {root,files}=fixture(t);
+ const {prepareContextSearch}=await import("./context-search.mjs");
+ const index=buildIndex(root,{scope});
+ const first=prepareContextSearch(index),second=prepareContextSearch(index);
+ assert.strictEqual(first,second);
+ assert.ok(first.postings.get("ps2")?.length);
+ const existing=searchContext(index,"comprar PS2",{prefix:scope+"/src/ui",limit:8});
+ assert.match(existing[0].path,/ps2Shop.ts$/);
+ const modified=scope+"/src/ui/ps2Shop.ts";
+ fs.writeFileSync(path.join(root,modified),"// Serviço de rede e monitoramento\nexport function monitorNetwork(){}\n");
+ const refreshed=buildIndex(root,{scope,previousIndex:index});
+ assert.notStrictEqual(prepareContextSearch(refreshed),first);
+ assert.equal(refreshed.files.find(f=>f.path===modified).contextTerms.purchase,undefined);
+ assert.deepEqual(searchContext(index,"comprar PS2"),searchContext(index,"comprar PS2"),
+  "Repeated ranking must be deterministic");
+});
+test("prefix isolation does not leak matches from other folders",t=>{
+ const {root}=fixture(t),index=buildIndex(root,{scope});
+ const ui=searchContext(index,"fila de clientes",{prefix:scope+"/src/ui"});
+ const sim=searchContext(index,"fila de clientes",{prefix:scope+"/src/sim"});
+ assert.ok(ui.every(f=>f.path.startsWith(scope+"/src/ui/")));
+ assert.match(sim[0].path,/retailQueue.ts$/);
+ assert.equal(searchContext(index,"comprar PS2",{prefix:scope+"/not-found"}).length,0);
+});
