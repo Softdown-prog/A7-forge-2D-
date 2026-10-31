@@ -30,6 +30,12 @@ Os componentes Angular agora recebem snapshots somente leitura por eventos de ap
 
 **Ainda falta:** teste E2E real de cartas e janelas, mobile e troca atômica de toda a interface. Não inserir os hosts de prévia no `index.html` do jogo em produção até remover o React.
 
+## Cabeçalho da loja e organização
+
+`ShopOverviewComponent` apresenta saldo/resumo do salão, botões **Organizar salão** e **Remover paredes e portas** e um guia acessível de ampliação. O estado é recebido de `ShopOverviewPort.snapshot()` via `lhs:shop-overview-updated` somente quando o snapshot muda, usando um adaptador UI TypeScript. Os botões preservam os IDs que o controlador nativo escuta; Angular não implementa compras, movimento de móveis, demolição ou regras econômicas. O `installShopPanels` preserva os elementos dentro do template Angular em vez de movê-los para outro `details`.
+
+Este cabeçalho está exclusivamente no documento de prévia Angular; não foi inserido no `index.html` React. O catálogo, oferta PS1/PS2 e compras ainda dependem do renderer e dos comandos TypeScript, aguardando migração e testes E2E.
+
 ## Próximas etapas
 
 1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.

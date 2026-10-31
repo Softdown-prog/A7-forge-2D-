@@ -12,6 +12,7 @@ import {ComputerWorkspaceComponent,ServiceWorkspaceComponent} from './workspaces
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
+import {ShopOverviewComponent} from './shop-overview';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -50,6 +51,17 @@ async function mountUi():Promise<void> {
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
   }
+  // The Angular shop overview is preview-only until the final coordinated
+  // React removal. Native TypeScript controllers bind its stable button IDs.
+  const shopOverviewHost=document.getElementById('angular-shop-overview');
+  if(shopOverviewHost){
+    const ref=createComponent(ShopOverviewComponent,{
+      environmentInjector:app.injector,hostElement:shopOverviewHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
   // These two components will replace their legacy markup at final cutover.
   // In the current game document they have no host, so there are no duplicate
   // save/input IDs and the React production UI keeps working untouched.

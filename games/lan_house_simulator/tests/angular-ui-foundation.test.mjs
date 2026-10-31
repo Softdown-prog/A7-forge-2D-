@@ -130,3 +130,37 @@ test('Angular mail preserves native notice actions and TypeScript port ownership
  assert.doesNotMatch(inbox,/\(click\)=/);
  assert.doesNotMatch(legacy,/id="angular-notice-inbox"/);
 });
+
+
+test('Shop header Angular projection preserves cash, organize and demolition commands',()=>{
+ const component=file(root+'src/shop-overview.ts');
+ const template=file(root+'src/templates/shop-overview.html');
+ const entry=file(root+'src/main.ts');
+ const preview=file(root+'src/index.html');
+ const adapter=file('src/ui/shopOverviewPanel.ts');
+ const shopPanels=file('src/ui/shopPanels.ts');
+ const snapshot=file('src/application/shopOverviewPort.ts');
+ const legacy=file('index.html');
+ for(const id of ['shop-cash','organize-furniture','demolish-walls']){
+  assert.match(template,new RegExp('id="'+id+'"'));
+  assert.match(legacy,new RegExp('id="'+id+'"'));
+ }
+ for(const field of ['organizeText','demolishText','demolishDisabled','cashText']){
+  assert.ok(component.includes(field),field);
+  assert.ok(snapshot.includes(field),field);
+ }
+ assert.match(component,/lhs:shop-overview-updated/);
+ assert.match(adapter,/lhs:shop-overview-updated/);
+ assert.match(adapter,/published\.get\(doc\)/);
+ assert.match(adapter,/getElementById\("angular-shop-overview"\)/);
+ assert.match(shopPanels,/!shop\.querySelector\('#angular-shop-overview'\)/);
+ assert.match(template,/class="shop-guide"/);
+ assert.match(template,/class="shop-organize-help"/);
+ assert.match(template,/view\(\)\.demolishDisabled/);
+ assert.match(entry,/ShopOverviewComponent/);
+ assert.match(preview,/id="angular-shop-overview"/);
+ assert.doesNotMatch(legacy,/id="angular-shop-overview"/);
+ assert.doesNotMatch(component,/requestAnimationFrame|localStorage|createGame|purchase\(/);
+ assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|render|application|bootstrap)\//);
+ assert.doesNotMatch(template,/\(click\)=/);
+});

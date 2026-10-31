@@ -1,0 +1,21 @@
+<section class="angular-shop-overview" aria-label="Saldo e organização do salão">
+  <p id="shop-cash" class="angular-shop-overview-cash">{{view().cashText}}</p>
+  <div class="angular-shop-organization-actions">
+    <button id="organize-furniture" class="slice organize-furniture" type="button">
+      {{view().organizeText}}
+    </button>
+    <button id="demolish-walls" class="slice organize-furniture" type="button"
+      [disabled]="view().demolishDisabled">
+      {{view().demolishText}}
+    </button>
+  </div>
+  <details class="shop-guide">
+    <summary>Como ampliar e reorganizar</summary>
+    <p class="shop-organize-help">Para instalar mais PCs, primeiro amplie o salão.
+      <b>Ampliar salão</b> libera duas posições; ampliar à esquerda, à direita ou nos fundos
+      libera uma posição de PC no anexo por etapa. Depois compre o computador por R$ 320
+      e mantenha livre a passagem para a cadeira.</p>
+    <p class="shop-organize-help">Mova ou gire os objetos do salão. Selecione plantas, mesas,
+      pôsteres, divisórias ou portas para remover e liberar espaço.</p>
+  </details>
+</section>

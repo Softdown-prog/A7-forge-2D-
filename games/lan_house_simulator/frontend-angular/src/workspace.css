@@ -86,3 +86,22 @@ html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
  .angular-status-preview .time-weather-trigger{display:grid;gap:8px}
  .angular-status-preview .notice-letter .action-row{display:flex;flex-wrap:wrap}
 }
+
+
+/* Shop header stays within Angular's view; native commands keep their IDs. */
+.angular-shop-preview{max-width:900px;margin:16px auto;padding:12px}
+.angular-shop-overview{min-width:0;display:grid;gap:12px;border:1px solid #cbd9c0;
+ border-radius:12px;background:#f7f8ee;padding:14px}
+.angular-shop-overview-cash{font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin:0}
+.angular-shop-organization-actions{display:flex;flex-wrap:wrap;gap:9px}
+.angular-shop-organization-actions button{min-height:44px;max-width:100%;white-space:normal;text-align:center}
+.angular-shop-overview .shop-guide{min-width:0;padding:10px 12px;
+ border:1px solid #d4deca;border-radius:8px}
+.angular-shop-overview .shop-guide summary{cursor:pointer;font-weight:650}
+.angular-shop-overview .shop-organize-help{font-size:12px;line-height:1.6}
+.angular-shop-organization-actions button:focus-visible,
+.angular-shop-overview .shop-guide summary:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+@media(max-width:600px){
+ .angular-shop-organization-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .angular-shop-organization-actions button{min-width:0}
+}
