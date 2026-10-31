@@ -1,7 +1,8 @@
 /** Read-only projection of the inbox. No notice or decision is changed here. */
 import type {GameState} from "../sim/types.js";
 import {missingWindowsLicenses} from "../sim/notices.js";
-import {linuxUnlocked,LINUX_AUGUST_DAY} from "../sim/linuxQuest.js";
+import {linuxUnlocked,LINUX_OCTOBER_DAY,LINUX_MAGAZINE_ENROLLMENT_COST,LINUX_MAGAZINE_ISSUE_COST,
+ linuxNextMagazineDueDay,LINUX_MAGAZINE_TITLES,linuxDay} from "../sim/linuxQuest.js";
 import {decisionOptions} from "../sim/decisions.js";
 import {basicGamesLicenseCost} from "../sim/economy.js";
 
@@ -27,18 +28,27 @@ export function createNoticeInboxPort(getState:()=>GameState):NoticeInboxPort {
    const items:NoticePresentationItem[]=[];
    if(!n.read)items.push({kind:"button",action:"read",noticeId:n.id,text:"Marcar como lida",disabled:false});
    if(n.id==="linux-forum-contact"){
-    if(s.linuxResearchStartedDay===undefined)
-     items.push({kind:"button",action:"linux-research",text:"Tony vai pesquisar Linux",disabled:false,
-      title:"Iniciar pesquisa com o fórum. A instalação só será possível em agosto de 1999."});
+    if(s.linuxMagazineSubscriptionDay===undefined)
+     items.push({kind:"button",action:"linux-research",text:"Assinar revista Informática Livre · R$ "+LINUX_MAGAZINE_ENROLLMENT_COST,
+      disabled:s.cash<LINUX_MAGAZINE_ENROLLMENT_COST,
+      title:"Assinar seis revistas mensais; R$ "+LINUX_MAGAZINE_ISSUE_COST+
+       " por edição entregue. Primeiro exemplar no fim de março, se assinado naquele mês."});
     else items.push({kind:"hint",text:linuxUnlocked(s)?
-     "Pesquisa concluída! Desligue um computador e instale Linux em Administração → Windows / Licenças.":
-     "Pesquisa em andamento desde o dia "+s.linuxResearchStartedDay+
-     ". Os próximos e-mails chegarão com o passar dos meses. Agosto de 1999 começa no dia "+LINUX_AUGUST_DAY+"."});
+     "Seis revistas estudadas! Máquinas Linux prontas disponíveis na Loja → Computadores.":
+     "Coleção Informática Livre: "+(s.linuxMagazineIssuesReceived??0)+"/6 edições recebidas. "+
+     (linuxNextMagazineDueDay(s)!==null?
+      "Próxima entrega após o dia "+linuxNextMagazineDueDay(s)+
+      (linuxDay(s)>=linuxNextMagazineDueDay(s)!&&s.cash<LINUX_MAGAZINE_ISSUE_COST?
+       " · falta R$ "+LINUX_MAGAZINE_ISSUE_COST+" no caixa.":" · R$ "+LINUX_MAGAZINE_ISSUE_COST+" por exemplar.") :
+      "Todas recebidas. Estudar até outubro (dia "+LINUX_OCTOBER_DAY+") ou 30 dias após a última edição.")});
    }
+   if(LINUX_MAGAZINE_TITLES.some(edition=>edition.id===n.id))
+    items.push({kind:"resolved",text:"Edição impressa guardada na coleção: "+
+     (s.linuxMagazineIssuesReceived??0)+"/6 recebidas · custo R$ "+LINUX_MAGAZINE_ISSUE_COST+" por exemplar."});
    if(n.id==="linux-forum-ready")
     items.push({kind:"resolved",text:linuxUnlocked(s)?
-     "✓ Linux liberado. Administração → Windows / Licenças → Instalar Linux (PC desligado).":
-     "Aguarde a pesquisa terminar."});
+     "✓ Conhecimento concluído! Compre uma nova máquina Linux já montada na Loja → Computadores.":
+     "Aguarde a conclusão da coleção."});
    if(n.id==="safety"&&!s.contentFilterInstalled)
     items.push({kind:"button",action:"programmer",text:"Contratar programador · R$ 320",disabled:s.cash<320});
    if((n.id==="windows"||n.id==="windows-fine")&&missingWindowsLicenses(s)>0)

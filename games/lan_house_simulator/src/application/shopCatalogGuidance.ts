@@ -10,7 +10,7 @@ export function shopPlacementStatus(s:GameState,id:string):string|null{
  const installed=Math.max(3,Math.min(cap,s.installedPcs??cap));
  if(id==="computer"||linuxMachineSpec(id)){
   const intro=linuxMachineSpec(id)?
-   (linuxUnlocked(s)?"Linux pronto para uso. Modelo físico próprio; não substitui computadores Windows. ":"Conclua a missão do Fórum Linux até agosto de 1999. "):"";
+   (linuxUnlocked(s)?"Linux pronto para uso. Modelo físico próprio; não substitui computadores Windows. ":"Assine a revista do Fórum Linux, receba seis edições e estude até outubro de 1999. "):"";
   const free=cap-installed;
   return intro+"Área principal: "+installed+"/"+cap+" PCs · "+free+
    (free===1?" vaga livre.":" vagas livres.")+

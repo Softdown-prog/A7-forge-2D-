@@ -132,6 +132,10 @@ export interface GameState {
   printer?: import("./printService.js").PrinterService;
   /** Tony studies Linux after the March 1999 forum email. */
   linuxResearchStartedDay?:number;
+  /** Paid six-issue magazine series from the March 1999 forum referral. */
+  linuxMagazineSubscriptionDay?:number;
+  linuxMagazineIssuesReceived?:number;
+  linuxMagazineLastDeliveryDay?:number;
   linuxMailSeenIds?:import("./linuxQuest.js").LinuxMailId[];
   /** Boot selection is independent of retained Windows licenses. */
   pcLinuxInstalled?:boolean[];

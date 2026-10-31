@@ -19,7 +19,7 @@ import { WALL_COST } from "./walls.js";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar área principal",category:"Expansão",description:"Aumenta em duas faixas a largura da área principal, sempre no mesmo sentido (sem sorteio). Libera duas vagas de PC e aumenta os custos fixos mensais."},
  {id:"computer",label:"Instalar PC na área principal",category:"Computadores",description:"Computador completo com mesa e cadeira, instalado automaticamente na próxima vaga da área principal. Para abrir duas vagas, use Ampliar área principal."},
- {id:"linux-lab-99",label:"Bancada Linux 99 · máquina nova",category:"Computadores Linux · 1999",description:"PC inteiro pronto para Linux: mesa técnica, gabinete de aço, CRT e cadeira. Desbloqueio pelo Fórum Linux em agosto de 1999; ocupa uma vaga física na área principal."},
+ {id:"linux-lab-99",label:"Bancada Linux 99 · máquina nova",category:"Computadores Linux · 1999",description:"PC inteiro pronto para Linux: mesa técnica, gabinete de aço, CRT e cadeira. Desbloqueio após a coleção de revistas, a partir de outubro de 1999; ocupa uma vaga física na área principal."},
  {id:"linux-dev-99",label:"Estação Programador 99 · máquina nova",category:"Computadores Linux · 1999",description:"Novo PC completo para programadores: gabinete reforçado, CRT grafite e bancada de desenvolvimento. Linux já instalado; maior conforto. Ocupa uma vaga física na área principal."},
  {id:"computer-annex",label:"Instalar PC na ampliação",category:"Computadores",description:"O mesmo computador completo, mas você escolhe uma vaga no mapa. Primeiro amplie à esquerda, à direita ou nos fundos; o PC só é cobrado ao escolher a vaga."},
  {id:"disc-copier",label:"Copiadora de CDs e DVDs",category:"Serviços · 2001",description:"Ativa cópias no balcão. Você define o preço por CD e DVD; cada venda inclui o custo da mídia. Não ocupa espaço no salão."},
@@ -71,7 +71,7 @@ export function nextComputerPlacementIssue(s:GameState):string|null{
 }
 export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  if(linuxModel&&(!linuxMachineSpec(linuxModel)||!linuxUnlocked(s)))
-  return {ok:false,message:"Conclua a pesquisa do Fórum Linux para liberar os equipamentos a partir de agosto de 1999."};
+  return {ok:false,message:"Assine e receba as seis revistas de Linux; os novos computadores ficam disponíveis a partir de outubro de 1999."};
  const count=s.installedPcs??(3+s.expansionLevel*2),capacity=3+s.expansionLevel*2;
  if(count>=capacity)return {ok:false,message:"Amplie o salão antes de instalar outro PC."};
  const cost=shopPrice(s,linuxModel??"computer");
