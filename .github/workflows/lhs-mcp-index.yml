@@ -77,6 +77,15 @@ jobs:
       - name: Verify live MCP tools against checked out game
         if: ${{ inputs.scope != 'game' }}
         run: node tools/lhs-mcp/smoke.mjs
+      - name: Evaluate search relevance against real LHS modules
+        run: node tools/lhs-mcp/evaluate-real.mjs --output out/lhs-mcp-relevance/results.json
+      - name: Upload real source relevance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-real-relevance
+          path: out/lhs-mcp-relevance/results.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Benchmark contextual search at 10k and 15k simulated files
         run: node --expose-gc tools/lhs-mcp/benchmark.mjs --output out/lhs-mcp-benchmark/results.json
       - name: Upload contextual benchmark report

@@ -188,3 +188,15 @@ repetir a extração de palavras de todos os nomes/símbolos. Um novo
 `buildIndex`/refresh cria novo índice e descarta naturalmente a cache
 antiga (armazenada por `WeakMap`). Não editar `index.files` no mesmo
 objeto depois de preparar a busca. A cache **não** entra no artefato Git.
+
+## Avaliação de relevância em arquivos reais
+
+`tools/lhs-mcp/evaluate-real.mjs` contém doze intenções de busca com
+arquivos de referência existentes em `games/lan_house_simulator/src/`.
+A avaliação executa a mesma busca contextual usada pelo MCP sobre o
+catálogo **real** do GitHub Actions e registra posição do arquivo esperado,
+hit@1, hit@5, hit@10, latência e cinco primeiros resultados. O relatório
+`lhs-mcp-real-relevance` é publicado no CI. Rankings fora do top-5
+são exibidos como limitações, não são ocultados por ajustes automáticos.
+O ensaio mede localização de arquivos previamente rotulados, não qualidade
+de compreensão de código nem todas as consultas possíveis.
