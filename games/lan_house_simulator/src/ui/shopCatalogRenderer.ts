@@ -58,4 +58,6 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
  }
  renderPs1ShopDiscCatalog(options.host,options.discs,options.currentCategory()==="consoles",options.doc);
  if(options.ps2&&options.currentCategory()==="consoles")renderPs2ShopCatalog(options.host,options.ps2,options.doc);
+ // Only alert presentation controls after the original DOM catalogue is complete.
+ options.host.dispatchEvent(new Event("lhs:shop-catalog-updated"));
 }

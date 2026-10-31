@@ -75,6 +75,31 @@ try{
    const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
    return data.some((value,i)=>i%4===3&&value>0);
   });
+  // Verify the React shop presentation on a real running game, desktop and mobile.
+  // All purchases and item availability remain delegated to TypeScript controllers.
+  await frame.locator("#open-shop").click();
+  await frame.locator("#shop").waitFor({state:"visible",timeout:10000});
+  await frame.locator("#react-shop-query").fill("impressora");
+  await frame.locator(".react-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
+   .waitFor({state:"visible",timeout:10000});
+  const searchResult=await frame.locator("#shop-catalog").evaluate(host=>{
+   const cards=Array.from(host.querySelectorAll(":scope > article.shop-card"));
+   return {total:cards.length,visible:cards.filter(card=>!card.hidden).length,
+    titles:cards.filter(card=>!card.hidden).map(card=>card.querySelector("h3")?.textContent??"")};
+  });
+  assert.ok(searchResult.total>1,"O catálogo precisa conter múltiplos produtos pesquisáveis");
+  assert.ok(searchResult.visible>=1&&searchResult.visible<searchResult.total,
+   "A busca deve filtrar cartões sem alterar a lista de produtos");
+  assert.ok(searchResult.titles.some(value=>/impressora/i.test(value)),
+   "A busca por impressora deve mostrar a opção correspondente");
+  await frame.locator('[data-shop-category="consoles"]').click();
+  await frame.locator(".react-shop-search-count").filter({hasText:/opções nesta categoria/})
+   .waitFor({state:"visible",timeout:10000});
+  assert.equal(await frame.locator("#react-shop-query").inputValue(),"",
+   "Trocar de categoria deve limpar a pesquisa");
+  await frame.locator("#close-shop").click();
+  await frame.locator("#shop").waitFor({state:"hidden",timeout:10000});
+
   const spriteReady=await frame.locator("#game").evaluate(async()=>{
    const entryScript=document.querySelector('script[type="module"][src*="react-entry.js"]')??
     document.querySelector('script[type="module"][src*="main.js"]');

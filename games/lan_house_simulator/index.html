@@ -74,6 +74,7 @@
       <span class="hud-autosave" data-icon="save"><span id="autosave-state" role="status" aria-live="polite">Salvamento automático</span></span>
     </div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
+    <nav id="react-quick-deck" class="react-quick-deck" aria-label="Acesso rápido ao negócio"></nav>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
         <div class="stage-titlebar"><div><span class="stage-pixel" aria-hidden="true"></span><strong>SEU SALÃO</strong><span class="stage-subtitle">Onde tudo acontece.</span></div><span class="stage-live"><i></i> AO VIVO</span></div>
@@ -98,6 +99,8 @@
       <button id="organize-furniture" class="slice organize-furniture" type="button">Organizar salão</button>
       <p class="shop-organize-help">Mova ou gire os objetos do salão. Selecione plantas, mesas, pôsteres, divisórias ou portas para remover e liberar espaço.</p>
       <button id="demolish-walls" class="slice organize-furniture" type="button">Remover divisórias (0)</button>
+      <nav id="react-shop-categories" class="shop-categories react-shop-categories" aria-label="Categorias da loja"></nav>
+      <div id="react-shop-search" aria-label="Busca no catálogo"></div>
       <div id="shop-catalog" class="shop-grid"></div>
     </section>
     <section id="notices" class="admin notice-inbox" aria-label="Caixa de mensagens" role="dialog" aria-modal="true" aria-labelledby="notices-title" tabindex="-1" hidden>
@@ -133,6 +136,7 @@
         <span id="bill-watch-status">Calculando a provisão atual.</span>
         <small>O valor pode aumentar com energia e salários. As contas são cobradas na virada de cada ciclo de 30 dias, não diariamente.</small>
       </aside>
+      <div id="react-admin-shortcuts" aria-label="Atalhos de administração"></div>
       <nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
         <button type="button" class="admin-tab active" data-admin-tab="prices" role="tab" aria-controls="section-prices" aria-selected="true">Preços</button>
         <button type="button" class="admin-tab" data-admin-tab="computers" role="tab" aria-controls="section-computers" aria-selected="false">Computadores</button>
