@@ -41,9 +41,12 @@ function testSuggestions(index,query,owners,reviewed,limit,graph){
   const importOwners=[...direct].filter(p=>ownerSet.has(p));
   const importReviewed=[...direct].filter(p=>reviewSet.has(p)&&!ownerSet.has(p));
   const inName=[...new Set(tokenize(path.posix.basename(test.path)).filter(w=>terms.has(w)))];
-  // Test names are weaker evidence than imports, but useful where tests
-  // exercise compiled code through helpers or fixture loaders.
-  const score=importOwners.length*20+importReviewed.length*8+inName.length*3;
+  // Importing the strongest candidate is direct evidence. Other candidate
+  // modules (such as an application engine) are too broad to qualify alone:
+  // require at least one intent word in the test filename as corroboration.
+  const primaryImport=Boolean(owners.length&&direct.has(owners[0].path));
+  const score=primaryImport?30+inName.length*3:
+   inName.length?importOwners.length*12+importReviewed.length*6+inName.length*3:0;
   if(score<=0)continue;
   results.push({path:test.path,score,
    evidence:importOwners.length?"imports-candidate":importReviewed.length?

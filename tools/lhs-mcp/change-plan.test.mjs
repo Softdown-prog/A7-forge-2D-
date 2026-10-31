@@ -71,3 +71,19 @@ test("output is bounded, deterministic and does not mutate the index",()=>{
  assert.deepEqual(planChange(index,"simulação",{owners:1,reviewLimit:15,testLimit:5,depth:2}),a);
  assert.equal(JSON.stringify(index),before);
 });
+
+test("broad secondary-owner imports alone do not misclassify unrelated suites",()=>{
+ const core=root+"sim/ps2.ts",engine=root+"sim/engine.ts";
+ const index={files:[
+  source("sim/ps2.ts",{ps2:9,simulation:4}),
+  source("sim/engine.ts",{ps2:4,simulation:7}),
+  suite("ps2-gameplay",["../dist/js/sim/ps2.js"]),
+  suite("ps2-hardware",["../dist/js/sim/engine.js"]),
+  suite("linux-forum-1999",["../dist/js/sim/engine.js"])
+ ]};
+ const plan=planChange(index,"simulação PS2",{owners:2});
+ assert.equal(plan.owners[0].path,core);
+ assert.ok(plan.suggestedTests.some(t=>t.path.endsWith("ps2-gameplay.test.mjs")));
+ assert.ok(plan.suggestedTests.some(t=>t.path.endsWith("ps2-hardware.test.mjs")));
+ assert.ok(!plan.suggestedTests.some(t=>t.path.endsWith("linux-forum-1999.test.mjs")));
+});

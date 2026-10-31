@@ -268,3 +268,9 @@ no `games/lan_house_simulator/package.json`: `npm run typecheck` e
 cobertura de teste**: o agente deve ler o código e validar antes de fazer
 qualquer commit. Relações dinâmicas e eventos do Canvas não são plenamente
 representados pelo grafo estático.
+
+Na seleção de testes, importar o **principal candidato** é evidência
+direta; importar apenas um candidato secundário ou uma dependência
+compartilhada exige também correspondência com o assunto no nome do
+teste. Isso reduz falsos positivos causados por módulos centrais como
+`engine.ts`. Continua sendo uma sugestão, não medição de cobertura.
