@@ -1,5 +1,7 @@
 export { FURNITURE_SLOTS,FurnitureKind,furnitureLimit,furnitureLocations,furnitureSlots,occupiedFurnitureSlots,PlacementSlot } from "./furnitureLayout.js";
 import { installedLcd } from "./computerModels.js";
+import {linuxMachineSpec,linuxMachineFor,type LinuxMachineId} from "./linuxMachines.js";
+import {linuxUnlocked} from "./linuxQuest.js";
 import { DISC_COPIER_COST } from "./discCopy.js";
 import type { EditableObject } from "./editableObjects.js";
 import { FurnitureKind,furnitureLimit,furnitureLocations,furnitureSlots,occupiedFurnitureSlots,PlacementSlot } from "./furnitureLayout.js";
@@ -17,6 +19,8 @@ import { WALL_COST } from "./walls.js";
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar área principal",category:"Expansão",description:"Aumenta em duas faixas a largura da área principal, sempre no mesmo sentido (sem sorteio). Libera duas vagas de PC e aumenta os custos fixos mensais."},
  {id:"computer",label:"Instalar PC na área principal",category:"Computadores",description:"Computador completo com mesa e cadeira, instalado automaticamente na próxima vaga da área principal. Para abrir duas vagas, use Ampliar área principal."},
+ {id:"linux-lab-99",label:"Bancada Linux 99 · máquina nova",category:"Computadores Linux · 1999",description:"PC inteiro pronto para Linux: mesa técnica, gabinete de aço, CRT e cadeira. Desbloqueio pelo Fórum Linux em agosto de 1999; ocupa uma vaga física na área principal."},
+ {id:"linux-dev-99",label:"Estação Programador 99 · máquina nova",category:"Computadores Linux · 1999",description:"Novo PC completo para programadores: gabinete reforçado, CRT grafite e bancada de desenvolvimento. Linux já instalado; maior conforto. Ocupa uma vaga física na área principal."},
  {id:"computer-annex",label:"Instalar PC na ampliação",category:"Computadores",description:"O mesmo computador completo, mas você escolhe uma vaga no mapa. Primeiro amplie à esquerda, à direita ou nos fundos; o PC só é cobrado ao escolher a vaga."},
  {id:"disc-copier",label:"Copiadora de CDs e DVDs",category:"Serviços · 2001",description:"Ativa cópias no balcão. Você define o preço por CD e DVD; cada venda inclui o custo da mídia. Não ocupa espaço no salão."},
  {id:"printer",label:"Impressora de documentos",category:"Serviços",description:"Ofereça impressão de documentos no balcão. Você define o preço por página; papel e tinta são descontados por pedido. Não ocupa espaço no salão nesta etapa."},
@@ -31,6 +35,7 @@ export const SHOP_CATALOG=[
  {id:"table",label:"Mesinha",category:"Móveis",description:"Mesa lateral decorativa."}
 ] as const;
 export function shopPrice(s:GameState,id:string):number{
+ if(linuxMachineSpec(id))return linuxMachineSpec(id)!.cost;
  if(id==="disc-copier")return DISC_COPIER_COST;
  if(id==="printer")return PRINTER_COST;
  if(id==="ps1")return 560;
@@ -64,10 +69,12 @@ export function nextComputerPlacementIssue(s:GameState):string|null{
  if(count>=capacity)return "Amplie o salão antes de instalar outro PC.";
  return plannedMainComputer(s,count).issue;
 }
-export function buyComputer(s:GameState):Result{
+export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
+ if(linuxModel&&(!linuxMachineSpec(linuxModel)||!linuxUnlocked(s)))
+  return {ok:false,message:"Conclua a pesquisa do Fórum Linux para liberar os equipamentos a partir de agosto de 1999."};
  const count=s.installedPcs??(3+s.expansionLevel*2),capacity=3+s.expansionLevel*2;
  if(count>=capacity)return {ok:false,message:"Amplie o salão antes de instalar outro PC."};
- const cost=shopPrice(s,"computer");
+ const cost=shopPrice(s,linuxModel??"computer");
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para o PC."};
  const {shifted,issue}=plannedMainComputer(s,count);
  if(issue)return {ok:false,message:issue};
@@ -81,6 +88,15 @@ export function buyComputer(s:GameState):Result{
  (s.pcWindows??=[]).splice(count,0,"win98");
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
  (s.pcGpus??=[]).splice(count,0,null);
+ // The new PC is a physical station: never overwrite or shift an annex station's OS or model.
+ const previous=count+(s.annexPcs?.length??0);
+ const systems=Array.from({length:previous},(_,i)=>s.pcOperatingSystems?.[i]==="linux"?"linux":"windows");
+ const linuxInstalled=Array.from({length:previous},(_,i)=>s.pcLinuxInstalled?.[i]===true);
+ const models=Array.from({length:previous},(_,i)=>linuxMachineFor(s,i));
+ systems.splice(count,0,linuxModel?"linux":"windows");
+ linuxInstalled.splice(count,0,!!linuxModel);
+ models.splice(count,0,linuxModel??null);
+ s.pcOperatingSystems=systems;s.pcLinuxInstalled=linuxInstalled;s.pcLinuxModels=models;
  // PC inserido ANTES dos anexos desloca as licenças de software por índice,
  // exatamente como GPU/Windows/contabilidade; PC novo começa sem instalações.
  if(s.gpuGameInstalls){
@@ -103,7 +119,8 @@ export function buyComputer(s:GameState):Result{
  s.pcLcdModels.splice(count,0,null);
  if(s.pcComponents){s.pcComponents=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>s.pcComponents?.[i]??null);s.pcComponents.splice(count,0,null);}
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
- return {ok:true,message:"Novo PC instalado: -R$ "+cost+"."};
+ return {ok:true,message:(linuxModel?linuxMachineSpec(linuxModel)!.name+" comprado pronto para Linux":"Novo PC instalado")+
+  ": -R$ "+cost+". Estação física com mesa, monitor e cadeira."};
 }
 function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0,editingSlotId?:string):string|null{
  if(kind!=="poster"){

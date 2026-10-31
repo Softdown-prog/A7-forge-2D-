@@ -4,7 +4,8 @@ import {pcCount} from "../sim/engine.js";
 import {gameYear,WINDOWS_ERAS,installedWindows} from "../sim/era.js";
 import {windowsHardwareIssues} from "../sim/hardware.js";
 import {stationPoweredOn,stationUpgradeIssue} from "../sim/stationPower.js";
-import {isLinuxPc,linuxInstalledOnPc,linuxUnlocked,LINUX_AUGUST_DAY} from "../sim/linuxQuest.js";
+import {isLinuxPc,linuxInstalledOnPc} from "../sim/linuxQuest.js";
+import {linuxMachineFor,linuxMachineSpec} from "../sim/linuxMachines.js";
 import {stationOccupied} from "../sim/computerModels.js";
 
 export interface WindowsLicenseChoice {
@@ -12,7 +13,7 @@ export interface WindowsLicenseChoice {
 }
 export interface WindowsLicenseRow{
  index:number;title:string;choices:ReadonlyArray<WindowsLicenseChoice>;
- linuxAction:{action:"install"|"windows";label:string;disabled:boolean;title:string};
+ linuxAction:{action:"install"|"windows";label:string;disabled:boolean;title:string}|null;
 }
 export interface WindowsLicensePort{rows():ReadonlyArray<WindowsLicenseRow>}
 export function createWindowsLicensePort(getState:()=>GameState):WindowsLicensePort{
@@ -23,14 +24,16 @@ export function createWindowsLicensePort(getState:()=>GameState):WindowsLicenseP
    const licensed=s.pcWindowsLicenses?.[index]===true;
    return {
     index,title:"PC "+(index+1)+" · "+(isLinuxPc(s,index)?"Linux ativo (Windows "+edition.name+" preservado)":edition.name)+
-     (licensed?" · Windows licenciado":" · sem licença Windows"),
-    linuxAction:{
+     (licensed?" · Windows licenciado":" · sem licença Windows")+
+     (linuxMachineFor(s,index)?" · "+linuxMachineSpec(linuxMachineFor(s,index)!)!.name:""),
+    linuxAction:linuxMachineFor(s,index)?{
      action:isLinuxPc(s,index)?"windows":"install",
-     label:isLinuxPc(s,index)?"Voltar ao Windows":linuxInstalledOnPc(s,index)?"Iniciar Linux":"Instalar Linux · gratuito",
-     disabled:!linuxUnlocked(s)||!!stationUpgradeIssue(s,index)||!!s.gpuGameInstallJobs?.some(j=>j.pc===index),
-     title:!linuxUnlocked(s)?"Pesquisa do Fórum Linux: disponível a partir de agosto de 1999 (dia "+LINUX_AUGUST_DAY+").":
-      stationUpgradeIssue(s,index)??"A instalação e a troca de sistema exigem PC desligado, sem clientes ou reparos."
-    },
+     label:isLinuxPc(s,index)?licensed?"Iniciar Windows licenciado":"Windows requer licença":"Reiniciar em Linux",
+     disabled:!!stationUpgradeIssue(s,index)||!!s.gpuGameInstallJobs?.some(j=>j.pc===index)||
+      (isLinuxPc(s,index)&&!licensed),
+     title:!licensed&&isLinuxPc(s,index)?"Compre primeiro uma licença Windows para este computador.":
+      stationUpgradeIssue(s,index)??"Trocar o sistema exige PC desligado e desocupado."
+    }:null,
     choices:WINDOWS_ERAS.map(item=>{
      const already=licensed&&edition.id===item.id;
      const reasons=windowsHardwareIssues(s,index,item.id);

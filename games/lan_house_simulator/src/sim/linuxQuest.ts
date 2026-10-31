@@ -3,6 +3,7 @@
  */
 import type {GameState,Result} from "./types.js";
 import {DAY_MINUTES} from "./types.js";
+import {linuxMachineFor,validLinuxMachines} from "./linuxMachines.js";
 import {stationUpgradeIssue,stationPowerCount,stationReadyForSessions} from "./stationPower.js";
 export const LINUX_CONTACT_DAY=360+60+1; // 1 March 1999, absolute campaign day 421
 export const LINUX_AUGUST_DAY=360+210+1; // 1 August 1999, absolute campaign day 571
@@ -40,7 +41,7 @@ export function nextLinuxLetter(s:GameState):LinuxLetter|null{
  };
  if(linuxUnlocked(s)&&!delivered(s,"linux-forum-ready"))return {
   id:"linux-forum-ready",title:"Fórum Linux · Estações liberadas!",
-  body:"A pesquisa foi concluída! A partir de agosto de 1999, Tony já pode instalar Linux nos computadores desligados e desocupados. A distribuição é gratuita: o que exigiu tempo foi aprender a instalá-la. Os PCs podem manter o Windows para voltar a ele depois."
+  body:"Pesquisa concluída! Os estudantes ajudaram Tony a conhecer bancadas próprias para Linux. A partir de agosto de 1999, a loja oferece dois modelos de computador novos, já com Linux pronto para programar. Eles ocupam vagas físicas, com mesa, monitor e cadeira, sem alterar os PCs Windows antigos."
  };
  return null;
 }
@@ -66,6 +67,7 @@ export function installLinux(s:GameState,index:number):Result{
  if(!linuxUnlocked(s))return {ok:false,message:"Conclua a pesquisa do fórum e aguarde agosto de 1999 para instalar Linux."};
  const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};
  if(s.gpuGameInstallJobs?.some(j=>j.pc===index))return {ok:false,message:"Aguarde a instalação atual terminar."};
+ if(!linuxMachineFor(s,index))return {ok:false,message:"Este é um computador Windows. Compre uma bancada Linux pronta na loja; a pesquisa libera máquinas novas."};
  if(isLinuxPc(s,index))return {ok:false,message:"Este PC já está iniciado em Linux."};
  setPcArray(s);
  s.pcLinuxInstalled![index]=true;
@@ -75,6 +77,7 @@ export function installLinux(s:GameState,index:number):Result{
 export function bootWindows(s:GameState,index:number):Result{
  const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};
  if(!isLinuxPc(s,index)||!linuxInstalledOnPc(s,index))return {ok:false,message:"Esta estação não está usando Linux."};
+ if(s.pcWindowsLicenses?.[index]!==true)return {ok:false,message:"Esta máquina Linux não veio com Windows. Adquira a licença para este PC antes de alternar."};
  setPcArray(s);
  s.pcOperatingSystems![index]="windows";
  return {ok:true,message:"PC "+(index+1)+" voltou ao Windows já instalado. Linux permanece disponível."};
@@ -88,6 +91,7 @@ export function validLinuxState(s:Partial<GameState>):boolean{
  if(started!==undefined&&(!Number.isInteger(started)||started<LINUX_CONTACT_DAY||started>day||
    !ids?.includes("linux-forum-contact")))return false;
  if(ids?.some(id=>id!=="linux-forum-contact")&&started===undefined)return false;
+ if(!validLinuxMachines(s.pcLinuxModels))return false;
  const installed=s.pcLinuxInstalled,modes=s.pcOperatingSystems;
  if(installed!==undefined&&(!Array.isArray(installed)||installed.length>200||
    installed.some(v=>typeof v!=="boolean")))return false;
@@ -96,10 +100,14 @@ export function validLinuxState(s:Partial<GameState>):boolean{
  if(s.linuxSessions!==undefined&&(!Number.isSafeInteger(s.linuxSessions)||s.linuxSessions<0||s.linuxSessions>1e7))return false;
  if(s.linuxRevenue!==undefined&&(!Number.isFinite(s.linuxRevenue)||s.linuxRevenue<0||s.linuxRevenue>1e9||
   Math.abs(s.linuxRevenue*100-Math.round(s.linuxRevenue*100))>1e-4))return false;
- if((installed?.some(Boolean)||modes?.includes("linux"))&&
+ if((installed?.some(Boolean)||modes?.includes("linux")||s.pcLinuxModels?.some(Boolean))&&
     !(s.economyVersion===2&&started!==undefined&&
       day>=Math.max(LINUX_AUGUST_DAY,started+110)))return false;
  for(let i=0;i<(modes?.length??0);i++)
-  if(modes?.[i]==="linux"&&installed?.[i]!==true)return false;
+  if(modes?.[i]==="linux"&&(installed?.[i]!==true||!linuxMachineFor(s,i)))return false;
+ for(let i=0;i<(installed?.length??0);i++)
+  if(installed?.[i]===true&&!linuxMachineFor(s,i))return false;
+ for(let i=0;i<(s.pcLinuxModels?.length??0);i++)
+  if(s.pcLinuxModels?.[i]!==null&&s.pcLinuxModels?.[i]!==undefined&&installed?.[i]!==true)return false;
  return true;
 }

@@ -14,12 +14,14 @@ export function renderWindowsLicensePanel(panel:HTMLElement,port:WindowsLicenseP
    button.textContent=choice.label;button.disabled=choice.disabled;button.title=choice.title;
    choices.appendChild(button);
   }
-  const linux=document.createElement("button");linux.type="button";linux.className="slice";
-  linux.dataset.linuxPc=String(row.index);
-  linux.dataset.linuxAction=row.linuxAction.action;
-  linux.textContent=row.linuxAction.label;linux.disabled=row.linuxAction.disabled;
-  linux.title=row.linuxAction.title;
-  choices.appendChild(linux);
+  if(row.linuxAction){
+   const linux=document.createElement("button");linux.type="button";linux.className="slice";
+   linux.dataset.linuxPc=String(row.index);
+   linux.dataset.linuxAction=row.linuxAction.action;
+   linux.textContent=row.linuxAction.label;linux.disabled=row.linuxAction.disabled;
+   linux.title=row.linuxAction.title;
+   choices.appendChild(linux);
+  }
   line.append(title,choices);next.appendChild(line);
  }
  syncPanelChildren(panel,next);

@@ -136,6 +136,8 @@ export interface GameState {
   /** Boot selection is independent of retained Windows licenses. */
   pcLinuxInstalled?:boolean[];
   pcOperatingSystems?:import("./linuxQuest.js").PcOperatingSystem[];
+  /** Physical Linux-ready models bought as distinct stations in the shop. */
+  pcLinuxModels?:(import("./linuxMachines.js").LinuxMachineId|null)[];
   linuxSessions?:number;
   linuxRevenue?:number;
   /** Nível de hardware por PC, 1 é o computador original. */
