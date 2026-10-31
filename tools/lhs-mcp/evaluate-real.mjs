@@ -11,6 +11,7 @@ import {performance} from "node:perf_hooks";
 import {buildIndex,repositoryRoot} from "./catalog.mjs";
 import {searchContext,prepareContextSearch} from "./context-search.mjs";
 import {traceFeature} from "./feature-trace.mjs";
+import {planChange} from "./change-plan.mjs";
 
 const prefix="games/lan_house_simulator/src/";
 const tasks=[
@@ -54,6 +55,17 @@ export function evaluate(index){
    graphHint:candidate?.graphHint??null,
    imports:candidate?.dependenciesTotal??0,dependents:candidate?.dependentsTotal??0};
  });
+ const changePlanChecks=[
+  {query:"simulação console PS2",expected:"sim/ps2.ts"},
+  {query:"fila de clientes no caixa",expected:"sim/retailQueue.ts"},
+  {query:"controles do console PS1",expected:"ui/ps1Controls.ts"}
+ ].map(({query,expected})=>{
+  const plan=planChange(index,query,{owners:4,testLimit:10});
+  const ownerFound=plan.owners.some(o=>o.path===prefix+expected);
+  return {query,expected,ownerFound,files:plan.reviewFiles.length,
+   tests:plan.suggestedTests.length,
+   evidence:plan.suggestedTests.slice(0,3).map(x=>({path:x.path,evidence:x.evidence}))};
+ });
  const sorted=results.map(x=>x.latencyMs).sort((a,b)=>a-b);
  const at=n=>sorted[Math.floor((sorted.length-1)*n)];
  return {kind:"real-LHS-context-relevance",commit:index.head,scope:prefix,
@@ -62,7 +74,7 @@ export function evaluate(index){
   queries:tasks.length,hitAt1:results.filter(r=>r.top1).length,
   hitAt5:results.filter(r=>r.top5).length,
   hitAt10:results.filter(r=>r.top10).length,
-  medianLatencyMs:at(0.5),p95LatencyMs:at(0.95),structuralChecks,results};
+  medianLatencyMs:at(0.5),p95LatencyMs:at(0.95),structuralChecks,changePlanChecks,results};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pathname){
  const root=repositoryRoot(process.cwd());
@@ -79,6 +91,8 @@ if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pat
  assert.ok(report.hitAt5===report.queries,
   "All 12 labeled real modules must appear in top-five search results");
  assert.ok(report.hitAt1>=7,"At least seven labeled modules should rank first");
+ assert.ok(report.changePlanChecks.every(c=>c.ownerFound),
+  "Change plan must include three ground-truth owner modules");
  const position=process.argv.indexOf("--output");
  if(position!==-1){
   const out=process.argv[position+1];if(!out)throw Error("Missing report path");
@@ -89,6 +103,7 @@ if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pat
   top1:report.hitAt1,top5:report.hitAt5,top10:report.hitAt10,
   preparationMs:report.preparationMs,medianLatencyMs:report.medianLatencyMs,
   structuralChecks:report.structuralChecks,
+  changePlanChecks:report.changePlanChecks,
   missed:report.results.filter(r=>!r.top5).map(r=>({target:r.target,rank:r.rank,
    top:r.suggestions.slice(0,2)}))}));
 }

@@ -249,3 +249,22 @@ importação prova apenas uma referência estática, **não** que o arquivo é o
 continuam necessários. O gráfico em memória é preparado uma vez por
 objeto de índice via `WeakMap`, sem persistência e sem execuções de código.
 A ferramenta é somente leitura e mantém as restrições de escopo do índice.
+
+## Planejamento de alterações antes de editar
+
+`plan_change` é a **18ª ferramenta MCP**, somente leitura. Recebe uma
+intenção em português ou inglês e retorna um plano de revisão baseado
+exclusivamente nos arquivos indexados: candidatos a proprietários da função,
+consumidores diretos, dependências que devem ser examinadas e possíveis
+arquivos afetados pelo grafo de imports estáticos (até três saltos).
+
+A ferramenta relaciona testes rastreados por imports **reais** (incluindo
+imports de `tests/../dist/js/...js`, associados ao `src/...ts` quando
+existe) ou, com menor confiança, palavras no nome do teste. Apresenta
+separadamente o tipo de evidência. Resultados ficam limitados a cinco
+candidatos, 40 arquivos de revisão e 20 testes. Lista comandos existentes
+no `games/lan_house_simulator/package.json`: `npm run typecheck` e
+`npm test`. **Não executa os comandos, não altera arquivos nem garante
+cobertura de teste**: o agente deve ler o código e validar antes de fazer
+qualquer commit. Relações dinâmicas e eventos do Canvas não são plenamente
+representados pelo grafo estático.

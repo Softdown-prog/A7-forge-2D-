@@ -17,7 +17,8 @@ const requests=[
  {jsonrpc:"2.0",id:6,method:"tools/call",params:{name:"search_content",arguments:{query:"ShopCatalogComponent",limit:8}}},
  {jsonrpc:"2.0",id:7,method:"tools/call",params:{name:"impact_analysis",arguments:{path:"games/lan_house_simulator/src/sim/types.ts",depth:3,limit:30}}},
  {jsonrpc:"2.0",id:8,method:"tools/call",params:{name:"search_context",arguments:{query:"comprar PS2",prefix:"games/lan_house_simulator/src",limit:20}}},
- {jsonrpc:"2.0",id:9,method:"tools/call",params:{name:"trace_feature",arguments:{query:"simulação console PS2",prefix:"games/lan_house_simulator/src",limit:8,depth:2}}}
+ {jsonrpc:"2.0",id:9,method:"tools/call",params:{name:"trace_feature",arguments:{query:"simulação console PS2",prefix:"games/lan_house_simulator/src",limit:8,depth:2}}},
+ {jsonrpc:"2.0",id:10,method:"tools/call",params:{name:"plan_change",arguments:{query:"simulação PS2",owners:3,depth:2,testLimit:10}}}
 ];
 const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",import.meta.url)),
  "--scope",".","--index","out/lhs-mcp-index/catalog.json"],{
@@ -27,7 +28,7 @@ const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",impo
 });
 assert.equal(proc.status,0,proc.stderr);
 const values=proc.stdout.split("\n").filter(Boolean).map(JSON.parse);
-assert.equal(values.length,9);
+assert.equal(values.length,10);
 assert.ok(values[1].result.tools.some(t=>t.name==="edit_file"));
 assert.ok(values[2].result.structuredContent.result.files>100);
 for(const i of [3,4,5])assert.ok(values[i].result.structuredContent.result.length>0,
@@ -41,6 +42,12 @@ const trace=values[8].result.structuredContent.result;
 assert.ok(trace.candidates.some(c=>c.path.endsWith("/sim/ps2.ts")));
 assert.ok(trace.candidates.every(c=>Array.isArray(c.directDependents)));
 assert.ok(trace.topCandidateImpact?.path,"Expected bounded impact information");
+const proposed=values[9].result.structuredContent.result;
+assert.equal(proposed.status,"review-only");
+assert.ok(proposed.owners.some(o=>o.path.endsWith("/sim/ps2.ts")));
+assert.ok(proposed.reviewFiles.length>0);
+assert.ok(proposed.suggestedTests.every(t=>t.path.startsWith("games/lan_house_simulator/tests/")));
+assert.ok(proposed.validation.some(v=>v.command==="npm test"));
 console.log(JSON.stringify({ready:true,head:values[2].result.structuredContent.result.head,
  indexedFiles:values[2].result.structuredContent.result.files,
- tools:values[1].result.tools.length,queries:5}));
+ tools:values[1].result.tools.length,queries:6}));

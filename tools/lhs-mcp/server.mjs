@@ -9,6 +9,7 @@ import {repositoryRoot,buildIndex,searchIndex,searchContent,listFolder,
 import {directDependencies,directDependents,impactAnalysis} from "./dependency-graph.mjs";
 import {searchContext} from "./context-search.mjs";
 import {traceFeature} from "./feature-trace.mjs";
+import {planChange} from "./change-plan.mjs";
 
 const args=process.argv.slice(2);
 function option(name,fallback=""){const i=args.indexOf(name);return i<0?fallback:args[i+1]??fallback;}
@@ -102,6 +103,7 @@ const tools=[
  {name:"search_content",description:"Search code text with line numbers, results limited.",inputSchema:{...properties({query:str("Literal code substring"),prefix:str("Folder prefix"),limit:int,caseSensitive:{type:"boolean"}}),required:["query"]}},
  {name:"search_context",description:"Find modules by purpose in Portuguese or English using ranked source vocabulary, identifiers and documentation; no paid model.",inputSchema:{...properties({query:str("Intent e.g. comprar PS2, salvar partida, fila de clientes"),prefix:str("Optional repo-relative directory"),limit:int}),required:["query"]}},
  {name:"trace_feature",description:"Trace likely implementing modules for a question, direct consumers/imports and bounded reverse impact via static import graph. Evidence only, not proof of ownership.",inputSchema:{...properties({query:str("Intent such as PS2 station, queue or saving"),prefix:str("Optional repo-relative folder"),limit:{type:"integer",minimum:1,maximum:15},depth:{type:"integer",minimum:1,maximum:3}}),required:["query"]}},
+ {name:"plan_change",description:"Prepare read-only, evidence-based code change plan: likely owners, related files, affected modules, candidate tests, validation scripts and warnings.",inputSchema:{...properties({query:str("Desired change, e.g. correct PS2 station logic"),prefix:str("Optional directory within game/src"),owners:{type:"integer",minimum:1,maximum:5},depth:{type:"integer",minimum:1,maximum:3},reviewLimit:{type:"integer",minimum:1,maximum:40},testLimit:{type:"integer",minimum:1,maximum:20}}),required:["query"]}},
  {name:"file_info",description:"File digest, size, symbol declarations and imports.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
  {name:"read_file",description:"Read a bounded line range with SHA256 for safe later edits.",inputSchema:{...properties({path:str("Repo-relative path"),start_line:int,line_count:int}),required:["path"]}},
  {name:"file_dependencies",description:"List resolved local imports and unresolved paths for a tracked file.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
@@ -124,6 +126,7 @@ function call(name,a={}){
   case "search_content":return searchContent(root,index,a.query,{prefix:a.prefix,limit:a.limit,caseSensitive:a.caseSensitive});
   case "search_context":return searchContext(index,a.query,{prefix:a.prefix,limit:a.limit});
   case "trace_feature":return traceFeature(index,a.query,{prefix:a.prefix,limit:a.limit,depth:a.depth});
+  case "plan_change":return planChange(index,a.query,{prefix:a.prefix,owners:a.owners,depth:a.depth,reviewLimit:a.reviewLimit,testLimit:a.testLimit});
   case "file_info":{
    const f=fileContents(a.path);const entry=index.files.find(x=>x.path===f.relative);
    return {path:f.relative,bytes:f.buffer.length,sha256:f.sha256,symbols:entry?.symbols??[],imports:entry?.imports??[]};
