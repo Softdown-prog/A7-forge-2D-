@@ -4,6 +4,16 @@ import {readFileSync,existsSync} from 'node:fs';
 const file=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const root='frontend-angular/';
 
+test('All six TypeScript/Angular strictness guards are enabled in the isolated Angular workspace',()=>{
+  const config=JSON.parse(file(root+'tsconfig.json'));
+  const app=JSON.parse(file(root+'tsconfig.app.json'));
+  for(const name of ["strict","noImplicitOverride","noUncheckedIndexedAccess","exactOptionalPropertyTypes"])
+    assert.equal(config.compilerOptions[name],true,'compilerOptions.'+name);
+  for(const name of ["strictTemplates","strictInjectionParameters"])
+    assert.equal(config.angularCompilerOptions[name],true,'angularCompilerOptions.'+name);
+  assert.equal(app.extends,'./tsconfig.json');
+});
+
 test('Angular 22 uses a separate TypeScript 6 toolchain; TypeScript 7 game stays unchanged',()=>{
   const ui=JSON.parse(file(root+'package.json'));
   const game=JSON.parse(file('package.json'));

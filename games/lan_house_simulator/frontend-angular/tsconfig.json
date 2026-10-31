@@ -12,7 +12,9 @@
     "skipLibCheck": true,
     "useDefineForClassFields": false,
     "forceConsistentCasingInFileNames": true,
-    "noImplicitOverride": true
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true
   },
   "angularCompilerOptions": {
     "strictInjectionParameters": true,
