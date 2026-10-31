@@ -43,3 +43,16 @@ test("Visual-only enhancements keep Canvas and game bootstrap untouched",()=>{
  assert.match(file("style.css"),/react-admin-shortcuts-grid/);
  assert.match(file("website/site.css"),/Website visual refresh: presentation only/);
 });
+
+test("React catalogue search is presentation-only and reacts after DOM repaint",()=>{
+ const html=file("index.html"),entry=file("src/react/entry.jsx"),ui=file("src/react/managementUi.jsx");
+ const renderer=file("src/ui/shopCatalogRenderer.ts");
+ assert.match(html,/id="react-shop-search"/);
+ assert.match(entry,/<ShopSearch\/>/);
+ assert.match(ui,/export function ShopSearch/);
+ assert.match(ui,/:scope > article\.shop-card/);
+ assert.match(ui,/card\.hidden=!matches/);
+ assert.match(renderer,/lhs:shop-catalog-updated/);
+ assert.match(ui,/lhs:shop-category-selected/);
+ assert.match(file("style.css"),/#shop-catalog>\.shop-card\[hidden\]/);
+});

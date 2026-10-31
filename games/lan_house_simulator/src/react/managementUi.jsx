@@ -1,7 +1,8 @@
 /** React-only presentation: no simulation imports, business decisions, or save access.
  * All actions delegate to the existing, tested DOM controller buttons.
  */
-import React,{useLayoutEffect,useState} from "react";
+import React,{useEffect,useLayoutEffect,useState} from "react";
+import {catalogSearchMatch} from "./catalogSearch.mjs";
 
 const SHOP_CATEGORIES=[
  {id:"equipment",label:"Computadores e serviços",icon:"▣",hint:"Equipar o salão"},
@@ -94,4 +95,52 @@ export function AdminShortcuts(){
   </div>
   <p className="react-admin-shortcut-status" role="status" aria-live="polite">{message}</p>
  </section>;
+}
+
+/* Search is view-only: the original shop catalog keeps ownership of items and actions. */
+export function ShopSearch(){
+ const [query,setQuery]=useState("");
+ const [counts,setCounts]=useState({visible:0,total:0});
+ useEffect(()=>{
+  const host=document.getElementById("shop-catalog");
+  const nav=document.getElementById("react-shop-categories");
+  if(!host||!nav)return;
+  const apply=()=>{
+   const cards=Array.from(host.querySelectorAll(":scope > article.shop-card"));
+   let visible=0;
+   for(const card of cards){
+    const title=card.querySelector("h3")?.textContent??"";
+    const category=card.querySelector("small")?.textContent??"";
+    const description=card.querySelector("p")?.textContent??"";
+    const matches=catalogSearchMatch(query,[title,category,description]);
+    card.hidden=!matches;
+    if(matches)visible++;
+   }
+   setCounts(previous=>previous.total===cards.length&&previous.visible===visible?
+    previous:{visible,total:cards.length});
+  };
+  const reset=()=>setQuery("");
+  host.addEventListener("lhs:shop-catalog-updated",apply);
+  nav.addEventListener("lhs:shop-category-selected",reset);
+  apply();
+  return ()=>{
+   host.removeEventListener("lhs:shop-catalog-updated",apply);
+   nav.removeEventListener("lhs:shop-category-selected",reset);
+  };
+ },[query]);
+ return <div className="react-shop-search">
+  <label htmlFor="react-shop-query">Pesquisar produtos e serviços</label>
+  <div className="react-shop-search-row">
+   <input id="react-shop-query" type="search" autoComplete="off"
+    placeholder="Computador, console, impressora..." value={query}
+    onChange={event=>setQuery(event.target.value)}/>
+   {query&&<button type="button" onClick={()=>setQuery("")} aria-label="Limpar busca">Limpar</button>}
+  </div>
+  <span className="react-shop-search-count" role="status" aria-live="polite">
+   {query?counts.visible+" de "+counts.total+" cartões encontrados":
+    counts.total+" opções nesta categoria"}
+  </span>
+  {query&&counts.total>0&&counts.visible===0&&
+   <p className="react-shop-no-match">Nenhum cartão corresponde à busca. Tente outro termo ou escolha outra categoria.</p>}
+ </div>;
 }
