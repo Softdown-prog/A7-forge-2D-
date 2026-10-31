@@ -12,6 +12,7 @@ import {recordCustomerFeedback,sessionFeedbackReason} from "./customerFeedback.j
 import {normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps2SessionWear,ps2HourPrice} from "./ps2.js";
 import {customerConsole} from "./consoleLayout.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {ps1SessionWear,ps1HourPrice} from "./ps1.js";
 import {online,pcWear,pcBroken,addLog,CLOSING_START_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
@@ -45,7 +46,7 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "using":
-      if (!customerConsole(c)&&!multiplayerRoundActive(s,c)&&!online(s)) {
+      if (!customerConsole(c)&&!multiplayerRoundActive(s,c)&&!isLinuxPc(s,c.pcIndex??-1)&&!online(s)) {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;

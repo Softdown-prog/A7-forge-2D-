@@ -1,6 +1,7 @@
 /** Business purchase entry point, bound to the latest restored save. */
 import type {GameState,Result} from "../sim/types.js";
 import {buyComputer,availablePlacementSlots,type FurnitureKind} from "../sim/shop.js";
+import {linuxMachineSpec} from "../sim/linuxMachines.js";
 import {buyPrinter} from "../sim/printService.js";
 import {buyDiscCopier} from "../sim/discCopy.js";
 import {expandShop} from "../sim/economy.js";
@@ -22,6 +23,7 @@ export function createShopActionsPort(getState:()=>GameState):ShopActionsPort{
    switch(id){
     case "expand":return expandShop(s);
     case "computer":return buyComputer(s);
+    case "linux-lab-99":case "linux-dev-99":return buyComputer(s,linuxMachineSpec(id)!.id);
     case "ps1":return buyPs1Station(s,ps1SlotId);
     case "ps2":return buyPs2Station(s,ps1SlotId);
     case "disc-copier":return buyDiscCopier(s);

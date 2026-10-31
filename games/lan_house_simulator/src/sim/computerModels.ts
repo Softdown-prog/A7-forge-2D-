@@ -1,6 +1,7 @@
 import type {GameState,Result} from "./types.js";
 import {stationUpgradeIssue} from "./stationPower.js";
 import {gameYear} from "./eraCatalog.js";
+import {linuxMachineFor,linuxMachineSpec} from "./linuxMachines.js";
 
 /** Fictional station kits: release years belong to the game's progression. */
 export const LCD_CATALOG=[
@@ -17,7 +18,9 @@ export function installedLcd(s:Partial<GameState>,index:number):LcdId|null{
 }
 export function lcdSpec(id:LcdId|null){return LCD_CATALOG.find(model=>model.id===id)??null;}
 export function stationModelName(s:GameState,index:number):string{
- return lcdSpec(installedLcd(s,index))?.name??"CRT · geração "+(s.pcTiers?.[index]??1);
+ const model=linuxMachineFor(s,index);
+ return model?linuxMachineSpec(model)!.name:
+  lcdSpec(installedLcd(s,index))?.name??"CRT · geração "+(s.pcTiers?.[index]??1);
 }
 export function validLcdModels(value:unknown):boolean{
  return value===undefined||(Array.isArray(value)&&value.length<=200&&

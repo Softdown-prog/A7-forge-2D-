@@ -15,6 +15,7 @@ import {complaintLine} from "./customerDialogue.js";
 import {recordCustomerFeedback} from "./customerFeedback.js";
 import {recordPaidSession} from "./stationAccounting.js";
 import {chooseConsoleSession} from "./consoleService.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {gpuGameSpec,gpuGamePlayableOnPc,gpuGameSessionPrice} from "./gpuGames.js";
 import {recordGpuGameSession} from "./gpuDemand.js";
 import {pcCount,pcPosition,addLog,CLOSING_START_MINUTE,SESSION_FINISH_MINUTE,localMinute} from "./simulationState.js";
@@ -137,7 +138,12 @@ export function tryServe(s: GameState, c: Customer): void {
   debitVisitorBudget(c,paid);
   s.cash += paid; s.revenue += paid; s.served++;
   recordPaidSession(s,index,pcCount(s),paid,!!c.vip);
+  if(isLinuxPc(s,index)){
+   s.linuxSessions=(s.linuxSessions??0)+1;
+   s.linuxRevenue=Math.round(((s.linuxRevenue??0)+paid)*100)/100;
+  }
   addLog(s, "Cliente pagou R$ " + paid + " por " + c.sessionMinutes + " minutos."+
+   (isLinuxPc(s,index)?" Estação Linux"+(c.linuxEnthusiast?" · estudante do fórum.":"."):"")+
    (c.gpuGameCharged
     ?" Sessão GPU: "+(c.preferredGpuGame?gpuGameSpec(c.preferredGpuGame)?.name??"jogo avançado":"jogo avançado")+"."
     :""));

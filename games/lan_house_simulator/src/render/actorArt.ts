@@ -6,8 +6,8 @@ import {workerMotion} from "./workerMotion.js";
 
 type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
 
-export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing";
-export type ActorKind = Costume | "owner" | "cleaner" | "technician";
+export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing" | "delivering" | "receiving";
+export type ActorKind = Costume | "owner" | "cleaner" | "technician" | "postman";
 export interface ActorStyle {
   shirt: string; dark: string; highlight: string;
   pants: string; hair: string; skin: string; trim: string;
@@ -27,6 +27,8 @@ export function actorStyleFor(kind: ActorKind, id: number): ActorStyle {
     pants:"#4B536A",hair:"#9E6745",skin:"#EDB596",trim:"#F5D7A1"};
   if(kind==="female-ponytail")return {shirt:"#D28A50",dark:"#915A45",highlight:"#F1BA79",
     pants:"#354866",hair:"#222C42",skin:"#BF866B",trim:"#E7C89A"};
+  if(kind==="postman")return {shirt:"#F4C949",dark:"#A87C22",highlight:"#FFEB91",
+    pants:"#294F88",hair:"#31313A",skin:"#DAA17C",trim:"#FFE69C"};
   if(kind==="cleaner")return {shirt:"#368DAD",dark:"#225E7A",highlight:"#8BCBDD",pants:"#345475",hair:"#3D3130",skin:"#DDA57F",trim:"#F0D680"};
   if(kind==="technician")return {shirt:"#41876E",dark:"#245D57",highlight:"#92BE96",pants:"#344D60",hair:"#4B342D",skin:"#DFAC85",trim:"#E6C67D"};
   if(kind==="owner") return {shirt:"#428f79",dark:"#234f48",highlight:"#93c4a0",pants:"#344c54",hair:"#49342c",skin:"#E4AE86",trim:"#e5c18a"};
@@ -389,6 +391,11 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // Silhuetas de costas, perfil e frente são distintas: não apenas um flip.
   // Capa e acessórios que ficam atrás do corpo.
   if(isFemaleCostume(a.kind))femaleHairBehind(ctx,style,a.kind,headShift,lean,sideways);
+  if(a.kind==="postman"){
+    // Cross-body satchel behind the torso, actual side volume.
+    shape(ctx,[[11,-43+headShift],[23,-41+headShift],[25,-15],[12,-15]],"#805A40","#41352F");
+    shape(ctx,[[12,-30+headShift],[25,-29+headShift],[25,-25+headShift],[11,-26+headShift]],"#BC9363");
+  }
   if(a.kind==="vampire"){
     shape(ctx,[[-14,-56+headShift],[13,-56+headShift],[24,-6],[-24,-5]],"#433451","#2C2840");
     shape(ctx,[[-12,-51+headShift],[11,-50+headShift],[17,-18],[-16,-15]],"#7E4A68","#4F3556");
@@ -421,7 +428,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.strokeStyle=style.highlight;ctx.lineWidth=1.1;
     ctx.beginPath();ctx.moveTo(kneeX-1.5,kneeY+1);ctx.lineTo(kneeX+2.1,kneeY+2);ctx.stroke();
     ctx.restore();
-    const shoe=a.kind==="rabbit"?"#E5D5D5":"#283647";
+    const shoe=a.kind==="rabbit"?"#E5D5D5":a.kind==="postman"?"#151B27":"#283647";
     // Body rises while the supporting shoe stays on the floor.
     const shoeY=ankleY;
     const shoeX=toeX+(screenRig?walkAxis(screenView!).x*2:2);
@@ -435,7 +442,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   const arm=(side:number):void=>{
     const printing=a.kind==="owner"&&pose==="printing";
     const copying=a.kind==="owner"&&pose==="copying";
-    const serving=a.kind==="owner"&&(pose==="idle"||printing||copying);
+    const receiving=a.kind==="owner"&&pose==="receiving";
+    const serving=a.kind==="owner"&&(pose==="idle"||printing||copying||receiving);
+    const handing=a.kind==="postman"&&pose==="delivering";
     const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
     const angledWalk=profileWalk||screenRig;
     const shoulderX=side*(sideways?8:quarter?10:15);
@@ -447,18 +456,19 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const elbowX=celebrating?side*20:
       angledWalk?shoulderX+side*1.5+armSwing*axis.x*.5:
       work?(side===1?21:-17)+work.pulse*1.7:
-      side*(copying?23:printing?21:serving?19:18-seated*2)+wave;
+      side*(copying?23:printing?21:serving?19:handing&&side===1?23:18-seated*2)+wave;
     const elbowY=celebrating?-52+headShift+Math.sin(a.time*6+side)*1.5:
       angledWalk?-36+headShift+armSwing*axis.y*.5:
-      work?(side===1?-38:-34):((serving?-39:-36)+headShift+seated*3);
+      work?(side===1?-38:-34):((serving?-39:handing&&side===1?-44:-36)+headShift+seated*3);
     const movingHand=work?(side===1?work.nearHand:work.farHand):null;
     const handX=gamepadActive&&a.modernGamepad?(a.gamepadGrip?.x??12.8)+side*11.05:celebrating?side*22:
       angledWalk?shoulderX+side*2+armSwing*axis.x:
-      movingHand?movingHand.x:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
+      movingHand?movingHand.x:receiving&&side===1?19+Math.sin(a.time*4)*.9:handing&&side===1?25+Math.sin(a.time*6)*1.3:copying?side*(14+Math.sin(a.time*7)*2):printing?side*(4+Math.sin(a.time*9)*3):serving?side*8:side*(19-seated*15)+wave*.5+seated*12;
     const handY=gamepadActive&&a.modernGamepad?(a.gamepadGrip?.y??-22.72)+2.72+Math.sin(a.time*7)*.4:celebrating?-72+headShift+Math.sin(a.time*6+side)*2:
       disappointed?-17+headShift:
       angledWalk?-25+headShift+armSwing*axis.y:
-      movingHand?movingHand.y:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
+      movingHand?movingHand.y:receiving&&side===1?-43+headShift+Math.sin(a.time*4)*1.0:
+       handing&&side===1?-43+headShift+Math.sin(a.time*6)*1.2:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
     // Borda da manga e luz discreta: o braço continua legível de costas.
@@ -486,6 +496,19 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     }
   }
 
+  if(a.kind==="postman"){
+    // Leather strap and side-bag remain attached while walking and handing off.
+    segment(ctx,back?10:-11,-48+headShift,back?-9:17,-22+headShift,3.0,"#5E4430");
+    segment(ctx,back?10:-11,-48+headShift,back?-9:17,-22+headShift,1.0,"#D3AA76");
+    shape(ctx,[[11,-26+headShift],[25,-25+headShift],[24,-15+headShift],[12,-15+headShift]],"#956B47","#4A372C");
+    segment(ctx,13,-24+headShift,22,-24+headShift,1.6,"#D5B078");
+    if(pose==="delivering"){
+      // The printed magazine stays in the postman's extended hand.
+      shape(ctx,[[21,-46+headShift],[35,-49+headShift],[36,-32+headShift],[23,-30+headShift]],"#E8E9D9","#42645B");
+      shape(ctx,[[23,-44+headShift],[34,-46+headShift],[34,-41+headShift],[23,-39+headShift]],"#3A7964","#42645B");
+      segment(ctx,25,-36+headShift,32,-38+headShift,1.3,"#BACBB8");
+    }
+  }
   if(!back && a.kind==="owner"&&!cyber){
     // Tailored service apron: curved bib, seam, folded pocket and terminal badge.
     segment(ctx,-6,-50+headShift,-7,-44+headShift,2.0,style.trim);
@@ -675,6 +698,15 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   if(a.kind==="vampire"){
     shape(ctx,[[-1,-58+headShift],[1,-55.5+headShift],[2,-59+headShift]],"#FFF1E8","#AC7077");
   }
+  }
+  if(a.kind==="postman"){
+    // Blue cap with peak; generic Brazilian uniform, without any third-party logo.
+    ctx.save();ctx.translate(lean,headShift);
+    shape(ctx,[[-12,-77],[-11,-84],[-5,-89],[7,-89],[12,-83],[12,-77]],"#31598B","#192F50");
+    shape(ctx,sideways?[[0,-77],[18,-77],[16,-74],[-2,-74]]:
+      [[-14,-77],[15,-77],[17,-74],[-16,-74]],"#224A7C","#192F50");
+    segment(ctx,-7,-83,6,-83,1.2,"#90B3D7");
+    ctx.restore();
   }
   if(a.kind==="cleaner"||a.kind==="technician"){
     // Capacete amarelo original: quatro direções, mesmo volume/câmera/contorno dos visitantes.

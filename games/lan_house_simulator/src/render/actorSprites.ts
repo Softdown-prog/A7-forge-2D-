@@ -48,7 +48,7 @@ export function actorRequiresLiveGamepadRig(a:Pick<ActorRender,"modernGamepad"|"
  * Work, seat transitions and premium effects keep their continuous renderer. */
 export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a:ActorRender):void{
  const pose=a.pose??"idle";
- if(actorRequiresLiveGamepadRig(a)||camera.zoom>1||a.kind==="owner"||a.kind==="cleaner"||a.kind==="technician"||a.premiumHeadset||a.reaction||
+ if(actorRequiresLiveGamepadRig(a)||camera.zoom>1||a.kind==="owner"||a.kind==="cleaner"||a.kind==="technician"||a.kind==="postman"||a.premiumHeadset||a.reaction||
     (pose!=="idle"&&pose!=="walking"&&pose!=="sitting")||
     (pose==="sitting"&&(a.transition??1)<1)){
   drawActor(ctx,camera,a);return;

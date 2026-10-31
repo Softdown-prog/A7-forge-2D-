@@ -8,6 +8,7 @@ import {roomBounds} from "./room.js";
 import {shouldShowCustomerSpeech,SPEECH_COOLDOWN_MINUTES} from "./customerDialogue.js";
 import {crowdRoute} from "./crowdNavigation.js";
 import {stationReadyForSessions} from "./stationPower.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {gpuGamePlayableOnPc,gpuGameHourlyRate} from "./gpuGames.js";
 import {pcCount,entrance,pcPosition} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
@@ -34,7 +35,14 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  // conseguem ocupar a máquina enquanto cada amigo aguarda na fila.
  if(c.multiplayerAssignedPc!==undefined){
   const pc=c.multiplayerAssignedPc;
-  return stationReadyForSessions(s,pc)?pc:undefined;
+  return stationReadyForSessions(s,pc)&&!isLinuxPc(s,pc)?pc:undefined;
+ }
+ if(c.linuxEnthusiast){
+  for(let i=0;i<pcCount(s);i++){
+   if(!isLinuxPc(s,i)||isReserved(s,i)||!stationReadyForSessions(s,i))continue;
+   if(navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))))return i;
+  }
+  return undefined; // A programmer never purchases a console session instead.
  }
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;

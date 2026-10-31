@@ -1,5 +1,6 @@
 import type {GameState,Result} from "./types.js";
 import {gameYear,installedWindows,WINDOWS_ERAS} from "./eraCatalog.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
 import {stationReadyForSessions,stationPowerCount} from "./stationPower.js";
 
@@ -28,7 +29,7 @@ export function eligibleEraGamePcs(s:GameState):number[]{
  const original=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)));
  const count=original+(s.annexPcs?.length??0);
  const win98=WINDOWS_ERAS.findIndex(x=>x.id==="win98");
- return Array.from({length:count},(_,i)=>i).filter(i=>s.pcWindowsLicenses?.[i]===true&&
+ return Array.from({length:count},(_,i)=>i).filter(i=>!isLinuxPc(s,i)&&s.pcWindowsLicenses?.[i]===true&&
   WINDOWS_ERAS.findIndex(w=>w.id===installedWindows(s,i))>=win98);
 }
 /** Descoberta por Eric em 2000; saves de 2001+ também podem voltar à novidade. */
@@ -81,7 +82,7 @@ export function validEraGameLicenses(value:unknown,s:Partial<GameState>):boolean
  */
 export function eraGameVisitorMultiplier(s:GameState):number{
  if(!s.licensedGames||!s.pcWindowsLicenses?.some((licensed,i)=>
-  licensed&&i<stationPowerCount(s)&&stationReadyForSessions(s,i)))return 1;
+  licensed&&!isLinuxPc(s,i)&&i<stationPowerCount(s)&&stationReadyForSessions(s,i)))return 1;
  const year=gameYear(s);
  const appeal=(s.licensedEraGames??[]).reduce((total,id)=>{
   const title=eraGameSpec(id);

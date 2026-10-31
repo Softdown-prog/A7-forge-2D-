@@ -5,15 +5,16 @@ import type {StoryNoticeId} from "./storyEvents.js";
 import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstMailDue,
  ERIC_SECOND_MAIL_ID,ERIC_SECOND_MAIL_TITLE,ERIC_SECOND_MAIL_BODY,ericSecondMailDue} from "./ericStory.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {nextLinuxLetter,recordLinuxMail,isLinuxPc,type LinuxMailId} from "./linuxQuest.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId|LinuxMailId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
 const day=(s:GameState)=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 const computerCount=(s:GameState)=>Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
 export function missingWindowsLicenses(s:GameState):number{
- return Array.from({length:computerCount(s)},(_,i)=>s.pcWindowsLicenses?.[i]===true?0:1).reduce<number>((a,b)=>a+b,0);
+ return Array.from({length:computerCount(s)},(_,i)=>isLinuxPc(s,i)||s.pcWindowsLicenses?.[i]===true?0:1).reduce<number>((a,b)=>a+b,0);
 }
 export function unreadNotices(s:GameState):number{return (s.notices??[]).filter(n=>!n.read).length;}
 function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameNotice["severity"]="warning"):void{
@@ -25,8 +26,17 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
  s.eventLog.unshift("D"+day(s)+" · Nova mensagem: "+title);
  s.eventLog.splice(14);
 }
+/** Mail appears only when the physical courier has completed the handoff to Tony. */
+export function deliverLinuxMagazineNotice(s:GameState,id:LinuxMailId,title:string,body:string):void{
+ deliver(s,id,title,body,"info");
+}
 export function reviewNotices(s:GameState):void{
  const d=day(s);
+ // One time-gated Linux correspondence per review, no artificial choices.
+ const linux=nextLinuxLetter(s);
+ if(linux&&!linux.id.startsWith("linux-magazine-")){
+  deliver(s,linux.id,linux.title,linux.body,"info");recordLinuxMail(s,linux.id);
+ }
  // Eric é família, não um vendedor: primeiro contato narrativo, sem preço,
  // novo catálogo ou pressão para decidir. A leitura é opcional.
  if(!s.ericFirstMailDelivered&&s.notices?.some(n=>n.id===ERIC_FIRST_MAIL_ID))

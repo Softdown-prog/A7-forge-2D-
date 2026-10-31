@@ -17,7 +17,7 @@ test("projeção de Windows conserva exatamente os limites do motor por PC",()=>
  for(const row of rows){
   const edition=WINDOWS_ERAS.find(w=>w.id===installedWindows(s,row.index));
   const licensed=s.pcWindowsLicenses?.[row.index]===true;
-  assert.equal(row.title,"PC "+(row.index+1)+" · "+edition.name+(licensed?" · licenciado":" · sem licença"));
+  assert.equal(row.title,"PC "+(row.index+1)+" · "+edition.name+(licensed?" · Windows licenciado":" · sem licença Windows"));
   assert.equal(row.choices.length,WINDOWS_ERAS.length);
   for(const item of row.choices){
    const spec=WINDOWS_ERAS.find(w=>w.id===item.id);
