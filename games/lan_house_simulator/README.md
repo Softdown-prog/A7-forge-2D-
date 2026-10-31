@@ -1,3 +1,13 @@
+## UI React — primeira fase (menu e navegação)
+
+Esta fase introduz React 19 em **três ilhas de interface**: ações do menu principal, guia interativo de capítulos e botões da barra superior. O restante dos painéis continua usando os adaptadores DOM atuais; o motor, a economia, a IA e o cenário isométrico permanecem no Canvas 2D TypeScript.
+
+`scripts/build.mjs` compila o TypeScript do motor e em seguida empacota `src/react/entry.jsx` com esbuild em `dist/js/react-entry.js`. Esse módulo monta os componentes de forma síncrona antes de importar `main.js` — assim todos os IDs e referências usados pelo jogo continuam disponíveis para o controlador existente. Não existe servidor React/Next.js, CDN ou mudança de hospedagem. O site estático continua sendo produzido por `npm run build:site`.
+
+**Validação antes de mesclar:** `npm ci`, `npm run typecheck`, `npm test`, `npm run build:site`, `npm run check:site` e testes no Chromium desktop/mobile. Não publicar no site via CH-site sem revisão visual e sem garantir os fluxos de criar/continuar/salvar, contas, menus e escala mobile.
+
+---
+
 # Lan House Simulator (LHS)
 
 ## Site próprio

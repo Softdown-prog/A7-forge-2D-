@@ -473,7 +473,13 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
- for(const id of ["start-screen","menu-new","menu-continue","menu-options","option-sound","open-menu"])assert.ok(html.includes('id="'+id+'"'),id);
+  // React owns button markup; the stable shell and real browser flows are still tested.
+  for(const id of ["start-screen","option-sound","react-menu-actions","react-topbar-actions"])
+   assert.ok(html.includes('id="'+id+'"'),id);
+  const react=readFileSync(resolve(root,"src/react/entry.jsx"),"utf8");
+  for(const id of ["menu-new","menu-continue","menu-options","open-menu"])
+   assert.ok(react.includes('id="'+id+'"'),"React button: "+id);
+  assert.match(react,/flushSync\(/,"React controls are mounted before event handlers");
  assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
  assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
  const frame=readFileSync(resolve(root,"src/application/frameActivity.ts"),"utf8");
