@@ -107,7 +107,11 @@ export function prepareContextSearch(index){
  for(let id=0;id<index.files.length;id++){
   const file=index.files[id];
   const name=new Set(groupsIn(path.posix.basename(file.path)));
-  const folder=new Set(groupsIn(path.posix.dirname(file.path).split("/").slice(-2).join(" ")));
+  const segments=path.posix.dirname(file.path).split("/");
+  const folder=new Set(groupsIn(segments.slice(-2).join(" ")));
+  // "sim" is the established simulation directory name, but not a
+  // general synonym for Portuguese "sim" (=yes) in user questions.
+  if(segments.includes("sim"))folder.add("simulation");
   const symbols=new Set((file.symbols??[]).flatMap(s=>groupsIn(s.name)));
   const terms=new Set([...name,...folder,...symbols,...Object.keys(file.contextTerms??{})]);
   for(const term of terms){
