@@ -1,0 +1,28 @@
+
+<details class="time-weather-panel" id="time-weather-panel">
+ <summary class="time-weather-trigger" aria-label="Abrir ou fechar calendário e clima da partida">
+  <span class="time-weather-summary-date" id="calendar-hud">{{dayLabel}}</span>
+  <span class="time-weather-summary-condition" id="weather-hud">
+   <span aria-hidden="true">{{view().weatherIcon==='rain'?'🌧️':'☀️'}}</span> {{view().weather}}
+  </span>
+  <span class="time-weather-summary-action">Calendário e clima <span aria-hidden="true">⌄</span></span>
+ </summary>
+ <div class="time-weather-content" aria-label="Detalhes do calendário e das condições do salão">
+  <section class="time-weather-tile" aria-label="Data da partida">
+   <span class="time-weather-eyebrow">CALENDÁRIO DO JOGO</span>
+   <strong id="time-weather-date">{{view().date}}</strong>
+   <span id="time-weather-day">{{campaignDay}}</span>
+  </section>
+  <section class="time-weather-tile" aria-label="Hora da partida">
+   <span class="time-weather-eyebrow">HORÁRIO DO SALÃO</span>
+   <strong id="time-weather-hour" class="time-weather-clock">{{view().time}}</strong>
+   <span>O expediente vai das 10h às 22h.</span>
+  </section>
+  <section class="time-weather-tile" aria-label="Clima do dia">
+   <span class="time-weather-eyebrow">CONDIÇÃO DO DIA</span>
+   <strong id="time-weather-condition">{{view().weather}}</strong>
+   <span id="time-weather-effect">{{view().impact}}</span>
+   <span id="time-weather-outlook">{{outlook}}</span>
+  </section>
+ </div>
+</details>
