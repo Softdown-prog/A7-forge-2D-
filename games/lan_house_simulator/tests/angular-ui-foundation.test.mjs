@@ -86,3 +86,47 @@ test('Angular menu settings and save transfer preserve native TypeScript contrac
   // Old game index must not mount Angular's duplicate control IDs yet.
   assert.doesNotMatch(legacy,/id="angular-(?:save-transfer|menu-preferences)"/);
 });
+
+test('Angular HUD uses read-only time/weather snapshots and preserves native DOM hooks',()=>{
+ const component=file(root+'src/calendar-mail.ts');
+ const hud=file(root+'src/templates/time-weather.html');
+ const adapter=file('src/ui/timeWeatherPanel.ts');
+ const preview=file(root+'src/index.html');
+ const legacy=file('index.html');
+ for(const id of ['time-weather-panel','calendar-hud','weather-hud','time-weather-date',
+  'time-weather-day','time-weather-hour','time-weather-condition','time-weather-effect','time-weather-outlook']){
+  assert.ok(hud.includes('id="'+id+'"'),id);
+  assert.ok(legacy.includes('id="'+id+'"'),id+' legacy');
+ }
+ assert.match(component,/lhs:time-weather-updated/);
+ assert.match(adapter,/publishedSnapshots/);
+ assert.match(adapter,/lhs:time-weather-updated/);
+ assert.match(preview,/id="angular-time-weather"/);
+ assert.doesNotMatch(legacy,/id="angular-time-weather"/);
+ assert.doesNotMatch(component,/innerHTML|localStorage|requestAnimationFrame/);
+});
+test('Angular mail preserves native notice actions and TypeScript port ownership',()=>{
+ const component=file(root+'src/calendar-mail.ts');
+ const inbox=file(root+'src/templates/notice-inbox.html');
+ const presenter=file('src/ui/noticeWindowRefresh.ts');
+ const controller=file('src/ui/noticeControls.ts');
+ const legacy=file('index.html');
+ for(const id of ['notices','notices-title','close-notices','notices-list']){
+  assert.ok(inbox.includes('id="'+id+'"'));
+  assert.ok(legacy.includes('id="'+id+'"'));
+ }
+ for(const attr of ['data-notice-read','data-notice-action','data-decision','data-choice'])
+  assert.ok(inbox.includes(attr),attr);
+ assert.match(inbox,/data-angular-owned="true"/);
+ assert.match(inbox,/aria-live="polite"/);
+ assert.match(inbox,/aria-modal="true"/);
+ assert.match(presenter,/lhs:notice-status-updated/);
+ assert.match(presenter,/lhs:notice-inbox-updated/);
+ assert.match(presenter,/angularOwned/);
+ assert.match(controller,/root\?\.addEventListener\("click"/);
+ assert.match(component,/lhs:notice-inbox-updated/);
+ assert.match(file(root+'src/main.ts'),/NoticeInboxComponent/);
+ assert.doesNotMatch(component,/localStorage|port\.choose|markRead\(|GameState|requestAnimationFrame/);
+ assert.doesNotMatch(inbox,/\(click\)=/);
+ assert.doesNotMatch(legacy,/id="angular-notice-inbox"/);
+});

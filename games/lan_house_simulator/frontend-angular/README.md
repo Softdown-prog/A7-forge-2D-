@@ -24,6 +24,12 @@ O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estát
 
 A apresentação de opções (efeitos sonoros) e importação/exportação de partidas também foi implementada em componentes Angular isolados. As interfaces TypeScript `installMenuControls` e `installSaveFileControls` continuam responsáveis pelas ações, confirmação, persistência e leitura de arquivo. O arquivo atual `index.html` segue usando seus controles originais até a conversão final; os hosts `angular-save-transfer` e `angular-menu-preferences` ficam apenas no documento de prévia enquanto não for possível retirar o React do jogo sem quebra.
 
+## HUD, clima e correspondência
+
+Os componentes Angular agora recebem snapshots somente leitura por eventos de apresentação: `lhs:time-weather-updated`, `lhs:notice-status-updated` e `lhs:notice-inbox-updated`. Os dados e decisões continuam nos ports TypeScript. O adaptador da caixa de correio preserva seu renderizador legado quando a lista não é marcada `data-angular-owned="true"` e deixa o Angular renderizar quando este atributo está presente.
+
+**Ainda falta:** teste E2E real de cartas e janelas, mobile e troca atômica de toda a interface. Não inserir os hosts de prévia no `index.html` do jogo em produção até remover o React.
+
 ## Próximas etapas
 
 1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.

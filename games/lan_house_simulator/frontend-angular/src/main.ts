@@ -11,6 +11,7 @@ import {
 import {ComputerWorkspaceComponent,ServiceWorkspaceComponent} from './workspaces';
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
+import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -32,6 +33,19 @@ async function mountUi():Promise<void> {
     const ref=createComponent(component,{environmentInjector:app.injector,hostElement:host});
     app.attachView(ref.hostView);
     // Original DOM controllers expect stable button IDs before bootstrap.
+    ref.changeDetectorRef.detectChanges();
+  }
+  // Exclusive Angular HUD/mail ownership is activated only when their
+  // future hosts are present. The published React game has neither host.
+  const futureStatusIslands=[
+    ['angular-time-weather',TimeWeatherComponent],
+    ['angular-notice-inbox',NoticeInboxComponent]
+  ] as const;
+  for(const [id,component] of futureStatusIslands){
+    const host=document.getElementById(id);
+    if(!host)continue;
+    const ref=createComponent(component,{environmentInjector:app.injector,hostElement:host});
+    app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
   }
   // These two components will replace their legacy markup at final cutover.
