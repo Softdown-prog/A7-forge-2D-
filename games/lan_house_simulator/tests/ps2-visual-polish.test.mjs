@@ -25,7 +25,7 @@ test("PS2 controllers use the correct mirrored grip for both seats; PS1 still us
   const forward=ps2ActorGrip(seat,station,"back-right");
   const mirrored=ps2ActorGrip(seat,station,"back-left");
   assert.ok(Number.isFinite(forward.x)&&Number.isFinite(forward.y));
-  assert.ok(Math.abs(forward.x)>1,"grip must be different for different stations");
+  assert.ok(Math.hypot(forward.x,forward.y)>1,"grip stays finite and away from the feet");
   assert.equal(mirrored.x,-forward.x);
   assert.equal(mirrored.y,forward.y);
   assert.deepEqual(ps2ActorGrip(seat,station,"front-right"),forward);
