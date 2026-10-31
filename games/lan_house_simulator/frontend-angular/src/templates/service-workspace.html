@@ -1,0 +1,15 @@
+<section class="angular-workspace" data-angular-workspace="services" aria-label="Equipe, internet e circulação">
+ <div class="angular-workspace-heading"><div><span>SERVIÇOS DO SALÃO</span><h4>Equipe, internet e circulação</h4></div>
+ <p>Encontre funcionários, contratos e pontos sem passagem sem procurar em uma lista longa.</p></div>
+ <nav class="angular-workspace-grid" aria-label="Tarefas de serviços">
+ @for(task of tasks;track task.id){
+  <button type="button" class="angular-workspace-task" [attr.data-angular-task]="task.id"
+   [attr.aria-pressed]="selected()===task.id" [attr.aria-controls]="'page-services-'+task.id"
+   (click)="openTask(task.id)">
+   <span class="angular-workspace-task-icon" aria-hidden="true">{{task.icon}}</span>
+   <span class="angular-workspace-task-copy"><strong>{{task.label}}</strong><small>{{task.desc}}</small></span>
+   <span aria-hidden="true">›</span>
+  </button>
+ }
+ </nav>
+</section>

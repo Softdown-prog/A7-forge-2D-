@@ -1,0 +1,16 @@
+<section class="angular-workspace" data-angular-workspace="computers" aria-label="Operação, peças e manutenção">
+ <div class="angular-workspace-heading"><div><span>CENTRAL DOS COMPUTADORES</span><h4>Operação, peças e manutenção</h4></div>
+ <p>Alterne entre reparos, evolução do hardware, Windows, monitores e receita por estação.</p></div>
+ <nav class="angular-workspace-grid" aria-label="Tarefas de computadores">
+ @for(task of tasks;track task.id){
+  <button type="button" class="angular-workspace-task" [attr.data-angular-task]="task.id"
+   [attr.aria-pressed]="selected()===task.id" [attr.aria-controls]="'page-computers-'+task.id"
+   (click)="openTask(task.id)">
+   <span class="angular-workspace-task-icon" aria-hidden="true">{{task.icon}}</span>
+   <span class="angular-workspace-task-copy"><strong>{{task.label}}</strong><small>{{task.desc}}</small></span>
+   <span aria-hidden="true">›</span>
+  </button>
+ }
+ </nav>
+</section>
+<lhs-station-switch [page]="selected()" />

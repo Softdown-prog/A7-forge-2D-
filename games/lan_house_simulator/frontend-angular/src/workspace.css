@@ -1,0 +1,38 @@
+/* Isolated Angular presentation styles; the original game and Canvas remain untouched. */
+.angular-admin-workspace-root{display:block;min-width:0;margin:14px 0}
+.angular-workspace{background:linear-gradient(130deg,#e9efdf,#f9f7eb);border:1px solid #cbd9c0;border-radius:12px;padding:15px}
+.angular-workspace-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}
+.angular-workspace-heading h4{margin:2px 0 0;font-size:17px;color:#233f30}
+.angular-workspace-heading p{margin:0!important;max-width:295px;font-size:11px;line-height:1.45;color:#647760;text-align:right}
+.angular-workspace-heading span{font:700 9px "Courier New",monospace;letter-spacing:.13em;color:#6d885b}
+.angular-workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
+#admin .angular-workspace-task{display:flex;align-items:flex-start;gap:9px;min-width:0;min-height:83px;
+ padding:12px 9px;text-align:left;background:#fffcf3;border:1px solid #cddbc4;border-radius:10px;color:#213d2e;cursor:pointer}
+#admin .angular-workspace-task:hover:not(:disabled){background:#eff5e8;border-color:#89af79}
+#admin .angular-workspace-task[aria-pressed="true"]{background:#234334;color:#f7f8ea;border-color:#234334}
+.angular-workspace-task-icon{display:grid;place-items:center;width:28px;height:28px;flex:none;
+ border-radius:7px;background:#daeaca;color:#335c3b;font-weight:700}
+.angular-workspace-task-copy{display:grid;gap:5px;min-width:0}
+.angular-workspace-task-copy strong{font-size:11px;line-height:1.35}
+.angular-workspace-task-copy small{font-size:9px;line-height:1.35;font-weight:400;color:#70836b;overflow-wrap:anywhere}
+.angular-workspace-task[aria-pressed="true"] .angular-workspace-task-copy small{color:#c5d6c2}
+.angular-station-switch{margin:10px 0 4px;padding:12px;background:#eef3e7;border:1px solid #c6d7ba;border-radius:10px}
+.angular-station-switch-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.angular-station-switch-heading strong{font-size:12px;color:#2f533c}
+.angular-station-switch-heading small{display:block;font-size:10px;line-height:1.4;color:#698065;margin-top:3px}
+.angular-station-switch-heading>span{font-size:11px;font-weight:700;color:#2d553a;background:#dfebd4;border-radius:6px;padding:6px 9px}
+.angular-station-switch-buttons{display:flex;flex-wrap:wrap;gap:7px}
+#admin .angular-station-switch-buttons button{min-width:70px;min-height:41px;background:#fffef7;
+ border:1px solid #bdd0ae;color:#2d4e37;border-radius:8px;cursor:pointer}
+#admin .angular-station-switch-buttons button[aria-pressed="true"]{background:#244a35;border-color:#244a35;color:#f7f9e8}
+#admin .angular-workspace-task:focus-visible,#admin .angular-station-switch-buttons button:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+@media(max-width:900px){.angular-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+ .angular-workspace{padding:11px}
+ .angular-workspace-heading{display:block}
+ .angular-workspace-heading p{max-width:none;margin-top:4px!important;text-align:left}
+ .angular-workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #admin .angular-workspace-task{min-height:76px;padding:10px 8px;gap:6px}
+ .angular-station-switch-buttons{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
+ #admin .angular-station-switch-buttons button{flex:0 0 auto;min-width:80px}
+}
