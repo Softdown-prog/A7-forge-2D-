@@ -22,7 +22,7 @@ concurrency:
 jobs:
   index-and-validate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - name: Use Node 22
@@ -84,6 +84,16 @@ jobs:
         with:
           name: lhs-mcp-benchmark
           path: out/lhs-mcp-benchmark/results.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Benchmark physical Git indexing at 10k and 15k files
+        timeout-minutes: 6
+        run: node --expose-gc tools/lhs-mcp/benchmark-physical.mjs --sizes=10000,15000 --output out/lhs-mcp-physical-benchmark/results.json
+      - name: Upload physical indexing benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-physical-benchmark
+          path: out/lhs-mcp-physical-benchmark/results.json
           retention-days: 30
           if-no-files-found: error
       - name: Upload indexed files, symbols and summary

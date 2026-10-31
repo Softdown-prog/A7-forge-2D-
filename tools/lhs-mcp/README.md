@@ -157,3 +157,24 @@ real. Os resultados são indicadores de regressão e escala, não SLA.
 O vocabulário foi ampliado para licenças, manutenção, desgaste,
 fornecedores, reputação, correio, videogames, campanhas e opções.
 Como sinônimos mudaram, o esquema do catálogo e o cache passaram para v5.
+
+## Benchmark físico com 10 mil e 15 mil arquivos Git
+
+O módulo `tools/lhs-mcp/benchmark-physical.mjs` cria repositórios Git
+**descartáveis** no diretório temporário do runner e gera exatamente 10.000
+e 15.000 arquivos TypeScript rastreados. Executa `git add` e `git commit`
+apenas nesses repositórios de teste, nunca no checkout de produção.
+
+Aferições: preparação da amostra, índice completo (`cold`), índice
+inalterado (`warm`), reindexação incremental após modificação de 1% dos
+arquivos e pequenas adições/remoções, e nova indexação completa. Os
+catálogos incremental e completo precisam ser **idênticos** em todas as
+entradas e estatísticas. Também confere a busca contextual no índice físico.
+
+O workflow executa ambos os tamanhos com limite de seis minutos para a
+etapa, produz `lhs-mcp-physical-benchmark` e apaga a árvore temporária
+mesmo quando o teste lança erro. O relatório diferencia tempo de criação
+do Git, tempo de indexação, quantidade reaproveitada, heap, RSS final e
+pico observado de RSS. Desempenho medido em runners compartilhados
+não representa SLA e os fontes sintéticos não replicam a complexidade
+de cada módulo real da lan house.
