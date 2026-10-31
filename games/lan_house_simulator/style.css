@@ -693,7 +693,7 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  .ps1-station-summary>button{align-self:flex-start}}
 
 /* PlayStation 1: acervo físico de CDs e seletor de bancada. */
-.ps1-shop-heading{grid-column:1/-1;margin:18px 0 0;font-size:16px;color:#203b31}
+.ps1-shop-heading,.ps2-shop-heading{grid-column:1/-1;margin:18px 0 0;font-size:16px;color:#203b31}
 .ps1-shop-note{grid-column:1/-1;margin:0 0 8px}
 .ps1-cd-shop-card{border-color:#b9c8b4}
 .ps1-cd-art{
@@ -1118,3 +1118,11 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  background:#fff7dc;color:#51411f}
 .night-reopening-announcement[hidden]{display:none}
 @media(max-width:650px){.night-reopening-announcement{font-size:11px;padding:6px 8px}}
+
+/* PS2 uses the existing console cards and native mobile controls. */
+.ps2-shop-preview{display:block;width:100%;max-width:300px;height:auto;margin:0 auto 8px;border-radius:8px;background:#172b38}
+.ps2-bench-card select,#ps2-stations select{max-width:100%;width:100%;min-height:40px}
+.ps2-bench-card label{display:block;margin-top:8px}
+#ps2-stations .action-row{gap:6px;margin-top:8px}
+#ps2-overview{border-top:1px solid #40566b;margin-top:12px;padding-top:12px}
+@media(max-width:700px){#ps2-stations .action-row button{flex:1 1 150px;white-space:normal}}

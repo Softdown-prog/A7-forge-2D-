@@ -10,8 +10,10 @@ import {praiseLine,complaintLine} from "./customerDialogue.js";
 import {vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import {recordCustomerFeedback,sessionFeedbackReason} from "./customerFeedback.js";
 import {normalizedHourlyPrice} from "./historicalEconomy.js";
-import {ps1SessionWear,ps1HourPrice} from "./ps1.js";
+import {ps2SessionWear,ps2HourPrice} from "./ps2.js";
+import {customerConsole} from "./consoleLayout.js";
 import {isLinuxPc} from "./linuxQuest.js";
+import {ps1SessionWear,ps1HourPrice} from "./ps1.js";
 import {online,pcWear,pcBroken,addLog,CLOSING_START_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
 import {navigableRoute} from "./navigation.js";
@@ -44,8 +46,7 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "using":
-      if (c.ps1StationIndex===undefined&&!multiplayerRoundActive(s,c)&&
-          !isLinuxPc(s,c.pcIndex??-1)&&!online(s)) {
+      if (!customerConsole(c)&&!multiplayerRoundActive(s,c)&&!isLinuxPc(s,c.pcIndex??-1)&&!online(s)) {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;
@@ -61,15 +62,16 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       c.usedMinutes++;
       // Sessões de PlayStation são independentes de PC e da internet.
       // O controle do PS1 se desgasta, mas a sessão em curso termina.
-      if(c.ps1StationIndex!==undefined)ps1SessionWear(s,c.ps1StationIndex);
+      if(c.ps2StationIndex!==undefined)ps2SessionWear(s,c.ps2StationIndex);
+      else if(c.ps1StationIndex!==undefined)ps1SessionWear(s,c.ps1StationIndex);
       else if(c.pcIndex!==null)(s.pcWear??=[])[c.pcIndex]=
         Math.min(100,pcWear(s,c.pcIndex)+(0.045 / (s.pcTiers?.[c.pcIndex]??1)));
       if (c.usedMinutes >= (c.sessionMinutes??SESSION_MINUTES)) {
-        const consoleSession=c.ps1StationIndex!==undefined;
+        const consoleSession=customerConsole(c)!==null;
         const bonus=consoleSession?0:hardwareSatisfactionBonus(s,c.pcIndex??-1);
         // Consoles e computadores têm tabelas de preço independentes.
         // A satisfação do cliente PS1 usa a tarifa que ele realmente pagou.
-        const paidHourly=normalizedHourlyPrice(s,consoleSession?ps1HourPrice(s):s.pricePerHour);
+        const paidHourly=normalizedHourlyPrice(s,consoleSession?(c.consolePaidHourly??(c.ps2StationIndex!==undefined?ps2HourPrice(s):ps1HourPrice(s))):s.pricePerHour);
         const profileAdjustment=preferenceSatisfactionAdjustment(c,{
           hourlyPrice:paidHourly,hardwareBonus:bonus,consoleSession
         });
@@ -99,17 +101,20 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "standing":
-      if(localMinute(s)>=CLOSING_START_MINUTE)return; // Aguarda sua vez na dispersão da saída.
+      if(localMinute(s)>=CLOSING_START_MINUTE){
+       if(c.ps2StationIndex!==undefined)c.poseMinutes=Math.min(3,(c.poseMinutes??0)+1);
+       return; // Aguarda sua vez na dispersão da saída.
+      }
       c.poseMinutes = (c.poseMinutes ?? 0) + 1;
       if (c.poseMinutes >= 3) {
         if(c.pcIndex!==null && pcBroken(s,c.pcIndex))addLog(s,"PC "+(c.pcIndex+1)+" precisa de manutenção.");
-        c.pcIndex = null;c.ps1StationIndex=undefined;c.ps1SeatIndex=undefined;
+        c.pcIndex = null;
         if (c.wantsSnack) {
           // Uma obra pode isolar a prateleira depois de a sessão terminar.
           // Não iniciar uma compra sem caminho: cliente ficaria preso na
           // posição do PC e ocuparia a fila da loja para sempre.
           const destination=c.desiredItem?purchaseApproach(c.desiredItem,s):vendingApproach("soda",s);
-          if(setTravel(s,c,destination))c.stage="shopping";
+          if(setTravel(s,c,destination)){c.stage="shopping";c.ps1StationIndex=undefined;c.ps1SeatIndex=undefined;c.ps2StationIndex=undefined;c.ps2SeatIndex=undefined;c.consolePaidHourly=undefined;}
           else sendHome(s,c);
         } else sendHome(s, c);
       }

@@ -4,6 +4,7 @@ import {hallwayRoute,computerSeat} from "./route.js";
 import {vendingApproach,purchaseApproach} from "./layout.js";
 import {roomBounds} from "./room.js";
 import {navigableRoute,routesForCurrentCustomers} from "./navigation.js";
+import {consoleFootprints,consoleApproaches} from "./consoleLayout.js";
 import {editableObjects,wallCutsObject} from "./layoutGeometry.js";
 import {counterQueue} from "./route.js";
 import {activeRetailQueuesReachable,refreshRetailQueues} from "./retailQueue.js";
@@ -57,7 +58,8 @@ function crossesRoute(w:WallSegment,points:Point[]):boolean{
 export function wallBlocksCustomers(s:GameState,w:WallSegment):boolean{
  const start=entrance(s),counter=counterQueue(s);
  const services:Point[]=[...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
-   vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
+   vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s),
+ ...consoleApproaches(s)];
  const pairs:Array<[Point,Point]>=[[start,counter],[counter,start]];
  for(const service of services){
    pairs.push([counter,service],[service,start]);
@@ -83,11 +85,12 @@ export function wallTouchesCustomer(s:GameState,w:WallSegment):boolean{
 export function canBuildWall(s:GameState,w:WallSegment):boolean{
  if(!validWallPosition(s,w)||wallTouchesCustomer(s,w)||(s.interiorWalls??[]).some(p=>wallId(p)===wallId(w))||
     (s.interiorDoors??[]).some(p=>wallId(p)===wallId(w)))return false;
- if(editableObjects(s).some(o=>o.surface==="floor"&&wallCutsObject(w,o)))return false;
+ if([...editableObjects(s),...consoleFootprints(s,true)].some(o=>o.surface==="floor"&&wallCutsObject(w,o)))return false;
  // Preserva a alcançabilidade de todos os serviços e de clientes ativos.
  const next={...s,interiorWalls:[...(s.interiorWalls??[]),w]};
  const goals:Point[]=[counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>computerSeat(pcPosition(i,s))),
- vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
+ vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s),
+ ...consoleApproaches(s)];
  for(const goal of goals)if(!navigableRoute(next,entrance(s),goal))return false;
  for(const c of s.customers)if(!navigableRoute(next,c,c.route?.at(-1)??c.target))return false;
  if(!activeRetailQueuesReachable(next))return false;
@@ -156,7 +159,8 @@ export function validInteriorWalls(s:GameState):boolean{
  }
  // A parede pode exigir desvio pela porta. Valida alcançabilidade, não a rota reta.
  const destinations:Point[]=[counterQueue(s),...Array.from({length:pcCount(s)},(_,i)=>
-   computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s)];
+   computerSeat(pcPosition(i,s))),vendingApproach("soda",s),vendingApproach("candy",s),purchaseApproach("snacks",s),
+ ...consoleApproaches(s)];
  for(const destination of destinations){
    if(!navigableRoute(s,entrance(s),destination))return false;
  }

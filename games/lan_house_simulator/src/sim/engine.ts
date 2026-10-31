@@ -5,7 +5,7 @@ export { addLog,applyResult,CLOSING_START_MINUTE,createGame,dayNumber,displayTim
 import { validLcdModels } from "./computerModels.js";
 import { spawn,spawnDiscWalkIn,spawnPrintWalkIn } from "./customerArrival.js";
 import { validCustomerFeedback } from "./customerFeedback.js";
-import { refreshCounterQueue,sendHome } from "./customerFlow.js";
+import { refreshCounterQueue,sendHome,startStanding } from "./customerFlow.js";
 import { advanceCustomer } from "./customerLifecycle.js";
 import { EXIT_REACH_DISTANCE } from "./customerMotion.js";
 import { scheduleDecisions } from "./decisions.js";
@@ -22,15 +22,16 @@ import { gpuGameSpec,gpuGameVisitorMultiplier,tickGpuGameInstallations,validGpuG
 import { validHardwareState } from "./hardware.js";
 import { clampPriceToEra,normalizedHourlyPrice } from "./historicalEconomy.js";
 import { GAME_END_DAY,GAME_LAST_MINUTE,isSporadicMailId } from "./mailCalendar.js";
-import {validLinuxState} from "./linuxQuest.js";
 import { productSpec,receiveDueOrders,validMerchandise } from "./merchandise.js";
 import { tickMultiplayerVisitors,validMultiplayerVisit } from "./multiplayerVisitors.js";
 import { tickNeeds } from "./needs.js";
 import { advanceNightMeetup,beginNightMeetup,nightScheduledForClosing,validNightMeetup } from "./nightMeetup.js";
 import { reviewNotices } from "./notices.js";
+import {validLinuxState} from "./linuxQuest.js";
 import {tickPostman,validPostmanDelivery} from "./postmanDelivery.js";
 import { pagesPrintedToday,PRINT_PAGES_PER_DAY,printWalkInDue,validPrinterService } from "./printService.js";
 import { promotionVisitorMultiplier } from "./promotion.js";
+import {ps2EnergyCostPerMinute,ps2HourPrice,ps2StationAvailable,validPs2State} from "./ps2.js";
 import { ps1EnergyCostPerMinute,ps1HourPrice,ps1StationAvailable,validPs1State } from "./ps1.js";
 import { refreshRetailQueues } from "./retailQueue.js";
 import { addWaste,dispatchHiredStaff,tickServices } from "./services.js";
@@ -77,14 +78,16 @@ export function visitorArrivalChance(s:GameState,occupied:number):number {
   // Não bloquear o público de console quando todos os PCs estão apagados.
   // O serviço PS1 não depende da internet e só admite clientes se há cadeira livre.
   const poweredPcs=Array.from({length:pcCount(s)},(_,i)=>i).filter(i=>stationReadyForSessions(s,i)).length;
-  const consoleCapacity=(s.ps1Stations??[]).filter((_,i)=>ps1StationAvailable(s,i)).length;
+  const ps1Capacity=(s.ps1Stations??[]).filter((_,i)=>ps1StationAvailable(s,i)).length;
+  const ps2Capacity=(s.ps2Stations??[]).filter((_,i)=>ps2StationAvailable(s,i)).length;
+  const consoleCapacity=ps1Capacity+ps2Capacity;
   if(!poweredPcs&&!consoleCapacity)return 0;
   if(localMinute(s)>=LAST_ADMISSION_MINUTE||
     (localMinute(s)<10&&s.customers.some(c=>c.stage==="leaving")))return 0;
   const consoleOnly=poweredPcs===0;
-  const rate=normalizedHourlyPrice(s,consoleOnly?ps1HourPrice(s):s.pricePerHour);
+  const rate=normalizedHourlyPrice(s,consoleOnly?(ps1Capacity&&ps2Capacity?Math.min(ps1HourPrice(s),ps2HourPrice(s)):ps2Capacity?ps2HourPrice(s):ps1HourPrice(s)):s.pricePerHour);
   const factor=demandFactor(rate,s.reputation,consoleOnly||online(s),s.weather==="rain");
-  const congestion=occupied>=poweredPcs+(s.ps1Stations?.length??0)?0.38:1;
+  const congestion=occupied>=poweredPcs+(s.ps1Stations?.length??0)+(s.ps2Stations?.length??0)?0.38:1;
   return 0.052*factor*promotionVisitorMultiplier(s)*storyVisitorMultiplier(s)*eraGameVisitorMultiplier(s)*gpuGameVisitorMultiplier(s)*congestion;
 }
 /** Dispensa em pequenos grupos: fila e compras primeiro, sessões até 21h30. */
@@ -105,7 +108,13 @@ function prepareClosing(s:GameState):void {
  // usando o PC depois do limite quando a fila de compras está cheia.
  const eligible=candidates.filter(c=>
    !active(c)||minute>=SESSION_FINISH_MINUTE||c.usedMinutes>=(c.sessionMinutes??SESSION_MINUTES));
- for(const c of eligible.slice(0,minute>=SESSION_FINISH_MINUTE?2:1))sendHome(s,c);
+ for(const c of eligible.slice(0,minute>=SESSION_FINISH_MINUTE?2:1)){
+  if(c.ps2StationIndex!==undefined){
+   if(c.stage==="using"||c.stage==="sitting"){startStanding(c,false);continue;}
+   if(c.stage==="standing"&&(c.poseMinutes??0)<3)continue;
+  }
+  sendHome(s,c);
+ }
 }
 function advanceMinute(s: GameState): void {
   if(s.nightMeetup){
@@ -122,10 +131,10 @@ function advanceMinute(s: GameState): void {
   }
   // Cobrar o consumo real por minuto: cada PC ligado usa standby; ocupados consomem mais.
   // Acumular inclusive o último minuto antes da virada mensal.
-  const energyExpense=energyCostPerMinute(s)+ps1EnergyCostPerMinute(s);
+  const energyExpense=energyCostPerMinute(s)+ps1EnergyCostPerMinute(s)+ps2EnergyCostPerMinute(s);
   s.energyAccrued=(s.energyAccrued??0)+energyExpense;
   recordComputerUtilization(s);
-  recordStationMinute(s,pcCount(s),energyExpense);
+  recordStationMinute(s,pcCount(s),energyExpense-ps2EnergyCostPerMinute(s));
   s.totalMinutes++;
   for(const message of receiveDueOrders(s))addLog(s,message);
   if(s.economyVersion===2&&s.totalMinutes===4*360*DAY_MINUTES)
@@ -193,7 +202,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validPostmanDelivery(v) && validLinuxState(v) && validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validNightMeetup(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validPostmanDelivery(v) && validLinuxState(v) && validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validNightMeetup(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPs2State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&

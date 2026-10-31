@@ -76,7 +76,7 @@ function mockCanvas(){
  const ctx=new Proxy(values,{get(target,key){
   if(key in target)return target[key];
   return (...args)=>{calls.push([key,...args]);};
- },set(target,key,value){target[key]=value;return true;}});
+ },set(target,key,value){target[key]=value;calls.push(["set",key,value]);return true;}});
  return {ctx,calls};
 }
 test("renderizador PS2 desenha TV, gabinete, bancada, controles e cadeira sem imagens",()=>{
@@ -84,10 +84,11 @@ test("renderizador PS2 desenha TV, gabinete, bancada, controles e cadeira sem im
  const solo=mockCanvas();
  drawPs2Station(solo.ctx,cam,point,0,false,0,null,false);
  assert.ok(solo.calls.some(x=>x[0]==="fillText"&&x[1]==="PS2"));
- const singleChairs=solo.calls.filter(x=>x[0]==="ellipse").length;
+ const chairTops=calls=>calls.filter(x=>x[0]==="set"&&x[1]==="fillStyle"&&x[2]==="#38505c").length;
+ assert.equal(chairTops(solo.calls),1);
  const duo=mockCanvas();
  drawPs2Station(duo.ctx,cam,point,100,true,1.4,"cidade-em-fuga",true);
- assert.ok(duo.calls.filter(x=>x[0]==="ellipse").length>=singleChairs);
+ assert.equal(chairTops(duo.calls),2);
  assert.ok(duo.calls.some(x=>x[0]==="fillText"&&x[1]==="!"));
  assert.ok(duo.calls.filter(x=>x[0]==="fill").length>solo.calls.filter(x=>x[0]==="fill").length);
  const pad=mockCanvas();

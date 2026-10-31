@@ -5,7 +5,7 @@ import {directionFromDelta} from "./direction.js";
 import {navigableRoute,canTraverseLocalStep} from "./navigation.js";
 import {roomBounds} from "./room.js";
 import {crowdRoute,crowdSideStep} from "./crowdNavigation.js";
-import {ps1Seat,ps1SeatApproach} from "./ps1.js";
+import {customerConsoleSeat} from "./consoleLayout.js";
 
 export function canCustomerOccupy(s:GameState,c:Customer,at:Point):boolean {
   return s.customers.every(other=>{
@@ -60,7 +60,11 @@ export function move(s:GameState,c:Customer,speed=0.38):boolean {
   return false;
 }
 export function setTravel(s:GameState,c:Customer,destination:Point):boolean{
- const points=navigableRoute(s,{x:c.x,y:c.y},destination);
+ const seat=c.ps2StationIndex!==undefined?customerConsoleSeat(s,c):null;
+ const side=c.ps2StationIndex!==undefined?customerConsoleSeat(s,c,true):null;
+ const exiting=seat&&side&&Math.hypot(c.x-seat.x,c.y-seat.y)<.12;
+ const onward=navigableRoute(s,exiting?side:{x:c.x,y:c.y},destination);
+ const points=onward&&exiting?[side,...onward]:onward;
  if(!points?.length)return false;
  c.target=points[0]!;c.route=points.slice(1);
  return true;
@@ -89,10 +93,8 @@ export function moveRoute(s:GameState,c: Customer): boolean {
       // Uma sessão de console sempre termina pela lateral da cadeira.
       // Replanejar diretamente até o assento poderia mandar o visitante
       // atravessar novamente a bancada/TV após encontrar outra pessoa.
-      const seat=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
-        ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0):null;
-      const side=c.ps1StationIndex!==undefined&&c.stage==="to_pc"
-        ?ps1SeatApproach(s,c.ps1StationIndex,c.ps1SeatIndex??0):null;
+      const seat=c.stage==="to_pc"?customerConsoleSeat(s,c):null;
+      const side=c.stage==="to_pc"?customerConsoleSeat(s,c,true):null;
       if(seat&&side&&!canTraverseLocalStep(s,side,seat))return false;
       const destination=seat&&side?side:(c.route?.at(-1)??c.target);
       // Narrow gaps between visitors may not contain a half-tile grid point.

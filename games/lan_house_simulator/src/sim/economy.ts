@@ -1,3 +1,4 @@
+import {ps2EnergyCostPerMinute} from "./consoleEnergy.js";
 import {merchandisePrice,setMerchandisePrice,orderMerchandise,sellMerchandise,quoteOrder,CLASSIC_PRICES,CLASSIC_WHOLESALE,PRODUCTS} from "./merchandise.js";
 import type { GameState, Inventory, Item, Result } from "./types.js";
 import {SESSION_MINUTES} from "./types.js";
@@ -72,7 +73,7 @@ export function sessionRevenue(hourly:number,minutes=SESSION_MINUTES,historical=
 export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansionLevel"> & Partial<GameState>,active?:number):number {
  const original=Math.max(3,Math.min(3+state.expansionLevel*2,state.installedPcs??(3+state.expansionLevel*2)));
  const count=original+(state.annexPcs?.length??0);
- const busy=active??(state.customers??[]).filter(c=>c.stage==="using").length;
+ const busy=active??(state.customers??[]).filter(c=>c.stage==="using"&&c.ps2StationIndex===undefined).length;
  const year=Math.floor(Math.max(0,state.totalMinutes)/(720*360));
  const tariff=isHistorical(state as GameState)?priceIndex(1998+year):Math.pow(1.03,Math.min(25,year));
  const base=(65+state.expansionLevel*15)/(30*720);
@@ -90,7 +91,7 @@ export function energyCostPerMinute(state:Pick<GameState,"totalMinutes"|"expansi
  return tariff*(base+hardware+Math.min(powered.length,Math.max(0,busy))*0.0030*averageTier);
 }
 export function energyMonthlyEstimate(state:Pick<GameState,"internetTier"|"expansionLevel"> & Partial<GameState>):number {
- return Math.round(energyCostPerMinute({...state,totalMinutes:state.totalMinutes??0},state.customers?.filter(c=>c.stage==="using").length??0)*30*720);
+ return Math.round((energyCostPerMinute({...state,totalMinutes:state.totalMinutes??0},state.customers?.filter(c=>c.stage==="using"&&c.ps2StationIndex===undefined).length??0)+ps2EnergyCostPerMinute(state))*30*720);
 }
 export function monthlyBills(state: Pick<GameState, "internetTier" | "expansionLevel"> & Partial<GameState>): number {
  const factor=isHistorical(state as GameState)?priceIndex(yearFromMinutes(state.totalMinutes??0)):1;

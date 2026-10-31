@@ -71,6 +71,10 @@ export interface Customer {
   ps1StationIndex?: number;
   /** 0 = original; 1 = cadeira adicional. Saves antigos assumem 0. */
   ps1SeatIndex?: 0|1;
+  ps2StationIndex?: number;
+  ps2SeatIndex?: 0|1;
+  /** Contract rate captured at checkout, unaffected by later price changes. */
+  consolePaidHourly?: number;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
@@ -174,6 +178,11 @@ export interface GameState {
   ps1HourlyPrice?:number;
   ps1Sessions?:number;
   ps1Revenue?:number;
+  ps2Stations?: Array<import("./ps2.js").Ps2Station>;
+  ps2Games?: Partial<Record<import("./ps2.js").Ps2GameId,number>>;
+  ps2HourlyPrice?:number;
+  ps2Sessions?:number;
+  ps2Revenue?:number;
   /** Títulos individuais de 1998/1999, ausentes em saves antigos. */
   licensedEraGames?: import("./eraGames.js").EraGameId[];
   /** Licenças avançadas por estabelecimento (opcional em saves antigos). */

@@ -30,7 +30,10 @@ import {technicianContactPoint} from "../sim/staffWorksites.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
-import {ps1StationPoint,ps1Seat,ps1PlayableDisc} from "../sim/ps1.js";
+import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
+import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
+import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
+import {drawPs2Station,drawPs2Controller,ps2ActorGrip} from "./ps2Art.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {premiumCheckerPatch,drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
@@ -128,6 +131,12 @@ export class SceneRenderer {
         s.ps1Stations![i]!.secondSeat===true)});
       }
     }
+    for(let i=0;i<(s.ps2Stations?.length??0);i++){
+      const point=ps2StationPoint(s,i);if(!point)continue;
+      const st=s.ps2Stations![i]!,active=s.customers.some(c=>c.ps2StationIndex===i&&c.stage==="using");
+      entries.push({depth:point.x+point.y+.3,paint:()=>drawPs2Station(ctx,camera,point,
+       st.wear,active,elapsedSeconds,ps2PlayableGame(s,i),!!st.secondSeat,!!st.poweredOff)});
+    }
     for(let i=0;i<BIN_SPOTS.length;i++){
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
@@ -146,8 +155,8 @@ export class SceneRenderer {
     const matchReactions=nightMatchReactions(s);
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
-      const location=seated&&c.ps1StationIndex!==undefined
-        ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0)??c:
+      const location=seated&&customerConsole(c)
+        ?customerConsoleSeat(s,c)??c:
           seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
       entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s,
         matchReactions.find(reaction=>reaction.playerId===c.id))});
@@ -721,8 +730,8 @@ export class SceneRenderer {
       c.stage==="shopping" || c.stage==="leaving";
     let pose:ActorPose=moving&&(motion?motion.moving:Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001)?"walking":"idle";
     let transition=1;
-    if(seated && c.ps1StationIndex!==undefined){
-      const seat=ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0);
+    if(seated && customerConsole(c)){
+      const seat=customerConsoleSeat(s,c);
       if(seat){x=seat.x;y=seat.y;pose=c.stage==="standing"?"standing-up":"sitting";
        transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;}
@@ -733,25 +742,36 @@ export class SceneRenderer {
       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
     }
-    const direction=seated&&c.ps1StationIndex!==undefined?"north":
+    const direction=seated&&customerConsole(c)?"north":
       seated&&c.pcIndex!==null?(["north","east","south","west"] as const)[pcPosition(c.pcIndex,s).rotation??0]:
       // SceneMotion resolves the direction of the *visible* interpolated step.
       // The next waypoint can already be around a corner: do not turn early.
       moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
+    const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
+    const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
+    // Seat-specific PS2 grip must mirror with the actor, not with the TV.
+    const grip=seated&&ps2Point?ps2ActorGrip({x,y},ps2Point,consoleView):undefined;
+    const drawPad=()=>drawPs2Controller(this.ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
+       ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
+    // A controller in front of a back-facing torso must be occluded by the body.
+    const padBehind=consoleView?.startsWith("back");
+    if(seated&&ps2Point&&c.stage==="using"&&padBehind)drawPad();
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,walkDistance:motion?.distance,
       reaction:reaction?.kind,
       // Face the current interpolated world step in SCREEN space (2:1 isometric).
-      screenView:seated?undefined:motion?.view??screenViewForMotion(
+      screenView:seated?consoleView:motion?.view??screenViewForMotion(
         pose==="walking"?c.target.x-c.x:0,
         pose==="walking"?c.target.y-c.y:0,direction),
-      gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using",
-      consoleSeat:seated&&c.ps1StationIndex!==undefined,
-      premiumHeadset:seated&&c.pcIndex!==null&&c.ps1StationIndex===undefined&&
+      gamepad:seated&&customerConsole(c)!==null&&c.stage==="using",
+      modernGamepad:c.ps2StationIndex!==undefined,gamepadGrip:grip,
+      consoleSeat:seated&&customerConsole(c)!==null,
+      premiumHeadset:seated&&c.pcIndex!==null&&!customerConsole(c)&&
        cosmeticAvailable("headset-rgb-neon",yearFromMinutes(s.totalMinutes))&&
        headsetOnSession(c.id,c.pcIndex)
     });
+    if(seated&&ps2Point&&c.stage==="using"&&!padBehind)drawPad();
     if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
       drawPs1Controller(this.ctx,camera,{x,y},t,c.ps1SeatIndex??0);
     if(seated && c.pcIndex!==null){

@@ -35,13 +35,20 @@ function createCache():SpriteCache{
  }catch{/* Original vector renderer remains available without worker support. */}
  return cache;
 }
+/** The PS2 grip is positioned per station and seat. It cannot share an
+ * asynchronous bitmap key with another PS2 seat (or with the PS1).
+ * Only these active PS2 rigs bypass the cache; walking and PS1 stay cached.
+ */
+export function actorRequiresLiveGamepadRig(a:Pick<ActorRender,"modernGamepad"|"gamepad"|"gamepadGrip">):boolean{
+ return !!(a.gamepad&&a.modernGamepad&&a.gamepadGrip);
+}
 /** Reuse the vector artist's frames, while keeping world movement continuous.
  * Rasterization runs outside the animation/input thread. A pending frame uses
  * the original art immediately; it never blocks or pauses an actor to warm up.
  * Work, seat transitions and premium effects keep their continuous renderer. */
 export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a:ActorRender):void{
  const pose=a.pose??"idle";
- if(camera.zoom>1||a.kind==="owner"||a.kind==="cleaner"||a.kind==="technician"||a.kind==="postman"||a.premiumHeadset||a.reaction||
+ if(actorRequiresLiveGamepadRig(a)||camera.zoom>1||a.kind==="owner"||a.kind==="cleaner"||a.kind==="technician"||a.kind==="postman"||a.premiumHeadset||a.reaction||
     (pose!=="idle"&&pose!=="walking"&&pose!=="sitting")||
     (pose==="sitting"&&(a.transition??1)<1)){
   drawActor(ctx,camera,a);return;
