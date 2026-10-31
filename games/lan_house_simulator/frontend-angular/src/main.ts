@@ -2,7 +2,7 @@
  * Angular 22 presentation islands. This entry is independent of the
  * TypeScript 7 Canvas game and may later replace the React entry.
  */
-import { createComponent } from '@angular/core';
+import { createComponent, type Type } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
@@ -44,7 +44,9 @@ async function mountUi():Promise<void> {
   for(const [id,component] of futureStatusIslands){
     const host=document.getElementById(id);
     if(!host)continue;
-    const ref=createComponent(component,{environmentInjector:app.injector,hostElement:host});
+    // Explicit common Angular component type avoids narrowing a heterogeneous
+    // component tuple to the first constructor under strict TypeScript 6.
+    const ref=createComponent(component as Type<unknown>,{environmentInjector:app.injector,hostElement:host});
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
   }
