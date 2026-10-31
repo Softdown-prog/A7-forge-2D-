@@ -14,7 +14,8 @@ const requests=[
  {jsonrpc:"2.0",id:3,method:"tools/call",params:{name:"project_status"}},
  {jsonrpc:"2.0",id:4,method:"tools/call",params:{name:"find_files",arguments:{query:"shopCatalogRenderer"}}},
  {jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"find_symbols",arguments:{query:"createGame"}}},
- {jsonrpc:"2.0",id:6,method:"tools/call",params:{name:"search_content",arguments:{query:"ShopCatalogComponent",limit:8}}}
+ {jsonrpc:"2.0",id:6,method:"tools/call",params:{name:"search_content",arguments:{query:"ShopCatalogComponent",limit:8}}},
+ {jsonrpc:"2.0",id:7,method:"tools/call",params:{name:"impact_analysis",arguments:{path:"games/lan_house_simulator/src/sim/types.ts",depth:3,limit:30}}}
 ];
 const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",import.meta.url)),
  "--scope",".","--index","out/lhs-mcp-index/catalog.json"],{
@@ -24,11 +25,12 @@ const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",impo
 });
 assert.equal(proc.status,0,proc.stderr);
 const values=proc.stdout.split("\n").filter(Boolean).map(JSON.parse);
-assert.equal(values.length,6);
+assert.equal(values.length,7);
 assert.ok(values[1].result.tools.some(t=>t.name==="edit_file"));
 assert.ok(values[2].result.structuredContent.result.files>100);
 for(const i of [3,4,5])assert.ok(values[i].result.structuredContent.result.length>0,
  "Expected lookup results: "+i);
+assert.ok(values[6].result.structuredContent.result.affected.length>0,"Expected real game impact edges");
 console.log(JSON.stringify({ready:true,head:values[2].result.structuredContent.result.head,
  indexedFiles:values[2].result.structuredContent.result.files,
  tools:values[1].result.tools.length,queries:3}));

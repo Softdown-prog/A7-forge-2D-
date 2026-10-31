@@ -6,10 +6,11 @@ import fs from "node:fs";
 import path from "node:path";
 import {createHash} from "node:crypto";
 import {execFileSync} from "node:child_process";
+import {extractImportSpecifiers,resolveImportGraph} from "./dependency-graph.mjs";
 
 const MAX_INDEXED_BYTES=256*1024;
 export const MAX_EDIT_BYTES=1024*1024;
-export const VERSION=1;
+export const VERSION=2;
 const ignoreDirectories=new Set([".git","node_modules","dist","out",".angular-browser-tools",".next","coverage","build",".cache"]);
 const secretNames=/^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|id_rsa|id_ed25519|credentials(?:\..*)?|.*\.(?:pem|key|p12|pfx))$/i;
 const textExt=new Set([".ts",".tsx",".js",".mjs",".cjs",".jsx",".json",".jsonc",".css",".scss",".html",".md",".mdx",".txt",".yaml",".yml",".xml",".svg",".go",".rs",".py",".toml",".sh",".sql",".gitignore"]);
@@ -88,13 +89,13 @@ export function buildIndex(root,{scope="."}={}){
     if(!buf.includes(0)){
      const contents=buf.toString("utf8");
      record.symbols=extractSymbols(contents,ext);
-     const re=/(?:import\s+(?:type\s+)?(?:[^;\n]*?\s+from\s+)?|require\s*\(|\bfrom\s+)['"]([^'"\r\n]+)['"]/g;
-     record.imports=Array.from(contents.matchAll(re)).slice(0,120).map(m=>m[1]);
+     record.imports=extractImportSpecifiers(contents,ext).slice(0,120);
     }
    }catch{}
   }
   files.push(record);
  }
+ resolveImportGraph(files);
  return {
   schemaVersion:VERSION,scope,head:git(root,["rev-parse","HEAD"]),
   files,statistics:{files:files.length,symbols:files.reduce((n,f)=>n+f.symbols.length,0),

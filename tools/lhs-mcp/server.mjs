@@ -6,6 +6,7 @@ import readline from "node:readline";
 import {randomUUID} from "node:crypto";
 import {repositoryRoot,buildIndex,searchIndex,searchContent,listFolder,
  validatedPath,digest,MAX_EDIT_BYTES,git} from "./catalog.mjs";
+import {directDependencies,directDependents,impactAnalysis} from "./dependency-graph.mjs";
 
 const args=process.argv.slice(2);
 function option(name,fallback=""){const i=args.indexOf(name);return i<0?fallback:args[i+1]??fallback;}
@@ -22,7 +23,7 @@ if(indexPath){
  try{
   const saved=JSON.parse(fs.readFileSync(indexPath,"utf8"));
   if(saved.head===git(root,["rev-parse","HEAD"])&&saved.scope===scope&&
-     saved.schemaVersion===1&&Array.isArray(saved.files))index=saved;
+     saved.schemaVersion===2&&Array.isArray(saved.files))index=saved;
  }catch{}
 }
 if(!index)reload();
@@ -99,6 +100,9 @@ const tools=[
  {name:"search_content",description:"Search code text with line numbers, results limited.",inputSchema:{...properties({query:str("Literal code substring"),prefix:str("Folder prefix"),limit:int,caseSensitive:{type:"boolean"}}),required:["query"]}},
  {name:"file_info",description:"File digest, size, symbol declarations and imports.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
  {name:"read_file",description:"Read a bounded line range with SHA256 for safe later edits.",inputSchema:{...properties({path:str("Repo-relative path"),start_line:int,line_count:int}),required:["path"]}},
+ {name:"file_dependencies",description:"List resolved local imports and unresolved paths for a tracked file.",inputSchema:{...properties({path:str("Repo-relative path")}),required:["path"]}},
+ {name:"find_dependents",description:"Find source files which directly import a tracked file.",inputSchema:{...properties({path:str("Repo-relative path"),limit:int}),required:["path"]}},
+ {name:"impact_analysis",description:"Follow reverse static imports to locate possibly affected files before editing.",inputSchema:{...properties({path:str("Repo-relative path"),depth:{type:"integer",minimum:1,maximum:8},limit:int}),required:["path"]}},
  {name:"refresh_index",description:"Rebuild index from the currently checked out Git files.",inputSchema:properties({})},
  {name:"edit_file",description:"Exact one-occurrence replacement with SHA256 optimistic lock; dry run default.",inputSchema:{...properties({path:str("Repo-relative file"),expected_sha256:str("From read_file"),find:str("Unique exact text"),replace:str("Replacement text"),dry_run:dry}),required:["path","expected_sha256","find","replace"]}},
  {name:"create_file",description:"Create a new file within the selected scope; dry run default.",inputSchema:{...properties({path:str("New repo-relative path"),content:str("New file contents"),dry_run:dry}),required:["path","content"]}},
@@ -125,6 +129,9 @@ function call(name,a={}){
    return {path:f.relative,sha256:f.sha256,totalLines:lines.length,from:start,
     lines:lines.slice(start-1,start-1+count).map((text,i)=>({line:start+i,text}))};
   }
+  case "file_dependencies":return directDependencies(index,validatedPath(root,scope,a.path).relative);
+  case "find_dependents":return directDependents(index,validatedPath(root,scope,a.path).relative,{limit:a.limit});
+  case "impact_analysis":return impactAnalysis(index,validatedPath(root,scope,a.path).relative,{depth:a.depth,limit:a.limit});
   case "refresh_index":return reload().statistics;
   case "edit_file":return edit(a);
   case "create_file":return create(a);

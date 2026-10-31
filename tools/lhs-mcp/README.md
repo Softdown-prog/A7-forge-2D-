@@ -74,3 +74,14 @@ e edições controladas num checkout.
 
 Pastas como `node_modules`, `dist`, `out` e chaves de acesso não são
 indexadas. Binários grandes só entram como metadados (caminho, tamanho).
+
+## Grafo de dependências e análise de impacto
+
+O índice v2 resolve imports **relativos estáticos** (incluindo `.js` que
+aponta para módulos TypeScript) em arquivos TS/JS rastreados pelo Git.
+As ferramentas `file_dependencies`, `find_dependents` e `impact_analysis`
+indicam arquivos que importam o módulo e outros consumidores indiretos,
+com limite de profundidade e de resultados. O grafo é uma aproximação:
+imports dinâmicos variáveis, aliases TypeScript, injeção em runtime e
+referências indiretas não são inferidos. Nenhuma ferramenta altera o código
+apenas por consultar o grafo; antes de editar, rode os testes relevantes.
