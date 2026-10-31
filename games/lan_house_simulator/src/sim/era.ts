@@ -1,6 +1,7 @@
 export { gameYear,installedWindows,INTERNET_ERAS,internetUnlockYear,WINDOWS_ERAS,WindowsEdition,windowsLicenseCost } from "./eraCatalog.js";
 import { gameYear,installedWindows,WINDOWS_ERAS,WindowsEdition } from "./eraCatalog.js";
 import { windowsHardwareIssues } from "./hardware.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import { stationUpgradeIssue } from "./stationPower.js";
 import type { GameState,Result } from "./types.js";
 export function licenseWindows(s:GameState,index:number,edition:WindowsEdition):Result{
@@ -21,5 +22,6 @@ export function licenseWindows(s:GameState,index:number,edition:WindowsEdition):
  s.cash-=cost;s.expenses+=cost;
  s.pcWindows=Array.from({length:count},(_,i)=>installedWindows(s,i));s.pcWindows[index]=edition;
  s.pcWindowsLicenses=Array.from({length:count},(_,i)=>s.pcWindowsLicenses?.[i]===true);s.pcWindowsLicenses[index]=true;
+ if(isLinuxPc(s,index))s.pcOperatingSystems![index]="windows";
  return {ok:true,message:"PC "+(index+1)+" licenciado com "+release.name+": -R$ "+cost+"."};
 }

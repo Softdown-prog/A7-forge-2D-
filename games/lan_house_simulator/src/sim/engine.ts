@@ -22,6 +22,7 @@ import { gpuGameSpec,gpuGameVisitorMultiplier,tickGpuGameInstallations,validGpuG
 import { validHardwareState } from "./hardware.js";
 import { clampPriceToEra,normalizedHourlyPrice } from "./historicalEconomy.js";
 import { GAME_END_DAY,GAME_LAST_MINUTE,isSporadicMailId } from "./mailCalendar.js";
+import {validLinuxState} from "./linuxQuest.js";
 import { productSpec,receiveDueOrders,validMerchandise } from "./merchandise.js";
 import { tickMultiplayerVisitors,validMultiplayerVisit } from "./multiplayerVisitors.js";
 import { tickNeeds } from "./needs.js";
@@ -190,7 +191,7 @@ export function isValidSave(value: unknown): value is GameState {
   const v = value as Partial<GameState>;
   const metrics=[v.monthPcUsedMinutes,v.monthPcCapacityMinutes,v.lastMonthPcUsedMinutes,
     v.lastMonthPcCapacityMinutes,v.monthRevenueBase,v.monthExpensesBase,v.lastMonthRevenue,v.lastMonthExpenses];
-  return validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validNightMeetup(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
+  return validLinuxState(v) && validMultiplayerVisit(v) && validFridayMeetupDraft(v) && validNightMeetup(v) && validMerchandise(v) && validCustomerFeedback(v.customerFeedback,v.totalMinutes??0) && validEmployeeState(v) && validStationPower(v) && validPs1State(v) && validPaidMonthlyBill(v.lastPaidMonthlyBill,v) && (v.economyVersion===undefined||v.economyVersion===2) && validDiscCopier(v) && validPrinterService(v) && validHardwareState(v) && validGpuGameLicenses(v.licensedGpuGames,v) && validGpuGameInstalls(v.gpuGameInstalls,v) && validGpuGameInstallJobs(v.gpuGameInstallJobs,v) && validGpuGameDemand(v.gpuGameDemand) && validEraGameLicenses(v.licensedEraGames,v) && validLcdModels(v.pcLcdModels) && validStationLedger(v.stationLedger) &&
     (v.stationLedger===undefined||v.stationLedger.length<=pcCount(v as GameState)) &&
     (v.pcWindows===undefined||(Array.isArray(v.pcWindows)&&v.pcWindows.length<=200&&v.pcWindows.every(id=>id===null||WINDOWS_ERAS.some(w=>w.id===id)))) &&
     metrics.every(n=>n===undefined||(Number.isFinite(n)&&n>=0&&n<=1e9)) &&
@@ -200,7 +201,7 @@ export function isValidSave(value: unknown): value is GameState {
     Array.isArray(v.customers) && v.customers.every(c=>!!c&&
       (c.retailConsumption===undefined||(!!c.retailConsumption&&!!productSpec(c.retailConsumption.product)&&Number.isInteger(c.retailConsumption.untilMinute)&&c.retailConsumption.untilMinute>=0&&c.retailConsumption.untilMinute<=1e9))&&
       (c.desiredProduct===undefined||(!!productSpec(c.desiredProduct)&&productSpec(c.desiredProduct)!.category===c.desiredItem))&&
-      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding,c.budgetAware].every(flag=>flag===undefined||typeof flag==="boolean")&&
+      [c.purchasedDrink,c.purchasedFood,c.gpuGamer,c.linuxEnthusiast,c.gpuGameCharged,c.discCopyChecked,c.printChecked,c.doorwayYielding,c.budgetAware].every(flag=>flag===undefined||typeof flag==="boolean")&&
       (c.preference===undefined||["economy","comfort","gaming","quick"].includes(c.preference))&&
       (c.preferredGpuGame===undefined||(c.gpuGamer===true&&gpuGameSpec(c.preferredGpuGame)!==undefined))&&
       (c.serviceRequest===undefined||c.serviceRequest==="printing"||c.serviceRequest==="disc-copy")&&

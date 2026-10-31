@@ -35,6 +35,8 @@ export interface Customer {
   wallet?: number;
   /** Novas visitas usam o saldo pessoal ao contratar; saves anteriores preservam o comportamento. */
   budgetAware?: boolean;
+  /** Student of the local Linux forum: only wants a real Linux PC. */
+  linuxEnthusiast?:boolean;
   /** Perfil determinístico calculado na entrada; não depende do RNG da simulação. */
   preference?: CustomerPreference;
   desiredItem?: Item | null;
@@ -128,6 +130,14 @@ export interface GameState {
   discCopier?: import("./discCopy.js").DiscCopier;
   /** Impressão de documentos no balcão; sem ocupar um PC. */
   printer?: import("./printService.js").PrinterService;
+  /** Tony studies Linux after the March 1999 forum email. */
+  linuxResearchStartedDay?:number;
+  linuxMailSeenIds?:import("./linuxQuest.js").LinuxMailId[];
+  /** Boot selection is independent of retained Windows licenses. */
+  pcLinuxInstalled?:boolean[];
+  pcOperatingSystems?:import("./linuxQuest.js").PcOperatingSystem[];
+  linuxSessions?:number;
+  linuxRevenue?:number;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
   /** Desligamento por estação, ausente em saves antigos = ligado. */
