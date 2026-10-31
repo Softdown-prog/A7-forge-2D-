@@ -16,7 +16,9 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  function mount(area:string,pages:Page[],dynamic?:HTMLElement){
   const root=$('section-'+area),nav=document.createElement('nav');
   nav.className='management-pages';nav.setAttribute('aria-label','Painéis de '+(root.querySelector('h3')?.textContent??area));
-  root.querySelector('h3')?.after(nav);
+  const reactRoot=area==='computers'?root.querySelector('#react-computer-workspace'):
+   area==='services'?root.querySelector('#react-service-workspace'):null;
+  (reactRoot??root.querySelector('h3'))?.after(nav);
   const controls:HTMLButtonElement[]=[],panes:HTMLElement[]=[];
   const isLocked=(page:Page)=>page.unlockYear!==undefined&&getYear()<page.unlockYear;
   const lockHint=area==='stock'?document.createElement('p'):null;
