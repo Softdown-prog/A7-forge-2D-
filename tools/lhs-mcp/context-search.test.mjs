@@ -73,7 +73,9 @@ test("incremental indexing invalidates contextual terms after a dirty edit",t=>{
  assert.equal(changed.buildStats.scanned,1);
  assert.equal(changed.buildStats.reused,Object.keys(files).length-1);
  const stale=searchContext(changed,"comprar ps2").find(x=>x.path===ps2);
- assert.equal(stale?.matchedTerms,1,"File name may still match PS2, but purchase context must be gone");
+ assert.equal(stale?.matchedTerms,2,"PS2Shop filename still contributes both concepts");
+ assert.equal(stale?.evidence.find(x=>x.term==="purchase")?.where,"filename",
+  "Purchase only matches the unchanged file name, not stale source content");
  assert.equal(changed.files.find(x=>x.path===ps2).contextTerms.purchase,undefined);
  assert.ok(searchContext(changed,"clima").some(x=>x.path===ps2));
 });
