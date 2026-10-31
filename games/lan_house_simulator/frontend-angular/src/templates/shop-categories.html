@@ -1,0 +1,7 @@
+@for (category of categories; track category.id) {
+  <button type="button" class="react-shop-category" [attr.data-shop-category]="category.id"
+    [attr.aria-pressed]="current() === category.id" [title]="category.hint">
+    <span class="react-shop-icon" aria-hidden="true">{{ category.icon }}</span>
+    <span class="react-shop-label">{{ category.label }}</span>
+  </button>
+}

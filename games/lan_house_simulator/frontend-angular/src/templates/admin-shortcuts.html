@@ -1,0 +1,17 @@
+<section class="react-admin-shortcuts" aria-label="Acesso rápido à administração">
+  <div class="react-admin-shortcuts-heading">
+    <div><span class="react-admin-kicker">ACESSO RÁPIDO</span><h3>O que você precisa resolver?</h3></div>
+    <span class="react-admin-helper">Escolha uma tarefa para abrir o painel correspondente</span>
+  </div>
+  <div class="react-admin-shortcuts-grid">
+    @for (action of actions; track action.area + '-' + action.page) {
+      <button type="button" class="react-admin-shortcut" [attr.data-ui-area]="action.area"
+        [attr.data-ui-page]="action.page" (click)="open(action)">
+        <span class="react-admin-shortcut-icon" aria-hidden="true">{{ action.icon }}</span>
+        <span><strong>{{ action.label }}</strong><small>{{ action.hint }}</small></span>
+        <span class="react-admin-arrow" aria-hidden="true">›</span>
+      </button>
+    }
+  </div>
+  <p class="react-admin-shortcut-status" role="status" aria-live="polite">{{ message() }}</p>
+</section>

@@ -1,0 +1,15 @@
+<div class="react-shop-search">
+  <label for="react-shop-query">Pesquisar produtos e serviços</label>
+  <div class="react-shop-search-row">
+    <input id="react-shop-query" type="search" autocomplete="off" placeholder="Computador, console, impressora..."
+      [value]="query()" (input)="onSearch($event)">
+    @if(query()) { <button type="button" (click)="clear()" aria-label="Limpar busca">Limpar</button> }
+  </div>
+  <span class="react-shop-search-count" role="status" aria-live="polite">
+    @if(query()) { {{ counts().visible }} de {{ counts().total }} cartões encontrados }
+    @else { {{ counts().total }} opções nesta categoria }
+  </span>
+  @if(query() && counts().total > 0 && counts().visible === 0) {
+    <p class="react-shop-no-match">Nenhum cartão corresponde à busca. Tente outro termo ou escolha outra categoria.</p>
+  }
+</div>
