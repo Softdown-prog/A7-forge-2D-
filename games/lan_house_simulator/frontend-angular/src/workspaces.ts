@@ -28,7 +28,7 @@ abstract class Workspace implements OnInit,OnDestroy{
   this.selected.set(TASKS[this.area][0].id);
   document.addEventListener('lhs:management-page-selected',this.sync);
   const active=document.querySelector<HTMLElement>('#section-'+this.area+' > .management-pages [aria-pressed="true"]');
-  if(active?.dataset.panelChoice)this.selected.set(active.dataset.panelChoice);
+  if(active?.dataset['panelChoice'])this.selected.set(active.dataset['panelChoice']);
  }
  ngOnDestroy():void {document.removeEventListener('lhs:management-page-selected',this.sync);}
  openTask(page:string):void{

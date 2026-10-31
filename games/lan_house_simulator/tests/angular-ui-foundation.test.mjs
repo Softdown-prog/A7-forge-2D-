@@ -29,7 +29,7 @@ test('Angular owns existing menu/header/shop islands without reimplementing the 
   const components=file(root+'src/components.ts');
   assert.match(entry,/createApplication\(\)/);
   assert.match(entry,/createComponent\(/);
-  assert.match(entry,/dataset\.uiFramework='angular'/);
+  assert.match(entry,/dataset\['uiFramework'\]='angular'/);
   assert.match(entry,/js\/main\.js/);
   assert.doesNotMatch(components,/from ['"][^'"]*(?:\/sim\/|\/application\/|\/render\/|\/bootstrap\/)/);
   assert.doesNotMatch(components,/requestAnimationFrame|createGame|localStorage|purchase\(/);

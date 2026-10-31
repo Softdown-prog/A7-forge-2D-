@@ -76,7 +76,7 @@ async function mountUi():Promise<void> {
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
   }
-  document.documentElement.dataset.uiFramework='angular';
+  document.documentElement.dataset['uiFramework']='angular';
 
   // The actual Canvas simulation still starts through its own JS module,
   // never bundled into Angular or invoked from a component.

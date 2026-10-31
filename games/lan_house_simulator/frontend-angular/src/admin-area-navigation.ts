@@ -31,7 +31,7 @@ export class AdminAreaNavigationComponent implements OnInit,OnDestroy {
     const buttons=Array.from(this.admin?.querySelectorAll<HTMLButtonElement>(
       '.admin-tabs button[data-admin-tab]') ?? []);
     const tabs:AreaTab[]=buttons.map(button=>({
-      id:button.dataset.adminTab??'',
+      id:button.dataset['adminTab']??'',
       label:button.textContent?.trim()??'',
       controls:button.getAttribute('aria-controls')??'',
       disabled:button.disabled
@@ -39,7 +39,7 @@ export class AdminAreaNavigationComponent implements OnInit,OnDestroy {
     this.tabs.set(tabs);
     const active=buttons.find(button=>button.getAttribute('aria-selected')==='true');
     const fallback=tabs[0];
-    if(active?.dataset.adminTab)this.selected.set(active.dataset.adminTab);
+    if(active?.dataset['adminTab'])this.selected.set(active.dataset['adminTab']);
     else if(fallback)this.selected.set(fallback.id);
     document.addEventListener('lhs:admin-area-selected',this.sync);
   }
