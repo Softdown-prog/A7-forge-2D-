@@ -13,6 +13,19 @@ Requisitos: Node.js 22.22.3+ compatível com Angular 22. Dentro de frontend-angu
 
 O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estático, sem servidor Next.js, Node em produção, Zone.js ou acesso direto ao motor. A integração na página do jogo só acontecerá após checagens de CI, navegador, controles e mobile.
 
+## Regras rígidas de qualidade
+
+O `tsconfig.json` usa `strict` com `noUnusedLocals`, `noUnusedParameters`,
+`noImplicitReturns`, `noFallthroughCasesInSwitch`, `noPropertyAccessFromIndexSignature`,
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` e `noImplicitOverride`.
+`strictNullChecks` está coberto por `strict:true` no TypeScript.
+No Angular: `strictTemplates`, `strictInputAccessModifiers` e
+`strictInjectionParameters`; não usar `fullTemplateTypeCheck` obsoleto.
+
+O ESLint (flat config) bloqueia `any` explícito e variáveis não utilizadas e emite
+avisos para tipos explícitos de retorno e `console` (exceto warn/error).
+Verificar com `npm run lint`; o pipeline da branch roda lint antes do AOT.
+
 ## Limites de responsabilidade
 
 - Angular assume elementos interativos do menu, tour, ações superiores, navegação rápida, categorias, busca na loja, atalhos administrativos e navegação por abas. Os workspaces de computadores/serviços e a faixa Angular de abas acionam os controles nativos do TypeScript; a interface legada só será escondida na etapa final de ativação Angular.

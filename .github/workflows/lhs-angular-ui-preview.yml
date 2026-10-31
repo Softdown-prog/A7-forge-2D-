@@ -34,6 +34,8 @@ jobs:
         run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs
       - name: Install isolated Angular dependencies
         run: npm install --prefix frontend-angular --no-audit --no-fund
+      - name: ESLint Angular TypeScript
+        run: npm run lint --prefix frontend-angular
       - name: Build Angular AOT preview
         run: npm run build --prefix frontend-angular
       - name: Upload preview for browser review

@@ -164,3 +164,26 @@ test('Shop header Angular projection preserves cash, organize and demolition com
  assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|render|application|bootstrap)\//);
  assert.doesNotMatch(template,/\(click\)=/);
 });
+
+test('Angular strict compiler flags and ESLint enforce the requested quality gates',()=>{
+  const cfg=JSON.parse(file(root+'tsconfig.json'));
+  for(const flag of ['noUnusedLocals','noUnusedParameters','noImplicitReturns',
+    'noFallthroughCasesInSwitch','noPropertyAccessFromIndexSignature']){
+    assert.equal(cfg.compilerOptions[flag],true,'compilerOptions.'+flag);
+  }
+  const eslint=file(root+'eslint.config.mjs');
+  const pkg=JSON.parse(file(root+'package.json'));
+  const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+  for(const rule of ['@typescript-eslint/no-explicit-any','@typescript-eslint/no-unused-vars',
+    '@typescript-eslint/explicit-function-return-type','no-console']){
+    assert.ok(eslint.includes(rule),rule);
+  }
+  assert.match(eslint,/no-explicit-any': 'error'/);
+  assert.match(eslint,/no-unused-vars': 'error'/);
+  assert.match(eslint,/explicit-function-return-type': 'warn'/);
+  assert.match(eslint,/allow: \['warn', 'error'\]/);
+  assert.equal(pkg.scripts.lint,'eslint src --ext .ts');
+  assert.ok(pkg.devDependencies.eslint);
+  assert.ok(pkg.devDependencies['typescript-eslint']);
+  assert.match(workflow,/npm run lint --prefix frontend-angular/);
+});
