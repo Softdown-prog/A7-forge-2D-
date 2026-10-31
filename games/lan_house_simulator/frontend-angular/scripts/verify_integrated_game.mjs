@@ -163,7 +163,7 @@ try{
   const downloadPromise=page.waitForEvent('download');
   await press(page.locator('#save-export'));
   const download=await downloadPromise;
-  assert.match(download.suggestedFilename(),/^lan-house-simulator-dia-\\d+\\.json$/);
+  assert.match(download.suggestedFilename(),/^lan-house-simulator-dia-\d+\.json$/);
   const exported=JSON.parse(await readFile(await download.path(),'utf8'));
   assert.equal(exported.format,'softdown-lan-house-save');
   assert.equal(exported.exportVersion,1);
