@@ -20,6 +20,7 @@ export function sessionPlan(c:Customer,wanted:number,remaining:number,quote:(min
  })??null;
 }
 export function shouldConsiderConsole(c:Customer,availablePc:number|undefined):boolean{
+ if(c.linuxEnthusiast)return false;
  // Preferência antiga preservada, mas oferecer console como alternativa real
  // se nenhum PC puder receber o cliente (lotação, pane, energia ou layout).
  return c.preference==="gaming"||c.preference==="economy"||

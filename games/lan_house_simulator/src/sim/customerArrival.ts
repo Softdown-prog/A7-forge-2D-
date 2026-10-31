@@ -6,6 +6,7 @@ import {visitorPreference} from "./customerChoices.js";
 import {discWalkInKind,discReferencePrice} from "./discCopy.js";
 import {printReferencePrice} from "./printService.js";
 import {vipArrivalEligible} from "./vip.js";
+import {operationalLinuxPcs} from "./linuxQuest.js";
 import {priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {wantsGpuGame,preferredGpuGame} from "./gpuGames.js";
 import {recordGpuGameRequest} from "./gpuDemand.js";
@@ -34,6 +35,8 @@ export function spawn(s: GameState): void {
     Math.round(((s.economyVersion===2?5:12)+Math.floor(random(s)*(s.economyVersion===2?14:18)))*
       (s.economyVersion===2?priceIndex(yearFromMinutes(s.totalMinutes)):1)*100)/100
   };
+  // Students are drawn from real regular visitors by ID, without extra RNG.
+  if(!c.gpuGamer&&operationalLinuxPcs(s).length>0&&c.id%8===3)c.linuxEnthusiast=true;
   if(!setTravel(s,c,c.target))return;
   if(c.preferredGpuGame)recordGpuGameRequest(s,c.preferredGpuGame);
   s.customers.push(c);
