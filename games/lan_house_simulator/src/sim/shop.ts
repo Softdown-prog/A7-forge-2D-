@@ -89,14 +89,18 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  (s.pcWindowsLicenses??=[]).splice(count,0,false);
  (s.pcGpus??=[]).splice(count,0,null);
  // The new PC is a physical station: never overwrite or shift an annex station's OS or model.
- const previous=count+(s.annexPcs?.length??0);
- const systems=Array.from({length:previous},(_,i)=>s.pcOperatingSystems?.[i]==="linux"?"linux":"windows");
- const linuxInstalled=Array.from({length:previous},(_,i)=>s.pcLinuxInstalled?.[i]===true);
- const models=Array.from({length:previous},(_,i)=>linuxMachineFor(s,i));
- systems.splice(count,0,linuxModel?"linux":"windows");
- linuxInstalled.splice(count,0,!!linuxModel);
- models.splice(count,0,linuxModel??null);
- s.pcOperatingSystems=systems;s.pcLinuxInstalled=linuxInstalled;s.pcLinuxModels=models;
+ if(linuxModel||s.pcOperatingSystems||s.pcLinuxInstalled||s.pcLinuxModels){
+  // Preserve byte-for-byte legacy saves when purchasing an ordinary Windows PC.
+  // Migrate OS/model arrays only once a Linux machine or prior OS data exists.
+  const previous=count+(s.annexPcs?.length??0);
+  const systems=Array.from({length:previous},(_,i)=>s.pcOperatingSystems?.[i]==="linux"?"linux":"windows");
+  const linuxInstalled=Array.from({length:previous},(_,i)=>s.pcLinuxInstalled?.[i]===true);
+  const models=Array.from({length:previous},(_,i)=>linuxMachineFor(s,i));
+  systems.splice(count,0,linuxModel?"linux":"windows");
+  linuxInstalled.splice(count,0,!!linuxModel);
+  models.splice(count,0,linuxModel??null);
+  s.pcOperatingSystems=systems;s.pcLinuxInstalled=linuxInstalled;s.pcLinuxModels=models;
+ }
  // PC inserido ANTES dos anexos desloca as licenças de software por índice,
  // exatamente como GPU/Windows/contabilidade; PC novo começa sem instalações.
  if(s.gpuGameInstalls){
@@ -119,8 +123,9 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  s.pcLcdModels.splice(count,0,null);
  if(s.pcComponents){s.pcComponents=Array.from({length:count+(s.annexPcs?.length??0)},(_,i)=>s.pcComponents?.[i]??null);s.pcComponents.splice(count,0,null);}
  s.cash-=cost;s.expenses+=cost;s.installedPcs=count+1;
- return {ok:true,message:(linuxModel?linuxMachineSpec(linuxModel)!.name+" comprado pronto para Linux":"Novo PC instalado")+
-  ": -R$ "+cost+". Estação física com mesa, monitor e cadeira."};
+ return {ok:true,message:linuxModel?
+  linuxMachineSpec(linuxModel)!.name+" comprado pronto para Linux: -R$ "+cost+". Estação física com mesa, monitor e cadeira.":
+  "Novo PC instalado: -R$ "+cost+"."};
 }
 function decorationIssue(s:GameState,candidate:GameState,kind:FurnitureKind,slot:PlacementSlot,rotation:0|1|2|3=0,editingSlotId?:string):string|null{
  if(kind!=="poster"){

@@ -16,12 +16,13 @@ function legacy(s,category){
  return [category,s.cash,s.discCopier,s.printer,s.ps1Stations,s.ps1Discs,
   gameYear(s),s.expansionLevel,s.installedPcs,s.annexPcs,s.roomExtensions,
   s.furniture,s.furniturePlacements,s.objectPlacements,s.removedBuiltPosters,
-  s.interiorWalls,s.interiorDoors];
+  s.interiorWalls,s.interiorDoors,
+  s.linuxResearchStartedDay,s.linuxMailSeenIds,s.pcLinuxModels,s.pcOperatingSystems];
 }
-test("projeção tem os mesmos dezessete campos originais na mesma ordem",()=>{
+test("projeção conserva dezessete campos originais e acrescenta quatro do Linux",()=>{
  const x=fixture(),s=x.state();
  assert.deepEqual(x.port.snapshot("equipment"),legacy(s,"equipment"));
- assert.equal(x.port.snapshot("equipment").length,17);
+ assert.equal(x.port.snapshot("equipment").length,21);
 });
 test("categoria indefinida preserva undefined e posições do vetor",()=>{
  const x=fixture(),v=x.port.snapshot(undefined);

@@ -115,7 +115,9 @@ try{
    products.push(...await page.locator('[data-buy]').evaluateAll(nodes=>nodes.map(n=>n.dataset.buy)));
    assert.ok(await page.locator('#shop-catalog .shop-card').count()<25,'One category is built at a time');
   }
-  assert.equal(new Set(products).size,14,'Every existing shop item remains accessible');
+  assert.equal(new Set(products).size,16,'14 original products and two Linux machines remain accessible');
+  assert.ok(products.includes('linux-lab-99')&&products.includes('linux-dev-99'),
+   'Both purchasable Linux hardware models are visible in the shop');
   await press(page.locator('#close-shop'));await page.locator('#scene-viewport').scrollIntoViewIfNeeded();
   await page.evaluate(async()=>{const {SceneRenderer}=await import('./js/render/scene.js');const old=SceneRenderer.prototype.draw;window.drawSamples=[];SceneRenderer.prototype.draw=function(...args){if(this.ctx.canvas.id==='game')window.drawSamples.push(performance.now());return old.apply(this,args);};});
   // Repeated map scroll events used to suppress every scene draw for 120 ms.

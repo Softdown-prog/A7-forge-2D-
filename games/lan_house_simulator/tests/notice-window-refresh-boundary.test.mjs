@@ -94,9 +94,15 @@ test("revisão lê sempre a partida atualmente importada",()=>{
  let first=port.snapshot();s=createGame(4814);s.cash+=900;
  assert.equal(port.snapshot()[0],s.cash);assert.notEqual(first[0],s.cash);
 });
-test("revisão contém somente os sete campos originais do main",()=>{
+test("revisão mantém sete campos originais e acrescenta as informações do Linux",()=>{
  const s=createGame(4815),snapshot=createNoticeInboxRevisionPort(()=>s).snapshot();
- assert.deepEqual(snapshot,[s.cash,s.notices,s.contentFilterInstalled,s.pcWindowsLicenses,s.licensedGames,s.electricalDeadlineDay,s.electricalInspectionFineApplied]);
+ assert.deepEqual(snapshot,[
+ s.cash,s.notices,s.contentFilterInstalled,s.pcWindowsLicenses,s.licensedGames,
+ s.electricalDeadlineDay,s.electricalInspectionFineApplied,
+ s.linuxResearchStartedDay,s.linuxMailSeenIds,s.pcOperatingSystems,
+ s.linuxMagazineSubscriptionDay,s.linuxMagazineIssuesReceived,
+ s.linuxMagazineLastDeliveryDay,1
+]);
 });
 test("mudança na lista de cartas altera revisão de JSON",()=>{
  const s=createGame(4816),port=createNoticeInboxRevisionPort(()=>s);
