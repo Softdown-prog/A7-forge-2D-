@@ -86,7 +86,10 @@ try{
   assert.equal(save.ps1Stations?.length,1,'Real PS1 purchased');
   assert.equal(save.ps1Stations[0]?.slotId,ps1Position,'PS1 installed in chosen position');
   assert.ok(save.cash<fixture.cash,'PS1 purchase debits cash');
-  await press(page.locator('#ps1-open-shop'));
+  // The original application moves to administration on first PS1 purchase.
+  // Reopen through the global shop button, which is always available in play.
+  await press(page.locator('#open-shop'));
+  await press(page.locator('[data-shop-category="consoles"]'));
   await shop.waitFor({state:'visible'});
   const ps1Disc=shop.locator('.angular-console-grid').first()
    .locator('article').filter({hasText:'Turbo Circuito'}).locator('button');
