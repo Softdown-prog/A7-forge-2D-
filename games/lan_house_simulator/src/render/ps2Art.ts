@@ -2,6 +2,7 @@ import type {Point} from "../sim/types.js";
 import type {Ps2GameId} from "../sim/ps2.js";
 import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 import {drawPs2MiniGame} from "./ps2MiniGames.js";
+import type {ActorScreenView} from "./direction.js";
 
 /** Viewport coordinates of the actual PS2 TV face, inside its procedural cabinet.
  * Wider + taller pixels stay legible at the normal 0.86 salon zoom.
@@ -89,6 +90,16 @@ export function ps2ControllerAnchor(seat:Point,station?:Point):{point:Point;heig
   return {point:{x:seat.x+dx/length*.22,y:seat.y+dy/length*.22},height:27};
  }
  return {point:{x:seat.x+.12,y:seat.y-.08},height:24};
+}
+/** Local coordinates for the player's hands. The actor artist mirrors poses
+ * that face screen-left, so the world-space controller target mirrors too.
+ * Returned values are unscaled local actor units, independent of camera zoom.
+ */
+export function ps2ActorGrip(seat:Point,station:Point,view?:ActorScreenView):{x:number;y:number}{
+ const anchor=ps2ControllerAnchor(seat,station),relativeX=anchor.point.x-seat.x,
+  relativeY=anchor.point.y-seat.y;
+ return {x:(relativeX-relativeY)*64*(view?.endsWith("-left")?-1:1),
+  y:(relativeX+relativeY)*32-anchor.height};
 }
 export function drawPs2Controller(
  ctx:CanvasRenderingContext2D,cam:Projection,seat:Point,seconds:number,number:0|1=0,station?:Point,skin="#d6ad88"

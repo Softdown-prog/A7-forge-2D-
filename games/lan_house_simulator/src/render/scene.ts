@@ -32,7 +32,7 @@ import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
 import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
 import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
-import {drawPs2Station,drawPs2Controller,ps2ControllerAnchor} from "./ps2Art.js";
+import {drawPs2Station,drawPs2Controller,ps2ActorGrip} from "./ps2Art.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {premiumCheckerPatch,drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
@@ -720,11 +720,8 @@ export class SceneRenderer {
       moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
     const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
     const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
-    const pad=ps2Point?ps2ControllerAnchor({x,y},ps2Point):null;
-    // ActorArt mirrors screen-left poses; counter-mirror the world-space grip
-    // so both hands remain aligned with the physical PS2 controller.
-    const grip=pad?{x:(pad.point.x-x-pad.point.y+y)*64*(consoleView?.endsWith("-left")?-1:1),
-      y:(pad.point.x-x+pad.point.y-y)*32-pad.height}:undefined;
+    // Seat-specific PS2 grip must mirror with the actor, not with the TV.
+    const grip=seated&&ps2Point?ps2ActorGrip({x,y},ps2Point,consoleView):undefined;
     const drawPad=()=>drawPs2Controller(this.ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
        ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
     // A controller in front of a back-facing torso must be occluded by the body.

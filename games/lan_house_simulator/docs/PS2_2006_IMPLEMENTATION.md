@@ -146,3 +146,11 @@ Na base `2f1d70e`, com `typescript@7.0.2`, `npm ci`, `npm run typecheck`,
 `npm run audit`, os scripts PS2 de gameplay/balanceamento e os três scripts
 PS1 de navegação, dupla e administração também concluíram com sucesso.
 Não confundir esse resultado local com o estado de uma execução futura do CI.
+
+## Polimento de legibilidade e controles (etapa incremental)
+
+- A tela do PS2 agora usa uma área maior do gabinete procedural; melhora a leitura dos cinco microjogos no zoom normal do salão.
+- Cenas dos cinco títulos receberam contraste mais alto e o gabinete ganhou borda de vidro, iluminação discreta e LED próprio; não há imagens externas.
+- A pose dos jogadores PS2 passa a atualizar as mãos por estação e cadeira (grip) sem reciclar frames da pose genérica PS1; a direção espelhada também usa âncora correta.
+- Testes unitários adicionais cobrem proporção da tela, controle espelhado, cor/animação e Canvas; as regressões de gameplay, Android emulado e PS1 continuam obrigatórias no CI.
+- **Ainda exige revisão humana das imagens reais geradas pelo workflow**, especialmente TV em 100%, dupla e Android físico. PR permanece em rascunho; não anunciar melhoria visual como aprovada por captura antes da revisão.
