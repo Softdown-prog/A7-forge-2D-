@@ -113,3 +113,15 @@ Também garante que ofertas bloqueadas não possam ser acionadas. Screenshots e
 relatório JSON são anexados ao CI. **Não é ainda o teste E2E da partida real:**
 o jogo e o save não são iniciados na prévia Angular; essa validação só será
 possível no cutover controlado após a integração da aplicação.
+
+## Teste integrado temporário da partida real
+
+O script `frontend-angular/scripts/verify_integrated_game.mjs` monta um servidor
+local que serve o HTML do jogo e altera **apenas sua resposta HTTP**: substitui
+o bootstrap React pelo bundle Angular. Não grava nenhum HTML em produção.
+O Canvas, os ports TypeScript de compra e o armazenamento são os originais.
+
+Com um save real de 2006, verifica compras de bancada PS1, CD PS1, bancada
+PS2 e jogo PS2, incluindo posição, cobrança e persistência ao recarregar.
+Executa Chromium desktop (1280px) e mobile touch (414px), gerando screenshots
+e JSON. Não substitui homologação de toda a interface para o corte final.

@@ -46,6 +46,19 @@ jobs:
           ./.angular-browser-tools/node_modules/.bin/playwright install --with-deps chromium
       - name: Validate Angular catalogue interactions in Chromium desktop and mobile
         run: node frontend-angular/scripts/verify_catalog_preview.mjs
+      - name: Build the original game in isolated test workspace
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Validate real game purchases, locations and saves through Angular
+        run: node frontend-angular/scripts/verify_integrated_game.mjs
+      - name: Upload integrated game screenshots and save QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-integrated-game-qa
+          path: games/lan_house_simulator/out/angular-integrated-browser
+          if-no-files-found: ignore
       - name: Upload Angular catalogue screenshots and browser report
         uses: actions/upload-artifact@v4
         if: always()
