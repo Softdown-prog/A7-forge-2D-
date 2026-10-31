@@ -87,7 +87,9 @@ try{
   assert.equal(save.ps1Stations[0]?.slotId,ps1Position,'PS1 installed in chosen position');
   assert.ok(save.cash<fixture.cash,'PS1 purchase debits cash');
   // The original application moves to administration on first PS1 purchase.
-  // Reopen through the global shop button, which is always available in play.
+  // Close the modal administration panel before using the topbar shop button.
+  // This exercises the real modal/backdrop instead of bypassing pointer events.
+  await press(page.locator('#close-admin'));
   await press(page.locator('#open-shop'));
   await press(page.locator('[data-shop-category="consoles"]'));
   await shop.waitFor({state:'visible'});
