@@ -93,6 +93,9 @@ export function validLinuxState(s:Partial<GameState>):boolean{
    installed.some(v=>typeof v!=="boolean")))return false;
  if(modes!==undefined&&(!Array.isArray(modes)||modes.length>200||
    modes.some(v=>v!=="windows"&&v!=="linux")))return false;
+ if(s.linuxSessions!==undefined&&(!Number.isSafeInteger(s.linuxSessions)||s.linuxSessions<0||s.linuxSessions>1e7))return false;
+ if(s.linuxRevenue!==undefined&&(!Number.isFinite(s.linuxRevenue)||s.linuxRevenue<0||s.linuxRevenue>1e9||
+  Math.abs(s.linuxRevenue*100-Math.round(s.linuxRevenue*100))>1e-4))return false;
  if((installed?.some(Boolean)||modes?.includes("linux"))&&
     !(s.economyVersion===2&&started!==undefined&&
       day>=Math.max(LINUX_AUGUST_DAY,started+110)))return false;

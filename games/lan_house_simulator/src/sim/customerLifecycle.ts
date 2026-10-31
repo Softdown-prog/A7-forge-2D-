@@ -11,6 +11,7 @@ import {vipReputationAdjustment,serviceReputationImpact} from "./vip.js";
 import {recordCustomerFeedback,sessionFeedbackReason} from "./customerFeedback.js";
 import {normalizedHourlyPrice} from "./historicalEconomy.js";
 import {ps1SessionWear,ps1HourPrice} from "./ps1.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {online,pcWear,pcBroken,addLog,CLOSING_START_MINUTE,localMinute} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
 import {navigableRoute} from "./navigation.js";
@@ -43,7 +44,8 @@ export function advanceCustomer(s: GameState, c: Customer): void {
       }
       return;
     case "using":
-      if (c.ps1StationIndex===undefined&&!multiplayerRoundActive(s,c)&&!online(s)) {
+      if (c.ps1StationIndex===undefined&&!multiplayerRoundActive(s,c)&&
+          !isLinuxPc(s,c.pcIndex??-1)&&!online(s)) {
         c.offlineWait++;
         if (c.offlineWait > 15) {
           c.happy = false;
