@@ -12,7 +12,7 @@ import {contextFromSource} from "./context-search.mjs";
 
 const MAX_INDEXED_BYTES=256*1024;
 export const MAX_EDIT_BYTES=1024*1024;
-export const VERSION=5;
+export const VERSION=6;
 const ignoreDirectories=new Set([".git","node_modules","dist","out",".angular-browser-tools",".next","coverage","build",".cache"]);
 const secretNames=/^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|id_rsa|id_ed25519|credentials(?:\..*)?|.*\.(?:pem|key|p12|pfx))$/i;
 const textExt=new Set([".ts",".tsx",".js",".mjs",".cjs",".jsx",".json",".jsonc",".css",".scss",".html",".md",".mdx",".txt",".yaml",".yml",".xml",".svg",".go",".rs",".py",".toml",".sh",".sql",".gitignore"]);

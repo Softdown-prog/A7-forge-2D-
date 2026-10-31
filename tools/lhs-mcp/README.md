@@ -77,7 +77,7 @@ indexadas. Binários grandes só entram como metadados (caminho, tamanho).
 
 ## Grafo de dependências e análise de impacto
 
-O índice v5 resolve imports **relativos estáticos** (incluindo `.js` que
+O índice v6 resolve imports **relativos estáticos** (incluindo `.js` que
 aponta para módulos TypeScript) em arquivos TS/JS rastreados pelo Git.
 As ferramentas `file_dependencies`, `find_dependents` e `impact_analysis`
 indicam arquivos que importam o módulo e outros consumidores indiretos,
@@ -95,7 +95,7 @@ Um índice do Actions pode ser reutilizado num checkout local **somente se**
 o SHA, a versão do esquema, o escopo e a árvore de arquivos rastreados
 estiverem consistentes; se o workspace foi alterado, o MCP reindexa.
 
-## Indexação incremental (índice v5)
+## Indexação incremental (índice v6)
 
 Cada entrada rastreada registra o identificador **Git blob OID** e modo do
 Git index. Quando o commit muda, o indexador compara esses identificadores
@@ -123,7 +123,7 @@ incremental no mesmo checkout e compara as entradas arquivo a arquivo,
 exigindo 100% de reaproveitamento quando não há alterações. O resumo
 principal continua registrando o reaproveitamento real **entre execuções**.
 
-## Busca contextual de código (índice v5)
+## Busca contextual de código (índice v6)
 
 A ferramenta `search_context` aceita perguntas curtas em português ou inglês,
 por exemplo `comprar PS2`, `fila de clientes` e `salvar partida`.
@@ -139,7 +139,7 @@ natural; novas palavras e sinônimos precisam ser adicionados ao dicionário
 com testes. O catálogo não publica o conteúdo completo dos fontes:
 somente vocabulário limitado por arquivo e até três títulos/comentários
 de contexto. Literais entre aspas não entram no vocabulário. O índice
-continua incremental, com cache versionado `v5` no GitHub Actions.
+continua incremental, com cache versionado `v6` no GitHub Actions.
 
 ## Benchmark escalável do buscador
 
@@ -156,7 +156,7 @@ não tempo de git checkout/indexação real nem precisão em tarefas do mundo
 real. Os resultados são indicadores de regressão e escala, não SLA.
 O vocabulário foi ampliado para licenças, manutenção, desgaste,
 fornecedores, reputação, correio, videogames, campanhas e opções.
-Como sinônimos mudaram, o esquema do catálogo e o cache passaram para v5.
+Como sinônimos mudaram, o esquema do catálogo e o cache passaram para v6.
 
 ## Benchmark físico com 10 mil e 15 mil arquivos Git
 
@@ -200,3 +200,8 @@ hit@1, hit@5, hit@10, latência e cinco primeiros resultados. O relatório
 são exibidos como limitações, não são ocultados por ajustes automáticos.
 O ensaio mede localização de arquivos previamente rotulados, não qualidade
 de compreensão de código nem todas as consultas possíveis.
+
+O conjunto de vocabulário v6 reconhece `transfer`/exportação,
+`imported`/importação, `controls`/controles e `partida`/save.
+Ajustes são guiados por erros identificados na avaliação real, que mantém
+exemplos não triviais para verificar regressões de ranking.

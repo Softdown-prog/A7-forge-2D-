@@ -51,7 +51,7 @@ function syntheticIndex(size){
    item.source+"\nexport function "+item.symbol+"() {}");
   files[at].symbols=[{name:item.symbol,kind:"function",line:2}];
  }
- return {schemaVersion:5,scope:".",files};
+ return {schemaVersion:6,scope:".",files};
 }
 function percentiles(a){
  const sorted=[...a].sort((x,y)=>x-y);

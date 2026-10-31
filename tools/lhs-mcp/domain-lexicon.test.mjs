@@ -12,7 +12,9 @@ test("LHS domain synonyms resolve to stable concepts",()=>{
   ["painel de configurações",["panel","settings"]],
   ["corujão madrugada",["night"]],
   ["fibra óptica",["network"]],
-  ["cookies de doação",["cookie","donation"]]
+  ["cookies de doação",["cookie","donation"]],
+  ["exportação importar partida",["transfer","load","save"]],
+  ["controles do console PS1",["controls","console","ps1"]]
  ];
  for(const [query,wanted] of pairs){
   const actual=queryTerms(query);
