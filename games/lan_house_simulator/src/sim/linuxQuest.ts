@@ -56,7 +56,7 @@ export function startLinuxResearch(s:GameState):Result{
  s.linuxResearchStartedDay=linuxDay(s);
  const mail=s.notices?.find(n=>n.id==="linux-forum-contact");
  if(mail)mail.resolved="linux-research-started";
- return {ok:true,message:"Tony começou a pesquisar Linux. O fórum voltará a escrever conforme os meses passarem; a instalação só será liberada a partir de agosto de 1999."};
+ return {ok:true,message:"Tony começou a pesquisar Linux. O fórum voltará a escrever conforme os meses passarem; as máquinas novas prontas para Linux serão vendidas a partir de agosto de 1999."};
 }
 const setPcArray=(s:GameState):void=>{
  const count=stationPowerCount(s);
@@ -72,7 +72,7 @@ export function installLinux(s:GameState,index:number):Result{
  setPcArray(s);
  s.pcLinuxInstalled![index]=true;
  s.pcOperatingSystems![index]="linux";
- return {ok:true,message:"Linux instalado no PC "+(index+1)+". O Windows anterior permanece disponível para alternar depois, com o PC desligado."};
+ return {ok:true,message:"PC Linux "+(index+1)+" iniciado novamente em Linux. A máquina física continua sendo a mesma."};
 }
 export function bootWindows(s:GameState,index:number):Result{
  const issue=stationUpgradeIssue(s,index);if(issue)return {ok:false,message:issue};

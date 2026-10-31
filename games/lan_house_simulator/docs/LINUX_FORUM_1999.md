@@ -1,36 +1,29 @@
 # Fórum Linux — março a agosto de 1999
 
-Esta é **uma missão narrativa específica aprovada pelo criador**, não a lista rejeitada de 33 eventos anuais da PR #40.
-
 ## História
+Tony recebe em março de 1999 uma mensagem de um fórum fictício de estudantes de programação. Em vez de substituir máquinas Windows, passa meses pesquisando o que o grupo precisa, até desbloquear **computadores Linux novos** à venda.
 
-Em março de 1999, um grupo fictício de estudantes e entusiastas manda uma mensagem ao Tony perguntando se a lan house tem computadores Linux. Tony não sabe bem o que é Linux. Pelo próprio correio, o jogador inicia a pesquisa. O calendário controla os retornos do grupo e o desbloqueio de instalar Linux.
+O jogo usa 12 meses de 30 dias:
+- 1999/03/01 (dia 421): chega o pedido dos estudantes.
+- +30 dias após aceitar a pesquisa: explicações sobre software livre e sistemas Linux.
+- +75 dias: escolha de bancadas, hardware e preparação do espaço.
+- 1999/08/01 (dia 571): catálogo de máquinas Linux liberado, se a pesquisa já tem 110 dias. Se Tony começou depois, terá que cumprir os 110 dias a partir do início.
 
-O jogo usa **12 meses de 30 dias**. Dias absolutos do calendário:
-- 1999/03/01: dia **421** — primeiro e-mail.
-- Depois de 30 dias desde o início da pesquisa: orientação sobre distribuições e software livre.
-- Depois de 75 dias: preparação da mídia e teste.
-- 1999/08/01: dia **571** — desbloqueio se pelo menos 110 dias de pesquisa tiverem transcorrido.
+## Estações de uma linha diferente
+O catálogo da loja na categoria **Computadores e serviços** passa a oferecer dois modelos fictícios:
+- **Bancada Linux 99** (R$ 440): mesa técnica, CRT, gabinete de aço, teclado e cadeira. Conforto adicional de 1,5%.
+- **Estação Programador 99** (R$ 610): bancada e gabinete reforçado, CRT grafite, periféricos e cadeira. Conforto adicional de 5%.
 
-Se o jogador começar a pesquisa depois, os 110 dias ainda são exigidos; o desbloqueio não é instantâneo. A oportunidade não desaparece em saves antigos. Os quatro e-mails são únicos e persistentes mesmo após compactação da caixa postal. Apenas um e-mail chega a cada revisão.
+Custos e nomes são **decisões de game design**, não preços de mercado históricos.
 
-## Jogabilidade
+Cada compra cria **um computador físico adicional** na próxima vaga real do salão principal: ocupa espaço, entra nas filas, energia, desgaste, economia por estação e save. A compra é bloqueada sem vaga, dinheiro ou conclusão da pesquisa, assim como uma compra de PC tradicional. Para comprar mais PCs, é necessário ampliar a área principal.
 
-- A pesquisa é iniciada em **Correspondência** usando “Tony vai pesquisar Linux”, sem escolhas arbitrárias e sem custo fictício.
-- A partir da conclusão, cada PC *desligado e livre* pode receber Linux em **Administração → Licenças → Windows**. Instalação sem custo de licença; os PCs usam o hardware e a localização reais.
-- O Linux instalado é mantido ao alternar para Windows. As licenças Windows permanecem intactas.
-- Clientes reais podem contratar sessões nas máquinas Linux; um subconjunto determinístico de estudantes procura *somente Linux*, se houver equipamento operacional. Não são NPCs inventados nem há receita sem pagamento.
-- Uma tela de terminal original é desenhada em Canvas 2D procedural tanto no CRT quanto no LCD e continua operável offline para programação.
-- Jogos comerciais que exigem Windows licenciado/GPU não passam a rodar artificialmente em Linux. O sistema Windows continua presente e intacto.
+As máquinas são fornecidas **com Linux pré-instalado**, sem licença Windows. A função de instalar Linux nos PCs Windows existentes foi retirada: pesquisar Linux libera hardware, não formatação gratuita dos PCs atuais. Instalar Windows posteriormente numa bancada Linux exige comprar licença específica; o Linux da bancada fica disponível para reinício posterior.
 
-## Validação necessária
+## Programação e público
+Estudantes podem pedir **especificamente uma estação Linux operacional**. São clientes reais na fila e pagam por sessões, não geram renda passiva. Os gabinetes, monitores e a bancada Linux têm peças e cores distintas, implementadas no renderizador **Canvas 2D procedural**, sem sprites ou imagens geradas. O monitor mostra programação em terminal mesmo se a conexão externa cair.
 
-\`npm run typecheck\`, \`npm run build\`, \`node --test tests/linux-forum-1999.test.mjs\`, \`npm test\`. Antes de mesclar, usar o navegador real para verificar o correio e os botões mobile, Linux ligado e Windows restaurado, tela CRT no zoom padrão, e ausência de regressão do PS1/PS2.
+**Não existe nesta versão** uma sala nova, fórum navegável, editor de código completo ou eventos em grupo. Essas possibilidades ficam como próximos passos do tema de programação; não confundir a programação apresentada no CRT com um compilador funcional.
 
-**Esta entrega exige revisão de gameplay no navegador.** Os testes unitários não provam que a interface está bem apresentada ao usuário. O PR não é mesclado automaticamente.
-
-## Próximos aprimoramentos possíveis
-
-- Pedido de reserva do grupo do fórum, no balcão, com vários estudantes usando Linux, condicionado a lugares e pagamento reais.
-- Ferramentas fictícias de programação visíveis no CRT, com diferentes cenas de terminal/editor.
-- Diferença entre distribuições disponíveis por época, com compatibilidade de hardware; não inventar nomes ou datas sem checagem histórica.
+## Validação
+Verificar com `npm test` (inclui os testes da missão), build do TypeScript, screenshot real do salão e botões da loja no Android. Manter PR #44 em rascunho até confirmar; verificar regressões de Windows, expansão, PS1/PS2, saves anteriores e inserção de um PC principal antes de PCs nos anexos.

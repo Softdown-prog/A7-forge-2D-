@@ -4,7 +4,7 @@ import {pcCount} from "../sim/engine.js";
 import {gameYear,WINDOWS_ERAS,installedWindows} from "../sim/era.js";
 import {windowsHardwareIssues} from "../sim/hardware.js";
 import {stationPoweredOn,stationUpgradeIssue} from "../sim/stationPower.js";
-import {isLinuxPc,linuxInstalledOnPc} from "../sim/linuxQuest.js";
+import {isLinuxPc} from "../sim/linuxQuest.js";
 import {linuxMachineFor,linuxMachineSpec} from "../sim/linuxMachines.js";
 import {stationOccupied} from "../sim/computerModels.js";
 
