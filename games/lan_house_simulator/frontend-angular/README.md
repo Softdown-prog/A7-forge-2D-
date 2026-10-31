@@ -75,6 +75,15 @@ A nova região está apenas em `frontend-angular/src/index.html` (prévia), sem
 ativação na página React publicada. Não remover o catálogo original antes da
 migração completa dos controles, busca e integração.
 
+## PlayStation 1 e 2 no Angular
+
+A prévia possui os cartões de bancada PS1, mídias físicas PS1, bancada PS2
+e jogos PS2. Os snapshots de disponibilidade e preços vêm dos ports existentes;
+os desenhos procedurais são reutilizados da visualização TypeScript.
+As compras são delegadas aos botões nativos e a escolha dos locais sincroniza
+com seus controles originais. Nenhuma regra econômica, Canvas do jogo ou saves
+foi modificada. Falta testar interação real no navegador/mobile antes da ativação.
+
 ## Próximas etapas
 
 1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.

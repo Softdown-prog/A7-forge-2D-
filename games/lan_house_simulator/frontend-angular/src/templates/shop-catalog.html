@@ -28,10 +28,51 @@
       </article>
     }
   </div>
-  @if(catalog().consolesPending){
-    <p class="angular-catalog-pending">Bancadas e CDs de PS1/PS2 permanecem no catálogo original
-      enquanto os controles de instalação e as artes Canvas são migrados.</p>
-  } @else if(catalog().cards.length===0){
+  @if(catalog().consolesPending && consoles();as consoleShop){
+    <section class="angular-console-shop" aria-label="PlayStation 1 e 2">
+      <h3>PlayStation 1 · bancadas e CDs</h3>
+      <article class="shop-card">
+        @if(consoleShop.ps1.artwork){<img class="angular-console-art" [src]="consoleShop.ps1.artwork" alt="Bancada PS1 procedural"/>}
+        <label for="angular-ps1-placement">Local da bancada PS1</label>
+        <select id="angular-ps1-placement" [value]="ps1Slot()" (change)="onPs1Change($event)">
+          @for(slot of consoleShop.ps1.slots;track slot.id){<option [value]="slot.id">{{slot.label}}</option>}
+        </select>
+        <button type="button" [disabled]="consoleShop.ps1.offerDisabled" (click)="buyPs1()">{{consoleShop.ps1.offerText}}</button>
+      </article>
+      @if(consoleShop.ps1.discs){
+        <h4>Jogos PS1 · CDs físicos</h4>
+        <div class="angular-console-grid">
+          @for(disc of consoleShop.ps1.discs;track disc.id){
+            <article class="shop-card">
+              @if(disc.cover){<img [src]="disc.cover" alt="" loading="lazy"/>}
+              <small>{{disc.genre}} · {{disc.copies}} cópia(s)</small>
+              <h4>{{disc.title}}</h4>
+              <button type="button" [disabled]="disc.disabled" (click)="buyPs1Disc(disc.id)">{{disc.buttonText}}</button>
+            </article>
+          }
+        </div>
+      }
+      <h3>PlayStation 2 · 2006</h3>
+      <article class="shop-card">
+        @if(consoleShop.ps2.artwork){<img class="angular-console-art" [src]="consoleShop.ps2.artwork" alt="Bancada PS2 procedural"/>}
+        <label for="angular-ps2-placement">Local da bancada PS2</label>
+        <select id="angular-ps2-placement" [value]="ps2Slot()" [disabled]="consoleShop.ps2.benchDisabled" (change)="onPs2Change($event)">
+          @for(slot of consoleShop.ps2.slots;track slot.id){<option [value]="slot.id">{{slot.label}}</option>}
+        </select>
+        <button type="button" [disabled]="consoleShop.ps2.benchDisabled" (click)="buyPs2()">{{consoleShop.ps2.benchText}}</button>
+      </article>
+      <div class="angular-console-grid">
+        @for(game of consoleShop.ps2.games;track game.id){
+          <article class="shop-card">
+            <small>{{game.genre}} · {{game.copies}} cópia(s)</small>
+            <h4>{{game.title}}</h4>
+            <button type="button" [disabled]="game.disabled" (click)="buyPs2Game(game.id)">{{game.buttonText}}</button>
+          </article>
+        }
+      </div>
+    </section>
+  } @else if(catalog().consolesPending){
+    <p class="angular-catalog-pending">As ofertas de consoles serão carregadas pela partida.</p>  } @else if(catalog().cards.length===0){
     <p class="angular-catalog-empty">O catálogo será preenchido quando a partida enviar suas ofertas.</p>
   }
 </section>

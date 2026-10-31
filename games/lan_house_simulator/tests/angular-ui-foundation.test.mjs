@@ -238,3 +238,26 @@ test('Angular catalog displays only read-only regular shop offers and preserves 
  assert.doesNotMatch(component,/port\.purchase|new Game|localStorage|fetch\(/);
  assert.match(file(root+'src/main.ts'),/ShopCatalogComponent/);
 });
+
+test('Angular PS1 PS2 console shop preserves purchase handlers and readonly projections',()=>{
+ const projection=file('src/ui/shopConsoleAngularProjection.ts');
+ const renderer=file('src/ui/shopCatalogRenderer.ts');
+ const component=file(root+'src/shop-catalog.ts');
+ const template=file(root+'src/templates/shop-catalog.html');
+ assert.match(projection,/projectPs1Disc/);
+ assert.match(projection,/projectPs2Game/);
+ assert.match(projection,/publishAngularConsoleShop/);
+ assert.match(renderer,/projectConsoleShop/);
+ assert.match(renderer,/publishAngularConsoleShop/);
+ assert.match(component,/lhs:shop-consoles-updated/);
+ assert.match(component,/buyPs1Disc/);
+ assert.match(component,/buyPs2Game/);
+ assert.match(component,/selectPs1/);
+ assert.match(component,/selectPs2/);
+ assert.match(template,/angular-ps1-placement/);
+ assert.match(template,/angular-ps2-placement/);
+ assert.match(template,/consoleShop\.ps1\.offerDisabled/);
+ assert.match(template,/consoleShop\.ps2\.benchDisabled/);
+ assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
+ assert.doesNotMatch(projection,/from ["']\.\.\/sim\//);
+});

@@ -11,6 +11,7 @@ import {renderPs1ShopDiscCatalog} from "./ps1ShopDiscCatalog.js";
 import {renderPs2ShopCatalog} from "./ps2Panels.js";
 import {regularShopCardView,publishAngularShopCatalog,
  type AngularShopCardView} from "./shopCatalogAngularProjection.js";
+import {projectConsoleShop,publishAngularConsoleShop} from "./shopConsoleAngularProjection.js";
 import type {Ps2Port} from "../application/ps2Port.js";
 import {shopCategory} from "./shopPanels.js";
 import type {ShopCatalogOffer} from "../application/shopCatalogOffersPort.js";
@@ -72,6 +73,16 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
  });
  renderPs1ShopDiscCatalog(options.host,options.discs,options.currentCategory()==="consoles",options.doc);
  if(options.ps2&&options.currentCategory()==="consoles")renderPs2ShopCatalog(options.host,options.ps2,options.doc);
+ if(currentCategory==="consoles"&&options.doc.getElementById("angular-shop-catalog")){
+  const ps1Card=options.host.querySelector<HTMLButtonElement>('button[data-buy="ps1"]')?.closest(".shop-card");
+  const ps1Artwork=ps1Card?.querySelector<HTMLImageElement>(".shop-art img")?.getAttribute("src")??null;
+  const ps2Canvas=options.host.querySelector<HTMLCanvasElement>(".ps2-bench-card canvas");
+  const ps2Artwork=ps2Canvas?.toDataURL()??null;
+  publishAngularConsoleShop(options.doc,projectConsoleShop(
+   options.ps1Offer(),options.ps1Slots(),options.selectedPs1Slot(),
+   options.discs.snapshot(),options.ps2?.snapshot()??null,ps1Artwork,ps2Artwork
+  ));
+ }
  // Only alert presentation controls after the original DOM catalogue is complete.
  options.host.dispatchEvent(new Event("lhs:shop-catalog-updated"));
 }
