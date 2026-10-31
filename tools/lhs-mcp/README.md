@@ -77,7 +77,7 @@ indexadas. Binários grandes só entram como metadados (caminho, tamanho).
 
 ## Grafo de dependências e análise de impacto
 
-O índice v2 resolve imports **relativos estáticos** (incluindo `.js` que
+O índice v3 resolve imports **relativos estáticos** (incluindo `.js` que
 aponta para módulos TypeScript) em arquivos TS/JS rastreados pelo Git.
 As ferramentas `file_dependencies`, `find_dependents` e `impact_analysis`
 indicam arquivos que importam o módulo e outros consumidores indiretos,
@@ -94,3 +94,26 @@ resolvidos. Isso ajuda a priorizar a revisão dos arquivos mais utilizados.
 Um índice do Actions pode ser reutilizado num checkout local **somente se**
 o SHA, a versão do esquema, o escopo e a árvore de arquivos rastreados
 estiverem consistentes; se o workspace foi alterado, o MCP reindexa.
+
+## Indexação incremental (índice v3)
+
+Cada entrada rastreada registra o identificador **Git blob OID** e modo do
+Git index. Quando o commit muda, o indexador compara esses identificadores
+com o catálogo anterior, além de inspecionar o \`git diff\` da árvore de
+trabalho para detectar alterações não commitadas. Reaproveita declarações
+e imports apenas nos arquivos intactos; lê e reprocessa os alterados.
+O grafo é **sempre recalculado** para refletir a remoção e adição de módulos.
+Relata \`buildStats.reused\`, \`scanned\` e \`deleted\`; para conferir a
+economia de trabalho, consulte o log ou o \`summary.json\`.
+
+O GitHub Actions usa \`actions/cache\` com chave por SHA e prefixo na branch
+para recuperar o índice anterior. Uma execução sem cache faz indexação
+completa; a seguinte pode reaproveitar registros. O artefato de download
+continua contendo o catálogo atualizado completo, não apenas um delta.
+No terminal, use \`--previous caminho/para/catalog.json\` no comando
+\`index.mjs\`. O servidor \`--index\` reconcilia o catálogo com o checkout
+atual, mesmo que o arquivo de cache tenha outro SHA.
+
+**Limites:** o cache depende dos IDs do Git index. Alterações ocultadas
+por configurações Git como \`assume-unchanged\` não podem ser detectadas
+com segurança; desative essas flags antes de indexar o projeto.

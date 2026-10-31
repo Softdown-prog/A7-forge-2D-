@@ -5,7 +5,7 @@ import path from "node:path";
 import readline from "node:readline";
 import {randomUUID} from "node:crypto";
 import {repositoryRoot,buildIndex,searchIndex,searchContent,listFolder,
- validatedPath,digest,MAX_EDIT_BYTES,git} from "./catalog.mjs";
+ validatedPath,digest,MAX_EDIT_BYTES,git,VERSION} from "./catalog.mjs";
 import {directDependencies,directDependents,impactAnalysis} from "./dependency-graph.mjs";
 
 const args=process.argv.slice(2);
@@ -16,17 +16,14 @@ const allowWrite=args.includes("--allow-write");
 const indexPath=option("--index");
 let index;
 function reload(){
- index=buildIndex(root,{scope});
+ index=buildIndex(root,{scope,previousIndex:index});
  return index;
 }
 if(indexPath){
  try{
   const saved=JSON.parse(fs.readFileSync(indexPath,"utf8"));
-  // HEAD is insufficient if a developer edited tracked files since checkout.
-  // Index artifacts are reusable only on a clean worktree.
-  const clean=git(root,["status","--porcelain","--untracked-files=no"]).length===0;
-  if(clean&&saved.head===git(root,["rev-parse","HEAD"])&&saved.scope===scope&&
-     saved.schemaVersion===2&&Array.isArray(saved.files))index=saved;
+  if(saved.schemaVersion===VERSION&&saved.scope===scope&&
+     Array.isArray(saved.files))index=buildIndex(root,{scope,previousIndex:saved});
  }catch{}
 }
 if(!index)reload();

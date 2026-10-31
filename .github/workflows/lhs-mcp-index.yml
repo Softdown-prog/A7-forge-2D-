@@ -31,6 +31,14 @@ jobs:
           node-version: "22"
       - name: Verify MCP safety, indexing and JSON-RPC stdio
         run: node --test tools/lhs-mcp/*.test.mjs
+      - name: Restore previous catalog for incremental indexing
+        id: cache-index
+        uses: actions/cache/restore@v4
+        with:
+          path: out/lhs-mcp-cache/catalog.json
+          key: lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-
       - name: Generate machine-readable repository index
         shell: bash
         run: |
@@ -39,7 +47,15 @@ jobs:
           if [[ "${{ inputs.scope || 'repository' }}" == "game" ]]; then
             SCOPE="games/lan_house_simulator"
           fi
-          node tools/lhs-mcp/index.mjs --scope "$SCOPE" --output out/lhs-mcp-index/catalog.json
+          node tools/lhs-mcp/index.mjs --scope "$SCOPE" --previous out/lhs-mcp-cache/catalog.json --output out/lhs-mcp-index/catalog.json
+          mkdir -p out/lhs-mcp-cache
+          cp out/lhs-mcp-index/catalog.json out/lhs-mcp-cache/catalog.json
+      - name: Cache updated catalog for next push
+        if: ${{ steps.cache-index.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: out/lhs-mcp-cache/catalog.json
+          key: lhs-mcp-v3-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
       - name: Verify live MCP tools against checked out game
         if: ${{ inputs.scope != 'game' }}
         run: node tools/lhs-mcp/smoke.mjs

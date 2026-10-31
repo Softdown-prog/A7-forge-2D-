@@ -7,10 +7,11 @@ import path from "node:path";
 import {createHash} from "node:crypto";
 import {execFileSync} from "node:child_process";
 import {extractImportSpecifiers,resolveImportGraph} from "./dependency-graph.mjs";
+import {trackedFingerprints,cacheEntry} from "./incremental.mjs";
 
 const MAX_INDEXED_BYTES=256*1024;
 export const MAX_EDIT_BYTES=1024*1024;
-export const VERSION=2;
+export const VERSION=3;
 const ignoreDirectories=new Set([".git","node_modules","dist","out",".angular-browser-tools",".next","coverage","build",".cache"]);
 const secretNames=/^(?:\.env(?:\..*)?|\.npmrc|\.pypirc|id_rsa|id_ed25519|credentials(?:\..*)?|.*\.(?:pem|key|p12|pfx))$/i;
 const textExt=new Set([".ts",".tsx",".js",".mjs",".cjs",".jsx",".json",".jsonc",".css",".scss",".html",".md",".mdx",".txt",".yaml",".yml",".xml",".svg",".go",".rs",".py",".toml",".sh",".sql",".gitignore"]);
@@ -48,11 +49,6 @@ export function validatedPath(root,scope,input,{newFile=false}={}){
  if(!newFile && !fs.statSync(absolute).isFile())throw Error("Not a regular file");
  return {relative:rel,absolute};
 }
-function tracked(root){
- return execFileSync("git",["ls-files","-z","--cached","--full-name"],{
-  cwd:root,encoding:"utf8",maxBuffer:64*1024*1024
- }).split("\0").filter(Boolean).sort();
-}
 export function extractSymbols(content,ext){
  if(!symbolExt.has(ext))return [];
  const patterns=[
@@ -74,39 +70,61 @@ export function extractSymbols(content,ext){
  }
  return result.slice(0,1500);
 }
-export function buildIndex(root,{scope="."}={}){
+export function buildIndex(root,{scope=".",previousIndex=null}={}){
  root=fs.realpathSync(root);
- if(scope!=="." )validatedPath(root,".",scope+"/.probe",{newFile:true});
- const list=tracked(root).filter(rel=>inScope(rel,scope)&&!isExcluded(rel));
+ if(scope!==".")validatedPath(root,".",scope+"/.probe",{newFile:true});
+ const state=trackedFingerprints(root);
+ const tracked=[...state.tracked].filter(([rel])=>inScope(rel,scope)&&!isExcluded(rel))
+  .sort(([a],[b])=>a.localeCompare(b));
+ const validPrevious=previousIndex?.schemaVersion===VERSION&&previousIndex.scope===scope&&
+  Array.isArray(previousIndex.files)?previousIndex:null;
+ const past=new Map((validPrevious?.files??[]).filter(x=>x&&typeof x.path==="string")
+  .map(x=>[x.path,x]));
  const files=[];
- for(const rel of list){
+ let reused=0,scanned=0;
+ for(const [rel,staged] of tracked){
   let stat,absolute;
   try{
    ({absolute}=validatedPath(root,scope,rel));
    stat=fs.statSync(absolute);
   }catch{continue;}
   if(!stat.isFile())continue;
+  const previous=cacheEntry(past.get(rel),rel,staged.mode,staged.oid,state.dirty.has(rel));
+  // Reusing record metadata does not skip graph resolution: dependencies can
+  // change when a newly added or deleted target makes an import resolvable.
+  if(previous&&previous.bytes===stat.size){
+   files.push({path:rel,bytes:stat.size,ext:previous.ext,mode:staged.mode,
+    blobOid:staged.oid,symbols:previous.symbols,imports:previous.imports});
+   reused++;
+   continue;
+  }
   const ext=path.posix.extname(rel).toLowerCase();
-  const record={path:rel,bytes:stat.size,ext,symbols:[],imports:[]};
-  if(stat.size<=MAX_INDEXED_BYTES && (textExt.has(ext)||path.basename(rel)==="Dockerfile")){
+  const record={path:rel,bytes:stat.size,ext,mode:staged.mode,blobOid:staged.oid,
+   symbols:[],imports:[]};
+  if(stat.size<=MAX_INDEXED_BYTES&&(textExt.has(ext)||path.basename(rel)==="Dockerfile")){
    try{
     const buf=fs.readFileSync(absolute);
     if(!buf.includes(0)){
-     const contents=buf.toString("utf8");
-     record.symbols=extractSymbols(contents,ext);
-     record.imports=extractImportSpecifiers(contents,ext).slice(0,120);
+     const content=buf.toString("utf8");
+     record.symbols=extractSymbols(content,ext);
+     record.imports=extractImportSpecifiers(content,ext).slice(0,120);
     }
    }catch{}
   }
   files.push(record);
+  scanned++;
  }
  resolveImportGraph(files);
+ const deleted=(validPrevious?.files??[]).filter(f=>!files.some(x=>x.path===f.path)).length;
  return {
   schemaVersion:VERSION,scope,head:git(root,["rev-parse","HEAD"]),
-  files,statistics:{files:files.length,symbols:files.reduce((n,f)=>n+f.symbols.length,0),
-    dependencyEdges:files.reduce((n,f)=>n+(f.dependencies?.length??0),0),
-    unresolvedLocalImports:files.reduce((n,f)=>n+(f.unresolvedLocalImports?.length??0),0),
-    totalBytes:files.reduce((n,f)=>n+f.bytes,0)}
+  files,
+  buildStats:{reused,scanned,deleted,previousFiles:validPrevious?.files.length??0,
+   cacheUsed:Boolean(validPrevious)},
+  statistics:{files:files.length,symbols:files.reduce((n,f)=>n+f.symbols.length,0),
+   dependencyEdges:files.reduce((n,f)=>n+(f.dependencies?.length??0),0),
+   unresolvedLocalImports:files.reduce((n,f)=>n+(f.unresolvedLocalImports?.length??0),0),
+   totalBytes:files.reduce((n,f)=>n+f.bytes,0)}
  };
 }
 export function searchIndex(index,query,{prefix="",limit=30,mode="files"}={}){

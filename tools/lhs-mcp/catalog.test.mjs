@@ -138,3 +138,57 @@ test("cached index is invalidated when tracked worktree files change",t=>{
  assert.match(replies[0].result.content[0].text,/revisedEngine/);
  assert.equal(replies[1].result.structuredContent.result.length,0);
 });
+
+test("incremental index reuses clean content, rescans dirty, added, staged and deleted",t=>{
+ const {dir,exec}=setup();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const scope="games/lan_house_simulator",engine=scope+"/src/sim/engine.ts";
+ const types=scope+"/src/sim/types.ts";
+ const first=buildIndex(dir,{scope});
+ assert.equal(first.buildStats.scanned,2);
+ assert.equal(first.buildStats.reused,0);
+ const second=buildIndex(dir,{scope,previousIndex:first});
+ assert.equal(second.buildStats.reused,2);
+ assert.equal(second.buildStats.scanned,0);
+ assert.equal(second.files.find(f=>f.path===engine).blobOid,first.files.find(f=>f.path===engine).blobOid);
+ fs.writeFileSync(path.join(dir,engine),'export function updatedEngine() {return 42;}\n');
+ const dirty=buildIndex(dir,{scope,previousIndex:second});
+ assert.equal(dirty.buildStats.scanned,1);
+ assert.equal(dirty.buildStats.reused,1);
+ assert.match(JSON.stringify(searchIndex(dirty,"updatedEngine",{mode:"symbols"})),/updatedEngine/);
+ exec("add",engine);exec("commit","-qm","modify engine");
+ const staged=buildIndex(dir,{scope,previousIndex:second});
+ assert.equal(staged.buildStats.scanned,1);
+ assert.equal(staged.buildStats.reused,1);
+ const add=scope+"/src/sim/added.ts";
+ fs.writeFileSync(path.join(dir,add),'import type {Cash} from "./types.js";\nexport const newValue=1;\n');
+ exec("add",add);
+ const increased=buildIndex(dir,{scope,previousIndex:staged});
+ assert.equal(increased.buildStats.scanned,1);
+ assert.equal(increased.buildStats.reused,2);
+ assert.ok(increased.files.find(f=>f.path===add).dependencies.includes(types));
+ exec("rm",types);
+ const removed=buildIndex(dir,{scope,previousIndex:increased});
+ assert.equal(removed.buildStats.deleted,1);
+ assert.equal(removed.statistics.files,2);
+ assert.equal(removed.files.find(f=>f.path===add).dependencies.length,0);
+ assert.ok(removed.files.find(f=>f.path===add).unresolvedLocalImports.length);
+});
+test("index CLI --previous produces same results with reuse and ignores invalid cache",t=>{
+ const {dir}=setup();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const output="out/lhs-mcp-index/catalog.json";
+ const invoke=(previous)=>spawnSync(process.execPath,[indexFile,"--scope","games/lan_house_simulator",
+  "--output",output,...(previous?["--previous",previous]:[])],{
+  cwd:dir,encoding:"utf8",timeout:10000
+ });
+ assert.equal(invoke(null).status,0);
+ const first=JSON.parse(fs.readFileSync(path.join(dir,output),"utf8"));
+ assert.equal(first.schemaVersion,3);
+ assert.equal(invoke(output).status,0);
+ const second=JSON.parse(fs.readFileSync(path.join(dir,output),"utf8"));
+ assert.equal(second.buildStats.reused,2);
+ assert.equal(second.buildStats.scanned,0);
+ assert.deepEqual(second.files,first.files);
+ assert.equal(invoke("out/missing.json").status,0);
+ const third=JSON.parse(fs.readFileSync(path.join(dir,output),"utf8"));
+ assert.equal(third.buildStats.scanned,2);
+});
