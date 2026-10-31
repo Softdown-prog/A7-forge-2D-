@@ -15,7 +15,7 @@ O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estát
 
 ## Limites de responsabilidade
 
-- Angular assume elementos interativos do menu, tour, ações superiores, navegação rápida, categorias, busca na loja e atalhos administrativos (espelhos das atuais ilhas React).
+- Angular assume elementos interativos do menu, tour, ações superiores, navegação rápida, categorias, busca na loja, atalhos administrativos e navegação por abas. Os workspaces de computadores/serviços e a faixa Angular de abas acionam os controles nativos do TypeScript; a interface legada só será escondida na etapa final de ativação Angular.
 - Eventos de interface e cliques nas ações originais continuam a comunicar com o controlador TypeScript via DOM.
 - Nenhuma regra de preços, disponibilidade, estoque, saves, clientes, animação, Canvas, renderização ou ciclo do jogo pode ser reimplementada em Angular.
 - IDs existentes permanecem idênticos, inclusive os nomes legados react-*, porque muitos adaptadores e testes ainda dependem deles. A renomeação será feita com mudança coordenada dos contratos.
@@ -28,4 +28,4 @@ O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estát
 4. Migrar a interface do site e os fluxos de conta e doações sem alterar serviços externos/contratos; conservar páginas estáticas/SEO.
 5. Validar mobile 360/414px, teclado, toque, compra, estoque, PS1/PS2, saves, Firebase e deploy Cloudflare. Somente depois remover React e código morto.
 
-PR propositalmente em rascunho até haver paridade funcional. Não mesclar por aparência ou pelo simples fato de Angular compilar.
+O PR preliminar foi **fechado sem merge**. Continuar somente na branch de migração; não abrir novo PR até 100% de paridade e autorização explícita. Não mesclar por aparência ou pelo simples fato de Angular compilar.

@@ -1,0 +1,12 @@
+<nav class="angular-admin-tabs" role="tablist" aria-label="Seções da administração">
+  @for(tab of tabs();track tab.id) {
+    <button type="button" class="angular-admin-tab" role="tab"
+      [attr.data-angular-admin-tab]="tab.id"
+      [attr.aria-controls]="tab.controls"
+      [attr.aria-selected]="selected()===tab.id"
+      [attr.tabindex]="selected()===tab.id?0:-1"
+      [disabled]="tab.disabled"
+      (click)="open(tab.id)"
+      (keydown)="onKeydown($event,tab.id)">{{tab.label}}</button>
+  }
+</nav>

@@ -36,3 +36,20 @@
  .angular-station-switch-buttons{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
  #admin .angular-station-switch-buttons button{flex:0 0 auto;min-width:80px}
 }
+
+/* Angular-only top-level administration tabs; legacy buttons remain DOM command targets. */
+.angular-admin-navigation-root{min-width:0;margin:0 0 14px}
+.angular-admin-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+ border:1px solid #d2d5bf;background:#e4e6d6;border-radius:10px;padding:6px}
+#admin .angular-admin-tab{min-height:52px;min-width:0;padding:9px 7px;line-height:1.3;
+ white-space:normal;overflow-wrap:anywhere;text-align:center;background:#fffef5;
+ color:#4b614e;border:1px solid #cbd6c2;border-radius:7px;font-size:11px;font-weight:650;cursor:pointer}
+#admin .angular-admin-tab[aria-selected="true"]{background:#234334;color:#f7f8ea;border-color:#234334}
+#admin .angular-admin-tab:hover:not(:disabled){border-color:#80a173}
+#admin .angular-admin-tab:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
+@media(max-width:700px){
+ .angular-admin-tabs{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
+  touch-action:pan-x;scroll-snap-type:x proximity;padding:6px 6px 10px}
+ #admin .angular-admin-tab{flex:0 0 120px;min-height:48px;scroll-snap-align:start}
+}
