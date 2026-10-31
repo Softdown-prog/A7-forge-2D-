@@ -185,12 +185,19 @@ export function searchContext(index,query,{prefix="",limit=15}={}){
   // A dedicated feature simulation module should beat broad engines that
   // happen to reference the same feature. Do not apply that stronger signal
   // to requests for other roles (for example PS2 artwork or UI panels).
-  if(exactOwner)score+=matches.has("simulation")&&matches.size>=2?55:18;
+  if(exactOwner)score+=18;
+  // When a user asks for the simulation of a specific named feature,
+  // a same-named module in src/sim is the direct owner. Rank it before
+  // broad simulation engines, but never steal queries for art or controls.
+  const dedicatedSimulation=exactOwner&&titleTerms[0]!=="simulation"&&
+   requested.includes("simulation")&&matches.has("simulation")&&
+   matches.size>=2&&file.path.split("/").includes("sim");
   results.push({path:file.path,score:Math.round(score*100)/100,
-   matchedTerms:matched,queryTerms:requested.length,evidence,
+   dedicatedSimulation,matchedTerms:matched,queryTerms:requested.length,evidence,
    symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>matches.has(t))).slice(0,5),
    description:file.contextHeadings?.[0]??null});
  }
- return results.sort((a,b)=>b.score-a.score||b.matchedTerms-a.matchedTerms||
-  a.path.localeCompare(b.path)).slice(0,max);
+ return results.sort((a,b)=>Number(b.dedicatedSimulation)-Number(a.dedicatedSimulation)||
+  b.score-a.score||b.matchedTerms-a.matchedTerms||
+  a.path.localeCompare(b.path)).map(({dedicatedSimulation,...result})=>result).slice(0,max);
 }
