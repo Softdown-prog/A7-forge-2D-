@@ -1,0 +1,57 @@
+name: LHS MCP repository index
+
+on:
+  push:
+    branches: ["feat/lhs-angular-ui-foundation"]
+    paths:
+      - "tools/lhs-mcp/**"
+      - ".github/workflows/lhs-mcp-index.yml"
+      - "games/lan_house_simulator/src/**"
+      - "games/lan_house_simulator/frontend-angular/src/**"
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Repository scope to index (game or entire repository)"
+        required: true
+        default: "repository"
+        type: choice
+        options: [repository, game]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhs-mcp-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  index-and-validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify MCP safety, indexing and JSON-RPC stdio
+        run: node --test tools/lhs-mcp/*.test.mjs
+      - name: Generate machine-readable repository index
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCOPE="."
+          if [[ "${{ inputs.scope || 'repository' }}" == "game" ]]; then
+            SCOPE="games/lan_house_simulator"
+          fi
+          node tools/lhs-mcp/index.mjs --scope "$SCOPE" --output out/lhs-mcp-index/catalog.json
+      - name: Verify live MCP tools against checked out game
+        if: ${{ inputs.scope != 'game' }}
+        run: node tools/lhs-mcp/smoke.mjs
+      - name: Upload indexed files, symbols and summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-catalog
+          path: out/lhs-mcp-index/
+          retention-days: 30
+          if-no-files-found: error
