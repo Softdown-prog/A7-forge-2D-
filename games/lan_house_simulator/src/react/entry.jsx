@@ -6,6 +6,7 @@
 import React,{useState} from "react";
 import {createRoot} from "react-dom/client";
 import {flushSync} from "react-dom";
+import {ShopCategories,QuickDeck,AdminShortcuts} from "./managementUi.jsx";
 
 const ICONS={
  play:"play",continue:"continue",users:"users",settings:"settings",
@@ -68,7 +69,10 @@ function mountReactControls(){
  const ids=[
   ["react-menu-actions",<MenuActions/>],
   ["react-menu-tour",<MenuTour/>],
-  ["react-topbar-actions",<GameHeaderActions/>]
+  ["react-topbar-actions",<GameHeaderActions/>],
+  ["react-quick-deck",<QuickDeck/>],
+  ["react-shop-categories",<ShopCategories/>],
+  ["react-admin-shortcuts",<AdminShortcuts/>]
  ];
  // flushSync ensures getElementById in locateGameElements finds the real React
  // buttons before the existing imperative TypeScript controllers attach.

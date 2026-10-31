@@ -1180,3 +1180,85 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 /* Hide React controls until legacy event handlers and first Canvas frame are ready. */
 html:not([data-game-ready="true"]) #react-menu-actions,
 html:not([data-game-ready="true"]) #react-topbar-actions{visibility:hidden}
+
+
+/* React management shell v2: visual-only navigation around the existing simulation. */
+#react-quick-deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:12px 0 2px}
+.react-quick-action{min-width:0;min-height:63px;display:flex;justify-content:flex-start;gap:11px;text-align:left;
+ border:1px solid #54725b;border-radius:11px;background:linear-gradient(145deg,#294b3c,#213a31);padding:11px 12px;
+ color:#f3f4e5;box-shadow:0 3px 0 #10281b66;transition:transform .15s,border-color .15s,background .15s}
+.react-quick-action:hover:not(:disabled){background:#355744;border-color:#c0daa5;transform:translateY(-2px)}
+.react-quick-symbol{flex:0 0 34px;height:34px;display:grid;place-items:center;background:#d7eac2;color:#17372a;
+ border:1px solid #ecf3dc;border-radius:9px;font:800 16px "Courier New",monospace}
+.react-quick-copy{display:grid;gap:3px;min-width:0}
+.react-quick-copy strong{font-size:12px;line-height:1.3;color:#f7f6ea}
+.react-quick-copy small{font-size:10px;line-height:1.3;color:#bbd0b9;overflow-wrap:anywhere}
+#react-admin-shortcuts{margin:0 0 17px}
+.react-admin-shortcuts{border:1px solid #c7d5b8;background:linear-gradient(145deg,#ecf1e3,#f7f7ec);
+ padding:15px;border-radius:12px;color:#244132}
+.react-admin-shortcuts-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.react-admin-kicker{display:block;font:700 9px "Courier New",monospace;letter-spacing:.14em;color:#698252;margin-bottom:3px}
+.react-admin-shortcuts h3{font-size:16px!important;letter-spacing:-.02em;margin:0;color:#193e2d}
+.react-admin-helper{font-size:10px;line-height:1.5;color:#6c806b;max-width:230px}
+.react-admin-shortcuts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.admin .react-admin-shortcut{min-width:0;display:flex;justify-content:flex-start;align-items:center;gap:9px;text-align:left;
+ padding:10px;background:#fffef8;color:#224031;border:1px solid #d1dccc;border-radius:9px;min-height:63px}
+.admin .react-admin-shortcut:hover:not(:disabled){background:#e6f2dc;border-color:#8fae87;box-shadow:0 2px 7px #29473215}
+.react-admin-shortcut-icon{display:grid;place-items:center;flex:none;width:31px;height:31px;border-radius:8px;
+ background:#e0ebd2;color:#355c3b;font:800 14px "Courier New",monospace}
+.react-admin-shortcut strong,.react-admin-shortcut small{display:block;line-height:1.25}
+.react-admin-shortcut strong{font-size:12px}
+.react-admin-shortcut small{font-size:10px;font-weight:400;color:#637960;margin-top:4px}
+.react-admin-arrow{margin-left:auto;font-size:21px;color:#6d9466}
+.react-admin-shortcut-status{margin:4px 0 0!important;min-height:0;color:#5d7458;font-size:11px}
+.react-admin-shortcut-status:empty{display:none}
+#react-shop-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 15px;overflow:visible}
+.admin #react-shop-categories .react-shop-category{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;
+ min-width:0;min-height:80px;padding:12px;border:1px solid #ced9c1;border-radius:10px;background:#f9f9f1;
+ color:#294a36;font-size:12px;line-height:1.35}
+.admin #react-shop-categories .react-shop-category:hover:not(:disabled){background:#e6f0dd;border-color:#91ad87}
+.admin #react-shop-categories .react-shop-category[aria-pressed="true"]{
+ background:#244333;color:#f3f5df;border-color:#244333;box-shadow:inset 0 0 0 1px #7a9c73}
+.react-shop-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:7px;background:#d9e9cc;
+ color:#244333;font:800 18px "Courier New",monospace}
+.react-shop-category[aria-pressed="true"] .react-shop-icon{background:#c8e4b2;color:#1d3b2b}
+.react-shop-label{font-size:12px;font-weight:700;line-height:1.3}
+#status .hud-card{position:relative;overflow:hidden;border-radius:12px;box-shadow:inset 0 1px 0 #ffffff0c,0 4px 14px #081a1620}
+#status .hud-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#89ac82}
+#status .hud-card.cash:before{background:#648d53}
+#status .hud-card.warning:before{background:#e6ad65}
+#status .hud-card strong{letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+#status .hud-card:nth-child(2){background:linear-gradient(115deg,#284b3f,#213c34)}
+#status .hud-card:nth-child(4)>span{border-color:#849c7c}
+.admin-summary>div{box-shadow:inset 0 1px 0 #fff9,0 3px 10px #172b1810}
+.admin-summary>div strong{font-variant-numeric:tabular-nums}
+#section-stock .stock-metrics>div{border-radius:11px;box-shadow:0 3px 8px #1b351012}
+#section-stock .stock-metrics strong{font-size:24px}
+#admin .management-pages{border-bottom:1px solid #ccd6c1;padding-bottom:12px}
+#admin .management-pages button{border-radius:9px;transition:background .16s,border-color .16s}
+#admin .management-pages button[aria-pressed="true"]{box-shadow:0 3px 0 #132e2050}
+#shop .shop-grid{gap:12px}
+#shop .shop-card{border-radius:12px;box-shadow:0 2px 7px #24392512;transition:border-color .15s,box-shadow .15s}
+#shop .shop-card:hover{border-color:#98b68d;box-shadow:0 5px 18px #24392522}
+#shop .shop-card button:focus-visible,#admin .react-admin-shortcut:focus-visible{outline:3px solid #b98243;outline-offset:2px}
+@media(max-width:950px){
+ #react-quick-deck{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .react-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #react-shop-categories{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ #react-quick-deck{display:flex;overflow-x:auto;gap:8px;padding:1px 2px 9px;scroll-snap-type:x proximity;touch-action:pan-x}
+ .react-quick-action{flex:0 0 168px;min-height:58px;scroll-snap-align:start}
+ .react-admin-shortcuts{padding:12px}
+ .react-admin-shortcuts-heading{align-items:start;flex-direction:column;gap:4px}
+ .react-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .admin .react-admin-shortcut{padding:8px;gap:6px}
+ .react-admin-shortcut-icon{width:27px;height:27px}
+ .react-admin-arrow{display:none}
+ #react-shop-categories{display:flex;overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 10px;gap:8px;scroll-snap-type:x proximity;touch-action:pan-x}
+ .admin #react-shop-categories .react-shop-category{flex:0 0 155px;min-height:77px;scroll-snap-align:start}
+ #status .hud-card{border-radius:10px}
+}
+@media(max-width:400px){.react-admin-shortcuts-grid{grid-template-columns:1fr 1fr}.react-admin-shortcut small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.react-quick-action,#shop .shop-card{transition:none}.react-quick-action:hover:not(:disabled){transform:none}}
+html:not([data-game-ready="true"]) #react-quick-deck{visibility:hidden}
