@@ -1,5 +1,5 @@
 /** Presentation-only workspaces. All state changes delegate to TypeScript DOM controllers. */
-import {Component,ChangeDetectionStrategy,Input,OnInit,OnDestroy,OnChanges,signal} from '@angular/core';
+import {Component,Directive,ChangeDetectionStrategy,Input,OnInit,OnDestroy,OnChanges,signal} from '@angular/core';
 
 export const TASKS={
  computers:[
@@ -15,6 +15,7 @@ export const TASKS={
 } as const;
 type Area=keyof typeof TASKS;
 
+@Directive()
 abstract class Workspace implements OnInit,OnDestroy{
  abstract readonly area:Area;
  readonly selected=signal('');
