@@ -191,7 +191,7 @@ export function searchContext(index,query,{prefix="",limit=15}={}){
   // broad simulation engines, but never steal queries for art or controls.
   const dedicatedSimulation=exactOwner&&titleTerms[0]!=="simulation"&&
    requested.includes("simulation")&&matches.has("simulation")&&
-   matches.size>=2&&file.path.split("/").includes("sim");
+   matches.size===requested.length&&file.path.split("/").includes("sim");
   results.push({path:file.path,score:Math.round(score*100)/100,
    dedicatedSimulation,matchedTerms:matched,queryTerms:requested.length,evidence,
    symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>matches.has(t))).slice(0,5),

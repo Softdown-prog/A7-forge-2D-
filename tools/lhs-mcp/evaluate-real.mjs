@@ -64,7 +64,9 @@ if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pat
   index=buildIndex(root,{scope:"."});
  }
  const report=evaluate(index);
- assert.ok(report.hitAt5>=11,"Search quality dropped below measured 10/12 top-five baseline");
+ assert.ok(report.hitAt5===report.queries,
+  "All 12 labeled real modules must appear in top-five search results");
+ assert.ok(report.hitAt1>=7,"At least seven labeled modules should rank first");
  const position=process.argv.indexOf("--output");
  if(position!==-1){
   const out=process.argv[position+1];if(!out)throw Error("Missing report path");

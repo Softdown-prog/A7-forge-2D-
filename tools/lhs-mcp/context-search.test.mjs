@@ -173,3 +173,20 @@ test("exact domain module beats aggregators without hard-coded paths",()=>{
  assert.match(searchContext(index,"simulação console PS2",{limit:3})[0].path,
   /\/ps2\.ts$/);
 });
+
+test("art-specific queries do not get hijacked by the simulation owner",()=>{
+ const root="games/lan_house_simulator/src/";
+ const file=(p,description,fn)=>{
+  const metadata=contextFromSource(description,".ts");
+  return {path:root+p,ext:".ts",contextTerms:metadata.terms,
+   contextHeadings:metadata.headings,symbols:[{name:fn,kind:"function",line:1}]};
+ };
+ const index={files:[
+  file("sim/ps2.ts","// PS2 simulation domain rules","ps2Unlocked"),
+  file("render/ps2Art.ts","// PS2 simulation art drawing and animation","drawPs2Art")
+ ]};
+ assert.match(searchContext(index,"simulação PS2 arte",{limit:2})[0].path,
+  /\/ps2Art\.ts$/,"Dedicated simulation owner should not override artwork requests");
+ assert.match(searchContext(index,"simulação PS2",{limit:2})[0].path,
+  /\/ps2\.ts$/,"Dedicated simulation requests should still find the simulation module");
+});

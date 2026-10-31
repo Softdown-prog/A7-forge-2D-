@@ -216,3 +216,13 @@ módulo possui basename exato equivalente a um conceito pedido (por exemplo,
 vocabulário para desenhar/renderizar, catálogo e cartões. As avaliações
 reais continuam orientando melhorias e seus resultados são publicados,
 incluindo regressões observadas. Não substitui leitura da implementação.
+
+### Validação de responsabilidade
+
+O ranking também reconhece um módulo específico dentro de `src/sim`
+quando a intenção pede simulação daquele assunto, sem priorizá-lo em
+perguntas que exigem outra especialidade, como arte visual. A suíte inclui
+um teste de não interferência entre PS2 simulação e PS2 arte, além de
+uma regra de CI para preservar 12/12 resultados reais no top 5 e pelo
+menos 7/12 na primeira posição. Essas garantias são sobre as consultas
+rotuladas, não sobre toda pesquisa possível.
