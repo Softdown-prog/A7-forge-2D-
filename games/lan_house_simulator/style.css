@@ -1168,3 +1168,7 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
  #react-topbar-actions button{flex:1;min-width:0}
  #react-topbar-actions .keyboard-hint{display:none}}
 @media(prefers-reduced-motion:reduce){.react-chapter-detail{animation:none}}
+
+/* Hide React controls until legacy event handlers and first Canvas frame are ready. */
+html:not([data-game-ready="true"]) #react-menu-actions,
+html:not([data-game-ready="true"]) #react-topbar-actions{visibility:hidden}

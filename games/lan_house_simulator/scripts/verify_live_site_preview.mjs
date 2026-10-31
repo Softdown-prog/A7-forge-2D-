@@ -76,7 +76,9 @@ try{
    return data.some((value,i)=>i%4===3&&value>0);
   });
   const spriteReady=await frame.locator("#game").evaluate(async()=>{
-   const entry=new URL(document.querySelector('script[type="module"][src*="main.js"]').src);
+   const entryScript=document.querySelector('script[type="module"][src*="react-entry.js"]')??
+    document.querySelector('script[type="module"][src*="main.js"]');
+   const entry=new URL(entryScript.src);
    const url=new URL("./render/actorSprites.js",entry);url.search=entry.search;
    const {drawActorSprite}=await import(url.href);
    const ctx=document.createElement("canvas").getContext("2d");

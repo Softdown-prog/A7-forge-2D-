@@ -15,6 +15,7 @@ test("React owns the menu and topbar without replacing the Canvas simulation",()
  assert.match(js,/flushSync/);
  assert.match(js,/import\("\.\/main\.js"\)/);
  assert.match(source,/id="game"/);
+ assert.match(file("src/bootstrap/bootstrapGame.ts"),/dataset\.gameReady="true"/);
  assert.match(js,/createRoot/);
  assert.doesNotMatch(js,/createGame|requestAnimationFrame|setInterval/);
 });

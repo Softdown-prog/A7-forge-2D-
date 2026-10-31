@@ -46,5 +46,11 @@ export function bootstrapGame(document:Document=globalThis.document,win:Window=w
  mountCloudControls(elements.saveMessage,application.account);
  const loop=createRuntimeLoop({document,window:win,canvas:elements.canvas,state,framePort:application.frame,scene,editor,inspection,renderUI});
  decorateControls();installWindowNavigation();session.showMenu();loop.start();
+ // React mounts navigation before bootstrap. Reveal those controls only after
+ // two real frames: the first draws the CRT menu preview and attaches listeners.
+ // Avoid races in mobile touch and account/continue flows.
+ win.requestAnimationFrame(()=>win.requestAnimationFrame(()=>{
+  document.documentElement.dataset.gameReady="true";
+ }));
  return {stop:()=>loop.stop()};
 }
