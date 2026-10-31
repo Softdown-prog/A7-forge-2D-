@@ -15,7 +15,8 @@ test("LHS domain synonyms resolve to stable concepts",()=>{
   ["cookies de doação",["cookie","donation"]],
   ["exportação importar partida",["transfer","load","save"]],
   ["controles do console PS1",["controls","console","ps1"]],
-  ["desenhar cartões do catálogo",["render","card","catalog"]]
+  ["desenhar cartões do catálogo",["render","card","catalog"]],
+  ["arte do PS2",["art","ps2"]]
  ];
  for(const [query,wanted] of pairs){
   const actual=queryTerms(query);

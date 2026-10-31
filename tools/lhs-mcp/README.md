@@ -226,3 +226,8 @@ um teste de não interferência entre PS2 simulação e PS2 arte, além de
 uma regra de CI para preservar 12/12 resultados reais no top 5 e pelo
 menos 7/12 na primeira posição. Essas garantias são sobre as consultas
 rotuladas, não sobre toda pesquisa possível.
+
+O vocabulário v8 distingue `arte`/`artwork` de simulação. Para
+perguntas mais longas, bônus pelo nome exato do módulo só são aplicados
+quando ele também corresponde a todos os conceitos pedidos. Isso evita
+que regras do PS2 sejam privilegiadas em pesquisas por arte.

@@ -24,6 +24,7 @@ const groups=[
  ["mail","correio","carta","cartas","mail","postal","inbox"],
  ["weather","clima","weather","chuva","rain"],
  ["render","desenho","desenhar","desenhando","render","rendering","renderer","canvas","draw","drawing"],
+ ["art","arte","artes","art","artwork","graphics","grafico","graficos","sprite","sprites"],
  ["admin","administracao","admin","management","gerenciamento"],
  ["license","licenca","licencas","licenciamento","license","licenses","licensing"],
  ["computer","computador","computadores","pc","pcs","computer","computers"],
@@ -185,7 +186,7 @@ export function searchContext(index,query,{prefix="",limit=15}={}){
   // A dedicated feature simulation module should beat broad engines that
   // happen to reference the same feature. Do not apply that stronger signal
   // to requests for other roles (for example PS2 artwork or UI panels).
-  if(exactOwner)score+=18;
+  if(exactOwner&&(requested.length<=2||matched===requested.length))score+=18;
   // When a user asks for the simulation of a specific named feature,
   // a same-named module in src/sim is the direct owner. Rank it before
   // broad simulation engines, but never steal queries for art or controls.
