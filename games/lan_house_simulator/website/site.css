@@ -20,3 +20,36 @@
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important}.will-reveal{opacity:1;transform:none}}
 
 html:not(.js-enabled) .motion-toggle,html:not(.js-enabled) .data-options,html:not(.js-enabled) #launch-game{display:none}
+
+
+/* Website visual refresh: presentation only; no game or account state changed. */
+.site-header{box-shadow:0 8px 24px #0b1b1517;backdrop-filter:blur(12px)}
+.site-header .site-nav a:not(.button){border-radius:8px;transition:background .18s,color .18s}
+.site-header .site-nav a:not(.button):hover{background:#ffffff10;color:#d7ecc4}
+.hero-art .monitor{box-shadow:0 22px 58px #0b1e1780,0 0 0 1px #a7c39b25}
+.hero-copy .actions .button:first-child,.closing .button{box-shadow:0 5px 0 #426945,0 14px 26px #0c261d35;transition:transform .17s,box-shadow .17s}
+.hero-copy .actions .button:first-child:hover,.closing .button:hover{transform:translateY(-2px);box-shadow:0 7px 0 #426945,0 18px 26px #0c261d50}
+.paper .step,.paper .feature{border-radius:15px;border:1px solid #cbd6be;background:#f8f8ed;
+ padding:25px;box-shadow:0 10px 25px #2d4f2420;transition:border-color .2s,transform .2s}
+.paper .step:hover,.paper .feature:hover{transform:translateY(-3px);border-color:#9eb58d}
+.paper .step h3,.paper .feature h3{color:#284534}
+.paper .step p,.paper .feature p{color:#586c54}
+.play-section .play-toolbar{background:linear-gradient(120deg,#253e33,#1c342a);border-color:#608269}
+.play-section .game-shell{box-shadow:0 18px 48px #0e251e50;border-color:#608269}
+.play-section .game-launch .button{min-height:52px;padding-inline:25px;border-radius:10px}
+.quick-start article{border-radius:13px;border:1px solid #46654f;background:#243e32;padding:20px;box-shadow:0 6px 18px #0e211a30}
+.quick-start article h3{font-size:1.2rem;margin-top:14px}
+.quick-start article p{color:#bdcdb7}
+.faq details{border-radius:10px;transition:border-color .18s}
+.faq details[open]{border-color:#83a47b}
+.site-header :is(a,button):focus-visible,.hero a:focus-visible,.play-toolbar a:focus-visible{outline:3px solid #e5b66c;outline-offset:4px}
+@media(max-width:700px){
+ .paper .step,.paper .feature{padding:20px;border-radius:12px;transform:none}
+ .quick-start article{padding:18px}
+ .hero-copy .actions .button:first-child:hover,.closing .button:hover{transform:none}
+ .site-header{backdrop-filter:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .paper .step,.paper .feature,.hero-copy .actions .button:first-child,.closing .button{transition:none}
+ .paper .step:hover,.paper .feature:hover{transform:none}
+}
