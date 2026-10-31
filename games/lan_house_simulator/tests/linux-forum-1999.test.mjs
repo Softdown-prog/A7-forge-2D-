@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
+import {tickPostman,POSTMAN_HANDOFF_MINUTES,postmanDoor,postmanCounter} from "../dist/js/sim/postmanDelivery.js";
 import {reviewNotices} from "../dist/js/sim/notices.js";
 import {createNoticeActionsPort} from "../dist/js/application/noticeActionsPort.js";
 import {createNoticeInboxPort} from "../dist/js/application/noticeInboxPort.js";
@@ -27,12 +28,26 @@ const game=(day=LINUX_CONTACT_DAY)=>setDay(createGame(45,"historical"),day);
 const ok=result=>assert.equal(result.ok,true,result.message);
 const inbox=s=>createNoticeInboxPort(()=>s).snapshot().letters;
 const shop=s=>createShopCatalogOffersPort(()=>s,()=>0);
+function deliverAt(s,day){
+ setDay(s,day);reviewNotices(s);
+ const before=s.linuxMagazineIssuesReceived??0;
+ const visited=new Set();
+ for(let i=0;i<90&&s.linuxMagazineIssuesReceived===before;i++){
+  tickPostman(s);
+  if(s.postmanDelivery)visited.add(s.postmanDelivery.phase);
+  s.totalMinutes++;
+ }
+ assert.equal(s.linuxMagazineIssuesReceived,before+1,"postman must reach Tony and hand over the magazine");
+ assert.ok(visited.has("arriving")&&visited.has("handing"),
+  "the visible postman must enter, walk to the counter and hand off");
+ return visited;
+}
 function subscribe(){
  const s=game();reviewNotices(s);ok(createNoticeActionsPort(()=>s).startLinux());return s;
 }
 function completeSeries(){
  const s=subscribe();
- for(const end of [450,480,510,540,570,600]){setDay(s,end);reviewNotices(s);}
+ for(const end of [450,480,510,540,570,600])deliverAt(s,end);
  setDay(s,LINUX_OCTOBER_DAY);reviewNotices(s);
  return s;
 }
@@ -83,7 +98,7 @@ test("Each issue arrives at month end, March to August, charged once",()=>{
  for(let i=0;i<6;i++){
   setDay(s,ends[i]-1);reviewNotices(s);
   assert.equal(s.linuxMagazineIssuesReceived,i);
-  setDay(s,ends[i]);reviewNotices(s);
+  deliverAt(s,ends[i]);
   assert.equal(s.linuxMagazineIssuesReceived,i+1);
   const id=LINUX_MAGAZINE_TITLES[i].id;
   assert.ok(s.notices.some(n=>n.id===id));
@@ -99,9 +114,7 @@ test("Each issue arrives at month end, March to August, charged once",()=>{
  assert.equal(linuxUnlocked(s),false);
 });
 test("Machines are unavailable in August and September; unlock only October",()=>{
- const s=subscribe();for(const end of [450,480,510,540,570,600]){
-  setDay(s,end);reviewNotices(s);
- }
+ const s=subscribe();for(const end of [450,480,510,540,570,600])deliverAt(s,end);
  setDay(s,LINUX_AUGUST_DAY);
  assert.equal(linuxUnlocked(s),false);assert.equal(shop(s).snapshot("linux-lab-99").disabled,true);
  setDay(s,630);reviewNotices(s);
@@ -118,13 +131,13 @@ test("Missing money holds delivery, no overdraft or catch-up in one day",()=>{
  assert.equal(s.cash,4);
  assert.equal(linuxNextMagazineDueDay(s),450);
  assert.match(inbox(s).find(x=>x.title.includes("Fórum da cidade")).items.find(x=>x.kind==="hint").text,/falta R/);
- s.cash=25;reviewNotices(s);
+ s.cash=25;deliverAt(s,450);
  assert.equal(s.linuxMagazineIssuesReceived,1);
  assert.equal(s.cash,13);assert.equal(s.linuxMagazineLastDeliveryDay,450);
  assert.equal(linuxNextMagazineDueDay(s),480);
  setDay(s,479);reviewNotices(s);
  assert.equal(s.linuxMagazineIssuesReceived,1);
- setDay(s,480);reviewNotices(s);assert.equal(s.linuxMagazineIssuesReceived,2);
+ deliverAt(s,480);assert.equal(s.linuxMagazineIssuesReceived,2);
  assert.equal(s.cash,1);
  assert.equal(isValidSave(s),true);
 });
@@ -135,7 +148,7 @@ test("Late signup receives the old print collection monthly, never unlocks immed
  const first=linuxNextMagazineDueDay(s);
  for(let i=0;i<6;i++){
   const at=first+i*30;
-  setDay(s,at);reviewNotices(s);
+  deliverAt(s,at);
   assert.equal(s.linuxMagazineIssuesReceived,i+1);
  }
  assert.equal(linuxUnlocked(s),false);
@@ -209,7 +222,7 @@ test("Save preserves magazine progress, expenses and Linux machine; corrupt data
  const base=game();
  assert.equal(isValidSave(base),true);
  assert.equal(parseImportedSave(serializeSave(base)).linuxMagazineSubscriptionDay,undefined);
- const s=subscribe();setDay(s,450);reviewNotices(s);
+ const s=subscribe();deliverAt(s,450);
  const partial=parseImportedSave(serializeSave(s));
  assert.equal(partial.linuxMagazineIssuesReceived,1);
  assert.equal(partial.linuxMagazineLastDeliveryDay,450);
@@ -226,4 +239,47 @@ test("Save preserves magazine progress, expenses and Linux machine; corrupt data
  assert.equal(isLinuxPc(restored,index),true);
  assert.equal(restored.cash,completed.cash);
  assert.equal(nextLinuxLetter(restored),null);
+});
+
+test("Postman is a reusable physical NPC: appears at the door, not in the mailbox",()=>{
+ const s=subscribe(),cash=s.cash;
+ setDay(s,450);reviewNotices(s);
+ assert.equal(s.linuxMagazineIssuesReceived,0);
+ assert.equal(s.notices.some(n=>n.id==="linux-magazine-01"),false);
+ assert.equal(s.postmanDelivery,undefined);
+ tickPostman(s);
+ assert.equal(s.linuxMagazineIssuesReceived,0,"no charge on appearance");
+ assert.equal(s.cash,cash);
+ assert.ok(s.postmanDelivery);
+ assert.equal(s.postmanDelivery.issueIndex,0);
+ assert.ok(Math.hypot(s.postmanDelivery.x-postmanDoor(s).x,s.postmanDelivery.y-postmanDoor(s).y)<1);
+ const history=[];
+ for(let i=0;i<120&&s.postmanDelivery;i++){
+  history.push(s.postmanDelivery.phase);
+  tickPostman(s);s.totalMinutes++;
+ }
+ assert.ok(history.includes("arriving"));
+ assert.ok(history.includes("handing"));
+ assert.ok(history.includes("leaving"));
+ assert.equal(s.postmanDelivery,undefined,"after delivery, the courier exits through the door");
+ assert.equal(s.linuxMagazineIssuesReceived,1);
+ assert.ok(s.notices.some(n=>n.id==="linux-magazine-01"));
+ assert.equal(s.cash,cash-LINUX_MAGAZINE_ISSUE_COST);
+ assert.ok(s.eventLog.some(x=>x.includes("Carteiro entregou")));
+ assert.equal(isValidSave(s),true);
+});
+test("Save and reload during postman handoff does not repeat charges",()=>{
+ const s=subscribe();setDay(s,450);reviewNotices(s);
+ for(let i=0;i<90&&s.postmanDelivery?.phase!=="handing";i++){tickPostman(s);s.totalMinutes++;}
+ assert.equal(s.postmanDelivery?.phase,"handing","courier reached Tony counter");
+ assert.equal(s.linuxMagazineIssuesReceived,0);
+ const restored=parseImportedSave(serializeSave(s));
+ const amount=restored.cash;
+ for(let i=0;i<POSTMAN_HANDOFF_MINUTES+2;i++){tickPostman(restored);restored.totalMinutes++;}
+ assert.equal(restored.linuxMagazineIssuesReceived,1);
+ assert.equal(restored.cash,amount-LINUX_MAGAZINE_ISSUE_COST);
+ for(let i=0;i<120;i++){tickPostman(restored);restored.totalMinutes++;}
+ assert.equal(restored.linuxMagazineIssuesReceived,1,"the courier never re-delivers the same issue");
+ const bad=structuredClone(restored);bad.postmanDelivery={issueIndex:15,x:3,y:3,phase:"handing",progress:0};
+ assert.equal(isValidSave(bad),false);
 });
