@@ -21,8 +21,9 @@ export const LINUX_MAGAZINE_TITLES=[
  {id:"linux-magazine-06",month:"agosto",title:"Montando um laboratório Linux",lesson:"A última edição da coleção ensina a planejar bancadas, terminais, redes locais e estações para estudantes. Tony guarda os seis exemplares e passa setembro estudando antes de abrir o serviço."}
 ] as const;
 export const LINUX_MAIL_IDS=[
- "linux-forum-contact",...LINUX_MAGAZINE_TITLES.map(x=>x.id),"linux-forum-ready",
- // Allowed only when reading old drafts from before the magazine storyline.
+ "linux-forum-contact","linux-magazine-01","linux-magazine-02","linux-magazine-03",
+ "linux-magazine-04","linux-magazine-05","linux-magazine-06","linux-forum-ready",
+ // Accepted when importing test saves created during the earlier draft.
  "linux-forum-guide","linux-forum-pilot"
 ] as const;
 export type LinuxMailId=typeof LINUX_MAIL_IDS[number];

@@ -29,7 +29,7 @@ export function createNoticeInboxPort(getState:()=>GameState):NoticeInboxPort {
    if(!n.read)items.push({kind:"button",action:"read",noticeId:n.id,text:"Marcar como lida",disabled:false});
    if(n.id==="linux-forum-contact"){
     if(s.linuxMagazineSubscriptionDay===undefined)
-     items.push({kind:"button",action:"linux-research",text:"Assinar revista Informática Livre · R$ "+LINUX_MAGAZINE_ENROLLMENT_COST,
+     items.push({kind:"button",action:"linux-research",text:"Assinar Informática Livre · R$ "+LINUX_MAGAZINE_ENROLLMENT_COST+" + 6 edições de R$ "+LINUX_MAGAZINE_ISSUE_COST,
       disabled:s.cash<LINUX_MAGAZINE_ENROLLMENT_COST,
       title:"Assinar seis revistas mensais; R$ "+LINUX_MAGAZINE_ISSUE_COST+
        " por edição entregue. Primeiro exemplar no fim de março, se assinado naquele mês."});
@@ -40,7 +40,7 @@ export function createNoticeInboxPort(getState:()=>GameState):NoticeInboxPort {
       "Próxima entrega após o dia "+linuxNextMagazineDueDay(s)+
       (linuxDay(s)>=linuxNextMagazineDueDay(s)!&&s.cash<LINUX_MAGAZINE_ISSUE_COST?
        " · falta R$ "+LINUX_MAGAZINE_ISSUE_COST+" no caixa.":" · R$ "+LINUX_MAGAZINE_ISSUE_COST+" por exemplar.") :
-      "Todas recebidas. Estudar até outubro (dia "+LINUX_OCTOBER_DAY+") ou 30 dias após a última edição.")});
+      "Todas recebidas. Estudar até outubro (dia "+LINUX_OCTOBER_DAY+") e aguardar pelo menos 30 dias após a última edição.")});
    }
    if(LINUX_MAGAZINE_TITLES.some(edition=>edition.id===n.id))
     items.push({kind:"resolved",text:"Edição impressa guardada na coleção: "+
