@@ -42,7 +42,7 @@ test("normalizes camelCase, accents and simple bilingual domain terms",()=>{
 });
 test("ranks by purpose and returns scoped evidence",t=>{
  const {root}=fixture(t),index=buildIndex(root,{scope});
- assert.equal(index.schemaVersion,6);
+ assert.equal(index.schemaVersion,7);
  const consoles=searchContext(index,"comprar PS2");
  assert.ok(consoles.length>0);
  assert.match(consoles[0].path,/ps2Shop\.ts$/);
@@ -156,4 +156,20 @@ test("non-specific console questions keep the console term",()=>{
  const index={files:[{path:"src/consoleManager.ts",contextTerms:{console:2},
   contextHeadings:[],symbols:[]}]};
  assert.equal(searchContext(index,"console",{limit:1}).length,1);
+});
+
+test("exact domain module beats aggregators without hard-coded paths",()=>{
+ const src="games/lan_house_simulator/src/sim/";
+ const entry=(name,symbol,text)=>({
+  path:src+name+".ts",symbols:[{name:symbol,kind:"function",line:1}],
+  contextTerms:contextFromSource(text,".ts").terms,contextHeadings:[],
+  ext:".ts"
+ });
+ const index={files:[
+  entry("engine","runSimulation","// Main engine imports PS2 and all other consoles."),
+  entry("ps2Art","drawPs2Art","// PS2 art and simulation visual reference."),
+  entry("ps2","ps2Unlocked","// PlayStation 2 rules and station price.")
+ ]};
+ assert.match(searchContext(index,"simulação console PS2",{limit:3})[0].path,
+  /\/ps2\.ts$/);
 });

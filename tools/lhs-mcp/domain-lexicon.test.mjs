@@ -14,7 +14,8 @@ test("LHS domain synonyms resolve to stable concepts",()=>{
   ["fibra óptica",["network"]],
   ["cookies de doação",["cookie","donation"]],
   ["exportação importar partida",["transfer","load","save"]],
-  ["controles do console PS1",["controls","console","ps1"]]
+  ["controles do console PS1",["controls","console","ps1"]],
+  ["desenhar cartões do catálogo",["render","card","catalog"]]
  ];
  for(const [query,wanted] of pairs){
   const actual=queryTerms(query);

@@ -23,7 +23,7 @@ const groups=[
  ["network","rede","internet","network","connection","conexao"],
  ["mail","correio","carta","cartas","mail","postal","inbox"],
  ["weather","clima","weather","chuva","rain"],
- ["render","desenho","render","rendering","canvas","draw"],
+ ["render","desenho","desenhar","desenhando","render","rendering","renderer","canvas","draw","drawing"],
  ["admin","administracao","admin","management","gerenciamento"],
  ["license","licenca","licencas","licenciamento","license","licenses","licensing"],
  ["computer","computador","computadores","pc","pcs","computer","computers"],
@@ -41,6 +41,8 @@ const groups=[
  ["marketing","campanha","campanhas","divulgacao","promocao","marketing","campaign","advertising"],
  ["controls","controles","controle","control","controls","controller","controllers","botoes","botoes","button","buttons"],
  ["transfer","exportacao","exportar","exported","exporting","transferencia","transferir","transfer","download","baixar"],
+ ["catalog","catalogo","catalogos","catalog","catalogue","catalogues"],
+ ["card","cartao","cartoes","card","cards","cartoes"],
  ["console","console","consoles","videogame","videogames"],
  ["pricing","precificacao","tarifa","tarifas","pricing","pricecap","teto"],
  ["mail","carteiro","correspondencia","correspondencias","courier","postman","delivery"],
@@ -168,7 +170,15 @@ export function searchContext(index,query,{prefix="",limit=15}={}){
   // Reward coherent responsibility rather than pinning particular paths.
   const ownershipBoost=1+Math.max(0,names-1)*0.32+
    Math.max(0,declarations-1)*0.14;
+  // A module named exactly after a specific intent (e.g. ps2.ts) should
+  // outrank generic aggregators that merely import or mention that feature.
+  // Scope bonus to a basename made of a *single* canonical search term;
+  // never match a generic substring such as "ps2" inside "ps2Art".
+  const basename=path.posix.basename(file.path,path.posix.extname(file.path));
+  const titleTerms=groupsIn(basename);
+  const exactOwner=titleTerms.length===1&&requested.includes(titleTerms[0]);
   score*= (matched===requested.length?1.55:matched/requested.length)*ownershipBoost;
+  if(exactOwner)score+=18;
   results.push({path:file.path,score:Math.round(score*100)/100,
    matchedTerms:matched,queryTerms:requested.length,evidence,
    symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>matches.has(t))).slice(0,5),

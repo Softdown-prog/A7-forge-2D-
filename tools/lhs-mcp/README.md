@@ -77,7 +77,7 @@ indexadas. Binários grandes só entram como metadados (caminho, tamanho).
 
 ## Grafo de dependências e análise de impacto
 
-O índice v6 resolve imports **relativos estáticos** (incluindo `.js` que
+O índice v7 resolve imports **relativos estáticos** (incluindo `.js` que
 aponta para módulos TypeScript) em arquivos TS/JS rastreados pelo Git.
 As ferramentas `file_dependencies`, `find_dependents` e `impact_analysis`
 indicam arquivos que importam o módulo e outros consumidores indiretos,
@@ -95,7 +95,7 @@ Um índice do Actions pode ser reutilizado num checkout local **somente se**
 o SHA, a versão do esquema, o escopo e a árvore de arquivos rastreados
 estiverem consistentes; se o workspace foi alterado, o MCP reindexa.
 
-## Indexação incremental (índice v6)
+## Indexação incremental (índice v7)
 
 Cada entrada rastreada registra o identificador **Git blob OID** e modo do
 Git index. Quando o commit muda, o indexador compara esses identificadores
@@ -123,7 +123,7 @@ incremental no mesmo checkout e compara as entradas arquivo a arquivo,
 exigindo 100% de reaproveitamento quando não há alterações. O resumo
 principal continua registrando o reaproveitamento real **entre execuções**.
 
-## Busca contextual de código (índice v6)
+## Busca contextual de código (índice v7)
 
 A ferramenta `search_context` aceita perguntas curtas em português ou inglês,
 por exemplo `comprar PS2`, `fila de clientes` e `salvar partida`.
@@ -156,7 +156,7 @@ não tempo de git checkout/indexação real nem precisão em tarefas do mundo
 real. Os resultados são indicadores de regressão e escala, não SLA.
 O vocabulário foi ampliado para licenças, manutenção, desgaste,
 fornecedores, reputação, correio, videogames, campanhas e opções.
-Como sinônimos mudaram, o esquema do catálogo e o cache passaram para v6.
+Como sinônimos mudaram, o esquema do catálogo e o cache passaram para v7.
 
 ## Benchmark físico com 10 mil e 15 mil arquivos Git
 
@@ -205,3 +205,14 @@ O conjunto de vocabulário v6 reconhece `transfer`/exportação,
 `imported`/importação, `controls`/controles e `partida`/save.
 Ajustes são guiados por erros identificados na avaliação real, que mantém
 exemplos não triviais para verificar regressões de ranking.
+
+## Revisão do ranking de propriedade (v7)
+
+A pontuação dá maior peso a termos no **nome do arquivo e em declarações
+locais**, em vez de repetições de termos em arquivos agregadores. Quando um
+módulo possui basename exato equivalente a um conceito pedido (por exemplo,
+`ps2.ts`), recebe bônus controlado; arquivos com nomes compostos, como
+`ps2Art.ts`, não recebem esse bônus por substring. Foi ampliado o
+vocabulário para desenhar/renderizar, catálogo e cartões. As avaliações
+reais continuam orientando melhorias e seus resultados são publicados,
+incluindo regressões observadas. Não substitui leitura da implementação.
