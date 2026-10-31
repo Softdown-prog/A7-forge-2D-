@@ -17,6 +17,7 @@ import {tryServe} from "../dist/js/sim/customerDecisions.js";
 import {pcActivityForStation,drawPcScreenActivity} from "../dist/js/render/pcScreenActivities.js";
 import {linuxMachineFor} from "../dist/js/sim/linuxMachines.js";
 import {eligibleEraGamePcs} from "../dist/js/sim/eraGames.js";
+import {actorStyleFor} from "../dist/js/render/actorArt.js";
 import {
  LINUX_CONTACT_DAY,LINUX_AUGUST_DAY,LINUX_OCTOBER_DAY,
  LINUX_MAGAZINE_ENROLLMENT_COST,LINUX_MAGAZINE_ISSUE_COST,LINUX_MAGAZINE_TITLES,
@@ -74,7 +75,8 @@ test("March 1999 email refers Tony to a newsstand and offers subscription",()=>{
  assert.ok(message);assert.match(message.body,/Banca da Praça Central/);
  const buttons=inbox(s).flatMap(x=>x.items).filter(x=>x.action==="linux-research");
  assert.equal(buttons.length,1);
- assert.match(buttons[0].text,/Assinar revista/);
+ assert.match(buttons[0].text,/Assinar Informática Livre/);
+ assert.match(buttons[0].text,/6 edições/);
  assert.ok(!inbox(s).some(n=>n.items.some(x=>x.action==="decision")));
  assert.equal(isValidSave(s),true);
 });
@@ -282,4 +284,16 @@ test("Save and reload during postman handoff does not repeat charges",()=>{
  assert.equal(restored.linuxMagazineIssuesReceived,1,"the courier never re-delivers the same issue");
  const bad=structuredClone(restored);bad.postmanDelivery={issueIndex:15,x:3,y:3,phase:"handing",progress:0};
  assert.equal(isValidSave(bad),false);
+});
+
+test("Reusable postman has his own yellow/blue uniform and never consumes a customer slot",()=>{
+ const style=actorStyleFor("postman",0);
+ assert.equal(style.shirt,"#F4C949");
+ assert.equal(style.pants,"#294F88");
+ const s=subscribe(),baseline=s.customers.length,rng=s.rng;
+ setDay(s,450);tickPostman(s);
+ assert.ok(s.postmanDelivery);
+ assert.equal(s.customers.length,baseline);
+ assert.equal(s.rng,rng);
+ assert.equal(s.employees?.technician,undefined);
 });
