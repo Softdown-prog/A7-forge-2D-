@@ -26,11 +26,17 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
  s.eventLog.unshift("D"+day(s)+" · Nova mensagem: "+title);
  s.eventLog.splice(14);
 }
+/** Mail appears only when the physical courier has completed the handoff to Tony. */
+export function deliverLinuxMagazineNotice(s:GameState,id:LinuxMailId,title:string,body:string):void{
+ deliver(s,id,title,body,"info");
+}
 export function reviewNotices(s:GameState):void{
  const d=day(s);
  // One time-gated Linux correspondence per review, no artificial choices.
  const linux=nextLinuxLetter(s);
- if(linux){deliver(s,linux.id,linux.title,linux.body,"info");recordLinuxMail(s,linux.id);}
+ if(linux&&!linux.id.startsWith("linux-magazine-")){
+  deliver(s,linux.id,linux.title,linux.body,"info");recordLinuxMail(s,linux.id);
+ }
  // Eric é família, não um vendedor: primeiro contato narrativo, sem preço,
  // novo catálogo ou pressão para decidir. A leitura é opcional.
  if(!s.ericFirstMailDelivered&&s.notices?.some(n=>n.id===ERIC_FIRST_MAIL_ID))

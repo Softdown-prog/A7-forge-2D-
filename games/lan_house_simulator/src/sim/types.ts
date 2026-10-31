@@ -136,6 +136,8 @@ export interface GameState {
   linuxMagazineSubscriptionDay?:number;
   linuxMagazineIssuesReceived?:number;
   linuxMagazineLastDeliveryDay?:number;
+  /** Visiting postman delivering the next paid printed magazine. */
+  postmanDelivery?:import("./postmanDelivery.js").PostmanDelivery;
   linuxMailSeenIds?:import("./linuxQuest.js").LinuxMailId[];
   /** Boot selection is independent of retained Windows licenses. */
   pcLinuxInstalled?:boolean[];
