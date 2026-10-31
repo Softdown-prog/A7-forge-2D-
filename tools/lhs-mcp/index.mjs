@@ -12,7 +12,14 @@ if(!out.startsWith(root+path.sep))throw Error("Artifact destination must be insi
 const index=buildIndex(root,{scope});
 fs.mkdirSync(path.dirname(out),{recursive:true});
 fs.writeFileSync(out,JSON.stringify(index));
+const reverse=new Map();
+for(const file of index.files)for(const dependency of file.dependencies??[])
+ reverse.set(dependency,(reverse.get(dependency)??0)+1);
+const mostReferenced=[...reverse.entries()].map(([file,dependents])=>({file,dependents}))
+ .sort((a,b)=>b.dependents-a.dependents||a.file.localeCompare(b.file)).slice(0,30);
 const summary={scope,commit:index.head,statistics:index.statistics,
+ mostReferenced,unresolvedFiles:index.files.filter(f=>f.unresolvedLocalImports?.length)
+  .slice(0,30).map(f=>({path:f.path,imports:f.unresolvedLocalImports})),
  directories:listFolder(index,"",200).map(x=>({path:x.path,count:x.descendants}))};
 const summaryPath=path.join(path.dirname(out),"summary.json");
 fs.writeFileSync(summaryPath,JSON.stringify(summary,null,2));

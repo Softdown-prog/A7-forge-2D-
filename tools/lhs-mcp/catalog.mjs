@@ -38,7 +38,12 @@ export function validatedPath(root,scope,input,{newFile=false}={}){
  let cur=base;
  for(const part of rel.split("/")){
   cur=path.join(cur,part);
-  if(fs.existsSync(cur)&&fs.lstatSync(cur).isSymbolicLink())throw Error("Symlink not allowed");
+  // lstat detects dangling symlinks too; existsSync reports false for those.
+  try{
+   if(fs.lstatSync(cur).isSymbolicLink())throw Error("Symlink not allowed");
+  }catch(error){
+   if(error.code!=="ENOENT")throw error;
+  }
  }
  if(!newFile && !fs.statSync(absolute).isFile())throw Error("Not a regular file");
  return {relative:rel,absolute};
@@ -99,6 +104,8 @@ export function buildIndex(root,{scope="."}={}){
  return {
   schemaVersion:VERSION,scope,head:git(root,["rev-parse","HEAD"]),
   files,statistics:{files:files.length,symbols:files.reduce((n,f)=>n+f.symbols.length,0),
+    dependencyEdges:files.reduce((n,f)=>n+(f.dependencies?.length??0),0),
+    unresolvedLocalImports:files.reduce((n,f)=>n+(f.unresolvedLocalImports?.length??0),0),
     totalBytes:files.reduce((n,f)=>n+f.bytes,0)}
  };
 }

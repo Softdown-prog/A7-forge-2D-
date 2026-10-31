@@ -85,3 +85,12 @@ com limite de profundidade e de resultados. O grafo é uma aproximação:
 imports dinâmicos variáveis, aliases TypeScript, injeção em runtime e
 referências indiretas não são inferidos. Nenhuma ferramenta altera o código
 apenas por consultar o grafo; antes de editar, rode os testes relevantes.
+
+## Catálogo em projetos grandes
+
+O `summary.json` agora inclui `mostReferenced` (módulos com mais imports
+recebidos), métricas de arestas do grafo e amostra de imports locais não
+resolvidos. Isso ajuda a priorizar a revisão dos arquivos mais utilizados.
+Um índice do Actions pode ser reutilizado num checkout local **somente se**
+o SHA, a versão do esquema, o escopo e a árvore de arquivos rastreados
+estiverem consistentes; se o workspace foi alterado, o MCP reindexa.

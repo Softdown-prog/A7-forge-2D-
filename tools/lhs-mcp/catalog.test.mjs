@@ -113,3 +113,28 @@ test("index builder emits auditable JSON without changing sources",t=>{
  assert.equal(index.scope,"games/lan_house_simulator");
  assert.ok(fs.existsSync(path.join(dir,"out/lhs-mcp-index/summary.json")));
 });
+
+
+test("dangling symlinks are denied for both read and file creation",t=>{
+ const {dir}=setup();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const bad="games/lan_house_simulator/broken.ts";
+ fs.symlinkSync(path.join(dir,"missing.ts"),path.join(dir,bad));
+ assert.throws(()=>validatedPath(dir,"games/lan_house_simulator",bad,{newFile:true}),
+  /Symlink not allowed/);
+});
+test("cached index is invalidated when tracked worktree files change",t=>{
+ const {dir,exec}=setup();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const local="games/lan_house_simulator/src/sim/engine.ts";
+ const artifact="out/lhs-mcp-index/catalog.json";
+ const indexed=spawnSync(process.execPath,[indexFile,"--scope","games/lan_house_simulator","--output",artifact],{
+  cwd:dir,encoding:"utf8",timeout:10000
+ });
+ assert.equal(indexed.status,0,indexed.stderr);
+ fs.writeFileSync(path.join(dir,local),'export function revisedEngine() {return 7;}\n');
+ const replies=call(dir,[
+  req(1,"find_symbols",{query:"revisedEngine"}),
+  req(2,"find_symbols",{query:"stepGame"})
+ ],["--scope","games/lan_house_simulator","--index",artifact]);
+ assert.match(replies[0].result.content[0].text,/revisedEngine/);
+ assert.equal(replies[1].result.structuredContent.result.length,0);
+});

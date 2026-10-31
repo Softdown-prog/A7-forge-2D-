@@ -22,7 +22,10 @@ function reload(){
 if(indexPath){
  try{
   const saved=JSON.parse(fs.readFileSync(indexPath,"utf8"));
-  if(saved.head===git(root,["rev-parse","HEAD"])&&saved.scope===scope&&
+  // HEAD is insufficient if a developer edited tracked files since checkout.
+  // Index artifacts are reusable only on a clean worktree.
+  const clean=git(root,["status","--porcelain","--untracked-files=no"]).length===0;
+  if(clean&&saved.head===git(root,["rev-parse","HEAD"])&&saved.scope===scope&&
      saved.schemaVersion===2&&Array.isArray(saved.files))index=saved;
  }catch{}
 }
