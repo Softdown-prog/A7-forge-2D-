@@ -126,3 +126,34 @@ test("prefix isolation does not leak matches from other folders",t=>{
  assert.match(sim[0].path,/retailQueue.ts$/);
  assert.equal(searchContext(index,"comprar PS2",{prefix:scope+"/not-found"}).length,0);
 });
+
+test("functional owner outranks files mentioning a console in passing",()=>{
+ const root="games/lan_house_simulator/src/ui/";
+ const module=(name,content,symbol)=>({
+  path:root+name+".ts",ext:".ts",
+  contextTerms:contextFromSource(content,".ts").terms,
+  contextHeadings:[],
+  symbols:symbol?[{name:symbol,kind:"function",line:1}]:[]
+ });
+ const index={files:[
+  module("shopConsoleProjection",
+   "// Shop aggregates and renders console PS1 controls from many views.\n"+
+   "export function renderShopConsole() {return null;}\n",
+   "renderShopConsole"),
+  module("ps1Controls",
+   "// DOM-only PS1 events.\nexport function installPs1Controls() {}\n",
+   "installPs1Controls"),
+  module("ps1Art","// Draw PS1 console graphics.\nexport function drawPs1() {}\n","drawPs1")
+ ]};
+ const first=searchContext(index,"controles do console PS1",{limit:3});
+ assert.match(first[0].path,/ps1Controls\.ts$/,
+  "Declared action controller should rank ahead of renderers that mention controls");
+ assert.ok(first[0].evidence.some(e=>e.where==="filename"));
+ assert.deepEqual(first,searchContext(index,"controles do console PS1",{limit:3}),
+  "Owner ranking must remain deterministic across repeated searches");
+});
+test("non-specific console questions keep the console term",()=>{
+ const index={files:[{path:"src/consoleManager.ts",contextTerms:{console:2},
+  contextHeadings:[],symbols:[]}]};
+ assert.equal(searchContext(index,"console",{limit:1}).length,1);
+});

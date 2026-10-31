@@ -122,7 +122,11 @@ export function prepareContextSearch(index){
  return prepared;
 }
 export function searchContext(index,query,{prefix="",limit=15}={}){
- const requested=queryTerms(query);
+ const terms=queryTerms(query);
+ // PS1 and PS2 already identify console types. Generic console references
+ // should not outweigh modules that implement the specific behavior.
+ const requested=terms.some(t=>t==="ps1"||t==="ps2")
+  ?terms.filter(t=>t!=="console"):terms;
  const max=Math.min(50,Math.max(1,Number(limit)||15));
  const prepared=prepareContextSearch(index);
  const total=prefix?index.files.reduce((n,f)=>n+(scoped(f.path,prefix)?1:0),0):index.files.length;
@@ -152,11 +156,19 @@ export function searchContext(index,query,{prefix="",limit=15}={}){
    if(!match)continue;
    const {tf,filename,symbol,directory}=match;
    const idf=1+Math.log(1+(total-(df.get(term)??0)+0.5)/((df.get(term)??0)+0.5));
-   score+=idf*(Math.log2(1+tf)*1.8+(filename?5:0)+(symbol?3:0)+(directory?0.6:0));
+   // Names and declared symbols are stronger ownership signals than
+   // words mentioned repeatedly by aggregator or presentation modules.
+   score+=idf*(Math.log2(1+Math.min(tf,8))*1.25+
+    (filename?9:0)+(symbol?5:0)+(directory?0.35:0));
    evidence.push({term,where:filename?"filename":symbol?"symbol":tf?"source":"folder"});
   }
   const matched=matches.size;
-  score*=matched===requested.length?1.55:matched/requested.length;
+  const names=[...matches.values()].filter(m=>m.filename).length;
+  const declarations=[...matches.values()].filter(m=>m.symbol).length;
+  // Reward coherent responsibility rather than pinning particular paths.
+  const ownershipBoost=1+Math.max(0,names-1)*0.32+
+   Math.max(0,declarations-1)*0.14;
+  score*= (matched===requested.length?1.55:matched/requested.length)*ownershipBoost;
   results.push({path:file.path,score:Math.round(score*100)/100,
    matchedTerms:matched,queryTerms:requested.length,evidence,
    symbols:(file.symbols??[]).filter(s=>groupsIn(s.name).some(t=>matches.has(t))).slice(0,5),
