@@ -7,8 +7,7 @@ mkdirSync(resolve(root,"dist"),{recursive:true});
 execFileSync(process.execPath,[resolve(root,"node_modules/typescript/bin/tsc"),"-p",resolve(root,"tsconfig.json")],{cwd:root,stdio:"inherit"});
 // React controls compile to one local, self-contained browser module. No CDN,
 // hydration mismatch, Node runtime, or bundling of the Canvas simulation.
-execFileSync(process.execPath,[
- resolve(root,"node_modules/esbuild/bin/esbuild"),
+execFileSync(resolve(root,"node_modules/esbuild/bin/esbuild"),[
  "src/react/entry.jsx","--bundle","--minify","--format=esm","--target=es2022",
  "--define:process.env.NODE_ENV=\"production\"",
  "--external:./main.js","--outfile=dist/js/react-entry.js"
