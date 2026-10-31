@@ -23,7 +23,8 @@ export function createWindowsLicensePort(getState:()=>GameState):WindowsLicenseP
    const edition=WINDOWS_ERAS.find(w=>w.id===installedWindows(s,index))!;
    const licensed=s.pcWindowsLicenses?.[index]===true;
    return {
-    index,title:"PC "+(index+1)+" · "+(isLinuxPc(s,index)?"Linux ativo (Windows "+edition.name+" preservado)":edition.name)+
+    index,title:"PC "+(index+1)+" · "+(isLinuxPc(s,index)?
+      licensed?"Linux ativo (Windows "+edition.name+" preservado)":"Linux ativo (sem Windows instalado)":edition.name)+
      (licensed?" · Windows licenciado":" · sem licença Windows")+
      (linuxMachineFor(s,index)?" · "+linuxMachineSpec(linuxMachineFor(s,index)!)!.name:""),
     linuxAction:linuxMachineFor(s,index)?{
