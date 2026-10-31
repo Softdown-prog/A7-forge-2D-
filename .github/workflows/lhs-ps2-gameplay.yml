@@ -1,0 +1,45 @@
+name: LHS PS2 integrated gameplay
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lhs-ps2-gameplay.yml'
+permissions:
+  contents: read
+jobs:
+  ps2-gameplay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npm run typecheck && npm run build
+      - run: node --test tests/ps2-*.test.mjs tests/ps1-*.test.mjs
+      - run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Real PS2 app, mobile controls, save reload and procedural games
+        run: node scripts/verify_ps2_gameplay.mjs out/ps2-integrated
+      - name: Seven-day demand and economics in 2006, 2010, 2020 and 2030
+        run: node scripts/audit_ps2_campaign.mjs out/ps2-integrated
+      - name: Existing PS1 real routes, two players and administration
+        run: |
+          node scripts/render_ps1_navigation.mjs out/ps1-regression
+          node scripts/render_ps1_crowded.mjs out/ps1-regression
+          node scripts/render_ps1_admin.mjs out/ps1-regression
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs-ps2-integrated-gameplay
+          path: |
+            games/lan_house_simulator/out/ps2-integrated/
+            games/lan_house_simulator/out/ps1-regression/
+          if-no-files-found: error
+          retention-days: 14

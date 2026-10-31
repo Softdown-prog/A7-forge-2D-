@@ -35,6 +35,8 @@ export interface Customer {
   wallet?: number;
   /** Novas visitas usam o saldo pessoal ao contratar; saves anteriores preservam o comportamento. */
   budgetAware?: boolean;
+  /** Student of the local Linux forum: only wants a real Linux PC. */
+  linuxEnthusiast?:boolean;
   /** Perfil determinístico calculado na entrada; não depende do RNG da simulação. */
   preference?: CustomerPreference;
   desiredItem?: Item | null;
@@ -69,6 +71,10 @@ export interface Customer {
   ps1StationIndex?: number;
   /** 0 = original; 1 = cadeira adicional. Saves antigos assumem 0. */
   ps1SeatIndex?: 0|1;
+  ps2StationIndex?: number;
+  ps2SeatIndex?: 0|1;
+  /** Contract rate captured at checkout, unaffected by later price changes. */
+  consolePaidHourly?: number;
   pcIndex: number | null;
   usedMinutes: number;
   /** Duração contratada na chegada; saves antigos usam 45 minutos. */
@@ -128,6 +134,22 @@ export interface GameState {
   discCopier?: import("./discCopy.js").DiscCopier;
   /** Impressão de documentos no balcão; sem ocupar um PC. */
   printer?: import("./printService.js").PrinterService;
+  /** Tony studies Linux after the March 1999 forum email. */
+  linuxResearchStartedDay?:number;
+  /** Paid six-issue magazine series from the March 1999 forum referral. */
+  linuxMagazineSubscriptionDay?:number;
+  linuxMagazineIssuesReceived?:number;
+  linuxMagazineLastDeliveryDay?:number;
+  /** Visiting postman delivering the next paid printed magazine. */
+  postmanDelivery?:import("./postmanDelivery.js").PostmanDelivery;
+  linuxMailSeenIds?:import("./linuxQuest.js").LinuxMailId[];
+  /** Boot selection is independent of retained Windows licenses. */
+  pcLinuxInstalled?:boolean[];
+  pcOperatingSystems?:import("./linuxQuest.js").PcOperatingSystem[];
+  /** Physical Linux-ready models bought as distinct stations in the shop. */
+  pcLinuxModels?:(import("./linuxMachines.js").LinuxMachineId|null)[];
+  linuxSessions?:number;
+  linuxRevenue?:number;
   /** Nível de hardware por PC, 1 é o computador original. */
   pcTiers?: number[];
   /** Desligamento por estação, ausente em saves antigos = ligado. */
@@ -156,6 +178,11 @@ export interface GameState {
   ps1HourlyPrice?:number;
   ps1Sessions?:number;
   ps1Revenue?:number;
+  ps2Stations?: Array<import("./ps2.js").Ps2Station>;
+  ps2Games?: Partial<Record<import("./ps2.js").Ps2GameId,number>>;
+  ps2HourlyPrice?:number;
+  ps2Sessions?:number;
+  ps2Revenue?:number;
   /** Títulos individuais de 1998/1999, ausentes em saves antigos. */
   licensedEraGames?: import("./eraGames.js").EraGameId[];
   /** Licenças avançadas por estabelecimento (opcional em saves antigos). */

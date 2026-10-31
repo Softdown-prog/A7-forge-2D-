@@ -119,9 +119,9 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  const consoleRoot=$('section-consoles'),discs=consoleRoot.querySelector('.ps1-disc-admin')!;
  const consolePricing=following($('ps1-overview').nextElementSibling!,discs);
  mount('consoles',[
-  {id:'stations',label:'Bancadas',nodes:[$('ps1-stations')]},
-  {id:'pricing',label:'Preço por hora',nodes:consolePricing},
-  {id:'discs',label:'Acervo de CDs',nodes:[discs]}
+  {id:'stations',label:'Bancadas',nodes:[$('ps1-stations'),$('ps2-stations')]},
+  {id:'pricing',label:'Preço por hora',nodes:[...consolePricing,$('ps2-pricing')]},
+  {id:'discs',label:'Jogos PS1 / PS2',nodes:[discs,$('ps2-game-admin')]}
  ]);
  const summary=document.createElement('details');summary.className='management-summary';summary.open=!matchMedia('(max-width:700px)').matches;
  const summaryTitle=document.createElement('summary');summaryTitle.id='management-summary-value';summaryTitle.textContent='Visão geral do negócio';

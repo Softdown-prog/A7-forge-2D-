@@ -2,7 +2,8 @@
  * requisição de rede ou aleatoriedade por quadro. O visitante escolhe um
  * visual por sessão (ID do cliente + estação), com transição discreta. */
 import type {GameState} from "../sim/types.js";
-export type PcScreenActivity="game"|"video"|"browser"|"chat"|"music"|"editor"|"lan";
+import {isLinuxPc} from "../sim/linuxQuest.js";
+export type PcScreenActivity="game"|"video"|"browser"|"chat"|"music"|"editor"|"lan"|"linux-terminal";
 export type PcScreenPixel=(x:number,y:number,w:number,h:number,color:string)=>void;
 const early:readonly PcScreenActivity[]=["game","browser","chat","editor","music"];
 const late:readonly PcScreenActivity[]=["game","video","browser","chat","music","editor"];
@@ -21,6 +22,7 @@ export function pcActivityForSession(customerId:number,pcIndex:number,year:numbe
  * Os PCs dos participantes mostram a mesma partida tática em rede local.
  */
 export function pcActivityForStation(s:GameState,pc:number,year:number):PcScreenActivity|null{
+ if(isLinuxPc(s,pc))return "linux-terminal";
  const customer=s.customers.find(c=>c.pcIndex===pc&&c.stage==="using");
  if(!customer)return null;
  if(customer.nightMeetupDay!==undefined&&
@@ -46,7 +48,20 @@ export function drawPcScreenActivity(
   if(x1>x0&&y1>y0)pixel(x0,y0,x1-x0,y1-y0,color);
  };
  const shift=(t%16)/16,beat=t%8;
- if(activity==="lan"){
+ if(activity==="linux-terminal"){
+  // Terminal original do LHS; real Linux boot mode, no external sprites.
+  r(0,0,1,1,"#112923");r(.02,.03,.96,.12,"#2b604a");
+  r(.09,.072,.33,.029,"#c8f5b6");r(.82,.072,.09,.029,"#7bcf94");
+  for(let i=0;i<5;i++){
+   const width=[.73,.52,.82,.39,.65][i]!;
+   r(.085,.23+i*.125,width,.040,i%2?"#64bf86":"#a0dfaa");
+   r(.10,.275+i*.125,width*.56,.018,"#346d55");
+  }
+  const cursorX=.12+(t%9)*.06;
+  r(.07,.87,.16,.043,"#d4f9af");
+  if(t%4<3)r(Math.min(.91,cursorX),.86,.024,.060,"#f4e8ad");
+  r(.09,.95,.33,.019,"#44896c");
+ }else if(activity==="lan"){
   // Setor Zero: microcena tática original e sincronizada entre monitores.
   // É atividade visual de um mesmo jogo em rede, não um FPS independente.
   r(0,0,1,1,"#152834");r(0,0,1,.16,"#254355");

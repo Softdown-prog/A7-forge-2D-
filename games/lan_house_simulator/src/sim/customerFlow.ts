@@ -8,6 +8,7 @@ import {roomBounds} from "./room.js";
 import {shouldShowCustomerSpeech,SPEECH_COOLDOWN_MINUTES} from "./customerDialogue.js";
 import {crowdRoute} from "./crowdNavigation.js";
 import {stationReadyForSessions} from "./stationPower.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {gpuGamePlayableOnPc,gpuGameHourlyRate} from "./gpuGames.js";
 import {pcCount,entrance,pcPosition} from "./simulationState.js";
 import {setTravel,moveRoute} from "./customerMotion.js";
@@ -34,7 +35,14 @@ export function chooseAvailablePc(s:GameState,c:Customer):number|undefined {
  // conseguem ocupar a máquina enquanto cada amigo aguarda na fila.
  if(c.multiplayerAssignedPc!==undefined){
   const pc=c.multiplayerAssignedPc;
-  return stationReadyForSessions(s,pc)?pc:undefined;
+  return stationReadyForSessions(s,pc)&&!isLinuxPc(s,pc)?pc:undefined;
+ }
+ if(c.linuxEnthusiast){
+  for(let i=0;i<pcCount(s);i++){
+   if(!isLinuxPc(s,i)||isReserved(s,i)||!stationReadyForSessions(s,i))continue;
+   if(navigableRoute(s,{x:c.x,y:c.y},computerSeat(pcPosition(i,s))))return i;
+  }
+  return undefined; // A programmer never purchases a console session instead.
  }
  let fallback:number|undefined,baseQuality=0,baseDistance=0;
  let preferred:number|undefined,bestGain=0;
@@ -96,7 +104,7 @@ export function customerSays(s:GameState,c:Customer,text:string,kind:"complaint"
   s.speechEffects=queueVisualEvent(s.speechEffects,{text,x:c.x,y:c.y,kind});
 }
 export function sendHome(s: GameState, c: Customer): void {
-  c.stage = "leaving"; c.pcIndex = null; c.multiplayerAssignedPc=undefined; c.ps1StationIndex=undefined; c.ps1SeatIndex=undefined; c.queueIndex=undefined;
+  c.stage = "leaving"; c.pcIndex = null; c.multiplayerAssignedPc=undefined; c.ps1StationIndex=undefined; c.ps1SeatIndex=undefined; c.consolePaidHourly=undefined; c.queueIndex=undefined;
   delete c.doorwayYielding;
   delete c.desiredProduct;
   c.stalledMinutes=0;
@@ -109,6 +117,7 @@ export function sendHome(s: GameState, c: Customer): void {
     c.target=door;c.route=[];
     c.nextCrowdRetryMinute=s.totalMinutes;
   }
+  c.ps2StationIndex=undefined;c.ps2SeatIndex=undefined;
 }
 /** Avança cada cliente uma casa quando a primeira posição é liberada. */
 export function refreshCounterQueue(s:GameState):void {
@@ -137,7 +146,7 @@ export function refreshCounterQueue(s:GameState):void {
 
 /** A saída lateral do caixa não cruza a coluna de pessoas aguardando. */
 export function leaveCounterForPc(s:GameState,c:Customer,destination:Point):boolean {
-  if(s.objectPlacements?.some(p=>p.id==="counter"))return setTravel(s,c,destination);
+  if(s.ps2Stations?.length||s.objectPlacements?.some(p=>p.id==="counter"))return setTravel(s,c,destination);
   const outside={x:2.46,y:COUNTER_QUEUE.y},aisle={x:2.46,y:AISLE_Y};
   // Uma divisória em outro cômodo não deve fazer o cliente pago retornar pela
   // coluna da fila. Usar a saída lateral se os dois segmentos forem livres.

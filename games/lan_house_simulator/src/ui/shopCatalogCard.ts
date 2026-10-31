@@ -2,6 +2,7 @@
 import {drawDiscCopier} from "../render/discCopierArt.js";
 import {drawPrinterShop} from "../render/printerArt.js";
 import {drawPs1Station} from "../render/ps1Art.js";
+import {drawLinuxWorkstationPreview} from "../render/linuxWorkstationPreview.js";
 import {iconMarkup,catalogueIcon} from "./presentation.js";
 
 export interface ShopCatalogCardItem {
@@ -27,7 +28,8 @@ export function createShopCatalogCard(
  const card=doc.createElement("article");card.className="shop-card";
  const art=doc.createElement("div");art.className="shop-art";art.dataset.item=item.id;
  art.setAttribute("aria-hidden","true");art.innerHTML=iconMarkup(catalogueIcon(item.id));
- if(item.id==="disc-copier"||item.id==="printer"||item.id==="ps1"){
+ if(item.id==="disc-copier"||item.id==="printer"||item.id==="ps1"||
+    item.id==="linux-lab-99"||item.id==="linux-dev-99"){
   art.replaceChildren();
   if(shopArtwork.has(item.id)){const image=doc.createElement("img");image.src=shopArtwork.get(item.id)!;image.alt="";art.append(image);}
   else{const preview=doc.createElement("canvas");
@@ -36,6 +38,8 @@ export function createShopCatalogCard(
    if(ctx){
     if(item.id==="printer")drawPrinterShop(ctx,640,360);
     else if(item.id==="disc-copier")drawDiscCopier(ctx,640,360);
+    else if(item.id==="linux-lab-99"||item.id==="linux-dev-99")
+     drawLinuxWorkstationPreview(ctx,item.id);
     else{
      ctx.fillStyle="#edf1e7";ctx.fillRect(0,0,640,360);
      const preview={originX:250,originY:125,zoom:1.75};

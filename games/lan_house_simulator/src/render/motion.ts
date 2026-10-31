@@ -1,5 +1,6 @@
 import type {Customer,GameState,Point} from "../sim/types.js";
 import type {RepairJob,CleaningJob} from "../sim/services.js";
+import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {canTraverseLocalStep,localStepValidator} from "../sim/navigation.js";
 import {directionFromDelta,screenViewForMotion,type ActorScreenView} from "./direction.js";
 import {entrance} from "../sim/engine.js";
@@ -18,12 +19,13 @@ export class SceneMotion {
  private customers=new Map<number,Customer>();
  private repairs=new Map<number,RepairJob>();
  private cleaning:CleaningJob|undefined;
+ private postman:PostmanDelivery|undefined;
  private captured=false;
  private strides=new Map<number,{distance:number;view:ActorScreenView}>();
  private repairStrides=new Map<number,WorkerStride>();
  private cleaningStride:WorkerStride|undefined;
  reset():void{
-  this.customers.clear();this.repairs.clear();this.cleaning=undefined;
+  this.customers.clear();this.repairs.clear();this.cleaning=undefined;this.postman=undefined;
   this.captured=false;this.strides.clear();this.repairStrides.clear();this.cleaningStride=undefined;
  }
  /** Same screen-space distance and eight-view facing used for customer strides. */
@@ -81,6 +83,7 @@ export class SceneMotion {
   this.customers=new Map(s.customers.map(c=>[c.id,{...c,target:{...c.target}}]));
   this.repairs=new Map((s.repairJobs??[]).map(j=>[j.pc,{...j}]));
   this.cleaning=s.cleaningJob?{...s.cleaningJob}:undefined;
+  this.postman=s.postmanDelivery?{...s.postmanDelivery}:undefined;
  }
  private position(s:GameState,previous:Point,current:Point,alpha:number):Point{
   // A collision detour can turn around a corner in one minute. Do not draw a
@@ -94,7 +97,21 @@ export class SceneMotion {
   // Uma apresentação visual percorre todos os clientes com as mesmas
   // divisórias. Não refazer roomBounds/portas para cada corpo a cada frame.
   const entry=entrance(s),traverse=localStepValidator(s);
-  return {...s,customers:s.customers.map(c=>{
+  const courier=s.postmanDelivery,previousCourier=this.postman;
+  // Presentation only: short local moves interpolate, but never through walls.
+  const interpolatedCourier=courier?(()=>{
+   const continuous=previousCourier?.issueIndex===courier.issueIndex&&
+     Math.hypot(courier.x-previousCourier.x,courier.y-previousCourier.y)<=.8&&
+     canTraverseLocalStep(s,previousCourier,courier);
+   const dx=continuous?courier.x-previousCourier!.x:0;
+   const dy=continuous?courier.y-previousCourier!.y:0;
+   const moving=!!continuous&&Math.hypot(dx,dy)>.001&&courier.phase!=="handing";
+   const point=continuous?{x:lerp(previousCourier!.x,courier.x,alpha),
+     y:lerp(previousCourier!.y,courier.y,alpha)}:courier;
+   return {...courier,...point,renderMotion:{distance:moving?Math.hypot((dx-dy)*64,(dx+dy)*32)*alpha:0,
+     view:screenViewForMotion(dx,dy,courier.facing),moving}};
+  })():undefined;
+  return {...s,postmanDelivery:interpolatedCourier,customers:s.customers.map(c=>{
    const prev=this.customers.get(c.id)??(this.captured&&c.stage==="arriving"&&
     Math.hypot(c.x-entry.x,c.y-entry.y)<=.8?{...c,...entry}:undefined);
    const stride=this.strides.get(c.id)??{distance:0,view:screenViewForMotion(0,0,c.facing)};
@@ -110,6 +127,10 @@ export class SceneMotion {
    const facing=directionFromDelta(c.x-prev.x,c.y-prev.y,c.facing??prev.facing);
    return {...c,...at,stage,facing,renderMotion,pcIndex:changed&&alpha<1?prev.pcIndex:c.pcIndex,
     poseMinutes:lerp(prev.poseMinutes??0,endPose,alpha),
+    ps1StationIndex:changed&&alpha<1?prev.ps1StationIndex:c.ps1StationIndex,
+    ps1SeatIndex:changed&&alpha<1?prev.ps1SeatIndex:c.ps1SeatIndex,
+    ps2StationIndex:changed&&alpha<1?prev.ps2StationIndex:c.ps2StationIndex,
+    ps2SeatIndex:changed&&alpha<1?prev.ps2SeatIndex:c.ps2SeatIndex,
     // The renderer points the actor along the motion being presented, rather
     // than turning early toward the next simulation waypoint.
     target:{x:c.x,y:c.y}};

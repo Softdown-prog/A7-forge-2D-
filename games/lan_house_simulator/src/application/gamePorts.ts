@@ -39,6 +39,7 @@ import { computerOperationsSnapshot,liveStatusSnapshot } from "./presentationMod
 import { createPricingInsightsPort } from "./pricingInsightsPort.js";
 import { createPricingPort } from "./pricingPort.js";
 import { createPromotionStatusPort } from "./promotionStatusPort.js";
+import {createPs2Port} from "./ps2Port.js";
 import { createPs1ActionsPort } from "./ps1ActionsPort.js";
 import { createPs1AdminPort } from "./ps1AdminPort.js";
 import { createPs1ShopDiscPort } from "./ps1ShopDiscPort.js";
@@ -61,6 +62,7 @@ export function createGamePorts(getState:()=>GameState,cameraForState:(state:Gam
  const layoutEditorPort=createLayoutEditorPort(getState,cameraForState);
  const placementActions=createPlacementActionsPort(getState);
  const ps1Actions=createPs1ActionsPort(getState);
+ const ps2Port=createPs2Port(getState);
  const ps1AdminPort=createPs1AdminPort(getState);
  const ps1ShopDiscPort=createPs1ShopDiscPort(getState);
  const ps1ShopPlacementPort=createPs1ShopPlacementPort(getState);
@@ -105,7 +107,7 @@ export function createGamePorts(getState:()=>GameState,cameraForState:(state:Gam
  const fridayMeetupPort=createFridayMeetupPort(getState);
  const nightTournamentHudPort=createNightTournamentHudPort(getState);
  return {
-  layoutEditorPort,placementActions,ps1Actions,ps1AdminPort,ps1ShopDiscPort,ps1ShopPlacementPort,ps1ShopOfferPort,shopServiceOffersPort,shopCatalogOffersPort,shopOverviewPort,gpuDownloadMetersPort,windowsLicensePort,stationLedgerPort,stationRevisionPort,adminPanelRevisionsPort,monthlyFinancePort,promotionStatusPort,financialBalancePort,financialAdminOverviewPort,staffStatusPort,pricingInsightsPort,hourlyPriceStatusPort,retailPriceStatusPort,deskPricingPort,commerceNetworkPort,pcOperationsPort,lcdMonitorsPort,hardwarePanelPort,gpuCatalogPort,classicGamesCatalogPort,gpuGamesCatalogPort,basicGamesLicenseStatusPort,noticeInboxPort,noticeWindowStatusPort,noticeInboxRevisionPort,eventLogPort,noticeActions,merchandisePort,pricingPort,serviceActions,gameLicensing,stationActions,shopActions,shopCatalogRevisionPort,fridayMeetupPort,nightTournamentHudPort,
+  layoutEditorPort,placementActions,ps2Port,ps1Actions,ps1AdminPort,ps1ShopDiscPort,ps1ShopPlacementPort,ps1ShopOfferPort,shopServiceOffersPort,shopCatalogOffersPort,shopOverviewPort,gpuDownloadMetersPort,windowsLicensePort,stationLedgerPort,stationRevisionPort,adminPanelRevisionsPort,monthlyFinancePort,promotionStatusPort,financialBalancePort,financialAdminOverviewPort,staffStatusPort,pricingInsightsPort,hourlyPriceStatusPort,retailPriceStatusPort,deskPricingPort,commerceNetworkPort,pcOperationsPort,lcdMonitorsPort,hardwarePanelPort,gpuCatalogPort,classicGamesCatalogPort,gpuGamesCatalogPort,basicGamesLicenseStatusPort,noticeInboxPort,noticeWindowStatusPort,noticeInboxRevisionPort,eventLogPort,noticeActions,merchandisePort,pricingPort,serviceActions,gameLicensing,stationActions,shopActions,shopCatalogRevisionPort,fridayMeetupPort,nightTournamentHudPort,
   catalog:SHOP_CATALOG,rules:{wallCost:WALL_COST,annexPcCost:ANNEX_PC_COST},
   status(){const s=getState();return {year:gameYear(s),pcCount:pcCount(s),ps1Count:s.ps1Stations?.length??0,partitionsCount:(s.interiorWalls?.length??0)+(s.interiorDoors?.length??0)};},
   recordResult:(result:ActionResult)=>applyResult(getState(),result),

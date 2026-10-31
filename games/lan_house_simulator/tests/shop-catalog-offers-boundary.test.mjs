@@ -34,10 +34,15 @@ function originalOffer(s,id){
   ownedText:max>0?"Instalados: "+count+" · posições livres: "+availablePlacementSlots(s,id).length:null
  };
 }
-test("os 14 itens mantêm ofertas e dicas exatamente iguais às originais",()=>{
+test("14 produtos antigos mantêm comportamento e duas máquinas Linux são adicionadas",()=>{
  const x=harness(),before=JSON.stringify(x.game);
- assert.equal(SHOP_CATALOG.length,14);
- for(const item of SHOP_CATALOG)assert.deepEqual(x.port.snapshot(item.id),originalOffer(x.game,item.id),item.id);
+ assert.equal(SHOP_CATALOG.length,16);
+ assert.deepEqual(SHOP_CATALOG.filter(item=>item.id.startsWith("linux-")).map(item=>item.id),
+  ["linux-lab-99","linux-dev-99"]);
+ for(const item of SHOP_CATALOG.filter(item=>!item.id.startsWith("linux-")))
+  assert.deepEqual(x.port.snapshot(item.id),originalOffer(x.game,item.id),item.id);
+ for(const id of ["linux-lab-99","linux-dev-99"])
+  assert.equal(x.port.snapshot(id).disabled,true,"six monthly magazines must unlock Linux");
  assert.equal(JSON.stringify(x.game),before);
 });
 test("sem saldo mantém texto de bloqueio e preço sem modificar dinheiro",()=>{

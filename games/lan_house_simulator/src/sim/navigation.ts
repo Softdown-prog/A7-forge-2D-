@@ -2,11 +2,27 @@ import type {GameState,Point} from "./types.js";
 import {roomBounds} from "./room.js";
 import {hallwayRoute} from "./route.js";
 import {editableObjects,objectRect} from "./layoutGeometry.js";
+import {consoleFootprints} from "./consoleLayout.js";
+
+function rectStepClear(objects:ReturnType<typeof objectRect>[],from:Point,to:Point):boolean{
+ const inside=(r:ReturnType<typeof objectRect>,p:Point)=>p.x>r.minX+.005&&p.x<r.maxX-.005&&p.y>r.minY+.005&&p.y<r.maxY-.005;
+ const count=Math.max(1,Math.ceil(Math.hypot(to.x-from.x,to.y-from.y)/.05));
+ return objects.every(r=>{
+  // A legacy visitor inside an object may walk out, never deeper into it.
+  if(inside(r,from))return !inside(r,to)||Math.hypot(to.x-(r.minX+r.maxX)/2,to.y-(r.minY+r.maxY)/2)>
+   Math.hypot(from.x-(r.minX+r.maxX)/2,from.y-(r.minY+r.maxY)/2)+1e-6;
+  for(let i=1;i<=count;i++)if(inside(r,{x:from.x+(to.x-from.x)*i/count,y:from.y+(to.y-from.y)*i/count}))return false;
+  return true;
+ });
+}
+function consoleStepClear(s:GameState,from:Point,to:Point):boolean{
+ return rectStepClear(consoleFootprints(s).map(objectRect),from,to);
+}
 
 /** Free-layout routing uses half-tile cells and tests every connecting segment. */
 function furnishedRoute(s:GameState,from:Point,to:Point):Point[]|null{
  const b=roomBounds(s),step=.5,cols=Math.ceil((b.maxX-b.minX)/step),rows=Math.ceil((b.maxY-b.minY)/step);
- const objects=editableObjects(s).filter(o=>o.surface==="floor").map(objectRect),point=(key:number)=>({x:b.minX+.25+(key%cols)*step,y:b.minY+.25+Math.floor(key/cols)*step});
+ const objects=[...editableObjects(s),...consoleFootprints(s)].filter(o=>o.surface==="floor").map(objectRect),point=(key:number)=>({x:b.minX+.25+(key%cols)*step,y:b.minY+.25+Math.floor(key/cols)*step});
  const traverse=localStepValidator(s);
  const inside=(p:Point)=>p.x>b.minX&&p.x<b.maxX&&p.y>b.minY&&p.y<b.maxY;
  const clear=(p:Point)=>inside(p)&&(Math.hypot(p.x-to.x,p.y-to.y)<.22||objects.every(r=>!(p.x>r.minX-.035&&p.x<r.maxX+.035&&p.y>r.minY-.035&&p.y<r.maxY+.035)));
@@ -48,6 +64,7 @@ export function canTraverseLocalStep(s:GameState,from:Point,to:Point):boolean{
     !Number.isFinite(to.x)||!Number.isFinite(to.y))return false;
  const b=roomBounds(s),eps=0.001;
  if(to.x<b.minX+eps||to.x>b.maxX-eps||to.y<b.minY+eps||to.y>b.maxY-eps)return false;
+ if((s.ps2Stations?.length??0)>0&&!consoleStepClear(s,from,to))return false;
  return !(s.interiorWalls??[]).some(w=>
    !(s.interiorDoors??[]).some(d=>barrierId(w.axis,w.x,w.y)===barrierId(d.axis,d.x,d.y)) &&
    crossesClosedWall(w,from,to));
@@ -61,10 +78,12 @@ export function localStepValidator(s:GameState):(from:Point,to:Point)=>boolean{
  const b=roomBounds(s),eps=.001;
  const doors=new Set((s.interiorDoors??[]).map(d=>barrierId(d.axis,d.x,d.y)));
  const closed=(s.interiorWalls??[]).filter(w=>!doors.has(barrierId(w.axis,w.x,w.y)));
+ const objects=(s.ps2Stations?.length??0)>0?consoleFootprints(s).map(objectRect):[];
  return (from:Point,to:Point):boolean=>{
   if(!Number.isFinite(from.x)||!Number.isFinite(from.y)||
      !Number.isFinite(to.x)||!Number.isFinite(to.y))return false;
   if(to.x<b.minX+eps||to.x>b.maxX-eps||to.y<b.minY+eps||to.y>b.maxY-eps)return false;
+  if(!rectStepClear(objects,from,to))return false;
   return !closed.some(w=>crossesClosedWall(w,from,to));
  };
 }
@@ -75,7 +94,7 @@ function tile(p:Point,b:{minX:number;maxX:number;minY:number;maxY:number}):[numb
          Math.max(b.minY,Math.min(b.maxY-1,Math.floor(p.y)))];
 }
 export function navigableRoute(s:GameState,from:Point,to:Point):Point[]|null{
- if(s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:"))||s.furniturePlacements?.some(p=>p.slotId.startsWith("floor-grid-")))return furnishedRoute(s,from,to);
+ if((s.ps2Stations?.length??0)>0||s.objectPlacements?.some(p=>!p.id.startsWith("built-poster:"))||s.furniturePlacements?.some(p=>p.slotId.startsWith("floor-grid-")))return furnishedRoute(s,from,to);
  const walls=s.interiorWalls??[];
  if(!walls.length)return hallwayRoute(from,to);
  const b=roomBounds(s);

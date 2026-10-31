@@ -1,6 +1,7 @@
 import type {GameState,Result} from "./types.js";
 import {GPU_CATALOG,installedGpu} from "./gpu.js";
 import {WINDOWS_ERAS,installedWindows} from "./eraCatalog.js";
+import {isLinuxPc} from "./linuxQuest.js";
 import {annualHourlyCeiling,isHistorical,sessionPrice,yearFromMinutes} from "./historicalEconomy.js";
 import {stationPowerCount,stationPoweredOn,stationHasCustomer,stationReadyForSessions} from "./stationPower.js";
 import {gamePopularityWeight} from "./gamePopularity.js";
@@ -184,7 +185,7 @@ export function installGpuGameOnAvailablePcs(s:GameState,id:GpuGameId):Result{
 export function gpuGameCompatible(s:GameState,index:number,game:GpuGameSpec):boolean{
  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??(3+s.expansionLevel*2)))+(s.annexPcs?.length??0);
  if(index<0||!Number.isInteger(index)||index>=count)return false;
- if(s.pcWindowsLicenses?.[index]!==true)return false;
+ if(isLinuxPc(s,index)||s.pcWindowsLicenses?.[index]!==true)return false;
  const gpu=installedGpu(s,index);
  const current=GPU_CATALOG.findIndex(x=>x.id===gpu);
  const required=GPU_CATALOG.findIndex(x=>x.id===game.minGpu);

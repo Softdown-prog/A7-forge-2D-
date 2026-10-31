@@ -1,6 +1,7 @@
 import type {GameState,Point,Result} from "./types.js";
 import {availablePlacementSlots,furnitureSlots,shopPrice} from "./shop.js";
 import {annualHourlyCeiling,isHistorical,yearFromMinutes,priceIndex} from "./historicalEconomy.js";
+import {consolePoint,consoleSeat,consoleApproach} from "./consoleLayout.js";
 import {roomBounds} from "./room.js";
 
 /** Marco de design: mistura das antigas locadoras de console com lan houses. */
@@ -113,27 +114,15 @@ export function ps1PlacementLabel(slot:{id:string;x:number;y:number}):string{
 }
 
 export function ps1StationPoint(s:GameState,index:number):Point|null{
- const id=s.ps1Stations?.[index]?.slotId;
- const slot=id&&furnitureSlots(s).find(p=>p.id===id&&p.surface==="floor");
- return slot?{x:slot.x,y:slot.y}:null;
+ return consolePoint(s,"ps1",index);
 }
 export type Ps1SeatNumber=0|1;
 export function ps1Seat(s:GameState,index:number,number:Ps1SeatNumber=0):Point|null{
- const p=ps1StationPoint(s,index),duo=s.ps1Stations?.[index]?.secondSeat===true;
- if(!p||(number===1&&!duo))return null;
- return {x:p.x+(duo?(number===0?.27:.85):.43),y:p.y+.77};
+ return consoleSeat(s,"ps1",index,number);
 }
-/** A cadeira esquerda e a direita têm entradas distintas. */
+/** Each chair keeps its original, independent lateral approach. */
 export function ps1SeatApproach(s:GameState,index:number,number:Ps1SeatNumber=0):Point|null{
- const p=ps1StationPoint(s,index),seat=ps1Seat(s,index,number);
- if(!p||!seat)return null;
- const bounds=roomBounds(s);
- if(s.ps1Stations?.[index]?.secondSeat){
-  const x=number===0?p.x-.35:p.x+1.36;
-  return x>bounds.minX+.22&&x<bounds.maxX-.22?{x,y:seat.y}:null;
- }
- const right=p.x+1.36;
- return {x:right<bounds.maxX-.22?right:p.x-.35,y:seat.y};
+ return consoleApproach(s,"ps1",index,number);
 }
 const ps1SeatOccupied=(s:GameState,index:number,number:Ps1SeatNumber):boolean=>
  s.customers.some(c=>c.ps1StationIndex===index&&

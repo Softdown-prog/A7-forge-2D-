@@ -8,6 +8,7 @@ import { installNoticeControls } from "./noticeControls.js";
 import type { PlacementController } from "./placementController.js";
 import { iconMarkup } from "./presentation.js";
 import { installPricingControls } from "./pricingControls.js";
+import {installPs2Controls} from "./ps2Panels.js";
 import { installPs1Controls } from "./ps1Controls.js";
 import { installRuntimeInteractionBindings } from "./runtimeInteractionBindings.js";
 import type { RuntimeSessionController } from "./runtimeSessionController.js";
@@ -71,6 +72,9 @@ button("close-admin",()=>{state.windows.adminOpen=false;renderUI();});
 button("ps1-open-shop",()=>{
  state.windows.adminOpen=false;state.windows.shopOpen=true;shopPanels?.select("consoles");renderUI();
  (document.querySelector(".ps1-shop-heading")??document.getElementById("shop-catalog"))?.scrollIntoView({block:"start",behavior:"instant"});
+});
+installPs2Controls({admin:document.getElementById("section-consoles"),shop:shopCatalog},ports.ps2Port,result=>{
+ ports.recordResult(result);renderUI();save();
 });
 installPs1Controls({
  stations:document.getElementById("ps1-stations"),

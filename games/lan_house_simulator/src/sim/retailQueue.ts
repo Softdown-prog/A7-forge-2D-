@@ -1,6 +1,7 @@
 import type {GameState,Item,Point} from "./types.js";
 import {purchaseApproach,vendingMachines,placedObject} from "./layout.js";
 import {roomBounds} from "./room.js";
+import {consoleFootprints} from "./consoleLayout.js";
 import {editableObjects,objectRect} from "./layoutGeometry.js";
 import {counterQueueSlot,MAX_COUNTER_QUEUE,CUSTOMER_COLLISION_RADIUS} from "./checkoutQueue.js";
 import {navigableRoute} from "./navigation.js";
@@ -12,10 +13,10 @@ import {entrance} from "./simulationState.js";
 const cache=new WeakMap<GameState,{key:string;slots:Map<Item,Point[]>}>();
 /** Encaixes separados para cada atendimento, sem tomar assentos ou lugares do caixa. */
 export function retailQueueSlots(s:GameState,item:Item):Point[]{
- const key=JSON.stringify([s.expansionLevel,s.roomExtensions,s.installedPcs,s.annexPcs,s.objectPlacements,s.furniture,s.furniturePlacements,s.interiorWalls,s.interiorDoors]);
+ const key=JSON.stringify([s.expansionLevel,s.roomExtensions,s.installedPcs,s.annexPcs,s.objectPlacements,s.furniture,s.furniturePlacements,s.interiorWalls,s.interiorDoors,s.ps1Stations?.map(st=>[st.slotId,st.secondSeat]),s.ps2Stations?.map(st=>[st.slotId,st.secondSeat])]);
  let entry=cache.get(s);if(!entry||entry.key!==key){entry={key,slots:new Map()};cache.set(s,entry);}
  const existing=entry.slots.get(item);if(existing)return existing;
- const goal=purchaseApproach(item,s),b=roomBounds(s),objects=editableObjects(s).filter(o=>o.surface==="floor").map(objectRect);
+ const goal=purchaseApproach(item,s),b=roomBounds(s),objects=[...editableObjects(s),...consoleFootprints(s,true)].filter(o=>o.surface==="floor").map(objectRect);
  const reserved=[...Array.from({length:MAX_COUNTER_QUEUE},(_,i)=>counterQueueSlot(i,s)),...layoutGoals(s).filter(p=>Math.hypot(p.x-goal.x,p.y-goal.y)>.01)];
  const origin=item==="snacks"?placedObject(s,"shelf",{x:b.minX+.23,y:2.92}):vendingMachines(s).find(m=>m.kind===item)!;
  const center={x:origin.x+(item==="snacks"?.23:.33),y:origin.y+(item==="snacks"?.61:.295)},length=Math.hypot(goal.x-center.x,goal.y-center.y),normal={x:(goal.x-center.x)/length,y:(goal.y-center.y)/length};

@@ -27,9 +27,13 @@ import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import {workerMotion} from "./workerMotion.js";
 import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
+import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
-import {ps1StationPoint,ps1Seat,ps1PlayableDisc} from "../sim/ps1.js";
+import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
+import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
+import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
+import {drawPs2Station,drawPs2Controller,ps2ActorGrip} from "./ps2Art.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {premiumCheckerPatch,drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
@@ -127,12 +131,23 @@ export class SceneRenderer {
         s.ps1Stations![i]!.secondSeat===true)});
       }
     }
+    for(let i=0;i<(s.ps2Stations?.length??0);i++){
+      const point=ps2StationPoint(s,i);if(!point)continue;
+      const st=s.ps2Stations![i]!,active=s.customers.some(c=>c.ps2StationIndex===i&&c.stage==="using");
+      entries.push({depth:point.x+point.y+.3,paint:()=>drawPs2Station(ctx,camera,point,
+       st.wear,active,elapsedSeconds,ps2PlayableGame(s,i),!!st.secondSeat,!!st.poweredOff)});
+    }
     for(let i=0;i<BIN_SPOTS.length;i++){
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});
     }
     for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job,elapsedSeconds,"technician",job.progress/job.duration,s)});
     if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j,elapsedSeconds,"cleaner",j.progress/9,s)});}
+    if(s.postmanDelivery){
+      const postal=s.postmanDelivery;
+      entries.push({depth:postal.x+postal.y+.09,
+       paint:()=>this.postman(camera,postal,elapsedSeconds)});
+    }
     for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
@@ -140,8 +155,8 @@ export class SceneRenderer {
     const matchReactions=nightMatchReactions(s);
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
-      const location=seated&&c.ps1StationIndex!==undefined
-        ?ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0)??c:
+      const location=seated&&customerConsole(c)
+        ?customerConsoleSeat(s,c)??c:
           seated&&c.pcIndex!==null?pcPosition(c.pcIndex,s):c;
       entries.push({depth:location.x+location.y+(seated?1.16:0.08),paint:()=>this.customer(camera,c,elapsedSeconds,seated,s,
         matchReactions.find(reaction=>reaction.playerId===c.id))});
@@ -551,6 +566,28 @@ export class SceneRenderer {
     }
     ctx.restore();
   }
+  /** Visiting postman: same actor rig, procedural uniform, visible delivery animation. */
+  private postman(camera:Projection,job:PostmanDelivery,t:number):void{
+    const motion=(job as PostmanDelivery&{renderMotion?:{moving:boolean;distance:number;view:import("./direction.js").ActorScreenView}}).renderMotion;
+    const moving=motion?.moving??job.moving;
+    drawActor(this.ctx,camera,{
+      x:job.x,y:job.y,kind:"postman",id:-31,time:t,
+      pose:job.phase==="handing"?"delivering":moving?"walking":"idle",
+      direction:job.phase==="handing"?"north":job.facing??"north",
+      screenView:job.phase==="handing"?undefined:motion?.view,
+      walkDistance:job.phase==="handing"?undefined:motion?.distance
+    });
+    const pos=iso(job,camera),ctx=this.ctx,z=camera.zoom;
+    const caption=job.phase==="handing"?"ENTREGANDO REVISTA":
+      job.phase==="arriving"?"CARTEIRO · CHEGANDO":"CARTEIRO · SAINDO";
+    ctx.save();ctx.font="700 "+Math.max(9,10*z)+"px system-ui";
+    const w=ctx.measureText(caption).width+10;
+    ctx.fillStyle="rgba(24,42,70,.93)";
+    ctx.fillRect(pos.x-w/2,pos.y-143*z,w,19*z);
+    ctx.fillStyle="#FFE495";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(caption,pos.x,pos.y-133.5*z);
+    ctx.restore();
+  }
   /** Trabalhadores agora usam EXATAMENTE a geometria, câmera e caminhada dos clientes. */
   private worker(camera:Projection,job:RepairJob|CleaningJob,time:number,
     kind:"technician"|"cleaner",progress:number,s:GameState):void{
@@ -678,7 +715,8 @@ export class SceneRenderer {
     const printAt=s?.printer?.lastPrintedMinute??-1,copyAt=s?.discCopier?.lastCopiedMinute??-1;
     // Prioridade ao serviço pago mais recente; ambos os equipamentos animam independente.
     const pose=s&&copyingAnimationActive(s)&&copyAt>=printAt?"copying":
-      s&&printingAnimationActive(s)?"printing":"idle";
+      s&&printingAnimationActive(s)?"printing":
+      s?.postmanDelivery?.phase==="handing"?"receiving":"idle";
     drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,
       direction:(["south","west","north","east"] as const)[r],
       premiumCyber:!!s&&cosmeticAvailable("tony-cyber",yearFromMinutes(s.totalMinutes))});
@@ -692,8 +730,8 @@ export class SceneRenderer {
       c.stage==="shopping" || c.stage==="leaving";
     let pose:ActorPose=moving&&(motion?motion.moving:Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001)?"walking":"idle";
     let transition=1;
-    if(seated && c.ps1StationIndex!==undefined){
-      const seat=ps1Seat(s,c.ps1StationIndex,c.ps1SeatIndex??0);
+    if(seated && customerConsole(c)){
+      const seat=customerConsoleSeat(s,c);
       if(seat){x=seat.x;y=seat.y;pose=c.stage==="standing"?"standing-up":"sitting";
        transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;}
@@ -704,25 +742,36 @@ export class SceneRenderer {
       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
         c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
     }
-    const direction=seated&&c.ps1StationIndex!==undefined?"north":
+    const direction=seated&&customerConsole(c)?"north":
       seated&&c.pcIndex!==null?(["north","east","south","west"] as const)[pcPosition(c.pcIndex,s).rotation??0]:
       // SceneMotion resolves the direction of the *visible* interpolated step.
       // The next waypoint can already be around a corner: do not turn early.
       moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
+    const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
+    const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
+    // Seat-specific PS2 grip must mirror with the actor, not with the TV.
+    const grip=seated&&ps2Point?ps2ActorGrip({x,y},ps2Point,consoleView):undefined;
+    const drawPad=()=>drawPs2Controller(this.ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
+       ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
+    // A controller in front of a back-facing torso must be occluded by the body.
+    const padBehind=consoleView?.startsWith("back");
+    if(seated&&ps2Point&&c.stage==="using"&&padBehind)drawPad();
     drawActor(this.ctx,camera,{
       x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
       pose,direction,transition,walkDistance:motion?.distance,
       reaction:reaction?.kind,
       // Face the current interpolated world step in SCREEN space (2:1 isometric).
-      screenView:seated?undefined:motion?.view??screenViewForMotion(
+      screenView:seated?consoleView:motion?.view??screenViewForMotion(
         pose==="walking"?c.target.x-c.x:0,
         pose==="walking"?c.target.y-c.y:0,direction),
-      gamepad:seated&&c.ps1StationIndex!==undefined&&c.stage==="using",
-      consoleSeat:seated&&c.ps1StationIndex!==undefined,
-      premiumHeadset:seated&&c.pcIndex!==null&&c.ps1StationIndex===undefined&&
+      gamepad:seated&&customerConsole(c)!==null&&c.stage==="using",
+      modernGamepad:c.ps2StationIndex!==undefined,gamepadGrip:grip,
+      consoleSeat:seated&&customerConsole(c)!==null,
+      premiumHeadset:seated&&c.pcIndex!==null&&!customerConsole(c)&&
        cosmeticAvailable("headset-rgb-neon",yearFromMinutes(s.totalMinutes))&&
        headsetOnSession(c.id,c.pcIndex)
     });
+    if(seated&&ps2Point&&c.stage==="using"&&!padBehind)drawPad();
     if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
       drawPs1Controller(this.ctx,camera,{x,y},t,c.ps1SeatIndex??0);
     if(seated && c.pcIndex!==null){

@@ -7,7 +7,7 @@ import {pcCount} from "./simulationState.js";
  * permaneceu constante durante ampliações no meio do mês. */
 export function recordComputerUtilization(s:GameState):void{
  const count=pcCount(s);
- const occupied=s.customers.filter(c=>c.stage==="using").length;
+ const occupied=s.customers.filter(c=>c.stage==="using"&&c.ps1StationIndex===undefined&&c.ps2StationIndex===undefined).length;
  s.monthPcUsedMinutes=(s.monthPcUsedMinutes??0)+Math.min(count,occupied);
  s.monthPcCapacityMinutes=(s.monthPcCapacityMinutes??0)+count;
 }

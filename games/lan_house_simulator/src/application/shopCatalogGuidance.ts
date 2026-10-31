@@ -1,14 +1,18 @@
 import type {GameState} from "../sim/types.js";
 import {annexComputerSlots,availableAnnexComputers} from "../sim/stations.js";
+import {linuxMachineSpec} from "../sim/linuxMachines.js";
+import {linuxUnlocked} from "../sim/linuxQuest.js";
 import {MAX_EXTENSION_LEVEL} from "../sim/room.js";
 
 /** Explica as compras sem alterar o estado da partida. */
 export function shopPlacementStatus(s:GameState,id:string):string|null{
  const cap=3+s.expansionLevel*2;
  const installed=Math.max(3,Math.min(cap,s.installedPcs??cap));
- if(id==="computer"){
+ if(id==="computer"||linuxMachineSpec(id)){
+  const intro=linuxMachineSpec(id)?
+   (linuxUnlocked(s)?"Linux pronto para uso. Modelo físico próprio; não substitui computadores Windows. ":"Assine a revista do Fórum Linux, receba seis edições e estude até outubro de 1999. "):"";
   const free=cap-installed;
-  return "Área principal: "+installed+"/"+cap+" PCs · "+free+
+  return intro+"Área principal: "+installed+"/"+cap+" PCs · "+free+
    (free===1?" vaga livre.":" vagas livres.")+
    (free===0?" Amplie a área principal para liberar mais duas.":" A posição é definida automaticamente.");
  }
@@ -35,7 +39,7 @@ export function shopPlacementStatus(s:GameState,id:string):string|null{
 }
 export function shopPurchaseButtonText(id:string,full:boolean,poor:boolean,price:number,isFurniture=false):string{
  if(full){
-  if(id==="computer")return "Sem vaga na área principal";
+  if(id==="computer"||linuxMachineSpec(id))return "Sem vaga na área principal";
   if(id==="computer-annex")return "Sem vaga na ampliação";
   if(id==="expand")return "Limite da área principal";
   if(id.startsWith("extend-"))return "Limite nesta direção";
@@ -43,6 +47,7 @@ export function shopPurchaseButtonText(id:string,full:boolean,poor:boolean,price
  }
  if(poor)return "Caixa insuficiente · R$ "+price;
  if(id==="computer")return "Instalar PC · R$ "+price;
+ if(linuxMachineSpec(id))return "Comprar estação Linux · R$ "+price;
  if(id==="computer-annex")return "Escolher vaga · R$ "+price;
  if(id==="expand"||id.startsWith("extend-"))return "Ampliar · R$ "+price;
  return "Comprar · R$ "+price;
