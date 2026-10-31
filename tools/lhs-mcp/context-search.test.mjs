@@ -42,7 +42,7 @@ test("normalizes camelCase, accents and simple bilingual domain terms",()=>{
 });
 test("ranks by purpose and returns scoped evidence",t=>{
  const {root}=fixture(t),index=buildIndex(root,{scope});
- assert.equal(index.schemaVersion,4);
+ assert.equal(index.schemaVersion,5);
  const consoles=searchContext(index,"comprar PS2");
  assert.ok(consoles.length>0);
  assert.match(consoles[0].path,/ps2Shop\.ts$/);

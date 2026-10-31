@@ -36,7 +36,7 @@ function fixture(t){
 test("resolve TS paths from JS specifiers and find reverse dependents",t=>{
  const {root}=fixture(t),index=buildIndex(root,{scope});
  const types=scope+"/src/sim/types.ts",engine=scope+"/src/sim/engine.ts",panel=scope+"/src/ui/panel.ts";
- assert.equal(index.schemaVersion,4);
+ assert.equal(index.schemaVersion,5);
  assert.deepEqual(directDependencies(index,engine).dependencies,[types]);
  assert.deepEqual(directDependencies(index,panel).dependencies,[engine]);
  assert.deepEqual(directDependents(index,engine),[panel]);

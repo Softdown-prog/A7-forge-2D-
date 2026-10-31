@@ -24,7 +24,25 @@ const groups=[
  ["mail","correio","carta","cartas","mail","postal","inbox"],
  ["weather","clima","weather","chuva","rain"],
  ["render","desenho","render","rendering","canvas","draw"],
- ["admin","administracao","admin","management","gerenciamento"]
+ ["admin","administracao","admin","management","gerenciamento"],
+ ["license","licenca","licencas","licenciamento","license","licenses","licensing"],
+ ["computer","computador","computadores","pc","pcs","computer","computers"],
+ ["maintenance","manutencao","manter","reparar","reparo","maintenance","repair","service","servicing"],
+ ["wear","desgaste","desgastado","wear","degradation","depreciation"],
+ ["hardware","hardware","equipamento","equipamentos","peca","pecas","componentes","device","devices"],
+ ["supplier","fornecedor","fornecedores","supplier","suppliers","vendor","vendors"],
+ ["reputation","reputacao","avaliacao","reputation","rating","satisfacao","satisfaction"],
+ ["panel","painel","paineis","panel","panels","dashboard","hud"],
+ ["settings","configuracao","configuracoes","preferencias","preferences","settings","options","opcoes"],
+ ["night","corujao","madrugada","noturno","noite","overnight","night"],
+ ["cookie","cookie","cookies"],
+ ["donation","doacao","doacoes","donation","donations","donate"],
+ ["network","fibra","optica","fiber","fibre"],
+ ["marketing","campanha","campanhas","divulgacao","promocao","marketing","campaign","advertising"],
+ ["console","console","consoles","videogame","videogames"],
+ ["pricing","precificacao","tarifa","tarifas","pricing","pricecap","teto"],
+ ["mail","carteiro","correspondencia","correspondencias","courier","postman","delivery"],
+ ["game","jogo","jogos","game","games","gaming"]
 ];
 const aliases=new Map();
 for(const [canonical,...words] of groups)for(const w of words)aliases.set(w,canonical);

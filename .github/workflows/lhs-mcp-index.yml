@@ -36,9 +36,9 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: out/lhs-mcp-cache/catalog.json
-          key: lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          key: lhs-mcp-v5-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-
+            lhs-mcp-v5-${{ runner.os }}-${{ github.ref_name }}-
       - name: Generate machine-readable repository index
         shell: bash
         run: |
@@ -73,10 +73,19 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: out/lhs-mcp-cache/catalog.json
-          key: lhs-mcp-v4-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          key: lhs-mcp-v5-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
       - name: Verify live MCP tools against checked out game
         if: ${{ inputs.scope != 'game' }}
         run: node tools/lhs-mcp/smoke.mjs
+      - name: Benchmark contextual search at 10k and 15k simulated files
+        run: node --expose-gc tools/lhs-mcp/benchmark.mjs --output out/lhs-mcp-benchmark/results.json
+      - name: Upload contextual benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-benchmark
+          path: out/lhs-mcp-benchmark/results.json
+          retention-days: 30
+          if-no-files-found: error
       - name: Upload indexed files, symbols and summary
         uses: actions/upload-artifact@v4
         with:

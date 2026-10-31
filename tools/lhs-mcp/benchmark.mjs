@@ -44,7 +44,7 @@ function syntheticIndex(size){
   files.push(f);
  }
  for(let i=0;i<cases.length;i++){
-  const item=cases[i],at=100+i*1031;
+  const item=cases[i],at=100+i*Math.floor((size-200)/(cases.length+1));
   if(at>=size)throw Error("Fixture position out of range");
   files[at]=makeEntry(
    "games/lan_house_simulator/src/"+(i%2?"sim":"ui")+"/"+item.name+".ts",
