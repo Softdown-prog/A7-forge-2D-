@@ -9,8 +9,9 @@ export function shopCategory(id:string):string{
 }
 export function installShopPanels(shop:HTMLElement,onChange:()=>void){
  let current='equipment';
- const nav=shop.querySelector<HTMLElement>('#react-shop-categories');
- if(!nav)throw new Error('React shop navigation is missing');
+ const element=shop.querySelector<HTMLElement>('#react-shop-categories');
+ if(!element)throw new Error('React shop navigation is missing');
+ const nav:HTMLElement=element;
  const help=Array.from(shop.querySelectorAll('.shop-organize-help'));
  const details=document.createElement('details'),summary=document.createElement('summary');
  summary.textContent='Como ampliar e reorganizar';details.className='shop-guide';
