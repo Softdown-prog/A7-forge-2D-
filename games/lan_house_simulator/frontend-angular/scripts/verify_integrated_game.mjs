@@ -46,7 +46,7 @@ let browser;
 const reports=[];
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
- for(const width of [1280,414]){
+ for(const width of [1280,414,360]){
   const mobile=width<700;
   const context=await browser.newContext({viewport:{width,height:900},isMobile:mobile,hasTouch:mobile});
   const fixture=createGame(2200+width,'historical');
@@ -138,8 +138,60 @@ try{
    ps2Stations:restored.ps2Stations.length,cash:restored.cash,runtimeErrors:errors.length});
   await context.close();
  }
- await writeFile(resolve(output,'results.json'),JSON.stringify({reports,passed:true},null,2));
- console.log('Integrated LHS Angular QA:',JSON.stringify(reports));
+
+ // Real engine eligibility tests: no fabricated Angular DTOs or purchase events.
+ const blocked=[];
+ for(const scenario of [
+  {year:2002,cash:15000,width:1280,reason:'PS2 not released'},
+  {year:2006,cash:0,width:414,reason:'Insufficient cash'}
+ ]){
+  const mobile=scenario.width<700;
+  const context=await browser.newContext({
+   viewport:{width:scenario.width,height:900},isMobile:mobile,hasTouch:mobile
+  });
+  const state=createGame(3200+scenario.year+scenario.width,'historical');
+  state.totalMinutes=(scenario.year-1998)*360*DAY_MINUTES+35;
+  state.cash=scenario.cash;state.pcPoweredOff=[true,true,true];
+  state.offlineUntil=state.totalMinutes+500;
+  await context.addInitScript(({key,save})=>{
+   if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(save));
+   localStorage.setItem('lhs.sound','off');
+   localStorage.setItem('lhs.privacy-choice.v1',JSON.stringify({version:1,choice:'rejected',at:Date.now()}));
+  },{key:GAME_SAVE_KEY,save:state});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  const press=async target=>mobile?target.tap():target.click();
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+  await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
+  await press(page.locator('#menu-continue'));
+  await press(page.locator('#open-shop'));
+  await press(page.locator('[data-shop-category="consoles"]'));
+  const shop=page.locator('.angular-console-shop');
+  await shop.waitFor();
+  const ps1=shop.locator(':scope > article.shop-card').first().locator('button');
+  const ps2=shop.locator(':scope > article.shop-card').nth(1).locator('button');
+  assert.equal(await ps2.isDisabled(),true,scenario.reason+' must block PS2');
+  assert.equal(await ps1.isDisabled(),scenario.cash===0,'PS1 cash gate');
+  // Native disabled buttons cannot trigger purchases, even programmatically.
+  await page.evaluate(()=>{
+   const buttons=Array.from(document.querySelectorAll('.angular-console-shop > article.shop-card button'));
+   for(const button of buttons)if(button.disabled)button.click();
+  });
+  const current=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+  assert.equal(current.ps1Stations?.length??0,0,'No locked PS1 purchase');
+  assert.equal(current.ps2Stations?.length??0,0,'No locked PS2 purchase');
+  assert.deepEqual(errors,[],'No runtime errors in locked shop');
+  await page.screenshot({
+   path:resolve(output,'locked-'+scenario.year+'-'+scenario.width+'.png'),
+   fullPage:true
+  });
+  blocked.push({year:scenario.year,cash:scenario.cash,width:scenario.width,
+   ps1Disabled:await ps1.isDisabled(),ps2Disabled:await ps2.isDisabled()});
+  await context.close();
+ }
+ await writeFile(resolve(output,'results.json'),JSON.stringify({reports,blocked,passed:true},null,2));
+ console.log('Integrated LHS Angular QA:',JSON.stringify({reports,blocked}));
 }finally{
  await browser?.close();
  await new Promise(done=>server.close(done));

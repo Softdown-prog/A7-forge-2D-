@@ -123,5 +123,9 @@ O Canvas, os ports TypeScript de compra e o armazenamento são os originais.
 
 Com um save real de 2006, verifica compras de bancada PS1, CD PS1, bancada
 PS2 e jogo PS2, incluindo posição, cobrança e persistência ao recarregar.
-Executa Chromium desktop (1280px) e mobile touch (414px), gerando screenshots
+Executa Chromium desktop (1280px) e mobile touch (414px e 360px), gerando screenshots
 e JSON. Não substitui homologação de toda a interface para o corte final.
+
+Inclui cenários reais de bloqueio: PS2 indisponível em 2002 e compra
+indisponível sem caixa em 2006, verificando que nenhum console foi adquirido
+por cliques programáticos em controles desabilitados.
