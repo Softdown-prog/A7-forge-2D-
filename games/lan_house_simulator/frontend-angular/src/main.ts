@@ -10,6 +10,7 @@ import {
 } from './components';
 import {ComputerWorkspaceComponent,ServiceWorkspaceComponent} from './workspaces';
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
+import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -31,6 +32,20 @@ async function mountUi():Promise<void> {
     const ref=createComponent(component,{environmentInjector:app.injector,hostElement:host});
     app.attachView(ref.hostView);
     // Original DOM controllers expect stable button IDs before bootstrap.
+    ref.changeDetectorRef.detectChanges();
+  }
+  // These two components will replace their legacy markup at final cutover.
+  // In the current game document they have no host, so there are no duplicate
+  // save/input IDs and the React production UI keeps working untouched.
+  const futureMenuIslands=[
+    ['angular-save-transfer',SaveTransferComponent],
+    ['angular-menu-preferences',MenuPreferencesComponent]
+  ] as const;
+  for(const [id,component] of futureMenuIslands){
+    const host=document.getElementById(id);
+    if(!host)continue;
+    const ref=createComponent(component,{environmentInjector:app.injector,hostElement:host});
+    app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
   }
   document.documentElement.dataset.uiFramework='angular';

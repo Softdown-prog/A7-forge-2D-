@@ -52,3 +52,37 @@ test('Angular preview cannot accidentally replace the current React runtime',()=
   assert.match(file('scripts/build.mjs'),/src\/react\/entry\.jsx/);
   assert.match(file('src/bootstrap/bootstrapGame.ts'),/dataset\.gameReady="true"/);
 });
+
+test('Angular menu settings and save transfer preserve native TypeScript contracts',()=>{
+  const entry=file(root+'src/main.ts');
+  const components=file(root+'src/menu-save-controls.ts');
+  const preferences=file(root+'src/templates/menu-preferences.html');
+  const transfer=file(root+'src/templates/save-transfer.html');
+  const legacy=file('index.html');
+  const menuPort=file('src/ui/gameMenuControls.ts');
+  const savePort=file('src/ui/saveFileControls.ts');
+  for(const id of ['menu-settings','option-sound']){
+    assert.match(preferences,new RegExp('id="'+id+'"'));
+    assert.match(legacy,new RegExp('id="'+id+'"'));
+  }
+  for(const id of ['save-export','save-import','save-import-file','save-message']){
+    assert.match(transfer,new RegExp('id="'+id+'"'));
+    assert.match(legacy,new RegExp('id="'+id+'"'));
+  }
+  assert.match(entry,/angular-save-transfer/);
+  assert.match(entry,/angular-menu-preferences/);
+  assert.match(file(root+'src/index.html'),/id="angular-save-transfer"/);
+  assert.match(file(root+'src/index.html'),/id="angular-menu-preferences"/);
+  assert.match(menuPort,/roots.soundToggle.addEventListener\("change"/);
+  assert.match(menuPort,/roots.settingsPanel.hidden/);
+  assert.match(savePort,/importFile.addEventListener\("change"/);
+  assert.match(savePort,/exportButton.addEventListener\("click"/);
+  assert.match(savePort,/importFile.click\(\)/);
+  assert.match(transfer,/type="file"/);
+  assert.match(transfer,/application\/json/);
+  assert.match(transfer,/aria-live="polite"/);
+  assert.doesNotMatch(components,/localStorage|new Blob|FileReader|importText|exportSnapshot|setSound/);
+  assert.doesNotMatch(components,/from ['"][^'"]*\/(?:sim|render|application|bootstrap)\//);
+  // Old game index must not mount Angular's duplicate control IDs yet.
+  assert.doesNotMatch(legacy,/id="angular-(?:save-transfer|menu-preferences)"/);
+});

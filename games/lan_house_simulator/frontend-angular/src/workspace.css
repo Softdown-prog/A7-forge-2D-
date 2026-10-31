@@ -53,3 +53,16 @@ html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
   touch-action:pan-x;scroll-snap-type:x proximity;padding:6px 6px 10px}
  #admin .angular-admin-tab{flex:0 0 120px;min-height:48px;scroll-snap-align:start}
 }
+
+/* Isolated Angular menu preview. The real game's CSS owns production styling. */
+.angular-menu-transfer-preview{max-width:550px;margin:16px auto;padding:12px}
+.angular-menu-transfer-preview .save-actions{display:flex;flex-wrap:wrap;gap:8px}
+.angular-menu-transfer-preview .save-actions button{min-height:44px}
+.angular-menu-transfer-preview .save-message{font-size:12px;line-height:1.5}
+.angular-menu-transfer-preview .sound-option{display:flex;align-items:center;gap:10px}
+.angular-menu-transfer-preview .sound-option input{min-width:22px;min-height:22px}
+.angular-menu-transfer-preview .sound-option small{display:block}
+@media(max-width:600px){
+ .angular-menu-transfer-preview .save-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .angular-menu-transfer-preview .save-actions button{min-width:0}
+}

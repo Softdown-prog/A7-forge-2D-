@@ -20,6 +20,10 @@ O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estát
 - Nenhuma regra de preços, disponibilidade, estoque, saves, clientes, animação, Canvas, renderização ou ciclo do jogo pode ser reimplementada em Angular.
 - IDs existentes permanecem idênticos, inclusive os nomes legados react-*, porque muitos adaptadores e testes ainda dependem deles. A renomeação será feita com mudança coordenada dos contratos.
 
+## Menu e transferência de partidas
+
+A apresentação de opções (efeitos sonoros) e importação/exportação de partidas também foi implementada em componentes Angular isolados. As interfaces TypeScript `installMenuControls` e `installSaveFileControls` continuam responsáveis pelas ações, confirmação, persistência e leitura de arquivo. O arquivo atual `index.html` segue usando seus controles originais até a conversão final; os hosts `angular-save-transfer` e `angular-menu-preferences` ficam apenas no documento de prévia enquanto não for possível retirar o React do jogo sem quebra.
+
 ## Próximas etapas
 
 1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.
