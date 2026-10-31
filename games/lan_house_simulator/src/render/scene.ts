@@ -721,7 +721,10 @@ export class SceneRenderer {
     const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
     const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
     const pad=ps2Point?ps2ControllerAnchor({x,y},ps2Point):null;
-    const grip=pad?{x:(pad.point.x-x-pad.point.y+y)*64,y:(pad.point.x-x+pad.point.y-y)*32-pad.height}:undefined;
+    // ActorArt mirrors screen-left poses; counter-mirror the world-space grip
+    // so both hands remain aligned with the physical PS2 controller.
+    const grip=pad?{x:(pad.point.x-x-pad.point.y+y)*64*(consoleView?.endsWith("-left")?-1:1),
+      y:(pad.point.x-x+pad.point.y-y)*32-pad.height}:undefined;
     const drawPad=()=>drawPs2Controller(this.ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
        ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
     // A controller in front of a back-facing torso must be occluded by the body.
