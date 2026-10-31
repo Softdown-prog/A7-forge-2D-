@@ -27,6 +27,7 @@ import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import {workerMotion} from "./workerMotion.js";
 import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
+import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
 import {ps1StationPoint,ps1Seat,ps1PlayableDisc} from "../sim/ps1.js";
@@ -133,6 +134,11 @@ export class SceneRenderer {
     }
     for(const job of s.repairJobs??[])entries.push({depth:job.x+job.y+.9,paint:()=>this.worker(camera,job,elapsedSeconds,"technician",job.progress/job.duration,s)});
     if(s.cleaningJob){const j=s.cleaningJob;entries.push({depth:j.x+j.y+.9,paint:()=>this.worker(camera,j,elapsedSeconds,"cleaner",j.progress/9,s)});}
+    if(s.postmanDelivery){
+      const postal=s.postmanDelivery;
+      entries.push({depth:postal.x+postal.y+.09,
+       paint:()=>this.postman(camera,postal,elapsedSeconds)});
+    }
     for(const wall of s.interiorWalls??[])
       entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
     for(const door of s.interiorDoors??[])
@@ -549,6 +555,28 @@ export class SceneRenderer {
         ctx.fillStyle="#E6B45A";ctx.fillRect(-9*z,-23*z,18*z,3*z);
       }
     }
+    ctx.restore();
+  }
+  /** Visiting postman: same actor rig, procedural uniform, visible delivery animation. */
+  private postman(camera:Projection,job:PostmanDelivery,t:number):void{
+    const motion=(job as PostmanDelivery&{renderMotion?:{moving:boolean;distance:number;view:import("./direction.js").ActorScreenView}}).renderMotion;
+    const moving=motion?.moving??job.moving;
+    drawActor(this.ctx,camera,{
+      x:job.x,y:job.y,kind:"postman",id:-31,time:t,
+      pose:job.phase==="handing"?"delivering":moving?"walking":"idle",
+      direction:job.phase==="handing"?"north":job.facing??"north",
+      screenView:job.phase==="handing"?undefined:motion?.view,
+      walkDistance:job.phase==="handing"?undefined:motion?.distance
+    });
+    const pos=iso(job,camera),ctx=this.ctx,z=camera.zoom;
+    const caption=job.phase==="handing"?"ENTREGANDO REVISTA":
+      job.phase==="arriving"?"CARTEIRO · CHEGANDO":"CARTEIRO · SAINDO";
+    ctx.save();ctx.font="700 "+Math.max(9,10*z)+"px system-ui";
+    const w=ctx.measureText(caption).width+10;
+    ctx.fillStyle="rgba(24,42,70,.93)";
+    ctx.fillRect(pos.x-w/2,pos.y-143*z,w,19*z);
+    ctx.fillStyle="#FFE495";ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.fillText(caption,pos.x,pos.y-133.5*z);
     ctx.restore();
   }
   /** Trabalhadores agora usam EXATAMENTE a geometria, câmera e caminhada dos clientes. */
