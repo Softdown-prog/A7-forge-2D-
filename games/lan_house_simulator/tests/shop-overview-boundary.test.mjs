@@ -114,7 +114,7 @@ test("o render mantém seletores, estado e rótulos dos elementos",()=>{
   getElementById:id=>{requested.push(id);return nodes[id]??null;}
  };
  renderShopOverview(view,doc);
- assert.deepEqual(requested,["#organize-furniture","#demolish-walls","shop-cash"]);
+ assert.deepEqual(requested,["angular-shop-overview","#organize-furniture","#demolish-walls","shop-cash"]);
  assert.equal(nodes["#organize-furniture"].disabled,false);
  assert.equal(nodes["#organize-furniture"].textContent,view.organizeText);
  assert.equal(nodes["#demolish-walls"].disabled,true);
@@ -142,4 +142,16 @@ test("a interface não conhece o motor e main conserva os handlers",()=>{
  assert.match(sourceModule("ui/runtimeControls.ts"),/button\("organize-furniture",\(\)=>layoutEditor\.open\(\)\)/);
  assert.match(sourceModule("ui/runtimeControls.ts"),/button\("demolish-walls"/);
  assertCompositionAdaptersExclude(/\broomBounds\b|\bwallZoneCount\b/);
+});
+
+test("Angular shop host prevents competing legacy writes to overview buttons",()=>{
+ const view=createHarness().port.snapshot();
+ const touched=[];
+ const host={};
+ const fake={
+  getElementById:id=>{touched.push(id);return id==="angular-shop-overview"?host:null;},
+  querySelector:selector=>{touched.push(selector);return null;}
+ };
+ renderShopOverview(view,fake);
+ assert.deepEqual(touched,["angular-shop-overview"]);
 });

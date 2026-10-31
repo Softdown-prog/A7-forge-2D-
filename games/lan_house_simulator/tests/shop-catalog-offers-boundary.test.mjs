@@ -174,7 +174,10 @@ test("UI continua sem dependência do motor e as compras usam controlador",()=>{
  assert.match(sourceModule("application/gamePorts.ts"),/createShopCatalogOffersPort\(getState,\(\)=>placementActions\.availableAnnex\(\)\.length\)/);
  assert.match(sourceModule("ui/gamePanels.ts"),/offer:id=>shopCatalogOffersPort\.snapshot\(id\)/);
  assert.match(catalog,/renderShopCatalogOfferButton\(button,offer\)/);
- assert.match(catalog,/renderShopServiceOffer\(button,options\.service\(item\.id\)\)/);
+ assert.match(catalog,/const serviceOffer=item\.id==="printer"\|\|item\.id==="disc-copier"/);
+ assert.match(catalog,/\?options\.service\(item\.id\):null/);
+ assert.match(catalog,/if\(serviceOffer\)renderShopServiceOffer\(button,serviceOffer\)/);
+ assert.match(catalog,/regularShopCardView\(item,offer,serviceOffer,artworkSrc\)/);
  assert.match(catalog,/renderPs1ShopOfferButton\(button,options\.ps1Offer\(\)\)/);
  assert.match(controls,/port\.purchase\(id,ps1Slot\)/);
 });

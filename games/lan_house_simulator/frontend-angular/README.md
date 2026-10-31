@@ -93,3 +93,11 @@ foi modificada. Falta testar interação real no navegador/mobile antes da ativa
 5. Validar mobile 360/414px, teclado, toque, compra, estoque, PS1/PS2, saves, Firebase e deploy Cloudflare. Somente depois remover React e código morto.
 
 O PR preliminar foi **fechado sem merge**. Continuar somente na branch de migração; não abrir novo PR até 100% de paridade e autorização explícita. Não mesclar por aparência ou pelo simples fato de Angular compilar.
+
+## Limites cobertos pelos testes de fronteira
+
+Os contratos de correio, loja e serviços verificam snapshots de leitura
+reutilizados entre a interface Angular e o DOM original. A redação dos testes
+acompanha a separação em duas camadas sem omitir o fallback legado. Os testes do
+cabeçalho também confirmam que o Angular não recebe alterações simultâneas
+do renderizador legado.

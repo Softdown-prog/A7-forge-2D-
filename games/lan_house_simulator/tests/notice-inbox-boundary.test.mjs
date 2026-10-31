@@ -99,6 +99,9 @@ test("porta não usa DOM; UI não usa GameState; listeners permanecem no bootstr
  assert.ok(sourceModule("application/gamePorts.ts").includes("createNoticeInboxPort(getState)"));
  const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("createNoticeWindowRefresh({"));
- assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
+ assert.match(refresh,/const snapshot=options\.inbox\.snapshot\(\)/);
+ assert.match(refresh,/sendEvent\("lhs:notice-inbox-updated",snapshot\)/);
+ assert.match(refresh,/if\(host\.dataset\?\.angularOwned!=="true"\)/);
+ assert.match(refresh,/renderNoticeInbox\(host,snapshot,options\.doc,options\.iconMarkup\)/);
  assert.ok(sourceModule("ui/runtimeControls.ts").includes("installNoticeControls(noticesList,noticeActions"));
 });

@@ -116,7 +116,10 @@ test("fronteira: render sem motor; compra permanece delegada",()=>{
  assert.doesNotMatch(ui,/\bGameState\b|quotePrinter|quoteDiscCopier|buyPrinter|buyDiscCopier/);
  assert.match(sourceModule("application/gamePorts.ts"),/createShopServiceOffersPort\(getState\)/);
  assert.match(sourceModule("ui/gamePanels.ts"),/service:id=>shopServiceOffersPort\.snapshot\(id\)/);
- assert.match(catalog,/renderShopServiceOffer\(button,options\.service\(item\.id\)\)/);
+ assert.match(catalog,/const serviceOffer=item\.id==="printer"\|\|item\.id==="disc-copier"/);
+ assert.match(catalog,/\?options\.service\(item\.id\):null/);
+ assert.match(catalog,/if\(serviceOffer\)renderShopServiceOffer\(button,serviceOffer\)/);
+ assert.match(catalog,/regularShopCardView\(item,offer,serviceOffer,artworkSrc\)/);
  assertCompositionAdaptersExclude(/\bquotePrinter\b|\bquoteDiscCopier\b/);
  assert.match(shop,/port\.purchase\(id,ps1Slot\)/);
 });
