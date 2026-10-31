@@ -231,3 +231,21 @@ O vocabulário v8 distingue `arte`/`artwork` de simulação. Para
 perguntas mais longas, bônus pelo nome exato do módulo só são aplicados
 quando ele também corresponde a todos os conceitos pedidos. Isso evita
 que regras do PS2 sejam privilegiadas em pesquisas por arte.
+
+## Consulta de funcionalidade e dependentes (grafo)
+
+A ferramenta MCP **`trace_feature`** combina `search_context` com os
+imports TS/JS relativos resolvidos em `dependencies`. Retorna até 15
+candidatos ordenados por relevância lexical e um ajuste estrutural limitado,
+separando `directDependencies` (arquivos que o candidato importa),
+`directDependents` (quem o importa), totais e relações com outros
+candidatos relevantes. Também mostra `topCandidateImpact`, com alcance
+indireto limitado a três saltos e 30 resultados.
+
+O resultado `graphHint` pode sugerir `potential-provider`,
+`potential-consumer`, `intermediary` ou evidência insuficiente. Uma
+importação prova apenas uma referência estática, **não** que o arquivo é o
+único responsável por uma funcionalidade; inspeção do fonte e testes
+continuam necessários. O gráfico em memória é preparado uma vez por
+objeto de índice via `WeakMap`, sem persistência e sem execuções de código.
+A ferramenta é somente leitura e mantém as restrições de escopo do índice.

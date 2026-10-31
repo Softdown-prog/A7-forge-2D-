@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import {performance} from "node:perf_hooks";
 import {buildIndex,repositoryRoot} from "./catalog.mjs";
 import {searchContext,prepareContextSearch} from "./context-search.mjs";
+import {traceFeature} from "./feature-trace.mjs";
 
 const prefix="games/lan_house_simulator/src/";
 const tasks=[
@@ -42,6 +43,17 @@ export function evaluate(index){
    latencyMs:+latency.toFixed(3),
    suggestions:candidates.slice(0,5).map(x=>({path:x.path.slice(prefix.length),score:x.score}))};
  });
+ const structuralChecks=[
+  {query:"simulação console PS2",expected:"sim/ps2.ts"},
+  {query:"fila de clientes no caixa",expected:"sim/retailQueue.ts"},
+  {query:"controles do console PS1",expected:"ui/ps1Controls.ts"}
+ ].map(({query,expected})=>{
+  const trace=traceFeature(index,query,{prefix:prefix.slice(0,-1),limit:10,depth:2});
+  const candidate=trace.candidates.find(c=>c.path===prefix+expected);
+  return {query,expected,rank:trace.candidates.findIndex(c=>c.path===prefix+expected)+1,
+   graphHint:candidate?.graphHint??null,
+   imports:candidate?.dependenciesTotal??0,dependents:candidate?.dependentsTotal??0};
+ });
  const sorted=results.map(x=>x.latencyMs).sort((a,b)=>a-b);
  const at=n=>sorted[Math.floor((sorted.length-1)*n)];
  return {kind:"real-LHS-context-relevance",commit:index.head,scope:prefix,
@@ -50,7 +62,7 @@ export function evaluate(index){
   queries:tasks.length,hitAt1:results.filter(r=>r.top1).length,
   hitAt5:results.filter(r=>r.top5).length,
   hitAt10:results.filter(r=>r.top10).length,
-  medianLatencyMs:at(0.5),p95LatencyMs:at(0.95),results};
+  medianLatencyMs:at(0.5),p95LatencyMs:at(0.95),structuralChecks,results};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pathname){
  const root=repositoryRoot(process.cwd());
@@ -76,6 +88,7 @@ if(process.argv[1]&&path.resolve(process.argv[1])===new URL(import.meta.url).pat
  console.log(JSON.stringify({kind:report.kind,commit:report.commit,queries:report.queries,
   top1:report.hitAt1,top5:report.hitAt5,top10:report.hitAt10,
   preparationMs:report.preparationMs,medianLatencyMs:report.medianLatencyMs,
+  structuralChecks:report.structuralChecks,
   missed:report.results.filter(r=>!r.top5).map(r=>({target:r.target,rank:r.rank,
    top:r.suggestions.slice(0,2)}))}));
 }

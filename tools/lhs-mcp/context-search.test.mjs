@@ -95,7 +95,7 @@ test("MCP protocol serves contextual search and rejects empty questions",t=>{
  });
  assert.equal(proc.status,0,proc.stderr);
  const messages=proc.stdout.trim().split("\n").map(JSON.parse);
- assert.equal(messages[1].result.tools.length,16);
+ assert.equal(messages[1].result.tools.length,17);
  assert.match(messages[2].result.content[0].text,/ps2Shop/);
  assert.equal(messages[3].result.isError,true);
 });
