@@ -261,3 +261,9 @@ test('Angular PS1 PS2 console shop preserves purchase handlers and readonly proj
  assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
  assert.doesNotMatch(projection,/from ["']\.\.\/sim\//);
 });
+
+test('Legacy DOM-only catalog fixture can render without browser event APIs',()=>{
+ const renderer=file('src/ui/shopCatalogRenderer.ts');
+ assert.match(renderer,/typeof options\.doc\.getElementById==="function"/);
+ assert.match(renderer,/typeof options\.host\.dispatchEvent==="function"/);
+});

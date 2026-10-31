@@ -73,7 +73,8 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
  });
  renderPs1ShopDiscCatalog(options.host,options.discs,options.currentCategory()==="consoles",options.doc);
  if(options.ps2&&options.currentCategory()==="consoles")renderPs2ShopCatalog(options.host,options.ps2,options.doc);
- if(currentCategory==="consoles"&&options.doc.getElementById("angular-shop-catalog")){
+ if(currentCategory==="consoles"&&typeof options.doc.getElementById==="function"&&
+  options.doc.getElementById("angular-shop-catalog")){
   const ps1Card=options.host.querySelector<HTMLButtonElement>('button[data-buy="ps1"]')?.closest(".shop-card");
   const ps1Artwork=ps1Card?.querySelector<HTMLImageElement>(".shop-art img")?.getAttribute("src")??null;
   const ps2Canvas=options.host.querySelector<HTMLCanvasElement>(".ps2-bench-card canvas");
@@ -84,5 +85,6 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
   ));
  }
  // Only alert presentation controls after the original DOM catalogue is complete.
- options.host.dispatchEvent(new Event("lhs:shop-catalog-updated"));
+ if(typeof options.host.dispatchEvent==="function"&&typeof Event==="function")
+  options.host.dispatchEvent(new Event("lhs:shop-catalog-updated"));
 }
