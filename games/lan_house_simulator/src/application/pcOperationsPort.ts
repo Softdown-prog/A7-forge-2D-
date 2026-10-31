@@ -6,6 +6,7 @@ import {employeeHired} from "../sim/staff.js";
 import {workPhaseLabel} from "../sim/staffPresentation.js";
 import {serviceVisitCost} from "../sim/historicalEconomy.js";
 import {gameYear} from "../sim/era.js";
+import {isLinuxPc} from "../sim/linuxQuest.js";
 
 export interface PcOperationRow {
  index:number;
@@ -47,7 +48,7 @@ export function createPcOperationsPort(getState:()=>GameState):PcOperationsPort{
      index:i,poweredOn:isOn,
      label:"PC "+(i+1)+" · "+(isOn?"LIGADO":"DESLIGADO")+
       " · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · MANUTENÇÃO":"")+
-      " · hardware nível "+tier,
+      " · hardware nível "+tier+(isLinuxPc(game,i)?" · Linux":" · Windows"),
      powerLabel:isOn?"Desligar estação":"Ligar estação",
      powerDisabled:isOn?busy:!!game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving"),
      powerTitle:isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?

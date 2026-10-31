@@ -5,6 +5,7 @@ import {computerOccupancyPercent} from "../sim/financialReview.js";
 import {isPromotionActive} from "../sim/promotion.js";
 import {stationModelName} from "../sim/computerModels.js";
 import {installedWindows,WINDOWS_ERAS} from "../sim/era.js";
+import {isLinuxPc} from "../sim/linuxQuest.js";
 import {hardwareFor,buildParts,formatMemory,describePart} from "../sim/hardware.js";
 import {PRODUCTS,merchandiseStock} from "../sim/merchandise.js";
 
@@ -34,7 +35,7 @@ export function computerOperationsSnapshot(s:GameState):ComputerOperationSnapsho
   const parts=buildParts(hardwareFor(s,i));
   return {
    index:i,wear:pcWear(s,i),broken:pcBroken(s,i),
-   windows:WINDOWS_ERAS.find(w=>w.id===installedWindows(s,i))!.name,
+   windows:isLinuxPc(s,i)?"Linux":WINDOWS_ERAS.find(w=>w.id===installedWindows(s,i))!.name,
    model:stationModelName(s,i),cpu:parts.cpu.name,
    ram:formatMemory(parts.ram.ramMb!),storage:describePart(parts.storage)
   };

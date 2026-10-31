@@ -36,6 +36,12 @@ export function installStationControls(
  });
  roots.windowsLicenses?.addEventListener("click",event=>{
   const button=clicked(event);if(!button)return;
+  if(button.dataset.linuxPc!==undefined){
+   const index=Number(button.dataset.linuxPc),action=button.dataset.linuxAction;
+   if(Number.isInteger(index)&&(action==="install"||action==="windows"))
+    events.onResult(port.linux(index,action));
+   return;
+  }
   const index=Number(button.dataset.winPc),id=button.dataset.winEdition;
   if(Number.isInteger(index)&&id&&port.isWindowsEdition(id))
    events.onResult(port.windows(index,id));
@@ -59,6 +65,12 @@ export function installStationControls(
    const kind=button.dataset.hardwareKind;
    if(kind&&port.isHardwareKind(kind))
     events.onResult(port.component(events.selectedStation(),kind,button.dataset.hardwarePart));
+   return;
+  }
+  if(button.dataset.linuxPc!==undefined){
+   const index=Number(button.dataset.linuxPc),action=button.dataset.linuxAction;
+   if(Number.isInteger(index)&&(action==="install"||action==="windows"))
+    events.onResult(port.linux(index,action));
    return;
   }
   if(button.dataset.winPc!==undefined){
