@@ -46,6 +46,27 @@ try{
     pages.push(area+'/'+task);
    }
   }
+  // React task boards must drive the same TypeScript page buttons on every screen size.
+  await selectAdminArea(page,'computers');
+  await press(page.locator('#react-computer-workspace [data-react-task="hardware"]'));
+  await page.waitForFunction(()=>document.querySelector(
+   '#react-computer-workspace [data-react-task="hardware"]')?.getAttribute('aria-pressed')==='true');
+  assert.equal(await page.locator('#section-computers .management-pages [data-panel-choice="hardware"]')
+   .getAttribute('aria-pressed'),'true','React task selects the native hardware page');
+  await page.locator('#react-computer-workspace [data-react-station="1"]')
+   .waitFor({state:'visible',timeout:10000});
+  await press(page.locator('#react-computer-workspace [data-react-station="1"]'));
+  await page.waitForFunction(()=>document.querySelector('#hardware-select-1')?.getAttribute('aria-pressed')==='true');
+  assert.equal(await page.locator('#hardware-select-1').getAttribute('aria-pressed'),'true',
+   'React PC selector delegates to the original hardware station');
+  await selectAdminArea(page,'services');
+  for(const task of ['network','access','staff']){
+   await press(page.locator('#react-service-workspace [data-react-task="'+task+'"]'));
+   await page.waitForFunction(value=>document.querySelector(
+    '#react-service-workspace [data-react-task="'+value+'"]')?.getAttribute('aria-pressed')==='true',task);
+   assert.equal(await page.locator('#section-services .management-pages [data-panel-choice="'+task+'"]')
+    .getAttribute('aria-pressed'),'true','React services must synchronize with native pages: '+task);
+  }
   await selectAdminArea(page,'finance');await selectTask(page,'finance','feedback');
   assert.ok((await page.locator('#customer-feedback-summary').innerText()).includes('1 crítica(s) com efeito'));
   assert.ok((await page.locator('#customer-feedback-summary').innerText()).includes('-0.25 pontos'));

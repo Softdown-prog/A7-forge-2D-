@@ -1279,3 +1279,91 @@ html:not([data-game-ready="true"]) #react-quick-deck{visibility:hidden}
 .react-shop-no-match{margin:0!important;flex:0 0 100%;color:#71583e;font-size:12px}
 #shop-catalog>.shop-card[hidden]{display:none!important}
 @media(max-width:700px){.react-shop-search{padding:11px;gap:7px}.react-shop-search-count{flex:0 0 100%}}
+
+/* React task workspaces: presentation only, driven by existing TypeScript panels. */
+.react-admin-workspace-root{min-width:0;margin:14px 0 13px}
+.react-workspace{background:linear-gradient(130deg,#e9efdf,#f9f7eb);border:1px solid #cbd9c0;
+ border-radius:12px;padding:15px;box-shadow:0 5px 18px #17391f12}
+.react-workspace-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}
+.react-workspace-heading h4{margin:2px 0 0;font-size:17px;letter-spacing:-.035em;color:#233f30}
+.react-workspace-heading p{margin:0!important;max-width:295px;font-size:11px;line-height:1.45;color:#647760;text-align:right}
+.react-workspace-eyebrow{font:700 9px "Courier New",monospace;letter-spacing:.13em;color:#6d885b}
+.react-workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
+#admin .react-workspace-task{display:flex;align-items:flex-start;justify-content:flex-start;gap:9px;
+ min-width:0;min-height:83px;padding:12px 9px;text-align:left;background:#fffcf3;border:1px solid #cddbc4;
+ border-radius:10px;color:#213d2e;box-shadow:0 2px 4px #223d220c}
+#admin .react-workspace-task:hover:not(:disabled){background:#eff5e8;border-color:#89af79;box-shadow:0 4px 13px #1633231c}
+#admin .react-workspace-task[aria-pressed="true"]{background:#234334;color:#f7f8ea;border-color:#234334;
+ box-shadow:inset 0 0 0 1px #829f76,0 4px 12px #1c3d2c26}
+.react-workspace-task-icon{display:grid;place-items:center;width:28px;height:28px;flex:none;
+ border-radius:7px;background:#daeaca;color:#335c3b;font:700 14px "Courier New",monospace}
+.react-workspace-task[aria-pressed="true"] .react-workspace-task-icon{background:#d5e7c4;color:#234334}
+.react-workspace-task-copy{display:grid;gap:5px;min-width:0}
+.react-workspace-task-copy strong{font-size:11px;line-height:1.35}
+.react-workspace-task-copy small{font-size:9px;line-height:1.35;font-weight:400;color:#70836b;overflow-wrap:anywhere}
+.react-workspace-task[aria-pressed="true"] .react-workspace-task-copy small{color:#c5d6c2}
+.react-workspace-task-arrow{margin-left:auto;font-size:16px;color:#73946a}
+.react-workspace-task[aria-pressed="true"] .react-workspace-task-arrow{color:#d9ecca}
+#section-computers > .management-pages,#section-services > .management-pages{
+ margin:3px 0 15px;padding-bottom:11px;border-bottom:1px solid #d7dece;gap:5px}
+#section-computers > .management-pages button,#section-services > .management-pages button{
+ min-height:38px;flex:1 1 120px;padding:7px 9px;font-size:10px;border-radius:7px}
+.react-station-switch{margin:10px 0 4px;padding:12px;background:#eef3e7;
+ border:1px solid #c6d7ba;border-radius:10px}
+.react-station-switch-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.react-station-switch-heading strong{font-size:12px;color:#2f533c}
+.react-station-switch-heading small{display:block;font-size:10px;line-height:1.4;color:#698065;margin-top:3px}
+.react-station-switch-heading>span{font-size:11px;font-weight:700;color:#2d553a;background:#dfebd4;
+ border-radius:6px;padding:6px 9px;white-space:nowrap}
+.react-station-switch-buttons{display:flex;flex-wrap:wrap;gap:7px}
+#admin .react-station-switch-buttons button{min-width:70px;min-height:41px;
+ background:#fffef7;border:1px solid #bdd0ae;color:#2d4e37;border-radius:8px;font-size:11px}
+#admin .react-station-switch-buttons button:hover:not(:disabled){background:#e6f1dd;border-color:#79a369}
+#admin .react-station-switch-buttons button[aria-pressed="true"]{background:#244a35;
+ border-color:#244a35;color:#f7f9e8;box-shadow:inset 0 0 0 1px #a0c295}
+#admin .react-workspace-task:focus-visible,#admin .react-station-switch-buttons button:focus-visible{
+ outline:3px solid #c68a42;outline-offset:2px}
+#pc-maintenance .pc-operation{border-radius:10px;padding:14px 12px;gap:8px;
+ box-shadow:0 2px 8px #1230220c}
+#pc-maintenance .pc-operation>span{line-height:1.45;min-width:0}
+#pc-maintenance .pc-operation progress{accent-color:#638e65}
+#pc-maintenance .hardware-card,#pc-maintenance .lcd-card{
+ border-radius:11px;box-shadow:0 4px 12px #28401d12;transition:border-color .15s,box-shadow .15s}
+#pc-maintenance .hardware-card:hover,#pc-maintenance .lcd-card:hover{
+ border-color:#9fb793;box-shadow:0 6px 17px #28401d20}
+#pc-maintenance .hardware-card button:disabled,#pc-maintenance .lcd-card button:disabled{
+ opacity:.65;box-shadow:none;cursor:not-allowed}
+#pc-maintenance .machine-sheet{border-radius:11px}
+#section-services .staff-activity,#section-services .service-access-review{
+ border-radius:10px}
+@media(max-width:900px){
+ .react-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .react-admin-workspace-root{margin:9px 0 10px}
+ .react-workspace{padding:11px}
+ .react-workspace-heading{display:block}
+ .react-workspace-heading h4{font-size:15px}
+ .react-workspace-heading p{max-width:none;margin-top:4px!important;text-align:left}
+ .react-workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #admin .react-workspace-task{min-height:76px;padding:10px 8px;gap:6px}
+ .react-workspace-task-icon{width:25px;height:25px}
+ .react-workspace-task-copy strong{font-size:11px}
+ .react-workspace-task-copy small{font-size:9px}
+ .react-workspace-task-arrow{display:none}
+ .react-station-switch-heading{align-items:start}
+ .react-station-switch-buttons{overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 8px;
+  scroll-snap-type:x proximity;touch-action:pan-x}
+ #admin .react-station-switch-buttons button{flex:0 0 74px;scroll-snap-align:start}
+ #section-computers > .management-pages,#section-services > .management-pages{
+  display:flex;overflow-x:auto;flex-wrap:nowrap;touch-action:pan-x}
+ #section-computers > .management-pages button,#section-services > .management-pages button{
+  flex:0 0 auto;font-size:10px}
+ #pc-maintenance .pc-operation{padding:10px;box-shadow:none}
+}
+@media(max-width:370px){.react-workspace-grid{grid-template-columns:1fr 1fr}
+ .react-workspace-task-icon{display:none}
+ .react-station-switch-heading>span{font-size:10px;padding:5px}}
+@media(prefers-reduced-motion:reduce){
+ #pc-maintenance .hardware-card,#pc-maintenance .lcd-card{transition:none}
+}
