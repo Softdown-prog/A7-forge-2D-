@@ -101,3 +101,15 @@ reutilizados entre a interface Angular e o DOM original. A redação dos testes
 acompanha a separação em duas camadas sem omitir o fallback legado. Os testes do
 cabeçalho também confirmam que o Angular não recebe alterações simultâneas
 do renderizador legado.
+
+## Teste real da prévia Angular em Chromium
+
+O workflow `LHS Angular UI preview` executa `frontend-angular/scripts/verify_catalog_preview.mjs`
+com Playwright em larguras 1280, 414 e 360px. O teste carrega o JavaScript Angular
+compilado, publica DTOs de apresentação simulados e usa controles nativos de teste
+para verificar que a seleção das bancadas e os cliques de compras PS1, CD PS1,
+PS2, jogos PS2 e itens comuns chegam **uma única vez** aos comandos delegados.
+Também garante que ofertas bloqueadas não possam ser acionadas. Screenshots e
+relatório JSON são anexados ao CI. **Não é ainda o teste E2E da partida real:**
+o jogo e o save não são iniciados na prévia Angular; essa validação só será
+possível no cutover controlado após a integração da aplicação.
