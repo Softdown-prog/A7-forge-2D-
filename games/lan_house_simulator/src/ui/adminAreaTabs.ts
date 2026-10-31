@@ -24,7 +24,10 @@ export function createAdminAreaTabs(
   for(const section of sections)section.hidden=section.dataset.section!==area;
   if(selectedArea!==area){
    selectedArea=area;
-   admin.ownerDocument.dispatchEvent(new CustomEvent('lhs:admin-area-selected',{detail:{area}}));
+   // Browsers have an ownerDocument; minimal DOM test doubles need not.
+   const doc=admin.ownerDocument;
+   if(doc&&typeof doc.dispatchEvent==="function"&&typeof CustomEvent==="function")
+    doc.dispatchEvent(new CustomEvent('lhs:admin-area-selected',{detail:{area}}));
   }
  }
  for(const button of tabs)button.addEventListener("click",()=>{

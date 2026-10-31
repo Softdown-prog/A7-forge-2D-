@@ -63,7 +63,8 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
   // Only regular cards are ported in this step. PS1/PS2 remain on their
   // procedural Canvas renderers and existing purchase handlers.
   if(item.id!=="ps1"){
-   const artworkSrc=art.querySelector<HTMLImageElement>("img")?.getAttribute("src")??null;
+   const artworkSrc=typeof art.querySelector==="function"
+    ?art.querySelector<HTMLImageElement>("img")?.getAttribute("src")??null:null;
    angularCards.push(regularShopCardView(item,offer,serviceOffer,artworkSrc));
   }
  }

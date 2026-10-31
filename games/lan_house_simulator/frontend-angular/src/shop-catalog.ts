@@ -63,14 +63,16 @@ export class ShopCatalogComponent implements OnInit,OnDestroy {
  }
  // During migration the existing catalog is the authoritative command target.
  // Forward clicks to its real data-buy buttons. We do not call simulation APIs.
- private forward(attribute:string,id:string):void{
-  const host=document.getElementById('shop-catalog');
-  const button=Array.from(host?.querySelectorAll<HTMLButtonElement>('button['+attribute+']')??[])
-   .find(b=>b.dataset[attribute.replace(/-([a-z])/g,(_m,c:string)=>c.toUpperCase())]===id&&!b.disabled);
+ private forward(attribute:'buyPs1Disc'|'buyPs2Game',id:string):void{
+  const catalog=document.getElementById('shop-catalog');
+  // Preserve the original delegated purchase listener and its disabled state.
+  const button=Array.from(catalog?.querySelectorAll<HTMLButtonElement>(
+   attribute==='buyPs1Disc'?'button[data-buy-ps1-disc]':'button[data-buy-ps2-game]')??[])
+   .find(node=>node.dataset[attribute]===id&&!node.disabled);
   button?.click();
  }
- buyPs1Disc(id:string):void{this.forward('data-buy-ps1-disc',id);}
- buyPs2Game(id:string):void{this.forward('data-buy-ps2-game',id);}
+ buyPs1Disc(id:string):void{this.forward('buyPs1Disc',id);}
+ buyPs2Game(id:string):void{this.forward('buyPs2Game',id);}
  selectPs1(id:string):void{
   const select=document.querySelector<HTMLSelectElement>('#shop-catalog #ps1-placement');
   const buttons=Array.from(document.querySelectorAll<HTMLButtonElement>(

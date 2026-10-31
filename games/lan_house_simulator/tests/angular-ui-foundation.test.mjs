@@ -267,3 +267,15 @@ test('Legacy DOM-only catalog fixture can render without browser event APIs',()=
  assert.match(renderer,/typeof options\.doc\.getElementById==="function"/);
  assert.match(renderer,/typeof options\.host\.dispatchEvent==="function"/);
 });
+
+test('Admin area adapter does not assume an ownerDocument in lightweight DOM fixtures',()=>{
+ const source=file('src/ui/adminAreaTabs.ts');
+ assert.match(source,/if\(doc&&typeof doc\.dispatchEvent==="function"&&typeof CustomEvent==="function"\)/);
+});
+test('Console purchase forwarding uses actual DOM dataset camelCase keys',()=>{
+ const source=file(root+'src/shop-catalog.ts');
+ assert.match(source,/node\.dataset\[attribute\]===id/);
+ assert.match(source,/this\.forward\('buyPs1Disc',id\)/);
+ assert.match(source,/this\.forward\('buyPs2Game',id\)/);
+ assert.doesNotMatch(source,/this\.forward\('data-buy-/);
+});
