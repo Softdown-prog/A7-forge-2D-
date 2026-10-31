@@ -206,3 +206,35 @@ test('Angular workspace lockfile is complete and CI installs with npm ci',()=>{
   assert.doesNotMatch(workflow,/npm install --prefix frontend-angular/);
   assert.doesNotMatch(workflow,/LHS_RESOLVED_LOCK/);
 });
+
+
+test('Angular catalog displays only read-only regular shop offers and preserves native purchase commands',()=>{
+ const presenter=file('src/ui/shopCatalogAngularProjection.ts');
+ const renderer=file('src/ui/shopCatalogRenderer.ts');
+ const component=file(root+'src/shop-catalog.ts');
+ const template=file(root+'src/templates/shop-catalog.html');
+ const preview=file(root+'src/index.html');
+ const legacy=file('index.html');
+ for(const field of ['disabled','buttonText','buttonTitle','placementHint','ownedText','artworkSrc']){
+  assert.ok(presenter.includes(field),field);
+  assert.ok(component.includes(field),field);
+ }
+ assert.match(presenter,/shopCardIcon/);
+ assert.match(presenter,/lhs:shop-cards-updated/);
+ assert.match(renderer,/regularShopCardView\(item,offer,serviceOffer,artworkSrc\)/);
+ assert.match(renderer,/if\(item\.id!=="ps1"\)/);
+ assert.match(renderer,/publishAngularShopCatalog/);
+ assert.match(component,/document\.addEventListener\('lhs:shop-cards-updated'/);
+ assert.match(component,/target\?\.click\(\)/);
+ assert.match(template,/\[disabled\]="card\.disabled"/);
+ assert.match(template,/\[attr\.data-buy\]="card\.id"/);
+ assert.match(template,/track card\.id/);
+ assert.match(template,/card\.artworkSrc/);
+ assert.match(template,/\(click\)="purchase\(card\.id\)"/);
+ assert.match(template,/consolesPending/);
+ assert.match(preview,/id="angular-shop-catalog"/);
+ assert.doesNotMatch(legacy,/id="angular-shop-catalog"/);
+ assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
+ assert.doesNotMatch(component,/port\.purchase|new Game|localStorage|fetch\(/);
+ assert.match(file(root+'src/main.ts'),/ShopCatalogComponent/);
+});

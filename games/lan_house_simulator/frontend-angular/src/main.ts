@@ -13,6 +13,7 @@ import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
 import {ShopOverviewComponent} from './shop-overview';
+import {ShopCatalogComponent} from './shop-catalog';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -57,6 +58,16 @@ async function mountUi():Promise<void> {
   if(shopOverviewHost){
     const ref=createComponent(ShopOverviewComponent,{
       environmentInjector:app.injector,hostElement:shopOverviewHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // Future Angular cards are preview-only until PS1/PS2 feature parity.
+  const shopCardsHost=document.getElementById('angular-shop-catalog');
+  if(shopCardsHost){
+    const ref=createComponent(ShopCatalogComponent,{
+      environmentInjector:app.injector,hostElement:shopCardsHost
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();

@@ -1,0 +1,37 @@
+<section class="angular-catalog" aria-label="Produtos disponíveis no salão">
+  <div class="angular-catalog-heading">
+    <h3>Catálogo de produtos</h3>
+    <span role="status" aria-live="polite">{{catalog().cards.length}} opções</span>
+  </div>
+  <div class="shop-grid angular-catalog-grid">
+    @for(card of catalog().cards;track card.id){
+      <article class="shop-card">
+        <div class="shop-art" [attr.data-item]="card.id" aria-hidden="true">
+          @if(card.artworkSrc){
+            <img [src]="card.artworkSrc" alt="" loading="lazy"/>
+          } @else {
+            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <use [attr.href]="'./assets/ui/icons.svg#'+card.icon"></use>
+            </svg>
+          }
+        </div>
+        <small>{{card.category}}</small>
+        <h3>{{card.label}}</h3>
+        <p>{{card.description}}</p>
+        @if(card.placementHint){
+          <small class="shop-purchase-status">{{card.placementHint}}</small>
+        }
+        <button type="button" [attr.data-buy]="card.id"
+          [disabled]="card.disabled" [attr.title]="card.buttonTitle"
+          (click)="purchase(card.id)">{{card.buttonText}}</button>
+        @if(card.ownedText){<span>{{card.ownedText}}</span>}
+      </article>
+    }
+  </div>
+  @if(catalog().consolesPending){
+    <p class="angular-catalog-pending">Bancadas e CDs de PS1/PS2 permanecem no catálogo original
+      enquanto os controles de instalação e as artes Canvas são migrados.</p>
+  } @else if(catalog().cards.length===0){
+    <p class="angular-catalog-empty">O catálogo será preenchido quando a partida enviar suas ofertas.</p>
+  }
+</section>

@@ -57,6 +57,24 @@ Os componentes Angular agora recebem snapshots somente leitura por eventos de ap
 
 Este cabeçalho está exclusivamente no documento de prévia Angular; não foi inserido no `index.html` React. O catálogo, oferta PS1/PS2 e compras ainda dependem do renderer e dos comandos TypeScript, aguardando migração e testes E2E.
 
+## Catálogo comum Angular
+
+`ShopCatalogComponent` apresenta os cartões comuns do catálogo com rótulo, categoria,
+imagem procedural já desenhada pelo adaptador TypeScript (ou ícone local), descrição,
+cotação, texto de propriedade e botão habilitado/bloqueado. O adaptador
+`shopCatalogAngularProjection.ts` recebe exclusivamente os DTOs já resolvidos
+pelos ports de preços/serviços e publica `lhs:shop-cards-updated` somente quando o
+host Angular está presente. O clique é encaminhado para o botão original no
+`#shop-catalog`, que mantém `installShopControls` como executor único.
+O componente NÃO resolve preço, limite, disponibilidade ou colocação e
+não pode disparar uma compra sem um botão original ativo.
+
+**Paridade ainda pendente:** o seletor PS1, os CDs PS1, a compra/instalação
+de PS2 e os cards procedurais de consoles continuam no renderizador original.
+A nova região está apenas em `frontend-angular/src/index.html` (prévia), sem
+ativação na página React publicada. Não remover o catálogo original antes da
+migração completa dos controles, busca e integração.
+
 ## Próximas etapas
 
 1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.
