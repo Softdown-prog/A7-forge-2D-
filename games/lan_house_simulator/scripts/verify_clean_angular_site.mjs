@@ -94,6 +94,19 @@ try{
   }));
   assert.ok(before.scrollHeight-before.innerHeight>150,
    'Homepage has too little content to test scrolling: '+JSON.stringify(before));
+  // Distinguish an actual locked document from a synthetic input issue.
+  const programmatic=await page.evaluate(()=>{
+   window.scrollTo(0,250);
+   const moved=window.scrollY;
+   window.scrollTo(0,0);
+   const point=document.elementFromPoint(innerWidth/2,600);
+   return {moved,point:point?.tagName,klass:point?.className,
+    documentOverflow:getComputedStyle(document.documentElement).overflow,
+    bodyOverflow:getComputedStyle(document.body).overflow};
+  });
+  console.log('ANGULAR_SCROLL_PROGRAMMATIC',JSON.stringify({width,programmatic}));
+  assert.ok(programmatic.moved>100,'Document cannot scroll programmatically: '+
+   JSON.stringify({width,programmatic}));
   await page.mouse.move(Math.floor(width/2),Math.min(600,850-40));
   if(mobile){
    const cdp=await context.newCDPSession(page);
@@ -105,6 +118,7 @@ try{
   }else{
    await page.mouse.wheel(0,460);
   }
+  await page.waitForTimeout(500);
   const after=await page.evaluate(()=>({
    y:window.scrollY,scrollTop:document.scrollingElement?.scrollTop,
    bodyScroll:document.body.scrollTop,
