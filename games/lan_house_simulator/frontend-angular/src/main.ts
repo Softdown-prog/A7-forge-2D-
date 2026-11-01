@@ -8,7 +8,7 @@ import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
   MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent, ShopSearchComponent
 } from './components';
-import {ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent} from './workspaces';
+import {ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent,FinanceWorkspaceComponent} from './workspaces';
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
@@ -81,6 +81,17 @@ async function mountUi():Promise<void> {
   if(stockWorkspaceHost){
     const ref=createComponent(StockWorkspaceComponent,{
       environmentInjector:app.injector,hostElement:stockWorkspaceHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // Optional finance task navigation, only in the isolated Angular rehearsal.
+  // The underlying TypeScript finance/reset buttons remain command owners.
+  const financeWorkspaceHost=document.getElementById('angular-finance-workspace');
+  if(financeWorkspaceHost){
+    const ref=createComponent(FinanceWorkspaceComponent,{
+      environmentInjector:app.injector,hostElement:financeWorkspaceHost
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
