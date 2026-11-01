@@ -23,6 +23,7 @@ export class AccountComponent implements OnInit {
  private readonly changeDetector=inject(ChangeDetectorRef);
  private client:SiteAccountClient|null=null;
  private uploadedSave:unknown=null;
+ private uploadedInput:HTMLInputElement|null=null;
  private destroyed=false;
  ngOnInit():void{
   const query=new URLSearchParams(location.search).get('modo');
@@ -198,20 +199,22 @@ export class AccountComponent implements OnInit {
    if(file.size>2000000)throw new AccountError('O save deve ter no máximo 2 MB.');
    const payload=await this.validateSave(await file.text());
    this.uploadedSave=payload;
+   this.uploadedInput=input;
    this.changeDetector.detectChanges();
    dialog.returnValue='cancel';
    dialog.showModal();
    this.message.set('Revise a confirmação antes de enviar.');
   });
  }
- async onUploadDialogClose(dialog:HTMLDialogElement,input:HTMLInputElement):Promise<void>{
+ async onUploadDialogClose(dialog:HTMLDialogElement):Promise<void>{
   const payload=this.uploadedSave;this.uploadedSave=null;
+  const input=this.uploadedInput;this.uploadedInput=null;
   if(dialog.returnValue!=='confirm'||payload===null)return;
   const expectedRevision=this.remote()?.revision;
   if(expectedRevision===undefined){this.message.set('Atualize o save antes de enviar.');return;}
   await this.execute(async()=>{
    await this.requireClient().api('/v1/saves/main',{expectedRevision,save:payload});
-   input.value='';this.filename.set('');
+   if(input)input.value='';this.filename.set('');
    await this.refreshAccount();
    this.message.set('Save confirmado na nuvem. Seu arquivo e save local foram preservados.');
   });

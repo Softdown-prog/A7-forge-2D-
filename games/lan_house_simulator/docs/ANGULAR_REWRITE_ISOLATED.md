@@ -39,3 +39,10 @@ O primeiro commit desta branch inicia um projeto Angular independente. Fluxos in
 - Exclusão separada com `<dialog>` nativo, confirmação explícita, cancelamento/Escape, status acessível e tratamento de bloqueio do `localStorage`. Não há `localStorage.clear()` nem remoção de chaves de outros aplicativos.
 - A partida deve ser fechada antes da exclusão; saves já baixados e arquivos da conta/nuvem não são removidos. **Não** foi introduzido controle de exclusão de nuvem ou import/export independente: a exportação permanece no menu Canvas do jogo, que será validado na etapa de conta e saves.
 - O Chromium deve cobrir o cancelamento e a confirmação, isolamento de chaves, recuperação após F5, teclado/toque e erro de armazenamento nas três larguras. Produção continua inalterada.
+
+## Conta e saves na nuvem — client Angular isolado
+- O cliente e controlador foram reescritos em TypeScript em `src/site-rewrite/account-client.ts`, `account.ts` e `account.html`, sem importar `website/account.mjs` nem `website/account-client.mjs`.
+- Mantém Firebase email/senha (consulta de email confirmado), expiração da sessão de oito horas, renovação de token, sair da conta, checagem autenticada do backend e status de conta.
+- Upload requer JSON exportado pelo jogo e validação via `/game/js/sim/saveTransfer.js`, com limite de 2 MB, confirmação nativa e revisão otimista `expectedRevision`. HTTP 409 obriga conferir a revisão antes de novo envio. Download principal/backup também valida o arquivo.
+- O envio nunca altera a partida local. Os testes devem interceptar Firebase/API com dados fictícios, sem criar contas reais nem publicar o site.
+- A tela de confirmação de email por link e integração com Donate ainda são etapas distintas e bloqueiam o cutover.

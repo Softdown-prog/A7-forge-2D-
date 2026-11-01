@@ -2,10 +2,11 @@ import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,computed,signal} from
 import {eras,faq,footerLinks,navigation,normalizeSearch,pathOf} from './site-data';
 import {termsSections,privacySections} from './legal-content';
 import {LocalDataComponent} from './local-data';
+import {AccountComponent} from './account';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent],
+ imports:[LocalDataComponent,AccountComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })

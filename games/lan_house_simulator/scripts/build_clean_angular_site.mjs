@@ -6,6 +6,11 @@ import {resolve,dirname,extname} from 'node:path';
 const root=resolve(import.meta.dirname,'..');
 const angular=resolve(root,'frontend-angular');
 const output=resolve(root,'out/site-clean-angular');
+const accountConfig=JSON.parse(readFileSync(resolve(root,'account-config.json'),'utf8'));
+const accountApi=new URL(accountConfig.apiUrl);
+assert.ok(accountApi.protocol==='https:'&&!accountApi.username&&!accountApi.password&&
+ accountApi.pathname==='/'&&!accountApi.search&&!accountApi.hash,'Invalid configured account API origin');
+const accountApiOrigin=accountApi.origin;
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 function run(program,args,env=process.env){
  execFileSync(program,args,{cwd:root,stdio:'inherit',env});
@@ -55,7 +60,8 @@ writeFileSync(resolve(output,'robots.txt'),'User-agent: *\nDisallow: /\n');
 writeFileSync(resolve(output,'_headers'),[
  '/*','  X-Content-Type-Options: nosniff',
  '  Referrer-Policy: strict-origin-when-cross-origin',
- "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'",
+ // Only explicitly configured authenticated service origins may receive connections.
+ "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+accountApiOrigin+"; frame-src 'self'; object-src 'none'; base-uri 'self'",
  '  Cache-Control: no-cache, must-revalidate',
  '/assets/*','  Cache-Control: no-cache, must-revalidate',
  '/game/*','  Cache-Control: no-cache, must-revalidate',''].join('\n'));
