@@ -1,12 +1,14 @@
 import {execFileSync} from "node:child_process";
-import {cpSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from "node:fs";
+import {cpSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync,existsSync} from "node:fs";
 import {resolve,dirname} from "node:path";
 import {createHash} from "node:crypto";
 import {siteConfig} from "./config.mjs";
 import {pages,icon,eras} from "./content.mjs";
 const root=resolve(import.meta.dirname,"..");
-// Opt-in Angular candidate; default Cloudflare output remains the React site.
+// Migration branch defaults to Angular for the complete site build.
+// The published main remains unchanged until the full review and merge.
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
+const angularSite=process.env.LHS_SITE_UI!=="react";
 const output=resolve(root,angularCandidate?"out/site-angular":"out/site");
 export function validateConfig(c){
  if(!["preview","public"].includes(c.mode))throw Error("Modo do site inválido");
@@ -21,23 +23,33 @@ export function buildSite(){
  if(accounts.enabled&&(!siteConfig.email||!siteConfig.operator||!accounts.firebaseApiKey))throw Error("Conta online exige responsável, contato e configuração Firebase.");
  // Always ship the currently compiled game, never a stale build from another task.
  execFileSync(process.execPath,[resolve(root,"scripts/build.mjs")],{cwd:root,stdio:"inherit"});
- if(angularCandidate)execFileSync(process.execPath,[resolve(root,"frontend-angular/scripts/build_cutover_candidate.mjs")],{cwd:root,stdio:"inherit"});
+ if(angularSite){
+  // Rebuild Angular from its own lockfile; a stale preview must never be deployed.
+  if(!existsSync(resolve(root,"frontend-angular/node_modules/@angular/cli/package.json")))
+   execFileSync(process.platform==="win32"?"npm.cmd":"npm",
+    ["ci","--prefix","frontend-angular","--no-audit","--no-fund"],
+    {cwd:root,stdio:"inherit"});
+  execFileSync(process.platform==="win32"?"npm.cmd":"npm",
+   ["run","build","--prefix","frontend-angular"],{cwd:root,stdio:"inherit"});
+  execFileSync(process.execPath,[resolve(root,"frontend-angular/scripts/build_cutover_candidate.mjs")],
+   {cwd:root,stdio:"inherit"});
+ }
  rmSync(output,{recursive:true,force:true});mkdirSync(resolve(output,"assets"),{recursive:true});
  for(const [from,to] of [["website/site.css","assets/site.css"],["website/site.mjs","assets/site.mjs"],["website/data-controls.mjs","assets/data-controls.mjs"],["assets/ui/brand.svg","assets/brand.svg"],["assets/ui/icons.svg","assets/icons.svg"]])cpSync(resolve(root,from),resolve(output,to));
  for(const file of ["sala.webp","pc-crt.svg","pc-lcd.svg","pc-led.svg","pc-arena.svg"])cpSync(resolve(root,"website/assets",file),resolve(output,"assets",file));
  for(const file of ["account.mjs","account-client.mjs","account.css","donate-client.mjs","donate.css","email-confirmation.mjs"])cpSync(resolve(root,"website",file),resolve(output,"assets",file));
  cpSync(resolve(root,"account-config.json"),resolve(output,"account-config.json"));
  writeFileSync(resolve(output,"assets/eras.mjs"),"export const eras="+JSON.stringify(eras)+";\n");
- cpSync(resolve(root,angularCandidate?"out/angular-cutover-candidate":"dist"),resolve(output,"game"),{recursive:true});
+ cpSync(resolve(root,angularSite?"out/angular-cutover-candidate":"dist"),resolve(output,"game"),{recursive:true});
  // The report is CI-only metadata, never a publicly reachable /game/ resource.
- if(angularCandidate)rmSync(resolve(output,"game/angular-candidate-report.json"),{force:true});
+ if(angularSite)rmSync(resolve(output,"game/angular-candidate-report.json"),{force:true});
  // Identificador muda com o código do jogo. Evita JS antigo no navegador após o deploy.
  const moduleFiles=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>
   entry.isDirectory()?moduleFiles(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
  const revisionHash=createHash("sha256");
  for(const file of moduleFiles(resolve(output,"game/js")).sort())revisionHash.update(readFileSync(file));
  // Include Angular runtime and styles in the iframe revision to invalidate cached UI.
- if(angularCandidate)for(const file of moduleFiles(resolve(output,"game/__angular")).sort())
+ if(angularSite)for(const file of moduleFiles(resolve(output,"game/__angular")).sort())
   revisionHash.update(readFileSync(file));
  for(const file of ["website/site.mjs","website/site.css","website/account.mjs","website/account-client.mjs","website/account.css","website/donate-client.mjs","website/donate.css","website/email-confirmation.mjs","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
  revisionHash.update(readFileSync(resolve(root,"website/assets/sala.webp")));
@@ -64,7 +76,7 @@ export function buildSite(){
   (_match,prefix,suffix)=>prefix+"?v="+revision+suffix);
  game=game.replace("<title>",'<meta name="robots" content="noindex"/><title>');
  game=game.replace('href="./style.css"','href="./style.css?v='+revision+'"');
- if(angularCandidate)game=game.replace('href="./__angular/styles.css"','href="./__angular/styles.css?v='+revision+'"');
+ if(angularSite)game=game.replace('href="./__angular/styles.css"','href="./__angular/styles.css?v='+revision+'"');
  writeFileSync(gameFile,game);
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const c=Object.fromEntries(Object.entries(siteConfig).map(([k,v])=>[k,typeof v==="string"?escape(v):v]));

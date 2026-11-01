@@ -5,8 +5,18 @@ import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
 const root=resolve(import.meta.dirname,angularCandidate?"../out/site-angular":"../out/site");
+const angularSite=process.env.LHS_SITE_UI!=="react";
 const walk=p=>readdirSync(p).flatMap(n=>{const f=resolve(p,n);return statSync(f).isDirectory()?walk(f):[f];});
 const files=walk(root),html=files.filter(f=>extname(f)===".html"),titles=new Set();let references=0;
+const gameHtml=readFileSync(resolve(root,"game/index.html"),"utf8");
+if(angularSite){
+ assert.match(gameHtml,/src="\.\/__angular\/main\.js\?v=[0-9a-f]{12}"/,
+  "O site padrão deve carregar Angular com revisão de cache");
+ assert.ok(!gameHtml.includes("react-entry.js"),"O React não pode inicializar no site Angular");
+ assert.ok(existsSync(resolve(root,"game/__angular/styles.css")),"Estilos Angular ausentes");
+ assert.ok(!existsSync(resolve(root,"game/js/react-entry.js")),"Bundle React não deve ser publicado");
+}else assert.match(gameHtml,/src="\.\/js\/react-entry\.js\?v=[0-9a-f]{12}"/);
+
 const header=readFileSync(resolve(root,"_headers"),"utf8");
 // Não expor referências ao repositório de desenvolvimento em arquivos servidos aos jogadores.
 // Inclui jogo compilado, site, scripts, estilos, ícones e arquivos de configuração públicos.

@@ -52,12 +52,15 @@ test('shop-overview integrated check matches the real TypeScript cash read model
  assert.match(qa,/label\.startsWith\('Caixa R\$ '\)/);
  assert.match(qa,/label\.includes\(' · PCs '\)/);
 });
-test('Angular site candidate shares site rules and keeps the default React output',()=>{
+test('complete site defaults to Angular in migration branch and allows explicit React regression',()=>{
  const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
  const check=readFileSync(new URL('../website/check.mjs',import.meta.url),'utf8');
  const wrapper=readFileSync(new URL('../scripts/build_angular_site_candidate.mjs',import.meta.url),'utf8');
  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
  assert.ok(build.includes('process.env.LHS_SITE_ANGULAR_CANDIDATE'));
+ assert.ok(build.includes('process.env.LHS_SITE_UI!=="react"'));
+ assert.match(build,/frontend-angular\/scripts\/build_cutover_candidate\.mjs/);
+ assert.match(check,/React não pode inicializar no site Angular/);
  assert.ok(build.includes('angularCandidate?"out/site-angular":"out/site"'));
  assert.ok(check.includes('angularCandidate?"../out/site-angular":"../out/site"'));
  assert.match(build,/game\/__angular/);
