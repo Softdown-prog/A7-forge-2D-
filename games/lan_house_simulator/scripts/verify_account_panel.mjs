@@ -14,8 +14,11 @@ const server=createServer(async(req,res)=>{
   const u=new URL(req.url??'/','http://localhost');
   const file=resolve(root,'.'+(u.pathname==='/'?'/index.html':decodeURIComponent(u.pathname)));
   if(!file.startsWith(root+sep)&&file!==root){res.writeHead(403).end();return;}
-  res.writeHead(200,{'content-type':mime[extname(file)]??'application/octet-stream'}).end(await readFile(file));
- }catch{res.writeHead(404).end();}
+  // Read before sending headers: optional browser requests may be 404.
+  // Writing 200 before await readFile() makes the catch throw ERR_HTTP_HEADERS_SENT.
+  const data=await readFile(file);
+  res.writeHead(200,{'content-type':mime[extname(file)]??'application/octet-stream'}).end(data);
+ }catch{if(!res.headersSent)res.writeHead(404).end();else res.end();}
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
