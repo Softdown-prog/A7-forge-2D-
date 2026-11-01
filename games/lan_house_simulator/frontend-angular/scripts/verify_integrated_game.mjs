@@ -53,7 +53,11 @@ assert.ok(!integratedShell.includes('<section id="notices"'),'Native mail dialog
 assert.ok(!integratedShell.includes('<details class="time-weather-panel" id="time-weather-panel">'),
  'Native calendar must not coexist with Angular-owned panel');
 
-const index=integratedShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+// The real account controller will reuse this Angular-owned dialog in the
+// rehearsal. The published HTML intentionally retains its native fallback.
+const accountCutoverShell=integratedShell.replace('</body>',
+ '<div id="angular-player-account"></div></body>');
+const index=accountCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
