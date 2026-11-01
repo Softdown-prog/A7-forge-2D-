@@ -256,3 +256,26 @@ a homologação de pagamentos em ambiente autorizado.
 
 Essa cobertura não libera merge: a produção continua em React até a
 migração completa de todas as ilhas e revisão explícita.
+
+## Mercadorias e gestão de estoque na migração
+
+A ilha `#angular-merchandise-catalog` monta apenas os controles do catálogo
+avançado de estoque, dentro do host nativo `#merchandise-catalog`.
+O formulário continua recebendo opções e estados da `MerchandisePort`;
+o controlador TypeScript original permanece como **única autoridade**
+para preços, escolha de fornecedores, compras, caixa, entregas e salvamento.
+Se o host Angular estiver ausente, a implementação DOM anterior continua
+ativa sem duplicar controles. O site publicado não monta essa ilha.
+
+O ensaio Chromium integrado testa 1280/414/360 px no ano 2000: abre
+Administração → Estoque → Mercadorias via navegação Angular, seleciona
+água e fornecedor econômico, confirma o mínimo de lotes, cria um pedido
+real da simulação, observa o débito único no caixa e a entrega pendente,
+muda o preço de um doce e recarrega o save, exigindo persistência
+e nenhuma compra adicional. Em 1998, a navegação bloqueia o catálogo
+avançado e preserva o estoque básico na aba Fornecedores.
+
+Esse cenário verifica a apresentação e os contratos existentes, **não
+substitui o teste do motor econômico nem homologação em celular físico**.
+Todos os testes devem passar antes de discutir a retirada do React,
+e nenhum merge/deploy é autorizado pelo script de auditoria.
