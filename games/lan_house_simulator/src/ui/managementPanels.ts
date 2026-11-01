@@ -17,7 +17,8 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
   const root=$('section-'+area),nav=document.createElement('nav');
   nav.className='management-pages';nav.setAttribute('aria-label','Painéis de '+(root.querySelector('h3')?.textContent??area));
   const angularRoot=area==='computers'?root.querySelector('#angular-computer-workspace'):
-   area==='services'?root.querySelector('#angular-service-workspace'):null;
+   area==='services'?root.querySelector('#angular-service-workspace'):
+   area==='stock'?root.querySelector('#angular-stock-workspace'):null;
   (angularRoot??root.querySelector('h3'))?.after(nav);
   const controls:HTMLButtonElement[]=[],panes:HTMLElement[]=[];
   const isLocked=(page:Page)=>page.unlockYear!==undefined&&getYear()<page.unlockYear;
