@@ -1,0 +1,134 @@
+name: LHS MCP repository index
+
+on:
+  push:
+    branches: ["feat/lhs-angular-ui-foundation"]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: "Repository scope to index (game or entire repository)"
+        required: true
+        default: "repository"
+        type: choice
+        options: [repository, game]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhs-mcp-index-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  index-and-validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify MCP safety, indexing and JSON-RPC stdio
+        run: node --test tools/lhs-mcp/*.test.mjs
+      - name: Restore previous catalog for incremental indexing
+        id: cache-index
+        uses: actions/cache/restore@v4
+        with:
+          path: out/lhs-mcp-cache/catalog.json
+          key: lhs-mcp-v8-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            lhs-mcp-v8-${{ runner.os }}-${{ github.ref_name }}-
+      - name: Generate machine-readable repository index
+        shell: bash
+        run: |
+          set -euo pipefail
+          SCOPE="."
+          if [[ "${{ inputs.scope || 'repository' }}" == "game" ]]; then
+            SCOPE="games/lan_house_simulator"
+          fi
+          node tools/lhs-mcp/index.mjs --scope "$SCOPE" --previous out/lhs-mcp-cache/catalog.json --output out/lhs-mcp-index/catalog.json
+          mkdir -p out/lhs-mcp-cache
+          cp out/lhs-mcp-index/catalog.json out/lhs-mcp-cache/catalog.json
+          echo "LHS_MCP_SCOPE=$SCOPE" >> "$GITHUB_ENV"
+      - name: Verify warm incremental index matches full catalog
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tools/lhs-mcp/index.mjs --scope "$LHS_MCP_SCOPE" \
+            --previous out/lhs-mcp-index/catalog.json \
+            --output out/lhs-mcp-verify/catalog.json > /dev/null
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const cold=JSON.parse(fs.readFileSync("out/lhs-mcp-index/catalog.json","utf8"));
+            const warm=JSON.parse(fs.readFileSync("out/lhs-mcp-verify/catalog.json","utf8"));
+            assert.deepEqual(warm.files,cold.files,"Incremental and full catalogs differ");
+            assert.equal(warm.buildStats.reused,cold.statistics.files);
+            assert.equal(warm.buildStats.scanned,0);
+            console.log(JSON.stringify({incrementalVerified:true,...warm.buildStats}));
+          '
+      - name: Cache updated catalog for next push
+        if: ${{ steps.cache-index.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: out/lhs-mcp-cache/catalog.json
+          key: lhs-mcp-v8-${{ runner.os }}-${{ github.ref_name }}-${{ github.sha }}
+      - name: Verify live MCP tools against checked out game
+        if: ${{ inputs.scope != 'game' }}
+        run: node tools/lhs-mcp/smoke.mjs
+      - name: Evaluate search relevance against real LHS modules
+        run: node tools/lhs-mcp/evaluate-real.mjs --output out/lhs-mcp-relevance/results.json
+      - name: Upload real source relevance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-real-relevance
+          path: out/lhs-mcp-relevance/results.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Review latest game Git diff without editing
+        run: node tools/lhs-mcp/diff-review-cli.mjs --base HEAD^ --output out/lhs-mcp-diff-review/report.json
+      - name: Upload advisory diff review
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-diff-review
+          path: out/lhs-mcp-diff-review/report.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Review branch against main from their common ancestor
+        run: node tools/lhs-mcp/branch-review-cli.mjs --base-branch main --output out/lhs-mcp-branch-review/report.json
+      - name: Upload branch comparison (advisory; no merge)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-branch-review
+          path: out/lhs-mcp-branch-review/report.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Benchmark contextual search at 10k and 15k simulated files
+        run: node --expose-gc tools/lhs-mcp/benchmark.mjs --output out/lhs-mcp-benchmark/results.json
+      - name: Upload contextual benchmark report
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-benchmark
+          path: out/lhs-mcp-benchmark/results.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Benchmark physical Git indexing at 10k and 15k files
+        timeout-minutes: 6
+        run: node --expose-gc tools/lhs-mcp/benchmark-physical.mjs --sizes=10000,15000 --output out/lhs-mcp-physical-benchmark/results.json
+      - name: Upload physical indexing benchmark
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-physical-benchmark
+          path: out/lhs-mcp-physical-benchmark/results.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Upload indexed files, symbols and summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-catalog
+          path: out/lhs-mcp-index/
+          retention-days: 30
+          if-no-files-found: error

@@ -12,10 +12,14 @@ export function installShopPanels(shop:HTMLElement,onChange:()=>void){
  const element=shop.querySelector<HTMLElement>('#react-shop-categories');
  if(!element)throw new Error('React shop navigation is missing');
  const nav:HTMLElement=element;
- const help=Array.from(shop.querySelectorAll('.shop-organize-help'));
- const details=document.createElement('details'),summary=document.createElement('summary');
- summary.textContent='Como ampliar e reorganizar';details.className='shop-guide';
- details.append(summary,...help);nav.before(details);
+ // The Angular template already owns its guidance disclosure. Moving those
+ // nodes out of an Angular view would break its DOM ownership.
+ if(!shop.querySelector('#angular-shop-overview')){
+  const help=Array.from(shop.querySelectorAll('.shop-organize-help'));
+  const details=document.createElement('details'),summary=document.createElement('summary');
+  summary.textContent='Como ampliar e reorganizar';details.className='shop-guide';
+  details.append(summary,...help);nav.before(details);
+ }
  function select(id:string){
   current=id;
   // Keep the rendered React tabs in sync even for programmatic selections.

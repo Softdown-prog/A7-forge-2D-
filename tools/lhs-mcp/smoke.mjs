@@ -1,0 +1,68 @@
+#!/usr/bin/env node
+/** End-to-end MCP stdio smoke on real checkout. */
+import assert from "node:assert/strict";
+import {spawnSync} from "node:child_process";
+import {fileURLToPath} from "node:url";
+import {repositoryRoot} from "./catalog.mjs";
+const root=repositoryRoot(process.cwd());
+const requests=[
+ {jsonrpc:"2.0",id:1,method:"initialize",params:{
+  protocolVersion:"2025-06-18",capabilities:{},clientInfo:{name:"github-actions",version:"1.0"}
+ }},
+ {jsonrpc:"2.0",method:"notifications/initialized"},
+ {jsonrpc:"2.0",id:2,method:"tools/list"},
+ {jsonrpc:"2.0",id:3,method:"tools/call",params:{name:"project_status"}},
+ {jsonrpc:"2.0",id:4,method:"tools/call",params:{name:"find_files",arguments:{query:"shopCatalogRenderer"}}},
+ {jsonrpc:"2.0",id:5,method:"tools/call",params:{name:"find_symbols",arguments:{query:"createGame"}}},
+ {jsonrpc:"2.0",id:6,method:"tools/call",params:{name:"search_content",arguments:{query:"ShopCatalogComponent",limit:8}}},
+ {jsonrpc:"2.0",id:7,method:"tools/call",params:{name:"impact_analysis",arguments:{path:"games/lan_house_simulator/src/sim/types.ts",depth:3,limit:30}}},
+ {jsonrpc:"2.0",id:8,method:"tools/call",params:{name:"search_context",arguments:{query:"comprar PS2",prefix:"games/lan_house_simulator/src",limit:20}}},
+ {jsonrpc:"2.0",id:9,method:"tools/call",params:{name:"trace_feature",arguments:{query:"simulação console PS2",prefix:"games/lan_house_simulator/src",limit:8,depth:2}}},
+ {jsonrpc:"2.0",id:10,method:"tools/call",params:{name:"plan_change",arguments:{query:"simulação PS2",owners:3,depth:2,testLimit:10}}},
+ {jsonrpc:"2.0",id:11,method:"tools/call",params:{name:"review_diff",arguments:{base:"HEAD^",depth:2,testLimit:8}}},
+ {jsonrpc:"2.0",id:12,method:"tools/call",params:{name:"review_branch",arguments:{baseBranch:"main"}}}
+];
+const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",import.meta.url)),
+ "--scope",".","--index","out/lhs-mcp-index/catalog.json"],{
+ cwd:root,encoding:"utf8",timeout:45000,
+ input:requests.map(x=>JSON.stringify(x)).join("\n")+"\n",
+ maxBuffer:8*1024*1024
+});
+assert.equal(proc.status,0,proc.stderr);
+const values=proc.stdout.split("\n").filter(Boolean).map(JSON.parse);
+assert.equal(values.length,12);
+assert.ok(values[1].result.tools.some(t=>t.name==="edit_file"));
+assert.ok(values[2].result.structuredContent.result.files>100);
+for(const i of [3,4,5])assert.ok(values[i].result.structuredContent.result.length>0,
+ "Expected lookup results: "+i);
+assert.ok(values[6].result.structuredContent.result.affected.length>0,"Expected real game impact edges");
+assert.ok(values[1].result.tools.some(t=>t.name==="search_context"),"Context tool registered");
+assert.ok(values[7].result.structuredContent.result.some(f=>/ps2/i.test(f.path)),
+ "Context search must find real PS2 module");
+assert.ok(values[1].result.tools.some(t=>t.name==="trace_feature"));
+const trace=values[8].result.structuredContent.result;
+assert.ok(trace.candidates.some(c=>c.path.endsWith("/sim/ps2.ts")));
+assert.ok(trace.candidates.every(c=>Array.isArray(c.directDependents)));
+assert.ok(trace.topCandidateImpact?.path,"Expected bounded impact information");
+const proposed=values[9].result.structuredContent.result;
+assert.equal(proposed.status,"review-only");
+assert.ok(proposed.owners.some(o=>o.path.endsWith("/sim/ps2.ts")));
+assert.ok(proposed.reviewFiles.length>0);
+assert.ok(proposed.suggestedTests.every(t=>t.path.startsWith("games/lan_house_simulator/tests/")));
+assert.ok(proposed.validation.some(v=>v.command==="npm test"));
+assert.ok(values[1].result.tools.some(t=>t.name==="review_diff"));
+const diffReview=values[10].result.structuredContent.result;
+assert.equal(diffReview.status,"review-only");
+assert.ok(Array.isArray(diffReview.affected));
+assert.ok(Array.isArray(diffReview.suggestedTests));
+const review=values[11].result.structuredContent.result;
+assert.equal(review.status,"review-only");
+assert.equal(review.mergeDecision,"not-authorized");
+assert.equal(review.comparison.baseBranch,"main");
+assert.ok(review.comparison.headSha);
+assert.ok(review.areas.frontendAngular>=0);
+assert.ok(Array.isArray(review.validation));
+assert.ok(values[1].result.tools.some(t=>t.name==="review_branch"));
+console.log(JSON.stringify({ready:true,head:values[2].result.structuredContent.result.head,
+ indexedFiles:values[2].result.structuredContent.result.files,
+ tools:values[1].result.tools.length,queries:8}));

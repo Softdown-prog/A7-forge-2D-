@@ -78,8 +78,12 @@ test("porta não conhece DOM, painel não conhece motor, ações de correio cont
  assert.ok(sourceModule("application/gamePorts.ts").includes("createNoticeWindowStatusPort(getState)"));
  const refresh=readFileSync(new URL("ui/noticeWindowRefresh.ts",root),"utf8");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("status:noticeWindowStatusPort,inbox:noticeInboxPort"));
- assert.ok(refresh.includes("renderNoticeWindowStatus(options.status.snapshot(open),options.doc)"));
- assert.ok(refresh.includes("renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup)"));
+ assert.match(refresh,/const status=options\.status\.snapshot\(open\)/);
+ assert.match(refresh,/renderNoticeWindowStatus\(status,options\.doc\)/);
+ assert.match(refresh,/sendEvent\("lhs:notice-status-updated",status\)/);
+ assert.match(refresh,/const snapshot=options\.inbox\.snapshot\(\)/);
+ assert.match(refresh,/renderNoticeInbox\(host,snapshot,options\.doc,options\.iconMarkup\)/);
+ assert.match(refresh,/if\(host\.dataset\?\.angularOwned!=="true"\)/);
  assert.ok(sourceModule("ui/runtimeControls.ts").includes("button(\"open-notices\""));
  assert.ok(sourceModule("ui/runtimeControls.ts").includes("noticeActions.review()"));
  assert.ok(sourceModule("ui/runtimeControls.ts").includes("installNoticeControls("));

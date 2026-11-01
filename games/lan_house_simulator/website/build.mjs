@@ -1,10 +1,15 @@
 import {execFileSync} from "node:child_process";
-import {cpSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from "node:fs";
+import {cpSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync,existsSync} from "node:fs";
 import {resolve,dirname} from "node:path";
 import {createHash} from "node:crypto";
 import {siteConfig} from "./config.mjs";
 import {pages,icon,eras} from "./content.mjs";
-const root=resolve(import.meta.dirname,".."),output=resolve(root,"out/site");
+const root=resolve(import.meta.dirname,"..");
+// Migration branch defaults to Angular for the complete site build.
+// The published main remains unchanged until the full review and merge.
+const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
+const angularSite=process.env.LHS_SITE_UI!=="react";
+const output=resolve(root,angularCandidate?"out/site-angular":"out/site");
 export function validateConfig(c){
  if(!["preview","public"].includes(c.mode))throw Error("Modo do site inválido");
  if(c.origin){const u=new URL(c.origin);if(u.protocol!=="https:"||u.pathname!=="/"||u.search||u.hash||u.username||u.password)throw Error("origin deve ser um domínio HTTPS sem caminho");}
@@ -18,18 +23,34 @@ export function buildSite(){
  if(accounts.enabled&&(!siteConfig.email||!siteConfig.operator||!accounts.firebaseApiKey))throw Error("Conta online exige responsável, contato e configuração Firebase.");
  // Always ship the currently compiled game, never a stale build from another task.
  execFileSync(process.execPath,[resolve(root,"scripts/build.mjs")],{cwd:root,stdio:"inherit"});
+ if(angularSite){
+  // Rebuild Angular from its own lockfile; a stale preview must never be deployed.
+  if(!existsSync(resolve(root,"frontend-angular/node_modules/@angular/cli/package.json")))
+   execFileSync(process.platform==="win32"?"npm.cmd":"npm",
+    ["ci","--prefix","frontend-angular","--no-audit","--no-fund"],
+    {cwd:root,stdio:"inherit"});
+  execFileSync(process.platform==="win32"?"npm.cmd":"npm",
+   ["run","build","--prefix","frontend-angular"],{cwd:root,stdio:"inherit"});
+  execFileSync(process.execPath,[resolve(root,"frontend-angular/scripts/build_cutover_candidate.mjs")],
+   {cwd:root,stdio:"inherit"});
+ }
  rmSync(output,{recursive:true,force:true});mkdirSync(resolve(output,"assets"),{recursive:true});
  for(const [from,to] of [["website/site.css","assets/site.css"],["website/site.mjs","assets/site.mjs"],["website/data-controls.mjs","assets/data-controls.mjs"],["assets/ui/brand.svg","assets/brand.svg"],["assets/ui/icons.svg","assets/icons.svg"]])cpSync(resolve(root,from),resolve(output,to));
  for(const file of ["sala.webp","pc-crt.svg","pc-lcd.svg","pc-led.svg","pc-arena.svg"])cpSync(resolve(root,"website/assets",file),resolve(output,"assets",file));
  for(const file of ["account.mjs","account-client.mjs","account.css","donate-client.mjs","donate.css","email-confirmation.mjs"])cpSync(resolve(root,"website",file),resolve(output,"assets",file));
  cpSync(resolve(root,"account-config.json"),resolve(output,"account-config.json"));
  writeFileSync(resolve(output,"assets/eras.mjs"),"export const eras="+JSON.stringify(eras)+";\n");
- cpSync(resolve(root,"dist"),resolve(output,"game"),{recursive:true});
+ cpSync(resolve(root,angularSite?"out/angular-cutover-candidate":"dist"),resolve(output,"game"),{recursive:true});
+ // The report is CI-only metadata, never a publicly reachable /game/ resource.
+ if(angularSite)rmSync(resolve(output,"game/angular-candidate-report.json"),{force:true});
  // Identificador muda com o código do jogo. Evita JS antigo no navegador após o deploy.
  const moduleFiles=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>
   entry.isDirectory()?moduleFiles(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
  const revisionHash=createHash("sha256");
  for(const file of moduleFiles(resolve(output,"game/js")).sort())revisionHash.update(readFileSync(file));
+ // Include Angular runtime and styles in the iframe revision to invalidate cached UI.
+ if(angularSite)for(const file of moduleFiles(resolve(output,"game/__angular")).sort())
+  revisionHash.update(readFileSync(file));
  for(const file of ["website/site.mjs","website/site.css","website/account.mjs","website/account-client.mjs","website/account.css","website/donate-client.mjs","website/donate.css","website/email-confirmation.mjs","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
  revisionHash.update(readFileSync(resolve(root,"website/assets/sala.webp")));
  const revision=revisionHash.digest("hex").slice(0,12);
@@ -51,10 +72,12 @@ export function buildSite(){
  game=game.replace('<span class="edition-label">','<a class="edition-label" href="/jogar/" target="_top">← Voltar ao site</a><span class="edition-label">');
  // All game entry scripts must use the same revision as their transitive
  // imports. Otherwise the preview checker (and a real browser cache) rejects them.
- game=game.replace(/(<script type="module" src="\.\/js\/[^"?]+\.js)(?:\?v=[^"]+)?(">)/g,
+ game=game.replace(/(<script type="module" src="\.\/(?:js|__angular)\/[^"?]+\.js)(?:\?v=[^"]+)?(">)/g,
   (_match,prefix,suffix)=>prefix+"?v="+revision+suffix);
  game=game.replace("<title>",'<meta name="robots" content="noindex"/><title>');
- game=game.replace('href="./style.css"','href="./style.css?v='+revision+'"');writeFileSync(gameFile,game);
+ game=game.replace('href="./style.css"','href="./style.css?v='+revision+'"');
+ if(angularSite)game=game.replace('href="./__angular/styles.css"','href="./__angular/styles.css?v='+revision+'"');
+ writeFileSync(gameFile,game);
  const escape=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
  const c=Object.fromEntries(Object.entries(siteConfig).map(([k,v])=>[k,typeof v==="string"?escape(v):v]));
  if(c.hosting)c.hosting=Object.fromEntries(Object.entries(c.hosting).map(([k,v])=>[k,escape(v)]));
@@ -81,7 +104,7 @@ export function buildSite(){
  let connections="'self'";
  for(const config of [online,accounts])if(config.enabled){const api=new URL(config.apiUrl);if(api.protocol!=="https:"||api.pathname!=="/"||api.search||api.hash||api.username||api.password)throw Error("URL da API online inválida");connections+=" "+api.origin+" https://identitytoolkit.googleapis.com https://securetoken.googleapis.com";}
  const csp=`default-src 'self'; script-src 'self' ${hashes.join(" ")}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; connect-src ${connections}; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'`;
- writeFileSync(resolve(output,"_headers"),`/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), fullscreen=(self)\n  Content-Security-Policy: ${csp}\n  Cache-Control: no-cache\n/assets/*\n  Cache-Control: public, max-age=3600\n/game/js/*\n  Cache-Control: no-cache\n/conta/confirmar/*\n  ! Referrer-Policy\n  Referrer-Policy: no-referrer\n  ! Cache-Control\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n`);
+ writeFileSync(resolve(output,"_headers"),`/*\n  X-Content-Type-Options: nosniff\n  Referrer-Policy: strict-origin-when-cross-origin\n  Permissions-Policy: camera=(), microphone=(), geolocation=(), fullscreen=(self)\n  Content-Security-Policy: ${csp}\n  Cache-Control: no-cache\n/assets/*\n  Cache-Control: public, max-age=3600\n/game/js/*\n  Cache-Control: no-cache\n/game/__angular/*\n  Cache-Control: no-cache\n/conta/confirmar/*\n  ! Referrer-Policy\n  Referrer-Policy: no-referrer\n  ! Cache-Control\n  Cache-Control: no-store\n  X-Robots-Tag: noindex, nofollow\n`);
  console.log(`Site: ${content.length} páginas + jogo completo em ${output}`);return output;
 }
 if(process.argv[1]&&resolve(process.argv[1])===resolve(import.meta.filename))buildSite();

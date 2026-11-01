@@ -1,0 +1,6 @@
+@for (action of actions; track action.id) {
+  <button type="button" class="react-quick-action" [attr.data-ui-shortcut]="action.id" (click)="open(action)">
+    <span aria-hidden="true" class="react-quick-symbol">{{ action.icon }}</span>
+    <span class="react-quick-copy"><strong>{{ action.label }}</strong><small>{{ action.detail }}</small></span>
+  </button>
+}

@@ -1,0 +1,42 @@
+
+<section id="notices" class="admin notice-inbox" aria-label="Caixa de mensagens"
+ role="dialog" aria-modal="true" aria-labelledby="notices-title"
+ tabindex="-1" [hidden]="status().windowHidden">
+ <div class="admin-title">
+  <div><span class="window-eyebrow">AVISOS &amp; OPORTUNIDADES</span>
+   <h2 id="notices-title">Correio da lan house</h2></div>
+  <button id="close-notices" type="button" class="slice" aria-label="Fechar painel" data-icon="close">Fechar</button>
+ </div>
+ <p>Cartas, avisos, cobranças e oportunidades. Leia as mensagens e resolva os problemas do estabelecimento.</p>
+ <div id="notices-list" class="notices-list" aria-live="polite" data-angular-owned="true">
+  @if(letters().length===0){
+   <p>Nenhuma mensagem recebida por enquanto.</p>
+  } @else {
+   @for(letter of letters();track $index){
+    <article class="notice-letter" [class.notice-info]="letter.severity==='info'"
+     [class.notice-warning]="letter.severity==='warning'"
+     [class.notice-urgent]="letter.severity==='urgent'" [class.read]="letter.read">
+     <h3><span aria-hidden="true">{{letter.severity==='urgent'?'⚠️':'✉️'}}</span> {{letter.title}}</h3>
+     <small>Dia {{letter.day}}</small><p>{{letter.body}}</p>
+     <div class="action-row wrap">
+      @for(item of letter.items;track $index){
+       @if(item.kind==='button'){
+        <button type="button" class="slice" [disabled]="item.disabled" [attr.title]="item.title??null"
+         [attr.data-notice-read]="item.action==='read'?item.noticeId:null"
+         [attr.data-decision]="item.action==='decision'?item.noticeId:null"
+         [attr.data-choice]="item.action==='decision'?item.choiceId:null"
+         [attr.data-notice-action]="item.action!=='read'&&item.action!=='decision'?item.action:null">
+          {{item.text}}
+        </button>
+       } @else if(item.kind==='hint'){
+        <small class="notice-followup-hint">{{item.text}}</small>
+       } @else {
+        <strong>{{item.text}}</strong>
+       }
+      }
+     </div>
+    </article>
+   }
+  }
+ </div>
+</section>

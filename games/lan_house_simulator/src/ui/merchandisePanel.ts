@@ -4,7 +4,9 @@ const money=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL
  * Stable DOM: live updates never replace controls, steal focus or move scroll. */
 export function installMerchandisePanel(port:MerchandisePort,commit:(result:{ok:boolean;message:string})=>void){
  const catalog=document.getElementById("merchandise-catalog")!;
- catalog.innerHTML=`<p>Escolha uma mercadoria. O estoque é compartilhado com os clientes no salão.</p>
+ // Angular renders the markup only in the isolated cutover rehearsal.
+ // Never overwrite Angular-owned form controls or detach its event handlers.
+ if(!catalog.querySelector("#angular-merchandise-catalog"))catalog.innerHTML=`<p>Escolha uma mercadoria. O estoque é compartilhado com os clientes no salão.</p>
  <div class="merchandise-fields"><label>Categoria<select id="merchandise-category"><option value="soda">Bebidas</option><option value="candy">Balas, chicletes e doces</option><option value="snacks">Biscoitos e salgadinhos</option></select></label>
  <label>Mercadoria<select id="merchandise-product"></select></label></div>
  <p id="merchandise-detail"></p><p id="merchandise-margin"></p><p id="merchandise-sales"></p>

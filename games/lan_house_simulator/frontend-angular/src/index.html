@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Lan House Simulator · Angular UI Preview</title></head>
+<body>
+  <!-- This is only a component preview. The actual game keeps its original Canvas document. -->
+  <div id="react-menu-actions"></div><div id="react-menu-tour"></div>
+  <section class="angular-menu-transfer-preview" aria-label="Prévia dos controles de menu"><div id="angular-save-transfer"></div><div id="angular-menu-preferences"></div></section><div id="react-topbar-actions"></div>
+  <nav id="react-quick-deck"></nav><nav id="react-shop-categories"></nav>
+  <div id="react-shop-search"></div><div id="react-admin-shortcuts"></div>
+  <section class="angular-shop-preview" aria-label="Prévia dos controles da loja">
+    <div id="angular-shop-overview"></div>
+    <div id="angular-shop-catalog"></div>
+  </section>
+  <div id="shop-catalog"></div>
+  <div class="angular-status-preview" aria-label="Prévia Angular do calendário, clima e correspondência">
+    <div id="angular-time-weather"></div><div id="angular-notice-inbox"></div>
+  </div>
+  <section id="admin">
+    <div id="angular-admin-area-navigation"></div>
+    <nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
+      <button data-admin-tab="prices" aria-controls="section-prices" aria-selected="true">Preços</button>
+      <button data-admin-tab="computers" aria-controls="section-computers" aria-selected="false">Computadores</button>
+      <button data-admin-tab="services" aria-controls="section-services" aria-selected="false">Serviços</button>
+    </nav><div id="section-computers"><h3>Computadores</h3><div id="angular-computer-workspace"></div><div id="pc-maintenance"></div></div><div id="section-services"><h3>Serviços</h3><div id="angular-service-workspace"></div></div></section>
+  <!-- Native stock manager owns prices/orders; Angular owns its stable form DOM only. -->
+  <section id="section-stock" aria-label="Prévia do estoque">
+    <h3>Produtos e estoque</h3>
+    <div id="angular-stock-workspace" class="angular-admin-workspace-root"></div>
+    <div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>
+  </section>
+  <!-- Finance navigation only: game and transaction controls stay native. -->
+  <section id="section-finance" aria-label="Prévia da navegação financeira">
+    <h3>Investimento e finanças</h3>
+    <div id="angular-finance-workspace" class="angular-admin-workspace-root"></div>
+  </section>
+  <!-- Optional administration previews, with gameplay actions only in the real game. -->
+  <section id="section-prices" aria-label="Prévia de preços">
+    <h3>Preços de venda</h3><div id="angular-prices-workspace" class="angular-admin-workspace-root"></div>
+  </section>
+  <section id="section-licenses" aria-label="Prévia de licenças">
+    <h3>Licenciamento de Windows</h3><div id="angular-licenses-workspace" class="angular-admin-workspace-root"></div>
+  </section>
+  <section id="section-consoles" aria-label="Prévia de videogames">
+    <h3>Videogames PS1 e PS2</h3><div id="angular-consoles-workspace" class="angular-admin-workspace-root"></div>
+  </section>
+  <!-- Account dialog DOM owned by Angular, business actions attached by native controller only in game. -->
+  <div id="angular-player-account"></div>
+</body>
+</html>

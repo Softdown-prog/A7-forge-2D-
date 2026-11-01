@@ -1,0 +1,381 @@
+# LHS Angular 22 — migração da interface
+
+Primeira etapa isolada da migração de React para Angular do Lan House Simulator. NÃO substitui ainda a interface publicada. A main, o jogo Canvas 2D, src/sim, src/application, src/render, src/bootstrap e os contratos de save continuam intactos.
+
+## Por que um workspace separado?
+
+O motor usa TypeScript 7.0.2; Angular 22 aceita TypeScript 6.0.x. Por isso este workspace usa seu próprio TypeScript 6.0.2 e não altera as dependências do jogo.
+
+Requisitos: Node.js 22.22.3+ compatível com Angular 22. Dentro de frontend-angular execute:
+
+- npm ci
+- npm run lint
+- npm run build
+
+O build cria frontend-angular/dist/game-ui/browser com JavaScript Angular estático, sem servidor Next.js, Node em produção, Zone.js ou acesso direto ao motor. A integração na página do jogo só acontecerá após checagens de CI, navegador, controles e mobile.
+
+## Dependências reproduzíveis
+
+`package-lock.json` foi gerado pelo npm no runner do GitHub Actions, versionado
+junto do workspace Angular e validado em CI. Instalar com `npm ci`, que falha
+se o manifesto e o lockfile divergirem, em vez de resolver versões novas a
+cada compilação. O workflow usa cache do npm pela assinatura do lockfile.
+
+## Regras rígidas de qualidade
+
+O `tsconfig.json` usa `strict` com `noUnusedLocals`, `noUnusedParameters`,
+`noImplicitReturns`, `noFallthroughCasesInSwitch`, `noPropertyAccessFromIndexSignature`,
+`noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` e `noImplicitOverride`.
+`strictNullChecks` está coberto por `strict:true` no TypeScript.
+No Angular: `strictTemplates`, `strictInputAccessModifiers` e
+`strictInjectionParameters`; não usar `fullTemplateTypeCheck` obsoleto.
+
+O ESLint (flat config) bloqueia `any` explícito e variáveis não utilizadas e emite
+avisos para tipos explícitos de retorno e `console` (exceto warn/error).
+Verificar com `npm run lint`; o pipeline da branch roda lint antes do AOT.
+
+## Limites de responsabilidade
+
+- Angular assume elementos interativos do menu, tour, ações superiores, navegação rápida, categorias, busca na loja, atalhos administrativos e navegação por abas. Os workspaces de computadores/serviços e a faixa Angular de abas acionam os controles nativos do TypeScript; a interface legada só será escondida na etapa final de ativação Angular.
+- Eventos de interface e cliques nas ações originais continuam a comunicar com o controlador TypeScript via DOM.
+- Nenhuma regra de preços, disponibilidade, estoque, saves, clientes, animação, Canvas, renderização ou ciclo do jogo pode ser reimplementada em Angular.
+- IDs existentes permanecem idênticos, inclusive os nomes legados react-*, porque muitos adaptadores e testes ainda dependem deles. A renomeação será feita com mudança coordenada dos contratos.
+
+## Menu e transferência de partidas
+
+A apresentação de opções (efeitos sonoros) e importação/exportação de partidas também foi implementada em componentes Angular isolados. As interfaces TypeScript `installMenuControls` e `installSaveFileControls` continuam responsáveis pelas ações, confirmação, persistência e leitura de arquivo. O arquivo atual `index.html` segue usando seus controles originais até a conversão final; os hosts `angular-save-transfer` e `angular-menu-preferences` ficam apenas no documento de prévia enquanto não for possível retirar o React do jogo sem quebra.
+
+## HUD, clima e correspondência
+
+Os componentes Angular agora recebem snapshots somente leitura por eventos de apresentação: `lhs:time-weather-updated`, `lhs:notice-status-updated` e `lhs:notice-inbox-updated`. Os dados e decisões continuam nos ports TypeScript. O adaptador da caixa de correio preserva seu renderizador legado quando a lista não é marcada `data-angular-owned="true"` e deixa o Angular renderizar quando este atributo está presente.
+
+**Ainda falta:** teste E2E real de cartas e janelas, mobile e troca atômica de toda a interface. Não inserir os hosts de prévia no `index.html` do jogo em produção até remover o React.
+
+## Cabeçalho da loja e organização
+
+`ShopOverviewComponent` apresenta saldo/resumo do salão, botões **Organizar salão** e **Remover paredes e portas** e um guia acessível de ampliação. O estado é recebido de `ShopOverviewPort.snapshot()` via `lhs:shop-overview-updated` somente quando o snapshot muda, usando um adaptador UI TypeScript. Os botões preservam os IDs que o controlador nativo escuta; Angular não implementa compras, movimento de móveis, demolição ou regras econômicas. O `installShopPanels` preserva os elementos dentro do template Angular em vez de movê-los para outro `details`.
+
+Este cabeçalho está exclusivamente no documento de prévia Angular; não foi inserido no `index.html` React. O catálogo, oferta PS1/PS2 e compras ainda dependem do renderer e dos comandos TypeScript, aguardando migração e testes E2E.
+
+## Catálogo comum Angular
+
+`ShopCatalogComponent` apresenta os cartões comuns do catálogo com rótulo, categoria,
+imagem procedural já desenhada pelo adaptador TypeScript (ou ícone local), descrição,
+cotação, texto de propriedade e botão habilitado/bloqueado. O adaptador
+`shopCatalogAngularProjection.ts` recebe exclusivamente os DTOs já resolvidos
+pelos ports de preços/serviços e publica `lhs:shop-cards-updated` somente quando o
+host Angular está presente. O clique é encaminhado para o botão original no
+`#shop-catalog`, que mantém `installShopControls` como executor único.
+O componente NÃO resolve preço, limite, disponibilidade ou colocação e
+não pode disparar uma compra sem um botão original ativo.
+
+**Paridade ainda pendente:** o seletor PS1, os CDs PS1, a compra/instalação
+de PS2 e os cards procedurais de consoles continuam no renderizador original.
+A nova região está apenas em `frontend-angular/src/index.html` (prévia), sem
+ativação na página React publicada. Não remover o catálogo original antes da
+migração completa dos controles, busca e integração.
+
+## PlayStation 1 e 2 no Angular
+
+A prévia possui os cartões de bancada PS1, mídias físicas PS1, bancada PS2
+e jogos PS2. Os snapshots de disponibilidade e preços vêm dos ports existentes;
+os desenhos procedurais são reutilizados da visualização TypeScript.
+As compras são delegadas aos botões nativos e a escolha dos locais sincroniza
+com seus controles originais. Nenhuma regra econômica, Canvas do jogo ou saves
+foi modificada. Falta testar interação real no navegador/mobile antes da ativação.
+
+## Próximas etapas
+
+1. Completar o port das ilhas React, gerar lockfile do workspace Angular e validar o build pelo CI.
+2. No PR de ativação, trocar somente o bundle de bootstrap React pelo Angular, preservar a importação externa de js/main.js, e migrar os testes de contrato.
+3. Transferir progressivamente os painéis imperativos de src/ui para componentes Angular usando portas read-only e comandos, sem trazer o motor para dentro do framework.
+4. Migrar a interface do site e os fluxos de conta e doações sem alterar serviços externos/contratos; conservar páginas estáticas/SEO.
+5. Validar mobile 360/414px, teclado, toque, compra, estoque, PS1/PS2, saves, Firebase e deploy Cloudflare. Somente depois remover React e código morto.
+
+O PR preliminar foi **fechado sem merge**. Continuar somente na branch de migração; não abrir novo PR até 100% de paridade e autorização explícita. Não mesclar por aparência ou pelo simples fato de Angular compilar.
+
+## Limites cobertos pelos testes de fronteira
+
+Os contratos de correio, loja e serviços verificam snapshots de leitura
+reutilizados entre a interface Angular e o DOM original. A redação dos testes
+acompanha a separação em duas camadas sem omitir o fallback legado. Os testes do
+cabeçalho também confirmam que o Angular não recebe alterações simultâneas
+do renderizador legado.
+
+## Teste real da prévia Angular em Chromium
+
+O workflow `LHS Angular UI preview` executa `frontend-angular/scripts/verify_catalog_preview.mjs`
+com Playwright em larguras 1280, 414 e 360px. O teste carrega o JavaScript Angular
+compilado, publica DTOs de apresentação simulados e usa controles nativos de teste
+para verificar que a seleção das bancadas e os cliques de compras PS1, CD PS1,
+PS2, jogos PS2 e itens comuns chegam **uma única vez** aos comandos delegados.
+Também garante que ofertas bloqueadas não possam ser acionadas. Screenshots e
+relatório JSON são anexados ao CI. **Não é ainda o teste E2E da partida real:**
+o jogo e o save não são iniciados na prévia Angular; essa validação só será
+possível no cutover controlado após a integração da aplicação.
+
+## Teste integrado temporário da partida real
+
+O script `frontend-angular/scripts/verify_integrated_game.mjs` monta um servidor
+local que serve o HTML do jogo e altera **apenas sua resposta HTTP**: substitui
+o bootstrap React pelo bundle Angular. Não grava nenhum HTML em produção.
+O Canvas, os ports TypeScript de compra e o armazenamento são os originais.
+
+Com um save real de 2006, verifica compras de bancada PS1, CD PS1, bancada
+PS2 e jogo PS2, incluindo posição, cobrança e persistência ao recarregar.
+Executa Chromium desktop (1280px) e mobile touch (414px e 360px), gerando screenshots
+e JSON. Não substitui homologação de toda a interface para o corte final.
+
+Inclui cenários reais de bloqueio: PS2 indisponível em 2002 e compra
+indisponível sem caixa em 2006, verificando que nenhum console foi adquirido
+por cliques programáticos em controles desabilitados.
+
+## QA integrado de administração e arquivos de save
+
+O mesmo teste E2E integrado verifica, em desktop e celular, os cliques das abas
+Angular de Administração e das tarefas de Computadores/Serviços, conferindo que
+o painel TypeScript original abriu a seção correta. Também navega pelo menu,
+altera a preferência de som, exporta o JSON real via download do navegador,
+valida o envelope e as cópias físicas PS1/PS2, e importa esse arquivo via o
+controle nativo (incluindo confirmação), comprovando que o progresso foi
+preservado. Nenhum componente Angular acessa as regras da simulação.
+
+## Simulação isolada do corte para componentes de menu Angular
+
+O servidor E2E agora também substitui (somente na resposta HTTP de teste)
+os nós antigos do formulário de save e das opções pelos hosts
+`angular-save-transfer` e `angular-menu-preferences`. O Angular monta
+os controles com os mesmos IDs antes do bootstrap nativo TypeScript.
+O teste verifica a inexistência de IDs duplicados e realiza download,
+importação de arquivo e mudança do som **nesses componentes Angular reais**,
+sem redirecionar eventos artificialmente. O HTML versionado da produção
+continua com seus controles originais.
+
+## Auditoria verificável de migração (sem troca da interface)
+
+O script `frontend-angular/scripts/audit_migration.mjs` compara os
+sete hosts React reais de `src/react/entry.jsx` com os mounts Angular,
+confere IDs presentes no documento do jogo e na prévia, e informa quais
+componentes Angular opcionais ainda **não** existem no HTML publicado.
+Também inventaria verificações já escritas nos scripts Playwright para
+compras PS1/PS2, salvamento, administração, desktop/mobile e ofertas
+bloqueadas; registra explicitamente fluxos sem evidência de E2E integrado
+(posicionamento de móveis e integração de conta/doações).
+
+O resultado JSON em `out/angular-migration-audit/report.json` é publicado
+como `lhs-angular-migration-audit` pelo workflow da branch. Executar:
+
+```bash
+node --test tests/angular-migration-audit.test.mjs
+node frontend-angular/scripts/audit_migration.mjs --output out/angular-migration-audit/report.json
+```
+
+**Atenção:** encontrar texto de verificação em um script significa apenas
+evidência **estática** de cobertura; um fluxo só fica comprovadamente
+funcional após o Playwright executar e passar. O auditor não marca o
+cutover como pronto nem altera o jogo ou o site. A migração continua
+retida nesta branch até homologação total e autorização explícita.
+
+## Endurecimento E2E: calendário, clima e correspondência
+
+O ensaio Chromium integrado agora também substitui **somente na resposta
+HTTP de teste** o calendário nativo e o diálogo de correio pelos hosts
+Angular equivalentes. Usa o jogo real, um save histórico com chuva e uma
+carta real armazenada no save. Valida em 1280, 414 e 360 px: IDs únicos,
+calendário expandir/fechar, efeito da chuva, diálogo acessível, texto de
+carta escapado (sem execução de HTML), leitura por botão Angular delegado
+à ação TypeScript, contador de não lidas, fechamento da janela e estado
+persistido após reload. Não injeta snapshots falsos para esses testes.
+
+A auditoria estática reconhece esses dois casos como evidenciados, mas o
+status de corte final continua `not-ready` até os demais fluxos serem
+homologados. Nenhum HTML publicado, regra do motor ou esquema de save muda.
+
+## Testes de busca e teclado rigorosos
+
+O E2E integrado testa também a busca na loja com **cartões Angular reais**:
+um termo impossível remove todos os cartões visíveis e limpar a busca
+restaura a contagem anterior. O componente de busca continua delegando
+as ações econômicas ao DOM TypeScript e recebe os DTOs do catálogo
+apenas para contagem/filtragem visual; a projeção Angular ouve o mesmo
+termo e filtra sua própria lista. Em desktop, o teste exige foco real
+no botão de correio, abertura com Enter, retorno ao menu com Escape e
+retomada da partida. Isso é validado em execução de navegador, não
+simulado por callbacks unitários.
+
+## Validação integrada de privacidade (sem publicação)
+
+O ensaio Chromium de integração também verifica o aviso real de privacidade
+em desktop 1280px e mobile touch 414px/360px, sem pré-configurar a escolha:
+aceitar e recusar opcionais, gravar a decisão com versão e data, mantê-la
+após reload e reexibir o aviso quando a decisão ultrapassa 30 dias.
+Depois de recusar, a partida ainda pode ser retomada com o save essencial
+intacto. O cenário usa o mesmo corte HTTP temporário e não publica Angular.
+As verificações ficam sujeitas ao resultado do GitHub Actions; a existência
+do script, sozinha, não equivale à homologação.
+
+## Ensaios móveis do editor de salão
+
+A integração Playwright usa Chromium com toque real em **414px e 360px**,
+rodando uma partida salva e o mesmo Canvas 2D da produção. Abre a loja
+pela ilha Angular e aciona **Organizar salão** no controlador TypeScript;
+projeta um PC com a câmera isométrica compilada, toca no Canvas, gira,
+escolhe o destino, confirma e valida a alteração no save original.
+O destino é verificado dentro de **um único encaixe de 0,25 tile** por
+causa do arredondamento da grade no viewport móvel ampliado, sem permitir
+saltos arbitrários. Exige apenas um registro por PC e nenhuma cobrança.
+
+O mesmo fluxo testa remover um pôster, cancelar antes da confirmação,
+confirmar explicitamente e recarregar a página para conferir PC e pôster.
+Screenshots e relatório JSON são enviados como artefatos do CI.
+**São testes Chromium mobile emulado, não homologação em aparelho físico.**
+O React publicado e a simulação continuam intocados; a migração não está
+liberada para merge/deploy até a paridade integral e a aprovação explícita.
+
+## Minha Conta e Donate em ensaio Angular
+
+No ensaio de migração, o host opcional `#angular-player-account` cria o
+diálogo `#player-account` via `AccountShellComponent`, antes da inicialização
+do jogo. O controlador `src/ui/cloudControls.ts` reutiliza esse diálogo
+e segue como **única autoridade** para Firebase Auth, carteira de Cookies,
+catálogo de cosméticos, histórico e save na nuvem. O HTML publicado ainda
+não possui o host; nele, a estrutura nativa é mantida sem mudanças
+de autenticação ou backend.
+
+A bateria Playwright usa resoluções 1280, 414 e 360 para conferir que
+não há diálogos duplicados, que uma conta offline não apresenta saldo
+fictício, que catálogo e menu funcionam e que o save local permanece.
+A conta online é exercitada somente com **Firebase e API simulados**,
+incluindo login, saldo verificado, um resgate idempotente, inventário e
+logout. O vínculo com Donate é apenas um link `/donate/`, preservando a
+sessão da aba (`target="_top"`). O CI **não inicia Checkout Pro, não
+cria pedidos reais, não cobra e não envia saves para nuvem**.
+A navegação autenticada completa entre `/conta/`, jogo e `/donate/`
+continua coberta separadamente pelo site; o ensaio Angular não substitui
+a homologação de pagamentos em ambiente autorizado.
+
+Essa cobertura não libera merge: a produção continua em React até a
+migração completa de todas as ilhas e revisão explícita.
+
+## Mercadorias e gestão de estoque na migração
+
+A ilha `#angular-stock-workspace` oferece navegação Angular acessível entre
+**Mercadorias**, **Fornecedores** e **Entregas**. Os botões encaminham
+comandos para os seletores TypeScript originais, que permanecem montados
+mas têm a navegação duplicada visualmente ocultada apenas no ensaio.
+O estado bloqueado de Mercadorias antes de 2000 é lido do botão nativo
+e acompanhado por `MutationObserver`, sem reproduzir regras de ano
+no componente. O site publicado continua sem esse host.
+
+A ilha `#angular-merchandise-catalog` monta apenas os controles do catálogo
+avançado de estoque, dentro do host nativo `#merchandise-catalog`.
+O formulário continua recebendo opções e estados da `MerchandisePort`;
+o controlador TypeScript original permanece como **única autoridade**
+para preços, escolha de fornecedores, compras, caixa, entregas e salvamento.
+Se o host Angular estiver ausente, a implementação DOM anterior continua
+ativa sem duplicar controles. O site publicado não monta essa ilha.
+
+O ensaio Chromium integrado testa 1280/414/360 px no ano 2000: abre
+Administração → Estoque → Mercadorias via navegação Angular, seleciona
+água e fornecedor econômico, confirma o mínimo de lotes, cria um pedido
+real da simulação, observa o débito único no caixa e a entrega pendente,
+muda o preço de um doce e recarrega o save, exigindo persistência
+e nenhuma compra adicional. Em 1998, a navegação bloqueia o catálogo
+avançado e preserva o estoque básico na aba Fornecedores.
+
+Esse cenário verifica a apresentação e os contratos existentes, **não
+substitui o teste do motor econômico nem homologação em celular físico**.
+Todos os testes devem passar antes de discutir a retirada do React,
+e nenhum merge/deploy é autorizado pelo script de auditoria.
+
+## Finanças na prévia Angular
+
+A navegação opcional `#angular-finance-workspace` organiza as seis
+páginas financeiras em Angular: **Caixa e contas**, **Ocupação e resultado**,
+**Primeira sexta**, **Divulgação**, **Opiniões dos clientes** e **Reiniciar
+partida**. Os botões Angular só acionam a seleção nativa
+`data-panel-choice` do `managementPanels.ts`; não calculam dinheiro,
+não reprocessam contas e não criam nem apagam saves.
+
+A área **Reiniciar partida** é visualmente diferenciada. Acessar essa
+aba **não reinicia o jogo**: o botão original `#reset-game` e seu
+processo de confirmação continuam sob o controlador TypeScript.
+O ensaio de navegador exercita as seis páginas nas larguras desktop
+e mobile, confere exatamente uma seção visível, identidade dos
+elementos e permanência das bancadas PS1/PS2 da partida. Não
+confirma nem executa a ação destrutiva.
+
+O Angular da produção segue desativado até completar toda a paridade,
+executar os testes e obter aprovação explícita para o merge.
+
+## Administração de Preços, Licenças e Videogames
+
+A prévia Angular tem três ilhas adicionais, apenas de apresentação:
+
+- `#angular-prices-workspace` abre Hora/pacotes, Análise de tarifas, Produtos,
+  Impressões e Cópias CD/DVD.
+- `#angular-licenses-workspace` abre Windows por PC, Jogos clássicos e
+  Jogos com GPU.
+- `#angular-consoles-workspace` abre Bancadas, Preço/hora e Jogos PS1/PS2.
+
+Todas usam o template compartilhado `admin-task-workspace.html` e encaminham
+os cliques às abas `data-panel-choice` gerenciadas por
+`src/ui/managementPanels.ts`. Os IDs originais e os controladores
+de compra, preços, desbloqueio histórico e save continuam ativos.
+A navegação nativa é ocultada *somente no ensaio Angular*, sem excluir
+os botões de comando do DOM.
+
+O teste integrado abre as 11 subtelas reais, confirma a aba selecionada
+e o layout em 1280/414/360 px e verifica que a navegação **não**
+compra discos, jogos ou bancadas. A retirada do React publicado continua
+bloqueada, e o motor Canvas 2D não é modificado nesta etapa.
+
+## Publicação candidata Angular, isolada da main
+
+O transformador frontend-angular/scripts/cutover_document.mjs compõe a mesma
+página HTML para o teste integrado Chromium e para um candidato estático.
+Esta página substitui o bootstrap React pelo Angular e monta os 13 hosts
+opcionais, inclusive saldo e organização da loja, sem alterar Canvas, economia
+ou os formatos de saves. O script valida âncoras obrigatórias e IDs únicos.
+
+Após construir o jogo TypeScript e o Angular 22, execute na pasta do jogo:
+
+    node frontend-angular/scripts/build_cutover_candidate.mjs
+
+O resultado fica em out/angular-cutover-candidate, com os artefatos do jogo,
+o bundle Angular em __angular/ e sem o bundle React. O GitHub Actions
+publica esse diretório como artefato temporário para QA. A geração NÃO altera
+index.html da fonte, scripts/build.mjs, produção ou branch main.
+
+Só considerar publicação após testes verdes, revisão móvel, conta/doações
+em ambiente autorizado e aprovação explícita do merge.
+
+## Build completo do site com jogo Angular (candidato sem deploy)
+
+Use `npm run build:site:angular:candidate` na pasta do Lan House Simulator,
+depois de `npm ci` na raiz e `npm ci --prefix frontend-angular` e
+`npm run build --prefix frontend-angular`.
+Esse comando gera `out/site-angular/` (não `out/site/`), com todo o site,
+conta e Donate e o jogo Angular em `/game/`. Aplica a checagem de URLs,
+imports, recursos, CSP e revisão de cache do mesmo validador do site.
+O identificador do iframe também inclui os assets Angular para impedir
+que mudanças apenas na UI sejam ocultadas por cache antigo.
+Os scripts padrão `npm run build` e `npm run build:site` continuam usando React.
+O CI apenas armazena o candidato como artefato; não publica nem mescla a main.
+
+## Troca do build padrão do site (somente nesta branch)
+
+O comando `npm run build:site` agora constrói `out/site/` com Angular no jogo,
+sem `react-entry.js`. Um `npm run build` isolado ainda gera o jogo legado
+React para validações anteriores; isso **não** altera as regras de negócio.
+O instalador do site garante as dependências Angular do lockfile e recompila
+AOT, evitando arquivos dist obsoletos. Para a regressão temporária do site
+React, execute `LHS_SITE_UI=react npm run build:site` (ambiente Unix) ou
+`$env:LHS_SITE_UI='react'; npm run build:site` (PowerShell). A build Angular
+isolada em `out/site-angular/` continua disponível via
+`npm run build:site:angular:candidate`.
+
+A branch não aciona a publicação: o workflow de espelhamento Pages só é
+disparado por alterações na `main`. Não efetuar merge antes de revisar o
+conjunto de jobs que ainda verificam o antigo React, o teste mobile físico
+e a compatibilidade de conta e Donate em homologação.

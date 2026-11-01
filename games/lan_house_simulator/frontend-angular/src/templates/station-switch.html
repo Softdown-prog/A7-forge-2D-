@@ -1,0 +1,13 @@
+@if(stations().length){
+ <section class="angular-station-switch" aria-label="Seleção rápida de computadores">
+  <div class="angular-station-switch-heading"><div><strong>Escolha a estação</strong>
+   <small>Selecione um PC para consultar as peças e opções disponíveis.</small></div>
+   <span aria-live="polite">{{chosen}}</span></div>
+  <div class="angular-station-switch-buttons">
+   @for(station of stations();track station.id){
+    <button type="button" [attr.data-angular-station]="station.id" [disabled]="station.disabled"
+     [attr.aria-pressed]="station.selected" (click)="select(station)">{{station.label}}</button>
+   }
+  </div>
+ </section>
+}

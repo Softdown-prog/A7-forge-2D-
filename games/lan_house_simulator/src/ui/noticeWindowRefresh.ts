@@ -16,12 +16,29 @@ export interface NoticeWindowRefreshOptions {
 export function createNoticeWindowRefresh(options:NoticeWindowRefreshOptions):{
  refresh(open:boolean,force:boolean):boolean
 }{
+ let lastStatus="";
  return {refresh(open,force){
   // Badge and aria-expanded always refresh, even if the inbox is closed.
-  renderNoticeWindowStatus(options.status.snapshot(open),options.doc);
+  const status=options.status.snapshot(open);
+  renderNoticeWindowStatus(status,options.doc);
+  const sendEvent=(name:string,detail:unknown):void=>{
+   if(typeof options.doc.dispatchEvent==="function"&&typeof CustomEvent==="function")
+    options.doc.dispatchEvent(new CustomEvent(name,{detail}));
+  };
+  // Publish read-only data only after a genuine change.
+  const statusKey=JSON.stringify(status);
+  if(lastStatus!==statusKey){
+   lastStatus=statusKey;
+   sendEvent("lhs:notice-status-updated",status);
+  }
   const host=options.host();
   if(!host||!open||!options.changed(force))return false;
-  renderNoticeInbox(host,options.inbox.snapshot(),options.doc,options.iconMarkup);
+  const snapshot=options.inbox.snapshot();
+  sendEvent("lhs:notice-inbox-updated",snapshot);
+  // Angular-owned mail list is rendered by Angular. The existing delegated
+  // TypeScript notice controller still handles the button click actions.
+  if(host.dataset?.angularOwned!=="true")
+   renderNoticeInbox(host,snapshot,options.doc,options.iconMarkup);
   return true;
  }};
 }

@@ -16,7 +16,14 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  function mount(area:string,pages:Page[],dynamic?:HTMLElement){
   const root=$('section-'+area),nav=document.createElement('nav');
   nav.className='management-pages';nav.setAttribute('aria-label','Painéis de '+(root.querySelector('h3')?.textContent??area));
-  root.querySelector('h3')?.after(nav);
+  const angularRoot=area==='computers'?root.querySelector('#angular-computer-workspace'):
+   area==='services'?root.querySelector('#angular-service-workspace'):
+   area==='stock'?root.querySelector('#angular-stock-workspace'):
+   area==='finance'?root.querySelector('#angular-finance-workspace'):
+   area==='prices'?root.querySelector('#angular-prices-workspace'):
+   area==='licenses'?root.querySelector('#angular-licenses-workspace'):
+   area==='consoles'?root.querySelector('#angular-consoles-workspace'):null;
+  (angularRoot??root.querySelector('h3'))?.after(nav);
   const controls:HTMLButtonElement[]=[],panes:HTMLElement[]=[];
   const isLocked=(page:Page)=>page.unlockYear!==undefined&&getYear()<page.unlockYear;
   const lockHint=area==='stock'?document.createElement('p'):null;
@@ -48,6 +55,7 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
     if(active&&dynamic&&chosen.id!=='ledger')pane.append(dynamic);
    }
    if(dynamic)dynamic.hidden=chosen.id==='ledger';
+   document.dispatchEvent(new CustomEvent('lhs:management-page-selected',{detail:{area,page:chosen.id}}));
   }
   lockRefreshers.push(()=>{
    for(const [i,page] of pages.entries()){
@@ -66,7 +74,10 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  }
  const prices=$('section-prices'),insight=prices.querySelector('.price-insight')!;
  const packageList=$('session-package-prices'),packages=[packageList.previousElementSibling!,packageList];
- const hourly=following(prices.querySelector('h3')!.nextElementSibling!,insight);
+ // The optional Angular navigation is not a native task node: keep it anchored
+ // directly inside the administration section when the legacy panes are moved.
+ const hourly=following(prices.querySelector('h3')!.nextElementSibling!,insight)
+  .filter(node=>node.id!=='angular-prices-workspace');
  packages.forEach(node=>node.remove());
  mount('prices',[
   {id:'hourly',label:'Hora e pacotes',nodes:[...hourly,...packages]},
@@ -94,14 +105,16 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  ],$('pc-maintenance'));
  const serviceRoot=$('section-services'),access=serviceRoot.querySelector('.service-access-review')!;
  const network=following($('internet'));
- const staff=Array.from(serviceRoot.children).filter(node=>node!==serviceRoot.querySelector('h3')&&node!==access&&!network.includes(node));
+ const staff=Array.from(serviceRoot.children).filter(node=>node!==serviceRoot.querySelector('h3')&&node.id!=='angular-service-workspace'&&node!==access&&!network.includes(node));
  mount('services',[
   {id:'staff',label:'Equipe e limpeza',nodes:staff},
   {id:'network',label:'Internet e contrato',nodes:network},
   {id:'access',label:'Passagens',nodes:[access]}
  ]);
  const licenseRoot=$('section-licenses'),classicHeading=headingFor($('era-game-catalog')),gpuHeading=headingFor($('gpu-game-catalog'));
- const windows=following(licenseRoot.querySelector('h3')!.nextElementSibling!,classicHeading),classic=following(classicHeading,gpuHeading),advanced=following(gpuHeading);
+ const windows=following(licenseRoot.querySelector('h3')!.nextElementSibling!,classicHeading)
+  .filter(node=>node.id!=='angular-licenses-workspace');
+ const classic=following(classicHeading,gpuHeading),advanced=following(gpuHeading);
  mount('licenses',[
   {id:'windows',label:'Windows por PC',nodes:windows},
   {id:'classic',label:'Jogos clássicos',nodes:classic},

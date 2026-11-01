@@ -1,0 +1,175 @@
+name: LHS Angular UI preview
+
+on:
+  pull_request:
+    paths:
+      - "games/lan_house_simulator/frontend-angular/**"
+      - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
+      - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
+      - "games/lan_house_simulator/website/build.mjs"
+      - "games/lan_house_simulator/website/check.mjs"
+      - "games/lan_house_simulator/scripts/build_angular_site_candidate.mjs"
+      - "games/lan_house_simulator/package.json"
+      - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
+      - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
+      - "games/lan_house_simulator/src/ui/cloudControls.ts"
+      - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
+      - "games/lan_house_simulator/src/ui/managementPanels.ts"
+      - ".github/workflows/lhs-angular-ui-preview.yml"
+  push:
+    branches: ["feat/lhs-angular-ui-foundation"]
+    paths:
+      - "games/lan_house_simulator/frontend-angular/**"
+      - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
+      - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
+      - "games/lan_house_simulator/website/build.mjs"
+      - "games/lan_house_simulator/website/check.mjs"
+      - "games/lan_house_simulator/scripts/build_angular_site_candidate.mjs"
+      - "games/lan_house_simulator/package.json"
+      - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
+      - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
+      - "games/lan_house_simulator/src/ui/cloudControls.ts"
+      - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
+      - "games/lan_house_simulator/src/ui/managementPanels.ts"
+      - ".github/workflows/lhs-angular-ui-preview.yml"
+
+# The migration branch may receive many UI-only commits. Do not queue
+# redundant Chromium runs for superseded revisions; never affect other jobs.
+concurrency:
+  group: lhs-angular-preview-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  angular-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: games/lan_house_simulator/frontend-angular/package-lock.json
+      - name: Syntax check cutover and browser QA scripts
+        run: |
+          node --check frontend-angular/scripts/cutover_document.mjs
+          node --check frontend-angular/scripts/build_cutover_candidate.mjs
+          node --check frontend-angular/scripts/verify_catalog_preview.mjs
+          node --check frontend-angular/scripts/verify_static_candidate.mjs
+          node --check frontend-angular/scripts/verify_integrated_game.mjs
+          node --check scripts/build_angular_site_candidate.mjs
+          node --check frontend-angular/scripts/verify_full_site.mjs
+          node --check website/build.mjs
+          node --check website/check.mjs
+          node --check scripts/verify_live_site_preview.mjs
+      - name: Verify Angular UI boundaries
+        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
+      - name: Audit React to Angular hosts and browser QA gaps (advisory)
+        run: |
+          node --test tests/angular-migration-audit.test.mjs
+          node frontend-angular/scripts/audit_migration.mjs --output out/angular-migration-audit/report.json
+      - name: Upload Angular migration audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-migration-audit
+          path: games/lan_house_simulator/out/angular-migration-audit/report.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Install isolated Angular dependencies
+        run: npm ci --prefix frontend-angular --no-audit --no-fund
+      - name: ESLint Angular TypeScript
+        run: npm run lint --prefix frontend-angular
+      - name: Build Angular AOT preview
+        run: npm run build --prefix frontend-angular
+      - name: Install Playwright for real Angular browser QA
+        run: |
+          npm install --prefix .angular-browser-tools --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          ./.angular-browser-tools/node_modules/.bin/playwright install --with-deps chromium
+      - name: Validate Angular catalogue interactions in Chromium desktop and mobile
+        run: node frontend-angular/scripts/verify_catalog_preview.mjs
+      - name: Build the original game in isolated test workspace
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+      - name: Assemble isolated static Angular cutover candidate
+        run: node frontend-angular/scripts/build_cutover_candidate.mjs
+      - name: Smoke test the compiled Angular candidate in desktop and mobile Chromium
+        run: node frontend-angular/scripts/verify_static_candidate.mjs
+      - name: Verify native UI Escape precedence before browser integration
+        run: node --test tests/runtime-interaction-bindings-boundary.test.mjs
+      - name: Validate real game purchases, locations and saves through Angular
+        run: node frontend-angular/scripts/verify_integrated_game.mjs
+      - name: Build and verify the complete Angular site candidate (no deploy)
+        run: npm run build:site:angular:candidate
+      - name: Validate full-site Angular iframe under actual CSP on desktop and mobile
+        run: node frontend-angular/scripts/verify_full_site.mjs
+      - name: Validate default Angular site build and real public output
+        run: |
+          npm run build:site
+          npm run check:site
+          LHS_CHECK_DEFAULT_SITE=1 node frontend-angular/scripts/verify_full_site.mjs
+      - name: Upload integrated game screenshots and save QA report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-integrated-game-qa
+          path: games/lan_house_simulator/out/angular-integrated-browser
+          if-no-files-found: ignore
+      - name: Upload Angular catalogue screenshots and browser report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs-angular-catalog-browser-qa
+          path: games/lan_house_simulator/out/angular-catalog-browser
+          if-no-files-found: ignore
+      - name: Upload static candidate Chromium smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-cutover-smoke
+          path: games/lan_house_simulator/out/angular-cutover-smoke
+          if-no-files-found: ignore
+      - name: Upload default Angular site browser QA
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-default-site-qa
+          path: games/lan_house_simulator/out/angular-site-default-browser
+          if-no-files-found: ignore
+      - name: Upload full-site Angular browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-full-site-qa
+          path: games/lan_house_simulator/out/angular-site-browser
+          if-no-files-found: ignore
+      - name: Upload complete Angular site candidate (not deployed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-site-candidate
+          path: games/lan_house_simulator/out/site-angular
+          retention-days: 7
+          if-no-files-found: error
+      - name: Upload full Angular cutover candidate for review only
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-cutover-candidate
+          path: games/lan_house_simulator/out/angular-cutover-candidate
+          retention-days: 7
+          if-no-files-found: error
+      - name: Upload preview for browser review
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-ui-preview
+          path: games/lan_house_simulator/frontend-angular/dist/game-ui/browser
+          if-no-files-found: error

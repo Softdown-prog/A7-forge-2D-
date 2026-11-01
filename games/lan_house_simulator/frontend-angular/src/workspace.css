@@ -1,0 +1,182 @@
+/* Isolated Angular presentation styles; the original game and Canvas remain untouched. */
+.angular-admin-workspace-root{display:block;min-width:0;margin:14px 0}
+.angular-workspace{background:linear-gradient(130deg,#e9efdf,#f9f7eb);border:1px solid #cbd9c0;border-radius:12px;padding:15px}
+.angular-workspace-heading{display:flex;align-items:end;justify-content:space-between;gap:12px;margin-bottom:13px}
+.angular-workspace-heading h4{margin:2px 0 0;font-size:17px;color:#233f30}
+.angular-workspace-heading p{margin:0!important;max-width:295px;font-size:11px;line-height:1.45;color:#647760;text-align:right}
+.angular-workspace-heading span{font:700 9px "Courier New",monospace;letter-spacing:.13em;color:#6d885b}
+.angular-workspace-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:8px}
+#admin .angular-workspace-task{display:flex;align-items:flex-start;gap:9px;min-width:0;min-height:83px;
+ padding:12px 9px;text-align:left;background:#fffcf3;border:1px solid #cddbc4;border-radius:10px;color:#213d2e;cursor:pointer}
+#admin .angular-workspace-task:hover:not(:disabled){background:#eff5e8;border-color:#89af79}
+#admin .angular-workspace-task[aria-pressed="true"]{background:#234334;color:#f7f8ea;border-color:#234334}
+.angular-workspace-task-icon{display:grid;place-items:center;width:28px;height:28px;flex:none;
+ border-radius:7px;background:#daeaca;color:#335c3b;font-weight:700}
+.angular-workspace-task-copy{display:grid;gap:5px;min-width:0}
+.angular-workspace-task-copy strong{font-size:11px;line-height:1.35}
+.angular-workspace-task-copy small{font-size:9px;line-height:1.35;font-weight:400;color:#70836b;overflow-wrap:anywhere}
+.angular-workspace-task[aria-pressed="true"] .angular-workspace-task-copy small{color:#c5d6c2}
+.angular-station-switch{margin:10px 0 4px;padding:12px;background:#eef3e7;border:1px solid #c6d7ba;border-radius:10px}
+.angular-station-switch-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.angular-station-switch-heading strong{font-size:12px;color:#2f533c}
+.angular-station-switch-heading small{display:block;font-size:10px;line-height:1.4;color:#698065;margin-top:3px}
+.angular-station-switch-heading>span{font-size:11px;font-weight:700;color:#2d553a;background:#dfebd4;border-radius:6px;padding:6px 9px}
+.angular-station-switch-buttons{display:flex;flex-wrap:wrap;gap:7px}
+#admin .angular-station-switch-buttons button{min-width:70px;min-height:41px;background:#fffef7;
+ border:1px solid #bdd0ae;color:#2d4e37;border-radius:8px;cursor:pointer}
+#admin .angular-station-switch-buttons button[aria-pressed="true"]{background:#244a35;border-color:#244a35;color:#f7f9e8}
+#admin .angular-workspace-task:focus-visible,#admin .angular-station-switch-buttons button:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+@media(max-width:900px){.angular-workspace-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+ .angular-workspace{padding:11px}
+ .angular-workspace-heading{display:block}
+ .angular-workspace-heading p{max-width:none;margin-top:4px!important;text-align:left}
+ .angular-workspace-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #admin .angular-workspace-task{min-height:76px;padding:10px 8px;gap:6px}
+ .angular-station-switch-buttons{overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
+ #admin .angular-station-switch-buttons button{flex:0 0 auto;min-width:80px}
+}
+
+/* Angular-only top-level administration tabs; legacy buttons remain DOM command targets. */
+.angular-admin-navigation-root{min-width:0;margin:0 0 14px}
+.angular-admin-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;
+ border:1px solid #d2d5bf;background:#e4e6d6;border-radius:10px;padding:6px}
+#admin .angular-admin-tab{min-height:52px;min-width:0;padding:9px 7px;line-height:1.3;
+ white-space:normal;overflow-wrap:anywhere;text-align:center;background:#fffef5;
+ color:#4b614e;border:1px solid #cbd6c2;border-radius:7px;font-size:11px;font-weight:650;cursor:pointer}
+#admin .angular-admin-tab[aria-selected="true"]{background:#234334;color:#f7f8ea;border-color:#234334}
+#admin .angular-admin-tab:hover:not(:disabled){border-color:#80a173}
+#admin .angular-admin-tab:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
+@media(max-width:700px){
+ .angular-admin-tabs{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
+  touch-action:pan-x;scroll-snap-type:x proximity;padding:6px 6px 10px}
+ #admin .angular-admin-tab{flex:0 0 120px;min-height:48px;scroll-snap-align:start}
+}
+
+/* Isolated Angular menu preview. The real game's CSS owns production styling. */
+.angular-menu-transfer-preview{max-width:550px;margin:16px auto;padding:12px}
+.angular-menu-transfer-preview .save-actions{display:flex;flex-wrap:wrap;gap:8px}
+.angular-menu-transfer-preview .save-actions button{min-height:44px}
+.angular-menu-transfer-preview .save-message{font-size:12px;line-height:1.5}
+.angular-menu-transfer-preview .sound-option{display:flex;align-items:center;gap:10px}
+.angular-menu-transfer-preview .sound-option input{min-width:22px;min-height:22px}
+.angular-menu-transfer-preview .sound-option small{display:block}
+@media(max-width:600px){
+ .angular-menu-transfer-preview .save-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .angular-menu-transfer-preview .save-actions button{min-width:0}
+}
+
+/* Angular-only HUD/mail preview. The published game keeps its own CSS. */
+.angular-status-preview{margin:18px auto;max-width:900px;padding:12px}
+.angular-status-preview .time-weather-panel{border:1px solid #b9ccb1;border-radius:11px;padding:12px;background:#f5f8ef}
+.angular-status-preview .time-weather-trigger{display:flex;gap:16px;align-items:center;flex-wrap:wrap;cursor:pointer}
+.angular-status-preview .time-weather-content{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;padding-top:12px}
+.angular-status-preview .time-weather-tile{display:grid;gap:7px;border:1px solid #cbd9bf;border-radius:9px;padding:12px}
+.angular-status-preview .time-weather-eyebrow{font-weight:700;font-size:10px;letter-spacing:.06em}
+.angular-status-preview .time-weather-tile strong{font-size:18px}
+.angular-status-preview .notice-inbox:not([hidden]){position:static;display:block;margin-top:12px;border:1px solid #c5d2be;border-radius:10px;padding:16px}
+.angular-status-preview .notice-letter{padding:14px;border:1px solid #c5d2be;border-radius:8px;margin:9px 0;overflow-wrap:anywhere}
+.angular-status-preview .notice-letter.notice-urgent{border-color:#ba7549}
+.angular-status-preview .notice-letter.read{opacity:.75}
+.angular-status-preview .notice-letter button{min-height:44px;margin:4px}
+.angular-status-preview .notice-inbox[hidden]{display:none!important}
+@media(max-width:700px){
+ .angular-status-preview .time-weather-content{grid-template-columns:1fr}
+ .angular-status-preview .time-weather-trigger{display:grid;gap:8px}
+ .angular-status-preview .notice-letter .action-row{display:flex;flex-wrap:wrap}
+}
+
+
+/* Shop header stays within Angular's view; native commands keep their IDs. */
+.angular-shop-preview{max-width:900px;margin:16px auto;padding:12px}
+.angular-shop-overview{min-width:0;display:grid;gap:12px;border:1px solid #cbd9c0;
+ border-radius:12px;background:#f7f8ee;padding:14px}
+.angular-shop-overview-cash{font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin:0}
+.angular-shop-organization-actions{display:flex;flex-wrap:wrap;gap:9px}
+.angular-shop-organization-actions button{min-height:44px;max-width:100%;white-space:normal;text-align:center}
+.angular-shop-overview .shop-guide{min-width:0;padding:10px 12px;
+ border:1px solid #d4deca;border-radius:8px}
+.angular-shop-overview .shop-guide summary{cursor:pointer;font-weight:650}
+.angular-shop-overview .shop-organize-help{font-size:12px;line-height:1.6}
+.angular-shop-organization-actions button:focus-visible,
+.angular-shop-overview .shop-guide summary:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+@media(max-width:600px){
+ .angular-shop-organization-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .angular-shop-organization-actions button{min-width:0}
+}
+
+
+/* Angular catalog preview; prices and purchasing rules are read from native ports. */
+.angular-catalog{min-width:0;display:grid;gap:12px;margin:15px 0}
+.angular-catalog-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.angular-catalog-heading h3{font-size:17px;margin:0}
+.angular-catalog-heading>span{font-size:12px;color:#55715b}
+.angular-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px}
+.angular-catalog-grid .shop-card{min-width:0;display:flex;flex-direction:column;gap:8px;
+ border:1px solid #c9d7c0;background:#fffdf4;border-radius:10px;padding:12px}
+.angular-catalog-grid .shop-art{display:grid;place-items:center;min-height:72px}
+.angular-catalog-grid .shop-art img{width:100%;max-height:138px;object-fit:contain}
+.angular-catalog-grid .shop-art .ui-icon{height:38px;width:38px}
+.angular-catalog-grid .shop-card h3{font-size:14px;margin:0}
+.angular-catalog-grid .shop-card p{font-size:11px;line-height:1.5;overflow-wrap:anywhere;margin:0}
+.angular-catalog-grid .shop-card button{min-height:44px;margin-top:auto}
+.angular-catalog-grid .shop-card button:focus-visible{outline:3px solid #c68a42;outline-offset:2px}
+.angular-catalog-pending,.angular-catalog-empty{font-size:12px;line-height:1.6}
+@media(max-width:600px){
+ .angular-catalog-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .angular-catalog-grid .shop-card{padding:9px}
+}
+
+.angular-console-shop{display:grid;gap:12px;margin-top:18px}
+.angular-console-shop>h3{margin:8px 0 0;font-size:17px}
+.angular-console-shop .shop-card{display:grid;gap:8px;padding:12px;border:1px solid #c9d7c0;border-radius:10px}
+.angular-console-shop .shop-card select,.angular-console-shop .shop-card button{min-height:44px;min-width:0}
+.angular-console-shop .shop-card button{white-space:normal}
+.angular-console-shop .angular-console-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.angular-console-shop .shop-card img{max-width:100%;max-height:164px;object-fit:contain}
+.angular-console-shop .shop-card h4{margin:0}
+@media(max-width:600px){.angular-console-shop .angular-console-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Angular stock navigation replaces only its native tab strip in rehearsal;
+   the hidden native buttons remain the sole command targets for TypeScript. */
+html[data-ui-framework="angular"] #section-stock #angular-stock-workspace + .management-pages{
+ display:none!important
+}
+#angular-stock-workspace .management-lock-note{
+ margin:12px 0 0;font-size:12px;line-height:1.5
+}
+#angular-stock-workspace .angular-workspace-task:disabled{
+ opacity:.55;cursor:not-allowed
+}
+
+/* Finance command buttons remain available to TypeScript, but their duplicate
+ * navigation is not displayed during an Angular cutover rehearsal. */
+html[data-ui-framework="angular"] #section-finance #angular-finance-workspace + .management-pages{
+ display:none!important
+}
+#angular-finance-workspace .angular-workspace-task-danger{
+ border-color:#b78164;color:#7b3723
+}
+#angular-finance-workspace .angular-workspace-task-danger[aria-pressed="true"]{
+ background:#783d30;color:#fff8f3;border-color:#783d30
+}
+#angular-finance-workspace .angular-workspace-task-danger .angular-workspace-task-icon{
+ background:#f5dccc;color:#783d30
+}
+#angular-finance-workspace .management-lock-note{
+ border-left:3px solid #aa704d;padding-left:10px;font-size:12px;line-height:1.5
+}
+
+/* Optional Angular navigation owns only visible task choices. Keep native task
+   buttons mounted as sole command handlers until coordinated cutover. */
+html[data-ui-framework="angular"] #section-prices #angular-prices-workspace + .management-pages,
+html[data-ui-framework="angular"] #section-licenses #angular-licenses-workspace + .management-pages,
+html[data-ui-framework="angular"] #section-consoles #angular-consoles-workspace + .management-pages{
+ display:none!important
+}
+#angular-prices-workspace .angular-workspace,
+#angular-licenses-workspace .angular-workspace,
+#angular-consoles-workspace .angular-workspace{
+ min-width:0
+}

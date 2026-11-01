@@ -12,6 +12,7 @@ export function createAdminAreaTabs(
  // Preserve the stable nodes and event listeners mounted in the original bootstrap.
  const tabs=Array.from(admin.querySelectorAll<HTMLButtonElement>("[data-admin-tab]"));
  const sections=Array.from(admin.querySelectorAll<HTMLElement>("[data-section]"));
+ let selectedArea:string|null=null;
  function activate(area:string):void{
   selectArea(area);
   for(const button of tabs){
@@ -21,6 +22,13 @@ export function createAdminAreaTabs(
    button.tabIndex=active?0:-1;
   }
   for(const section of sections)section.hidden=section.dataset.section!==area;
+  if(selectedArea!==area){
+   selectedArea=area;
+   // Browsers have an ownerDocument; minimal DOM test doubles need not.
+   const doc=admin.ownerDocument;
+   if(doc&&typeof doc.dispatchEvent==="function"&&typeof CustomEvent==="function")
+    doc.dispatchEvent(new CustomEvent('lhs:admin-area-selected',{detail:{area}}));
+  }
  }
  for(const button of tabs)button.addEventListener("click",()=>{
   activate(button.dataset.adminTab??"prices");

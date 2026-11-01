@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {installRuntimeInteractionBindings} from "../dist/js/ui/runtimeInteractionBindings.js";
 
-function fixture({present=true,open=false,playing=true,editor=false,placing=false}={}){
+function fixture({present=true,open=false,playing=true,editor=false,placing=false,activePanel=null}={}){
  const registrations=[],actionsLog=[],listeners=new Map();
  let panel;
  if(present)panel={
@@ -12,7 +12,11 @@ function fixture({present=true,open=false,playing=true,editor=false,placing=fals
   addEventListener:(name,fn)=>{registrations.push("panel:"+name);listeners.set("panel:"+name,fn);}
  };
  const doc={
-  getElementById:name=>{assert.equal(name,"time-weather-panel");return panel??null;},
+  getElementById:name=>{
+   if(name==="time-weather-panel")return panel??null;
+   assert.ok(["admin","shop","notices"].includes(name),"Unexpected DOM lookup "+name);
+   return activePanel===name?{hidden:false}:{hidden:true};
+  },
   addEventListener:(name,fn)=>{registrations.push("doc:"+name);listeners.set("doc:"+name,fn);}
  };
  const actions={
@@ -28,11 +32,29 @@ function fixture({present=true,open=false,playing=true,editor=false,placing=fals
  return {doc,actions,install,toggle,press,actionsLog,registrations,listeners,
   setPanel:v=>{if(panel)panel.open=v;},
   replacePanel:v=>{panel=v;},
-  setPlaying:v=>playing=v,setEditor:v=>editor=v,setPlacing:v=>placing=v};
+  setPlaying:v=>playing=v,setEditor:v=>editor=v,setPlacing:v=>placing=v,
+  setActivePanel:v=>activePanel=v};
 }
 test("instala primeiro o listener do calendário e depois o teclado",()=>{
  const x=fixture();x.install();assert.deepEqual(x.registrations,["panel:toggle","doc:keydown"]);
 });
+test("Escape uses capture so a nested Angular dialog cannot swallow the shortcut",()=>{
+ let registered;
+ const doc={
+  getElementById:()=>null,
+  addEventListener:(name,listener,options)=>{if(name==="keydown")registered={listener,options};}
+ };
+ const actions=[];
+ installRuntimeInteractionBindings(doc,{
+  playing:()=>true,editorOpen:()=>false,editingPlacement:()=>false,
+  closeEditor:()=>actions.push("editor"),stopPlacement:()=>actions.push("placement"),
+  showMenu:()=>actions.push("menu"),refreshTimeWeather:()=>actions.push("weather")
+ });
+ assert.equal(registered?.options?.capture,true);
+ registered.listener({key:"Escape"});
+ assert.deepEqual(actions,["menu"]);
+});
+
 test("não executa callbacks de UI durante inicialização",()=>{
  const x=fixture();x.install();assert.deepEqual(x.actionsLog,[]);
 });
@@ -73,6 +95,16 @@ test("Escape com editor ativo fecha primeiro o editor",()=>{
 test("Escape com posicionamento ativo cancela posicionamento",()=>{
  const x=fixture({placing:true});x.install();x.press("Escape");
  assert.deepEqual(x.actionsLog,["stopPlacement"]);
+});
+test("Escape closes visible admin, shop and inbox before returning to game menu",()=>{
+ const x=fixture({activePanel:"admin"});x.install();
+ for(const panel of ["admin","shop","notices"]){
+  x.setActivePanel(panel);
+  x.press("Escape");
+  assert.deepEqual(x.actionsLog,[],"Runtime listener cannot override window handler: "+panel);
+ }
+ x.setActivePanel(null);x.press("Escape");
+ assert.deepEqual(x.actionsLog,["showMenu"]);
 });
 test("Escape sem edições abertas retorna para o menu",()=>{
  const x=fixture();x.install();x.press("Escape");

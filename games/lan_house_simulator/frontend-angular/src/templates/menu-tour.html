@@ -1,0 +1,17 @@
+<div class="react-chapters">
+  <div class="react-chapters-heading"><span>UM SALÃO. MUITAS HISTÓRIAS.</span><span class="react-chapters-rule" aria-hidden="true"></span></div>
+  <div class="react-chapters-tabs" role="tablist" aria-label="Conheça o jogo">
+    @for (chapter of chapters; track chapter.id) {
+      <button type="button" role="tab" [attr.aria-selected]="selected() === chapter.id"
+        aria-controls="react-chapter-content" [id]="'react-tab-' + chapter.id"
+        [class.active]="selected() === chapter.id" class="react-chapter-tab"
+        (click)="selected.set(chapter.id)">{{ chapter.label }}</button>
+    }
+  </div>
+  <div class="react-chapter-detail" id="react-chapter-content" role="tabpanel"
+    [attr.aria-labelledby]="'react-tab-' + chapter().id">
+    <span class="react-chapter-marker" aria-hidden="true">✦</span>
+    <div><strong>{{ chapter().title }}</strong><p>{{ chapter().body }}</p>
+      <span class="react-chapter-note">{{ chapter().note }}</span></div>
+  </div>
+</div>
