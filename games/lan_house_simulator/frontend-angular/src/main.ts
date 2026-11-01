@@ -8,7 +8,7 @@ import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
   MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent, ShopSearchComponent
 } from './components';
-import {ComputerWorkspaceComponent,ServiceWorkspaceComponent} from './workspaces';
+import {ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent} from './workspaces';
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
@@ -70,6 +70,17 @@ async function mountUi():Promise<void> {
   if(shopCardsHost){
     const ref=createComponent(ShopCatalogComponent,{
       environmentInjector:app.injector,hostElement:shopCardsHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // The original site has no stock workspace island. During the cutover
+  // rehearsal, its Angular navigation proxies the native stock task buttons.
+  const stockWorkspaceHost=document.getElementById('angular-stock-workspace');
+  if(stockWorkspaceHost){
+    const ref=createComponent(StockWorkspaceComponent,{
+      environmentInjector:app.injector,hostElement:stockWorkspaceHost
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
