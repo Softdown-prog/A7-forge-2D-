@@ -305,7 +305,16 @@ try{
   await press(page.locator('#close-shop'));
   await press(page.locator('#open-admin'));
   const area=page.locator('#angular-admin-area-navigation');
+  // A top-level area switch is authored in the native TypeScript controller;
+  // Angular must mirror its accessible selected tab on the next render.
+  const awaitAdminAreaParity=async chosenArea=>page.waitForFunction(chosenArea=>{
+   const native=document.querySelector('#admin .admin-tabs [data-admin-tab="'+chosenArea+'"]');
+   const angular=document.querySelector('#angular-admin-area-navigation [data-angular-admin-tab="'+chosenArea+'"]');
+   return native?.getAttribute('aria-selected')==='true'&&
+    angular?.getAttribute('aria-selected')==='true';
+  },chosenArea,{timeout:5000});
   await press(area.locator('[data-angular-admin-tab="services"]'));
+  await awaitAdminAreaParity('services');
   assert.equal(await page.locator('#admin .admin-tabs [data-admin-tab="services"]')
    .getAttribute('aria-selected'),'true','Angular tabs delegate to native admin state');
   await page.locator('#section-services').waitFor({state:'visible'});
@@ -313,12 +322,14 @@ try{
   assert.equal(await page.locator('#page-services-network').isVisible(),true,
    'Angular services task delegates to native management view');
   await press(area.locator('[data-angular-admin-tab="computers"]'));
+  await awaitAdminAreaParity('computers');
   await press(page.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
   assert.equal(await page.locator('#page-computers-hardware').isVisible(),true,
    'Angular computers task opens native hardware panel');
   // Navigate finance through Angular commands. The original TypeScript manager
   // still moves/shows the actual panes; no mutation or reset is performed.
   await press(area.locator('[data-angular-admin-tab="finance"]'));
+  await awaitAdminAreaParity('finance');
   const financeNav=page.locator('#angular-finance-workspace');
   const nativeFinance=page.locator('#admin .admin-tabs [data-admin-tab="finance"]');
   assert.equal(await nativeFinance.getAttribute('aria-selected'),'true',
@@ -376,6 +387,7 @@ try{
   const beforeTaskSwitch=await persisted();
   for(const group of adminTaskMatrix){
    await press(area.locator('[data-angular-admin-tab="'+group.area+'"]'));
+   await awaitAdminAreaParity(group.area);
    const nav=page.locator('#angular-'+group.area+'-workspace');
    assert.equal(await nav.count(),1,'One Angular navigation root '+group.area);
    assert.equal(await nav.evaluate(el=>el.parentElement?.id),'section-'+group.area,
