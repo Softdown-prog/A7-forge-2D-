@@ -24,7 +24,13 @@ assert.ok((await stat(resolve(root,'game/__angular/main.js'))).isFile());
 await mkdir(output,{recursive:true});
 const server=createServer(async(req,res)=>{
  try{
-  const path=decodeURIComponent(new URL(req.url??'/','http://localhost').pathname);
+  const requestUrl=new URL(req.url??'/','http://localhost');
+  const path=decodeURIComponent(requestUrl.pathname);
+  // Match the actual Pages preview: every native JS module must be pinned
+  // to the exact 12-hex build revision, including the Angular dynamic import.
+  if(path.startsWith('/game/js/')&&path.endsWith('.js')&&
+   !/^[a-f0-9]{12}$/.test(requestUrl.searchParams.get('v')??''))
+   throw Error('Unversioned native game module');
   const file=resolve(root,'.'+path,path.endsWith('/')?'index.html':'');
   if(!file.startsWith(root+sep))throw Error('Outside site');
   if(!(await stat(file)).isFile())throw Error('Not found');
@@ -86,7 +92,7 @@ try{
   assert.deepEqual(errors,[],'Site CSP and iframe game must have no browser errors');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
-   shopCatalog:true,reactScript:false,csp:true,errorCount:errors.length});
+   shopCatalog:true,reactScript:false,csp:true,revisionedGameImports:true,errorCount:errors.length});
   await context.close();
  }
  await writeFile(resolve(output,'results.json'),JSON.stringify({passed:true,results},null,2)+'\n');

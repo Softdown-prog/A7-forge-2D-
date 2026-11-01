@@ -108,6 +108,15 @@ test('real-game Chromium tests use exactly the same cutover document',()=>{
  assert.doesNotMatch(browser,/const additionalAdminCutoverShell/);
 });
 
+test('Angular passes the same 12-hex cache revision to native Canvas imports',()=>{
+ const entry=readFileSync(new URL('../frontend-angular/src/main.ts',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ const legacy=readFileSync(new URL('../scripts/verify_live_site_preview.mjs',import.meta.url),'utf8');
+ assert.match(entry,/uiEntry\?new URL\(uiEntry\.src\)\.searchParams\.get\('v'\)/);
+ assert.match(entry,/gameUrl\.searchParams\.set\('v',revision\)/);
+ assert.match(browser,/Unversioned native game module/);
+ assert.match(legacy,/dataset\.gameReady==="true"/);
+});
 test('CI browser checks boot the actual static candidate on desktop and mobile',()=>{
  const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
  const smoke=readFileSync(new URL('../frontend-angular/scripts/verify_static_candidate.mjs',import.meta.url),'utf8');

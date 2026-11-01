@@ -44,7 +44,27 @@ try{
   await page.goto("http://127.0.0.1:"+port+"/jogar/",{waitUntil:"networkidle"});
   await page.locator("#launch-game").click();
   const frame=page.frameLocator("#game-frame");
-  await frame.locator("#menu-new").waitFor({state:"visible",timeout:15000});
+  // The old check saw Angular's HTML button before its Canvas bootstrap,
+  // which hides the start screen until gameReady is set. Wait for both
+  // the site's lazy iframe reveal and the native TS engine handshake.
+  try{
+   await page.waitForFunction(()=>{
+    const iframe=document.querySelector("#game-frame");
+    return iframe&&!iframe.hidden&&
+      iframe.contentDocument?.documentElement.dataset.gameReady==="true";
+   },null,{timeout:30000});
+   await frame.locator("#menu-new").waitFor({state:"visible",timeout:10000});
+  }catch(error){
+   const detail=await page.evaluate(()=>{
+    const iframe=document.querySelector("#game-frame"),doc=iframe?.contentDocument;
+    return {iframeHidden:iframe?.hidden,iframeSource:iframe?.getAttribute("src"),
+     framework:doc?.documentElement.dataset.uiFramework,
+     gameReady:doc?.documentElement.dataset.gameReady,
+     startHidden:doc?.querySelector("#start-screen")?.hidden,
+     gameAppHidden:doc?.querySelector("#game-app")?.hidden};
+   });
+   throw new Error("O site não inicializou o menu: "+JSON.stringify({detail,errors}),{cause:error});
+  }
   // Checar que a apresentação do jogo tem imagem desenhada, não só cor de fundo.
   const pixels=await frame.locator("#menu-scene").evaluate(c=>{
    const ctx=c.getContext("2d");

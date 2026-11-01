@@ -160,8 +160,17 @@ async function mountUi():Promise<void> {
   // The actual Canvas simulation still starts through its own JS module,
   // never bundled into Angular or invoked from a component.
   if(document.getElementById('game')){
-    const gameUrl=new URL('./js/main.js',document.baseURI).href;
-    await import(/* @vite-ignore */ gameUrl);
+    const gameUrl=new URL('./js/main.js',document.baseURI);
+    // The standalone game has no revision query, but the site build uses
+    // ?v=<12 hex> for every native module. Reuse the UI entry's exact revision
+    // so old Canvas imports are never mixed with a freshly deployed Angular UI.
+    const uiEntry=document.querySelector<HTMLScriptElement>(
+      'script[type="module"][src*="__angular/main.js"]'
+    );
+    const revision=uiEntry?new URL(uiEntry.src).searchParams.get('v'):null;
+    if(revision && /^[a-f0-9]{12}$/.test(revision))
+      gameUrl.searchParams.set('v',revision);
+    await import(/* @vite-ignore */ gameUrl.href);
   }
 }
 mountUi().catch(error=>{
