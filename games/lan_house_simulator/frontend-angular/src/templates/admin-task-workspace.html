@@ -1,0 +1,22 @@
+<section class="angular-workspace" [attr.data-angular-workspace]="area"
+  [attr.aria-label]="heading">
+ <div class="angular-workspace-heading">
+  <div><span>{{eyebrow}}</span><h4>{{heading}}</h4></div>
+  <p>{{summary}}</p>
+ </div>
+ <nav class="angular-workspace-grid" [attr.aria-label]="'Tarefas: '+heading">
+  @for(task of tasks;track task.id){
+   <button type="button" class="angular-workspace-task"
+    [attr.data-angular-task]="task.id"
+    [attr.aria-controls]="'page-'+area+'-'+task.id"
+    [attr.aria-pressed]="selected()===task.id"
+    (click)="openTask(task.id)">
+    <span class="angular-workspace-task-icon" aria-hidden="true">{{task.icon}}</span>
+    <span class="angular-workspace-task-copy">
+     <strong>{{task.label}}</strong><small>{{task.desc}}</small>
+    </span>
+    <span aria-hidden="true">›</span>
+   </button>
+  }
+ </nav>
+</section>
