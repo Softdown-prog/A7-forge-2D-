@@ -118,7 +118,7 @@ export function auditMigration(sources){
   nextSteps:[
    "Add real-browser E2E for Angular calendar, weather and inbox/letter dialogs",
    "Test mobile furniture layout/rotation and keyboard focus/Escape after cutover",
-   "Test shop filtering, stock flows, privacy and account/donation integration",
+   "Test stock management and account/donation integration after Angular cutover",
    "Keep React bootstrap in production until complete parity and explicit approval"
   ]
  };
