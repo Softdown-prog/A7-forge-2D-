@@ -16,7 +16,8 @@ test('local data interface is Angular only and has two-key allowlist',()=>{
  assert.match(component,/dialog\.returnValue!=='confirm'/);
  assert.match(component,/try\s*\{\s*removeOwnedLocalData\(window\.localStorage,kind\)/);
  assert.match(component,/ChangeDetectionStrategy.OnPush/);
- assert.match(app,/imports:\[LocalDataComponent,AccountComponent\]/);
+ assert.match(app,/imports:\[[^\]]*LocalDataComponent[^\]]*\]/);
+ assert.match(app,/imports:\[[^\]]*AccountComponent[^\]]*\]/);
  assert.match(host,/<lhs-local-data><\/lhs-local-data>/);
  for(const value of ['id="delete-local-save"','id="delete-local-sound"','id="delete-dialog"',
   'id="data-status"','role="status"','aria-live="polite"','id="confirm-delete"',

@@ -1,0 +1,17 @@
+<section class="wrap intro"><p class="eyebrow">SUA CONTA · CONFIRMAÇÃO DE EMAIL</p>
+ <h1>{{confirmed()?'Tudo pronto. Seu salão espera.':'Confirme seu email.'}}</h1>
+ <p class="lead">Uma confirmação para manter seu acesso seguro.</p>
+</section>
+<section class="wrap confirmation-layout">
+ <div id="email-confirmation" class="account-card" [attr.aria-busy]="busy()">
+  @if(confirmed()){<p id="confirmation-badge" class="eyebrow">EMAIL CONFIRMADO</p>}
+  <p id="confirmation-status" role="status" aria-live="polite" aria-atomic="true">{{message()}}</p>
+  @if(ready()){
+   <button id="confirm-email-button" class="button" type="button" [disabled]="busy()"
+    (click)="confirm()">{{busy()?'Confirmando…':'Confirmar meu email'}}</button>
+  }
+  <div class="actions"><a class="button secondary" href="/conta/">Ir para Minha conta</a>
+   <a class="account-link" href="/ajuda/">Preciso de ajuda</a></div>
+  <p class="small">Este link é pessoal. A confirmação não entra na conta automaticamente, não altera sua partida e não envia saves.</p>
+ </div>
+</section>

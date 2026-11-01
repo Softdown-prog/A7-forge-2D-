@@ -45,4 +45,24 @@ O primeiro commit desta branch inicia um projeto Angular independente. Fluxos in
 - Mantém Firebase email/senha (consulta de email confirmado), expiração da sessão de oito horas, renovação de token, sair da conta, checagem autenticada do backend e status de conta.
 - Upload requer JSON exportado pelo jogo e validação via `/game/js/sim/saveTransfer.js`, com limite de 2 MB, confirmação nativa e revisão otimista `expectedRevision`. HTTP 409 obriga conferir a revisão antes de novo envio. Download principal/backup também valida o arquivo.
 - O envio nunca altera a partida local. Os testes devem interceptar Firebase/API com dados fictícios, sem criar contas reais nem publicar o site.
-- A tela de confirmação de email por link e integração com Donate ainda são etapas distintas e bloqueiam o cutover.
+- A confirmação de email por link foi implementada na etapa seguinte, abaixo. A integração com Donate permanece pendente e bloqueia o cutover.
+
+## Continuação após PR #54 — confirmação de email Angular
+
+- Base auditada: `7a085971ee4f074b5db3ca9d4093e0d132159f7f` (merge do PR #54). A conta e os saves já estão implementados no novo site; a rota `/conta/confirmar/` ainda era placeholder.
+- `email-confirmation.ts/.html` e `email-confirmation-client.ts`, na raiz canônica Angular, agora são os únicos donos da nova rota. Nenhum import do JS legado de confirmação, manipulação concorrente do DOM, persistência do código, auto-login ou alteração de saves.
+- Aceita o link marcado de Resend `#codigo=...` e ação Firebase `?mode=verifyEmail&oobCode=...`. Rejeita códigos duplicados/ambíguos, inválidos ou outro modo. Remove fragmento e query antes do primeiro trabalho assíncrono; falha de limpeza impede confirmação.
+- Não confia em `apiKey`/`continueUrl` vindos do link. Usa somente `/account-config.json` e endpoint fixo Firebase `accounts:update`, com código no POST, timeout e referrer de origem. A página compilada tem meta referrer `no-referrer`. Links Firebase com código na query inevitavelmente chegam no primeiro request HTTP: preferir os links marcados em fragmento para não registrar códigos no servidor.
+- O envio exige clique explícito para evitar consumo por scanners de email. Bloqueia cliques simultâneos e descarta o código após sucesso ou erro permanente; falhas transitórias permitem nova tentativa na mesma página. F5 não repete o envio nem recupera o código; o usuário precisa reabrir o email se recarregar antes de confirmar.
+- Testes Node exercitam o cliente TypeScript real compilado em memória; Chromium cobre desktop1280/mobile414/360, toque, deep links/F5, HTTP/expiração/sem conexão, CSP, chave/redirect não confiáveis e preservação de storage. Firebase/API são interceptados; não são criadas contas reais ou enviadas mensagens.
+- O projeto `site-rewrite` desativa somente a injeção de CSS crítico/carregador inline gerada pelo otimizador; JS/CSS continuam minificados e servidos como arquivos, compatíveis com a CSP sem unsafe-inline. Jogo e site-shell não mudam.
+- O workflow isolado agora também roda em PRs e produz evidências da confirmação antes dos cenários completos de conta/site. Nada muda o deploy ou o artefato legado de produção.
+
+### Pendências para Angular completo / cutover
+
+1. Donate/Mercado Pago ainda está desabilitado na nova UI; migrar cliente e fluxo com sandbox/mocks antes de qualquer pagamento real.
+2. Pré-renderização/SEO/metadados por rota, conteúdo institucional restante e revisão editorial/jurídica precisam homologação; o shell CSR não é SEO completo.
+3. Confirmar paridade dos painéis ainda imperativos do jogo separadamente do site; não substituir a simulação/Canvas por UI.
+4. Só remover `website/`, `site-shell` e dependências React após paridade e regressões completas; validar Android real e fluxo de cache/CDN/publicação em etapa explicitamente autorizada.
+
+Esta etapa avança a migração, mas **não declara o frontend inteiro concluído**. Continua sem merge/publicação.
