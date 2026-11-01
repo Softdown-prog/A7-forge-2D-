@@ -33,6 +33,9 @@ const cutoverShell=original
  .replace(nativeSettingsMarkup,'<div id="angular-menu-preferences"></div>');
 const reactEntry='<script type="module" src="./js/react-entry.js"></script>';
 const shopEntry='<div id="shop-catalog" class="shop-grid"></div>';
+const merchandiseEntry='<div id="merchandise-catalog"></div>';
+assert.equal(original.split(merchandiseEntry).length,2,
+ 'One stock catalog host expected in original game shell');
 assert.equal(original.split(reactEntry).length,2,'One React bootstrap expected');
 assert.equal(original.split(shopEntry).length,2,'One native catalogue expected');
 // Replace ONLY the HTTP test response: Angular renders the real calendar and
@@ -57,7 +60,9 @@ assert.ok(!integratedShell.includes('<details class="time-weather-panel" id="tim
 // rehearsal. The published HTML intentionally retains its native fallback.
 const accountCutoverShell=integratedShell.replace('</body>',
  '<div id="angular-player-account"></div></body>');
-const index=accountCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+const stockCutoverShell=accountCutoverShell.replace(merchandiseEntry,
+ '<div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>');
+const index=stockCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
