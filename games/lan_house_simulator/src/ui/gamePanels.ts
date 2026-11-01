@@ -4,6 +4,7 @@ import { createPanelRevisionCache } from "../application/panelRevisionCache.js";
 import { placementStatusSnapshot } from "../application/placementStatusPort.js";
 import { serviceAccessStatusSnapshot } from "../application/serviceAccessStatusPort.js";
 import { createAdminAreaTabs } from "./adminAreaTabs.js";
+import {publishAngularAdminSummary} from "./adminReactiveSummary.js";
 import { renderAdminComputerSections } from "./adminComputerSections.js";
 import { renderAdminFinanceActivity,renderAdminFinanceSummary } from "./adminFinanceSections.js";
 import { renderAdminGpuLicenseSections } from "./adminGpuLicenseSections.js";
@@ -108,6 +109,12 @@ function renderUI(liveOnly=false):void {
   const stationRevision=stationRevisionPort.snapshot(year);
   const money=formatAdminMoney;
   const financialAdminOverview=financialAdminOverviewPort.snapshot();
+  if(state.windows.activeAdminTab==="finance"){
+   const balance=financialBalancePort.balance();
+   publishAngularAdminSummary(document,"finance",{
+    cash:balance.cash,bills:financialAdminOverview.bills,served:financialAdminOverview.served
+   });
+  }
   renderAdminFinanceSummary({
    overview:financialAdminOverview,balance:financialBalancePort,
    financeTab:state.windows.activeAdminTab==="finance",
@@ -133,9 +140,17 @@ function renderUI(liveOnly=false):void {
    isActive:page=>managementPanels.active("prices",page),
    discControls,printControls,setText,iconMarkup,doc:document,sync:syncPanelChildren
   });
-  if(state.windows.adminOpen&&state.windows.activeAdminTab==="stock")merchandisePanel.render();
+  if(state.windows.activeAdminTab==="stock"){
+   const stockOverview=["soda","candy","snacks"] as const;
+   const available=stockOverview.reduce((total,category)=>
+    total+ports.merchandisePort.overview(category).products.length,0);
+   publishAngularAdminSummary(document,"stock",{year,available});
+   merchandisePanel.render();
+  }
   renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
   setText("pc",pcOperationsPort.summary());
+  if(state.windows.activeAdminTab==="computers")
+   publishAngularAdminSummary(document,"computers",{installed:ports.status().pcCount});
   renderAdminComputerSections({
    adminOpen:state.windows.adminOpen,computersTab:state.windows.activeAdminTab==="computers",
    ledgerActive:()=>managementPanels.active("computers","ledger"),

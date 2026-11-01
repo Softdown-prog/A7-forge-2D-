@@ -180,3 +180,11 @@ html[data-ui-framework="angular"] #section-consoles #angular-consoles-workspace 
 #angular-consoles-workspace .angular-workspace{
  min-width:0
 }
+
+/* Cheap signal-backed read-only summaries; native ports still own all values. */
+.angular-workspace-live{display:flex;flex-wrap:wrap;align-items:center;gap:8px 17px;
+ margin:0 0 13px!important;padding:10px 12px;background:#e0ecd8;
+ border:1px solid #bfd3b3;border-radius:9px;font-size:11px;color:#38513c}
+.angular-workspace-live span{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:baseline}
+.angular-workspace-live strong{font-size:12px;color:#213e2d;font-variant-numeric:tabular-nums}
+@media(max-width:520px){.angular-workspace-live{gap:6px 12px;padding:9px}}

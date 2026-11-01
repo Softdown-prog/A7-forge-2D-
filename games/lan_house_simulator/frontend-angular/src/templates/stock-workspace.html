@@ -1,6 +1,12 @@
 <section class="angular-workspace" data-angular-workspace="stock" aria-label="Produtos e estoque">
  <div class="angular-workspace-heading"><div><span>GESTÃO DE MERCADORIAS</span><h4>Estoque, fornecedores e entregas</h4></div>
  <p>Selecione uma tarefa. Os valores, pedidos e regras vêm da simulação original.</p></div>
+ @if(summary(); as live){
+  <p class="angular-workspace-live" aria-label="Estoque atualizado">
+   <span>Ano <strong>{{live.year}}</strong></span>
+   <span>Produtos no catálogo <strong>{{live.available}}</strong></span>
+  </p>
+ }
  <nav class="angular-workspace-grid" aria-label="Tarefas de estoque">
  @for(task of tasks;track task.id){
   <button type="button" class="angular-workspace-task"

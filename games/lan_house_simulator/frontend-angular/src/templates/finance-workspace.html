@@ -1,6 +1,13 @@
 <section class="angular-workspace" data-angular-workspace="finance" aria-label="Gestão financeira">
  <div class="angular-workspace-heading"><div><span>FINANÇAS DO NEGÓCIO</span><h4>Caixa, desempenho e planejamento</h4></div>
  <p>Consulte receitas, contas, eventos e opiniões sem alterar as regras econômicas.</p></div>
+ @if(summary(); as live){
+  <div class="angular-workspace-live" aria-label="Resumo financeiro atualizado">
+   <span>Caixa <strong>{{live.cash}}</strong></span>
+   <span>Contas mensais <strong>{{live.bills}}</strong></span>
+   <span>Atendimentos <strong>{{live.served}}</strong></span>
+  </div>
+ }
  <nav class="angular-workspace-grid" aria-label="Tarefas financeiras">
  @for(task of tasks;track task.id){
   <button type="button" class="angular-workspace-task"

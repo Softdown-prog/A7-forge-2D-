@@ -123,6 +123,20 @@ export class StationSwitchComponent implements OnInit,OnChanges,OnDestroy{
 export class ComputerWorkspaceComponent extends Workspace{
  readonly area='computers' as const;
  readonly tasks=TASKS.computers;
+ readonly installed=signal<number|null>(null);
+ private readonly receiveComputer=(event:Event):void=>{
+  const view=(event as CustomEvent<{installed:number}>).detail;
+  if(!view||!Number.isInteger(view.installed)||view.installed<0)return;
+  if(this.installed()!==view.installed)this.installed.set(view.installed);
+ };
+ override ngOnInit():void{
+  super.ngOnInit();
+  document.addEventListener('lhs:admin-computers-updated',this.receiveComputer);
+ }
+ override ngOnDestroy():void{
+  document.removeEventListener('lhs:admin-computers-updated',this.receiveComputer);
+  super.ngOnDestroy();
+ }
 }
 @Component({selector:'lhs-service-workspace',standalone:true,
  templateUrl:'./templates/service-workspace.html',changeDetection:ChangeDetectionStrategy.OnPush})
@@ -140,19 +154,22 @@ export class StockWorkspaceComponent extends Workspace{
  readonly area='stock' as const;
  readonly tasks=TASKS.stock;
  readonly catalogLocked=signal(true);
- private observer:MutationObserver|null=null;
-
+ readonly summary=signal<{year:number;available:number}|null>(null);
+ private readonly receiveStock=(event:Event):void=>{
+  const view=(event as CustomEvent<{year:number;available:number}>).detail;
+  if(!view||!Number.isInteger(view.year)||!Number.isInteger(view.available))return;
+  const old=this.summary();
+  if(!old||old.year!==view.year||old.available!==view.available)this.summary.set(view);
+  // The native controller updates unlock buttons before publishing the view.
+  this.syncLock();
+ };
  override ngOnInit():void{
   super.ngOnInit();
-  const root=document.getElementById('section-stock');
-  if(!root)return;
-  this.observer=new MutationObserver(()=>this.syncLock());
-  this.observer.observe(root,{subtree:true,childList:true,
-   attributes:true,attributeFilter:['disabled']});
+  document.addEventListener('lhs:admin-stock-updated',this.receiveStock);
   this.syncLock();
  }
  override ngOnDestroy():void{
-  this.observer?.disconnect();
+  document.removeEventListener('lhs:admin-stock-updated',this.receiveStock);
   super.ngOnDestroy();
  }
  private syncLock():void{
@@ -172,6 +189,23 @@ export class StockWorkspaceComponent extends Workspace{
 export class FinanceWorkspaceComponent extends Workspace{
  readonly area='finance' as const;
  readonly tasks=TASKS.finance;
+ readonly summary=signal<{cash:string;bills:string;served:string}|null>(null);
+ private readonly receiveFinance=(event:Event):void=>{
+  const view=(event as CustomEvent<{cash:string;bills:string;served:string}>).detail;
+  if(!view||typeof view.cash!=='string'||typeof view.bills!=='string'||
+     typeof view.served!=='string')return;
+  const old=this.summary();
+  if(!old||old.cash!==view.cash||old.bills!==view.bills||old.served!==view.served)
+   this.summary.set(view);
+ };
+ override ngOnInit():void{
+  super.ngOnInit();
+  document.addEventListener('lhs:admin-finance-updated',this.receiveFinance);
+ }
+ override ngOnDestroy():void{
+  document.removeEventListener('lhs:admin-finance-updated',this.receiveFinance);
+  super.ngOnDestroy();
+ }
 }
 
 /** These three layouts delegate navigation to the same native TypeScript

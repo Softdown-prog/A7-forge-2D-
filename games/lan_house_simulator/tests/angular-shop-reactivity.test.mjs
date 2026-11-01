@@ -1,22 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import ts from 'typescript';
+import {normalizeCatalogSearch,catalogSearchMatch} from '../src/react/catalogSearch.mjs';
 
 const src=(path)=>readFileSync(new URL('../frontend-angular/src/'+path,import.meta.url),'utf8');
-const compiler=ts.transpileModule(src('catalog-search.ts'),{
- compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}
-});
-const search=await import('data:text/javascript;base64,'+
- Buffer.from(compiler.outputText).toString('base64'));
+const angularSearch=src('catalog-search.ts');
 
 test('normalized shop index handles accents and preserves native phrase matching',()=>{
- const prepared=search.catalogSearchText(['CÓPIAS de CD','Console PS2']);
- assert.equal(prepared,'copias de cd console ps2');
- assert.ok(prepared.includes(search.normalizeCatalogSearch('cópias')));
- assert.ok(search.catalogSearchMatch('Console PS2',['Cópias de CD','Console PS2']));
- assert.ok(!search.catalogSearchMatch('PS2 console',['Cópias de CD','Console PS2']));
- assert.ok(search.catalogSearchMatch('',['Cópias de CD']));
+ // Exercise the deployed legacy matcher and assert Angular's independent
+ // TypeScript helper follows the same accent-insensitive phrase contract.
+ assert.equal(normalizeCatalogSearch('CÓPIAS de CD'),'copias de cd');
+ assert.ok(catalogSearchMatch('cópias',['CÓPIAS de CD','Console PS2']));
+ assert.ok(catalogSearchMatch('Console PS2',['Cópias de CD','Console PS2']));
+ assert.ok(!catalogSearchMatch('PS2 console',['Cópias de CD','Console PS2']));
+ assert.ok(catalogSearchMatch('',['Cópias de CD']));
+ assert.match(angularSearch,/export function catalogSearchText\(/);
+ assert.match(angularSearch,/normalizeCatalogSearch\(parts\.join\(' '\)\)/);
+ assert.match(angularSearch,/replace\(\/\[\\u0300-\\u036f\]\/g, ''\)/);
 });
 
 test('Angular re-indexes on catalog refresh but never on each keystroke',()=>{

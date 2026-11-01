@@ -1,6 +1,11 @@
 <section class="angular-workspace" data-angular-workspace="computers" aria-label="Operação, peças e manutenção">
  <div class="angular-workspace-heading"><div><span>CENTRAL DOS COMPUTADORES</span><h4>Operação, peças e manutenção</h4></div>
  <p>Alterne entre reparos, evolução do hardware, Windows, monitores e receita por estação.</p></div>
+ @if(installed() !== null){
+  <p class="angular-workspace-live" aria-label="Estações atualizadas">
+   <span>Computadores instalados <strong>{{installed()}}</strong></span>
+  </p>
+ }
  <nav class="angular-workspace-grid" aria-label="Tarefas de computadores">
  @for(task of tasks;track task.id){
   <button type="button" class="angular-workspace-task" [attr.data-angular-task]="task.id"
