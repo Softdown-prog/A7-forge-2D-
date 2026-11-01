@@ -213,3 +213,21 @@ Depois de recusar, a partida ainda pode ser retomada com o save essencial
 intacto. O cenário usa o mesmo corte HTTP temporário e não publica Angular.
 As verificações ficam sujeitas ao resultado do GitHub Actions; a existência
 do script, sozinha, não equivale à homologação.
+
+## Ensaios móveis do editor de salão
+
+A integração Playwright usa Chromium com toque real em **414px e 360px**,
+rodando uma partida salva e o mesmo Canvas 2D da produção. Abre a loja
+pela ilha Angular e aciona **Organizar salão** no controlador TypeScript;
+projeta um PC com a câmera isométrica compilada, toca no Canvas, gira,
+escolhe o destino, confirma e valida a alteração no save original.
+O destino é verificado dentro de **um único encaixe de 0,25 tile** por
+causa do arredondamento da grade no viewport móvel ampliado, sem permitir
+saltos arbitrários. Exige apenas um registro por PC e nenhuma cobrança.
+
+O mesmo fluxo testa remover um pôster, cancelar antes da confirmação,
+confirmar explicitamente e recarregar a página para conferir PC e pôster.
+Screenshots e relatório JSON são enviados como artefatos do CI.
+**São testes Chromium mobile emulado, não homologação em aparelho físico.**
+O React publicado e a simulação continuam intocados; a migração não está
+liberada para merge/deploy até a paridade integral e a aprovação explícita.
