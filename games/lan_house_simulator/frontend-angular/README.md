@@ -150,3 +150,29 @@ O teste verifica a inexistência de IDs duplicados e realiza download,
 importação de arquivo e mudança do som **nesses componentes Angular reais**,
 sem redirecionar eventos artificialmente. O HTML versionado da produção
 continua com seus controles originais.
+
+## Auditoria verificável de migração (sem troca da interface)
+
+O script `frontend-angular/scripts/audit_migration.mjs` compara os
+sete hosts React reais de `src/react/entry.jsx` com os mounts Angular,
+confere IDs presentes no documento do jogo e na prévia, e informa quais
+componentes Angular opcionais ainda **não** existem no HTML publicado.
+Também inventaria verificações já escritas nos scripts Playwright para
+compras PS1/PS2, salvamento, administração, desktop/mobile e ofertas
+bloqueadas; registra explicitamente fluxos sem evidência de E2E integrado
+(calendário/clima, correio/cartas, posicionamento de móveis, busca,
+teclado/foco, conta/doações e consentimento de privacidade).
+
+O resultado JSON em `out/angular-migration-audit/report.json` é publicado
+como `lhs-angular-migration-audit` pelo workflow da branch. Executar:
+
+```bash
+node --test tests/angular-migration-audit.test.mjs
+node frontend-angular/scripts/audit_migration.mjs --output out/angular-migration-audit/report.json
+```
+
+**Atenção:** encontrar texto de verificação em um script significa apenas
+evidência **estática** de cobertura; um fluxo só fica comprovadamente
+funcional após o Playwright executar e passar. O auditor não marca o
+cutover como pronto nem altera o jogo ou o site. A migração continua
+retida nesta branch até homologação total e autorização explícita.
