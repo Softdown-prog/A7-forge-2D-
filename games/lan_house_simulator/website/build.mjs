@@ -3,7 +3,7 @@ import {cpSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync,existsSyn
 import {resolve,dirname} from "node:path";
 import {createHash} from "node:crypto";
 import {siteConfig} from "./config.mjs";
-import {pages,icon,eras} from "./content.mjs";
+import {pages,icon,eras,faq} from "./content.mjs";
 const root=resolve(import.meta.dirname,"..");
 // The published /game/ iframe uses Angular by default. The standalone
 // npm run build path retains React only for compatibility and regression QA.
@@ -109,8 +109,13 @@ export function buildSite(){
   const canonical=url&&p.path!=="404"?`<link rel="canonical" href="${escape(url)}"/><meta property="og:url" content="${escape(url)}"/><meta property="og:image" content="${escape(new URL("/assets/sala.webp",siteConfig.origin).href)}"/><meta property="og:image:alt" content="Salão isométrico do Lan House Simulator"/>`:"";
   // SEO and no-JS retain the server-generated timeline markup.
   let body=p.path==="jogar"?p.body.replace('data-src="/game/"','data-src="/game/?v='+revision+'"'):p.body;
-  if(angularCandidate)body=body.replaceAll('<div class="era-layout">',
-   '<div class="era-layout" data-angular-site-timeline="true" data-era-list="'+escape(JSON.stringify(eras))+'">');
+  if(angularCandidate){
+   body=body.replaceAll('<div class="era-layout">',
+    '<div class="era-layout" data-angular-site-timeline="true" data-era-list="'+escape(JSON.stringify(eras))+'">');
+   // The original FAQ stays present in pre-rendered HTML until Angular runs.
+   if(p.path==="ajuda")body=body.replace('<article id="duvidas">',
+    '<article id="duvidas" data-angular-site-help="true" data-faq-list="'+escape(JSON.stringify(faq))+'">');
+  }
   const html=`<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="theme-color" content="#192e2a"/>
 <title>${escape(p.title)} · ${c.name}</title><meta name="description" content="${escape(p.description)}"/><meta name="robots" content="${siteConfig.mode==="public"&&p.path!=="404"&&!p.noindex?"index,follow":"noindex,nofollow"}"/>

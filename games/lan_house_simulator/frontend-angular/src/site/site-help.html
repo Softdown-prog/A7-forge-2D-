@@ -1,0 +1,31 @@
+<h2>Perguntas frequentes</h2>
+<div class="help-search-tools" id="help-search-tools">
+ <label for="help-search">Encontre uma resposta</label>
+ <div class="help-search-row">
+  <input #queryInput id="help-search" type="search" autocomplete="off"
+   placeholder="Ex.: salvar, PS2 ou compras" aria-controls="help-questions"
+   [value]="query()" (input)="onInput($event)"/>
+  <button id="help-search-clear" type="button" class="button secondary"
+   [hidden]="!active()" (click)="clear(queryInput)">Limpar</button>
+ </div>
+ <p id="help-search-results" class="small" role="status" aria-live="polite" aria-atomic="true">
+  @if(active()){
+   {{count()}} {{count()===1?'resposta encontrada.':'respostas encontradas.'}}
+  } @else {
+   Pesquise por uma palavra ou explore as perguntas abaixo.
+  }
+ </p>
+</div>
+<div class="faq" id="help-questions">
+ @for(item of questions;track item.question;let index=$index){
+  <details [hidden]="active()&&!matched()[index]"
+   [open]="active()?matched()[index]:opened()[index]===true"
+   (toggle)="onToggle(index,$event)">
+   <summary>{{item.question}}<span aria-hidden="true">+</span></summary>
+   <p>{{item.answer}}</p>
+  </details>
+ }
+</div>
+<p class="help-empty" id="help-empty" [hidden]="!active()||count()>0">
+ Nenhuma resposta encontrada. Tente palavras diferentes ou consulte os canais de contato abaixo.
+</p>

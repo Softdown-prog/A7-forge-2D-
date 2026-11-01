@@ -33,7 +33,8 @@ for(const button of eraButtons)button.addEventListener("click",()=>{
 
 const helpInput=document.querySelector("#help-search");
 const helpList=document.querySelector("#help-questions");
-if(helpInput&&helpList){
+// Preview Angular owns the Help region; no duplicate native event handlers.
+if(helpInput&&helpList&&!document.querySelector('[data-angular-site-help]')){
  const tools=document.querySelector("#help-search-tools");
  const clear=document.querySelector("#help-search-clear");
  const result=document.querySelector("#help-search-results");

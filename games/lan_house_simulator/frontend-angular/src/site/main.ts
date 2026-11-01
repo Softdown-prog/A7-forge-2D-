@@ -3,6 +3,7 @@ import {createComponent} from '@angular/core';
 import {createApplication} from '@angular/platform-browser';
 import {SiteNavigationComponent} from './site-navigation';
 import {SiteTimelineComponent} from './site-timeline';
+import {SiteHelpComponent} from './site-help';
 
 async function start():Promise<void>{
  const host=document.querySelector<HTMLElement>('#site-nav[data-angular-site-nav]');
@@ -20,6 +21,14 @@ async function start():Promise<void>{
   app.attachView(timeline.hostView);
   timeline.changeDetectorRef.detectChanges();
   document.documentElement.dataset['siteTimeline']='angular';
+ }
+ for(const helpHost of document.querySelectorAll<HTMLElement>('[data-angular-site-help]')){
+  const help=createComponent(SiteHelpComponent,{
+   environmentInjector:app.injector,hostElement:helpHost
+  });
+  app.attachView(help.hostView);
+  help.changeDetectorRef.detectChanges();
+  document.documentElement.dataset['siteHelp']='angular';
  }
  document.documentElement.dataset['siteNavigation']='angular';
 }

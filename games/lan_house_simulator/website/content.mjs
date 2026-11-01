@@ -5,7 +5,7 @@ const link = (text,href="/jogar/",secondary=false) => `<a class="button ${second
 const eyebrow = text => `<p class="eyebrow"><span class="pixel" aria-hidden="true"></span>${text}</p>`;
 const intro = (label,title,description) => `<section class="page-intro wrap">${eyebrow(label)}<h1>${title}</h1><p class="lead">${description}</p></section>`;
 const section = (id,title,body) => ({id,title,body});
-const faq = [
+export const faq = [
  ["O jogo é gratuito?","Sim. A campanha e a progressão são gratuitas. Cookies (biscoitos) permitem resgatar personalizações opcionais na Loja Cookies, em Minha Conta dentro do jogo. A conta opcional já permite gerenciar saves na nuvem."],
  ["Preciso instalar ou criar uma conta?","Não precisa instalar nem criar uma conta para jogar. O login é opcional para gerenciar saves na nuvem e necessário para receber Cookies ao apoiar o projeto em Donate. Não há assinatura obrigatória."],
  ["Funciona no celular?","Sim, a interface se adapta a telas menores e aceita toques. Para ver melhor o salão, você pode jogar com o aparelho na horizontal. Navegadores atuais com JavaScript e Canvas 2D são necessários; o desempenho depende do aparelho."],
