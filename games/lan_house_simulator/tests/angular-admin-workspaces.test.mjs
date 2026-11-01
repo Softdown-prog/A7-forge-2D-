@@ -35,7 +35,7 @@ test('Angular task views read the confirmed native selection and schedule OnPush
 });
 test('Angular PC selector mirrors native controls without gameplay logic',()=>{
  const ui=file('frontend-angular/src/workspaces.ts');
- for(const needle of ['MutationObserver','data-lcd-select','data-hardware-select','original.click()','button.click()'])
+ for(const needle of ['lhs:pc-maintenance-refreshed','data-lcd-select','data-hardware-select','original.click()','button.click()'])
   assert.ok(ui.includes(needle),needle);
  assert.doesNotMatch(ui,/requestAnimationFrame|localStorage|createGame|purchase\(|save\(/);
  assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
@@ -87,7 +87,8 @@ test('Angular stock workspace mirrors native 2000 unlock and forwards task comma
  assert.match(ui,/class StockWorkspaceComponent extends Workspace/);
  assert.match(ui,/catalogLocked=signal\(true\)/);
  assert.match(ui,/original\.disabled/);
- assert.match(ui,/MutationObserver/);
+ assert.match(ui,/lhs:admin-stock-updated/);
+ assert.doesNotMatch(ui,/new MutationObserver/);
  assert.match(ui,/super\.ngOnInit\(\)/);
  assert.match(ui,/super\.ngOnDestroy\(\)/);
  assert.match(markup,/\[disabled\]="task\.id==='catalog'&&catalogLocked\(\)"/);
