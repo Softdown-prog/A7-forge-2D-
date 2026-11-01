@@ -23,10 +23,10 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
  for(const id of ["console-purchases","menu-save-transfer","sound-preferences",
   "admin-workspaces","desktop-mobile-touch","disabled-purchases",
   "shop-catalog-preview","hud-weather","mail-inbox","shop-search","keyboard-focus",
-  "privacy-consent"]){
+  "privacy-consent","layout-editor"]){
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
- for(const id of ["layout-editor","account-donation"]){
+ for(const id of ["account-donation"]){
   assert.equal(byId[id].status,"not-evidenced-in-script",id);
  }
  assert.equal(report.browserQa.workflowPresent,true);
@@ -61,4 +61,17 @@ test("privacy coverage audits actual banner controls and expiry without claiming
  assert.match(sources.integratedQa,/31\*24\*60\*60\*1000/);
  assert.match(sources.integratedQa,/localStorage\.getItem\(key\)/);
  assert.equal(report.status,"not-ready","Privacy checks alone must never authorize the cutover");
+});
+
+test("mobile layout editor checks real Canvas touch, rotation, removal and reload",()=>{
+ const report=auditMigration(sources);
+ assert.equal(report.browserQa.checks.find(c=>c.id==="layout-editor")?.status,
+  "script-evidence-found");
+ for(const token of [
+  "page.touchscreen.tap","worldTouch","built-poster:2",
+  "#layout-confirm","#layout-removal-cancel","#layout-removal-confirm",
+  "restored.objectPlacements"
+ ])assert.ok(sources.integratedQa.includes(token),token);
+ assert.equal(report.status,"not-ready",
+  "Mobile QA script coverage alone cannot authorize React removal");
 });
