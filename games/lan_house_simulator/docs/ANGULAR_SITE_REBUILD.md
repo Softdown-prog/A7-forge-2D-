@@ -26,3 +26,10 @@
 - `website/content.mjs` continua entregando HTML estático válido para SEO e fallback sem JavaScript.
 - A prévia Angular recebe os dados canônicos de `eras` por atributo JSON HTML-escapado; produção continua com os handlers antigos.
 - Os testes de navegador verificam `/` e `/sobre-o-jogo/`, mouse/toque, quatro anos, SVGs, teclado e largura mobile antes dos testes do jogo.
+
+## Etapa 3 — Ajuda e FAQ (somente prévia Angular)
+- O componente Angular em frontend-angular/src/site/site-help.ts renderiza as sete respostas canônicas com HTML semântico, signals e change detection OnPush; sem React.
+- website/content.mjs mantém a fonte original dos textos, e o builder só adiciona JSON escapado e o host Angular na página /ajuda/ da prévia out/site-angular.
+- O FAQ original já está presente no HTML compilado antes do JavaScript, garantindo fallback e indexação de conteúdo. Na hidratação da prévia, o componente toma posse da seção sem listeners JavaScript duplicados.
+- Playwright em Chromium verifica 1280, 414 e 360 px, seleção de perguntas por toque/teclado, consulta sem acentos, vários termos, ausência de resultados, limpeza e recuperação do estado aberto.
+- FAQ reduzido da página inicial permanece HTML nativo até uma etapa posterior. Produção out/site não usa o componente novo.

@@ -110,6 +110,46 @@ try{
      'Angular timeline must stay inside '+width+'px viewport');
    }
   }
+  if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
+   // Real Angular FAQ candidate /ajuda/: search, restored disclosure state
+   // and keyboard/touch behavior on 1280, 414 and 360px viewports.
+   await page.goto(origin+'/ajuda/',{waitUntil:'networkidle'});
+   await page.waitForFunction(()=>
+    document.documentElement.dataset.siteHelp==='angular');
+   const help=page.locator('#duvidas[data-angular-site-help]');
+   assert.equal(await help.count(),1,'Exactly one Angular FAQ host');
+   const details=help.locator('#help-questions details');
+   assert.equal(await details.count(),7,'All seven canonical FAQ answers present');
+   assert.ok(await help.locator('#help-search-tools').isVisible());
+   await details.first().locator('summary').click();
+   await page.waitForFunction(()=>
+    document.querySelector('#help-questions details:first-child')?.open===true);
+   const search=help.locator('#help-search');
+   await search.fill('nao ha assinatura');
+   await page.waitForFunction(()=>
+    document.querySelectorAll('#help-questions details:not([hidden])').length===1);
+   assert.ok(await details.nth(1).isVisible(),
+    'Accent-insensitive multiword FAQ search must find answer');
+   await page.waitForFunction(()=>
+    document.querySelector('#help-search-results')?.textContent?.includes('1 resposta encontrada.'));
+   await search.fill('termo-que-nao-existe-no-faq-98765');
+   await help.locator('#help-empty').waitFor({state:'visible'});
+   assert.equal(await help.locator('#help-questions details:visible').count(),0);
+   const clear=help.locator('#help-search-clear');
+   if(mobile)await clear.tap();else await clear.click();
+   await help.locator('#help-empty').waitFor({state:'hidden'});
+   assert.equal(await search.inputValue(),'');
+   await page.waitForFunction(()=>
+    document.querySelector('#help-questions details:first-child')?.open===true);
+   assert.equal(await clear.isHidden(),true);
+   assert.equal(await help.locator('#help-questions details:visible').count(),7);
+   await details.nth(1).locator('summary').focus();
+   await page.keyboard.press('Enter');
+   await page.waitForFunction(()=>
+    document.querySelectorAll('#help-questions details[open]').length===2);
+   assert.ok(await help.evaluate(el=>el.scrollWidth-el.clientWidth)<=3,
+    'Angular FAQ must not overflow at '+width+'px');
+  }
   await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
    // Test the rebuilt institutional Angular shell without changing /out/site.
@@ -197,6 +237,7 @@ try{
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
    shopCatalog:true,siteAngularNavigation:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    siteAngularTimeline:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
+   siteAngularHelp:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    adminComputer:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    resourceErrors:0,errorCount:errors.length});

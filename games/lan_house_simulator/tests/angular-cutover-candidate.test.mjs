@@ -218,3 +218,29 @@ test('Angular timeline isolates the legacy JavaScript handler and runs Chromium 
    "siteAngularTimeline:"])
   assert.ok(browser.includes(marker),'Missing real Chromium check: '+marker);
 });
+
+test('Angular candidate owns Ajuda FAQ and Chromium verifies search, keyboard, touch',()=>{
+ const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const native=readFileSync(new URL('../website/site.mjs',import.meta.url),'utf8');
+ const content=readFileSync(new URL('../website/content.mjs',import.meta.url),'utf8');
+ const entry=readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8');
+ const component=readFileSync(new URL('../frontend-angular/src/site/site-help.ts',import.meta.url),'utf8');
+ const html=readFileSync(new URL('../frontend-angular/src/site/site-help.html',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ assert.match(content,/export const faq = \[/);
+ assert.ok(build.includes('if(p.path==="ajuda")body=body.replace'));
+ assert.ok(build.includes('escape(JSON.stringify(faq))'));
+ assert.ok(native.includes("!document.querySelector('[data-angular-site-help]')"));
+ assert.ok(entry.includes('createComponent(SiteHelpComponent'));
+ assert.ok(entry.includes("dataset['siteHelp']='angular'"));
+ for(const marker of ['ChangeDetectionStrategy.OnPush','signal(', 'normalize(', 'templateUrl'])
+  assert.ok(component.includes(marker),marker);
+ for(const marker of ['help-search-results', 'help-search-clear', 'aria-controls="help-questions"',
+   '@for(item of questions', '(toggle)="onToggle(index,$event)"'])
+  assert.ok(html.includes(marker),marker);
+ assert.doesNotMatch(component,/from\s+['"][^'"]*react|innerHTML\s*=|fetch\(/i);
+ for(const marker of ["'/ajuda/'", "dataset.siteHelp==='angular'",
+   "search.fill('nao ha assinatura')", "search.fill('termo-que-nao-existe-no-faq-98765')",
+   "page.keyboard.press('Enter')", "clear.tap()", "siteAngularHelp:"])
+  assert.ok(browser.includes(marker),'Missing real browser help QA: '+marker);
+});
