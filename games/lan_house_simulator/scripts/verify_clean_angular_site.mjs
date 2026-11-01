@@ -86,20 +86,34 @@ try{
   await page.goto(origin+'/',{waitUntil:'networkidle'});
   await page.waitForFunction(()=>
    document.documentElement.dataset.siteFramework==='angular-rewrite');
-  const before=await page.evaluate(()=>window.scrollY);
+  const before=await page.evaluate(()=>({
+   y:window.scrollY,scrollHeight:document.documentElement.scrollHeight,
+   clientHeight:document.documentElement.clientHeight,
+   innerHeight:innerHeight,scrolling:document.scrollingElement?.tagName,
+   overflow: getComputedStyle(document.documentElement).overflowY
+  }));
+  assert.ok(before.scrollHeight-before.innerHeight>150,
+   'Homepage has too little content to test scrolling: '+JSON.stringify(before));
+  await page.mouse.move(Math.floor(width/2),Math.min(600,850-40));
   if(mobile){
    const cdp=await context.newCDPSession(page);
    await cdp.send('Input.synthesizeScrollGesture',{
-    x:Math.floor(width/2),y:650,yDistance:-460,xDistance:0,
+    x:Math.floor(width/2),y:600,yDistance:-460,xDistance:0,
     gestureSourceType:'touch',speed:600
    });
    await cdp.detach();
   }else{
    await page.mouse.wheel(0,460);
   }
-  await page.waitForFunction(() => window.scrollY>60);
-  const after=await page.evaluate(()=>window.scrollY);
-  assert.ok(after>before,'The page must scroll without resetting to top');
+  const after=await page.evaluate(()=>({
+   y:window.scrollY,scrollTop:document.scrollingElement?.scrollTop,
+   bodyScroll:document.body.scrollTop,
+   scrollHeight:document.documentElement.scrollHeight,
+   innerHeight:innerHeight
+  }));
+  console.log('ANGULAR_SCROLL_DIAGNOSTIC',JSON.stringify({width,before,after}));
+  assert.ok(after.y>before.y+60,'Swipe/wheel failed to scroll page: '+
+   JSON.stringify({width,before,after}));
   assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'No horizontal jump while scrolling');
   await page.screenshot({path:resolve(output,'angular-clean-'+width+'.png'),fullPage:true});
