@@ -259,6 +259,14 @@ migração completa de todas as ilhas e revisão explícita.
 
 ## Mercadorias e gestão de estoque na migração
 
+A ilha `#angular-stock-workspace` oferece navegação Angular acessível entre
+**Mercadorias**, **Fornecedores** e **Entregas**. Os botões encaminham
+comandos para os seletores TypeScript originais, que permanecem montados
+mas têm a navegação duplicada visualmente ocultada apenas no ensaio.
+O estado bloqueado de Mercadorias antes de 2000 é lido do botão nativo
+e acompanhado por `MutationObserver`, sem reproduzir regras de ano
+no componente. O site publicado continua sem esse host.
+
 A ilha `#angular-merchandise-catalog` monta apenas os controles do catálogo
 avançado de estoque, dentro do host nativo `#merchandise-catalog`.
 O formulário continua recebendo opções e estados da `MerchandisePort`;
