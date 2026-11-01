@@ -106,8 +106,20 @@ try{
   await page.locator('#account-email').fill('test@example.invalid');
   await page.locator('#account-password').fill('test-password');
   await page.locator('#auth-submit').click();
+  await page.waitForTimeout(400);
+  console.log('ACCOUNT_LOGIN_DIAGNOSTIC',JSON.stringify({
+   width,loginCount,requests:requests.slice(-5),errors,
+   ui:await page.evaluate(()=>({
+    status:document.querySelector('#account-status')?.textContent?.trim(),
+    view:!!document.querySelector('#account-email'),
+    submit:document.querySelector('#auth-submit')?.textContent?.trim(),
+    validity:(document.querySelector('#account-email') instanceof HTMLInputElement)?
+     document.querySelector('#account-email').validity.valid:null,
+    busy:document.querySelector('.account-card')?.getAttribute('aria-busy')
+   }))
+  }));
   await page.waitForFunction(()=>document.querySelector('#account-status')?.textContent
-   ?.includes('Não foi possível entrar.'));
+   ?.includes('Não foi possível entrar.'),null,{timeout:5000});
   assert.equal(await page.locator('#cookies-balance').count(),0);
   await page.locator('#account-password').fill('test-password');
   await page.locator('#auth-submit').click();
