@@ -110,10 +110,17 @@ try{
   await page.mouse.move(Math.floor(width/2),Math.min(600,850-40));
   if(mobile){
    const cdp=await context.newCDPSession(page);
-   await cdp.send('Input.synthesizeScrollGesture',{
-    x:Math.floor(width/2),y:600,yDistance:-460,xDistance:0,
-    gestureSourceType:'touch',speed:600
+   const x=Math.floor(width/2);
+   await cdp.send('Input.dispatchTouchEvent',{
+    type:'touchStart',touchPoints:[{x,y:640,id:1}]
    });
+   for(let y=615;y>=250;y-=25){
+    await cdp.send('Input.dispatchTouchEvent',{
+     type:'touchMove',touchPoints:[{x,y,id:1}]
+    });
+    await page.waitForTimeout(16);
+   }
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
    await cdp.detach();
   }else{
    await page.mouse.wheel(0,460);
