@@ -33,3 +33,9 @@ O primeiro commit desta branch inicia um projeto Angular independente. Fluxos in
 - `site-app.html` renderiza índice âncora, seções e links através de bindings Angular. Nada é montado pelo JavaScript legado.
 - Esta é **uma versão para revisão editorial/jurídica**, sem publicação; não afirmar equivalência literal ou validade jurídica definitiva. Identificação do operador, provedores e comportamentos da conta/pagamentos ainda precisam homologação.
 - Inclusão de testes no Chromium para rotas, links, links âncora e F5, inclusive telas pequenas.
+
+## Etapa Dados locais — reescrita Angular exclusiva
+- `frontend-angular/src/site-rewrite/local-data.ts` e `local-data.html` oferecem gerenciamento autônomo de **apenas** `lhs-save-v1` e `lhs.sound`; nenhuma importação de `website/data-controls.mjs` ou JS que reescreva DOM.
+- Exclusão separada com `<dialog>` nativo, confirmação explícita, cancelamento/Escape, status acessível e tratamento de bloqueio do `localStorage`. Não há `localStorage.clear()` nem remoção de chaves de outros aplicativos.
+- A partida deve ser fechada antes da exclusão; saves já baixados e arquivos da conta/nuvem não são removidos. **Não** foi introduzido controle de exclusão de nuvem ou import/export independente: a exportação permanece no menu Canvas do jogo, que será validado na etapa de conta e saves.
+- O Chromium deve cobrir o cancelamento e a confirmação, isolamento de chaves, recuperação após F5, teclado/toque e erro de armazenamento nas três larguras. Produção continua inalterada.

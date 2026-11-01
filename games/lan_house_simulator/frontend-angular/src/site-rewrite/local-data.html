@@ -1,0 +1,73 @@
+<section class="wrap data-page">
+ <article class="data-intro">
+  <p class="eyebrow">SEUS DADOS LOCAIS</p>
+  <h1>Sua história. Sob seu controle.</h1>
+  <p class="lead">Sua partida e a preferência de som são armazenadas neste navegador, no endereço atual. Você pode gerenciá-las individualmente.</p>
+ </article>
+ <div class="data-columns">
+  <article class="data-card">
+   <h2>Antes de apagar</h2>
+   <p>Feche o jogo em todas as abas. Uma partida aberta pode salvar os dados novamente.</p>
+   <p>Se quiser guardar seu progresso, abra o jogo e escolha <strong>Salvar em arquivo</strong> no menu antes de excluir a partida local.</p>
+   <p>Esses controles não apagam arquivos JSON baixados, dados em outros domínios, cookies da hospedagem nem partidas enviadas à sua conta.</p>
+   <div class="data-actions">
+    <div class="data-option">
+     <div><strong>Partida neste navegador</strong>
+      <p id="local-save-status">
+       @switch(saveStatus()){
+        @case('present'){Partida encontrada.}
+        @case('absent'){Nenhuma partida local encontrada.}
+        @default{Armazenamento indisponível neste navegador.}
+       }
+      </p></div>
+     <button type="button" class="button secondary" id="delete-local-save"
+      [disabled]="saveStatus()!=='present'"
+      (click)="request('save',confirmation)">Apagar minha partida</button>
+    </div>
+    <div class="data-option">
+     <div><strong>Preferência de som</strong>
+      <p id="local-sound-status">
+       @switch(soundStatus()){
+        @case('present'){Preferência de som encontrada.}
+        @case('absent'){Usando a preferência padrão.}
+        @default{Armazenamento indisponível neste navegador.}
+       }
+      </p></div>
+     <button type="button" class="button secondary" id="delete-local-sound"
+      [disabled]="soundStatus()!=='present'"
+      (click)="request('sound',confirmation)">Redefinir preferência de som</button>
+    </div>
+   </div>
+   <p id="data-status" role="status" aria-live="polite" aria-atomic="true">{{message()}}</p>
+  </article>
+  <article class="data-card">
+   <h2>O que fica guardado?</h2>
+   <div class="data-table-scroll">
+    <table>
+     <caption>Armazenamento local utilizado pelo jogo</caption>
+     <thead><tr><th>Dado</th><th>Finalidade</th><th>Conservação</th></tr></thead>
+     <tbody>
+      <tr><td><code>lhs-save-v1</code></td><td>Continuar a partida</td><td>Até substituir, apagar ou limpar os dados do navegador</td></tr>
+      <tr><td><code>lhs.sound</code></td><td>Lembrar o estado do som</td><td>Até redefinir ou limpar os dados do navegador</td></tr>
+     </tbody>
+    </table>
+   </div>
+   <p>Veja também a <a href="/privacidade/">política de privacidade</a> e os <a href="/contato/">canais de contato</a>.</p>
+  </article>
+ </div>
+ <dialog #confirmation id="delete-dialog" aria-labelledby="delete-title"
+  aria-describedby="delete-description" (close)="onClose(confirmation)">
+  <h2 id="delete-title">{{pending()==='save'?'Apagar a partida local?':'Redefinir o som?'}}</h2>
+  <p id="delete-description">
+   @if(pending()==='save'){
+    A partida deste navegador será removida. Esta ação não pode ser desfeita. Feche o jogo e guarde um arquivo de backup antes de continuar.
+   }@else{
+    Apenas a preferência local de som será removida. Sua partida continuará salva.
+   }
+  </p>
+  <form method="dialog" class="data-dialog-actions">
+   <button type="submit" value="cancel" class="button secondary" id="cancel-delete">Cancelar</button>
+   <button type="submit" value="confirm" class="button danger" id="confirm-delete">Confirmar exclusão</button>
+  </form>
+ </dialog>
+</section>

@@ -1,9 +1,11 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,computed,signal} from '@angular/core';
 import {eras,faq,footerLinks,navigation,normalizeSearch,pathOf} from './site-data';
 import {termsSections,privacySections} from './legal-content';
+import {LocalDataComponent} from './local-data';
 @Component({
  selector:'lhs-site',
  standalone:true,
+ imports:[LocalDataComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
