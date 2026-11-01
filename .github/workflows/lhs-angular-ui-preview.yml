@@ -7,6 +7,8 @@ on:
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
+      - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
   push:
     branches: ["feat/lhs-angular-ui-foundation"]
@@ -15,6 +17,8 @@ on:
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
+      - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
 
 permissions:
@@ -63,6 +67,8 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
+      - name: Verify native UI Escape precedence before browser integration
+        run: node --test tests/runtime-interaction-bindings-boundary.test.mjs
       - name: Validate real game purchases, locations and saves through Angular
         run: node frontend-angular/scripts/verify_integrated_game.mjs
       - name: Upload integrated game screenshots and save QA report
