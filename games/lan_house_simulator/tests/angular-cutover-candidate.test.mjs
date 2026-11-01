@@ -110,6 +110,13 @@ test('real-game Chromium tests use exactly the same cutover document',()=>{
  assert.doesNotMatch(browser,/const additionalAdminCutoverShell/);
 });
 
+test('the integrated browser test enforces Escape modal precedence',()=>{
+ const qa=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
+ assert.match(qa,/Escape closes the mail dialog without leaving the game/);
+ assert.match(qa,/Escape must not reopen the main menu while a dialog owns focus/);
+ const bindings=readFileSync(new URL('../src/ui/runtimeInteractionBindings.ts',import.meta.url),'utf8');
+ assert.match(bindings,/\["admin","shop","notices"\]/);
+});
 test('Angular passes the same 12-hex cache revision to native Canvas imports',()=>{
  const entry=readFileSync(new URL('../frontend-angular/src/main.ts',import.meta.url),'utf8');
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');

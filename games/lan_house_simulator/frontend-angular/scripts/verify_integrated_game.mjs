@@ -138,9 +138,13 @@ try{
    await page.locator('#notices').waitFor({state:'visible'});
    assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'true');
    await page.keyboard.press('Escape');
-   await page.locator('#start-screen').waitFor({state:'visible'});
-   await press(page.locator('#menu-continue'));
-   await page.locator('#game-app').waitFor({state:'visible'});
+   // A window handles Escape before the global gameplay shortcut. Do not
+   // abandon the running campaign or force the player back through Continue.
+   await page.locator('#notices').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#game-app').isVisible(),true,
+    'Escape closes the mail dialog without leaving the game');
+   assert.equal(await page.locator('#start-screen').isVisible(),false,
+    'Escape must not reopen the main menu while a dialog owns focus');
   }
 
   await press(page.locator('#open-shop'));
