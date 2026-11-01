@@ -40,7 +40,7 @@ test('PC health uses a read-only port and only publishes changed values',()=>{
   assert.ok(html.includes('live.'+field));
  }
  assert.match(port,/Math\.round\(totalWear\/installed\)/);
- assert.match(game,/publishAngularAdminSummary\(document,"computers",pcOperationsPort\.overview\(\)\)/);
+ assert.match(game,/publishAngularAdminSummary\(document,"computers",\{\.\.\.pcOperationsPort\.overview\(\)\}\)/);
  assert.doesNotMatch(component,/requestAnimationFrame|setInterval\(/);
 });
 test('station switch synchronizes after native reconciliation without a DOM observer',()=>{
