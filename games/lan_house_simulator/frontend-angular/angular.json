@@ -68,6 +68,40 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "site-rewrite": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src/site-rewrite",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/site-rewrite",
+            "index": "src/site-rewrite/index.html",
+            "browser": "src/site-rewrite/main.ts",
+            "polyfills": [],
+            "tsConfig": "tsconfig.site-rewrite.json",
+            "assets": [],
+            "styles": [
+              "src/site-rewrite/site.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "none",
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "outputHashing": "none",
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   }
 }

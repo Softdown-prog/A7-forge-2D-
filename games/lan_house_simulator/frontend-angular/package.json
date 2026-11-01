@@ -7,7 +7,8 @@
     "build": "ng build game-ui --configuration production",
     "build:development": "ng build game-ui --configuration development",
     "lint": "eslint src --ext .ts",
-    "build:site-shell": "ng build site-shell --configuration production"
+    "build:site-shell": "ng build site-shell --configuration production",
+    "build:site-rewrite": "ng build site-rewrite --configuration production"
   },
   "dependencies": {
     "@angular/common": "~22.2.0",
