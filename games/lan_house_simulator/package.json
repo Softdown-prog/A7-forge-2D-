@@ -25,7 +25,9 @@
     "audit:gpu-licenses": "npm run build && LHS_GPU_LICENSE_AUDIT=1 node --test tests/gpu-license-campaign.test.mjs",
     "audit:gpu-pricing": "npm run build && LHS_GPU_PRICING_AUDIT=1 node --test tests/gpu-pricing-campaign.test.mjs",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.engine.json",
-    "build:site:angular:candidate": "node scripts/build_angular_site_candidate.mjs"
+    "build:site:angular:candidate": "node scripts/build_angular_site_candidate.mjs",
+    "build:site:clean": "node scripts/build_clean_angular_site.mjs",
+    "check:site:clean": "node scripts/check_clean_angular_site.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2",

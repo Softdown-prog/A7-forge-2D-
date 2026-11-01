@@ -1,0 +1,159 @@
+<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<div class="page" [class.reduce-motion]="reduceMotion()" (keydown.escape)="closeMenu()">
+<header class="header"><div class="wrap bar">
+ <a class="brand" href="/" aria-label="Lan House Simulator, página inicial">
+  <img src="/assets/brand.svg" alt="" width="41" height="41"/>
+  <span>LAN HOUSE SIMULATOR<small>UM JOGO SOFTDOWN</small></span>
+ </a>
+ <button class="menu-button" type="button" aria-controls="site-nav"
+  [attr.aria-expanded]="openMenu()" (click)="toggleMenu()">Menu ☰</button>
+ <nav id="site-nav" class="nav" [class.open]="openMenu()" aria-label="Navegação principal">
+  @for(link of navigation;track link.href){
+   <a [href]="link.href" [attr.aria-current]="path===link.href?'page':null"
+    (click)="closeMenu()">{{link.label}}</a>
+  }
+ </nav>
+</div></header>
+<main id="conteudo">
+ @switch(path){
+  @case('/'){
+   <section class="wrap hero">
+    <div><p class="eyebrow">1998 · TERMINAL DE BAIRRO</p>
+     <h1>Sua lan house. Sua história.</h1>
+     <p class="lead">Comece com alguns computadores antigos. Cuide dos clientes, mantenha o estoque e evolua seu negócio de bairro.</p>
+     <div class="actions"><a class="button" href="/jogar/">Jogar agora</a><a class="button secondary" href="/sobre-o-jogo/">Conheça o jogo</a></div>
+     <p class="small">Simulação HTML5 em Canvas 2D · gratuito</p></div>
+    <img class="hero-image" src="/assets/sala.webp" alt="Salão do Lan House Simulator em perspectiva isométrica" width="780" height="480"/>
+   </section>
+   <section class="wrap features"><p class="eyebrow">GESTÃO DE BAIRRO</p><h2>Uma decisão de cada vez.</h2>
+    <div class="cards"><article><h3>Clientes</h3><p>Organize o atendimento e as filas.</p></article>
+     <article><h3>Computadores</h3><p>Troque componentes quando valer a pena.</p></article>
+     <article><h3>Finanças</h3><p>Planeje estoque, salários e preços.</p></article></div>
+   </section>
+  }
+  @case('/jogar/'){
+   <section class="wrap intro"><p class="eyebrow">ABRA O SALÃO</p><h1>Jogar Lan House Simulator</h1>
+    <p class="lead">A partida é carregada apenas quando você solicitar. Salve seu progresso no menu do jogo.</p></section>
+   <section class="wrap game-shell">
+    @if(gameOpen()){
+     <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen></iframe>
+     <p><a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a></p>
+    }@else{
+     <div class="game-start">
+      <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
+      <button class="button" id="launch-game" type="button" (click)="startGame()">Abrir minha lan house</button>
+     </div>
+    }
+   </section>
+  }
+  @case('/sobre-o-jogo/'){
+   <section class="wrap intro"><p class="eyebrow">SOBRE O JOGO</p><h1>Dos primeiros CRTs à sua própria arena.</h1>
+    <p class="lead">Um simulador isométrico de gestão em HTML5. Monte o salão, atenda clientes, compre equipamentos e acompanhe a evolução desde 1998.</p></section>
+  }
+  @case('/sobre-nos/'){
+   <section class="wrap intro"><p class="eyebrow">SOFTDOWN</p><h1>Um projeto independente sobre uma época inesquecível.</h1>
+    <p class="lead">Lan House Simulator recria a experiência de administrar uma lan house brasileira, entre a nostalgia e as decisões de um pequeno negócio.</p></section>
+  }
+  @case('/ajuda/'){
+   <section class="wrap intro"><p class="eyebrow">CENTRAL DE AJUDA</p><h1>Como podemos ajudar?</h1>
+    <p class="lead">Pesquise nas perguntas frequentes.</p></section>
+   <section class="wrap faq">
+    <label for="help-search">Buscar resposta</label>
+    <div class="search"><input #searchBox id="help-search" type="search"
+     autocomplete="off" placeholder="Ex.: salvar, conta" [value]="query()" (input)="changeQuery($event)"/>
+     <button type="button" class="button secondary" (click)="clearQuery(searchBox)">Limpar</button></div>
+    <p role="status" aria-live="polite">{{matched().length}} respostas encontradas</p>
+    @for(item of matched();track item[0]){
+     <details><summary>{{item[0]}}<span aria-hidden="true">+</span></summary><p>{{item[1]}}</p></details>
+    }@empty{<p>Nenhuma resposta encontrada.</p>}
+   </section>
+  }
+  @case('/contato/'){
+   <section class="wrap intro"><p class="eyebrow">CONTATO</p><h1>Fale com a Softdown.</h1>
+    <p class="lead">Para suporte, relatos de bugs e sugestões, escreva para <a href="mailto:softloady@gmail.com">softloady@gmail.com</a>.</p>
+    <p>Não envie senhas nem dados pessoais em relatos públicos.</p></section>
+  }
+  @case('/conta/'){
+   <section class="wrap intro"><h1>Minha conta</h1><p class="lead">A autenticação e os saves na nuvem ainda não foram migrados para a aplicação Angular independente. O login está bloqueado neste protótipo.</p><a class="button" href="/jogar/">Jogar sem conta</a></section>
+  }
+  @case('/conta/confirmar/'){
+   <section class="wrap intro"><h1>Confirmação de email</h1><p class="lead">Em reconstrução; este protótipo não processa links de confirmação.</p></section>
+  }
+  @case('/donate/'){
+   <section class="wrap intro"><h1>Donate</h1><p class="lead">Os valores previstos são R$ 5 por 50 Cookies e R$ 10 por 100 Cookies. Pagamentos desabilitados até a migração segura.</p></section>
+  }
+  @case('/termos/'){
+   <section class="wrap intro legal-intro"><p class="eyebrow">TERMOS DE USO</p>
+    <h1>Regras claras. Uma boa experiência.</h1>
+    <p class="lead">Condições para acessar o site e jogar Lan House Simulator.</p>
+    <p class="draft-notice">Versão Angular em revisão. Este texto não substitui os termos atualmente publicados.</p>
+   </section>
+  }
+  @case('/privacidade/'){
+   <section class="wrap intro legal-intro"><p class="eyebrow">POLÍTICA DE PRIVACIDADE</p>
+    <h1>Sua privacidade importa.</h1>
+    <p class="lead">Entenda as informações utilizadas e como exercer seus direitos.</p>
+    <p class="draft-notice">Versão Angular em revisão. Esta política não substitui a publicada atualmente.</p>
+   </section>
+  }
+  @case('/dados/'){
+   <section class="wrap intro"><h1>Dados locais</h1><p class="lead">As ações de exclusão e exportação ainda não foram migradas. Nenhum dado será apagado neste protótipo.</p></section>
+  }
+  @default{
+   <section class="wrap intro"><h1>Página não encontrada</h1><p>Este endereço não existe no salão.</p><a class="button" href="/">Voltar ao início</a></section>
+  }
+ }
+ @if(path==='/termos/'||path==='/privacidade/'){
+  <div class="wrap legal-grid">
+   <aside class="legal-index">
+    <h2>Esta página</h2>
+    <nav aria-label="Índice desta página">
+     @for(item of legalSections;track item.id;let i=$index){
+      <a [href]="path+'#'+item.id"><span>{{i+1}}.</span> {{item.title}}</a>
+     }
+    </nav>
+   </aside>
+   <article class="legal-body" aria-label="Conteúdo completo para revisão">
+    @for(item of legalSections;track item.id){
+     <section [id]="item.id" [attr.aria-labelledby]="'legal-'+item.id">
+      <h2 [id]="'legal-'+item.id">{{item.title}}</h2>
+      @for(paragraph of item.paragraphs;track $index){<p>{{paragraph}}</p>}
+      @if(item.links){
+       <p class="legal-related">
+        @for(link of item.links;track link.href){
+         <a [href]="link.href">{{link.label}}</a>
+        }
+       </p>
+      }
+     </section>
+    }
+   </article>
+  </div>
+ }
+ @if(path==='/'||path==='/sobre-o-jogo/'){
+  <section class="wrap timeline" id="evolucao" aria-label="Evolução dos computadores">
+   <p class="eyebrow">UMA HISTÓRIA QUE EVOLUI</p><h2>A tecnologia muda com você.</h2>
+   <div class="era-tabs">
+    @for(item of eras;track item.year;let i=$index){
+     <button type="button" [attr.aria-pressed]="era()===i" [class.active]="era()===i"
+      (click)="selectEra(i)">{{item.year}}</button>
+    }
+   </div>
+   <div class="era-panel"><img [src]="selectedEra().image" [alt]="'Computador '+selectedEra().year" width="480" height="300"/>
+    <div><p class="eyebrow">{{selectedEra().year}}</p><h3>{{selectedEra().title}}</h3><p>{{selectedEra().text}}</p></div></div>
+  </section>
+ }
+</main>
+<footer class="footer"><div class="wrap footer-grid">
+ <div><a class="brand" href="/">LAN HOUSE SIMULATOR</a><p class="small">Seu bairro. Seu negócio. Sua história.</p></div>
+ <nav aria-label="Explore o salão"><h2>EXPLORAR</h2>
+  @for(link of navigation;track link.href){<a [href]="link.href">{{link.label}}</a>}
+ </nav>
+ <nav aria-label="Informações"><h2>INFORMAÇÕES</h2>
+  @for(link of footerLinks;track link.href){<a [href]="link.href">{{link.label}}</a>}
+ </nav>
+</div><div class="wrap footer-bottom"><span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span>
+ <button type="button" id="motion-toggle" [attr.aria-pressed]="reduceMotion()"
+  (click)="toggleMotion()">{{reduceMotion()?'Animações pausadas':'Pausar animações'}}</button>
+ <span>REESCRITA ANGULAR · NÃO PUBLICAR</span></div></footer>
+</div>

@@ -1,0 +1,43 @@
+name: LHS clean Angular rewrite (isolated, no deploy)
+on:
+  push:
+    branches: ['rewrite/lhs-angular-site-clean']
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lhs-clean-angular-rewrite.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rewrite:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install independent game and Angular toolchains
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix frontend-angular --no-audit --no-fund
+      - name: Build clean Angular-only static artifact
+        working-directory: games/lan_house_simulator
+        run: |
+          npm run build:site:clean
+          npm run check:site:clean
+          node --test tests/clean-site-legal.test.mjs
+      - name: Real Chromium Android-like touch, F5 and iframe QA
+        working-directory: games/lan_house_simulator
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium
+          node scripts/verify_clean_angular_site.mjs
+      - name: Save browser evidence — research only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-clean-angular-browser-evidence
+          path: games/lan_house_simulator/out/site-clean-angular-browser
+          if-no-files-found: ignore
