@@ -231,3 +231,28 @@ Screenshots e relatório JSON são enviados como artefatos do CI.
 **São testes Chromium mobile emulado, não homologação em aparelho físico.**
 O React publicado e a simulação continuam intocados; a migração não está
 liberada para merge/deploy até a paridade integral e a aprovação explícita.
+
+## Minha Conta e Donate em ensaio Angular
+
+No ensaio de migração, o host opcional `#angular-player-account` cria o
+diálogo `#player-account` via `AccountShellComponent`, antes da inicialização
+do jogo. O controlador `src/ui/cloudControls.ts` reutiliza esse diálogo
+e segue como **única autoridade** para Firebase Auth, carteira de Cookies,
+catálogo de cosméticos, histórico e save na nuvem. O HTML publicado ainda
+não possui o host; nele, a estrutura nativa é mantida sem mudanças
+de autenticação ou backend.
+
+A bateria Playwright usa resoluções 1280, 414 e 360 para conferir que
+não há diálogos duplicados, que uma conta offline não apresenta saldo
+fictício, que catálogo e menu funcionam e que o save local permanece.
+A conta online é exercitada somente com **Firebase e API simulados**,
+incluindo login, saldo verificado, um resgate idempotente, inventário e
+logout. O vínculo com Donate é apenas um link `/donate/`, preservando a
+sessão da aba (`target="_top"`). O CI **não inicia Checkout Pro, não
+cria pedidos reais, não cobra e não envia saves para nuvem**.
+A navegação autenticada completa entre `/conta/`, jogo e `/donate/`
+continua coberta separadamente pelo site; o ensaio Angular não substitui
+a homologação de pagamentos em ambiente autorizado.
+
+Essa cobertura não libera merge: a produção continua em React até a
+migração completa de todas as ilhas e revisão explícita.
