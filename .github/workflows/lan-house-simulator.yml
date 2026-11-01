@@ -88,6 +88,14 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/verify_live_site_preview.mjs
+      - name: Rebuild legacy standalone fixture without changing the Angular site
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          npm run build
+          test -s dist/js/react-entry.js
+          test -s out/site/game/__angular/main.js
+          test ! -e out/site/game/js/react-entry.js
       - name: Capture actual runtime desktop and mobile
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
