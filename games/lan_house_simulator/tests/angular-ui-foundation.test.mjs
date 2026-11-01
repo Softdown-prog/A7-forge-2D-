@@ -308,3 +308,35 @@ test('Angular account shell owns a unique dialog while TypeScript owns all accou
  assert.doesNotMatch(template,/\(click\)=|\[innerHTML\]=/);
  assert.equal((template.match(/id="player-account"/g)??[]).length,1);
 });
+
+
+test('Angular merchandise stock form has one DOM owner and native transaction authority',()=>{
+ const entry=file(root+'src/main.ts');
+ const component=file(root+'src/merchandise-catalog.ts');
+ const template=file(root+'src/templates/merchandise-catalog.html');
+ const original=file('src/ui/merchandisePanel.ts');
+ const port=file('src/application/merchandisePort.ts');
+ const preview=file(root+'src/index.html');
+ const production=file('index.html');
+ assert.match(entry,/MerchandiseCatalogComponent/);
+ assert.match(entry,/angular-merchandise-catalog/);
+ assert.match(entry,/js\/main\.js/);
+ assert.match(preview,/id="angular-merchandise-catalog"/);
+ assert.doesNotMatch(production,/id="angular-merchandise-catalog"/);
+ for(const id of ['merchandise-category','merchandise-product',
+  'merchandise-detail','merchandise-margin','merchandise-sales',
+  'merchandise-price-form','merchandise-price','merchandise-supplier',
+  'merchandise-packs','merchandise-quote','merchandise-order',
+  'merchandise-feedback']){
+  assert.equal((template.match(new RegExp('id="'+id+'"','g'))??[]).length,1,
+   id+' appears exactly once in Angular template');
+  assert.ok(original.includes('id="'+id+'"'),id+' preserved in native fallback');
+ }
+ assert.match(original,/if\(!catalog\.querySelector\("#angular-merchandise-catalog"\)\)/);
+ assert.match(original,/port\.order\(product\.value,supplier\.value,Number\(packs\.value\)\)/);
+ assert.match(original,/port\.setPrice\(product\.value,Number\(price\.value\)\)/);
+ assert.match(port,/orderMerchandise\(getState\(\),p\.id,supplier\.id,packs\)/);
+ assert.match(component,/ChangeDetectionStrategy\.OnPush/);
+ assert.doesNotMatch(component,/requestAnimationFrame|GameState|fetch\(|localStorage|orderMerchandise|setMerchandisePrice/);
+ assert.doesNotMatch(template,/\(click\)=|\(submit\)=|\[innerHTML\]=/);
+});
