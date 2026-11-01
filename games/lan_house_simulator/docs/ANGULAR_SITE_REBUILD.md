@@ -20,3 +20,9 @@
 - `website/build.mjs`: constrói o entrypoint apenas na prévia; o site publicado é preservado.
 - `frontend-angular/scripts/verify_full_site.mjs`: navegação Angular do site candidato em Chromium, seguida pela verificação do iframe Canvas.
 - **Critério de avanço:** Chromium verde, comparação visual e nenhum erro de navegação/DOM duplicado.
+
+## Etapa 2 — linha do tempo (prévia Angular)
+- `frontend-angular/src/site/site-timeline.ts` substitui os controles e o painel de épocas por estado Angular OnPush, sem React.
+- `website/content.mjs` continua entregando HTML estático válido para SEO e fallback sem JavaScript.
+- A prévia Angular recebe os dados canônicos de `eras` por atributo JSON HTML-escapado; produção continua com os handlers antigos.
+- Os testes de navegador verificam `/` e `/sobre-o-jogo/`, mouse/toque, quatro anos, SVGs, teclado e largura mobile antes dos testes do jogo.

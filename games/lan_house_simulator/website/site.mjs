@@ -22,6 +22,8 @@ if("IntersectionObserver" in window&&!paused){
  for(const el of document.querySelectorAll(".reveal")){el.classList.add("will-reveal");observer.observe(el);}
 }
 const eraButtons=[...document.querySelectorAll("[data-era]")];
+// The isolated Angular preview takes exclusive ownership of era controls.
+if(!document.querySelector('[data-angular-site-timeline]'))
 for(const button of eraButtons)button.addEventListener("click",()=>{
  const era=eras[Number(button.dataset.era)];if(!era)return;
  for(const b of eraButtons)b.setAttribute("aria-pressed",String(b===button));
