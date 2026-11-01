@@ -154,5 +154,7 @@ test('production Angular site does not compile throwaway React JS',()=>{
  // The candidate never needs the React artifact; the standalone /dist
  // build can still generate it and the explicit React site remains available.
  assert.match(checker,/!existsSync\(resolve\(root,"game\/js\/react-entry\.js"\)\)/);
- assert.match(checker,/src="\.\\\/js\\\/react-entry\\\.js/);
+ assert.ok(checker.includes('else assert.match(gameHtml,/src='),
+  'The explicit legacy React site still has its own check');
+ assert.ok(checker.includes('react-entry.js'));
 });
