@@ -135,3 +135,9 @@ h1{font-size:clamp(2.6rem,5vw,5.1rem);margin:12px 0 22px}h2{font-size:clamp(1.9r
 #upload-dialog::backdrop{background:rgba(0,0,0,.76)}
 @media(max-width:900px){.account-grid{grid-template-columns:1fr}}
 @media(max-width:520px){.account-stats{grid-template-columns:1fr}.account-actions .button{flex:1}.account-tabs button{flex:1}.password-row{gap:4px}.password-row button{padding-inline:8px}}
+
+/* Angular-owned email action screen; no legacy DOM listeners. */
+.confirmation-layout{padding-bottom:clamp(40px,7vw,80px)}
+.confirmation-layout .account-card{max-width:760px;overflow-wrap:anywhere}
+.confirmation-layout .actions{margin-top:24px}
+#confirmation-status{min-height:3em}

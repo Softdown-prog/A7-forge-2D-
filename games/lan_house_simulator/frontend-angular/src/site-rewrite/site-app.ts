@@ -3,10 +3,11 @@ import {eras,faq,footerLinks,navigation,normalizeSearch,pathOf} from './site-dat
 import {termsSections,privacySections} from './legal-content';
 import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
+import {EmailConfirmationComponent} from './email-confirmation';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })

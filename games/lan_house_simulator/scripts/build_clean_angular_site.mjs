@@ -53,7 +53,9 @@ const paths=['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato',
 for(const path of paths){
  const dir=resolve(output,path);
  mkdirSync(dir,{recursive:true});
- writeFileSync(resolve(dir,'index.html'),index);
+ const pageIndex=path==='conta/confirmar'?index.replace('<head>',
+  '<head><meta name="referrer" content="no-referrer">'):index;
+ writeFileSync(resolve(dir,'index.html'),pageIndex);
 }
 writeFileSync(resolve(output,'404.html'),index);
 writeFileSync(resolve(output,'robots.txt'),'User-agent: *\nDisallow: /\n');
