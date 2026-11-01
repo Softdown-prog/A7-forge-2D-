@@ -22,7 +22,21 @@ export const TASKS={
   {id:'events',label:'Primeira sexta',desc:'Encontros e resultados de eventos',icon:'◉'},
   {id:'promotion',label:'Divulgação',desc:'Campanhas e anúncios',icon:'◎'},
   {id:'feedback',label:'Opiniões dos clientes',desc:'Satisfação e reclamações',icon:'☷'},
-  {id:'restart',label:'Reiniciar partida',desc:'Ação permanente; exige confirmação',icon:'!'}]
+  {id:'restart',label:'Reiniciar partida',desc:'Ação permanente; exige confirmação',icon:'!'}],
+ prices:[
+  {id:'hourly',label:'Hora e pacotes',desc:'Tarifa dos computadores e sessões',icon:'R$'},
+  {id:'insights',label:'Análise da tarifa',desc:'Procura, inflação e cenário',icon:'▥'},
+  {id:'retail',label:'Produtos',desc:'Preços no balcão',icon:'▦'},
+  {id:'printing',label:'Impressões',desc:'Preço das páginas e capacidade',icon:'▤'},
+  {id:'discs',label:'Cópias CD / DVD',desc:'Serviço de cópia e custos',icon:'◎'}],
+ licenses:[
+  {id:'windows',label:'Windows por PC',desc:'Licenças por estação',icon:'⊞'},
+  {id:'classic',label:'Jogos clássicos',desc:'Catálogo por geração',icon:'◉'},
+  {id:'gpu',label:'Jogos com GPU',desc:'Títulos que exigem placa de vídeo',icon:'▣'}],
+ consoles:[
+  {id:'stations',label:'Bancadas',desc:'PS1 e PS2 instalados',icon:'▤'},
+  {id:'pricing',label:'Preço por hora',desc:'Tarifas independentes dos PCs',icon:'R$'},
+  {id:'discs',label:'Jogos PS1 / PS2',desc:'Mídias físicas por console',icon:'▦'}]
 } as const;
 type Area=keyof typeof TASKS;
 
@@ -143,4 +157,38 @@ export class StockWorkspaceComponent extends Workspace{
 export class FinanceWorkspaceComponent extends Workspace{
  readonly area='finance' as const;
  readonly tasks=TASKS.finance;
+}
+
+/** These three layouts delegate navigation to the same native TypeScript
+ * management controller. Monetary operations, unlocks, and save ownership
+ * remain outside Angular; this is purely a presentation replacement. */
+@Component({selector:'lhs-prices-workspace',standalone:true,
+ templateUrl:'./templates/admin-task-workspace.html',
+ changeDetection:ChangeDetectionStrategy.OnPush})
+export class PricesWorkspaceComponent extends Workspace{
+ readonly area='prices' as const;
+ readonly tasks=TASKS.prices;
+ readonly eyebrow='PREÇOS E TARIFAS';
+ readonly heading='Valores dos serviços';
+ readonly summary='Consulte as tarifas e os preços. Regras históricas e ajustes continuam na simulação.';
+}
+@Component({selector:'lhs-licenses-workspace',standalone:true,
+ templateUrl:'./templates/admin-task-workspace.html',
+ changeDetection:ChangeDetectionStrategy.OnPush})
+export class LicensesWorkspaceComponent extends Workspace{
+ readonly area='licenses' as const;
+ readonly tasks=TASKS.licenses;
+ readonly eyebrow='SISTEMAS E LICENÇAS';
+ readonly heading='Windows e biblioteca de jogos';
+ readonly summary='Consulte as licenças por computador e os jogos disponíveis por geração.';
+}
+@Component({selector:'lhs-consoles-workspace',standalone:true,
+ templateUrl:'./templates/admin-task-workspace.html',
+ changeDetection:ChangeDetectionStrategy.OnPush})
+export class ConsolesWorkspaceComponent extends Workspace{
+ readonly area='consoles' as const;
+ readonly tasks=TASKS.consoles;
+ readonly eyebrow='VIDEO GAMES';
+ readonly heading='Bancadas, tarifas e mídias';
+ readonly summary='Administre o PS1 e o PS2 sem modificar a lógica dos consoles.';
 }
