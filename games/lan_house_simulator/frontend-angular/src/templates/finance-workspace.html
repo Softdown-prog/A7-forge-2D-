@@ -1,0 +1,21 @@
+<section class="angular-workspace" data-angular-workspace="finance" aria-label="Gestão financeira">
+ <div class="angular-workspace-heading"><div><span>FINANÇAS DO NEGÓCIO</span><h4>Caixa, desempenho e planejamento</h4></div>
+ <p>Consulte receitas, contas, eventos e opiniões sem alterar as regras econômicas.</p></div>
+ <nav class="angular-workspace-grid" aria-label="Tarefas financeiras">
+ @for(task of tasks;track task.id){
+  <button type="button" class="angular-workspace-task"
+   [class.angular-workspace-task-danger]="task.id==='restart'"
+   [attr.data-angular-task]="task.id"
+   [attr.aria-pressed]="selected()===task.id"
+   [attr.aria-controls]="'page-finance-'+task.id"
+   (click)="openTask(task.id)">
+   <span class="angular-workspace-task-icon" aria-hidden="true">{{task.icon}}</span>
+   <span class="angular-workspace-task-copy"><strong>{{task.label}}</strong><small>{{task.desc}}</small></span>
+   <span aria-hidden="true">›</span>
+  </button>
+ }
+ </nav>
+ @if(selected()==='restart'){
+  <p class="management-lock-note" role="note">Esta aba contém uma ação destrutiva. Apenas o botão original de reinício, com sua confirmação, pode apagar a partida.</p>
+ }
+</section>
