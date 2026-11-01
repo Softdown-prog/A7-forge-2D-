@@ -67,6 +67,21 @@ test('Angular site candidate shares site rules and keeps the default React outpu
  assert.equal(pkg.scripts['build:site:angular:candidate'],
   'node scripts/build_angular_site_candidate.mjs');
 });
+test('the complete Angular site is exercised through the real CSP-protected iframe',()=>{
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ const builder=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/node --check frontend-angular\/scripts\/verify_full_site\.mjs/);
+ assert.match(workflow,/node frontend-angular\/scripts\/verify_full_site\.mjs/);
+ assert.match(workflow,/lhs-angular-full-site-qa/);
+ assert.ok(workflow.indexOf('Build and verify the complete Angular site candidate')<
+  workflow.indexOf('Validate full-site Angular iframe'));
+ for(const token of ['#launch-game','#game-frame','/jogar/','dataset.uiFramework',
+  'Content-Security-Policy','react-entry.js','[1280,414]'])
+  assert.ok(browser.includes(token),'Browser must verify '+token);
+ assert.ok(builder.includes('game/angular-candidate-report.json'),
+  'Do not ship internal CI report in a candidate site');
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);

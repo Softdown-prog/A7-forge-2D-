@@ -68,6 +68,7 @@ jobs:
           node --check frontend-angular/scripts/verify_static_candidate.mjs
           node --check frontend-angular/scripts/verify_integrated_game.mjs
           node --check scripts/build_angular_site_candidate.mjs
+          node --check frontend-angular/scripts/verify_full_site.mjs
           node --check website/build.mjs
           node --check website/check.mjs
       - name: Verify Angular UI boundaries
@@ -109,6 +110,8 @@ jobs:
         run: node frontend-angular/scripts/verify_integrated_game.mjs
       - name: Build and verify the complete Angular site candidate (no deploy)
         run: npm run build:site:angular:candidate
+      - name: Validate full-site Angular iframe under actual CSP on desktop and mobile
+        run: node frontend-angular/scripts/verify_full_site.mjs
       - name: Upload integrated game screenshots and save QA report
         if: always()
         uses: actions/upload-artifact@v4
@@ -129,6 +132,13 @@ jobs:
         with:
           name: lhs-angular-cutover-smoke
           path: games/lan_house_simulator/out/angular-cutover-smoke
+          if-no-files-found: ignore
+      - name: Upload full-site Angular browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-full-site-qa
+          path: games/lan_house_simulator/out/angular-site-browser
           if-no-files-found: ignore
       - name: Upload complete Angular site candidate (not deployed)
         uses: actions/upload-artifact@v4

@@ -29,6 +29,8 @@ export function buildSite(){
  cpSync(resolve(root,"account-config.json"),resolve(output,"account-config.json"));
  writeFileSync(resolve(output,"assets/eras.mjs"),"export const eras="+JSON.stringify(eras)+";\n");
  cpSync(resolve(root,angularCandidate?"out/angular-cutover-candidate":"dist"),resolve(output,"game"),{recursive:true});
+ // The report is CI-only metadata, never a publicly reachable /game/ resource.
+ if(angularCandidate)rmSync(resolve(output,"game/angular-candidate-report.json"),{force:true});
  // Identificador muda com o código do jogo. Evita JS antigo no navegador após o deploy.
  const moduleFiles=dir=>readdirSync(dir,{withFileTypes:true}).flatMap(entry=>
   entry.isDirectory()?moduleFiles(resolve(dir,entry.name)):[resolve(dir,entry.name)]);
