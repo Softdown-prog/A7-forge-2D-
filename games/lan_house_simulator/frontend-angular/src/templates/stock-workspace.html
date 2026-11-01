@@ -1,0 +1,22 @@
+<section class="angular-workspace" data-angular-workspace="stock" aria-label="Produtos e estoque">
+ <div class="angular-workspace-heading"><div><span>GESTÃO DE MERCADORIAS</span><h4>Estoque, fornecedores e entregas</h4></div>
+ <p>Selecione uma tarefa. Os valores, pedidos e regras vêm da simulação original.</p></div>
+ <nav class="angular-workspace-grid" aria-label="Tarefas de estoque">
+ @for(task of tasks;track task.id){
+  <button type="button" class="angular-workspace-task"
+   [attr.data-angular-task]="task.id"
+   [attr.aria-pressed]="selected()===task.id"
+   [attr.aria-controls]="'page-stock-'+task.id"
+   [attr.title]="task.id==='catalog'&&catalogLocked()?'Mercadorias disponíveis a partir de 2000':null"
+   [disabled]="task.id==='catalog'&&catalogLocked()"
+   (click)="openTask(task.id)">
+   <span class="angular-workspace-task-icon" aria-hidden="true">{{task.icon}}</span>
+   <span class="angular-workspace-task-copy"><strong>{{task.label}}</strong><small>{{task.desc}}</small></span>
+   <span aria-hidden="true">›</span>
+  </button>
+ }
+ </nav>
+ @if(catalogLocked()){
+  <p class="management-lock-note" role="status">O catálogo avançado abre em 2000. A reposição básica continua disponível em Fornecedores.</p>
+ }
+</section>
