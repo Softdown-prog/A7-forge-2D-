@@ -167,3 +167,16 @@ html[data-ui-framework="angular"] #section-finance #angular-finance-workspace + 
 #angular-finance-workspace .management-lock-note{
  border-left:3px solid #aa704d;padding-left:10px;font-size:12px;line-height:1.5
 }
+
+/* Optional Angular navigation owns only visible task choices. Keep native task
+   buttons mounted as sole command handlers until coordinated cutover. */
+html[data-ui-framework="angular"] #section-prices #angular-prices-workspace + .management-pages,
+html[data-ui-framework="angular"] #section-licenses #angular-licenses-workspace + .management-pages,
+html[data-ui-framework="angular"] #section-consoles #angular-consoles-workspace + .management-pages{
+ display:none!important
+}
+#angular-prices-workspace .angular-workspace,
+#angular-licenses-workspace .angular-workspace,
+#angular-consoles-workspace .angular-workspace{
+ min-width:0
+}
