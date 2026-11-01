@@ -14,6 +14,7 @@ import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-contro
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
 import {ShopOverviewComponent} from './shop-overview';
 import {ShopCatalogComponent} from './shop-catalog';
+import {AccountShellComponent} from './account-shell';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -68,6 +69,18 @@ async function mountUi():Promise<void> {
   if(shopCardsHost){
     const ref=createComponent(ShopCatalogComponent,{
       environmentInjector:app.injector,hostElement:shopCardsHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // Account presentation is optional until the coordinated production switch.
+  // Mount before importing the native game so its account controller can
+  // attach to the one stable dialog without replacing Angular-owned DOM.
+  const accountHost=document.getElementById('angular-player-account');
+  if(accountHost){
+    const ref=createComponent(AccountShellComponent,{
+      environmentInjector:app.injector,hostElement:accountHost
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
