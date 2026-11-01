@@ -86,17 +86,17 @@ export class StationSwitchComponent implements OnInit,OnChanges,OnDestroy{
  @Input() page='operations';
  readonly stations=signal<Station[]>([]);
  private host:HTMLElement|null=null;
- private observer:MutationObserver|null=null;
+ private readonly refreshed=():void=>this.read();
  get chosen():string{return this.stations().find(x=>x.selected)?.label??'Selecione uma estação';}
  ngOnInit():void{
   this.host=document.getElementById('pc-maintenance');
-  if(!this.host)return;
-  this.observer=new MutationObserver(()=>this.read());
-  this.observer.observe(this.host,{subtree:true,childList:true,attributes:true,attributeFilter:['aria-pressed','disabled']});
+  document.addEventListener('lhs:pc-maintenance-refreshed',this.refreshed);
   this.read();
  }
  ngOnChanges():void{this.read();}
- ngOnDestroy():void{this.observer?.disconnect();}
+ ngOnDestroy():void{
+  document.removeEventListener('lhs:pc-maintenance-refreshed',this.refreshed);
+ }
  private read():void{
   if(!this.host||!['hardware','windows','monitors'].includes(this.page)){
    if(this.stations().length)this.stations.set([]);return;
@@ -123,11 +123,20 @@ export class StationSwitchComponent implements OnInit,OnChanges,OnDestroy{
 export class ComputerWorkspaceComponent extends Workspace{
  readonly area='computers' as const;
  readonly tasks=TASKS.computers;
- readonly installed=signal<number|null>(null);
+ readonly health=signal<{installed:number;poweredOff:number;broken:number;
+  repairing:number;averageWear:number}|null>(null);
  private readonly receiveComputer=(event:Event):void=>{
-  const view=(event as CustomEvent<{installed:number}>).detail;
-  if(!view||!Number.isInteger(view.installed)||view.installed<0)return;
-  if(this.installed()!==view.installed)this.installed.set(view.installed);
+  const view=(event as CustomEvent<{installed:number;poweredOff:number;
+   broken:number;repairing:number;averageWear:number}>).detail;
+  if(!view)return;
+  if(![view.installed,view.poweredOff,view.broken,view.repairing,view.averageWear]
+    .every(n=>Number.isInteger(n)&&n>=0))return;
+  if(view.poweredOff>view.installed||view.broken>view.installed||
+     view.repairing>view.installed||view.averageWear>100)return;
+  const old=this.health();
+  if(!old||old.installed!==view.installed||old.poweredOff!==view.poweredOff||
+     old.broken!==view.broken||old.repairing!==view.repairing||
+     old.averageWear!==view.averageWear)this.health.set(view);
  };
  override ngOnInit():void{
   super.ngOnInit();

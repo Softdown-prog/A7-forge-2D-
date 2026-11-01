@@ -1,10 +1,14 @@
 <section class="angular-workspace" data-angular-workspace="computers" aria-label="Operação, peças e manutenção">
  <div class="angular-workspace-heading"><div><span>CENTRAL DOS COMPUTADORES</span><h4>Operação, peças e manutenção</h4></div>
  <p>Alterne entre reparos, evolução do hardware, Windows, monitores e receita por estação.</p></div>
- @if(installed() !== null){
-  <p class="angular-workspace-live" aria-label="Estações atualizadas">
-   <span>Computadores instalados <strong>{{installed()}}</strong></span>
-  </p>
+ @if(health(); as live){
+  <div class="angular-workspace-live angular-pc-health" aria-label="Situação atual dos computadores">
+   <span>Instalados <strong>{{live.installed}}</strong></span>
+   <span>Desligados <strong>{{live.poweredOff}}</strong></span>
+   <span>Com defeito <strong>{{live.broken}}</strong></span>
+   <span>Em reparo <strong>{{live.repairing}}</strong></span>
+   <span>Desgaste médio <strong>{{live.averageWear}}%</strong></span>
+  </div>
  }
  <nav class="angular-workspace-grid" aria-label="Tarefas de computadores">
  @for(task of tasks;track task.id){

@@ -40,5 +40,8 @@ export function renderAdminComputerSections(options:AdminComputerSectionsOptions
    reconcile:options.reconcile,
    selectedStation:options.selectedStation
   },options.doc);
+  // Native reconciliation is complete; Angular reads the settled controls.
+  if(typeof options.doc.dispatchEvent==="function"&&typeof CustomEvent==="function")
+   options.doc.dispatchEvent(new CustomEvent("lhs:pc-maintenance-refreshed"));
  }
 }

@@ -21,12 +21,34 @@ export interface PcOperationRow {
  upgradeLabel:string;
  upgradeDisabled:boolean;
 }
+export interface PcHealthOverview {
+ readonly installed:number;
+ readonly poweredOff:number;
+ readonly broken:number;
+ readonly repairing:number;
+ readonly averageWear:number;
+}
 export interface PcOperationsPort {
  summary():string;
+ overview():PcHealthOverview;
  rows():ReadonlyArray<PcOperationRow>;
 }
 export function createPcOperationsPort(getState:()=>GameState):PcOperationsPort{
  return {
+  overview(){
+   const game=getState(),installed=pcCount(game);
+   let poweredOff=0,broken=0,totalWear=0;
+   for(let i=0;i<installed;i++){
+    if(!stationPoweredOn(game,i))poweredOff++;
+    if(pcBroken(game,i))broken++;
+    totalWear+=pcWear(game,i);
+   }
+   // Whole-percentage snapshots coalesce tiny wear changes between frames.
+   const repairing=new Set((game.repairJobs??[])
+    .filter(job=>job.phase!=="leaving").map(job=>job.pc)).size;
+   return {installed,poweredOff,broken,repairing,
+    averageWear:installed?Math.min(100,Math.max(0,Math.round(totalWear/installed))):0};
+  },
   summary(){
    const game=getState(),count=pcCount(game);
    const broken=Array.from({length:count},(_,i)=>i).filter(i=>pcBroken(game,i)).length;

@@ -28,3 +28,27 @@ test('Finance, stock and computer islands subscribe once and clean up',()=>{
  }
  assert.match(workspaces,/this\.syncLock\(\)/);
 });
+
+test('PC health uses a read-only port and only publishes changed values',()=>{
+ const port=src('src/application/pcOperationsPort.ts');
+ const game=src('src/ui/gamePanels.ts');
+ const component=src('frontend-angular/src/workspaces.ts');
+ const html=src('frontend-angular/src/templates/computer-workspace.html');
+ for(const field of ['installed','poweredOff','broken','repairing','averageWear']){
+  assert.match(port,new RegExp('readonly '+field+':number'));
+  assert.ok(component.includes('view.'+field));
+  assert.ok(html.includes('live.'+field));
+ }
+ assert.match(port,/Math\.round\(totalWear\/installed\)/);
+ assert.match(game,/publishAngularAdminSummary\(document,"computers",pcOperationsPort\.overview\(\)\)/);
+ assert.doesNotMatch(component,/requestAnimationFrame|setInterval\(/);
+});
+test('station switch synchronizes after native reconciliation without a DOM observer',()=>{
+ const native=src('src/ui/adminComputerSections.ts');
+ const workspaces=src('frontend-angular/src/workspaces.ts');
+ assert.match(native,/lhs:pc-maintenance-refreshed/);
+ assert.match(workspaces,/addEventListener\('lhs:pc-maintenance-refreshed'/);
+ assert.match(workspaces,/removeEventListener\('lhs:pc-maintenance-refreshed'/);
+ assert.doesNotMatch(workspaces,/new MutationObserver/);
+ assert.match(native,/renderPcMaintenancePanel/);
+});
