@@ -6,8 +6,8 @@ import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
-const root=resolve(import.meta.dirname,'../../out/site-angular');
-const output=resolve(import.meta.dirname,'../../out/angular-site-browser');
+const root=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/site':'../../out/site-angular');
+const output=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/angular-site-default-browser':'../../out/angular-site-browser');
 const require=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
 const {chromium}=require('playwright');
 const mime={

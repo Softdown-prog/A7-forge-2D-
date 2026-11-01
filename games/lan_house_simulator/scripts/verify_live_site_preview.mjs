@@ -75,23 +75,33 @@ try{
    const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
    return data.some((value,i)=>i%4===3&&value>0);
   });
-  // Verify the React shop presentation on a real running game, desktop and mobile.
-  // All purchases and item availability remain delegated to TypeScript controllers.
+  // Verify native TypeScript shopping through whichever UI the build selected.
+  // This branch defaults to Angular, while React remains an explicit regression fallback.
   await frame.locator("#open-shop").click();
   await frame.locator("#shop").waitFor({state:"visible",timeout:10000});
   await frame.locator("#react-shop-query").fill("impressora");
   await frame.locator(".react-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
    .waitFor({state:"visible",timeout:10000});
-  const searchResult=await frame.locator("#shop-catalog").evaluate(host=>{
-   const cards=Array.from(host.querySelectorAll(":scope > article.shop-card"));
-   return {total:cards.length,visible:cards.filter(card=>!card.hidden).length,
-    titles:cards.filter(card=>!card.hidden).map(card=>card.querySelector("h3")?.textContent??"")};
-  });
-  assert.ok(searchResult.total>1,"O catálogo precisa conter múltiplos produtos pesquisáveis");
-  assert.ok(searchResult.visible>=1&&searchResult.visible<searchResult.total,
-   "A busca deve filtrar cartões sem alterar a lista de produtos");
-  assert.ok(searchResult.titles.some(value=>/impressora/i.test(value)),
-   "A busca por impressora deve mostrar a opção correspondente");
+  const angular=await frame.locator("html").evaluate(el=>el.dataset.uiFramework==="angular");
+  if(angular){
+   const cards=frame.locator("#angular-shop-catalog .angular-catalog-grid > article.shop-card");
+   await cards.first().waitFor({state:"visible",timeout:10000});
+   assert.ok((await cards.allTextContents()).some(text=>/impressora/i.test(text)),
+    "A busca Angular deve exibir a impressora");
+   assert.equal(await frame.locator("#shop-catalog > article.shop-card:visible").count(),0,
+    "O catálogo nativo deve ficar oculto sob Angular");
+  }else{
+   const searchResult=await frame.locator("#shop-catalog").evaluate(host=>{
+    const cards=Array.from(host.querySelectorAll(":scope > article.shop-card"));
+    return {total:cards.length,visible:cards.filter(card=>!card.hidden).length,
+     titles:cards.filter(card=>!card.hidden).map(card=>card.querySelector("h3")?.textContent??"")};
+   });
+   assert.ok(searchResult.total>1,"O catálogo precisa conter múltiplos produtos pesquisáveis");
+   assert.ok(searchResult.visible>=1&&searchResult.visible<searchResult.total,
+    "A busca deve filtrar cartões sem alterar a lista de produtos");
+   assert.ok(searchResult.titles.some(value=>/impressora/i.test(value)),
+    "A busca por impressora deve mostrar a opção correspondente");
+  }
   await frame.locator('[data-shop-category="consoles"]').click();
   await frame.locator(".react-shop-search-count").filter({hasText:/opções nesta categoria/})
    .waitFor({state:"visible",timeout:10000});
@@ -102,9 +112,11 @@ try{
 
   const spriteReady=await frame.locator("#game").evaluate(async()=>{
    const entryScript=document.querySelector('script[type="module"][src*="react-entry.js"]')??
-    document.querySelector('script[type="module"][src*="main.js"]');
+    document.querySelector('script[type="module"][src*="__angular/main.js"]');
+   if(!entryScript)throw Error("Não foi encontrado o bootstrap da interface");
    const entry=new URL(entryScript.src);
-   const url=new URL("./render/actorSprites.js",entry);url.search=entry.search;
+   const url=new URL("./js/render/actorSprites.js",document.baseURI);
+   url.search=entry.search;
    const {drawActorSprite}=await import(url.href);
    const ctx=document.createElement("canvas").getContext("2d");
    let blits=0;const original=ctx.drawImage;

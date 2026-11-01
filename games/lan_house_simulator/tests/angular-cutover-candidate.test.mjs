@@ -85,6 +85,15 @@ test('the complete Angular site is exercised through the real CSP-protected ifra
  assert.ok(builder.includes('game/angular-candidate-report.json'),
   'Do not ship internal CI report in a candidate site');
 });
+test('published site preview checks the Angular cards and versioned Canvas renderer',()=>{
+ const script=readFileSync(new URL('../scripts/verify_live_site_preview.mjs',import.meta.url),'utf8');
+ assert.match(script,/el\.dataset\.uiFramework==="angular"/);
+ assert.match(script,/angular-shop-catalog/);
+ assert.match(script,/__angular\/main\.js/);
+ assert.match(script,/js\/render\/actorSprites\.js/);
+ const full=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ assert.match(full,/LHS_CHECK_DEFAULT_SITE/);
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);
