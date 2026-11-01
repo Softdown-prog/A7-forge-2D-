@@ -11,6 +11,7 @@ on:
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
       - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
+      - "games/lan_house_simulator/src/ui/managementPanels.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
   push:
     branches: ["feat/lhs-angular-ui-foundation"]
@@ -23,6 +24,7 @@ on:
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
       - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
+      - "games/lan_house_simulator/src/ui/managementPanels.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
 
 # The migration branch may receive many UI-only commits. Do not queue
