@@ -23,7 +23,7 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
  for(const id of ["console-purchases","menu-save-transfer","sound-preferences",
   "admin-workspaces","desktop-mobile-touch","disabled-purchases",
   "shop-catalog-preview","hud-weather","mail-inbox","shop-search","keyboard-focus",
-  "privacy-consent","layout-editor","account-donation","stock-management","finance-navigation"]){
+  "privacy-consent","layout-editor","account-donation","stock-management","finance-navigation","admin-task-navigation"]){
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
  assert.equal(report.browserQa.workflowPresent,true);
@@ -106,6 +106,19 @@ test("finance Angular rehearsal shows all native pages without invoking reset",(
  for(const marker of ["#angular-finance-workspace","#page-finance-",
   "financeSnapshot.ps1Stations","#reset-game",
   "Finance navigation cannot reset PS2 stations"]){
+  assert.ok(sources.integratedQa.includes(marker),marker);
+ }
+ assert.equal(report.decision,"no-merge-no-deploy");
+});
+
+test("prices, licensing and consoles have integrated Angular navigation evidence",()=>{
+ const report=auditMigration(sources);
+ assert.equal(report.browserQa.checks.find(c=>c.id==="admin-task-navigation")?.status,
+  "script-evidence-found");
+ for(const marker of ["adminTaskMatrix","Angular task forwards native",
+  "Only one native task page shown",
+  "Navigation alone cannot purchase another PS1 disc",
+  "Console navigation cannot purchase stations"]){
   assert.ok(sources.integratedQa.includes(marker),marker);
  }
  assert.equal(report.decision,"no-merge-no-deploy");
