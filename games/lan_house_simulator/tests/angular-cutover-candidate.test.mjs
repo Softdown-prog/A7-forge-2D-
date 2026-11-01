@@ -281,3 +281,18 @@ test('institutional header/footer are complete Angular components with live-brow
   'Header overflow at','Footer overflow at','siteAngularHeaderFooter:'])
   assert.ok(browser.includes(term),term);
 });
+
+test('reload is a release gate: deep links, cached assets and game restart in Chromium',()=>{
+ const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const qa=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-pages-sync.yml',import.meta.url),'utf8');
+ assert.match(build,/\/assets\/\*\\n  Cache-Control: no-cache, must-revalidate/);
+ assert.match(build,/\/game\/js\/\*\\n  Cache-Control: no-cache, must-revalidate/);
+ assert.match(build,/\/game\/__angular\/\*\\n  Cache-Control: no-cache, must-revalidate/);
+ for(const marker of ['page.reload({waitUntil:',"'/ajuda/'","'/conta/'","'/jogar/'",
+  "siteLogo.evaluate", "FAQ search must work after F5",
+  "Canvas must draw after a full-page reload",
+  "gameReload?.status()","deepLinkRefresh:true","assert.deepEqual(errors,[]"])
+  assert.ok(qa.includes(marker),'Reload regression test missing '+marker);
+ assert.match(workflow,/LHS_CHECK_DEFAULT_SITE=1 node frontend-angular\/scripts\/verify_full_site\.mjs/);
+});

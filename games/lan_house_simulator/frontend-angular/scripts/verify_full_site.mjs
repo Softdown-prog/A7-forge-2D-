@@ -42,7 +42,8 @@ const server=createServer(async(req,res)=>{
   if(!file.startsWith(root+sep))throw Error('Outside site');
   if(!(await stat(file)).isFile())throw Error('Not found');
   res.writeHead(200,{'Content-Type':mime[extname(file)]??'application/octet-stream',
-   'Content-Security-Policy':header});
+   'Content-Security-Policy':header,
+   'Cache-Control':'no-cache, must-revalidate'});
   res.end(await readFile(file));
  }catch{res.writeHead(404).end('Not found');}
 });
@@ -74,6 +75,69 @@ try{
    if(message.type()==='error'&&/Content Security Policy|Refused to|unsafe-eval/i.test(message.text()))
     errors.push('CSP: '+message.text());
   });
+  // Real browser reload regression: F5/direct deep-link must not break HTML,
+  // static JS, Angular bootstrap, mobile navigation or the lazy game shell.
+  const refreshPaths=width===1280?['/','/ajuda/','/conta/','/jogar/']:
+   ['/','/ajuda/','/jogar/'];
+  for(const pathname of refreshPaths){
+   const original=await page.goto(origin+pathname,{waitUntil:'networkidle'});
+   assert.equal(original?.status(),200,'Direct route must open: '+pathname);
+   const reloaded=await page.reload({waitUntil:'networkidle'});
+   assert.equal(reloaded?.status(),200,'Refreshing must keep HTTP 200: '+pathname);
+   await page.locator('#conteudo').waitFor({state:'visible',timeout:12000});
+   assert.equal(await page.locator('header.site-header').count(),1);
+   assert.equal(await page.locator('footer.site-footer').count(),1);
+   assert.equal(await page.locator('nav#site-nav').count(),1);
+   assert.equal(await page.locator('button#menu-toggle').count(),1);
+   assert.equal(await page.locator('#motion-toggle').count(),1);
+   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteNavigation==='angular' &&
+     document.documentElement.dataset.siteFooter==='angular');
+    assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0);
+   }else{
+    await page.waitForFunction(()=>
+     document.documentElement.classList.contains('js-enabled'));
+   }
+   const siteLogo=page.locator('header .brand img');
+   assert.ok(await siteLogo.evaluate(img=>img.complete&&img.naturalWidth>0),
+    'Brand image must survive reload on '+pathname);
+   if(mobile){
+    const toggle=page.locator('#menu-toggle');
+    await toggle.tap();
+    await page.waitForFunction(()=>
+     document.querySelector('#menu-toggle')?.getAttribute('aria-expanded')==='true' &&
+     document.querySelector('#site-nav')?.classList.contains('is-open'));
+    assert.ok(await page.locator('#site-nav').isVisible(),
+     'Mobile nav should open after F5 at '+pathname);
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(()=>
+     document.querySelector('#menu-toggle')?.getAttribute('aria-expanded')==='false');
+   }
+   if(pathname==='/ajuda/'){
+    if(process.env.LHS_CHECK_DEFAULT_SITE!=='1')
+     await page.waitForFunction(()=>
+      document.documentElement.dataset.siteHelp==='angular');
+    const search=page.locator('#help-search');
+    await search.fill('salvar');
+    await page.waitForFunction(()=>
+     /respostas? encontradas?/.test(
+      document.querySelector('#help-search-results')?.textContent??''));
+    assert.ok(await page.locator('#help-questions details:visible').count()>0,
+     'FAQ search must work after F5');
+   }
+   if(pathname==='/jogar/'){
+    assert.equal(await page.locator('#game-frame').getAttribute('src'),null,
+     'Refresh must not autoplay iframe or retain a stale game document');
+    assert.ok(await page.locator('#launch-game').isVisible(),
+     'Refresh should restore the playable launch control');
+   }
+   assert.deepEqual(errors,[],'Reload errors at '+pathname+' width '+width);
+  }
+  await page.goto(origin+'/',{waitUntil:'networkidle'});
+  const siteModule=await page.request.get(origin+'/assets/site.mjs');
+  assert.match(siteModule.headers()['cache-control']??'',/no-cache/,
+   'Public JS must always revalidate after a deployment');
   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
    // Exercise each public timeline against the actual Angular candidate.
    for(const pathname of ['/', '/sobre-o-jogo/']){
@@ -288,6 +352,25 @@ try{
    'Angular computer panel must not overflow at '+width+'px');
   await press(game.locator('#close-admin'));
   await game.locator('#admin').waitFor({state:'hidden'});
+  // Reload while a Canvas session is in progress, then reopen the game.
+  // This catches blank screens and stale Angular/Canvas bundles on F5.
+  const gameReload=await page.reload({waitUntil:'networkidle'});
+  assert.equal(gameReload?.status(),200,'In-game F5 should reload /jogar/');
+  await page.locator('#launch-game').waitFor({state:'visible',timeout:15000});
+  assert.equal(await page.locator('#game-frame').getAttribute('src'),null);
+  await page.locator('#launch-game').click();
+  await game.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+  await page.waitForFunction(()=>{
+   const frame=document.querySelector('#game-frame');
+   return !!frame&&!frame.hidden&&
+    frame.contentDocument?.documentElement.dataset.gameReady==='true'&&
+    frame.contentDocument?.documentElement.dataset.uiFramework==='angular';
+  },null,{timeout:20000});
+  assert.ok(await game.locator('#menu-scene').evaluate(canvas=>{
+   if(!(canvas instanceof HTMLCanvasElement))return false;
+   const pixels=canvas.getContext('2d')?.getImageData(0,0,canvas.width,canvas.height).data;
+   return !!pixels&&pixels.some((alpha,index)=>index%4===3&&alpha>0);
+  }),'Canvas must draw after a full-page reload');
   assert.deepEqual(errors,[],'Production build CSP, resources and game must be error-free');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
@@ -297,6 +380,7 @@ try{
    siteAngularHeaderFooter:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    adminComputer:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
+   fullPageReload:true,deepLinkRefresh:true,canvasRestartAfterReload:true,
    resourceErrors:0,errorCount:errors.length});
   await context.close();
  }

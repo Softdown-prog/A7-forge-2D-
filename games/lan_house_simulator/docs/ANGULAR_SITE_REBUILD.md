@@ -40,3 +40,9 @@
 - `website/build.mjs` conserva HTML semântico e links pré-renderizados para SEO/no-JS. Somente `out/site-angular` recebe os marcadores de upgrade.
 - `website/site.mjs` mantém animações e comportamento da produção, mas não conecta listeners duplicados ao rodapé Angular.
 - O Chromium deverá verificar cabeçalho e rodapé reais, links/ícones, menu mobile, Escape, controle de animações e responsividade nas larguras 1280/414/360; jogo e conta seguem protegidos.
+
+## Correção emergencial — recarregamento (F5) e cache
+- O fluxo de validação anterior cobria abertura inicial, mas **não testava recarregar /, /ajuda/, /conta/ e /jogar/**; não atribuir aprovação anterior ao F5.
+- O build Cloudflare remove o TTL de uma hora dos recursos /assets/*, exigindo revalidação de JS/CSS/SVG após atualização; /game/js/* e /game/__angular/* também exigem revalidação.
+- Playwright agora visita rotas reais por URL, faz page.reload, exige HTTP 200, navegação única e funcional (inclusive mobile), busca FAQ após refresh, e testa F5 durante uma partida seguido de reinicialização real do Canvas Angular.
+- A validação roda tanto no out/site pré-publicação quanto no candidato out/site-angular. Não equivale a teste na URL Cloudflare após deploy, que precisa de smoke remoto separado quando o domínio estiver acessível.
