@@ -44,6 +44,11 @@ export const checks=[
   scope:"integrated-browser",need:["#react-shop-query","Nenhum cartão"]},
  {id:"keyboard-focus",name:"Keyboard focus, Escape and accessible admin dialogs",
   scope:"integrated-browser",need:["page.keyboard","Escape","focus"]},
+ {id:"stock-management",name:"Real Angular stock catalog, native pricing, orders and save",
+  scope:"integrated-browser",need:["#angular-merchandise-catalog",
+   "#merchandise-order","#merchandise-price-form",
+   "#page-stock-suppliers","stockManagementResults",
+   "restored.merchandise.orders.length"]},
  {id:"account-donation",name:"Site account and donation links under Angular cutover",
   scope:"integrated-browser",need:["#player-account","/donate/","Firebase"]},
  {id:"privacy-consent",name:"Privacy banner accept/reject through Angular cutover",
@@ -116,7 +121,7 @@ export function auditMigration(sources){
    caveat:"String markers indicate script coverage only, NOT proof of passing browser behavior. See Actions results."},
   blockers,
   nextSteps:[
-   "Review end-to-end stock management and save/cloud flows in Chromium and on real devices",
+   "Confirm stock management in an actual mobile device; review save/cloud flows separately",
    "Review account/donation navigation with live services only in a separately approved environment",
    "Confirm Angular template/host parity for remaining native interface panels",
    "Keep React bootstrap in production until complete parity and explicit approval"
