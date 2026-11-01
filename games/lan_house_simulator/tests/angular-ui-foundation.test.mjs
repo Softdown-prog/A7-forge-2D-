@@ -279,3 +279,31 @@ test('Console purchase forwarding uses actual DOM dataset camelCase keys',()=>{
  assert.match(source,/this\.forward\('buyPs2Game',id\)/);
  assert.doesNotMatch(source,/this\.forward\('data-buy-/);
 });
+
+
+test('Angular account shell owns a unique dialog while TypeScript owns all account business rules',()=>{
+ const entry=file(root+'src/main.ts');
+ const component=file(root+'src/account-shell.ts');
+ const template=file(root+'src/templates/account-shell.html');
+ const preview=file(root+'src/index.html');
+ const fallback=file('src/ui/cloudControls.ts');
+ const published=file('index.html');
+ for(const id of ['player-account','account-heading','account-balance','account-spent',
+  'account-owned','account-login-box','account-signin','account-logout',
+  'account-catalog','account-inventory','account-transactions','account-donate',
+  'account-cloud-save','account-cloud-check','account-cloud-load']){
+  assert.match(template,new RegExp('id="'+id+'"'),id);
+  assert.match(fallback,new RegExp('id=\\\\"'+id+'\\\\"'),id+' native fallback');
+ }
+ assert.match(entry,/AccountShellComponent/);
+ assert.match(entry,/angular-player-account/);
+ assert.match(preview,/id="angular-player-account"/);
+ assert.doesNotMatch(published,/id="angular-player-account"/);
+ assert.match(fallback,/angularDialog\?\?document\.createElement\("dialog"\)/);
+ assert.match(fallback,/if\(!angularDialog\)/);
+ assert.match(fallback,/document\.body\.append\(dialog\)/);
+ assert.match(component,/ChangeDetectionStrategy\.OnPush/);
+ assert.doesNotMatch(component,/Firebase|fetch\(|api\(|localStorage|sessionStorage|GameState|purchase|port\./);
+ assert.doesNotMatch(template,/\(click\)=|\[innerHTML\]=/);
+ assert.equal((template.match(/id="player-account"/g)??[]).length,1);
+});
