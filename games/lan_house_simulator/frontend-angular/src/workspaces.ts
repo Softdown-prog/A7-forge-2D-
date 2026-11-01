@@ -1,5 +1,5 @@
 /** Presentation-only workspaces. All state changes delegate to TypeScript DOM controllers. */
-import {Component,Directive,ChangeDetectionStrategy,Input,OnInit,OnDestroy,OnChanges,signal} from '@angular/core';
+import {Component,Directive,ChangeDetectionStrategy,ChangeDetectorRef,Input,OnInit,OnDestroy,OnChanges,inject,signal} from '@angular/core';
 
 export const TASKS={
  computers:[
@@ -44,23 +44,38 @@ type Area=keyof typeof TASKS;
 abstract class Workspace implements OnInit,OnDestroy{
  abstract readonly area:Area;
  readonly selected=signal('');
+ private readonly cdr=inject(ChangeDetectorRef);
  private readonly sync=(e:Event):void=>{
   const detail=(e as CustomEvent<{area:string;page:string}>).detail;
-  if(detail?.area===this.area&&TASKS[this.area].some(task=>task.id===detail.page))
-   this.selected.set(detail.page);
+  if(detail?.area!==this.area||!TASKS[this.area].some(task=>task.id===detail.page))return;
+  this.readNativeSelection();
  };
+ /** Only the native TS controller decides which page is actually active.
+  * Mark the zoneless OnPush view for a render after native DOM events. */
+ private readNativeSelection():void{
+  const active=document.getElementById('section-'+this.area)
+   ?.querySelector<HTMLButtonElement>('.management-pages button[aria-pressed="true"]');
+  const page=active?.dataset['panelChoice'];
+  if(!page||!TASKS[this.area].some(task=>task.id===page))return;
+  if(this.selected()!==page)this.selected.set(page);
+  this.cdr.markForCheck();
+ }
  ngOnInit():void {
   this.selected.set(TASKS[this.area][0].id);
   document.addEventListener('lhs:management-page-selected',this.sync);
-  const active=document.querySelector<HTMLElement>('#section-'+this.area+' > .management-pages [aria-pressed="true"]');
-  if(active?.dataset['panelChoice'])this.selected.set(active.dataset['panelChoice']);
+  this.readNativeSelection();
  }
  ngOnDestroy():void {document.removeEventListener('lhs:management-page-selected',this.sync);}
  openTask(page:string):void{
   if(!TASKS[this.area].some(task=>task.id===page))return;
   const button=document.getElementById('section-'+this.area)
    ?.querySelector<HTMLButtonElement>('.management-pages button[data-panel-choice="'+page+'"]');
-  if(button&&!button.disabled)button.click();
+  if(button&&!button.disabled){
+   button.click();
+   // The controller handles the click synchronously; never assume a locked
+   // request was accepted or update Angular to an unverified task.
+   this.readNativeSelection();
+  }
  }
 }
 
