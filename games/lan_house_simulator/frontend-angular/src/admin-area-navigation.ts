@@ -1,7 +1,7 @@
 /** Angular tab strip. The pre-existing TypeScript controller remains the single
  * authority for active area, accessible panel state and game rendering.
  */
-import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
+import {ChangeDetectionStrategy,ChangeDetectorRef,Component,OnDestroy,OnInit,inject,signal} from '@angular/core';
 
 interface AreaTab {
   id:string;
@@ -21,10 +21,22 @@ export class AdminAreaNavigationComponent implements OnInit,OnDestroy {
   readonly selected=signal('prices');
 
   private admin:HTMLElement|null=null;
+  private readonly cdr=inject(ChangeDetectorRef);
   private readonly sync=(event:Event):void=>{
     const area=(event as CustomEvent<{area:string}>).detail?.area;
-    if(area && this.tabs().some(tab=>tab.id===area))this.selected.set(area);
+    if(area && this.tabs().some(tab=>tab.id===area))this.readNativeSelection();
   };
+
+  /** Never infer selected area from a click: the TypeScript controller is the
+   * authority. Explicitly schedule this zoneless OnPush view after DOM events. */
+  private readNativeSelection():void {
+    const active=this.admin?.querySelector<HTMLButtonElement>(
+      '.admin-tabs button[data-admin-tab][aria-selected="true"]');
+    const area=active?.dataset['adminTab'];
+    if(!area || !this.tabs().some(tab=>tab.id===area))return;
+    if(this.selected()!==area)this.selected.set(area);
+    this.cdr.markForCheck();
+  }
 
   ngOnInit():void {
     this.admin=document.getElementById('admin');
@@ -37,11 +49,10 @@ export class AdminAreaNavigationComponent implements OnInit,OnDestroy {
       disabled:button.disabled
     })).filter(tab=>tab.id!=='' && tab.controls!=='' && tab.label!=='');
     this.tabs.set(tabs);
-    const active=buttons.find(button=>button.getAttribute('aria-selected')==='true');
     const fallback=tabs[0];
-    if(active?.dataset['adminTab'])this.selected.set(active.dataset['adminTab']);
-    else if(fallback)this.selected.set(fallback.id);
+    if(fallback)this.selected.set(fallback.id);
     document.addEventListener('lhs:admin-area-selected',this.sync);
+    this.readNativeSelection();
   }
 
   ngOnDestroy():void {
@@ -52,7 +63,10 @@ export class AdminAreaNavigationComponent implements OnInit,OnDestroy {
     if(!this.tabs().some(tab=>tab.id===area && !tab.disabled))return;
     const original=this.admin?.querySelector<HTMLButtonElement>(
       '.admin-tabs button[data-admin-tab="'+area+'"]');
-    if(original && !original.disabled)original.click();
+    if(original && !original.disabled){
+      original.click();
+      this.readNativeSelection();
+    }
   }
 
   onKeydown(event:KeyboardEvent,area:string):void {
