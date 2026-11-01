@@ -23,14 +23,12 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
  for(const id of ["console-purchases","menu-save-transfer","sound-preferences",
   "admin-workspaces","desktop-mobile-touch","disabled-purchases",
   "shop-catalog-preview","hud-weather","mail-inbox","shop-search","keyboard-focus",
-  "privacy-consent","layout-editor"]){
+  "privacy-consent","layout-editor","account-donation"]){
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
- for(const id of ["account-donation"]){
-  assert.equal(byId[id].status,"not-evidenced-in-script",id);
- }
  assert.equal(report.browserQa.workflowPresent,true);
- assert.ok(report.blockers.some(b=>b.id==="untested-integrated-flows"));
+ assert.ok(report.blockers.some(b=>b.id==="react-production-entry"));
+ assert.ok(report.blockers.some(b=>b.id==="optional-angular-hosts"));
 });
 test("the audit detects missing hosts and disabled browser checks",()=>{
  const missing=auditMigration({...sources,
@@ -74,4 +72,17 @@ test("mobile layout editor checks real Canvas touch, rotation, removal and reloa
  ])assert.ok(sources.integratedQa.includes(token),token);
  assert.equal(report.status,"not-ready",
   "Mobile QA script coverage alone cannot authorize React removal");
+});
+
+test("account and Donate browser evidence is mocked and cannot charge a player",()=>{
+ const report=auditMigration(sources);
+ assert.equal(report.browserQa.checks.find(c=>c.id==="account-donation")?.status,
+  "script-evidence-found");
+ for(const marker of ["accountDonationResults","angular-player-account",
+  "identitytoolkit.googleapis.com","account-logout",
+  "redemptions","orderCalls,0","cloudUploads,0",
+  "No donation order or Mercado Pago charge"]){
+  assert.ok(sources.integratedQa.includes(marker),marker);
+ }
+ assert.equal(report.decision,"no-merge-no-deploy");
 });
