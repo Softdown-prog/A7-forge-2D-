@@ -379,3 +379,20 @@ A branch não aciona a publicação: o workflow de espelhamento Pages só é
 disparado por alterações na `main`. Não efetuar merge antes de revisar o
 conjunto de jobs que ainda verificam o antigo React, o teste mobile físico
 e a compatibilidade de conta e Donate em homologação.
+
+## Busca reativa sem varrer o catálogo a cada tecla
+
+A ilha Angular de pesquisa normaliza e indexa os cartões DOM uma vez por evento
+`lhs:shop-catalog-updated` (o renderizador nativo recria os cartões). Durante
+a digitação, compara apenas o texto indexado e só altera `hidden` quando o
+estado visual muda. Os DTOs dos cartões Angular também são preparados uma vez
+por `lhs:shop-cards-updated`, preservando o filtro ao receber preços novos.
+O sinal de contagem só é alterado se os valores mudarem; a emissão para o
+catálogo Angular acontece exclusivamente quando muda a consulta.
+
+A categoria de consoles é uma exceção: suas mídias e bancadas ainda são
+geridas pelo renderizador nativo, portanto a contagem usa os cartões nativos
+em vez de contar apenas os DTOs de produtos comuns. O catálogo nativo
+permanece o executor único de compras e bloqueios por ano/saldo.
+
+Validação: `node --test tests/angular-shop-reactivity.test.mjs` após `npm ci`.
