@@ -28,7 +28,13 @@ export function mountCloudControls(
  _anchor:HTMLElement,port:AccountGamePort
 ):void{
  const COOKIE_COSMETICS=port.catalog;
- const dialog=document.createElement("dialog");
+ // During the Angular cutover rehearsal, the Angular island supplies the
+ // dialog markup. Keep the native fallback until production migrates, and
+ // never mount two dialogs or attach duplicate account action listeners.
+ const angularDialog=document.querySelector<HTMLDialogElement>(
+  "#angular-player-account > #player-account");
+ const dialog=angularDialog??document.createElement("dialog");
+ if(!angularDialog){
  dialog.id="player-account";dialog.className="account-dialog";
  dialog.setAttribute("aria-labelledby","account-heading");
  // Os controles são exclusivos deste diálogo; nenhuma informação do servidor
@@ -97,6 +103,7 @@ export function mountCloudControls(
   </section>
  `;
  document.body.append(dialog);
+ }
  const find=<T extends HTMLElement=HTMLElement>(selector:string)=>dialog.querySelector<T>(selector)!;
  const alert=find("#account-alert");
  const balance=find("#account-balance"),spent=find("#account-spent"),owned=find("#account-owned");
