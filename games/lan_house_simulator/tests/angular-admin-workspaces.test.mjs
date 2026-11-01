@@ -141,6 +141,10 @@ test('Prices, licenses and consoles navigate existing native panels without engi
    assert.match(ui,new RegExp("id:'"+page+"'"));
   }
  }
+ // The original manager moves task contents. Never relocate Angular hosts
+ // inside a page that can later become hidden.
+ assert.match(management,/\.filter\(node=>node\.id!=='angular-prices-workspace'\)/);
+ assert.match(management,/\.filter\(node=>node\.id!=='angular-licenses-workspace'\)/);
  assert.match(template,/data-angular-task/);
  assert.match(template,/openTask\(task\.id\)/);
  assert.match(template,/aria-controls/);
