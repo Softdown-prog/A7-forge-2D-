@@ -52,6 +52,21 @@ test('shop-overview integrated check matches the real TypeScript cash read model
  assert.match(qa,/label\.startsWith\('Caixa R\$ '\)/);
  assert.match(qa,/label\.includes\(' · PCs '\)/);
 });
+test('Angular site candidate shares site rules and keeps the default React output',()=>{
+ const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const check=readFileSync(new URL('../website/check.mjs',import.meta.url),'utf8');
+ const wrapper=readFileSync(new URL('../scripts/build_angular_site_candidate.mjs',import.meta.url),'utf8');
+ const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+ assert.ok(build.includes('process.env.LHS_SITE_ANGULAR_CANDIDATE'));
+ assert.ok(build.includes('angularCandidate?"out/site-angular":"out/site"'));
+ assert.ok(check.includes('angularCandidate?"../out/site-angular":"../out/site"'));
+ assert.match(build,/game\/__angular/);
+ assert.match(build,/build_cutover_candidate\.mjs/);
+ assert.match(build,/__angular\/styles\.css/);
+ assert.match(wrapper,/LHS_SITE_ANGULAR_CANDIDATE:'1'/);
+ assert.equal(pkg.scripts['build:site:angular:candidate'],
+  'node scripts/build_angular_site_candidate.mjs');
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);

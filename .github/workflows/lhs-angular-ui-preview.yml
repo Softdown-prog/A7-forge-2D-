@@ -8,6 +8,10 @@ on:
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
       - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
+      - "games/lan_house_simulator/website/build.mjs"
+      - "games/lan_house_simulator/website/check.mjs"
+      - "games/lan_house_simulator/scripts/build_angular_site_candidate.mjs"
+      - "games/lan_house_simulator/package.json"
       - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
@@ -22,6 +26,10 @@ on:
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
       - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
+      - "games/lan_house_simulator/website/build.mjs"
+      - "games/lan_house_simulator/website/check.mjs"
+      - "games/lan_house_simulator/scripts/build_angular_site_candidate.mjs"
+      - "games/lan_house_simulator/package.json"
       - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
@@ -59,6 +67,9 @@ jobs:
           node --check frontend-angular/scripts/verify_catalog_preview.mjs
           node --check frontend-angular/scripts/verify_static_candidate.mjs
           node --check frontend-angular/scripts/verify_integrated_game.mjs
+          node --check scripts/build_angular_site_candidate.mjs
+          node --check website/build.mjs
+          node --check website/check.mjs
       - name: Verify Angular UI boundaries
         run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
       - name: Audit React to Angular hosts and browser QA gaps (advisory)
@@ -96,6 +107,8 @@ jobs:
         run: node --test tests/runtime-interaction-bindings-boundary.test.mjs
       - name: Validate real game purchases, locations and saves through Angular
         run: node frontend-angular/scripts/verify_integrated_game.mjs
+      - name: Build and verify the complete Angular site candidate (no deploy)
+        run: npm run build:site:angular:candidate
       - name: Upload integrated game screenshots and save QA report
         if: always()
         uses: actions/upload-artifact@v4
@@ -117,6 +130,13 @@ jobs:
           name: lhs-angular-cutover-smoke
           path: games/lan_house_simulator/out/angular-cutover-smoke
           if-no-files-found: ignore
+      - name: Upload complete Angular site candidate (not deployed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-site-candidate
+          path: games/lan_house_simulator/out/site-angular
+          retention-days: 7
+          if-no-files-found: error
       - name: Upload full Angular cutover candidate for review only
         uses: actions/upload-artifact@v4
         with:

@@ -349,3 +349,16 @@ index.html da fonte, scripts/build.mjs, produção ou branch main.
 
 Só considerar publicação após testes verdes, revisão móvel, conta/doações
 em ambiente autorizado e aprovação explícita do merge.
+
+## Build completo do site com jogo Angular (candidato sem deploy)
+
+Use `npm run build:site:angular:candidate` na pasta do Lan House Simulator,
+depois de `npm ci` na raiz e `npm ci --prefix frontend-angular` e
+`npm run build --prefix frontend-angular`.
+Esse comando gera `out/site-angular/` (não `out/site/`), com todo o site,
+conta e Donate e o jogo Angular em `/game/`. Aplica a checagem de URLs,
+imports, recursos, CSP e revisão de cache do mesmo validador do site.
+O identificador do iframe também inclui os assets Angular para impedir
+que mudanças apenas na UI sejam ocultadas por cache antigo.
+Os scripts padrão `npm run build` e `npm run build:site` continuam usando React.
+O CI apenas armazena o candidato como artefato; não publica nem mescla a main.
