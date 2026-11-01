@@ -226,8 +226,10 @@ test('Angular candidate owns Ajuda FAQ and Chromium verifies search, keyboard, t
  const entry=readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8');
  const component=readFileSync(new URL('../frontend-angular/src/site/site-help.ts',import.meta.url),'utf8');
  const html=readFileSync(new URL('../frontend-angular/src/site/site-help.html',import.meta.url),'utf8');
+ const css=readFileSync(new URL('../website/site.css',import.meta.url),'utf8');
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
  assert.match(content,/export const faq = \[/);
+ assert.match(css,/#duvidas\[data-angular-site-help\] \.faq summary>span\{margin-inline-end:10px\}/);
  assert.ok(build.includes('if(p.path==="ajuda")body=body.replace'));
  assert.ok(build.includes('escape(JSON.stringify(faq))'));
  assert.ok(native.includes("!document.querySelector('[data-angular-site-help]')"));
