@@ -36,7 +36,7 @@
        <input #passwordInput id="account-password" name="password"
         [type]="showPassword()?'text':'password'"
         [attr.autocomplete]="mode()==='signup'?'new-password':'current-password'"
-        [minlength]="mode()==='signup'?8:6" maxlength="128" [required]="mode()!=='reset'"/>
+        [attr.minlength]="mode()==='signup'?8:6" maxlength="128" [required]="mode()!=='reset'"/>
        <button type="button" id="show-password" [attr.aria-pressed]="showPassword()"
         (click)="togglePassword()">{{showPassword()?'Ocultar':'Mostrar'}}</button>
       </div>

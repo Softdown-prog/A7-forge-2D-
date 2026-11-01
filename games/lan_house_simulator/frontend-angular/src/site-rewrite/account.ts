@@ -1,6 +1,6 @@
 import {ChangeDetectionStrategy,ChangeDetectorRef,Component,OnInit,inject,signal} from '@angular/core';
 import {AccountError,SiteAccountClient,validateAccountConfig} from './account-client';
-import type {AccountProfile,MainSave,AccountConfig} from './account-client';
+import type {AccountProfile,MainSave} from './account-client';
 type View='loading'|'disabled'|'auth'|'verify'|'dashboard';
 type Mode='login'|'signup'|'reset';
 /** Sole Angular owner of authentication, session, cloud save and account dashboard. */
