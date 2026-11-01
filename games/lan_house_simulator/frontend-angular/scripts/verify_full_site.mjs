@@ -147,8 +147,19 @@ try{
    await page.keyboard.press('Enter');
    await page.waitForFunction(()=>
     document.querySelectorAll('#help-questions details[open]').length===2);
-   assert.ok(await help.evaluate(el=>el.scrollWidth-el.clientWidth)<=3,
-    'Angular FAQ must not overflow at '+width+'px');
+   const overflow=await help.evaluate(el=>{
+    const rootRect=el.getBoundingClientRect();
+    const offenders=[...el.querySelectorAll('*')].map(node=>{
+     const rect=node.getBoundingClientRect();
+     return {tag:node.tagName,id:node.id,klass:String(node.className).slice(0,75),
+      end:Math.round(rect.right-rootRect.right),width:Math.round(rect.width)};
+    }).filter(row=>row.end>3).sort((a,b)=>b.end-a.end).slice(0,6);
+    return {client:el.clientWidth,scroll:el.scrollWidth,
+     document:document.documentElement.scrollWidth,
+     host:Math.round(rootRect.width),offenders};
+   });
+   assert.ok(overflow.scroll-overflow.client<=3,
+    'Angular FAQ overflow at '+width+'px: '+JSON.stringify(overflow));
   }
   await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
