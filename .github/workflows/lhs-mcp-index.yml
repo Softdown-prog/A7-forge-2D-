@@ -25,6 +25,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - name: Use Node 22
         uses: actions/setup-node@v4
         with:
@@ -84,6 +86,15 @@ jobs:
         with:
           name: lhs-mcp-real-relevance
           path: out/lhs-mcp-relevance/results.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Review latest game Git diff without editing
+        run: node tools/lhs-mcp/diff-review-cli.mjs --base HEAD^ --output out/lhs-mcp-diff-review/report.json
+      - name: Upload advisory diff review
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-mcp-diff-review
+          path: out/lhs-mcp-diff-review/report.json
           retention-days: 30
           if-no-files-found: error
       - name: Benchmark contextual search at 10k and 15k simulated files

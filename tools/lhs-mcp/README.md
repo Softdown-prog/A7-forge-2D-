@@ -274,3 +274,28 @@ direta; importar apenas um candidato secundário ou uma dependência
 compartilhada exige também correspondência com o assunto no nome do
 teste. Isso reduz falsos positivos causados por módulos centrais como
 `engine.ts`. Continua sendo uma sugestão, não medição de cobertura.
+
+## Revisão automática de diffs de commits (sem alterações)
+
+A ferramenta MCP `review_diff` consulta **somente** o diff Git entre
+`HEAD^` (padrão) e `HEAD`, ou um SHA Git completo de 40 caracteres como
+base. A comparação restringe-se ao diretório `games/lan_house_simulator`.
+O resultado lista os fontes alterados, módulos potencialmente afetados por
+imports reversos, referências ainda não resolvidas após exclusões/renomes,
+possíveis testes associados e comandos de validação já existentes.
+
+A ferramenta é **somente leitura**, não executa comandos do projeto nem
+aprova/mescla commits. As sugestões não substituem a leitura do diff ou a
+validação funcional. O gráfico representa o checkout atual: uma exclusão
+não pode recuperar as dependências históricas sem indexar o commit anterior.
+A seleção de testes usa imports rastreados; nomes de testes são indício
+menos forte. Arquivos sensíveis ou fora da pasta do jogo não são expostos.
+
+O GitHub Actions usa checkout com histórico de pelo menos dois commits,
+executa uma revisão após indexar e publica `lhs-mcp-diff-review`, mesmo
+quando o último commit só altera ferramentas MCP e nenhum arquivo do jogo.
+Para baixar ou reproduzir localmente:
+
+```bash
+node tools/lhs-mcp/diff-review-cli.mjs --base HEAD^ --output out/lhs-mcp-diff-review/report.json
+```

@@ -14,7 +14,7 @@ const clamp=(input,defaultValue,max)=>Number.isFinite(Number(input))?
  Math.max(1,Math.min(max,Math.trunc(Number(input)))):defaultValue;
 const testsOnly=file=>file.path.startsWith(testRoot)&&
  /\.(?:test|spec)\.(?:mjs|cjs|js|ts|tsx)$/.test(file.path);
-function resolveTestImports(file,knownFiles){
+export function resolveTestImports(file,knownFiles){
  const files=new Set();
  for(const spec of file.imports??[]){
   if(typeof spec!=="string"||!spec.startsWith("."))continue;
