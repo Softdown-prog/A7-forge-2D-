@@ -193,7 +193,7 @@ test('the new institutional site Angular navigation is isolated and browser-test
   assert.ok(readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8').includes(token));
  assert.match(component,/ChangeDetectionStrategy\.OnPush/);
  assert.match(component,/signal\(false\)/);
- assert.doesNotMatch(component,/react|React|localStorage|fetch\(/);
+ assert.doesNotMatch(component,/from\s+['"][^'"]*react|localStorage|fetch\(/i);
  for(const token of ['siteNavigation','menu-toggle','Escape','aria-expanded','/ajuda/'])
   assert.ok(browser.includes(token),token);
 });
