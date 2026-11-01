@@ -3,7 +3,8 @@
  * composer, which reads authoritative application shop quotes.
  * Purchase actions stay in installShopControls (TypeScript).
  */
-import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
+import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,computed,signal} from '@angular/core';
+import {catalogSearchMatch} from './catalog-search';
 interface Card{
  readonly id:string;readonly label:string;readonly category:string;
  readonly description:string;readonly icon:string;readonly artworkSrc:string|null;
@@ -37,9 +38,16 @@ const EMPTY:Catalog={category:'equipment',cards:[],consolesPending:false};
 })
 export class ShopCatalogComponent implements OnInit,OnDestroy {
  readonly catalog=signal<Catalog>(EMPTY);
+ readonly query=signal('');
+ readonly visibleCards=computed(()=>this.catalog().cards.filter(card=>
+  catalogSearchMatch(this.query(),[card.label,card.category,card.description])));
  readonly consoles=signal<ConsoleView|null>(null);
  readonly ps1Slot=signal('');
  readonly ps2Slot=signal('');
+ private readonly receiveFilter=(event:Event):void=>{
+  const query=(event as CustomEvent<{query:string}>).detail?.query;
+  if(typeof query==='string')this.query.set(query);
+ };
  private readonly receive=(event:Event):void=>{
   const detail=(event as CustomEvent<Catalog>).detail;
   if(detail&&typeof detail.category==='string'&&Array.isArray(detail.cards))
@@ -55,10 +63,12 @@ export class ShopCatalogComponent implements OnInit,OnDestroy {
  };
  ngOnInit():void{
   document.addEventListener('lhs:shop-cards-updated',this.receive);
+  document.addEventListener('lhs:angular-catalog-filter-updated',this.receiveFilter);
   document.addEventListener('lhs:shop-consoles-updated',this.receiveConsoles);
  }
  ngOnDestroy():void{
   document.removeEventListener('lhs:shop-cards-updated',this.receive);
+  document.removeEventListener('lhs:angular-catalog-filter-updated',this.receiveFilter);
   document.removeEventListener('lhs:shop-consoles-updated',this.receiveConsoles);
  }
  // During migration the existing catalog is the authoritative command target.

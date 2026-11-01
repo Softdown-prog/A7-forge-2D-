@@ -172,6 +172,23 @@ try{
   assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'false');
 
   await press(page.locator('#open-shop'));
+  // The Angular search must filter the VISIBLE Angular projection,
+  // not just the hidden native command catalog.
+  await press(page.locator('[data-shop-category="equipment"]'));
+  const visibleCards=page.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card');
+  await page.waitForFunction(()=>document.querySelectorAll(
+   '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length>0);
+  const originalCount=await visibleCards.count();
+  assert.ok(originalCount>0,'Equipment catalog has real projected cards');
+  await page.locator('#react-shop-query').fill('zzz-qa-nenhum-item-999');
+  await page.waitForFunction(()=>document.querySelectorAll(
+   '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===0);
+  assert.equal(await visibleCards.count(),0,'Filtering removes unmatched Angular cards');
+  assert.match(await page.locator('#react-shop-search').innerText(),/Nenhum cartão/);
+  await press(page.getByRole('button',{name:'Limpar busca'}));
+  await page.waitForFunction(expected=>document.querySelectorAll(
+   '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===expected,originalCount);
+  assert.equal(await visibleCards.count(),originalCount,'Clearing search restores all Angular cards');
   await press(page.locator('[data-shop-category="consoles"]'));
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor({state:'visible'});

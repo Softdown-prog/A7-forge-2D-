@@ -120,6 +120,15 @@ export class ShopSearchComponent implements OnInit,OnDestroy {
   readonly counts=signal({visible:0,total:0});
   private host:HTMLElement|null=null;
   private nav:HTMLElement|null=null;
+  private projectedCards:readonly {label:string;category:string;description:string}[]|null=null;
+  private readonly receivedCards=(event:Event):void=>{
+    const detail=(event as CustomEvent<{
+      cards:readonly {label:string;category:string;description:string}[];
+    }>).detail;
+    if(!detail||!Array.isArray(detail.cards))return;
+    this.projectedCards=detail.cards;
+    this.apply();
+  };
   private readonly updated=():void=>this.apply();
   private readonly categorySelected=():void=>{
     this.query.set('');
@@ -130,11 +139,13 @@ export class ShopSearchComponent implements OnInit,OnDestroy {
     this.nav=document.getElementById('react-shop-categories');
     this.host?.addEventListener('lhs:shop-catalog-updated',this.updated);
     this.nav?.addEventListener('lhs:shop-category-selected',this.categorySelected);
+    document.addEventListener('lhs:shop-cards-updated',this.receivedCards);
     this.apply();
   }
   ngOnDestroy():void {
     this.host?.removeEventListener('lhs:shop-catalog-updated',this.updated);
     this.nav?.removeEventListener('lhs:shop-category-selected',this.categorySelected);
+    document.removeEventListener('lhs:shop-cards-updated',this.receivedCards);
   }
   onSearch(event:Event):void {
     if(event.target instanceof HTMLInputElement) {
@@ -157,9 +168,18 @@ export class ShopSearchComponent implements OnInit,OnDestroy {
       card.hidden=!matches;
       if(matches)visible++;
     }
-    const current=this.counts();
-    if(current.total!==cards.length||current.visible!==visible){
-      this.counts.set({visible,total:cards.length});
+    let total=cards.length;
+    if(document.getElementById('angular-shop-catalog')&&this.projectedCards){
+      total=this.projectedCards.length;
+      visible=this.projectedCards.filter(card=>catalogSearchMatch(
+        this.query(),[card.label,card.category,card.description])).length;
     }
+    const current=this.counts();
+    if(current.total!==total||current.visible!==visible){
+      this.counts.set({visible,total});
+    }
+    document.dispatchEvent(new CustomEvent('lhs:angular-catalog-filter-updated',{
+      detail:{query:this.query()}
+    }));
   }
 }

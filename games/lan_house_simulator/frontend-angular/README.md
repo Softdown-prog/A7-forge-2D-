@@ -191,3 +191,15 @@ persistido após reload. Não injeta snapshots falsos para esses testes.
 A auditoria estática reconhece esses dois casos como evidenciados, mas o
 status de corte final continua `not-ready` até os demais fluxos serem
 homologados. Nenhum HTML publicado, regra do motor ou esquema de save muda.
+
+## Testes de busca e teclado rigorosos
+
+O E2E integrado testa também a busca na loja com **cartões Angular reais**:
+um termo impossível remove todos os cartões visíveis e limpar a busca
+restaura a contagem anterior. O componente de busca continua delegando
+as ações econômicas ao DOM TypeScript e recebe os DTOs do catálogo
+apenas para contagem/filtragem visual; a projeção Angular ouve o mesmo
+termo e filtra sua própria lista. Em desktop, o teste exige foco real
+no botão de correio, abertura com Enter, retorno ao menu com Escape e
+retomada da partida. Isso é validado em execução de navegador, não
+simulado por callbacks unitários.
