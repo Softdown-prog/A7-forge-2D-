@@ -35,7 +35,7 @@ export function buildSite(){
    {cwd:root,stdio:"inherit"});
  }
  rmSync(output,{recursive:true,force:true});mkdirSync(resolve(output,"assets"),{recursive:true});
- for(const [from,to] of [["website/site.css","assets/site.css"],["website/site.mjs","assets/site.mjs"],["website/data-controls.mjs","assets/data-controls.mjs"],["assets/ui/brand.svg","assets/brand.svg"],["assets/ui/icons.svg","assets/icons.svg"]])cpSync(resolve(root,from),resolve(output,to));
+ for(const [from,to] of [["website/site.css","assets/site.css"],["website/site.mjs","assets/site.mjs"],["website/help-search.mjs","assets/help-search.mjs"],["website/data-controls.mjs","assets/data-controls.mjs"],["assets/ui/brand.svg","assets/brand.svg"],["assets/ui/icons.svg","assets/icons.svg"]])cpSync(resolve(root,from),resolve(output,to));
  for(const file of ["sala.webp","pc-crt.svg","pc-lcd.svg","pc-led.svg","pc-arena.svg"])cpSync(resolve(root,"website/assets",file),resolve(output,"assets",file));
  for(const file of ["account.mjs","account-client.mjs","account.css","donate-client.mjs","donate.css","email-confirmation.mjs"])cpSync(resolve(root,"website",file),resolve(output,"assets",file));
  cpSync(resolve(root,"account-config.json"),resolve(output,"account-config.json"));
@@ -51,7 +51,7 @@ export function buildSite(){
  // Include Angular runtime and styles in the iframe revision to invalidate cached UI.
  if(angularSite)for(const file of moduleFiles(resolve(output,"game/__angular")).sort())
   revisionHash.update(readFileSync(file));
- for(const file of ["website/site.mjs","website/site.css","website/account.mjs","website/account-client.mjs","website/account.css","website/donate-client.mjs","website/donate.css","website/email-confirmation.mjs","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
+ for(const file of ["website/site.mjs","website/help-search.mjs","website/site.css","website/account.mjs","website/account-client.mjs","website/account.css","website/donate-client.mjs","website/donate.css","website/email-confirmation.mjs","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
  revisionHash.update(readFileSync(resolve(root,"website/assets/sala.webp")));
  const revision=revisionHash.digest("hex").slice(0,12);
  // Keep account/payment modules on the same release, including their imports.

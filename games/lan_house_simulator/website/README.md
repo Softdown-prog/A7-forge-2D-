@@ -1,6 +1,6 @@
 # Site próprio do Lan House Simulator
 
-Site estático, sem framework ou dependência de runtime. Reutiliza a marca e os 41 ícones do Terminal de Bairro. A imagem da home é um quadro real do Canvas do jogo, otimizado em WebP (cerca de 49 KB), não uma promessa de gráficos diferentes.
+Site público pré-renderizado em HTML e CSS, sem servidor de framework em produção; a interface do jogo incorporado usa Angular 22. Reutiliza a marca e os 41 ícones do Terminal de Bairro. A imagem da home é um quadro real do Canvas do jogo, otimizado em WebP (cerca de 49 KB), não uma promessa de gráficos diferentes.
 
 ## Construir e conferir
 
@@ -54,3 +54,9 @@ Depois de alterar a arte de balcão, administrador ou salão: `npm run build`, i
 O build do site atribui a mesma revisão a main.js e a todos os imports estáticos/dinâmicos de módulos do jogo, ao CSS e à imagem do salão. Isso impede misturar arquivos antigos em cache com código novo. A imagem de reserva do menu é copiada também para o build isolado, em `assets/ui/salon-preview.webp`.
 
 `verify_live_site_preview.mjs` simula módulos antigos sem revisão recusando essas URLs, verifica carregamento e desenho da partida em desktop/celular, e deve passar antes da sincronização para o repositório ligado ao Pages.
+
+## Busca de ajuda (interface do site)
+
+Na página `/ajuda/`, a busca filtra instantaneamente as perguntas frequentes, ignorando acentos e diferenças entre maiúsculas/minúsculas. Vários termos podem aparecer em qualquer ordem na pergunta ou resposta. As respostas correspondentes se abrem automaticamente e o filtro anterior é restaurado ao limpar a pesquisa. O contador de resultados usa `role="status"`, e a lista completa permanece disponível sem JavaScript. O menu móvel também fecha com clique/toque fora, além do botão e da tecla Escape.
+
+A busca roda localmente no navegador, sem API, indexação remota nem dados enviados. Teste: `node --test tests/website-help-search.test.mjs`.

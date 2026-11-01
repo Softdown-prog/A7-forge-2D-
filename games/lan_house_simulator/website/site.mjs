@@ -1,4 +1,5 @@
 import {eras} from "./eras.mjs";
+import {matchesHelpQuery} from "./help-search.mjs";
 import {deleteLocalData} from "./data-controls.mjs";
 const menu=document.querySelector("#site-nav"),toggle=document.querySelector("#menu-toggle");
 if(menu&&toggle){
@@ -7,6 +8,7 @@ if(menu&&toggle){
  toggle.addEventListener("click",()=>{const open=toggle.getAttribute("aria-expanded")!=="true";menu.classList.toggle("is-open",open);toggle.setAttribute("aria-expanded",String(open));});
  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&toggle.getAttribute("aria-expanded")==="true"){close();toggle.focus();}});
  menu.addEventListener("click",e=>{if(e.target.closest("a"))close();});
+ document.addEventListener("pointerdown",e=>{if(toggle.getAttribute("aria-expanded")==="true"&&!menu.contains(e.target)&&!toggle.contains(e.target))close();});
  matchMedia("(min-width:801px)").addEventListener("change",close);
 }
 const motion=document.querySelector("#motion-toggle"),preference=matchMedia("(prefers-reduced-motion: reduce)");
@@ -24,6 +26,39 @@ for(const button of eraButtons)button.addEventListener("click",()=>{
  for(const [id,value] of [["era-year",era.year],["era-title",era.title],["era-copy",era.body],["era-spec",era.spec]]){const el=document.getElementById(id);if(el)el.textContent=value;}
  const image=document.querySelector("#era-image");if(image){image.src="/assets/pc-"+era.model+".svg";image.alt="Ilustração de computador da época "+era.year;}
 });
+
+const helpInput=document.querySelector("#help-search");
+const helpList=document.querySelector("#help-questions");
+if(helpInput&&helpList){
+ const tools=document.querySelector("#help-search-tools");
+ const clear=document.querySelector("#help-search-clear");
+ const result=document.querySelector("#help-search-results");
+ const empty=document.querySelector("#help-empty");
+ const entries=[...helpList.querySelectorAll("details")].map(detail=>({detail,text:detail.textContent||""}));
+ let filtering=false;
+ let previousOpen=[];
+ tools.hidden=false;
+ const refresh=()=>{
+  const query=helpInput.value.trim();
+  const active=query.length>0;
+  if(active&&!filtering)previousOpen=entries.map(entry=>entry.detail.open);
+  let found=0;
+  for(const [index,entry] of entries.entries()){
+   const matches=!active||matchesHelpQuery(entry.text,query);
+   entry.detail.hidden=!matches;
+   if(active&&matches)entry.detail.open=true;
+   else if(!active&&filtering)entry.detail.open=previousOpen[index]??false;
+   if(matches)found++;
+  }
+  clear.hidden=!active;
+  empty.hidden=!active||found>0;
+  result.textContent=active?found+" "+(found===1?"resposta encontrada.":"respostas encontradas."):"Pesquise por uma palavra ou explore as perguntas abaixo.";
+  filtering=active;
+ };
+ helpInput.addEventListener("input",refresh);
+ clear.addEventListener("click",()=>{helpInput.value="";refresh();helpInput.focus();});
+ refresh();
+}
 const launch=document.querySelector("#launch-game"),frame=document.querySelector("#game-frame"),shell=document.querySelector("#game-shell"),fullscreen=document.querySelector("#fullscreen"),status=document.querySelector("#game-status");
 if(launch&&frame&&shell){
  launch.addEventListener("click",()=>{

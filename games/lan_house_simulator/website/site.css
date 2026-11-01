@@ -53,3 +53,16 @@ html:not(.js-enabled) .motion-toggle,html:not(.js-enabled) .data-options,html:no
  .paper .step,.paper .feature,.hero-copy .actions .button:first-child,.closing .button{transition:none}
  .paper .step:hover,.paper .feature:hover{transform:none}
 }
+
+/* Busca local e acessível nas perguntas: o guia continua íntegro sem JavaScript. */
+.help-search-tools{border:1px solid #5f795f;border-radius:14px;background:linear-gradient(135deg,#253d30,#192e29);padding:22px;margin:23px 0 20px}
+.help-search-tools[hidden],#help-search-clear[hidden],#help-empty[hidden],#help-questions details[hidden]{display:none!important}
+.help-search-tools label{display:block;color:var(--green);font-weight:700;margin-bottom:12px}
+.help-search-row{display:flex;gap:12px;align-items:stretch}
+.help-search-row input{min-width:0;flex:1;background:#10241e;color:var(--paper);border:1px solid #748d75;border-radius:8px;padding:13px 16px;font:inherit;font-size:16px;min-height:48px}
+.help-search-row input::placeholder{color:#b9caba;opacity:1}
+.help-search-row input:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.help-search-row .button{min-height:48px;box-shadow:none}
+.help-search-results{color:#d7e5d0;margin:12px 0 0}
+.help-empty{padding:24px;border:1px dashed var(--line);border-radius:10px;color:var(--muted)}
+@media(max-width:520px){.help-search-tools{padding:17px;margin:20px 0}.help-search-row{flex-wrap:wrap}.help-search-row .button{width:100%}}
