@@ -4,9 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "ng build --configuration production",
-    "build:development": "ng build --configuration development",
-    "lint": "eslint src --ext .ts"
+    "build": "ng build game-ui --configuration production",
+    "build:development": "ng build game-ui --configuration development",
+    "lint": "eslint src --ext .ts",
+    "build:site-shell": "ng build site-shell --configuration production"
   },
   "dependencies": {
     "@angular/common": "~22.2.0",

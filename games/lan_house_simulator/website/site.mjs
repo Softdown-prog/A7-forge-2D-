@@ -2,7 +2,9 @@ import {eras} from "./eras.mjs";
 import {matchesHelpQuery} from "./help-search.mjs";
 import {deleteLocalData} from "./data-controls.mjs";
 const menu=document.querySelector("#site-nav"),toggle=document.querySelector("#menu-toggle");
-if(menu&&toggle){
+// Angular takes exclusive ownership only in the opt-in site-shell candidate.
+// Production and no-JS fallbacks keep the existing static navigation.
+if(menu&&toggle&&!menu.hasAttribute("data-angular-site-nav")){
  document.documentElement.classList.add("js-enabled");
  const close=()=>{menu.classList.remove("is-open");toggle.setAttribute("aria-expanded","false");};
  toggle.addEventListener("click",()=>{const open=toggle.getAttribute("aria-expanded")!=="true";menu.classList.toggle("is-open",open);toggle.setAttribute("aria-expanded",String(open));});

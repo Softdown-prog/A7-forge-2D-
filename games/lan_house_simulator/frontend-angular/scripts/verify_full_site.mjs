@@ -75,6 +75,37 @@ try{
     errors.push('CSP: '+message.text());
   });
   await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
+  if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
+   // Test the rebuilt institutional Angular shell without changing /out/site.
+   await page.waitForFunction(()=>
+    document.documentElement.dataset.siteNavigation==='angular');
+   const nav=page.locator('#site-nav');
+   assert.equal(await nav.locator('a').count(),7,
+    'Angular owns six links and the original Play button');
+   assert.equal(await nav.locator('a[aria-current="page"]').count(),1);
+   assert.equal(await nav.locator('a[href="/jogar/"][aria-current="page"]').count(),1);
+   assert.equal(await nav.evaluate(el=>el.scrollWidth-el.clientWidth)<=3,true,
+    'Site navigation must not overflow its own width');
+   if(mobile){
+    await page.locator('#menu-toggle').click();
+    assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'true');
+    assert.ok(await nav.evaluate(el=>el.classList.contains('is-open')),
+     'Mobile Angular menu must actually open');
+    await page.keyboard.press('Escape');
+    assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'false');
+    await page.locator('#menu-toggle').click();
+    await nav.locator('a[href="/ajuda/"]').click();
+    await page.waitForURL('**/ajuda/');
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteNavigation==='angular');
+    assert.equal(await page.locator('#site-nav a[href="/ajuda/"][aria-current="page"]').count(),1);
+    await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteNavigation==='angular');
+   }
+   assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0,
+    'React must never bootstrap institutional site navigation');
+  }
   const frame=page.locator('#game-frame');
   assert.equal(await frame.getAttribute('src'),null,'Game must not load before launch');
   assert.match(await frame.getAttribute('data-src'),/^\/game\/\?v=[0-9a-f]{12}$/);
@@ -126,7 +157,8 @@ try{
   assert.deepEqual(errors,[],'Production build CSP, resources and game must be error-free');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
-   shopCatalog:true,adminComputer:true,mobileTouch:mobile,
+   shopCatalog:true,siteAngularNavigation:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
+   adminComputer:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    resourceErrors:0,errorCount:errors.length});
   await context.close();

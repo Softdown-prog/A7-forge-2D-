@@ -36,6 +36,38 @@
           "defaultConfiguration": "production"
         }
       }
+    },
+    "site-shell": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src/site",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/site-shell",
+            "index": "src/site/index.html",
+            "browser": "src/site/main.ts",
+            "polyfills": [],
+            "tsConfig": "tsconfig.site.json",
+            "assets": [],
+            "styles": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "none",
+              "sourceMap": false
+            },
+            "development": {
+              "optimization": false,
+              "outputHashing": "none",
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        }
+      }
     }
   }
 }

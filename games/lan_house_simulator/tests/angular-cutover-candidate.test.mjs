@@ -175,3 +175,25 @@ test('Cloudflare publication blocks on real Angular browser behavior',()=>{
   assert.ok(browser.includes(check),'Missing browser release check: '+check);
  }
 });
+
+test('the new institutional site Angular navigation is isolated and browser-tested',()=>{
+ const angular=JSON.parse(readFileSync(new URL('../frontend-angular/angular.json',import.meta.url),'utf8'));
+ const pkg=JSON.parse(readFileSync(new URL('../frontend-angular/package.json',import.meta.url),'utf8'));
+ const site=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const native=readFileSync(new URL('../website/site.mjs',import.meta.url),'utf8');
+ const component=readFileSync(new URL('../frontend-angular/src/site/site-navigation.ts',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ assert.ok(angular.projects['site-shell']);
+ assert.match(pkg.scripts['build:site-shell'],/ng build site-shell/);
+ assert.match(site,/if\(angularCandidate\)/);
+ assert.match(site,/data-angular-site-nav/);
+ assert.match(site,/site-angular\/main\.js/);
+ assert.match(native,/!menu\.hasAttribute\("data-angular-site-nav"\)/);
+ for(const token of ['createApplication','createComponent','changeDetectorRef.detectChanges'])
+  assert.ok(readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8').includes(token));
+ assert.match(component,/ChangeDetectionStrategy\.OnPush/);
+ assert.match(component,/signal\(false\)/);
+ assert.doesNotMatch(component,/react|React|localStorage|fetch\(/);
+ for(const token of ['siteNavigation','menu-toggle','Escape','aria-expanded','/ajuda/'])
+  assert.ok(browser.includes(token),token);
+});

@@ -1,0 +1,22 @@
+# Reconstrução progressiva do site LHS em Angular
+
+## Estado auditado (01/11/2026)
+- `website/content.mjs`, `website/build.mjs` e `website/site.css` geram o site institucional estático; `site.mjs` mantém as interações de menu, eras, FAQ e abertura do iframe.
+- `frontend-angular/src/main.ts` é o Angular do **jogo**; `frontend-angular/src/site/main.ts` é um entrypoint **separado** e novo para o site.
+- A produção `out/site` contém o jogo Angular, não o bootstrap React. React permanece no `dist/` legado para testes, sem evidência de que ele esteja executando na vitrine atual.
+
+## Contrato de migração
+- Migrar **uma área por etapa**: navegação -> timeline -> FAQ -> cabeçalho/rodapé -> páginas de conteúdo -> conta/Donate, sem misturar regras de cobrança ou do Canvas.
+- Cada componente novo é Angular standalone, OnPush, com HTML semântico. Nunca importar componentes React nem copiar handlers velhos.
+- Reutilizar os tokens de `website/site.css` e os SVGs existentes; não criar duas identidades visuais.
+- Preservar HTML estático de fallback e SEO durante a migração. O objetivo final é prerender Angular (SSG) para as páginas públicas, não um shell CSR vazio.
+- `LHS_SITE_ANGULAR_CANDIDATE=1` gera a prévia em `out/site-angular`; a produção `out/site` mantém a navegação anterior até validar cada etapa no navegador.
+- Não remover dependências React usadas por scripts de regressão antes de migrar esses scripts.
+- Cobrir desktop 1280px, mobile 414px/360px, links, teclado, toque, CSP, erros de JS, acessibilidade básica e regressões do jogo antes de publicar.
+
+## Etapa 1 — navegação
+- `frontend-angular/src/site/site-navigation.ts`: links e menu mobile refeitos em Angular, sem React.
+- `frontend-angular/src/site/main.ts`: entrypoint institucional isolado.
+- `website/build.mjs`: constrói o entrypoint apenas na prévia; o site publicado é preservado.
+- `frontend-angular/scripts/verify_full_site.mjs`: navegação Angular do site candidato em Chromium, seguida pela verificação do iframe Canvas.
+- **Critério de avanço:** Chromium verde, comparação visual e nenhum erro de navegação/DOM duplicado.

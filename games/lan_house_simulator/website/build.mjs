@@ -36,9 +36,17 @@ export function buildSite(){
    ["run","build","--prefix","frontend-angular"],{cwd:root,stdio:"inherit"});
   execFileSync(process.execPath,[resolve(root,"frontend-angular/scripts/build_cutover_candidate.mjs")],
    {cwd:root,stdio:"inherit"});
+  // The first institutional Angular component is opt-in only. The standard
+  // Cloudflare /out/site artifact stays unchanged while browser QA runs.
+  if(angularCandidate)
+   execFileSync(process.platform==="win32"?"npm.cmd":"npm",
+    ["run","build:site-shell","--prefix","frontend-angular"],{cwd:root,stdio:"inherit"});
  }
  rmSync(output,{recursive:true,force:true});mkdirSync(resolve(output,"assets"),{recursive:true});
  for(const [from,to] of [["website/site.css","assets/site.css"],["website/site.mjs","assets/site.mjs"],["website/help-search.mjs","assets/help-search.mjs"],["website/data-controls.mjs","assets/data-controls.mjs"],["assets/ui/brand.svg","assets/brand.svg"],["assets/ui/icons.svg","assets/icons.svg"]])cpSync(resolve(root,from),resolve(output,to));
+ if(angularCandidate)
+  cpSync(resolve(root,"frontend-angular/dist/site-shell/browser"),
+   resolve(output,"assets/site-angular"),{recursive:true});
  for(const file of ["sala.webp","pc-crt.svg","pc-lcd.svg","pc-led.svg","pc-arena.svg"])cpSync(resolve(root,"website/assets",file),resolve(output,"assets",file));
  for(const file of ["account.mjs","account-client.mjs","account.css","donate-client.mjs","donate.css","email-confirmation.mjs"])cpSync(resolve(root,"website",file),resolve(output,"assets",file));
  cpSync(resolve(root,"account-config.json"),resolve(output,"account-config.json"));
@@ -53,6 +61,8 @@ export function buildSite(){
  for(const file of moduleFiles(resolve(output,"game/js")).sort())revisionHash.update(readFileSync(file));
  // Include Angular runtime and styles in the iframe revision to invalidate cached UI.
  if(angularSite)for(const file of moduleFiles(resolve(output,"game/__angular")).sort())
+  revisionHash.update(readFileSync(file));
+ if(angularCandidate)for(const file of moduleFiles(resolve(output,"assets/site-angular")).sort())
   revisionHash.update(readFileSync(file));
  for(const file of ["website/site.mjs","website/help-search.mjs","website/site.css","website/account.mjs","website/account-client.mjs","website/account.css","website/donate-client.mjs","website/donate.css","website/email-confirmation.mjs","style.css"])revisionHash.update(readFileSync(resolve(root,file)));
  revisionHash.update(readFileSync(resolve(root,"website/assets/sala.webp")));
@@ -96,8 +106,8 @@ export function buildSite(){
 <html lang="pt-BR"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><meta name="theme-color" content="#192e2a"/>
 <title>${escape(p.title)} · ${c.name}</title><meta name="description" content="${escape(p.description)}"/><meta name="robots" content="${siteConfig.mode==="public"&&p.path!=="404"&&!p.noindex?"index,follow":"noindex,nofollow"}"/>
 <meta property="og:type" content="website"/><meta property="og:locale" content="pt_BR"/><meta property="og:site_name" content="${c.name}"/><meta property="og:title" content="${escape(p.title)} · ${c.name}"/><meta property="og:description" content="${escape(p.description)}"/><meta name="twitter:card" content="summary_large_image"/>${canonical}
-<link rel="icon" type="image/svg+xml" href="/assets/brand.svg"/><link rel="stylesheet" href="/assets/site.css?v=${revision}"/><link rel="stylesheet" href="/assets/account.css?v=${revision}"/>${p.path==='donate'?`<link rel="stylesheet" href="/assets/donate.css?v=${revision}"/>`:''}<script type="application/ld+json">${structured}</script><script type="module" src="/assets/site.mjs?v=${revision}"></script></head><body>
-<a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="site-header"><div class="header-inner wrap">${brand}<button type="button" id="menu-toggle" class="menu-toggle" aria-controls="site-nav" aria-expanded="false">Menu ${icon("settings")}</button><nav class="site-nav" id="site-nav" aria-label="Navegação principal">${nav}<a class="button" href="/jogar/" ${p.path==="jogar"?'aria-current="page"':""}>${icon("play")} Jogar agora</a></nav></div></header>
+<link rel="icon" type="image/svg+xml" href="/assets/brand.svg"/><link rel="stylesheet" href="/assets/site.css?v=${revision}"/><link rel="stylesheet" href="/assets/account.css?v=${revision}"/>${p.path==='donate'?`<link rel="stylesheet" href="/assets/donate.css?v=${revision}"/>`:''}<script type="application/ld+json">${structured}</script><script type="module" src="/assets/site.mjs?v=${revision}"></script>${angularCandidate?`<script type="module" src="/assets/site-angular/main.js?v=${revision}"></script>`:""}</head><body>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a><header class="site-header"><div class="header-inner wrap">${brand}<button type="button" id="menu-toggle" class="menu-toggle" aria-controls="site-nav" aria-expanded="false">Menu ${icon("settings")}</button><nav class="site-nav" id="site-nav" ${angularCandidate?'data-angular-site-nav="true" ':''}aria-label="Navegação principal">${nav}<a class="button" href="/jogar/" ${p.path==="jogar"?'aria-current="page"':""}>${icon("play")} Jogar agora</a></nav></div></header>
 <main id="conteudo">${p.path==="jogar"?p.body.replace('data-src="/game/"','data-src="/game/?v='+revision+'"'):p.body}</main><footer class="site-footer"><div class="footer-top wrap"><div class="footer-brand">${brand}<p>Seu bairro. Seu negócio. Sua história.<br/>Da primeira conexão ao seu próprio salão.</p></div><div class="footer-links"><h2>EXPLORE O SALÃO</h2><a href="/jogar/">Jogar agora</a><a href="/sobre-o-jogo/">Sobre o jogo</a><a href="/sobre-nos/">Sobre nós</a><a href="/ajuda/">Ajuda e perguntas</a><a href="/contato/">Contato</a></div><div class="footer-links"><h2>INFORMAÇÕES</h2><a href="/termos/">Termos de uso</a><a href="/privacidade/">Política de privacidade</a><a href="/dados/">Gerenciar dados locais</a></div></div><div class="footer-bottom wrap"><span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span><button type="button" class="motion-toggle" id="motion-toggle" aria-pressed="false">Pausar animações</button><span>TERMINAL DE BAIRRO / ${siteConfig.mode==="preview"?"PRÉVIA PRIVADA":"EDIÇÃO WEB"}</span></div></footer></body></html>`;
   const file=p.path==="404"?resolve(output,"404.html"):resolve(output,p.path,"index.html");mkdirSync(dirname(file),{recursive:true});writeFileSync(file,html.replaceAll('src="/assets/sala.webp"','src="/assets/sala.webp?v='+revision+'"').replaceAll('src="/assets/account.mjs"','src="/assets/account.mjs?v='+revision+'"').replaceAll('src="/assets/email-confirmation.mjs"','src="/assets/email-confirmation.mjs?v='+revision+'"'));
  }
