@@ -150,7 +150,7 @@ function renderUI(liveOnly=false):void {
   renderCommerceNetworkPanel(commerceNetworkPort.snapshot(),setText,document);
   setText("pc",pcOperationsPort.summary());
   if(state.windows.activeAdminTab==="computers")
-   publishAngularAdminSummary(document,"computers",pcOperationsPort.overview());
+   publishAngularAdminSummary(document,"computers",{...pcOperationsPort.overview()});
   renderAdminComputerSections({
    adminOpen:state.windows.adminOpen,computersTab:state.windows.activeAdminTab==="computers",
    ledgerActive:()=>managementPanels.active("computers","ledger"),
