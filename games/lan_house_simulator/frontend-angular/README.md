@@ -1,3 +1,19 @@
+# Front-end canônico — Lan House Simulator
+
+A raiz deste diretório é a **única origem canônica do front-end Angular** do jogo e do site:
+
+- `src/site-rewrite/`: **site institucional novo**, Angular standalone; estilos, templates, textos e recursos visuais próprios em `public/assets/`.
+- `src/` (incluindo `main.ts` e `workspace.css`): **UI Angular do jogo**. O motor 2D TypeScript/Canvas fica no `../src/` do projeto e não é outro site institucional.
+- `src/site/`: **ponte temporária** da migração antiga (Angular montado no HTML de `website/`). Não desenvolver funcionalidades novas aqui.
+
+**Status:** reescrita em branch isolada; não publicar nem fazer merge. Até o cutover, o site existente em `../website/` continua atendendo produção para não interromper autenticação, saves, pagamentos e documentos em vigor. Remover o legado só depois dos testes e homologação de todas as funcionalidades.
+
+Para construir o site novo a partir da raiz `games/lan_house_simulator`: `npm run build:site:clean` e `npm run check:site:clean`. O resultado é `out/site-clean-angular/` e não deve ser publicado enquanto existirem lacunas funcionais.
+
+Para detalhes de engenharia e os bloqueios de liberação, consulte `../docs/ANGULAR_REWRITE_ISOLATED.md`.
+
+---
+
 # LHS Angular 22 — migração da interface
 
 Primeira etapa isolada da migração de React para Angular do Lan House Simulator. NÃO substitui ainda a interface publicada. A main, o jogo Canvas 2D, src/sim, src/application, src/render, src/bootstrap e os contratos de save continuam intactos.

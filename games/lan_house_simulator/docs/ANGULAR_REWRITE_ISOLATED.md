@@ -4,6 +4,14 @@
 
 A implementação anterior não era uma reescrita: `website/build.mjs` renderiza o HTML, `website/site.mjs` registra handlers globais e `frontend-angular/src/site/main.ts` monta ilhas Angular por cima. Esse desenho cria duas autoridades para o mesmo DOM, especialmente navegação, FAQ e animações. Não afirmar que Bootstrap ou Alpine existam sem evidência.
 
+## Canonicidade e convivência temporária
+
+**Raiz canônica do front-end:** `frontend-angular/`. Dentro dela, `src/site-rewrite/` é a implementação institucional **nova e única** que deverá sobreviver ao cutover; `src/site/` é a implementação Angular antiga, apenas transitória, e será removida após concluir a substituição e trocar os workflows.
+`website/` é **legado de produção**, não a fonte de verdade do novo site. Ela existe para manter o endereço público funcionando até que a aplicação nova tenha paridade funcional e seja aprovada. Não fazer novas funcionalidades institucionais em `website/` nem em `frontend-angular/src/site/`.
+`src/` na raiz do LHS contém o motor de jogo TypeScript/Canvas e permanece separado da camada de interface (a UI do jogo usa o projeto Angular `game-ui`). Não apagar a simulação por confundir TypeScript com um segundo framework visual.
+
+A partir desta etapa, o site novo mantém seus recursos em `frontend-angular/src/site-rewrite/public/assets/`. O build independente **não lê imagens nem CSS de `website/`**. Durante a migração, os arquivos legados ainda existem por necessidade da produção; não são usados pelo artefato `out/site-clean-angular/`. Ao completar todos os fluxos, remover `website/` e o `site-shell` legado junto com suas referências em CI/deploy em uma alteração única e testada — não manter duas versões publicáveis.
+
 ## Arquitetura substituta
 - Aplicação única em `frontend-angular/src/site-rewrite/`, com DOM, templates, estilo e estado próprios.
 - Sem importar `website/site.mjs`, `website/content.mjs`, `website/site.css`, React, Alpine ou Bootstrap.

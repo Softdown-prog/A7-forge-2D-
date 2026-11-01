@@ -27,7 +27,7 @@ jobs:
         run: |
           npm run build:site:clean
           npm run check:site:clean
-          node --test tests/clean-site-legal.test.mjs
+          node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs
       - name: Real Chromium Android-like touch, F5 and iframe QA
         working-directory: games/lan_house_simulator
         run: |

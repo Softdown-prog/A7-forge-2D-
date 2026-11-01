@@ -27,15 +27,16 @@ rmSync(output,{recursive:true,force:true});
 mkdirSync(resolve(output,'assets'),{recursive:true});
 cpSync(compiled,resolve(output,'assets/site'),{recursive:true});
 rmSync(resolve(output,'assets/site/index.html'),{force:true});
-const siteAssets=[
- ['assets/ui/brand.svg','assets/brand.svg'],['assets/ui/icons.svg','assets/icons.svg'],
- ['website/assets/sala.webp','assets/sala.webp'],
- ...['pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg']
- .map(name=>['website/assets/'+name,'assets/'+name])
-];
-for(const [src,dst] of siteAssets){
- mkdirSync(dirname(resolve(output,dst)),{recursive:true});
- cpSync(resolve(root,src),resolve(output,dst));
+// All public assets for the new institutional site live inside Angular.
+const siteAssetRoot=resolve(angular,'src/site-rewrite/public/assets');
+const siteAssets=['brand.svg','icons.svg','sala.webp',
+ 'pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg'];
+for(const name of siteAssets){
+ const source=resolve(siteAssetRoot,name);
+ assert.ok(existsSync(source),'Missing canonical Angular site asset: '+name);
+ const destination=resolve(output,'assets',name);
+ mkdirSync(dirname(destination),{recursive:true});
+ cpSync(source,destination);
 }
 cpSync(resolve(root,'out/angular-cutover-candidate'),resolve(output,'game'),{recursive:true});
 rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});

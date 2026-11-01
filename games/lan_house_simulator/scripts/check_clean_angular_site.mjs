@@ -12,7 +12,9 @@ for(const path of ['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato','cont
 }
 assert.ok(existsSync(resolve(root,'game/__angular/main.js')));
 assert.ok(!existsSync(resolve(root,'game/js/react-entry.js')));
-assert.ok(existsSync(resolve(root,'assets/brand.svg')));
+for(const name of ['brand.svg','icons.svg','sala.webp',
+ 'pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg'])
+ assert.ok(existsSync(resolve(root,'assets',name)),'Missing Angular site asset: '+name);
 assert.match(readFileSync(resolve(root,'robots.txt'),'utf8'),/Disallow: \//);
 assert.ok(readdirSync(resolve(root,'assets/site')).includes('main.js'));
 assert.match(readFileSync(resolve(root,'_headers'),'utf8'),/no-cache, must-revalidate/);
