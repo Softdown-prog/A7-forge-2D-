@@ -1,0 +1,24 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
+test('Donate is Angular-only and cannot create orders or checkout',()=>{
+ const c=read('../frontend-angular/src/site-rewrite/donate.ts');
+ const h=read('../frontend-angular/src/site-rewrite/donate.html');
+ const s=read('../frontend-angular/src/site-rewrite/site-app.ts');
+ const host=read('../frontend-angular/src/site-rewrite/site-app.html');
+ const qa=read('../scripts/verify_clean_angular_site.mjs');
+ assert.match(c,/DONATE_PACKAGES=Object\.freeze/);
+ assert.match(c,/paymentsEnabled/);
+ assert.match(c,/paymentsMode.*production/);
+ assert.match(c,/\'\/v1\/config\'/);
+ assert.doesNotMatch(c+h,/\/v1\/orders|checkoutUrl|website\/|sessionStorage|window\.location\.assign/);
+ assert.match(h,/<button[^>]*\[attr\.data-donate-package\]="pack.id"[^>]*disabled/);
+ assert.match(h,/aria-disabled="true"/);
+ assert.match(h,/role="status" aria-live="polite"/);
+ assert.match(host,/<lhs-donate><\/lhs-donate>/);
+ assert.match(s,/imports:\[[^\]]*DonateComponent/);
+ assert.match(qa,/unsafePaymentCalls/);
+ assert.match(qa,/donateMode='active'/);
+ assert.match(qa,/donateMode='error'/);
+});

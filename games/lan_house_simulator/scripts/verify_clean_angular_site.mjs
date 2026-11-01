@@ -6,6 +6,8 @@ import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
 const root=resolve(import.meta.dirname,'../out/site-clean-angular');
 const output=resolve(import.meta.dirname,'../out/site-clean-angular-browser');
+const accountConfig=JSON.parse(await readFile(resolve(root,'account-config.json'),'utf8'));
+const apiOrigin=new URL(accountConfig.apiUrl).origin;
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml',
  '.json':'application/json','.webp':'image/webp'};
@@ -36,6 +38,19 @@ try{
    viewport:{width,height:850},isMobile:mobile,hasTouch:mobile,
    deviceScaleFactor:1,reducedMotion:'no-preference'
   });
+  let donateMode='disabled',donateCalls=0,unsafePaymentCalls=0;
+  await context.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(url.origin===origin){await route.continue();return;}
+   if(url.origin===apiOrigin&&url.pathname==='/v1/config'&&request.method()==='GET'){
+    donateCalls++;
+    if(donateMode==='error')await route.fulfill({status:503,json:{error:'mock unavailable'}});
+    else await route.fulfill({json:{paymentsEnabled:donateMode==='active',
+     paymentsMode:donateMode==='active'?'production':'disabled'}});
+    return;
+   }
+   unsafePaymentCalls++;await route.abort();
+  });
   const page=await context.newPage(),errors=[];
   page.on('pageerror',err=>errors.push('JS '+err.message));
   page.on('response',response=>{
@@ -43,7 +58,7 @@ try{
      /\.(?:js|css|svg|webp|json)$/.test(new URL(response.url()).pathname))
     errors.push('HTTP '+response.status()+' '+response.url());
   });
-  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/','/dados/']){
+  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/','/dados/','/donate/']){
    let res=await page.goto(origin+pathname,{waitUntil:'networkidle'});
    assert.equal(res?.status(),200);
    await page.waitForFunction(()=>
@@ -80,6 +95,30 @@ try{
     await page.locator('#launch-game').click();
     await page.frameLocator('#game-frame').locator('#menu-new')
       .waitFor({state:'visible',timeout:20000});
+   }
+   if(pathname==='/donate/'){
+    assert.equal(await page.locator('lhs-donate').count(),1);
+    assert.equal(await page.locator('[data-donate-package]').count(),2);
+    assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+    assert.equal(await page.locator('script[src*="donate"]').count(),0);
+    await page.waitForFunction(()=>
+     document.querySelector('#donate-status')?.textContent?.includes('não liberadas'));
+    assert.ok(donateCalls>=1);
+    donateMode='active';
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.querySelector('#donate-status')?.textContent?.includes('Serviço de pagamentos ativo'));
+    assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+    assert.equal(await page.locator('a[href*="mercadopago"]').count(),0);
+    donateMode='error';
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.querySelector('#donate-status')?.textContent?.includes('Não foi possível consultar'));
+    assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+    assert.equal(unsafePaymentCalls,0,'Donate read-only must not issue external orders/checkout');
+    assert.ok(await page.evaluate(()=>
+     document.documentElement.scrollWidth<=innerWidth+2),'Donate must not overflow at '+width);
+    donateMode='disabled';
    }
    if(pathname==='/dados/'){
     // Seed only this origin; never use a production/user storage value.
@@ -278,7 +317,7 @@ try{
   assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'No horizontal jump while scrolling');
   await page.screenshot({path:resolve(output,'angular-clean-'+width+'.png'),fullPage:true});
-  results.push({width,routeReloads:7,legalRoutes:2,localDataVerified:true,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
+  results.push({width,routeReloads:8,legalRoutes:2,donateReadOnly:true,localDataVerified:true,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
    gameReload:true,errors:errors.length});
   await context.close();
  }
