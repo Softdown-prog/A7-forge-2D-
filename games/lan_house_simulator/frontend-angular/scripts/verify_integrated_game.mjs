@@ -65,7 +65,10 @@ const stockCutoverShell=accountCutoverShell
   '<h3>Produtos e estoque</h3><div id="angular-stock-workspace" class="angular-admin-workspace-root"></div>')
  .replace(merchandiseEntry,
   '<div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>');
-const index=stockCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+const financeCutoverShell=stockCutoverShell.replace(
+ '<h3>Investimento e finanças</h3>',
+ '<h3>Investimento e finanças</h3><div id="angular-finance-workspace" class="angular-admin-workspace-root"></div>');
+const index=financeCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
@@ -306,6 +309,33 @@ try{
   await press(page.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
   assert.equal(await page.locator('#page-computers-hardware').isVisible(),true,
    'Angular computers task opens native hardware panel');
+  // Navigate finance through Angular commands. The original TypeScript manager
+  // still moves/shows the actual panes; no mutation or reset is performed.
+  await press(area.locator('[data-angular-admin-tab="finance"]'));
+  const financeNav=page.locator('#angular-finance-workspace');
+  const nativeFinance=page.locator('#admin .admin-tabs [data-admin-tab="finance"]');
+  assert.equal(await nativeFinance.getAttribute('aria-selected'),'true',
+   'Angular finance area delegates to native admin state');
+  const financeSnapshot=await persisted();
+  for(const task of ['balance','usage','events','promotion','feedback','restart']){
+   await press(financeNav.locator('[data-angular-task="'+task+'"]'));
+   assert.equal(await page.locator('#page-finance-'+task).isVisible(),true,
+    'Angular finance task opens native panel '+task);
+   assert.equal(await page.locator('#section-finance > .management-page:visible').count(),1,
+    'Exactly one finance task visible');
+   assert.equal(await financeNav.locator('[data-angular-task="'+task+'"]')
+    .getAttribute('aria-pressed'),'true','Angular selection synchronized '+task);
+  }
+  assert.equal(await page.locator('#reset-game').isVisible(),true,
+   'Reset action stays in native management page and requires a separate click');
+  const afterFinance=await persisted();
+  assert.equal(afterFinance.ps1Stations?.length,financeSnapshot.ps1Stations?.length,
+   'Finance navigation cannot reset PS1 stations');
+  assert.equal(afterFinance.ps2Stations?.length,financeSnapshot.ps2Stations?.length,
+   'Finance navigation cannot reset PS2 stations');
+  assert.equal(afterFinance.cash>=0,true,'Finance navigation must not corrupt cash');
+  assert.equal(await page.locator('#admin').evaluate(el=>el.scrollWidth-el.clientWidth)<=3,true,
+   'Finance task grid fits desktop and mobile without horizontal overflow');
   await press(page.locator('#close-admin'));
 
   // Save export/import must use the original TypeScript serializer/validator,
