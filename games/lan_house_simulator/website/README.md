@@ -1,3 +1,11 @@
+# Site legado — somente manutenção da produção
+
+Esta pasta é a implementação institucional **antiga**. A nova implementação canônica está em `../frontend-angular/src/site-rewrite/`, inteiramente Angular.
+
+Não adicionar novas funcionalidades institucionais aqui, nem reintroduzir os scripts de `website/` no bundle Angular novo. Preservar o código legado apenas para manter o site publicado operante até o cutover único, com autenticação, saves, pagamentos, conteúdo legal, SEO e testes aprovados. Após o cutover, excluir este diretório e os workflows que o referenciam.
+
+---
+
 # Site próprio do Lan House Simulator
 
 Site público pré-renderizado em HTML e CSS, sem servidor de framework em produção; a interface do jogo incorporado usa Angular 22. Reutiliza a marca e os 41 ícones do Terminal de Bairro. A imagem da home é um quadro real do Canvas do jogo, otimizado em WebP (cerca de 49 KB), não uma promessa de gráficos diferentes.

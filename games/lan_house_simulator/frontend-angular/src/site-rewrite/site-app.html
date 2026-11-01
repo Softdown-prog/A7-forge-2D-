@@ -74,7 +74,7 @@
     <p>Não envie senhas nem dados pessoais em relatos públicos.</p></section>
   }
   @case('/conta/'){
-   <section class="wrap intro"><h1>Minha conta</h1><p class="lead">A autenticação e os saves na nuvem ainda não foram migrados para a aplicação Angular independente. O login está bloqueado neste protótipo.</p><a class="button" href="/jogar/">Jogar sem conta</a></section>
+   <lhs-account></lhs-account>
   }
   @case('/conta/confirmar/'){
    <section class="wrap intro"><h1>Confirmação de email</h1><p class="lead">Em reconstrução; este protótipo não processa links de confirmação.</p></section>
@@ -97,7 +97,7 @@
    </section>
   }
   @case('/dados/'){
-   <section class="wrap intro"><h1>Dados locais</h1><p class="lead">As ações de exclusão e exportação ainda não foram migradas. Nenhum dado será apagado neste protótipo.</p></section>
+   <lhs-local-data></lhs-local-data>
   }
   @default{
    <section class="wrap intro"><h1>Página não encontrada</h1><p>Este endereço não existe no salão.</p><a class="button" href="/">Voltar ao início</a></section>

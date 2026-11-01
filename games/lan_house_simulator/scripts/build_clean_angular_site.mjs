@@ -6,6 +6,11 @@ import {resolve,dirname,extname} from 'node:path';
 const root=resolve(import.meta.dirname,'..');
 const angular=resolve(root,'frontend-angular');
 const output=resolve(root,'out/site-clean-angular');
+const accountConfig=JSON.parse(readFileSync(resolve(root,'account-config.json'),'utf8'));
+const accountApi=new URL(accountConfig.apiUrl);
+assert.ok(accountApi.protocol==='https:'&&!accountApi.username&&!accountApi.password&&
+ accountApi.pathname==='/'&&!accountApi.search&&!accountApi.hash,'Invalid configured account API origin');
+const accountApiOrigin=accountApi.origin;
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 function run(program,args,env=process.env){
  execFileSync(program,args,{cwd:root,stdio:'inherit',env});
@@ -27,15 +32,16 @@ rmSync(output,{recursive:true,force:true});
 mkdirSync(resolve(output,'assets'),{recursive:true});
 cpSync(compiled,resolve(output,'assets/site'),{recursive:true});
 rmSync(resolve(output,'assets/site/index.html'),{force:true});
-const siteAssets=[
- ['assets/ui/brand.svg','assets/brand.svg'],['assets/ui/icons.svg','assets/icons.svg'],
- ['website/assets/sala.webp','assets/sala.webp'],
- ...['pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg']
- .map(name=>['website/assets/'+name,'assets/'+name])
-];
-for(const [src,dst] of siteAssets){
- mkdirSync(dirname(resolve(output,dst)),{recursive:true});
- cpSync(resolve(root,src),resolve(output,dst));
+// All public assets for the new institutional site live inside Angular.
+const siteAssetRoot=resolve(angular,'src/site-rewrite/public/assets');
+const siteAssets=['brand.svg','icons.svg','sala.webp',
+ 'pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg'];
+for(const name of siteAssets){
+ const source=resolve(siteAssetRoot,name);
+ assert.ok(existsSync(source),'Missing canonical Angular site asset: '+name);
+ const destination=resolve(output,'assets',name);
+ mkdirSync(dirname(destination),{recursive:true});
+ cpSync(source,destination);
 }
 cpSync(resolve(root,'out/angular-cutover-candidate'),resolve(output,'game'),{recursive:true});
 rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
@@ -54,7 +60,8 @@ writeFileSync(resolve(output,'robots.txt'),'User-agent: *\nDisallow: /\n');
 writeFileSync(resolve(output,'_headers'),[
  '/*','  X-Content-Type-Options: nosniff',
  '  Referrer-Policy: strict-origin-when-cross-origin',
- "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'self'",
+ // Only explicitly configured authenticated service origins may receive connections.
+ "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+accountApiOrigin+"; frame-src 'self'; object-src 'none'; base-uri 'self'",
  '  Cache-Control: no-cache, must-revalidate',
  '/assets/*','  Cache-Control: no-cache, must-revalidate',
  '/game/*','  Cache-Control: no-cache, must-revalidate',''].join('\n'));

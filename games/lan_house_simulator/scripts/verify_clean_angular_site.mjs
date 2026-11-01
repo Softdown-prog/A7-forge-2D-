@@ -43,7 +43,7 @@ try{
      /\.(?:js|css|svg|webp|json)$/.test(new URL(response.url()).pathname))
     errors.push('HTTP '+response.status()+' '+response.url());
   });
-  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/']){
+  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/','/dados/']){
    let res=await page.goto(origin+pathname,{waitUntil:'networkidle'});
    assert.equal(res?.status(),200);
    await page.waitForFunction(()=>
@@ -81,6 +81,103 @@ try{
     await page.frameLocator('#game-frame').locator('#menu-new')
       .waitFor({state:'visible',timeout:20000});
    }
+   if(pathname==='/dados/'){
+    // Seed only this origin; never use a production/user storage value.
+    await page.evaluate(()=>{
+     localStorage.setItem('lhs-save-v1','{"day":1,"test":"clean-angular"}');
+     localStorage.setItem('lhs.sound','off');
+     localStorage.setItem('another-project-unrelated','keep-this');
+    });
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    const save=page.locator('#delete-local-save');
+    const sound=page.locator('#delete-local-sound');
+    const dialog=page.locator('#delete-dialog');
+    assert.equal(await save.isEnabled(),true);
+    assert.equal(await sound.isEnabled(),true);
+    assert.equal(await page.locator('lhs-local-data').count(),1);
+    if(mobile)await save.tap();else await save.click();
+    await dialog.waitFor({state:'visible'});
+    assert.ok(await dialog.evaluate(el=>el instanceof HTMLDialogElement&&el.open));
+    assert.equal(await page.locator('#delete-title').innerText(),'Apagar a partida local?');
+    // Escape and Cancel must NEVER delete.
+    await page.keyboard.press('Escape');
+    await dialog.waitFor({state:'hidden'});
+    assert.ok(await page.evaluate(()=>localStorage.getItem('lhs-save-v1')!==null));
+    if(mobile)await save.tap();else await save.click();
+    await dialog.waitFor({state:'visible'});
+    await page.locator('#cancel-delete').click();
+    await dialog.waitFor({state:'hidden'});
+    assert.ok(await page.evaluate(()=>localStorage.getItem('lhs-save-v1')!==null));
+    // Explicit confirm removes only the save.
+    if(mobile)await save.tap();else await save.click();
+    await dialog.waitFor({state:'visible'});
+    await page.locator('#confirm-delete').click();
+    await dialog.waitFor({state:'hidden'});
+    await page.waitForFunction(()=>
+     document.querySelector('#data-status')?.textContent?.includes('Partida local apagada.'));
+    assert.deepEqual(await page.evaluate(()=>({
+     save:localStorage.getItem('lhs-save-v1'),
+     sound:localStorage.getItem('lhs.sound'),
+     other:localStorage.getItem('another-project-unrelated')
+    })),{save:null,sound:'off',other:'keep-this'});
+    assert.equal(await save.isDisabled(),true);
+    assert.equal(await sound.isEnabled(),true);
+    // Sound is a separate action, never affects any other key.
+    if(mobile)await sound.tap();else await sound.click();
+    await dialog.waitFor({state:'visible'});
+    await page.locator('#confirm-delete').click();
+    await dialog.waitFor({state:'hidden'});
+    // HTMLDialogElement "close" is dispatched after the visual close.
+    // Wait for Angular's actual completion message and the storage change.
+    await page.waitForFunction(()=>
+     document.querySelector('#data-status')?.textContent?.includes('Preferência de som redefinida.') &&
+     localStorage.getItem('lhs.sound')===null);
+    assert.deepEqual(await page.evaluate(()=>({
+     save:localStorage.getItem('lhs-save-v1'),
+     sound:localStorage.getItem('lhs.sound'),
+     other:localStorage.getItem('another-project-unrelated')
+    })),{save:null,sound:null,other:'keep-this'});
+    assert.equal(await sound.isDisabled(),true);
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('#delete-local-save').isDisabled(),true);
+    assert.equal(await page.locator('#delete-local-sound').isDisabled(),true);
+    // Browser denial should display feedback, NOT clear any other entries.
+    await page.evaluate(()=>{
+     localStorage.setItem('lhs-save-v1','test-denied');
+    });
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    await page.evaluate(()=>{
+     const original=Storage.prototype.removeItem;
+     Storage.prototype.removeItem=function(key){
+      if(key==='lhs-save-v1')throw new DOMException('Storage unavailable','SecurityError');
+      return original.call(this,key);
+     };
+    });
+    await page.locator('#delete-local-save').click();
+    await dialog.waitFor({state:'visible'});
+    await page.locator('#confirm-delete').click();
+    await dialog.waitFor({state:'hidden'});
+    await page.waitForFunction(()=>
+     document.querySelector('#data-status')?.textContent?.includes('não permitiu alterar'));
+    assert.equal(await page.evaluate(()=>localStorage.getItem('lhs-save-v1')),'test-denied');
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('#delete-local-save').isEnabled(),true);
+    // Leave this test origin clean without touching arbitrary keys.
+    await page.evaluate(()=>{
+     localStorage.removeItem('lhs-save-v1');
+     localStorage.removeItem('another-project-unrelated');
+    });
+    assert.deepEqual(errors,[],'Angular local storage tests should not produce page errors');
+   }
+
    if(pathname==='/termos/'||pathname==='/privacidade/'){
     const terms=pathname==='/termos/';
     const expected=terms?10:11;
@@ -181,7 +278,7 @@ try{
   assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'No horizontal jump while scrolling');
   await page.screenshot({path:resolve(output,'angular-clean-'+width+'.png'),fullPage:true});
-  results.push({width,routeReloads:6,legalRoutes:2,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
+  results.push({width,routeReloads:7,legalRoutes:2,localDataVerified:true,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
    gameReload:true,errors:errors.length});
   await context.close();
  }
