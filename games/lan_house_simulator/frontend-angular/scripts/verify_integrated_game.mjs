@@ -157,6 +157,12 @@ try{
   },GAME_SAVE_KEY);
   await page.waitForFunction(count=>
    Number(document.querySelector('#notices-count')?.textContent)===count-1,initialUnread);
+  await page.waitForFunction(title=>{
+   const cards=[...document.querySelectorAll('#notices-list .notice-letter')];
+   const card=cards.find(node=>node.querySelector('h3')?.textContent?.includes(title));
+   return card?.classList.contains('read')&&
+    !card.querySelector('[data-notice-read="y2k-warning"]');
+  },mailTitle,{timeout:10000});
   assert.match(await letter.getAttribute('class'),/\bread\b/);
   assert.equal(await letter.locator('[data-notice-read="y2k-warning"]').count(),0,
    'Already-read notice cannot be read again');
