@@ -25,6 +25,12 @@ on:
       - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
 
+# The migration branch may receive many UI-only commits. Do not queue
+# redundant Chromium runs for superseded revisions; never affect other jobs.
+concurrency:
+  group: lhs-angular-preview-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
