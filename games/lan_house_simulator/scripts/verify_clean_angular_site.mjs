@@ -94,10 +94,11 @@ try{
     assert.equal(await page.locator('main h1').count(),1);
     assert.equal(await page.locator('script[src*="site.mjs"]').count(),0);
     const anchor=index.first();
-    assert.equal(await anchor.getAttribute('href'),terms?'#projeto':'#responsavel');
+    assert.equal(await anchor.getAttribute('href'),terms?'/termos/#projeto':'/privacidade/#responsavel');
     if(mobile)await anchor.tap();else await anchor.click();
-    await page.waitForFunction(id=>location.hash==='#'+id,
-     terms?'projeto':'responsavel');
+    await page.waitForFunction(({id,pathname})=>
+     location.hash==='#'+id&&location.pathname===pathname,
+     {id:terms?'projeto':'responsavel',pathname});
     const sectionLayout=await sections.first().evaluate(element=>{
      const rect=element.getBoundingClientRect();
      const style=getComputedStyle(element);

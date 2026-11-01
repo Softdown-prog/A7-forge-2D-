@@ -109,7 +109,7 @@
     <h2>Esta página</h2>
     <nav aria-label="Índice desta página">
      @for(item of legalSections;track item.id;let i=$index){
-      <a [href]="'#'+item.id"><span>{{i+1}}.</span> {{item.title}}</a>
+      <a [href]="path+'#'+item.id"><span>{{i+1}}.</span> {{item.title}}</a>
      }
     </nav>
    </aside>

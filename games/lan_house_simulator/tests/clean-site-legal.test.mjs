@@ -17,12 +17,12 @@ test('Terms and Privacy are independent Angular-owned pages',()=>{
  assert.ok(app.includes("import {termsSections,privacySections} from './legal-content'"));
  assert.ok(template.includes('@for(item of legalSections;track item.id)'));
  assert.ok(template.includes('[attr.aria-labelledby]'));
- assert.ok(template.includes('[href]="\'#\'+item.id"'));
+ assert.ok(template.includes('[href]="path+\'#\'+item.id"'));
  assert.ok(template.includes('Versão Angular em revisão'));
  assert.ok(!template.includes('Conteúdo integral pendente de migração'));
  assert.ok(css.includes('.legal-grid')&&css.includes('@media(max-width:520px)'));
  assert.ok(browser.includes("'/termos/','/privacidade/'"));
  assert.ok(browser.includes('const expected=terms?10:11'));
- assert.ok(browser.includes("location.hash==='#'+id"));
+ assert.ok(browser.includes("location.hash==='#'+id&&location.pathname===pathname"));
  assert.ok(browser.includes("page.reload({waitUntil:'networkidle'})"));
 });
