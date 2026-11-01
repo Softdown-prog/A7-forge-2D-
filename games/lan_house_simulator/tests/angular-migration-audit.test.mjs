@@ -23,7 +23,7 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
  for(const id of ["console-purchases","menu-save-transfer","sound-preferences",
   "admin-workspaces","desktop-mobile-touch","disabled-purchases",
   "shop-catalog-preview","hud-weather","mail-inbox","shop-search","keyboard-focus",
-  "privacy-consent","layout-editor","account-donation"]){
+  "privacy-consent","layout-editor","account-donation","stock-management"]){
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
  assert.equal(report.browserQa.workflowPresent,true);
@@ -83,6 +83,18 @@ test("account and Donate browser evidence is mocked and cannot charge a player",
   "redemptions","orderCalls,0","cloudUploads,0",
   "No donation order or Mercado Pago charge"]){
   assert.ok(sources.integratedQa.includes(marker),marker);
+ }
+ assert.equal(report.decision,"no-merge-no-deploy");
+});
+
+test("stock browser evidence covers 2000 unlock, supplier order, price and persisted save",()=>{
+ const report=auditMigration(sources);
+ assert.equal(report.browserQa.checks.find(x=>x.id==="stock-management")?.status,
+  "script-evidence-found");
+ for(const text of ["stockManagementResults","angular-merchandise-catalog",
+  "merchandise-order","merchandise-price-form","supplierTask",
+  "restored.merchandise.orders.length"]){
+  assert.ok(sources.integratedQa.includes(text),text);
  }
  assert.equal(report.decision,"no-merge-no-deploy");
 });
