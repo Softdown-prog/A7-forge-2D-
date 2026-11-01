@@ -1,5 +1,5 @@
 /** Sole owner of local save and sound controls in the new Angular site. */
-import {ChangeDetectionStrategy,Component,OnInit,signal} from '@angular/core';
+import {ChangeDetectionStrategy,ChangeDetectorRef,Component,OnInit,inject,signal} from '@angular/core';
 
 export const LOCAL_DATA_KEYS=Object.freeze({
  save:'lhs-save-v1',
@@ -24,6 +24,7 @@ export function localDataState(storage:Pick<Storage,'getItem'>,kind:LocalDataKin
  templateUrl:'./local-data.html'
 })
 export class LocalDataComponent implements OnInit {
+ private readonly changeDetector=inject(ChangeDetectorRef);
  readonly saveStatus=signal<LocalDataState>('blocked');
  readonly soundStatus=signal<LocalDataState>('blocked');
  readonly pending=signal<LocalDataKind|null>(null);
@@ -45,6 +46,8 @@ export class LocalDataComponent implements OnInit {
   this.message.set('');
   this.pending.set(kind);
   dialog.returnValue='cancel';
+  // The native dialog opens synchronously; render Angular's chosen copy first.
+  this.changeDetector.detectChanges();
   try{dialog.showModal();}
   catch{this.pending.set(null);this.message.set('Não foi possível abrir a confirmação. Nenhum dado foi apagado.');}
  }
