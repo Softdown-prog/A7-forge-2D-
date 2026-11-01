@@ -356,6 +356,10 @@ try{
    await press(area.locator('[data-angular-admin-tab="'+group.area+'"]'));
    const nav=page.locator('#angular-'+group.area+'-workspace');
    assert.equal(await nav.count(),1,'One Angular navigation root '+group.area);
+   assert.equal(await nav.evaluate(el=>el.parentElement?.id),'section-'+group.area,
+    'Angular workspace must not be moved into a native page: '+group.area);
+   assert.equal(await nav.isVisible(),true,
+    'Angular task grid must remain visible after native management mount');
    for(const task of group.pages){
     const button=nav.locator('[data-angular-task="'+task+'"]');
     await press(button);
