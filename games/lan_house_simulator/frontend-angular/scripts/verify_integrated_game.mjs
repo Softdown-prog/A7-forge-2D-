@@ -44,6 +44,7 @@ try{
   const fixture=createGame(2200+width,'historical');
   fixture.totalMinutes=8*360*DAY_MINUTES+35; // 2006
   fixture.cash=15000;fixture.pcPoweredOff=[true,true,true];
+  fixture.pcWear=[19,53,82]; // Deterministic real-save wear for health UI QA.
   fixture.offlineUntil=fixture.totalMinutes+500;
   fixture.weather='rain';
   // A known real notice from the native save, not a mocked Angular snapshot.
@@ -282,6 +283,69 @@ try{
   await press(page.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
   assert.equal(await page.locator('#page-computers-hardware').isVisible(),true,
    'Angular computers task opens native hardware panel');
+  // Verify real Angular PC-health updates and native actions on each width.
+  // No synthetic Angular events: all snapshots come from the active game.
+  const pcWorkspace=page.locator('#angular-computer-workspace');
+  const pcHealth=pcWorkspace.locator('.angular-pc-health');
+  await pcHealth.waitFor({state:'visible'});
+  await page.waitForFunction(()=>{
+   const text=document.querySelector('#angular-computer-workspace .angular-pc-health')?.textContent??'';
+   return text.includes('Instalados')&&text.includes('3')&&
+    text.includes('Desligados')&&text.includes('Com defeito')&&
+    text.includes('Em reparo')&&text.includes('Desgaste médio');
+  },null,{timeout:10000});
+  assert.match(await pcHealth.innerText(),/Desgaste médio\\s*\\d+%/);
+  assert.ok(await pcHealth.evaluate(node=>node.scrollWidth-node.clientWidth)<=3,
+   'PC health summary does not overflow at '+width+' px');
+
+  // Angular station buttons forward to the native hardware selection.
+  await page.waitForFunction(()=>
+   document.querySelectorAll('#angular-computer-workspace [data-angular-station]').length>=3);
+  const angularStations=pcWorkspace.locator('[data-angular-station]');
+  assert.equal(await angularStations.count(),3,'Three hardware stations available');
+  const beforeStation=await persisted();
+  await press(pcWorkspace.locator('[data-angular-station="1"]'));
+  await page.waitForFunction(()=>
+   document.querySelector('#hardware-select-1')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#angular-computer-workspace [data-angular-station="1"]')
+    ?.getAttribute('aria-pressed')==='true');
+  await page.evaluate(()=>document.querySelector('#hardware-select-0')?.click());
+  await page.waitForFunction(()=>
+   document.querySelector('#hardware-select-0')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#angular-computer-workspace [data-angular-station="0"]')
+    ?.getAttribute('aria-pressed')==='true');
+  assert.equal((await persisted()).cash,beforeStation.cash,
+   'Selecting a station cannot change cash');
+
+  // Power button remains native and modifies the saved PC power state.
+  await press(pcWorkspace.locator('[data-angular-task="operations"]'));
+  await page.locator('#pc-power-0').waitFor({state:'visible'});
+  assert.equal(await page.locator('#pc-power-0').isEnabled(),true,
+   'Idle offline station can be switched on');
+  await press(page.locator('#pc-power-0'));
+  await page.waitForFunction(key=>{
+   const save=JSON.parse(localStorage.getItem(key)??'{}');
+   return save.pcPoweredOff?.[0]===false;
+  },GAME_SAVE_KEY);
+  await page.waitForFunction(()=>
+   document.querySelector('#angular-computer-workspace .angular-pc-health')
+    ?.textContent?.includes('Desligados 2'));
+  await press(page.locator('#pc-power-0'));
+  await page.waitForFunction(key=>{
+   const save=JSON.parse(localStorage.getItem(key)??'{}');
+   return save.pcPoweredOff?.[0]===true;
+  },GAME_SAVE_KEY);
+  await page.waitForFunction(()=>
+   document.querySelector('#angular-computer-workspace .angular-pc-health')
+    ?.textContent?.includes('Desligados 3'));
+  assert.equal(await page.locator('[data-pc-repair="0"]').count(),1,
+   'Native PC repair action remains present');
+  assert.equal((await persisted()).cash,beforeStation.cash,
+   'Power buttons cannot debit cash');
+  assert.ok(await pcWorkspace.evaluate(node=>node.scrollWidth-node.clientWidth)<=3,
+   'PC workspace stays responsive at '+width+' px');
+  await page.screenshot({path:resolve(output,'pc-maintenance-'+width+'.png'),fullPage:true});
+
   // Navigate finance through Angular commands. The original TypeScript manager
   // still moves/shows the actual panes; no mutation or reset is performed.
   await press(area.locator('[data-angular-admin-tab="finance"]'));
@@ -412,7 +476,7 @@ try{
   assert.deepEqual(errors,[],'No runtime JS errors');
   reports.push({width,mobile,ps1Position,ps2Position,ps1Stations:restored.ps1Stations.length,
    ps2Stations:restored.ps2Stations.length,cash:restored.cash,
-   adminNavigation:true,soundPreference:true,saveFileRoundtrip:true,
+   adminNavigation:true,pcMaintenance:true,soundPreference:true,saveFileRoundtrip:true,
    angularMenuComponents:true,
    runtimeErrors:errors.length});
   await context.close();

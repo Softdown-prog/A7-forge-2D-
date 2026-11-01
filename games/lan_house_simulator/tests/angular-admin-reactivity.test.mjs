@@ -52,3 +52,20 @@ test('station switch synchronizes after native reconciliation without a DOM obse
  assert.doesNotMatch(workspaces,/new MutationObserver/);
  assert.match(native,/renderPcMaintenancePanel/);
 });
+
+test('Integrated Chromium QA checks real PC health, mobile selection and persisted power state',()=>{
+ const qa=src('frontend-angular/scripts/verify_integrated_game.mjs');
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+ for(const marker of [
+  "pc-maintenance-'+width",
+  '#angular-computer-workspace .angular-pc-health',
+  '[data-angular-station="1"]','hardware-select-0',
+  '#pc-power-0','[data-pc-repair="0"]',
+  'save.pcPoweredOff?.[0]===false','save.pcPoweredOff?.[0]===true',
+  'pcMaintenance:true','Desgaste médio'
+ ])assert.ok(qa.includes(marker),marker);
+ assert.match(qa,/for\(const width of \[1280,414,360\]\)/);
+ assert.match(qa,/isMobile:mobile,hasTouch:mobile/);
+ assert.match(workflow,/branches: \["main", "feat\/lhs-angular-ui-foundation"\]/);
+ assert.match(workflow,/verify_integrated_game\.mjs/);
+});

@@ -5,6 +5,7 @@ on:
     paths:
       - "games/lan_house_simulator/frontend-angular/**"
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-reactivity.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
       - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
@@ -17,12 +18,16 @@ on:
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
       - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
       - "games/lan_house_simulator/src/ui/managementPanels.ts"
+      - "games/lan_house_simulator/src/ui/adminComputerSections.ts"
+      - "games/lan_house_simulator/src/ui/adminReactiveSummary.ts"
+      - "games/lan_house_simulator/src/application/pcOperationsPort.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
   push:
-    branches: ["feat/lhs-angular-ui-foundation"]
+    branches: ["main", "feat/lhs-angular-ui-foundation"]
     paths:
       - "games/lan_house_simulator/frontend-angular/**"
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
+      - "games/lan_house_simulator/tests/angular-admin-reactivity.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
       - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
@@ -35,6 +40,9 @@ on:
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
       - "games/lan_house_simulator/src/ui/merchandisePanel.ts"
       - "games/lan_house_simulator/src/ui/managementPanels.ts"
+      - "games/lan_house_simulator/src/ui/adminComputerSections.ts"
+      - "games/lan_house_simulator/src/ui/adminReactiveSummary.ts"
+      - "games/lan_house_simulator/src/application/pcOperationsPort.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
 
 # The migration branch may receive many UI-only commits. Do not queue
@@ -73,7 +81,7 @@ jobs:
           node --check website/check.mjs
           node --check scripts/verify_live_site_preview.mjs
       - name: Verify Angular UI boundaries
-        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
+        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-reactivity.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
       - name: Audit React to Angular hosts and browser QA gaps (advisory)
         run: |
           node --test tests/angular-migration-audit.test.mjs
