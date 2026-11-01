@@ -453,6 +453,10 @@ try{
    const dy=pixel.y/canvas.height*canvas.offsetHeight;
    viewport.scrollLeft=Math.max(0,dx-viewport.clientWidth/2);
    viewport.scrollTop=Math.max(0,dy-viewport.clientHeight/2);
+   // The viewport's ResizeObserver may recenter the magnified canvas in a
+   // pending animation frame after scrolling back from the editor controls.
+   // Read screen coordinates only once those browser layout frames settle.
+   await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
    const rect=canvas.getBoundingClientRect();
    const x=rect.left+pixel.x/canvas.width*rect.width;
    const y=rect.top+pixel.y/canvas.height*rect.height;
