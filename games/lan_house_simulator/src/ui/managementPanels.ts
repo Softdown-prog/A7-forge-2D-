@@ -74,7 +74,10 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
  }
  const prices=$('section-prices'),insight=prices.querySelector('.price-insight')!;
  const packageList=$('session-package-prices'),packages=[packageList.previousElementSibling!,packageList];
- const hourly=following(prices.querySelector('h3')!.nextElementSibling!,insight);
+ // The optional Angular navigation is not a native task node: keep it anchored
+ // directly inside the administration section when the legacy panes are moved.
+ const hourly=following(prices.querySelector('h3')!.nextElementSibling!,insight)
+  .filter(node=>node.id!=='angular-prices-workspace');
  packages.forEach(node=>node.remove());
  mount('prices',[
   {id:'hourly',label:'Hora e pacotes',nodes:[...hourly,...packages]},
@@ -109,7 +112,9 @@ export function installManagementPanels(admin:HTMLElement,onChange:()=>void,getY
   {id:'access',label:'Passagens',nodes:[access]}
  ]);
  const licenseRoot=$('section-licenses'),classicHeading=headingFor($('era-game-catalog')),gpuHeading=headingFor($('gpu-game-catalog'));
- const windows=following(licenseRoot.querySelector('h3')!.nextElementSibling!,classicHeading),classic=following(classicHeading,gpuHeading),advanced=following(gpuHeading);
+ const windows=following(licenseRoot.querySelector('h3')!.nextElementSibling!,classicHeading)
+  .filter(node=>node.id!=='angular-licenses-workspace');
+ const classic=following(classicHeading,gpuHeading),advanced=following(gpuHeading);
  mount('licenses',[
   {id:'windows',label:'Windows por PC',nodes:windows},
   {id:'classic',label:'Jogos clássicos',nodes:classic},
