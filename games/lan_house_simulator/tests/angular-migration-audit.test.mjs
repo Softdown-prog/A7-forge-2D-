@@ -145,3 +145,18 @@ test("cutover audit includes standalone optional Angular hosts, not only tuple i
  }
  assert.equal(report.decision,"no-merge-no-deploy");
 });
+
+test("isolated Angular preview explicitly renders calendar and mail safely",()=>{
+ const report=auditMigration(sources);
+ for(const id of ["mail-preview","weather-preview"]){
+  assert.equal(report.browserQa.checks.find(c=>c.id===id)?.status,
+   "script-evidence-found",id);
+ }
+ for(const marker of [
+  "#angular-time-weather #time-weather-date",
+  "#angular-notice-inbox #notices",
+  "data-notice-read",
+  "Untrusted inbox text never becomes an executable image"
+ ])assert.ok(sources.previewQa.includes(marker),marker);
+ assert.equal(report.decision,"no-merge-no-deploy");
+});

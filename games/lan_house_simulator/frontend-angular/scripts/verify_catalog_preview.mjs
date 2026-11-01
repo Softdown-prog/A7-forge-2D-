@@ -43,6 +43,44 @@ try{
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(origin,{waitUntil:'load'});
   await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+
+  // Standalone Angular snapshot contracts complement real simulation browser QA.
+  // No backend, save, or native purchase action occurs in this preview fixture.
+  await page.evaluate(()=>{
+   document.dispatchEvent(new CustomEvent('lhs:time-weather-updated',{detail:{
+    day:42,date:'12/02/2002',time:'18:45',weekday:'terça-feira',
+    nightActive:false,ended:false,weather:'Chuva',weatherIcon:'rain',
+    impact:'Menos clientes na chuva',outlook:'Previsão instável'
+   }}));
+   document.dispatchEvent(new CustomEvent('lhs:notice-status-updated',{detail:{
+    unread:1,badgeHidden:false,badgeText:'1',windowHidden:false,expanded:'true'
+   }}));
+   document.dispatchEvent(new CustomEvent('lhs:notice-inbox-updated',{detail:{letters:[{
+    title:'Carta de teste Angular',body:'Mensagem <img src=x onerror=alert(1)>',
+    day:42,severity:'warning',read:false,
+    items:[{kind:'button',action:'read',text:'Marcar como lida',
+     disabled:false,noticeId:'preview-mail-42'}]
+   }]}}));
+  });
+  await page.waitForFunction(()=>{
+   const date=document.querySelector('#angular-time-weather #time-weather-date');
+   const hour=document.querySelector('#angular-time-weather #time-weather-hour');
+   const letter=document.querySelector('#angular-notice-inbox .notice-letter h3');
+   return date?.textContent?.trim()==='12/02/2002' &&
+    hour?.textContent?.trim()==='18:45' &&
+    letter?.textContent?.includes('Carta de teste Angular');
+  });
+  assert.equal(await page.locator('#angular-time-weather #time-weather-condition')
+   .textContent(),'Chuva','Standalone Angular weather renders snapshot');
+  assert.equal(await page.locator('#angular-notice-inbox #notices')
+   .getAttribute('aria-modal'),'true','Angular inbox keeps dialog semantics');
+  assert.equal(await page.locator('#angular-notice-inbox [data-notice-read="preview-mail-42"]')
+   .count(),1,'Inbox renders native delegated action without invoking it');
+  assert.equal(await page.locator('#angular-notice-inbox img').count(),0,
+   'Untrusted inbox text never becomes an executable image');
+  assert.ok((await page.locator('#angular-notice-inbox .notice-letter p')
+   .textContent())?.includes('<img src=x onerror=alert(1)>'),
+   'Escaped inbox text is visible without injecting HTML');
   await page.evaluate(()=>{
    const native=document.getElementById('shop-catalog');
    if(!native)throw Error('Native shop command fixture host is missing');
@@ -141,7 +179,7 @@ try{
   assert.deepEqual(errors,[],'Preview must not throw JavaScript exceptions');
   await page.screenshot({path:resolve(output,'catalog-'+width+'.png'),fullPage:true});
   results.push({width,mobile,delegatedPurchases:purchases.length,slot:'west',
-   ps2Slot:'bench-b',runtimeErrors:errors.length});
+   ps2Slot:'bench-b',timeWeatherPreview:true,mailPreview:true,runtimeErrors:errors.length});
   await context.close();
  }
  await writeFile(resolve(output,'results.json'),JSON.stringify(results,null,2));
