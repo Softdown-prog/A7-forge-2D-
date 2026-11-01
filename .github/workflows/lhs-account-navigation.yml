@@ -8,6 +8,7 @@ on:
       - 'games/lan_house_simulator/online-config.json'
       - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
+      - 'games/lan_house_simulator/scripts/verify_account_panel.mjs'
       - '.github/workflows/lhs-account-navigation.yml'
   push:
     branches: [main]
@@ -18,6 +19,7 @@ on:
       - 'games/lan_house_simulator/online-config.json'
       - 'games/lan_house_simulator/scripts/build.mjs'
       - 'games/lan_house_simulator/scripts/verify_account_navigation.mjs'
+      - 'games/lan_house_simulator/scripts/verify_account_panel.mjs'
       - '.github/workflows/lhs-account-navigation.yml'
 permissions:
   contents: read
