@@ -51,3 +51,35 @@ test('React entry remains operational until complete release',()=>{
  assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
  assert.match(file('frontend-angular/angular.json'),/workspace\.css/);
 });
+
+test('Angular stock workspace mirrors native 2000 unlock and forwards task commands',()=>{
+ const ui=file('frontend-angular/src/workspaces.ts');
+ const markup=file('frontend-angular/src/templates/stock-workspace.html');
+ const manager=file('src/ui/managementPanels.ts');
+ const entry=file('frontend-angular/src/main.ts');
+ const preview=file('frontend-angular/src/index.html');
+ const css=file('frontend-angular/src/workspace.css');
+ for(const task of ['catalog','suppliers','orders']){
+  assert.match(ui,new RegExp("id:'"+task+"'"));
+  assert.match(manager,new RegExp("id:'"+task+"'"));
+ }
+ assert.match(ui,/class StockWorkspaceComponent extends Workspace/);
+ assert.match(ui,/catalogLocked=signal\(true\)/);
+ assert.match(ui,/original\.disabled/);
+ assert.match(ui,/MutationObserver/);
+ assert.match(ui,/super\.ngOnInit\(\)/);
+ assert.match(ui,/super\.ngOnDestroy\(\)/);
+ assert.match(markup,/\[disabled\]="task\.id==='catalog'&&catalogLocked\(\)"/);
+ assert.match(markup,/openTask\(task\.id\)/);
+ assert.match(markup,/data-angular-task/);
+ assert.match(manager,/angularRoot=area==='computers'/);
+ assert.match(manager,/area==='stock'\?root\.querySelector\('#angular-stock-workspace'\)/);
+ assert.match(manager,/MERCHANDISE_CATALOG_UNLOCK_YEAR=2000/);
+ assert.match(entry,/StockWorkspaceComponent/);
+ assert.match(entry,/stockWorkspaceHost/);
+ assert.match(preview,/id="angular-stock-workspace"/);
+ assert.match(css,/#angular-stock-workspace \+ \.management-pages/);
+ assert.doesNotMatch(file('index.html'),/id="angular-stock-workspace"/);
+ assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
+ assert.doesNotMatch(ui,/orderMerchandise|setMerchandisePrice|localStorage|fetch\(/);
+});
