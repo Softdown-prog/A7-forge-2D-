@@ -41,4 +41,6 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node scripts/verify_account_navigation.mjs
+      # O painel legado é testado em dist/, não no site Angular em out/site/.
+      - run: npm run build
       - run: node scripts/verify_account_panel.mjs
