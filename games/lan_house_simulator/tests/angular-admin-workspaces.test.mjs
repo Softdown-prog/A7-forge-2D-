@@ -113,3 +113,38 @@ test('Angular finance task navigation delegates to native manager with safe rest
  assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
  assert.doesNotMatch(ui,/resetGame|localStorage|fetch\(|createGame/);
 });
+
+
+test('Prices, licenses and consoles navigate existing native panels without engine logic',()=>{
+ const ui=file('frontend-angular/src/workspaces.ts');
+ const main=file('frontend-angular/src/main.ts');
+ const template=file('frontend-angular/src/templates/admin-task-workspace.html');
+ const management=file('src/ui/managementPanels.ts');
+ const css=file('frontend-angular/src/workspace.css');
+ const preview=file('frontend-angular/src/index.html');
+ const published=file('index.html');
+ const groups={
+  prices:['hourly','insights','retail','printing','discs'],
+  licenses:['windows','classic','gpu'],
+  consoles:['stations','pricing','discs']
+ };
+ for(const [area,pages] of Object.entries(groups)){
+  assert.match(ui,new RegExp("readonly area='"+area+"' as const"));
+  assert.match(ui,new RegExp("readonly tasks=TASKS\\."+area));
+  assert.match(main,new RegExp("'angular-"+area+"-workspace'"));
+  assert.match(management,new RegExp("area==='"+area+"'\\?root\\.querySelector\\('#angular-"+area+"-workspace'\\)"));
+  assert.ok(preview.includes('id="angular-'+area+'-workspace"'));
+  assert.ok(!published.includes('id="angular-'+area+'-workspace"'));
+  assert.ok(css.includes('#angular-'+area+'-workspace + .management-pages'));
+  for(const page of pages){
+   assert.match(management,new RegExp("id:'"+page+"'"));
+   assert.match(ui,new RegExp("id:'"+page+"'"));
+  }
+ }
+ assert.match(template,/data-angular-task/);
+ assert.match(template,/openTask\(task\.id\)/);
+ assert.match(template,/aria-controls/);
+ assert.match(template,/aria-pressed/);
+ assert.doesNotMatch(ui,/orderMerchandise|resetGame|localStorage|fetch\(|createGame/);
+ assert.doesNotMatch(template,/\(click\)="buy|\(click\)="purchase/);
+});
