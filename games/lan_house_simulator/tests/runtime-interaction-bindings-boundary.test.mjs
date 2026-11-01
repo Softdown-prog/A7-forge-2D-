@@ -33,6 +33,23 @@ function fixture({present=true,open=false,playing=true,editor=false,placing=fals
 test("instala primeiro o listener do calendário e depois o teclado",()=>{
  const x=fixture();x.install();assert.deepEqual(x.registrations,["panel:toggle","doc:keydown"]);
 });
+test("Escape uses capture so a nested Angular dialog cannot swallow the shortcut",()=>{
+ let registered;
+ const doc={
+  getElementById:()=>null,
+  addEventListener:(name,listener,options)=>{if(name==="keydown")registered={listener,options};}
+ };
+ const actions=[];
+ installRuntimeInteractionBindings(doc,{
+  playing:()=>true,editorOpen:()=>false,editingPlacement:()=>false,
+  closeEditor:()=>actions.push("editor"),stopPlacement:()=>actions.push("placement"),
+  showMenu:()=>actions.push("menu"),refreshTimeWeather:()=>actions.push("weather")
+ });
+ assert.equal(registered?.options?.capture,true);
+ registered.listener({key:"Escape"});
+ assert.deepEqual(actions,["menu"]);
+});
+
 test("não executa callbacks de UI durante inicialização",()=>{
  const x=fixture();x.install();assert.deepEqual(x.actionsLog,[]);
 });
