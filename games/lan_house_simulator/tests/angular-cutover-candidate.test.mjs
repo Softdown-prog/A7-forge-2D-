@@ -94,6 +94,14 @@ test('published site preview checks the Angular cards and versioned Canvas rende
  const full=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
  assert.match(full,/LHS_CHECK_DEFAULT_SITE/);
 });
+test('the standard site build and CSP browser smoke are mandatory on the migration branch',()=>{
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+ assert.match(workflow,/Validate default Angular site build and real public output/);
+ assert.match(workflow,/npm run build:site/);
+ assert.match(workflow,/npm run check:site/);
+ assert.match(workflow,/LHS_CHECK_DEFAULT_SITE=1 node frontend-angular\/scripts\/verify_full_site\.mjs/);
+ assert.match(workflow,/lhs-angular-default-site-qa/);
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);
