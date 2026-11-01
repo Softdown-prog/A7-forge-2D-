@@ -743,6 +743,7 @@ try{
   const angularOrders=stockWorkspace.locator('[data-angular-task="orders"]');
   if(scenario.year<2000){
    assert.equal(await catalogTask.isDisabled(),true,'1998 catalog must remain locked');
+   await page.waitForFunction(()=>document.querySelector('#angular-stock-workspace [data-angular-task="catalog"]')?.disabled===true);
    assert.equal(await angularCatalog.isDisabled(),true,
     'Angular stock navigation must mirror the 1998 catalog lock');
    assert.equal(await angularSuppliers.isEnabled(),true,
@@ -755,6 +756,7 @@ try{
     'Locked advanced catalog cannot charge the player');
   }else{
    assert.equal(await catalogTask.isEnabled(),true,'Catalog unlocks in 2000');
+   await page.waitForFunction(()=>document.querySelector('#angular-stock-workspace [data-angular-task="catalog"]')?.disabled===false);
    assert.equal(await angularCatalog.isEnabled(),true,
     'Angular catalog mirrors the unlocked native command');
    await press(angularCatalog);
