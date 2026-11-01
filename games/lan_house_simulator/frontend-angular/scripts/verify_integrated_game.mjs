@@ -60,8 +60,11 @@ assert.ok(!integratedShell.includes('<details class="time-weather-panel" id="tim
 // rehearsal. The published HTML intentionally retains its native fallback.
 const accountCutoverShell=integratedShell.replace('</body>',
  '<div id="angular-player-account"></div></body>');
-const stockCutoverShell=accountCutoverShell.replace(merchandiseEntry,
- '<div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>');
+const stockCutoverShell=accountCutoverShell
+ .replace('<h3>Produtos e estoque</h3>',
+  '<h3>Produtos e estoque</h3><div id="angular-stock-workspace" class="angular-admin-workspace-root"></div>')
+ .replace(merchandiseEntry,
+  '<div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>');
 const index=stockCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
@@ -734,8 +737,16 @@ try{
    'Angular stock tab must delegate to native administration');
   const catalogTask=page.locator('#section-stock [data-panel-choice="catalog"]');
   const supplierTask=page.locator('#section-stock [data-panel-choice="suppliers"]');
+  const stockWorkspace=page.locator('#angular-stock-workspace');
+  const angularCatalog=stockWorkspace.locator('[data-angular-task="catalog"]');
+  const angularSuppliers=stockWorkspace.locator('[data-angular-task="suppliers"]');
+  const angularOrders=stockWorkspace.locator('[data-angular-task="orders"]');
   if(scenario.year<2000){
    assert.equal(await catalogTask.isDisabled(),true,'1998 catalog must remain locked');
+   assert.equal(await angularCatalog.isDisabled(),true,
+    'Angular stock navigation must mirror the 1998 catalog lock');
+   assert.equal(await angularSuppliers.isEnabled(),true,
+    'Angular suppliers remain accessible before advanced catalog unlock');
    assert.equal(await page.locator('#page-stock-catalog').isVisible(),false);
    assert.equal(await page.locator('#page-stock-suppliers').isVisible(),true);
    assert.equal(await page.locator('#stock-soda').isEnabled(),true,
@@ -744,7 +755,9 @@ try{
     'Locked advanced catalog cannot charge the player');
   }else{
    assert.equal(await catalogTask.isEnabled(),true,'Catalog unlocks in 2000');
-   await press(catalogTask);
+   assert.equal(await angularCatalog.isEnabled(),true,
+    'Angular catalog mirrors the unlocked native command');
+   await press(angularCatalog);
    const root=page.locator('#angular-merchandise-catalog');
    await root.waitFor({state:'visible'});
    assert.equal(await page.locator('#page-stock-catalog').isVisible(),true);
@@ -763,13 +776,13 @@ try{
    assert.equal(ordered.merchandise.orders[0].product,'water');
    assert.ok(ordered.cash<first.cash&&ordered.cash>0,
     'Real merchandise order charges the game cash once');
-   await press(page.locator('#section-stock [data-panel-choice="orders"]'));
+   await press(angularOrders);
    assert.match(await page.locator('#merchandise-orders').innerText(),/36 un/,
     'Angular catalog order is visible in native deliveries panel');
-   await press(supplierTask);
+   await press(angularSuppliers);
    assert.equal(await page.locator('#supplier-up').isEnabled(),true,
     'Supplier upgrade remains available through the native stock panel');
-   await press(catalogTask);
+   await press(angularCatalog);
    await root.locator('#merchandise-category').selectOption('candy');
    await root.locator('#merchandise-product').selectOption('pacoca');
    await root.locator('#merchandise-price').fill('0.90');
@@ -796,13 +809,13 @@ try{
    await press(page.locator('#menu-continue'));
    await press(page.locator('#open-admin'));
    await press(page.locator('#angular-admin-area-navigation [data-angular-admin-tab="stock"]'));
-   await press(page.locator('#section-stock [data-panel-choice="catalog"]'));
+   await press(page.locator('#angular-stock-workspace [data-angular-task="catalog"]'));
    const restoredRoot=page.locator('#angular-merchandise-catalog');
    await restoredRoot.locator('#merchandise-category').selectOption('candy');
    await restoredRoot.locator('#merchandise-product').selectOption('pacoca');
    assert.equal(await restoredRoot.locator('#merchandise-price').inputValue(),'0.90',
     'Edited price persisted through reload and Angular DOM recreation');
-   await press(page.locator('#section-stock [data-panel-choice="orders"]'));
+   await press(page.locator('#angular-stock-workspace [data-angular-task="orders"]'));
    assert.match(await page.locator('#merchandise-orders').innerText(),/36 un/,
     'One paid pending order survives reload');
    const restored=await persisted();
