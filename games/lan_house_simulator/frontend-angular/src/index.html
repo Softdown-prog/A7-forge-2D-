@@ -22,6 +22,10 @@
       <button data-admin-tab="computers" aria-controls="section-computers" aria-selected="false">Computadores</button>
       <button data-admin-tab="services" aria-controls="section-services" aria-selected="false">Serviços</button>
     </nav><div id="section-computers"><h3>Computadores</h3><div id="angular-computer-workspace"></div><div id="pc-maintenance"></div></div><div id="section-services"><h3>Serviços</h3><div id="angular-service-workspace"></div></div></section>
+  <!-- Native stock manager owns prices/orders; Angular owns its stable form DOM only. -->
+  <section aria-label="Prévia do catálogo de mercadorias">
+    <div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>
+  </section>
   <!-- Account dialog DOM owned by Angular, business actions attached by native controller only in game. -->
   <div id="angular-player-account"></div>
 </body>
