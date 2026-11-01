@@ -116,9 +116,9 @@ export function auditMigration(sources){
    caveat:"String markers indicate script coverage only, NOT proof of passing browser behavior. See Actions results."},
   blockers,
   nextSteps:[
-   "Add real-browser E2E for Angular calendar, weather and inbox/letter dialogs",
-   "Test mobile furniture layout/rotation and keyboard focus/Escape after cutover",
-   "Test stock management and account/donation integration after Angular cutover",
+   "Review end-to-end stock management and save/cloud flows in Chromium and on real devices",
+   "Review account/donation navigation with live services only in a separately approved environment",
+   "Confirm Angular template/host parity for remaining native interface panels",
    "Keep React bootstrap in production until complete parity and explicit approval"
   ]
  };
