@@ -204,8 +204,8 @@ test('Angular timeline isolates the legacy JavaScript handler and runs Chromium 
  const entry=readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8');
  const component=readFileSync(new URL('../frontend-angular/src/site/site-timeline.ts',import.meta.url),'utf8');
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
- for(const key of ['if(angularCandidate)body=body.replaceAll',
-   'escape(JSON.stringify(eras))','data-angular-site-timeline'])
+ assert.match(build,/if\(angularCandidate\)\s*\{[\s\S]*?body=body\.replaceAll/);
+ for(const key of ['escape(JSON.stringify(eras))','data-angular-site-timeline'])
   assert.ok(build.includes(key),key);
  assert.ok(legacy.includes("!document.querySelector('[data-angular-site-timeline]')"));
  assert.ok(entry.includes('createComponent(SiteTimelineComponent'));
