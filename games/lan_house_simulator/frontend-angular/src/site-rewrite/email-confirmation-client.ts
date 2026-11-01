@@ -5,7 +5,7 @@ export class ConfirmationError extends Error {
  constructor(message:string,readonly retryable:boolean){super(message);}
 }
 const validCode=(code:unknown):code is string=>typeof code==='string'&&
- code.length>=16&&code.length<=1024&&/^[A-Za-z0-9_-]+$/.test(code);
+ code.length>=16&&code.length<=1024&&!/[^A-Za-z0-9_-]/.test(code);
 
 export function captureConfirmationCode(
  location:Pick<Location,'pathname'|'search'|'hash'>,

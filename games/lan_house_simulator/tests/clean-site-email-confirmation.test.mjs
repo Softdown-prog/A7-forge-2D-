@@ -19,7 +19,7 @@ test('capture snapshots a live Location and scrubs hash/query before async work'
 test('standard Firebase verifyEmail action ignores link key and redirect',()=>{
  assert.equal(capture('?mode=verifyEmail&oobCode='+code+'&apiKey=ignored&continueUrl=https://attacker.invalid').value,code);
 });
-for(const [query,hash] of [['',''],['','#codigo=short'],['','#codigo='+code+'&codigo='+code],['?mode=resetPassword&oobCode='+code,''],['?mode=verifyEmail&mode=verifyEmail&oobCode='+code,''],['?mode=verifyEmail&oobCode='+code+'&oobCode='+code,''],['?mode=verifyEmail&oobCode='+code,'#codigo='+code],['','#codigo=%3Cscript%3E'],['','#codigo='+'a'.repeat(1025)]])test('ambiguous, invalid and non-verification links cannot redeem',()=>assert.equal(capture(query,hash).value,null));
+for(const [query,hash] of [['',''],['','#codigo=short'],['','#codigo='+code+'&codigo='+code],['?mode=resetPassword&oobCode='+code,''],['?mode=verifyEmail&mode=verifyEmail&oobCode='+code,''],['?mode=verifyEmail&oobCode='+code+'&oobCode='+code,''],['?mode=verifyEmail&oobCode='+code,'#codigo='+code],['','#codigo=%3Cscript%3E'],['','#codigo='+code+'%0A'],['','#codigo='+'a'.repeat(1025)]])test('ambiguous, invalid and non-verification links cannot redeem',()=>assert.equal(capture(query,hash).value,null));
 test('history failure propagates to the UI to refuse unsafe processing',()=>{
  assert.throws(()=>captureConfirmationCode({pathname:'/conta/confirmar/',hash:'#codigo='+code,search:''},{replaceState(){throw Error('denied');}}));
 });
