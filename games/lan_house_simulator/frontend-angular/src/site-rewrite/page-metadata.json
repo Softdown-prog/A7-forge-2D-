@@ -1,0 +1,54 @@
+{
+  "/": {
+    "title": "Sua lan house, uma época inteira",
+    "description": "Crie e administre uma lan house brasileira desde 1998. Cuide dos clientes, computadores e finanças no Lan House Simulator."
+  },
+  "/jogar/": {
+    "title": "Jogar",
+    "description": "Jogue Lan House Simulator gratuitamente no navegador. Monte sua lan house, gerencie equipamentos e salve sua partida."
+  },
+  "/sobre-o-jogo/": {
+    "title": "Sobre o jogo",
+    "description": "Conheça Lan House Simulator, um simulador isométrico de gestão com computadores, clientes e tecnologia desde 1998."
+  },
+  "/sobre-nos/": {
+    "title": "Sobre nós",
+    "description": "Conheça a Softdown e o projeto independente Lan House Simulator, inspirado na história das lan houses brasileiras."
+  },
+  "/ajuda/": {
+    "title": "Ajuda e perguntas",
+    "description": "Encontre respostas sobre contas opcionais, salvamento, computadores, desempenho e como jogar Lan House Simulator."
+  },
+  "/contato/": {
+    "title": "Contato",
+    "description": "Saiba como entrar em contato com a Softdown para enviar sugestões, relatar bugs e pedir suporte do Lan House Simulator."
+  },
+  "/conta/": {
+    "title": "Minha conta",
+    "description": "Acesse sua conta opcional do Lan House Simulator, confirme seu e-mail e gerencie seus salvamentos na nuvem."
+  },
+  "/conta/confirmar/": {
+    "title": "Confirmação de email",
+    "description": "Confirme seu endereço de e-mail para utilizar recursos opcionais de conta do Lan House Simulator."
+  },
+  "/donate/": {
+    "title": "Donate",
+    "description": "Conheça as opções de apoio ao Lan House Simulator e saiba como funcionam os Cookies cosméticos opcionais."
+  },
+  "/termos/": {
+    "title": "Termos de uso",
+    "description": "Consulte os termos de uso do Lan House Simulator, regras de acesso, contas opcionais e recursos do jogo."
+  },
+  "/privacidade/": {
+    "title": "Política de privacidade",
+    "description": "Leia a política de privacidade do Lan House Simulator, incluindo informações sobre contas, dados e seus direitos."
+  },
+  "/dados/": {
+    "title": "Dados locais",
+    "description": "Entenda e gerencie os dados locais do Lan House Simulator, incluindo a partida salva e a preferência de som."
+  },
+  "/404/": {
+    "title": "Página não encontrada",
+    "description": "O endereço solicitado não foi encontrado no site Lan House Simulator. Volte à página inicial para continuar."
+  }
+}

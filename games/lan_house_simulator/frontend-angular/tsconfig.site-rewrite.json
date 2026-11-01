@@ -2,7 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "./out-tsc-rewrite",
-    "types": []
+    "types": [],
+    "resolveJsonModule": true
   },
   "files": [
     "src/site-rewrite/main.ts"

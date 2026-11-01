@@ -5,6 +5,7 @@ import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
 import {DonateComponent} from './donate';
+import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
@@ -43,23 +44,7 @@ export class SiteApp implements OnInit,OnDestroy{
   this.media.addEventListener('change',this.mediaListener);
  }
  ngOnDestroy():void{this.media.removeEventListener('change',this.mediaListener);}
- pageTitle():string{
-  switch(this.path){
-   case '/':return 'Sua lan house, uma época inteira';
-   case '/jogar/':return 'Jogar';
-   case '/ajuda/':return 'Ajuda e perguntas';
-   case '/sobre-o-jogo/':return 'Sobre o jogo';
-   case '/sobre-nos/':return 'Sobre nós';
-   case '/contato/':return 'Contato';
-   case '/conta/':return 'Minha conta';
-   case '/conta/confirmar/':return 'Confirmação de email';
-   case '/donate/':return 'Donate';
-   case '/termos/':return 'Termos de uso';
-   case '/privacidade/':return 'Política de privacidade';
-   case '/dados/':return 'Dados locais';
-   default:return 'Página não encontrada';
-  }
- }
+ pageTitle():string{return pageMetadata[this.path].title;}
  toggleMenu():void{this.openMenu.update(value=>!value);}
  closeMenu():void{this.openMenu.set(false);}
  toggleMotion():void{this.reduceMotion.update(value=>!value);}

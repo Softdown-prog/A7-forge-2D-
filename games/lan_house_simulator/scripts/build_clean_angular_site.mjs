@@ -48,16 +48,41 @@ rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
 assert.ok(!existsSync(resolve(output,'game/js/react-entry.js')));
 for(const file of ['account-config.json','online-config.json'])
  cpSync(resolve(root,file),resolve(output,file));
+const pageMetadata=JSON.parse(readFileSync(resolve(angular,'src/site-rewrite/page-metadata.json'),'utf8'));
 const paths=['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato',
  'conta','conta/confirmar','donate','termos','privacidade','dados'];
+assert.equal(Object.keys(pageMetadata).length,paths.length+1,'Metadata coverage must match Angular routes including 404');
+const escapeMeta=value=>value.replace(/&/g,'&amp;').replace(/"/g,'&quot;')
+ .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function pageHead(pathname){
+ const data=pageMetadata[pathname];
+ assert.ok(data&&typeof data.title==='string'&&typeof data.description==='string',
+  'Missing Angular route metadata: '+pathname);
+ const title=escapeMeta(data.title+' · Lan House Simulator');
+ const description=escapeMeta(data.description);
+ // Preview is deliberately non-indexable until full prerender, SEO review and cutover.
+ const tags='<meta name="robots" content="noindex,nofollow">'+
+  '<meta property="og:type" content="website">'+
+  '<meta property="og:locale" content="pt_BR">'+
+  '<meta property="og:title" content="'+title+'">'+
+  '<meta property="og:description" content="'+description+'">'+
+  '<meta name="twitter:card" content="summary">'+
+  (pathname==='/conta/confirmar/'?'<meta name="referrer" content="no-referrer">':'');
+ const html=index.replace(/<title>[^<]*<\/title>/i,'<title>'+title+'</title>')
+  .replace(/<meta\s+name="description"[^>]*>/i,
+   '<meta name="description" content="'+description+'">')
+  .replace('<head>','<head>'+tags);
+ assert.ok(html.includes('<title>'+title+'</title>')&&
+  html.includes('<meta name="description" content="'+description+'">'),
+  'Failed to replace static Angular route metadata: '+pathname);
+ return html;
+}
 for(const path of paths){
  const dir=resolve(output,path);
  mkdirSync(dir,{recursive:true});
- const pageIndex=path==='conta/confirmar'?index.replace('<head>',
-  '<head><meta name="referrer" content="no-referrer">'):index;
- writeFileSync(resolve(dir,'index.html'),pageIndex);
+ writeFileSync(resolve(dir,'index.html'),pageHead(path?'/'+path+'/':'/'));
 }
-writeFileSync(resolve(output,'404.html'),index);
+writeFileSync(resolve(output,'404.html'),pageHead('/404/'));
 writeFileSync(resolve(output,'robots.txt'),'User-agent: *\nDisallow: /\n');
 writeFileSync(resolve(output,'_headers'),[
  '/*','  X-Content-Type-Options: nosniff',
