@@ -83,3 +83,33 @@ test('Angular stock workspace mirrors native 2000 unlock and forwards task comma
  assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
  assert.doesNotMatch(ui,/orderMerchandise|setMerchandisePrice|localStorage|fetch\(/);
 });
+
+
+test('Angular finance task navigation delegates to native manager with safe restart',()=>{
+ const ui=file('frontend-angular/src/workspaces.ts');
+ const template=file('frontend-angular/src/templates/finance-workspace.html');
+ const manager=file('src/ui/managementPanels.ts');
+ const preview=file('frontend-angular/src/index.html');
+ const entry=file('frontend-angular/src/main.ts');
+ const css=file('frontend-angular/src/workspace.css');
+ const original=file('index.html');
+ for(const task of ['balance','usage','events','promotion','feedback','restart']){
+  assert.match(ui,new RegExp("id:'"+task+"'"));
+  assert.match(manager,new RegExp("id:'"+task+"'"));
+  assert.match(template,new RegExp("data-angular-task"));
+ }
+ assert.match(ui,/class FinanceWorkspaceComponent extends Workspace/);
+ assert.match(template,/\(click\)="openTask\(task\.id\)"/);
+ assert.match(template,/task\.id==='restart'/);
+ assert.match(template,/selected\(\)==='restart'/);
+ assert.doesNotMatch(template,/#reset-game|\(click\)="reset/);
+ assert.match(original,/id="reset-game"/);
+ assert.match(manager,/area==='finance'\?root\.querySelector\('#angular-finance-workspace'\)/);
+ assert.match(entry,/FinanceWorkspaceComponent/);
+ assert.match(entry,/financeWorkspaceHost/);
+ assert.match(preview,/id="angular-finance-workspace"/);
+ assert.doesNotMatch(original,/id="angular-finance-workspace"/);
+ assert.match(css,/#angular-finance-workspace \+ \.management-pages/);
+ assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
+ assert.doesNotMatch(ui,/resetGame|localStorage|fetch\(|createGame/);
+});
