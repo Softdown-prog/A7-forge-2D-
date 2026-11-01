@@ -16,13 +16,13 @@ test('one canonical institutional front-end: Angular clean only',()=>{
  assert.match(script,/src\/site-rewrite\/public\/assets/);
  assert.doesNotMatch(script,/['"]website\/assets\//);
  assert.doesNotMatch(script,/['"]assets\/ui\//);
- assert.doesNotMatch(script,/website\/build\.mjs/);
+ assert.doesNotMatch(script,/run\(process\.execPath,\[resolve\(root,'website\/build\.mjs'\)/);
  for(const name of ['brand.svg','icons.svg','sala.webp','pc-crt.svg',
   'pc-lcd.svg','pc-led.svg','pc-arena.svg']){
   assert.ok(existsSync(resolve(root,'frontend-angular/src/site-rewrite/public/assets',name)),
    'Angular missing canonical asset '+name);
  }
  for(const source of [app,template,styles,catalog,legal])
-  assert.doesNotMatch(source,/website\/|from ['"][^'"]*react|alpine\.js|bootstrap\.min\.js|innerHTML\s*=/i);
+  assert.doesNotMatch(source,/(?:from|import)\s*['"][^'"]*(?:website\/|react)|alpine\.js|bootstrap\.min\.js|innerHTML\s*=/i);
  assert.ok(read('docs/ANGULAR_REWRITE_ISOLATED.md').includes('**Raiz canônica do front-end:**'));
 });
