@@ -170,6 +170,18 @@ try{
   await press(page.locator('#close-notices'));
   await inbox.waitFor({state:'hidden'});
   assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'false');
+  if(!mobile){
+   await page.locator('#open-notices').focus();
+   assert.equal(await page.evaluate(()=>document.activeElement?.id),'open-notices',
+    'Mail trigger must receive keyboard focus');
+   await page.keyboard.press('Enter');
+   await page.locator('#notices').waitFor({state:'visible'});
+   assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'true');
+   await page.keyboard.press('Escape');
+   await page.locator('#start-screen').waitFor({state:'visible'});
+   await press(page.locator('#menu-continue'));
+   await page.locator('#game-app').waitFor({state:'visible'});
+  }
 
   await press(page.locator('#open-shop'));
   // The Angular search must filter the VISIBLE Angular projection,
