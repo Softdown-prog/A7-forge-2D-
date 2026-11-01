@@ -246,3 +246,38 @@ test('Angular candidate owns Ajuda FAQ and Chromium verifies search, keyboard, t
    "page.keyboard.press('Enter')", "clear.tap()", "siteAngularHelp:"])
   assert.ok(browser.includes(marker),'Missing real browser help QA: '+marker);
 });
+
+test('institutional header/footer are complete Angular components with live-browser checks',()=>{
+ const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const vanilla=readFileSync(new URL('../website/site.mjs',import.meta.url),'utf8');
+ const entry=readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8');
+ const header=readFileSync(new URL('../frontend-angular/src/site/site-header.ts',import.meta.url),'utf8');
+ const headerHtml=readFileSync(new URL('../frontend-angular/src/site/site-header.html',import.meta.url),'utf8');
+ const footer=readFileSync(new URL('../frontend-angular/src/site/site-footer.ts',import.meta.url),'utf8');
+ const footerHtml=readFileSync(new URL('../frontend-angular/src/site/site-footer.html',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ for(const term of ['data-angular-site-header','data-angular-site-footer',
+  'data-edition','angularCandidate?'])assert.ok(build.includes(term),term);
+ assert.match(vanilla,/!document\.querySelector\('footer\[data-angular-site-footer\]'\)/);
+ assert.match(entry,/createComponent\(SiteHeaderComponent/);
+ assert.match(entry,/createComponent\(SiteFooterComponent/);
+ assert.match(entry,/dataset\['siteHeader'\]='angular'/);
+ assert.match(entry,/dataset\['siteFooter'\]='angular'/);
+ assert.match(header,/imports:\[SiteNavigationComponent\]/);
+ assert.match(header,/ChangeDetectionStrategy.OnPush/);
+ for(const term of ['class="brand"','id="menu-toggle"','data-angular-site-nav'])
+  assert.ok(headerHtml.includes(term),term);
+ for(const term of ['ChangeDetectionStrategy.OnPush','signal(false)',
+  "document.body.classList.toggle('reduce-motion',value)",
+  "this.preference.addEventListener('change',this.onPreference)"])
+  assert.ok(footer.includes(term),term);
+ for(const term of ['footer-top wrap','nav class="footer-links"','id="motion-toggle"',
+  '[attr.aria-pressed]="paused()"','(click)="toggleMotion()"',
+  '/privacidade/','/dados/']) assert.ok(footerHtml.includes(term),term);
+ assert.doesNotMatch(header+footer+headerHtml+footerHtml,
+  /from\s+['"][^'"]*react|innerHTML\s*=|fetch\(/i);
+ for(const term of ['siteHeader', 'siteFooter', "page.emulateMedia({reducedMotion:'reduce'})",
+  "page.emulateMedia({reducedMotion:'no-preference'})",
+  'Header overflow at','Footer overflow at','siteAngularHeaderFooter:'])
+  assert.ok(browser.includes(term),term);
+});

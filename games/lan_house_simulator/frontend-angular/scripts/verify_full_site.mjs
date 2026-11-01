@@ -166,6 +166,51 @@ try{
    // Test the rebuilt institutional Angular shell without changing /out/site.
    await page.waitForFunction(()=>
     document.documentElement.dataset.siteNavigation==='angular');
+   // Full header/footer are new Angular components, not old DOM handlers.
+   await page.waitForFunction(()=>
+    document.documentElement.dataset.siteHeader==='angular' &&
+    document.documentElement.dataset.siteFooter==='angular');
+   const header=page.locator('header[data-angular-site-header]');
+   const footer=page.locator('footer[data-angular-site-footer]');
+   assert.equal(await header.count(),1);
+   assert.equal(await footer.count(),1);
+   assert.equal(await header.locator('a.brand[href="/"]').count(),1);
+   assert.equal(await footer.locator('a.brand[href="/"]').count(),1);
+   assert.equal(await page.locator('#menu-toggle').count(),1);
+   assert.equal(await page.locator('#motion-toggle').count(),1);
+   assert.equal(await footer.locator('nav.footer-links').count(),2);
+   for(const href of ['/jogar/','/ajuda/','/contato/','/termos/','/privacidade/','/dados/'])
+    assert.equal(await footer.locator('a[href="'+href+'"]').count(),1,
+     'Angular footer must preserve '+href);
+   for(const logo of await page.locator('a.brand img').all())
+    assert.ok(await logo.evaluate(img=>img instanceof HTMLImageElement &&
+      img.complete && img.naturalWidth>0),'Header/footer brand SVG must load');
+   const motion=footer.locator('#motion-toggle');
+   assert.equal(await motion.getAttribute('aria-pressed'),'false');
+   assert.equal(await page.locator('body.reduce-motion').count(),0);
+   if(mobile)await motion.tap();else await motion.click();
+   await page.waitForFunction(()=>
+    document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')==='true' &&
+    document.body.classList.contains('reduce-motion'));
+   assert.match(await motion.innerText(),/Animações pausadas/);
+   await motion.focus();
+   await page.keyboard.press('Enter');
+   await page.waitForFunction(()=>
+    document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')==='false' &&
+    !document.body.classList.contains('reduce-motion'));
+   // Confirm the system prefers-reduced-motion change is observed by Angular.
+   await page.emulateMedia({reducedMotion:'reduce'});
+   await page.waitForFunction(()=>
+    document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')==='true' &&
+    document.body.classList.contains('reduce-motion'));
+   await page.emulateMedia({reducedMotion:'no-preference'});
+   await page.waitForFunction(()=>
+    document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')==='false' &&
+    !document.body.classList.contains('reduce-motion'));
+   assert.ok(await header.evaluate(el=>
+    el.scrollWidth-el.clientWidth<=3),'Header overflow at '+width+'px');
+   assert.ok(await footer.evaluate(el=>
+    el.scrollWidth-el.clientWidth<=3),'Footer overflow at '+width+'px');
    const nav=page.locator('#site-nav');
    assert.equal(await nav.locator('a').count(),7,
     'Angular owns six links and the original Play button');
@@ -249,6 +294,7 @@ try{
    shopCatalog:true,siteAngularNavigation:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    siteAngularTimeline:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    siteAngularHelp:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
+   siteAngularHeaderFooter:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    adminComputer:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    resourceErrors:0,errorCount:errors.length});
