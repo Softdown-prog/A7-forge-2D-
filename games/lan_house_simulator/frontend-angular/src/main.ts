@@ -8,7 +8,11 @@ import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
   MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent, ShopSearchComponent
 } from './components';
-import {ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent,FinanceWorkspaceComponent} from './workspaces';
+import {
+  ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent,
+  FinanceWorkspaceComponent,PricesWorkspaceComponent,LicensesWorkspaceComponent,
+  ConsolesWorkspaceComponent
+} from './workspaces';
 import {AdminAreaNavigationComponent} from './admin-area-navigation';
 import {MenuPreferencesComponent,SaveTransferComponent} from './menu-save-controls';
 import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
@@ -92,6 +96,23 @@ async function mountUi():Promise<void> {
   if(financeWorkspaceHost){
     const ref=createComponent(FinanceWorkspaceComponent,{
       environmentInjector:app.injector,hostElement:financeWorkspaceHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // Secondary administration areas are optional presentation-only islands.
+  // Their original TS task buttons remain mounted as stable command targets.
+  const additionalAdminIslands=[
+    ['angular-prices-workspace',PricesWorkspaceComponent],
+    ['angular-licenses-workspace',LicensesWorkspaceComponent],
+    ['angular-consoles-workspace',ConsolesWorkspaceComponent]
+  ] as const;
+  for(const [id,component] of additionalAdminIslands){
+    const host=document.getElementById(id);
+    if(!host)continue;
+    const ref=createComponent(component as Type<unknown>,{
+      environmentInjector:app.injector,hostElement:host
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
