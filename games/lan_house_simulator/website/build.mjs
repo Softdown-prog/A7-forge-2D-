@@ -5,8 +5,8 @@ import {createHash} from "node:crypto";
 import {siteConfig} from "./config.mjs";
 import {pages,icon,eras} from "./content.mjs";
 const root=resolve(import.meta.dirname,"..");
-// Migration branch defaults to Angular for the complete site build.
-// The published main remains unchanged until the full review and merge.
+// The published /game/ iframe uses Angular by default. The standalone
+// npm run build path retains React only for compatibility and regression QA.
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
 const angularSite=process.env.LHS_SITE_UI!=="react";
 const output=resolve(root,angularCandidate?"out/site-angular":"out/site");
@@ -22,7 +22,10 @@ export function buildSite(){
  const accounts=JSON.parse(readFileSync(resolve(root,"account-config.json"),"utf8"));
  if(accounts.enabled&&(!siteConfig.email||!siteConfig.operator||!accounts.firebaseApiKey))throw Error("Conta online exige responsável, contato e configuração Firebase.");
  // Always ship the currently compiled game, never a stale build from another task.
- execFileSync(process.execPath,[resolve(root,"scripts/build.mjs")],{cwd:root,stdio:"inherit"});
+ execFileSync(process.execPath,[resolve(root,"scripts/build.mjs")],{
+  cwd:root,stdio:"inherit",
+  env:{...process.env,LHS_GAME_UI:angularSite?"angular":"react"}
+ });
  if(angularSite){
   // Rebuild Angular from its own lockfile; a stale preview must never be deployed.
   if(!existsSync(resolve(root,"frontend-angular/node_modules/@angular/cli/package.json")))

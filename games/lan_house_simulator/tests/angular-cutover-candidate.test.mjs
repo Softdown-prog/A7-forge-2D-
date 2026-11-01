@@ -139,3 +139,20 @@ test('CI browser checks boot the actual static candidate on desktop and mobile',
   "No React bootstrap survives the candidate","'#game'","[1280,414]"
  ])assert.ok(smoke.includes(token),'Missing candidate browser check '+token);
 });
+
+test('production Angular site does not compile throwaway React JS',()=>{
+ const standalone=readFileSync(new URL('../scripts/build.mjs',import.meta.url),'utf8');
+ const site=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const checker=readFileSync(new URL('../website/check.mjs',import.meta.url),'utf8');
+ // The native Canvas is compiled in both modes; only React is optional.
+ assert.match(standalone,/typescript\/bin\/tsc/);
+ assert.match(standalone,/const gameUi=process\.env\.LHS_GAME_UI\?\?"react"/);
+ assert.match(standalone,/if\(gameUi==="react"\)/);
+ assert.match(standalone,/await import\("esbuild"\)/);
+ assert.match(site,/LHS_GAME_UI:angularSite\?"angular":"react"/);
+ assert.match(site,/process\.env\.LHS_SITE_UI!=="react"/);
+ // The candidate never needs the React artifact; the standalone /dist
+ // build can still generate it and the explicit React site remains available.
+ assert.match(checker,/!existsSync\(resolve\(root,"game\/js\/react-entry\.js"\)\)/);
+ assert.match(checker,/src="\.\\\/js\\\/react-entry\\\.js/);
+});

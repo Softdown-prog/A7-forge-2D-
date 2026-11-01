@@ -1,10 +1,22 @@
-## UI React — primeira fase (menu e navegação)
+## Frontend atual — Angular no site, React apenas como compatibilidade
 
-Esta fase introduz React 19 em **três ilhas de interface**: ações do menu principal, guia interativo de capítulos e botões da barra superior. O restante dos painéis continua usando os adaptadores DOM atuais; o motor, a economia, a IA e o cenário isométrico permanecem no Canvas 2D TypeScript.
+O `npm run build:site` publica a versão **Angular** da interface do jogo em
+`/game/`, conservando o motor Canvas 2D em TypeScript e os comandos nativos.
+O teste de integração Angular é executado no Chromium em desktop e mobile,
+incluindo compras, saves, estação/energia e navegação. A página institucional
+continua estática (HTML/CSS/JS), sem exigir Angular para seu conteúdo.
 
-`scripts/build.mjs` compila o TypeScript do motor e em seguida empacota `src/react/entry.jsx` com esbuild em `dist/js/react-entry.js`. Esse módulo monta os componentes de forma síncrona antes de importar `main.js` — assim todos os IDs e referências usados pelo jogo continuam disponíveis para o controlador existente. Não existe servidor React/Next.js, CDN ou mudança de hospedagem. O site estático continua sendo produzido por `npm run build:site`.
+O build isolado `npm run build` mantém a entrada React 19 para ferramentas e
+cenários de regressão que usam o documento original `index.html`.
+Já o build do site passa `LHS_GAME_UI=angular`, evitando criar um
+`dist/js/react-entry.js` que seria descartado no cutover. A versão
+`LHS_SITE_UI=react npm run build:site` continua disponível para teste de
+compatibilidade, mas não é o padrão publicado.
 
-**Validação antes de mesclar:** `npm ci`, `npm run typecheck`, `npm test`, `npm run build:site`, `npm run check:site` e testes no Chromium desktop/mobile. Não publicar no site via CH-site sem revisão visual e sem garantir os fluxos de criar/continuar/salvar, contas, menus e escala mobile.
+Antes de remover definitivamente as dependências React ou reescrever o
+documento-base, eliminar as referências legadas nos testes e ferramentas de
+diagnóstico. Angular é somente camada visual: economia, compras, saves,
+rotas de personagens e Canvas continuam no motor TypeScript.
 
 ---
 
