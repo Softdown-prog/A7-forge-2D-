@@ -79,7 +79,13 @@ export function auditMigration(sources){
  const reactBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
  const reactHosts=list(reactEntry,/\["(react-[^"]+)",\s*</g);
  const mandatoryIslands=list(angularEntry,/\['(react-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
- const allAngularIslands=list(angularEntry,/\['((?:react|angular)-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
+ // Include hosts mounted individually with getElementById as well as tuple-based
+ // islands. Otherwise the audit would undercount new optional UI after each
+ // completed feature and could suggest an unsafe React cutover.
+ const allAngularIslands=uniq([
+  ...list(angularEntry,/\['((?:react|angular)-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g),
+  ...list(angularEntry,/getElementById\('(angular-[^']+)'\)/g)
+ ]);
  const previewIds=new Set(list(angularPreview,/\bid=["']([^"']+)["']/g));
  const gameIds=new Set(list(published,/\bid=["']([^"']+)["']/g));
  const missingInAngular=reactHosts.filter(id=>!mandatoryIslands.includes(id));
