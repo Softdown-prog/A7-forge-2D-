@@ -49,3 +49,17 @@ test('real-game Chromium tests use exactly the same cutover document',()=>{
  assert.match(browser,/createAngularCutoverDocument\(original\)/);
  assert.doesNotMatch(browser,/const additionalAdminCutoverShell/);
 });
+
+test('CI browser checks boot the actual static candidate on desktop and mobile',()=>{
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+ const smoke=readFileSync(new URL('../frontend-angular/scripts/verify_static_candidate.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/node --check frontend-angular\/scripts\/verify_static_candidate\.mjs/);
+ assert.match(workflow,/node frontend-angular\/scripts\/verify_static_candidate\.mjs/);
+ assert.match(workflow,/lhs-angular-cutover-smoke/);
+ assert.ok(workflow.indexOf('Assemble isolated static Angular cutover candidate') <
+  workflow.indexOf('Smoke test the compiled Angular candidate'));
+ for(const token of [
+  "out/angular-cutover-candidate","dataset.gameReady","dataset.uiFramework",
+  "No React bootstrap survives the candidate","'#game'","[1280,414]"
+ ])assert.ok(smoke.includes(token),'Missing candidate browser check '+token);
+});
