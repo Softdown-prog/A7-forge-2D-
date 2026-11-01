@@ -324,8 +324,19 @@ try{
   assert.equal(await nativeFinance.getAttribute('aria-selected'),'true',
    'Angular finance area delegates to native admin state');
   const financeSnapshot=await persisted();
+  // Native state changes synchronously; the zoneless Angular OnPush view
+  // commits the reflected aria-pressed state on its next render turn.
+  const awaitTaskParity=async (taskArea,task)=>page.waitForFunction(({area,task})=>{
+   const native=document.querySelector('#section-'+area+
+    ' > .management-pages button[data-panel-choice="'+task+'"]');
+   const angular=document.querySelector('#angular-'+area+
+    '-workspace [data-angular-task="'+task+'"]');
+   return native?.getAttribute('aria-pressed')==='true'&&
+    angular?.getAttribute('aria-pressed')==='true';
+  },{area:taskArea,task},{timeout:5000});
   for(const task of ['balance','usage','events','promotion','feedback','restart']){
    await press(financeNav.locator('[data-angular-task="'+task+'"]'));
+   await awaitTaskParity('finance',task);
    assert.equal(await page.locator('#page-finance-'+task).isVisible(),true,
     'Angular finance task opens native panel '+task);
    assert.equal(await page.locator('#section-finance > .management-page:visible').count(),1,
@@ -335,6 +346,17 @@ try{
   }
   assert.equal(await page.locator('#reset-game').isVisible(),true,
    'Reset action stays in native management page and requires a separate click');
+  // An external legacy controller can change the selected page without an
+  // Angular click. Its custom event must still update the Angular button.
+  await page.evaluate(()=>document.querySelector(
+   '#section-finance > .management-pages button[data-panel-choice="usage"]')?.click());
+  await awaitTaskParity('finance','usage');
+  assert.equal(await page.locator('#page-finance-usage').isVisible(),true,
+   'Native-only page change stays synchronized in Angular');
+  await press(financeNav.locator('[data-angular-task="restart"]'));
+  await awaitTaskParity('finance','restart');
+  assert.equal(await page.locator('#reset-game').isVisible(),true,
+   'Returning to restart tab does not trigger the destructive button');
   const afterFinance=await persisted();
   assert.equal(afterFinance.ps1Stations?.length,financeSnapshot.ps1Stations?.length,
    'Finance navigation cannot reset PS1 stations');
@@ -363,6 +385,7 @@ try{
    for(const task of group.pages){
     const button=nav.locator('[data-angular-task="'+task+'"]');
     await press(button);
+    await awaitTaskParity(group.area,task);
     assert.equal(await page.locator('#page-'+group.area+'-'+task).isVisible(),true,
      'Angular task forwards native '+group.area+'/'+task);
     assert.equal(await page.locator('#section-'+group.area+' > .management-page:visible').count(),1,
