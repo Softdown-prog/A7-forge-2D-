@@ -12,7 +12,14 @@ test('Donate is Angular-only and cannot create orders or checkout',()=>{
  assert.match(c,/paymentsEnabled/);
  assert.match(c,/paymentsMode.*production/);
  assert.match(c,/\'\/v1\/config\'/);
- assert.doesNotMatch(c+h,/\/v1\/orders|checkoutUrl|website\/|sessionStorage|window\.location\.assign/);
+ assert.doesNotMatch(c+h,/checkoutUrl|website\/|window\.location\.assign|\/v1\/orders\//);
+ assert.match(c,/client\.api\('\/v1\/orders'\)/);
+ assert.match(c,/client\.restore\(\)/);
+ assert.match(c,/!profile\.emailVerified/);
+ assert.match(h,/id="load-donate-history"/);
+ assert.match(h,/id="donate-history-status" role="status"/);
+ assert.match(read('../frontend-angular/src/site-rewrite/account-client.ts'),
+  /path==='\/v1\/orders'&&body===undefined/);
  assert.match(h,/<button[^>]*\[attr\.data-donate-package\]="pack.id"[^>]*disabled/);
  assert.match(h,/aria-disabled="true"/);
  assert.match(h,/role="status" aria-live="polite"/);
