@@ -35,6 +35,15 @@ test('cutover fails closed on missing anchors or duplicate ids',()=>{
   '<div id="merchandise-catalog"></div>','')),
   /One original anchor required/);
 });
+test('CI must reject malformed browser scripts before installing browsers',()=>{
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
+ for(const script of ['cutover_document.mjs','build_cutover_candidate.mjs',
+   'verify_catalog_preview.mjs','verify_integrated_game.mjs'])
+  assert.ok(workflow.includes('node --check frontend-angular/scripts/'+script),
+   'Missing syntax check: '+script);
+ assert.ok(workflow.indexOf('Syntax check cutover') <
+  workflow.indexOf('Install Playwright for real Angular browser QA'));
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);

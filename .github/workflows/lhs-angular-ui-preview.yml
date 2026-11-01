@@ -52,6 +52,12 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: games/lan_house_simulator/frontend-angular/package-lock.json
+      - name: Syntax check cutover and browser QA scripts
+        run: |
+          node --check frontend-angular/scripts/cutover_document.mjs
+          node --check frontend-angular/scripts/build_cutover_candidate.mjs
+          node --check frontend-angular/scripts/verify_catalog_preview.mjs
+          node --check frontend-angular/scripts/verify_integrated_game.mjs
       - name: Verify Angular UI boundaries
         run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
       - name: Audit React to Angular hosts and browser QA gaps (advisory)

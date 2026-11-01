@@ -153,8 +153,11 @@ try{
    assert.equal(await page.locator('#'+id).count(),1,
     'Exactly one TypeScript shop control survives Angular cutover: '+id);
   }
-  await page.waitForFunction(()=>document.querySelector(
-   '#angular-shop-overview #shop-cash')?.textContent?.includes('R
+  await page.waitForFunction(()=>{
+   const cash=document.querySelector('#angular-shop-overview #shop-cash');
+   return !!cash?.textContent?.trim().match(/^R\\s*\\d|^R\\s*[^\\s]/);
+  });
+  // The Angular search must filter the VISIBLE Angular projection,
   // not just the hidden native command catalog.
   await press(page.locator('[data-shop-category="equipment"]'));
   const visibleCards=page.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card');
