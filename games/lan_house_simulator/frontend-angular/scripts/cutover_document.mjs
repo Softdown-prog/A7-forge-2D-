@@ -59,8 +59,10 @@ export function createAngularCutoverDocument(original){
   '<script type="module" src="./__angular/main.js"></script>');
  html=exactlyOne(html,'</head>',
   '<link rel="stylesheet" href="./__angular/styles.css"/>'+
-  '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
-  'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
+  // The legacy DOM is an imperative command port. It must not be in layout,
+  // accessible by keyboard, or counted as a second visible catalogue.
+  // Angular delegates actions through native button.click() on the kept DOM.
+  '<style>#shop-catalog{display:none!important}'+
   '#angular-shop-catalog{display:block;min-width:0}</style></head>');
  assert.ok(!html.includes(react),'React bootstrap cannot be present');
  for(const id of ANGULAR_CUTOVER_HOSTS)
