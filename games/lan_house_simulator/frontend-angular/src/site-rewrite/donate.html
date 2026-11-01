@@ -27,36 +27,9 @@
  }
  </p>
 </section>
-<section class="wrap donate-history" aria-labelledby="donate-history-heading">
- <h2 id="donate-history-heading">Meus apoios</h2>
- <p>Consulte seus pedidos vinculados à conta, sem iniciar novos pagamentos. O retorno do provedor não confirma créditos.</p>
- <button type="button" id="load-donate-history" class="button secondary"
-  [disabled]="historyState()==='loading'" (click)="loadHistory()">Consultar meus apoios</button>
- <p id="donate-history-status" role="status" aria-live="polite">
-  @switch(historyState()){
-   @case('idle'){O histórico só será consultado quando você solicitar.}
-   @case('loading'){Consultando sua conta e seus pedidos…}
-   @case('login-required'){Entre na sua conta para ver seus pedidos.}
-   @case('verify-required'){Confirme seu email na página Minha conta antes de consultar.}
-   @case('ready'){Exibindo {{history().length}} pedido(s) informado(s) pelo serviço.}
-   @default{Não foi possível consultar seus pedidos. Tente novamente pela sua conta.}
-  }
- </p>
- @if(historyState()==='login-required'||historyState()==='verify-required'){
-  <p><a href="/conta/">Ir para Minha conta</a></p>
- }
- @if(historyState()==='ready'&&history().length>0){
-  <ul class="donate-orders" aria-label="Histórico de apoios">
-   @for(order of history();track order.id){
-    <li>
-     <div><strong>Pedido {{order.id.slice(0,12)}}</strong>
-      <small>{{order.mode==='sandbox'?'Ambiente de testes':'Produção'}}</small></div>
-     <div><span>R$ {{(order.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}} · {{order.cookies}} Cookies previstos</span>
-      <strong>{{order.statusLabel}}</strong></div>
-    </li>
-   }
-  </ul>
- }
+<section class="wrap donate-account-link">
+ <h2>Já apoiou o jogo?</h2>
+ <p>Veja o histórico dos seus pedidos em <a href="/conta/#apoios">Minha conta · Pagamentos e apoios</a>. O histórico é privado e exige login.</p>
 </section>
 <section class="wrap donate-guide" id="como-doar">
  <div><h2>Como funciona</h2><ol>

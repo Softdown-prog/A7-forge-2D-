@@ -91,3 +91,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Sem consulta automática ao abrir a página, com orientações para login/verificação. Os botões de compra continuam desabilitados mesmo se o backend anunciar pagamentos ativos.
 - Testes Node exercitam o parser TypeScript real; Chromium usa contas e pedidos sintéticos, com requests externos interceptados e cenários desktop/mobile, sessão ausente, email não confirmado, lista válida e payload inválido.
 - Não é ativação de pagamentos, SSR/prerender ou autorização de deploy; frontend público segue independente.
+
+
+### Microetapa — histórico particular movido para Minha conta
+- O histórico autenticado deixou a página pública `/donate/`. Ela mantém apenas o catálogo, FAQ e o link `/conta/#apoios` para acessar a área privada.
+- Após entrar e confirmar o email, o dashboard Angular oferece duas abas: `Salvamentos` (padrão, sem regressão nos controles de save) e `Pagamentos e apoios`. O deep link seleciona a segunda aba sem consultar automaticamente a API.
+- A consulta é explicitamente acionada pelo jogador através do cliente Firebase Angular e usa somente `GET /v1/orders`, validando os dados com `readDonateOrders`.
+- Ao sair da conta, o histórico em memória é apagado. F5 não recarrega a lista sem novo clique. A navegação não credita Cookies, não cria pedidos nem abre checkout.
+- Os testes do Chromium exercitam login, email não confirmado, navegação Donate → Minha conta, F5, logout, Android e respostas sintéticas válidas/inválidas. Produção e `main` não são publicadas por esta etapa.

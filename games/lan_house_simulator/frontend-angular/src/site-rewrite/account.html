@@ -77,7 +77,17 @@
      <div><span>Save principal</span><strong id="save-state">{{remote()?.save?'Na nuvem':'Nenhum envio'}}</strong>
       <small>{{remote()?.updatedAt?'Última atualização: '+remote()?.updatedAt:'Envio manual'}}</small></div>
     </div>
-    <section class="account-saves">
+    <div class="account-tabs account-section-tabs" role="tablist" aria-label="Áreas da conta">
+     <button type="button" role="tab" id="account-tab-saves" aria-controls="account-panel-saves"
+      [attr.aria-selected]="dashboardTab()==='salvamentos'" [disabled]="busy()"
+      (click)="selectDashboardTab('salvamentos')">Salvamentos</button>
+     <button type="button" role="tab" id="account-tab-apoios" aria-controls="account-panel-apoios"
+      [attr.aria-selected]="dashboardTab()==='apoios'" [disabled]="busy()"
+      (click)="selectDashboardTab('apoios')">Pagamentos e apoios</button>
+    </div>
+    @if(dashboardTab()==='salvamentos'){
+    <section class="account-saves" id="account-panel-saves" role="tabpanel"
+     aria-labelledby="account-tab-saves">
      <h3>Sua partida na nuvem</h3>
      <p>Exporte o JSON pelo menu do jogo e escolha o arquivo aqui. Para continuar uma partida da nuvem, baixe e importe pelo menu do jogo.</p>
      <div class="account-actions">
@@ -97,6 +107,38 @@
       [disabled]="busy()" (click)="refresh()">Atualizar conta e conferir save</button>
      <p class="small">Um envio pode substituir o principal e mover o anterior para backup. Se outro aparelho salvar antes, o envio será bloqueado. Sua partida local não é alterada.</p>
     </section>
+    }@else{
+    <section class="account-order-history" id="account-panel-apoios" role="tabpanel"
+     aria-labelledby="account-tab-apoios">
+     <h3>Meus apoios</h3>
+     <p>Consulte os pedidos vinculados à sua conta. Nenhum pagamento é iniciado nesta área. Os créditos só são confirmados pelo servidor.</p>
+     <button type="button" class="button secondary" id="load-account-orders"
+      [disabled]="busy()||orderState()==='loading'" (click)="loadOrders()">Consultar meus apoios</button>
+     <p id="account-order-status" role="status" aria-live="polite">
+      @switch(orderState()){
+       @case('idle'){O histórico será consultado somente quando você solicitar.}
+       @case('loading'){Consultando seus pedidos…}
+       @case('ready'){Exibindo {{orders().length}} pedido(s) informado(s) pelo serviço.}
+       @default{Não foi possível consultar seus pedidos. Tente novamente.}
+      }
+     </p>
+     @if(orderState()==='ready'){
+      @if(orders().length===0){<p>Você ainda não possui pedidos registrados.</p>}
+      @else{
+       <ul class="donate-orders" aria-label="Histórico de apoios">
+        @for(order of orders();track order.id){
+         <li>
+          <div><strong>Pedido {{order.id.slice(0,12)}}</strong>
+           <small>{{order.mode==='sandbox'?'Ambiente de testes':'Produção'}}</small></div>
+          <div><span>R$ {{(order.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}} · {{order.cookies}} Cookies previstos</span>
+           <strong>{{order.statusLabel}}</strong></div>
+         </li>
+        }
+       </ul>
+      }
+     }
+    </section>
+    }
     <a class="button secondary" href="/jogar/">Voltar ao jogo</a>
    }
   }
