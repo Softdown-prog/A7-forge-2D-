@@ -82,7 +82,7 @@ test('the complete Angular site is exercised through the real CSP-protected ifra
  assert.ok(workflow.indexOf('Build and verify the complete Angular site candidate')<
   workflow.indexOf('Validate full-site Angular iframe'));
  for(const token of ['#launch-game','#game-frame','/jogar/','dataset.uiFramework',
-  'Content-Security-Policy','react-entry.js','[1280,414]'])
+  'Content-Security-Policy','react-entry.js','[1280,414,360]'])
   assert.ok(browser.includes(token),'Browser must verify '+token);
  assert.ok(builder.includes('game/angular-candidate-report.json'),
   'Do not ship internal CI report in a candidate site');
@@ -157,4 +157,21 @@ test('production Angular site does not compile throwaway React JS',()=>{
  assert.ok(checker.includes('else assert.match(gameHtml,/src='),
   'The explicit legacy React site still has its own check');
  assert.ok(checker.includes('react-entry.js'));
+});
+
+test('Cloudflare publication blocks on real Angular browser behavior',()=>{
+ const workflow=readFileSync(new URL('../../../.github/workflows/lhs-pages-sync.yml',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ assert.match(workflow,/LHS_CHECK_DEFAULT_SITE=1 node frontend-angular\/scripts\/verify_full_site\.mjs/);
+ const preflight=workflow.indexOf('Conferir abertura real antes de publicar');
+ const guard=workflow.indexOf('LHS_CHECK_DEFAULT_SITE=1 node frontend-angular/scripts/verify_full_site.mjs');
+ const publish=workflow.indexOf('Sincronizar somente o LHS e publicar');
+ assert.ok(preflight>=0&&guard>preflight&&publish>guard,
+  'Angular browser QA must finish before the Pages mirror is updated');
+ assert.match(browser,/\[1280,414,360\]/);
+ for(const check of ['page.on(\'response\'','page.on(\'requestfailed\'',
+  'angular-pc-health','page.on(\'pageerror\'',
+  'Content Security Policy','close-admin','data-angular-task="hardware"']){
+  assert.ok(browser.includes(check),'Missing browser release check: '+check);
+ }
 });

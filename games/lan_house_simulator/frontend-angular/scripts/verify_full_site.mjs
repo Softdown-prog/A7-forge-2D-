@@ -1,5 +1,6 @@
-/** QA of the real /jogar/ -> iframe -> Angular/Canvas path, served from the
- * complete non-published out/site-angular artifact under the site's own CSP.
+/** QA of /jogar/ -> iframe -> Angular/Canvas using the actual production
+ * build artifact with its CSP. Run before publication, not as a live-site check.
+ * The same script also checks the isolated out/site-angular candidate.
  */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -8,8 +9,14 @@ import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 const root=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/site':'../../out/site-angular');
 const output=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/angular-site-default-browser':'../../out/angular-site-browser');
-const require=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
-const {chromium}=require('playwright');
+const angularTools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
+const gameTools=createRequire(resolve(import.meta.dirname,'../../package.json'));
+let chromium;
+try {({chromium}=angularTools('playwright'));}
+catch(error){
+ if(error?.code!=='MODULE_NOT_FOUND')throw error;
+ ({chromium}=gameTools('playwright'));
+}
 const mime={
  '.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
  '.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8',
@@ -45,13 +52,24 @@ const results=[];
 let browser;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
- for(const width of [1280,414]){
+ for(const width of [1280,414,360]){
   const mobile=width<700;
   const context=await browser.newContext({
    viewport:{width,height:840},isMobile:mobile,hasTouch:mobile
   });
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(e.message));
+  page.on('response',response=>{
+   const url=new URL(response.url());
+   if(url.origin===origin&&response.status()>=400&&
+      /\.(?:m?js|css|svg|webp|png|json)$/i.test(url.pathname))
+    errors.push('HTTP '+response.status()+' '+url.pathname);
+  });
+  page.on('requestfailed',request=>{
+   const url=new URL(request.url());
+   if(url.origin===origin&&/\.(?:m?js|css)$/i.test(url.pathname))
+    errors.push('Network '+(request.failure()?.errorText??'failed')+' '+url.pathname);
+  });
   page.on('console',message=>{
    if(message.type()==='error'&&/Content Security Policy|Refused to|unsafe-eval/i.test(message.text()))
     errors.push('CSP: '+message.text());
@@ -89,10 +107,28 @@ try{
   await game.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card')
    .first().waitFor({state:'visible',timeout:15000});
   assert.equal(await game.locator('#angular-shop-overview #organize-furniture').count(),1);
-  assert.deepEqual(errors,[],'Site CSP and iframe game must have no browser errors');
+  await press(game.locator('#close-shop'));
+  await game.locator('#shop').waitFor({state:'hidden'});
+  await press(game.locator('#open-admin'));
+  await game.locator('#admin').waitFor({state:'visible'});
+  await press(game.locator('#angular-admin-area-navigation [data-angular-admin-tab="computers"]'));
+  await game.locator('#angular-computer-workspace .angular-pc-health')
+   .waitFor({state:'visible',timeout:10000});
+  await press(game.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
+  await game.locator('#page-computers-hardware').waitFor({state:'visible'});
+  assert.ok(await game.locator('#hardware-select-0').count()>0,
+   'Native PC controls must remain available through Angular');
+  assert.ok(await game.locator('#angular-computer-workspace')
+   .evaluate(node=>node.scrollWidth-node.clientWidth)<=3,
+   'Angular computer panel must not overflow at '+width+'px');
+  await press(game.locator('#close-admin'));
+  await game.locator('#admin').waitFor({state:'hidden'});
+  assert.deepEqual(errors,[],'Production build CSP, resources and game must be error-free');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
-   shopCatalog:true,reactScript:false,csp:true,revisionedGameImports:true,errorCount:errors.length});
+   shopCatalog:true,adminComputer:true,mobileTouch:mobile,
+   reactScript:false,csp:true,revisionedGameImports:true,
+   resourceErrors:0,errorCount:errors.length});
   await context.close();
  }
  await writeFile(resolve(output,'results.json'),JSON.stringify({passed:true,results},null,2)+'\n');
