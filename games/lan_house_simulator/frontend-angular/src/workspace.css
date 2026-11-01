@@ -149,3 +149,21 @@ html[data-ui-framework="angular"] #section-stock #angular-stock-workspace + .man
 #angular-stock-workspace .angular-workspace-task:disabled{
  opacity:.55;cursor:not-allowed
 }
+
+/* Finance command buttons remain available to TypeScript, but their duplicate
+ * navigation is not displayed during an Angular cutover rehearsal. */
+html[data-ui-framework="angular"] #section-finance #angular-finance-workspace + .management-pages{
+ display:none!important
+}
+#angular-finance-workspace .angular-workspace-task-danger{
+ border-color:#b78164;color:#7b3723
+}
+#angular-finance-workspace .angular-workspace-task-danger[aria-pressed="true"]{
+ background:#783d30;color:#fff8f3;border-color:#783d30
+}
+#angular-finance-workspace .angular-workspace-task-danger .angular-workspace-task-icon{
+ background:#f5dccc;color:#783d30
+}
+#angular-finance-workspace .management-lock-note{
+ border-left:3px solid #aa704d;padding-left:10px;font-size:12px;line-height:1.5
+}
