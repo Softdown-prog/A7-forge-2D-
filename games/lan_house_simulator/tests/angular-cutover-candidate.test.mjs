@@ -10,7 +10,7 @@ test('Angular candidate replaces React with all thirteen unique hosts',()=>{
  assert.equal(ANGULAR_CUTOVER_HOSTS.length,13);
  assert.ok(game.includes('./js/react-entry.js'));
  assert.ok(!candidate.includes('./js/react-entry.js'));
- assert.match(candidate,/#shop-catalog\\{display:none!important\\}/,
+ assert.ok(candidate.includes('#shop-catalog{display:none!important}'),
   'Legacy purchase port remains in DOM but cannot be focused or displayed');
  assert.match(candidate,/src="\.\/__angular\/main\.js"/);
  assert.match(candidate,/href="\.\/__angular\/styles\.css"/);
