@@ -46,7 +46,7 @@ export class SiteAccountClient {
  private refreshing:Promise<void>|null=null;
  private readonly apiOrigin:string;
  private readonly storage:Storage|null;
- constructor(readonly config:AccountConfig,private readonly transport:typeof fetch=fetch,
+ constructor(readonly config:AccountConfig,private readonly transport:typeof fetch=(input,init)=>fetch(input,init),
   storage?:Storage|null,private readonly now:()=>number=Date.now){
   if(!config.enabled)throw new AccountError('Conta temporariamente indisponível.');
   this.apiOrigin=validateAccountConfig(config).apiUrl;
