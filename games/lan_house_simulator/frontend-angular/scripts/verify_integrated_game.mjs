@@ -6,6 +6,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
+import {createAngularCutoverDocument} from './cutover_document.mjs';
 import {createGame} from '../../dist/js/sim/engine.js';
 import {DAY_MINUTES,GAME_SAVE_KEY} from '../../dist/js/sim/types.js';
 const tools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
@@ -17,70 +18,7 @@ const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=u
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json',
  '.png':'image/png','.webp':'image/webp','.wav':'audio/wav','.ogg':'audio/ogg'};
 const original=await readFile(resolve(gameRoot,'index.html'),'utf8');
-// Rehearse real Angular save/options components, without altering production HTML.
-// Keeping all original IDs allows the same native TypeScript event controllers.
-const saveStart=original.indexOf('<div class="save-actions" aria-label="Transferir progresso">');
-const saveMessage=original.indexOf('<p id="save-message"',saveStart);
-const saveEnd=original.indexOf('</p>',saveMessage)+4;
-const settingsStart=original.indexOf('<div id="menu-settings"',saveEnd);
-const settingsEnd=original.indexOf('</div>',settingsStart)+6;
-assert.ok(saveStart>0&&saveMessage>saveStart&&saveEnd>saveMessage,'Native save controls found');
-assert.ok(settingsStart>saveEnd&&settingsEnd>settingsStart,'Native sound options found');
-const nativeSaveMarkup=original.slice(saveStart,saveEnd);
-const nativeSettingsMarkup=original.slice(settingsStart,settingsEnd);
-const cutoverShell=original
- .replace(nativeSaveMarkup,'<div id="angular-save-transfer"></div>')
- .replace(nativeSettingsMarkup,'<div id="angular-menu-preferences"></div>');
-const reactEntry='<script type="module" src="./js/react-entry.js"></script>';
-const shopEntry='<div id="shop-catalog" class="shop-grid"></div>';
-const merchandiseEntry='<div id="merchandise-catalog"></div>';
-assert.equal(original.split(merchandiseEntry).length,2,
- 'One stock catalog host expected in original game shell');
-assert.equal(original.split(reactEntry).length,2,'One React bootstrap expected');
-assert.equal(original.split(shopEntry).length,2,'One native catalogue expected');
-// Replace ONLY the HTTP test response: Angular renders the real calendar and
-// inbox, while all controller actions and business state stay TypeScript-owned.
-const timeStart=cutoverShell.indexOf('<details class="time-weather-panel" id="time-weather-panel">');
-const timeEnd=cutoverShell.indexOf('</details>',timeStart)+'</details>'.length;
-const mailStart=cutoverShell.indexOf('<section id="notices" class="admin notice-inbox"');
-const mailEnd=cutoverShell.indexOf('</section>',mailStart)+'</section>'.length;
-assert.ok(timeStart>0&&timeEnd>timeStart,'Native time/weather panel boundary exists');
-assert.ok(mailStart>timeEnd&&mailEnd>mailStart,'Native notice dialog boundary exists');
-const statusMailShell=cutoverShell
- .slice(0,mailStart)+'<div id="angular-notice-inbox"></div>'+cutoverShell.slice(mailEnd);
-const mailAdjustedTimeStart=statusMailShell.indexOf('<details class="time-weather-panel" id="time-weather-panel">');
-const mailAdjustedTimeEnd=statusMailShell.indexOf('</details>',mailAdjustedTimeStart)+'</details>'.length;
-const integratedShell=statusMailShell.slice(0,mailAdjustedTimeStart)+
- '<div id="angular-time-weather"></div>'+statusMailShell.slice(mailAdjustedTimeEnd);
-assert.ok(!integratedShell.includes('<section id="notices"'),'Native mail dialog must not coexist');
-assert.ok(!integratedShell.includes('<details class="time-weather-panel" id="time-weather-panel">'),
- 'Native calendar must not coexist with Angular-owned panel');
-
-// The real account controller will reuse this Angular-owned dialog in the
-// rehearsal. The published HTML intentionally retains its native fallback.
-const accountCutoverShell=integratedShell.replace('</body>',
- '<div id="angular-player-account"></div></body>');
-const stockCutoverShell=accountCutoverShell
- .replace('<h3>Produtos e estoque</h3>',
-  '<h3>Produtos e estoque</h3><div id="angular-stock-workspace" class="angular-admin-workspace-root"></div>')
- .replace(merchandiseEntry,
-  '<div id="merchandise-catalog"><div id="angular-merchandise-catalog"></div></div>');
-const financeCutoverShell=stockCutoverShell.replace(
- '<h3>Investimento e finanças</h3>',
- '<h3>Investimento e finanças</h3><div id="angular-finance-workspace" class="angular-admin-workspace-root"></div>');
-const additionalAdminCutoverShell=financeCutoverShell
- .replace('<h3>Preços de venda</h3>',
-  '<h3>Preços de venda</h3><div id="angular-prices-workspace" class="angular-admin-workspace-root"></div>')
- .replace('<h3>Licenciamento de Windows</h3>',
-  '<h3>Licenciamento de Windows</h3><div id="angular-licenses-workspace" class="angular-admin-workspace-root"></div>')
- .replace('<h3>Videogames · PS1 (2002) e PS2 (2006)</h3>',
-  '<h3>Videogames · PS1 (2002) e PS2 (2006)</h3><div id="angular-consoles-workspace" class="angular-admin-workspace-root"></div>');
-const index=additionalAdminCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
- .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
-  '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
-  'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
-  '#angular-shop-catalog{display:block;min-width:0}</style></head>')
- .replace(shopEntry,'<div id="angular-shop-catalog"></div>'+shopEntry);
+const index=createAngularCutoverDocument(original);
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url??'/','http://localhost').pathname);
