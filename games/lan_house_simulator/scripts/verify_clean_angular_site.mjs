@@ -43,7 +43,7 @@ try{
      /\.(?:js|css|svg|webp|json)$/.test(new URL(response.url()).pathname))
     errors.push('HTTP '+response.status()+' '+response.url());
   });
-  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/']){
+  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/']){
    let res=await page.goto(origin+pathname,{waitUntil:'networkidle'});
    assert.equal(res?.status(),200);
    await page.waitForFunction(()=>
@@ -81,6 +81,36 @@ try{
     await page.frameLocator('#game-frame').locator('#menu-new')
       .waitFor({state:'visible',timeout:20000});
    }
+   if(pathname==='/termos/'||pathname==='/privacidade/'){
+    const terms=pathname==='/termos/';
+    const expected=terms?10:11;
+    const sections=page.locator('.legal-body section');
+    const index=page.locator('.legal-index nav a');
+    assert.equal(await sections.count(),expected,
+     'Every legal section must be present in the Angular DOM on '+pathname);
+    assert.equal(await index.count(),expected,
+     'Legal index and document must have matching sections');
+    assert.equal(await page.locator('.draft-notice').count(),1);
+    assert.equal(await page.locator('main h1').count(),1);
+    assert.equal(await page.locator('script[src*="site.mjs"]').count(),0);
+    const anchor=index.first();
+    assert.equal(await anchor.getAttribute('href'),terms?'#projeto':'#responsavel');
+    if(mobile)await anchor.tap();else await anchor.click();
+    await page.waitForFunction(id=>location.hash==='#'+id,
+     terms?'projeto':'responsavel');
+    assert.ok(await sections.first().isVisible());
+    // F5 after a fragment deep-link must keep the section and Angular-only DOM.
+    const sectionRefresh=await page.reload({waitUntil:'networkidle'});
+    assert.equal(sectionRefresh?.status(),200);
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('.legal-body section').count(),expected);
+    assert.equal(await page.locator('header nav').count(),1);
+    assert.ok(await page.evaluate(()=>
+     document.documentElement.scrollWidth<=innerWidth+2),
+     'Legal page must not jump horizontally after F5 at '+width+'px');
+   }
+
    assert.deepEqual(errors,[],'JS/asset errors at '+pathname+' '+width+'px');
   }
   await page.goto(origin+'/',{waitUntil:'networkidle'});
@@ -138,7 +168,7 @@ try{
   assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'No horizontal jump while scrolling');
   await page.screenshot({path:resolve(output,'angular-clean-'+width+'.png'),fullPage:true});
-  results.push({width,routeReloads:4,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
+  results.push({width,routeReloads:6,legalRoutes:2,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
    gameReload:true,errors:errors.length});
   await context.close();
  }
