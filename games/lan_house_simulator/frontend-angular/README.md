@@ -160,8 +160,7 @@ componentes Angular opcionais ainda **não** existem no HTML publicado.
 Também inventaria verificações já escritas nos scripts Playwright para
 compras PS1/PS2, salvamento, administração, desktop/mobile e ofertas
 bloqueadas; registra explicitamente fluxos sem evidência de E2E integrado
-(calendário/clima, correio/cartas, posicionamento de móveis, busca,
-teclado/foco, conta/doações e consentimento de privacidade).
+(posicionamento de móveis e integração de conta/doações).
 
 O resultado JSON em `out/angular-migration-audit/report.json` é publicado
 como `lhs-angular-migration-audit` pelo workflow da branch. Executar:
@@ -203,3 +202,14 @@ termo e filtra sua própria lista. Em desktop, o teste exige foco real
 no botão de correio, abertura com Enter, retorno ao menu com Escape e
 retomada da partida. Isso é validado em execução de navegador, não
 simulado por callbacks unitários.
+
+## Validação integrada de privacidade (sem publicação)
+
+O ensaio Chromium de integração também verifica o aviso real de privacidade
+em desktop 1280px e mobile touch 414px/360px, sem pré-configurar a escolha:
+aceitar e recusar opcionais, gravar a decisão com versão e data, mantê-la
+após reload e reexibir o aviso quando a decisão ultrapassa 30 dias.
+Depois de recusar, a partida ainda pode ser retomada com o save essencial
+intacto. O cenário usa o mesmo corte HTTP temporário e não publica Angular.
+As verificações ficam sujeitas ao resultado do GitHub Actions; a existência
+do script, sozinha, não equivale à homologação.
