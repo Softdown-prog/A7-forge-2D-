@@ -294,7 +294,7 @@ try{
     text.includes('Desligados')&&text.includes('Com defeito')&&
     text.includes('Em reparo')&&text.includes('Desgaste médio');
   },null,{timeout:10000});
-  assert.match(await pcHealth.innerText(),/Desgaste médio\\s*\\d+%/);
+  assert.match(await pcHealth.innerText(),/Desgaste médio\s*\d+%/);
   assert.ok(await pcHealth.evaluate(node=>node.scrollWidth-node.clientWidth)<=3,
    'PC health summary does not overflow at '+width+' px');
 
