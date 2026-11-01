@@ -81,3 +81,13 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - **Não é SSR ou prerender do conteúdo.** O corpo segue CSR; SEO e publicação só serão homologados após pré-renderização, paridade completa e análise editorial.
 - `check:site:clean` valida os HTMLs gerados e Chromium valida título/descrição/OG por rota em desktop e mobile.
 - O workflow isolado passa a observar a branch `feat/lhs-angular-next-stage-20261101`, sem mudanças no deploy da `main`.
+
+
+### Microetapa — histórico de Donate autenticado e somente leitura
+
+- A página `/donate/` oferece consulta manual de até 10 pedidos da própria conta, exclusivamente `GET /v1/orders`, reutilizando o cliente Firebase Angular com sessão e confirmação de email.
+- O transporte permite essa rota **somente com GET sem corpo**; a UI não solicita `POST /v1/orders`, não gera idempotency keys, não abre checkout e não confirma Cookies por parâmetros de retorno.
+- Pedidos são validados com modelo tipado e rótulos controlados; respostas inválidas falham fechadas e status desconhecidos não aparecem como pagamento aprovado.
+- Sem consulta automática ao abrir a página, com orientações para login/verificação. Os botões de compra continuam desabilitados mesmo se o backend anunciar pagamentos ativos.
+- Testes Node exercitam o parser TypeScript real; Chromium usa contas e pedidos sintéticos, com requests externos interceptados e cenários desktop/mobile, sessão ausente, email não confirmado, lista válida e payload inválido.
+- Não é ativação de pagamentos, SSR/prerender ou autorização de deploy; frontend público segue independente.
