@@ -72,3 +72,12 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Consulta exclusivamente `/account-config.json` e `/v1/config`, sem credenciais. Os dois botões ficam desabilitados mesmo quando o backend declara pagamentos ativos.
 - Não cria pedidos, não recebe checkout, não credita Cookies, não confia em parâmetros de retorno do provedor. A integração autenticada, idempotência e histórico são a próxima etapa.
 - Testes devem interceptar toda chamada externa e verificar atualização visual, F5 e ausência de requisições de pedidos.
+
+### Microetapa seguinte — metadados estáticos por rota, ainda sem prerender
+
+- Fonte única de títulos e descrições em `src/site-rewrite/page-metadata.json`, consumida pelo Angular e pelo build isolado.
+- Cada rota recebe título/description/Open Graph próprios no HTML servido, antes de iniciar o JavaScript. Rota 404 e confirmação de email também são cobertas; a confirmação mantém `referrer=no-referrer`.
+- A prévia continua `noindex,nofollow`, com `robots.txt` bloqueando indexação; domínio canônico não foi presumido.
+- **Não é SSR ou prerender do conteúdo.** O corpo segue CSR; SEO e publicação só serão homologados após pré-renderização, paridade completa e análise editorial.
+- `check:site:clean` valida os HTMLs gerados e Chromium valida título/descrição/OG por rota em desktop e mobile.
+- O workflow isolado passa a observar a branch `feat/lhs-angular-next-stage-20261101`, sem mudanças no deploy da `main`.

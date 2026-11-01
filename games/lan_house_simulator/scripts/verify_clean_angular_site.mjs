@@ -7,6 +7,8 @@ import {chromium} from 'playwright';
 const root=resolve(import.meta.dirname,'../out/site-clean-angular');
 const output=resolve(import.meta.dirname,'../out/site-clean-angular-browser');
 const accountConfig=JSON.parse(await readFile(resolve(root,'account-config.json'),'utf8'));
+const pageMetadata=JSON.parse(await readFile(resolve(import.meta.dirname,
+ '../frontend-angular/src/site-rewrite/page-metadata.json'),'utf8'));
 const apiOrigin=new URL(accountConfig.apiUrl).origin;
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml',
@@ -66,6 +68,12 @@ try{
    assert.equal(await page.locator('lhs-site').count(),1);
    assert.equal(await page.locator('header nav').count(),1);
    assert.equal(await page.locator('main h1').count(),1);
+   assert.equal(await page.title(),pageMetadata[pathname].title+' · Lan House Simulator');
+   assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),
+    pageMetadata[pathname].description);
+   assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'),'noindex,nofollow');
+   assert.equal(await page.locator('meta[property="og:title"]').getAttribute('content'),
+    pageMetadata[pathname].title+' · Lan House Simulator');
    assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'Horizontal overflow at '+width+' '+pathname);
    res=await page.reload({waitUntil:'networkidle'});

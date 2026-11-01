@@ -5,7 +5,7 @@ on:
       - 'games/lan_house_simulator/**'
       - '.github/workflows/lhs-clean-angular-rewrite.yml'
   push:
-    branches: ['rewrite/lhs-angular-site-clean']
+    branches: ['rewrite/lhs-angular-site-clean', 'feat/lhs-angular-next-stage-20261101']
     paths:
       - 'games/lan_house_simulator/**'
       - '.github/workflows/lhs-clean-angular-rewrite.yml'
