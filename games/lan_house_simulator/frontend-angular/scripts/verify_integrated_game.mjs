@@ -155,8 +155,8 @@ try{
   }
   await page.waitForFunction(()=>{
    const cash=document.querySelector('#angular-shop-overview #shop-cash');
-   return cash?.textContent?.trim().startsWith('R')===true &&
-    cash.textContent.trim().length>=5;
+   const label=cash?.textContent?.trim()??'';
+   return label.startsWith('Caixa R$ ')&&label.includes(' · PCs ');
   });
   // The Angular search must filter the VISIBLE Angular projection,
   // not just the hidden native command catalog.

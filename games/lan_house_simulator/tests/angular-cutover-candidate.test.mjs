@@ -44,6 +44,14 @@ test('CI must reject malformed browser scripts before installing browsers',()=>{
  assert.ok(workflow.indexOf('Syntax check cutover') <
   workflow.indexOf('Install Playwright for real Angular browser QA'));
 });
+test('shop-overview integrated check matches the real TypeScript cash read model',()=>{
+ const native=readFileSync(new URL('../src/application/shopOverviewPort.ts',import.meta.url),'utf8');
+ const qa=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
+ assert.ok(native.includes('Caixa R$ '),'Native cash header prefix changed');
+ assert.ok(native.includes(' · PCs '),'Native summary field changed');
+ assert.match(qa,/label\.startsWith\('Caixa R\$ '\)/);
+ assert.match(qa,/label\.includes\(' · PCs '\)/);
+});
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
  assert.match(browser,/createAngularCutoverDocument\(original\)/);
