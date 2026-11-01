@@ -89,8 +89,10 @@ try{
    if(mobile){
     await page.locator('#menu-toggle').click();
     assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'true');
-    assert.ok(await nav.evaluate(el=>el.classList.contains('is-open')),
-     'Mobile Angular menu must actually open');
+    await page.waitForFunction(()=>
+     document.querySelector('#site-nav')?.classList.contains('is-open'),
+     null,{timeout:5000});
+    assert.ok(await nav.isVisible(),'Mobile Angular menu must actually open');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'false');
     await page.locator('#menu-toggle').click();
