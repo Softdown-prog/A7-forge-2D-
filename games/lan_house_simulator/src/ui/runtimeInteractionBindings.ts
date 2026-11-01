@@ -19,10 +19,12 @@ export function installRuntimeInteractionBindings(
   const panel=doc.getElementById("time-weather-panel");
   if(panel?.hasAttribute("open"))actions.refreshTimeWeather();
  });
+ // Capture Escape before dialog, button or framework handlers can stop bubbling.
+ // The original editor/placement precedence stays unchanged.
  doc.addEventListener("keydown",e=>{
   if(e.key!=="Escape"||!actions.playing())return;
   if(actions.editorOpen())actions.closeEditor();
   else if(actions.editingPlacement())actions.stopPlacement();
   else actions.showMenu();
- });
+ },{capture:true});
 }
