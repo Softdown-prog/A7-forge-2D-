@@ -68,7 +68,14 @@ const stockCutoverShell=accountCutoverShell
 const financeCutoverShell=stockCutoverShell.replace(
  '<h3>Investimento e finanças</h3>',
  '<h3>Investimento e finanças</h3><div id="angular-finance-workspace" class="angular-admin-workspace-root"></div>');
-const index=financeCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+const additionalAdminCutoverShell=financeCutoverShell
+ .replace('<h3>Preços de venda</h3>',
+  '<h3>Preços de venda</h3><div id="angular-prices-workspace" class="angular-admin-workspace-root"></div>')
+ .replace('<h3>Licenciamento de Windows</h3>',
+  '<h3>Licenciamento de Windows</h3><div id="angular-licenses-workspace" class="angular-admin-workspace-root"></div>')
+ .replace('<h3>Videogames · PS1 (2002) e PS2 (2006)</h3>',
+  '<h3>Videogames · PS1 (2002) e PS2 (2006)</h3><div id="angular-consoles-workspace" class="angular-admin-workspace-root"></div>');
+const index=additionalAdminCutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
@@ -336,6 +343,41 @@ try{
   assert.equal(afterFinance.cash>=0,true,'Finance navigation must not corrupt cash');
   assert.equal(await page.locator('#admin').evaluate(el=>el.scrollWidth-el.clientWidth)<=3,true,
    'Finance task grid fits desktop and mobile without horizontal overflow');
+
+  // The next three Angular workspaces only navigate existing native task panes.
+  // They must not buy media, edit prices or license any station on a click.
+  const adminTaskMatrix=[
+   {area:'prices',pages:['hourly','insights','retail','printing','discs']},
+   {area:'licenses',pages:['windows','classic','gpu']},
+   {area:'consoles',pages:['stations','pricing','discs']}
+  ];
+  const beforeTaskSwitch=await persisted();
+  for(const group of adminTaskMatrix){
+   await press(area.locator('[data-angular-admin-tab="'+group.area+'"]'));
+   const nav=page.locator('#angular-'+group.area+'-workspace');
+   assert.equal(await nav.count(),1,'One Angular navigation root '+group.area);
+   for(const task of group.pages){
+    const button=nav.locator('[data-angular-task="'+task+'"]');
+    await press(button);
+    assert.equal(await page.locator('#page-'+group.area+'-'+task).isVisible(),true,
+     'Angular task forwards native '+group.area+'/'+task);
+    assert.equal(await page.locator('#section-'+group.area+' > .management-page:visible').count(),1,
+     'Only one native task page shown: '+group.area);
+    assert.equal(await button.getAttribute('aria-pressed'),'true',
+     'Angular task selection follows native manager: '+group.area+'/'+task);
+   }
+   assert.ok(await page.locator('#admin').evaluate(el=>el.scrollWidth-el.clientWidth)<=3,
+    'No horizontal overflow in '+group.area+' at '+width);
+  }
+  const afterTaskSwitch=await persisted();
+  assert.equal(afterTaskSwitch.ps1Discs?.['turbo-circuito'],
+   beforeTaskSwitch.ps1Discs?.['turbo-circuito'],
+   'Navigation alone cannot purchase another PS1 disc');
+  assert.equal(afterTaskSwitch.ps2Games?.['cidade-em-fuga'],
+   beforeTaskSwitch.ps2Games?.['cidade-em-fuga'],
+   'Navigation alone cannot purchase a PS2 game');
+  assert.equal(afterTaskSwitch.ps2Stations?.length,beforeTaskSwitch.ps2Stations?.length,
+   'Console navigation cannot purchase stations');
   await press(page.locator('#close-admin'));
 
   // Save export/import must use the original TypeScript serializer/validator,
