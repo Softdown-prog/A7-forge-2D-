@@ -19,3 +19,9 @@ A implementação anterior não era uma reescrita: `website/build.mjs` renderiza
 - CI com Angular strict, Playwright Chromium desktop/mobile, e validação do endereço público **antes** de concluir qualquer publicação.
 
 O primeiro commit desta branch inicia um projeto Angular independente. Fluxos inacabados permanecem desabilitados nesta prévia e **não** devem substituir a produção.
+
+## Etapa adicional — Conteúdo legal Angular autônomo
+- `src/site-rewrite/legal-content.ts` contém conteúdo independente e tipado, com 10 seções de Termos e 11 de Privacidade, sem importar os antigos scripts ou renderizar HTML arbitrário.
+- `site-app.html` renderiza índice âncora, seções e links através de bindings Angular. Nada é montado pelo JavaScript legado.
+- Esta é **uma versão para revisão editorial/jurídica**, sem publicação; não afirmar equivalência literal ou validade jurídica definitiva. Identificação do operador, provedores e comportamentos da conta/pagamentos ainda precisam homologação.
+- Inclusão de testes no Chromium para rotas, links, links âncora e F5, inclusive telas pequenas.

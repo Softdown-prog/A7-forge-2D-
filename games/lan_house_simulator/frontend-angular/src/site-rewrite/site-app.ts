@@ -1,5 +1,6 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,computed,signal} from '@angular/core';
 import {eras,faq,footerLinks,navigation,normalizeSearch,pathOf} from './site-data';
+import {termsSections,privacySections} from './legal-content';
 @Component({
  selector:'lhs-site',
  standalone:true,
@@ -10,6 +11,7 @@ export class SiteApp implements OnInit,OnDestroy{
  readonly path=pathOf(location.pathname);
  readonly navigation=navigation;
  readonly footerLinks=footerLinks;
+ readonly legalSections=this.path==='/termos/'?termsSections:privacySections;
  readonly eras=eras;
  readonly faq=faq;
  readonly openMenu=signal(false);
