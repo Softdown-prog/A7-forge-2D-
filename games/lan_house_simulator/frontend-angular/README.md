@@ -287,3 +287,23 @@ Esse cenário verifica a apresentação e os contratos existentes, **não
 substitui o teste do motor econômico nem homologação em celular físico**.
 Todos os testes devem passar antes de discutir a retirada do React,
 e nenhum merge/deploy é autorizado pelo script de auditoria.
+
+## Finanças na prévia Angular
+
+A navegação opcional `#angular-finance-workspace` organiza as seis
+páginas financeiras em Angular: **Caixa e contas**, **Ocupação e resultado**,
+**Primeira sexta**, **Divulgação**, **Opiniões dos clientes** e **Reiniciar
+partida**. Os botões Angular só acionam a seleção nativa
+`data-panel-choice` do `managementPanels.ts`; não calculam dinheiro,
+não reprocessam contas e não criam nem apagam saves.
+
+A área **Reiniciar partida** é visualmente diferenciada. Acessar essa
+aba **não reinicia o jogo**: o botão original `#reset-game` e seu
+processo de confirmação continuam sob o controlador TypeScript.
+O ensaio de navegador exercita as seis páginas nas larguras desktop
+e mobile, confere exatamente uma seção visível, identidade dos
+elementos e permanência das bancadas PS1/PS2 da partida. Não
+confirma nem executa a ação destrutiva.
+
+O Angular da produção segue desativado até completar toda a paridade,
+executar os testes e obter aprovação explícita para o merge.
