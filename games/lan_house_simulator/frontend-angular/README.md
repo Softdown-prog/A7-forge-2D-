@@ -329,3 +329,23 @@ O teste integrado abre as 11 subtelas reais, confirma a aba selecionada
 e o layout em 1280/414/360 px e verifica que a navegação **não**
 compra discos, jogos ou bancadas. A retirada do React publicado continua
 bloqueada, e o motor Canvas 2D não é modificado nesta etapa.
+
+## Publicação candidata Angular, isolada da main
+
+O transformador frontend-angular/scripts/cutover_document.mjs compõe a mesma
+página HTML para o teste integrado Chromium e para um candidato estático.
+Esta página substitui o bootstrap React pelo Angular e monta os 13 hosts
+opcionais, inclusive saldo e organização da loja, sem alterar Canvas, economia
+ou os formatos de saves. O script valida âncoras obrigatórias e IDs únicos.
+
+Após construir o jogo TypeScript e o Angular 22, execute na pasta do jogo:
+
+    node frontend-angular/scripts/build_cutover_candidate.mjs
+
+O resultado fica em out/angular-cutover-candidate, com os artefatos do jogo,
+o bundle Angular em __angular/ e sem o bundle React. O GitHub Actions
+publica esse diretório como artefato temporário para QA. A geração NÃO altera
+index.html da fonte, scripts/build.mjs, produção ou branch main.
+
+Só considerar publicação após testes verdes, revisão móvel, conta/doações
+em ambiente autorizado e aprovação explícita do merge.

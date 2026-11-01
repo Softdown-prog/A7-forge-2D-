@@ -7,6 +7,7 @@ on:
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
       - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
@@ -20,6 +21,7 @@ on:
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
       - "games/lan_house_simulator/tests/angular-admin-workspaces.test.mjs"
       - "games/lan_house_simulator/tests/angular-migration-audit.test.mjs"
+      - "games/lan_house_simulator/tests/angular-cutover-candidate.test.mjs"
       - "games/lan_house_simulator/tests/runtime-interaction-bindings-boundary.test.mjs"
       - "games/lan_house_simulator/src/ui/runtimeInteractionBindings.ts"
       - "games/lan_house_simulator/src/ui/cloudControls.ts"
@@ -51,7 +53,7 @@ jobs:
           cache: npm
           cache-dependency-path: games/lan_house_simulator/frontend-angular/package-lock.json
       - name: Verify Angular UI boundaries
-        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs
+        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
       - name: Audit React to Angular hosts and browser QA gaps (advisory)
         run: |
           node --test tests/angular-migration-audit.test.mjs
@@ -79,6 +81,8 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
+      - name: Assemble isolated static Angular cutover candidate
+        run: node frontend-angular/scripts/build_cutover_candidate.mjs
       - name: Verify native UI Escape precedence before browser integration
         run: node --test tests/runtime-interaction-bindings-boundary.test.mjs
       - name: Validate real game purchases, locations and saves through Angular
@@ -97,6 +101,13 @@ jobs:
           name: lhs-angular-catalog-browser-qa
           path: games/lan_house_simulator/out/angular-catalog-browser
           if-no-files-found: ignore
+      - name: Upload full Angular cutover candidate for review only
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-cutover-candidate
+          path: games/lan_house_simulator/out/angular-cutover-candidate
+          retention-days: 7
+          if-no-files-found: error
       - name: Upload preview for browser review
         uses: actions/upload-artifact@v4
         with:
