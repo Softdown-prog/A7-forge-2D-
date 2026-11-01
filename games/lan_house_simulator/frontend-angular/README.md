@@ -176,3 +176,18 @@ evidência **estática** de cobertura; um fluxo só fica comprovadamente
 funcional após o Playwright executar e passar. O auditor não marca o
 cutover como pronto nem altera o jogo ou o site. A migração continua
 retida nesta branch até homologação total e autorização explícita.
+
+## Endurecimento E2E: calendário, clima e correspondência
+
+O ensaio Chromium integrado agora também substitui **somente na resposta
+HTTP de teste** o calendário nativo e o diálogo de correio pelos hosts
+Angular equivalentes. Usa o jogo real, um save histórico com chuva e uma
+carta real armazenada no save. Valida em 1280, 414 e 360 px: IDs únicos,
+calendário expandir/fechar, efeito da chuva, diálogo acessível, texto de
+carta escapado (sem execução de HTML), leitura por botão Angular delegado
+à ação TypeScript, contador de não lidas, fechamento da janela e estado
+persistido após reload. Não injeta snapshots falsos para esses testes.
+
+A auditoria estática reconhece esses dois casos como evidenciados, mas o
+status de corte final continua `not-ready` até os demais fluxos serem
+homologados. Nenhum HTML publicado, regra do motor ou esquema de save muda.

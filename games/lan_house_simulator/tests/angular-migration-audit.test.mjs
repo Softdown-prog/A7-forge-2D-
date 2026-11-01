@@ -22,10 +22,10 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
  const byId=Object.fromEntries(report.browserQa.checks.map(c=>[c.id,c]));
  for(const id of ["console-purchases","menu-save-transfer","sound-preferences",
   "admin-workspaces","desktop-mobile-touch","disabled-purchases",
-  "shop-catalog-preview"]){
+  "shop-catalog-preview","hud-weather","mail-inbox"]){
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
- for(const id of ["hud-weather","mail-inbox","layout-editor","shop-search",
+ for(const id of ["layout-editor","shop-search",
   "keyboard-focus","account-donation","privacy-consent"]){
   assert.equal(byId[id].status,"not-evidenced-in-script",id);
  }

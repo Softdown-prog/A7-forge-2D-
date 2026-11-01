@@ -35,7 +35,25 @@ const reactEntry='<script type="module" src="./js/react-entry.js"></script>';
 const shopEntry='<div id="shop-catalog" class="shop-grid"></div>';
 assert.equal(original.split(reactEntry).length,2,'One React bootstrap expected');
 assert.equal(original.split(shopEntry).length,2,'One native catalogue expected');
-const index=cutoverShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
+// Replace ONLY the HTTP test response: Angular renders the real calendar and
+// inbox, while all controller actions and business state stay TypeScript-owned.
+const timeStart=cutoverShell.indexOf('<details class="time-weather-panel" id="time-weather-panel">');
+const timeEnd=cutoverShell.indexOf('</details>',timeStart)+'</details>'.length;
+const mailStart=cutoverShell.indexOf('<section id="notices" class="admin notice-inbox"');
+const mailEnd=cutoverShell.indexOf('</section>',mailStart)+'</section>'.length;
+assert.ok(timeStart>0&&timeEnd>timeStart,'Native time/weather panel boundary exists');
+assert.ok(mailStart>timeEnd&&mailEnd>mailStart,'Native notice dialog boundary exists');
+const statusMailShell=cutoverShell
+ .slice(0,mailStart)+'<div id="angular-notice-inbox"></div>'+cutoverShell.slice(mailEnd);
+const mailAdjustedTimeStart=statusMailShell.indexOf('<details class="time-weather-panel" id="time-weather-panel">');
+const mailAdjustedTimeEnd=statusMailShell.indexOf('</details>',mailAdjustedTimeStart)+'</details>'.length;
+const integratedShell=statusMailShell.slice(0,mailAdjustedTimeStart)+
+ '<div id="angular-time-weather"></div>'+statusMailShell.slice(mailAdjustedTimeEnd);
+assert.ok(!integratedShell.includes('<section id="notices"'),'Native mail dialog must not coexist');
+assert.ok(!integratedShell.includes('<details class="time-weather-panel" id="time-weather-panel">'),
+ 'Native calendar must not coexist with Angular-owned panel');
+
+const index=integratedShell.replace(reactEntry,'<script type="module" src="./__angular/main.js"></script>')
  .replace('</head>','<link rel="stylesheet" href="./__angular/styles.css"/>'+
   '<style>#shop-catalog{position:absolute!important;left:-9999px!important;'+
   'width:1px!important;height:1px!important;overflow:hidden!important;pointer-events:none!important}'+
@@ -67,6 +85,12 @@ try{
   fixture.totalMinutes=8*360*DAY_MINUTES+35; // 2006
   fixture.cash=15000;fixture.pcPoweredOff=[true,true,true];
   fixture.offlineUntil=fixture.totalMinutes+500;
+  fixture.weather='rain';
+  // A known real notice from the native save, not a mocked Angular snapshot.
+  const mailId='y2k-warning',mailTitle='QA auditoria Angular — carta real';
+  const unsafeBody='Texto de auditoria <img src=x onerror="window.__mailInjection=1">';
+  fixture.notices=[{id:mailId,title:mailTitle,body:unsafeBody,
+   day:Math.floor(fixture.totalMinutes/DAY_MINUTES)+1,read:false,severity:'urgent'}];
   await context.addInitScript(({key,save})=>{
    if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(save));
    localStorage.setItem('lhs.sound','off');
@@ -89,6 +113,58 @@ try{
   await press(page.locator('#menu-continue'));
   await page.locator('#game-app').waitFor({state:'visible'});
   assert.equal(await page.locator('#game').count(),1,'Real Canvas game exists');
+  // Real Angular components receive snapshots from the actual game ports.
+  // Source-of-truth is the loaded save, not a manually dispatched DOM event.
+  assert.equal(await page.locator('#angular-time-weather #time-weather-panel').count(),1,
+   'Exactly one Angular weather panel is mounted');
+  assert.equal(await page.locator('#time-weather-panel').count(),1,'No duplicate calendar IDs');
+  assert.equal(await page.locator('#angular-notice-inbox #notices').count(),1,
+   'Exactly one Angular mail dialog is mounted');
+  assert.equal(await page.locator('#notices').count(),1,'No duplicate mail dialog');
+  await page.waitForFunction(()=>document.querySelector('#weather-hud')?.textContent?.includes('Chuva'));
+  assert.match(await page.locator('#weather-hud').innerText(),/Chuva/);
+  await press(page.locator('#time-weather-panel summary'));
+  assert.equal(await page.locator('#time-weather-panel').getAttribute('open'),'',
+   'Calendar opens using native details semantics');
+  assert.match(await page.locator('#time-weather-condition').innerText(),/Chuva/);
+  assert.match(await page.locator('#time-weather-effect').innerText(),/reduz a procura/);
+  assert.match(await page.locator('#time-weather-date').innerText(),/2006/);
+  await press(page.locator('#time-weather-panel summary'));
+  assert.equal(await page.locator('#time-weather-panel').getAttribute('open'),null,
+   'Calendar closes on the same toggle');
+  assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'false');
+  await press(page.locator('#open-notices'));
+  const inbox=page.locator('#angular-notice-inbox #notices');
+  await inbox.waitFor({state:'visible'});
+  assert.equal(await inbox.getAttribute('role'),'dialog');
+  assert.equal(await inbox.getAttribute('aria-modal'),'true');
+  assert.equal(await page.locator('#notices-list[data-angular-owned="true"]').count(),1,
+   'Native controller must not replace Angular-owned mail list');
+  const letter=page.locator('#notices-list .notice-letter').filter({hasText:mailTitle});
+  await letter.waitFor({state:'visible'});
+  assert.equal(await letter.count(),1,'Real saved letter appears once');
+  assert.match(await letter.innerText(),/Texto de auditoria <img/);
+  assert.equal(await letter.locator('img').count(),0,'HTML in a letter must be escaped');
+  assert.equal(await page.evaluate(()=>window.__mailInjection),undefined,
+   'Untrusted letter text cannot execute JavaScript');
+  const initialUnread=Number(await page.locator('#notices-count').innerText());
+  assert.ok(initialUnread>=1,'Real unread notice must be counted');
+  assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'true');
+  await press(letter.locator('[data-notice-read="y2k-warning"]'));
+  await page.waitForFunction(key=>{
+   const saved=JSON.parse(localStorage.getItem(key)??'{}');
+   return saved.notices?.some(n=>n.id==='y2k-warning'&&n.read===true);
+  },GAME_SAVE_KEY);
+  await page.waitForFunction(count=>
+   Number(document.querySelector('#notices-count')?.textContent)===count-1,initialUnread);
+  assert.match(await letter.getAttribute('class'),/\bread\b/);
+  assert.equal(await letter.locator('[data-notice-read="y2k-warning"]').count(),0,
+   'Already-read notice cannot be read again');
+  await page.screenshot({path:resolve(output,'mail-'+width+'.png'),fullPage:true});
+  await press(page.locator('#close-notices'));
+  await inbox.waitFor({state:'hidden'});
+  assert.equal(await page.locator('#open-notices').getAttribute('aria-expanded'),'false');
+
   await press(page.locator('#open-shop'));
   await press(page.locator('[data-shop-category="consoles"]'));
   const shop=page.locator('.angular-console-shop');
@@ -143,6 +219,12 @@ try{
   await page.screenshot({path:resolve(output,'integrated-'+width+'.png'),fullPage:true});
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.documentElement.dataset.uiFramework==='angular');
+  assert.equal(await page.locator('#angular-time-weather #weather-hud').count(),1);
+  assert.equal(await page.locator('#angular-notice-inbox #notices').count(),1);
+  const reopenedMail=await persisted();
+  assert.equal(reopenedMail.notices.find(n=>n.id==='y2k-warning')?.read,true,
+   'Real mail read state survives a browser reload');
+  assert.equal(await page.evaluate(()=>window.__mailInjection),undefined);
   assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
    'Angular export button mounted before native bootstrap');
   assert.equal(await page.locator('#angular-save-transfer #save-import-file').count(),1,
