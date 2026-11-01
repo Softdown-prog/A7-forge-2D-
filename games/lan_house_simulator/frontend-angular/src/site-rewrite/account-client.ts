@@ -178,7 +178,8 @@ export class SiteAccountClient {
   }
  }
  async api(path:string,body?:RequestJson,retried=false):Promise<RequestJson>{
-  if(!/^\/v1\/(?:account|saves\/main(?:\?backup=true)?|auth\/verification-email)$/.test(path))
+  if(!(path==='/v1/orders'&&body===undefined)&&
+   !/^\/v1\/(?:account|saves\/main(?:\?backup=true)?|auth\/verification-email)$/.test(path))
    throw new AccountError('Rota não autorizada.');
   const session=this.activeSession(),epoch=this.epoch;
   try{
