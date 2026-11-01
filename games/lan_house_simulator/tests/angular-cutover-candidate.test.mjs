@@ -197,3 +197,24 @@ test('the new institutional site Angular navigation is isolated and browser-test
  for(const token of ['siteNavigation','menu-toggle','Escape','aria-expanded','/ajuda/'])
   assert.ok(browser.includes(token),token);
 });
+
+test('Angular timeline isolates the legacy JavaScript handler and runs Chromium on both content pages',()=>{
+ const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
+ const legacy=readFileSync(new URL('../website/site.mjs',import.meta.url),'utf8');
+ const entry=readFileSync(new URL('../frontend-angular/src/site/main.ts',import.meta.url),'utf8');
+ const component=readFileSync(new URL('../frontend-angular/src/site/site-timeline.ts',import.meta.url),'utf8');
+ const browser=readFileSync(new URL('../frontend-angular/scripts/verify_full_site.mjs',import.meta.url),'utf8');
+ for(const key of ['if(angularCandidate)body=body.replaceAll',
+   'escape(JSON.stringify(eras))','data-angular-site-timeline'])
+  assert.ok(build.includes(key),key);
+ assert.ok(legacy.includes("!document.querySelector('[data-angular-site-timeline]')"));
+ assert.ok(entry.includes('createComponent(SiteTimelineComponent'));
+ assert.ok(entry.includes("dataset['siteTimeline']='angular'"));
+ for(const value of ['ChangeDetectionStrategy.OnPush','signal(0)','data-era-list','aria-pressed'])
+  assert.ok(component.includes(value),value);
+ assert.doesNotMatch(component,/from\s+['"][^'"]*react|innerHTML\s*=|fetch\(/i);
+ for(const marker of ["'/sobre-o-jogo/'","'2005'","'2012'","'2024'",
+   "timeline.locator('#era-image')","page.keyboard.press('Enter')",
+   "siteAngularTimeline:"])
+  assert.ok(browser.includes(marker),'Missing real Chromium check: '+marker);
+});

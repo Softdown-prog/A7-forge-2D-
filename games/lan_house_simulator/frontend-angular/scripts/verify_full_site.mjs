@@ -74,6 +74,42 @@ try{
    if(message.type()==='error'&&/Content Security Policy|Refused to|unsafe-eval/i.test(message.text()))
     errors.push('CSP: '+message.text());
   });
+  if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
+   // Exercise each public timeline against the actual Angular candidate.
+   for(const pathname of ['/', '/sobre-o-jogo/']){
+    await page.goto(origin+pathname,{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteTimeline==='angular');
+    const timeline=page.locator('[data-angular-site-timeline]');
+    assert.equal(await timeline.count(),1,'One timeline per page');
+    assert.equal(await timeline.locator('.era-tab').count(),4);
+    assert.equal(await timeline.locator('.era-tab[aria-pressed="true"]').count(),1);
+    assert.equal(await timeline.locator('#era-year').innerText(),'1998');
+    for(const [index,year,model] of [[1,'2005','lcd'],[2,'2012','led'],[3,'2024','arena']]){
+     const tab=timeline.locator('[data-era="'+index+'"]');
+     if(mobile)await tab.tap();else await tab.click();
+     await page.waitForFunction(year=>
+      document.querySelector('[data-angular-site-timeline] #era-year')?.textContent===year,
+      year,{timeout:10000});
+     assert.equal(await tab.getAttribute('aria-pressed'),'true');
+     assert.equal(await timeline.locator('.era-tab[aria-pressed="true"]').count(),1);
+     assert.equal(await timeline.locator('#era-image').getAttribute('src'),
+      '/assets/pc-'+model+'.svg');
+     await page.waitForFunction(() => {
+      const image=document.querySelector('[data-angular-site-timeline] #era-image');
+      return image instanceof HTMLImageElement && image.complete && image.naturalWidth>0;
+     },null,{timeout:10000});
+    }
+    // Real keyboard interaction, including touch viewport keyboard support.
+    await timeline.locator('[data-era="0"]').focus();
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(()=>
+     document.querySelector('[data-angular-site-timeline] #era-year')?.textContent==='1998');
+    assert.equal(await timeline.locator('[data-era="0"]').getAttribute('aria-pressed'),'true');
+    assert.ok(await timeline.evaluate(el=>el.scrollWidth-el.clientWidth)<=3,
+     'Angular timeline must stay inside '+width+'px viewport');
+   }
+  }
   await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
    // Test the rebuilt institutional Angular shell without changing /out/site.
@@ -160,6 +196,7 @@ try{
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
    shopCatalog:true,siteAngularNavigation:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
+   siteAngularTimeline:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
    adminComputer:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    resourceErrors:0,errorCount:errors.length});
