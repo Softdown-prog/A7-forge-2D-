@@ -293,7 +293,8 @@ test('Angular account shell owns a unique dialog while TypeScript owns all accou
   'account-catalog','account-inventory','account-transactions','account-donate',
   'account-cloud-save','account-cloud-check','account-cloud-load']){
   assert.match(template,new RegExp('id="'+id+'"'),id);
-  assert.ok(fallback.includes('id="'+id+'"'),id+' native fallback');
+  if(id==='player-account')assert.match(fallback,/dialog\.id="player-account"/);
+  else assert.ok(fallback.includes('id="'+id+'"'),id+' native fallback');
  }
  assert.match(entry,/AccountShellComponent/);
  assert.match(entry,/angular-player-account/);
