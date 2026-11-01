@@ -129,6 +129,11 @@ try{
     await dialog.waitFor({state:'visible'});
     await page.locator('#confirm-delete').click();
     await dialog.waitFor({state:'hidden'});
+    // HTMLDialogElement "close" is dispatched after the visual close.
+    // Wait for Angular's actual completion message and the storage change.
+    await page.waitForFunction(()=>
+     document.querySelector('#data-status')?.textContent?.includes('Preferência de som redefinida.') &&
+     localStorage.getItem('lhs.sound')===null);
     assert.deepEqual(await page.evaluate(()=>({
      save:localStorage.getItem('lhs-save-v1'),
      sound:localStorage.getItem('lhs.sound'),
