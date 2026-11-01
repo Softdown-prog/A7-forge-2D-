@@ -16,6 +16,23 @@ test('Angular implements all eight computer/service pages from TypeScript naviga
  assert.match(adapter,/dispatchEvent\(new CustomEvent\('lhs:management-page-selected'/);
  assert.match(adapter,/node\.id!=='angular-service-workspace'/);
 });
+test('Angular task views read the confirmed native selection and schedule OnPush refresh',()=>{
+ const ui=file('frontend-angular/src/workspaces.ts');
+ const qa=file('frontend-angular/scripts/verify_integrated_game.mjs');
+ const manager=file('src/ui/managementPanels.ts');
+ assert.match(ui,/inject\(ChangeDetectorRef\)/);
+ assert.match(ui,/this\.readNativeSelection\(\)/);
+ assert.match(ui,/this\.cdr\.markForCheck\(\)/);
+ assert.match(ui,/\.management-pages button\[aria-pressed="true"\]/);
+ assert.match(ui,/if\(button&&!button\.disabled\)/);
+ assert.match(ui,/button\.click\(\)/);
+ assert.match(qa,/const awaitTaskParity=async/);
+ assert.match(qa,/await awaitTaskParity\('finance',task\)/);
+ assert.match(qa,/await awaitTaskParity\(group\.area,task\)/);
+ assert.match(qa,/Native-only page change stays synchronized in Angular/);
+ assert.match(manager,/lhs:management-page-selected/);
+ assert.doesNotMatch(ui,/\b(?:resetGame|purchaseStation|orderMerchandise|localStorage)\b/);
+});
 test('Angular PC selector mirrors native controls without gameplay logic',()=>{
  const ui=file('frontend-angular/src/workspaces.ts');
  for(const needle of ['MutationObserver','data-lcd-select','data-hardware-select','original.click()','button.click()'])
