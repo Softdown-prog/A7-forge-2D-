@@ -66,3 +66,9 @@ O primeiro commit desta branch inicia um projeto Angular independente. Fluxos in
 4. Só remover `website/`, `site-shell` e dependências React após paridade e regressões completas; validar Android real e fluxo de cache/CDN/publicação em etapa explicitamente autorizada.
 
 Esta etapa avança a migração, mas **não declara o frontend inteiro concluído**. Continua sem merge/publicação.
+
+### Microetapa — Donate institucional Angular (somente leitura)
+- Catálogo e FAQ próprios em `src/site-rewrite/donate.ts`/`donate.html`, sem qualquer script de `website/`.
+- Consulta exclusivamente `/account-config.json` e `/v1/config`, sem credenciais. Os dois botões ficam desabilitados mesmo quando o backend declara pagamentos ativos.
+- Não cria pedidos, não recebe checkout, não credita Cookies, não confia em parâmetros de retorno do provedor. A integração autenticada, idempotência e histórico são a próxima etapa.
+- Testes devem interceptar toda chamada externa e verificar atualização visual, F5 e ausência de requisições de pedidos.

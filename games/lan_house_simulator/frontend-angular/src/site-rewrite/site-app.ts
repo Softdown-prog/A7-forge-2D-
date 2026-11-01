@@ -4,10 +4,11 @@ import {termsSections,privacySections} from './legal-content';
 import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
+import {DonateComponent} from './donate';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })

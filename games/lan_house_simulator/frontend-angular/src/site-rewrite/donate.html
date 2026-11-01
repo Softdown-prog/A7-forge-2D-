@@ -1,0 +1,44 @@
+<section class="wrap donate-intro">
+ <p class="eyebrow">DONATE · APOIE O JOGO</p><h1>Ajude o LHS a crescer.</h1>
+ <p class="lead">Seu apoio ajuda a desenvolver Lan House Simulator e oferece Cookies para cosméticos opcionais. A progressão do jogo continua gratuita.</p>
+ <a class="button secondary" href="/conta/">Minha conta</a>
+</section>
+<section class="wrap donate-catalog" aria-labelledby="donate-pricing">
+ <p class="eyebrow">PAGAMENTOS ÚNICOS · SEM ASSINATURA</p><h2 id="donate-pricing">Escolha seu apoio</h2>
+ <p>R$ 0,10 por Cookie.</p>
+ <div class="donate-cards">
+ @for(pack of packages;track pack.id){
+  <article class="donate-card">
+   <p class="eyebrow">APOIO OPCIONAL</p>
+   <h3>R$ {{(pack.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}}</h3>
+   <p class="donate-credit"><strong>{{pack.cookies}}</strong> Cookies</p>
+   <p>Créditos para itens cosméticos opcionais na Loja Cookies.</p>
+   <button type="button" class="button" [attr.data-donate-package]="pack.id" disabled aria-disabled="true">Indisponível nesta prévia</button>
+   <small>Este protótipo não inicia pagamentos.</small>
+  </article>
+ }
+ </div>
+ <p id="donate-status" class="donate-readiness" role="status" aria-live="polite">
+ @switch(availability()){
+  @case('loading'){Consultando disponibilidade do serviço…}
+  @case('unavailable'){Doações não liberadas pelo serviço. Nenhum pagamento será iniciado.}
+  @case('backend-active'){Serviço de pagamentos ativo, mas o checkout Angular ainda está bloqueado até a integração autenticada ser testada.}
+  @default{Não foi possível consultar o serviço. O checkout permanece bloqueado.}
+ }
+ </p>
+</section>
+<section class="wrap donate-guide" id="como-doar">
+ <div><h2>Como funciona</h2><ol>
+  <li>Crie sua conta opcional e confirme o email.</li>
+  <li>Quando liberado, escolha R$ 5 ou R$ 10 para pagar no provedor.</li>
+  <li>Os Cookies só serão creditados depois que o backend confirmar o pagamento.</li>
+ </ol><p>Voltar do provedor ou alterar parâmetros na URL não confirma o pagamento.</p></div>
+ <aside><h2>O jogo permanece gratuito</h2><p>Cookies são cosméticos e não dinheiro fictício da lan house. Eles não podem ser sacados ou transferidos.</p>
+ <p>Consulte os <a href="/termos/#donate">termos</a> e a <a href="/privacidade/">privacidade</a>. Menores precisam de autorização do responsável.</p></aside>
+</section>
+<section class="wrap donate-faq" aria-label="Perguntas sobre Donate">
+ <h2>Perguntas frequentes</h2>
+ <details><summary>Preciso ter uma conta?</summary><p>Para receber Cookies, sim. Jogar não exige conta.</p></details>
+ <details><summary>Quando os Cookies aparecem?</summary><p>Somente após confirmação do pagamento pelo serviço. Pagamentos pendentes não geram créditos.</p></details>
+ <details><summary>E se houver reembolso?</summary><p>Os créditos relacionados podem ser ajustados, respeitados seus direitos legais.</p></details>
+</section>
