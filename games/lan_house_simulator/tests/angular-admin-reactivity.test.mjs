@@ -7,7 +7,8 @@ test('Angular admin snapshots are read-only, scoped and event-deduplicated',()=>
  const game=src('src/ui/gamePanels.ts');
  assert.match(bridge,/new WeakMap/);
  assert.match(bridge,/states\.get\(area\)===key/);
- assert.match(bridge,/doc\.getElementById\("angular-"\+area\+"-workspace"\)/);
+ assert.match(bridge,/area==="computers"\?"angular-computer-workspace"/);
+ assert.match(bridge,/doc\.getElementById\(host\)/);
  assert.match(bridge,/lhs:admin-"/);
  for(const area of ['finance','stock','computers']){
   assert.ok(game.includes('publishAngularAdminSummary(document,"'+area+'"'));
