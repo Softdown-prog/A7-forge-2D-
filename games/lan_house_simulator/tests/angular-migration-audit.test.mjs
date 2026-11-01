@@ -123,3 +123,25 @@ test("prices, licensing and consoles have integrated Angular navigation evidence
  }
  assert.equal(report.decision,"no-merge-no-deploy");
 });
+
+
+test("cutover audit includes standalone optional Angular hosts, not only tuple islands",()=>{
+ const report=auditMigration(sources);
+ for(const id of [
+  "angular-shop-catalog","angular-shop-overview",
+  "angular-player-account","angular-merchandise-catalog",
+  "angular-stock-workspace","angular-finance-workspace",
+  "angular-prices-workspace","angular-licenses-workspace",
+  "angular-consoles-workspace"
+ ]){
+  assert.ok(report.hosts.optionalAngularHosts.includes(id),"Missing Angular host inventory: "+id);
+  assert.ok(report.hosts.optionalAngularHostsMissingGame.includes(id),
+   "React production must not accidentally contain preview-only host "+id);
+ }
+ for(const id of ["angular-computer-workspace","angular-service-workspace"]){
+  assert.ok(report.hosts.optionalAngularHosts.includes(id));
+  assert.ok(!report.hosts.optionalAngularHostsMissingGame.includes(id),
+   "Already mounted game hosts must not become invented blockers: "+id);
+ }
+ assert.equal(report.decision,"no-merge-no-deploy");
+});
