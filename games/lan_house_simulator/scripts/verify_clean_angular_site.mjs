@@ -98,7 +98,19 @@ try{
     if(mobile)await anchor.tap();else await anchor.click();
     await page.waitForFunction(id=>location.hash==='#'+id,
      terms?'projeto':'responsavel');
-    assert.ok(await sections.first().isVisible());
+    const sectionLayout=await sections.first().evaluate(element=>{
+     const rect=element.getBoundingClientRect();
+     const style=getComputedStyle(element);
+     return {display:style.display,visibility:style.visibility,opacity:style.opacity,
+      width:Math.round(rect.width),height:Math.round(rect.height),
+      top:Math.round(rect.top),scrollY:window.scrollY,hash:location.hash,
+      text:element.textContent?.slice(0,90)};
+    });
+    console.log('ANGULAR_LEGAL_ANCHOR_DIAGNOSTIC',
+     JSON.stringify({pathname,width,sectionLayout}));
+    assert.ok(sectionLayout.width>0&&sectionLayout.height>0,
+     'Legal section unexpectedly has no painted geometry: '+
+     JSON.stringify({pathname,width,sectionLayout}));
     // F5 after a fragment deep-link must keep the section and Angular-only DOM.
     const sectionRefresh=await page.reload({waitUntil:'networkidle'});
     assert.equal(sectionRefresh?.status(),200);
