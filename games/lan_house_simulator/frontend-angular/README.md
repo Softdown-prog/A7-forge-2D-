@@ -307,3 +307,25 @@ confirma nem executa a ação destrutiva.
 
 O Angular da produção segue desativado até completar toda a paridade,
 executar os testes e obter aprovação explícita para o merge.
+
+## Administração de Preços, Licenças e Videogames
+
+A prévia Angular tem três ilhas adicionais, apenas de apresentação:
+
+- `#angular-prices-workspace` abre Hora/pacotes, Análise de tarifas, Produtos,
+  Impressões e Cópias CD/DVD.
+- `#angular-licenses-workspace` abre Windows por PC, Jogos clássicos e
+  Jogos com GPU.
+- `#angular-consoles-workspace` abre Bancadas, Preço/hora e Jogos PS1/PS2.
+
+Todas usam o template compartilhado `admin-task-workspace.html` e encaminham
+os cliques às abas `data-panel-choice` gerenciadas por
+`src/ui/managementPanels.ts`. Os IDs originais e os controladores
+de compra, preços, desbloqueio histórico e save continuam ativos.
+A navegação nativa é ocultada *somente no ensaio Angular*, sem excluir
+os botões de comando do DOM.
+
+O teste integrado abre as 11 subtelas reais, confirma a aba selecionada
+e o layout em 1280/414/360 px e verifica que a navegação **não**
+compra discos, jogos ou bancadas. A retirada do React publicado continua
+bloqueada, e o motor Canvas 2D não é modificado nesta etapa.
