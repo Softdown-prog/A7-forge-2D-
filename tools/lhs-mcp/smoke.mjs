@@ -19,7 +19,8 @@ const requests=[
  {jsonrpc:"2.0",id:8,method:"tools/call",params:{name:"search_context",arguments:{query:"comprar PS2",prefix:"games/lan_house_simulator/src",limit:20}}},
  {jsonrpc:"2.0",id:9,method:"tools/call",params:{name:"trace_feature",arguments:{query:"simulação console PS2",prefix:"games/lan_house_simulator/src",limit:8,depth:2}}},
  {jsonrpc:"2.0",id:10,method:"tools/call",params:{name:"plan_change",arguments:{query:"simulação PS2",owners:3,depth:2,testLimit:10}}},
- {jsonrpc:"2.0",id:11,method:"tools/call",params:{name:"review_diff",arguments:{base:"HEAD^",depth:2,testLimit:8}}}
+ {jsonrpc:"2.0",id:11,method:"tools/call",params:{name:"review_diff",arguments:{base:"HEAD^",depth:2,testLimit:8}}},
+ {jsonrpc:"2.0",id:12,method:"tools/call",params:{name:"review_branch",arguments:{baseBranch:"main"}}}
 ];
 const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",import.meta.url)),
  "--scope",".","--index","out/lhs-mcp-index/catalog.json"],{
@@ -29,7 +30,7 @@ const proc=spawnSync(process.execPath,[fileURLToPath(new URL("./server.mjs",impo
 });
 assert.equal(proc.status,0,proc.stderr);
 const values=proc.stdout.split("\n").filter(Boolean).map(JSON.parse);
-assert.equal(values.length,11);
+assert.equal(values.length,12);
 assert.ok(values[1].result.tools.some(t=>t.name==="edit_file"));
 assert.ok(values[2].result.structuredContent.result.files>100);
 for(const i of [3,4,5])assert.ok(values[i].result.structuredContent.result.length>0,
@@ -54,6 +55,14 @@ const diffReview=values[10].result.structuredContent.result;
 assert.equal(diffReview.status,"review-only");
 assert.ok(Array.isArray(diffReview.affected));
 assert.ok(Array.isArray(diffReview.suggestedTests));
+const review=values[11].result.structuredContent.result;
+assert.equal(review.status,"review-only");
+assert.equal(review.mergeDecision,"not-authorized");
+assert.equal(review.comparison.baseBranch,"main");
+assert.ok(review.comparison.headSha);
+assert.ok(review.areas.frontendAngular>=0);
+assert.ok(Array.isArray(review.validation));
+assert.ok(values[1].result.tools.some(t=>t.name==="review_branch"));
 console.log(JSON.stringify({ready:true,head:values[2].result.structuredContent.result.head,
  indexedFiles:values[2].result.structuredContent.result.files,
- tools:values[1].result.tools.length,queries:7}));
+ tools:values[1].result.tools.length,queries:8}));

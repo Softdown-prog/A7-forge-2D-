@@ -299,3 +299,29 @@ Para baixar ou reproduzir localmente:
 ```bash
 node tools/lhs-mcp/diff-review-cli.mjs --base HEAD^ --output out/lhs-mcp-diff-review/report.json
 ```
+
+## Revisão de branch antes de qualquer PR ou merge
+
+`review_branch` é a **20ª ferramenta MCP**. Faz uma comparação
+**three-dot** (ancestral comum) entre a branch atual e a referência local
+`origin/main`, ou outro nome seguro de branch remota já baixada.
+Não busca refs pela rede, não faz checkout, merge, rebase, PR ou deploy.
+O relatório apresenta SHAs dos dois lados, ancestral comum, contagens
+`aheadBy`/`behindBy`, tipos de alterações por área (Angular, motor,
+testes, site), dependências do índice atual e comandos recomendados.
+O resultado marca `mergeDecision: not-authorized`: a análise jamais
+representa autorização ou verificação total de compatibilidade.
+
+O workflow `lhs-mcp-index.yml` faz checkout com histórico completo
+(`fetch-depth: 0`) para que o Git consiga localizar o ancestral comum;
+publica o artefato `lhs-mcp-branch-review` separado dos outros. O
+revisor automático **não ativa** a interface Angular publicada e **não
+executa** os testes Playwright, que ficam no workflow dedicado de prévia.
+
+```bash
+node tools/lhs-mcp/branch-review-cli.mjs --base-branch main --output out/lhs-mcp-branch-review/report.json
+```
+
+Em execução local, a ref `origin/main` deve já estar disponível.
+Ref ausente ou histórico sem ancestral comum causam erro explícito,
+sem tentativa de sincronizar ou modificar o repositório.
