@@ -33,3 +33,10 @@
 - O FAQ original já está presente no HTML compilado antes do JavaScript, garantindo fallback e indexação de conteúdo. Na hidratação da prévia, o componente toma posse da seção sem listeners JavaScript duplicados.
 - Playwright em Chromium verifica 1280, 414 e 360 px, seleção de perguntas por toque/teclado, consulta sem acentos, vários termos, ausência de resultados, limpeza e recuperação do estado aberto.
 - FAQ reduzido da página inicial permanece HTML nativo até uma etapa posterior. Produção out/site não usa o componente novo.
+
+## Etapa 4 — cabeçalho e rodapé (prévia isolada)
+- `frontend-angular/src/site/site-header.ts` compõe a marca e o botão Menu com o `SiteNavigationComponent` já migrado. O cabeçalho completo deixa de ser controlado por HTML/JS manual na prévia.
+- `frontend-angular/src/site/site-footer.ts` reproduz marca, links, direitos, edição e preferência por movimento reduzido; o controle de animação usa signals, OnPush e reage à preferência do sistema.
+- `website/build.mjs` conserva HTML semântico e links pré-renderizados para SEO/no-JS. Somente `out/site-angular` recebe os marcadores de upgrade.
+- `website/site.mjs` mantém animações e comportamento da produção, mas não conecta listeners duplicados ao rodapé Angular.
+- O Chromium deverá verificar cabeçalho e rodapé reais, links/ícones, menu mobile, Escape, controle de animações e responsividade nas larguras 1280/414/360; jogo e conta seguem protegidos.

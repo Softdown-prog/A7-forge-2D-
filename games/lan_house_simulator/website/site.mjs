@@ -16,7 +16,12 @@ if(menu&&toggle&&!menu.hasAttribute("data-angular-site-nav")){
 const motion=document.querySelector("#motion-toggle"),preference=matchMedia("(prefers-reduced-motion: reduce)");
 let paused=preference.matches;
 const updateMotion=()=>{document.body.classList.toggle("reduce-motion",paused);motion?.setAttribute("aria-pressed",String(paused));if(motion)motion.textContent=paused?"Animações pausadas":"Pausar animações";};
-motion?.addEventListener("click",()=>{paused=!paused;updateMotion();});preference.addEventListener("change",e=>{paused=e.matches;updateMotion();});updateMotion();
+// The preview's Angular footer is the only owner of the motion switch.
+if(!document.querySelector('footer[data-angular-site-footer]')){
+ motion?.addEventListener("click",()=>{paused=!paused;updateMotion();});
+ preference.addEventListener("change",e=>{paused=e.matches;updateMotion();});
+}
+updateMotion();
 if("IntersectionObserver" in window&&!paused){
  const observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){e.target.classList.add("is-visible");observer.unobserve(e.target);}},{threshold:.08});
  for(const el of document.querySelectorAll(".reveal")){el.classList.add("will-reveal");observer.observe(el);}

@@ -1,0 +1,32 @@
+<div class="footer-top wrap">
+ <div class="footer-brand">
+  <a class="brand" href="/" aria-label="Lan House Simulator · início">
+   <img src="/assets/brand.svg" alt="" width="41" height="41"/>
+   <span>LAN HOUSE SIMULATOR<small>UM JOGO SOFTDOWN</small></span>
+  </a>
+  <p>Seu bairro. Seu negócio. Sua história.
+   Da primeira conexão ao seu próprio salão.</p>
+ </div>
+ <nav class="footer-links" aria-label="Explore o salão">
+  <h2>EXPLORE O SALÃO</h2>
+  <a href="/jogar/">Jogar agora</a>
+  <a href="/sobre-o-jogo/">Sobre o jogo</a>
+  <a href="/sobre-nos/">Sobre nós</a>
+  <a href="/ajuda/">Ajuda e perguntas</a>
+  <a href="/contato/">Contato</a>
+ </nav>
+ <nav class="footer-links" aria-label="Informações do site">
+  <h2>INFORMAÇÕES</h2>
+  <a href="/termos/">Termos de uso</a>
+  <a href="/privacidade/">Política de privacidade</a>
+  <a href="/dados/">Gerenciar dados locais</a>
+ </nav>
+</div>
+<div class="footer-bottom wrap">
+ <span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span>
+ <button type="button" class="motion-toggle" id="motion-toggle"
+  [attr.aria-pressed]="paused()" (click)="toggleMotion()">
+  {{paused()?'Animações pausadas':'Pausar animações'}}
+ </button>
+ <span>TERMINAL DE BAIRRO / {{edition}}</span>
+</div>

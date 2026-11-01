@@ -1,19 +1,28 @@
 /** Institutional website Angular entry. This bundle never imports the game or React. */
 import {createComponent} from '@angular/core';
 import {createApplication} from '@angular/platform-browser';
-import {SiteNavigationComponent} from './site-navigation';
+import {SiteHeaderComponent} from './site-header';
+import {SiteFooterComponent} from './site-footer';
 import {SiteTimelineComponent} from './site-timeline';
 import {SiteHelpComponent} from './site-help';
 
 async function start():Promise<void>{
- const host=document.querySelector<HTMLElement>('#site-nav[data-angular-site-nav]');
- if(!host)return;
+ const headerHost=document.querySelector<HTMLElement>('header[data-angular-site-header]');
+ const footerHost=document.querySelector<HTMLElement>('footer[data-angular-site-footer]');
+ if(!headerHost||!footerHost)return;
  const app=await createApplication();
- const ref=createComponent(SiteNavigationComponent,{
-  environmentInjector:app.injector,hostElement:host
+ const header=createComponent(SiteHeaderComponent,{
+  environmentInjector:app.injector,hostElement:headerHost
  });
- app.attachView(ref.hostView);
- ref.changeDetectorRef.detectChanges();
+ app.attachView(header.hostView);
+ header.changeDetectorRef.detectChanges();
+ document.documentElement.dataset['siteHeader']='angular';
+ const footer=createComponent(SiteFooterComponent,{
+  environmentInjector:app.injector,hostElement:footerHost
+ });
+ app.attachView(footer.hostView);
+ footer.changeDetectorRef.detectChanges();
+ document.documentElement.dataset['siteFooter']='angular';
  for(const host of document.querySelectorAll<HTMLElement>('[data-angular-site-timeline]')){
   const timeline=createComponent(SiteTimelineComponent,{
    environmentInjector:app.injector,hostElement:host
@@ -32,4 +41,4 @@ async function start():Promise<void>{
  }
  document.documentElement.dataset['siteNavigation']='angular';
 }
-start().catch(error=>{console.error('Erro na navegação Angular do site:',error);});
+start().catch(error=>{console.error('Erro no site institucional Angular:',error);});
