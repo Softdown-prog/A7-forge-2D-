@@ -15,6 +15,7 @@ import {TimeWeatherComponent,NoticeInboxComponent} from './calendar-mail';
 import {ShopOverviewComponent} from './shop-overview';
 import {ShopCatalogComponent} from './shop-catalog';
 import {AccountShellComponent} from './account-shell';
+import {MerchandiseCatalogComponent} from './merchandise-catalog';
 
 async function mountUi():Promise<void> {
   const app=await createApplication();
@@ -69,6 +70,17 @@ async function mountUi():Promise<void> {
   if(shopCardsHost){
     const ref=createComponent(ShopCatalogComponent,{
       environmentInjector:app.injector,hostElement:shopCardsHost
+    });
+    app.attachView(ref.hostView);
+    ref.changeDetectorRef.detectChanges();
+  }
+
+  // Catalog controls mount before native management panels attach handlers.
+  // The simulation's MerchandisePort still handles every mutation.
+  const merchandiseHost=document.getElementById('angular-merchandise-catalog');
+  if(merchandiseHost){
+    const ref=createComponent(MerchandiseCatalogComponent,{
+      environmentInjector:app.injector,hostElement:merchandiseHost
     });
     app.attachView(ref.hostView);
     ref.changeDetectorRef.detectChanges();
