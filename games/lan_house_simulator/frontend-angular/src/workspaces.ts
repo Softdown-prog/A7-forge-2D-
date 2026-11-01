@@ -11,7 +11,11 @@ export const TASKS={
  services:[
   {id:'staff',label:'Equipe e limpeza',desc:'Funcionários e atividades',icon:'♟'},
   {id:'network',label:'Internet e contrato',desc:'Conexão e manutenção',icon:'◎'},
-  {id:'access',label:'Passagens',desc:'Caminhos livres no salão',icon:'↗'}]
+  {id:'access',label:'Passagens',desc:'Caminhos livres no salão',icon:'↗'}],
+ stock:[
+  {id:'catalog',label:'Mercadorias',desc:'Produtos, preços e reposição',icon:'▦'},
+  {id:'suppliers',label:'Fornecedores',desc:'Lotes e contratos comerciais',icon:'▤'},
+  {id:'orders',label:'Entregas',desc:'Pedidos pendentes e recebimentos',icon:'▥'}]
 } as const;
 type Area=keyof typeof TASKS;
 
@@ -89,4 +93,36 @@ export class ComputerWorkspaceComponent extends Workspace{
 export class ServiceWorkspaceComponent extends Workspace{
  readonly area='services' as const;
  readonly tasks=TASKS.services;
+}
+
+/** Navigation only. The native controller decides whether the advanced
+ * catalogue is available in this year; Angular mirrors that disabled flag
+ * and forwards clicks to the original management panel. */
+@Component({selector:'lhs-stock-workspace',standalone:true,
+ templateUrl:'./templates/stock-workspace.html',changeDetection:ChangeDetectionStrategy.OnPush})
+export class StockWorkspaceComponent extends Workspace{
+ readonly area='stock' as const;
+ readonly tasks=TASKS.stock;
+ readonly catalogLocked=signal(true);
+ private observer:MutationObserver|null=null;
+
+ override ngOnInit():void{
+  super.ngOnInit();
+  const root=document.getElementById('section-stock');
+  if(!root)return;
+  this.observer=new MutationObserver(()=>this.syncLock());
+  this.observer.observe(root,{subtree:true,childList:true,
+   attributes:true,attributeFilter:['disabled']});
+  this.syncLock();
+ }
+ override ngOnDestroy():void{
+  this.observer?.disconnect();
+  super.ngOnDestroy();
+ }
+ private syncLock():void{
+  const original=document.querySelector<HTMLButtonElement>(
+   '#section-stock .management-pages button[data-panel-choice="catalog"]');
+  const locked=!original||original.disabled;
+  if(this.catalogLocked()!==locked)this.catalogLocked.set(locked);
+ }
 }
