@@ -48,6 +48,10 @@ test('Angular primary admin tabs follow the original controller, keyboard and mo
  assert.match(angular,/\.admin-tabs button\[data-admin-tab/);
  assert.match(angular,/original\.click\(\)/);
  assert.match(angular,/lhs:admin-area-selected/);
+ assert.match(angular,/inject\(ChangeDetectorRef\)/);
+ assert.match(angular,/this\.readNativeSelection\(\)/);
+ assert.match(angular,/this\.cdr\.markForCheck\(\)/);
+ assert.match(file('frontend-angular/scripts/verify_integrated_game.mjs'),/awaitAdminAreaParity/);
  assert.match(controller,/lhs:admin-area-selected/);
  assert.match(controller,/selectedArea!==area/);
  assert.match(template,/role="tablist"/);
