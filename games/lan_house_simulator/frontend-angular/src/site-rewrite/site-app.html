@@ -34,17 +34,7 @@
   @case('/jogar/'){
    <section class="wrap intro"><p class="eyebrow">ABRA O SALÃO</p><h1>Jogar Lan House Simulator</h1>
     <p class="lead">A partida é carregada apenas quando você solicitar. Salve seu progresso no menu do jogo.</p></section>
-   <section class="wrap game-shell">
-    @if(gameOpen()){
-     <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen></iframe>
-     <p><a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a></p>
-    }@else{
-     <div class="game-start">
-      <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
-      <button class="button" id="launch-game" type="button" (click)="startGame()">Abrir minha lan house</button>
-     </div>
-    }
-   </section>
+   <lhs-game-launcher></lhs-game-launcher>
   }
   @case('/sobre-o-jogo/'){
    <section class="wrap intro"><p class="eyebrow">SOBRE O JOGO</p><h1>Dos primeiros CRTs à sua própria arena.</h1>
@@ -57,16 +47,7 @@
   @case('/ajuda/'){
    <section class="wrap intro"><p class="eyebrow">CENTRAL DE AJUDA</p><h1>Como podemos ajudar?</h1>
     <p class="lead">Pesquise nas perguntas frequentes.</p></section>
-   <section class="wrap faq">
-    <label for="help-search">Buscar resposta</label>
-    <div class="search"><input #searchBox id="help-search" type="search"
-     autocomplete="off" placeholder="Ex.: salvar, conta" [value]="query()" (input)="changeQuery($event)"/>
-     <button type="button" class="button secondary" (click)="clearQuery(searchBox)">Limpar</button></div>
-    <p role="status" aria-live="polite">{{matched().length}} respostas encontradas</p>
-    @for(item of matched();track item[0]){
-     <details><summary>{{item[0]}}<span aria-hidden="true">+</span></summary><p>{{item[1]}}</p></details>
-    }@empty{<p>Nenhuma resposta encontrada.</p>}
-   </section>
+   <lhs-help-search></lhs-help-search>
   }
   @case('/contato/'){
    <section class="wrap intro"><p class="eyebrow">CONTATO</p><h1>Fale com a Softdown.</h1>

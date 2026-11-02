@@ -1,15 +1,17 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,computed,signal} from '@angular/core';
-import {eras,faq,footerLinks,navigation,normalizeSearch,pathOf} from './site-data';
+import {eras,footerLinks,navigation,pathOf} from './site-data';
+import {HelpSearchComponent} from './help-search';
 import {termsSections,privacySections} from './legal-content';
 import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
 import {DonateComponent} from './donate';
+import {GameLauncherComponent} from './game-launcher';
 import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
@@ -19,20 +21,10 @@ export class SiteApp implements OnInit,OnDestroy{
  readonly footerLinks=footerLinks;
  readonly legalSections=this.path==='/termos/'?termsSections:privacySections;
  readonly eras=eras;
- readonly faq=faq;
  readonly openMenu=signal(false);
  readonly reduceMotion=signal(false);
  readonly era=signal(0);
  readonly selectedEra=computed(()=>this.eras[this.era()]!);
- readonly query=signal('');
- readonly matched=computed(()=>{
-  const terms=normalizeSearch(this.query()).split(' ').filter(Boolean);
-  return this.faq.filter(([question,answer])=>{
-   const text=normalizeSearch(question+' '+answer);
-   return terms.every(term=>text.includes(term));
-  });
- });
- readonly gameOpen=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');
  private readonly mediaListener=(event:MediaQueryListEvent):void=>{
   this.reduceMotion.set(event.matches);
@@ -51,11 +43,4 @@ export class SiteApp implements OnInit,OnDestroy{
  selectEra(index:number):void{
   if(index>=0&&index<this.eras.length)this.era.set(index);
  }
- changeQuery(event:Event):void{
-  if(event.target instanceof HTMLInputElement)this.query.set(event.target.value);
- }
- clearQuery(input:HTMLInputElement):void{
-  this.query.set('');input.value='';input.focus();
- }
- startGame():void{this.gameOpen.set(true);}
 }
