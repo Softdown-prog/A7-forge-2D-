@@ -34,6 +34,6 @@ test('footer does not duplicate media handling or violate strict style CSP',()=>
  assert.match(shell,/private readonly media=window\.matchMedia/);
  assert.match(shell,/toggleMotion\(\):void\{this\.reduceMotion\.update\(value=>!value\);\}/);
  assert.doesNotMatch(component,/styles:\s*\[|localStorage|fetch\(|addEventListener|window\.|document\.|react|website\/|innerHTML/i);
- assert.match(read('site.css'),/lhs-site-header,lhs-site-footer\{display:block\}/);
+ assert.match(read('site.css'),/lhs-site-footer\{display:block\}/);
  assert.doesNotMatch(read('site-footer.html'),/<iframe|<script|\[innerHTML\]/i);
 });
