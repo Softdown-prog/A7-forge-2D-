@@ -25,7 +25,14 @@
             "production": {
               "optimization": true,
               "outputHashing": "none",
-              "sourceMap": false
+              "sourceMap": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -57,7 +64,14 @@
             "production": {
               "optimization": true,
               "outputHashing": "none",
-              "sourceMap": false
+              "sourceMap": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                }
+              ]
             },
             "development": {
               "optimization": false,
@@ -103,8 +117,15 @@
                 },
                 "fonts": false
               },
-              "outputHashing": "none",
-              "sourceMap": false
+              "outputHashing": "all",
+              "sourceMap": false,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kb",
+                  "maximumError": "1mb"
+                }
+              ]
             },
             "development": {
               "optimization": false,

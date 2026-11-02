@@ -1,4 +1,6 @@
 /** Account transport for the independent Angular site: no legacy website JS. */
+import {approvedPackageId,validateIdempotencyKey} from './checkout-contract';
+import type {DonationPackageId} from './checkout-contract';
 export interface AccountConfig {
  enabled:boolean; apiUrl:string; firebaseApiKey:string;
  verificationEmailProvider?:'auto'|'firebase'|'resend';
@@ -194,6 +196,43 @@ export class SiteAccountClient {
   }catch(error){
    if(error instanceof AccountError&&error.status===401&&!retried&&epoch===this.epoch){
     await this.refresh();return this.api(path,body,true);
+   }
+   throw error;
+  }
+ }
+ /**
+  * Isolated sandbox-only order transport. Not available through the generic api()
+  * allowlist and not wired to any Donate button. The backend ALSO refuses this
+  * request in production even if its mode changes between the preflight and POST.
+  */
+ async postSandboxOrder(body:Readonly<{packageId:DonationPackageId;acceptedTerms:true}>,
+  idempotencyKey:string,retried=false):Promise<RequestJson>{
+  const packageId=approvedPackageId(body.packageId);
+  if(body.acceptedTerms!==true)throw new AccountError('Confirme os termos de Donate.');
+  const key=validateIdempotencyKey(idempotencyKey);
+  const epoch=this.epoch;
+  this.activeSession();
+  const settings=await this.json(this.apiOrigin+'/v1/config');
+  if(settings['paymentsEnabled']!==true||settings['paymentsMode']!=='sandbox')
+   throw new AccountError('Este pedido só pode ser preparado em sandbox.',409);
+  const profile=await this.profile();
+  if(!profile.emailVerified)throw new AccountError('Confirme seu email antes de apoiar.',403);
+  if(epoch!==this.epoch)throw new AccountError('Sessão encerrada.',401);
+  const token=this.activeSession().idToken;
+  try{
+   const result=await this.json(this.apiOrigin+'/v1/orders',{
+    method:'POST',headers:{
+     Authorization:'Bearer '+token,'Content-Type':'application/json',
+     'Idempotency-Key':key,'X-LHS-Sandbox-Only':'true'
+    },
+    body:JSON.stringify({packageId,acceptedTerms:true})
+   });
+   if(epoch!==this.epoch)throw new AccountError('Sessão encerrada.',401);
+   return result;
+  }catch(error){
+   if(error instanceof AccountError&&error.status===401&&!retried&&epoch===this.epoch){
+    await this.refresh();
+    return this.postSandboxOrder(body,key,true);
    }
    throw error;
   }

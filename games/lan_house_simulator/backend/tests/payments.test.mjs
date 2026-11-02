@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPayments,preferenceBody,validCheckout} from '../payments.mjs';
+import {createPayments,preferenceBody,validCheckout,assertSandboxOrderIntent} from '../payments.mjs';
 import {DONATE_PACKAGES} from '../../donate-packages.mjs';
 
 // A serialized transaction fixture with atomic commit and Firestore's read-before-write rule.
@@ -23,7 +23,9 @@ test('offers are exactly R$5/50 and R$10/100; preferences fix amount and safe re
  const p=preferenceBody({id:'order',packageId:'donate-5',...DONATE_PACKAGES['donate-5']},{apiUrl:'https://api.example',siteUrl:'https://site.example',now:0});
  assert.equal(p.items[0].unit_price,5);assert.equal(p.items[0].quantity,1);assert.equal(p.external_reference,'order');assert.equal(p.back_urls.success,'https://site.example/donate/?order=order');assert.equal(p.notification_url,'https://api.example/webhooks/mercadopago');assert.equal(p.expires,true);
  assert.equal(Object.hasOwn(p,'auto_recurring'),false);assert.equal(Object.hasOwn(p,'preapproval_plan_id'),false);
- for(const url of ['http://www.mercadopago.com.br/x','https://evilmercadopago.com/x','https://www.mercadopago.com.br.evil.com/x','https://user:pass@www.mercadopago.com.br/x'])assert.throws(()=>validCheckout(url));
+ const mode={sandbox:false,sellerIsTest:false};
+ for(const url of ['http://www.mercadopago.com.br/x','https://evilmercadopago.com/x','https://www.mercadopago.com.br.evil.com/x','https://user:pass@www.mercadopago.com.br/x'])assert.throws(()=>validCheckout(url,mode));
+
 });
 test('concurrent double clicks reuse one preference; amounts, user and mode are server-owned',async()=>{
  const f=fixture();const results=await Promise.allSettled([f.service.createOrder('player','donate-5','key'),f.service.createOrder('player','donate-5','key')]);
@@ -71,4 +73,66 @@ test('authenticated reconciliation recovers a lost webhook and history belongs t
  let p;const f=fixture({provider:path=>path.startsWith('/checkout')?{id:'p',init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p'}:{results:[p]}});
  const order=await f.service.createOrder('player','donate-5','key');p=payment(order);assert.equal((await f.service.readOrder('player',order.id)).status,'approved');assert.equal(f.rows.get('accounts/player').cookiesBalance,50);
  assert.equal((await f.service.listOrders('player')).length,1);assert.equal((await f.service.listOrders('other')).length,0);
+});
+
+test('sandbox-only intent denies malformed or replayed headers and production fallback',()=>{
+ for(const header of ['true','TRUE','false','0','',null,['true'],['true','true']]){
+  if(header==='true'){
+   assert.doesNotThrow(()=>assertSandboxOrderIntent(header,true));
+   assert.throws(()=>assertSandboxOrderIntent(header,false),e=>e.status===409);
+  }else{
+   assert.throws(()=>assertSandboxOrderIntent(header,true),e=>e.status===400);
+   assert.throws(()=>assertSandboxOrderIntent(header,false),e=>e.status===400);
+  }
+ }
+ // Legacy clients without this header keep using the old guarded checkout.
+ assert.doesNotThrow(()=>assertSandboxOrderIntent(undefined,true));
+ assert.doesNotThrow(()=>assertSandboxOrderIntent(undefined,false));
+});
+
+test('checkout URLs are restricted to the server-owned payment environment',async()=>{
+ const prod={sandbox:false,sellerIsTest:false};
+ const sandbox={sandbox:true,sellerIsTest:false};
+ const testSeller={sandbox:true,sellerIsTest:true};
+ const live='https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p';
+ const sandboxUrl='https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=p';
+ assert.equal(validCheckout(live,prod),live);
+ assert.equal(validCheckout(sandboxUrl,sandbox),sandboxUrl);
+ assert.equal(validCheckout(live,testSeller),live);
+ for(const [url,options] of [[live,sandbox],[sandboxUrl,prod],[sandboxUrl,testSeller]])
+  assert.throws(()=>validCheckout(url,options),e=>e.status===502);
+ for(const url of [
+  'http://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p',
+  'https://evil.mercadopago.com.br/checkout/v1/redirect?pref_id=p',
+  'https://www.mercadopago.com.br.evil.invalid/checkout/v1/redirect?pref_id=p',
+  'https://user:pass@www.mercadopago.com.br/checkout/v1/redirect?pref_id=p',
+  'https://www.mercadopago.com.br:8443/checkout/v1/redirect?pref_id=p',
+  'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p#fragment',
+  'https://www.mercadopago.com.br/evil?pref_id=p',
+  'https://www.mercadopago.com.br/checkout/v1/redirect',
+  'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p&pref_id=q',
+  'javascript:alert(1)',null,undefined,{}
+ ])assert.throws(()=>validCheckout(url,prod),e=>e.status===502);
+ const mkProvider=reply=>async()=>reply;
+ const failure=fixture({sandbox:true,provider:mkProvider({
+  id:'p',sandbox_init_point:live,init_point:live
+ })});
+ await assert.rejects(failure.service.createOrder('player','donate-5','wrong-provider-mode'),e=>e.status===502);
+ assert.equal(failure.rows.has('accounts/player'),false);
+ assert.equal(failure.rows.get('orders/'+(await import('node:crypto')).createHash('sha256')
+  .update('sandbox:player:wrong-provider-mode').digest('hex')).checkoutUrl,undefined);
+ const testSellerFailure=fixture({sandbox:true,sellerIsTest:true,provider:mkProvider({
+  id:'p',sandbox_init_point:sandboxUrl,init_point:sandboxUrl
+ })});
+ await assert.rejects(testSellerFailure.service.createOrder('player','donate-5','key'),e=>e.status===502);
+});
+test('idempotent retry revalidates persisted URL before returning it',async()=>{
+ const f=fixture({sandbox:true}),order=await f.service.createOrder('player','donate-5','safe-key');
+ const stored=f.rows.get('orders/'+order.id);
+ assert.equal(new URL(stored.checkoutUrl).hostname,'sandbox.mercadopago.com.br');
+ stored.checkoutUrl='https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p';
+ await assert.rejects(f.service.createOrder('player','donate-5','safe-key'),e=>e.status===502);
+ assert.equal(f.calls(),1,'A bad stored URL must never create a second provider preference');
+ stored.checkoutUrl=order.url;
+ assert.deepEqual(await f.service.createOrder('player','donate-5','safe-key'),order);
 });

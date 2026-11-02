@@ -107,3 +107,64 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Conta, confirmação de email, Donate e dados locais **não** são pré-renderizados, evitando exposição de sessões ou informações privadas. `angular-prerender-manifest.json` documenta essa lista fechada.
 - Isto é um **snapshot de browser em build isolado**, não Angular SSR/hydration; mudanças de conteúdo dinâmico exigem novo build. Não cobre indexação completa nem autoriza publicar o domínio. `robots.txt` e `noindex,nofollow` permanecem bloqueando indexação.
 - O workflow de pesquisa executa a pré-renderização antes da bateria Chromium existente. O comando legado `build:site:clean` continua produzindo CSR como base; o snapshot é uma segunda etapa explicitamente invocada.
+
+
+### Microetapa — contrato de checkout simulado, sem transações reais
+- `frontend-angular/src/site-rewrite/checkout-contract.ts` define um contrato tipado e independente para a futura integração de pagamento, **sem ser importado pela UI pública**.
+- O contrato rejeita ausência de conta verificada, falta de aceite dos termos, pacote não aprovado, chave de idempotência inválida, catálogo de produção, resposta de preço incorreta e URLs que não pertençam ao domínio HTTPS de **sandbox** do Mercado Pago.
+- O preço/cookies são exclusivamente os valores do catálogo entregue pelo backend simulado (`GET /v1/config`); o futuro pedido usa somente `{packageId,acceptedTerms:true}` com chave de idempotência informada pelo chamador. A resposta permanece explicitamente `not-confirmed` e nunca altera saldo.
+- O adapter é injetado apenas nos testes Node com fixtures sintéticas; nenhum acesso real ao Firebase, Mercado Pago ou ao backend acontece nesse fluxo.
+- A rota `/donate/` mantém os dois botões desabilitados. A integração autenticada real `POST /v1/orders` **não** está ligada e exigirá revisão separada; o histórico privado em Minha conta continua só de leitura.
+- Esta etapa não muda a `main`, não faz deploy e não autoriza cobrança de usuário.
+- A CI também executa um `tsc --noEmit` dedicado ao contrato, com `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noUnusedLocals` e verificações rigorosas antes dos testes Node.
+
+
+### Microetapa — revisão de apoio no Angular, liberada somente em sandbox
+- O Angular passa a reconhecer `paymentsMode=sandbox` com `paymentsEnabled=true` e mostra exclusivamente nesse modo o botão **Revisar apoio de teste**, preservando os botões de pagamento real desabilitados.
+- Após um clique, a página exige sessão Firebase restaurada e email confirmado antes de consultar o catálogo `GET /v1/config`. A prévia utiliza `validateSandboxQuote` e mostra preço/Cookies autorizados pelo servidor, não valores de formulários ou parâmetros de URL.
+- A etapa pede aceite explícito dos termos, mas **Finalizar simulação** apenas altera o estado visual. Não executa `POST /v1/orders`, não abre checkout, não credita Cookies e não faz pagamentos.
+- Sem sessão ou com email não verificado, encaminha o jogador a Minha conta. Mudanças de ambiente, respostas inválidas e erros falham sem pagamento. Fechar a revisão limpa valores e aceite.
+- O teste Chromium isolado usa login/refresh/lookup e catálogo sintéticos nas larguras 1280/414/360, exige zero requisições de pedido e não libera produção. O contrato completo de criação de pedido continua coberto apenas por unit tests com mock e sem conexão real.
+
+### Microetapa — orçamentos de bundle no Angular 22
+- As builds de produção `game-ui`, `site-shell` e `site-rewrite` passam a rejeitar bundles iniciais maiores que `1mb` e avisar acima de `500kb`, via `budgets` nativo do Angular CLI. O CI isolado bloqueia a mudança caso a build exceda o teto.
+- O build `site-rewrite` mediu `210,75 kB` no último workflow aprovado (antes da mudança). O valor é uma referência de build, não uma medição de rede em produção.
+- Mantemos `outputHashing: none` intencionalmente até a adaptação dos caminhos `main.js`/`styles.css` e da estratégia de cache, que dependem de nomes estáveis no gerador do site. **Não** ativar `all` sem revalidar pré-renderização, Chromium e Cloudflare Pages.
+- `tests/clean-site-angular-build-policy.test.mjs` testa os três budgets e confirma que as flags rigorosas do Angular/TypeScript continuam herdadas pelos projetos, sem exigir duplicações de flags implícitas em `strict`.
+- Sem alteração no deployment, nas rotas de checkout ou na `main`.
+
+
+### Microetapa — cache busting com hash no site Angular isolado
+- Apenas `site-rewrite` de produção usa `outputHashing: all`; `game-ui` e `site-shell` permanecem com nomes fixos até uma migração própria, preservando a compatibilidade do motor de jogo.
+- O gerador lê o `index.html` real do Angular CLI, valida os nomes com hash e religa os caminhos para `/assets/site/<nome-com-hash>` sem presumir `main.js` ou `styles.css`. O manifesto `angular-site-assets.json` registra os arquivos gerados.
+- A política `_headers` usa regras exatas para cada arquivo JavaScript/CSS com hash com `max-age=31536000, immutable`. HTML, `account-config.json`, `online-config.json` e `/game/*` não compartilham esse cache longo.
+- Verificações estáticas garantem nomes com hash, manifesto, referências no HTML, ausência de JS/CSS antigos e cache por arquivo. Os testes de pré-renderização e Chromium validam que o site inicializa e recarrega após o hash.
+- Nenhuma mudança no site publicado, em pagamentos, nos nomes do bundle do jogo ou na `main`. A política de produção Cloudflare Pages ainda precisa ser validada ao fazer o cutover.
+
+
+### Microetapa — transporte autenticado de pedidos SOMENTE sandbox (sem interface)
+- Um adapter TypeScript independente `checkout-sandbox-adapter.ts` é conectado a `simulateSandboxCheckout` apenas por testes de contrato. **Donate não importa nem chama esse adapter**; botões reais continuam bloqueados.
+- `SiteAccountClient.postSandboxOrder` valida pacote, aceite e UUID, exige sessão e consulta `GET /v1/config` em modo sandbox, revalida o email por Firebase e envia somente `{packageId,acceptedTerms:true}` com headers `Idempotency-Key`, `Authorization` e `X-LHS-Sandbox-Only: true`. Falhas 401 reutilizam a mesma chave de idempotência.
+- O backend reconhece `X-LHS-Sandbox-Only: true` e **rejeita** criação em `PAYMENTS_MODE=production`, mesmo se o ambiente mudar depois da checagem do navegador. Requisições antigas sem o header continuam com o fluxo existente, que permanece fora desta nova interface Angular.
+- Testes Node com transporte sintético verificam corpo, token, header, pacote, idempotência, modo produção, email não confirmado, sessão ausente e erros. Nenhuma solicitação real ao Firebase, Mercado Pago ou backend é feita pelos testes.
+- Não ocorre checkout, crédito de Cookies, deploy, merge ou habilitação do pagamento de produção. Integrar o botão a esse transporte requer uma etapa posterior e novos testes Chromium específicos.
+
+
+### Microetapa — preparo de pedido sandbox explícito na interface Angular
+- `/donate/` só exibe **Preparar pedido sandbox** após `paymentsMode=sandbox`, sessão restaurada, email verificado e aceite explícito dos termos. O botão de pagamentos reais continua desabilitado e a simulação local anterior permanece separada.
+- O cliente executa `simulateSandboxCheckout` com `createAuthenticatedSandboxAdapter`: valida o catálogo novamente, compara preço e Cookies com a revisão antes de enviar e mantém a mesma chave UUID por pacote em tentativas após incerteza de rede. Uma resposta 410 invalida a chave para a próxima tentativa.
+- Após um pedido sandbox válido, a interface exibe apenas a referência reduzida do pedido (12 caracteres), nunca redireciona ao provedor, nunca usa dados de retorno de URL para dar crédito e não declara pagamento aprovado.
+- A UI não importa código legado, o backend bloqueia o cabeçalho sandbox em modo produção e o Chromium intercepta TODOS os pedidos para testar erro 503, repetição com mesma chave, sucesso e mudança do backend para produção antes do POST. **Nenhuma requisição real de pagamento é feita nos testes.**
+- Publicação, fusão na `main`, checkout de produção e recebimento de dinheiro seguem fora do escopo.
+
+
+### Microetapa — cabeçalho sandbox sem fallback de produção
+- `assertSandboxOrderIntent` rejeita valores incorretos, ausentes de conteúdo, repetidos ou com capitalização inesperada no cabeçalho `X-LHS-Sandbox-Only` (HTTP 400). Se o cabeçalho declara `true`, pedidos em `PAYMENTS_MODE=production` são recusados (HTTP 409), independentemente da última consulta do navegador.
+- A ausência do cabeçalho preserva o fluxo legado existente, sem remover as exigências de autenticação, email verificado, aceite dos termos e `PAYMENTS_ENABLED`.
+- Os testes unitários do backend cobrem combinações de modo e cabeçalho; a suíte de segurança Angular afirma a chamada explícita ao validador. Não são efetuadas transações reais.
+
+### Microetapa — URLs de checkout vinculadas ao ambiente do pedido
+- `validCheckout` passa a exigir HTTPS, origem exata do Mercado Pago, sem porta personalizada, credenciais ou fragmento, e o caminho `/checkout/v1/redirect` com um único `pref_id` preenchido.
+- Para sandbox comum, aceita apenas `sandbox.mercadopago.com.br` ou `sandbox.mercadopago.com`. Em produção, apenas `www.mercadopago.com.br` ou `www.mercadopago.com`. Um **vendedor de testes identificado pelo backend** pode usar o domínio `www` mesmo em sandbox, mas continua com carteira `cookiesBalanceSandbox`, nunca créditos reais.
+- A mesma validação é obrigatória ao criar preferências e ao devolver URLs persistidas em novas tentativas com a mesma chave; URLs incompatíveis resultam em erro 502, sem redirecionamento ou crédito.
+- `backend/tests/payments.test.mjs` exercita ambientes cruzados, URL hostil, caminho/fragmento/porta inválidos e repetição idempotente com URL adulterada. O checkout de produção permanece desabilitado na interface Angular e não houve deploy.

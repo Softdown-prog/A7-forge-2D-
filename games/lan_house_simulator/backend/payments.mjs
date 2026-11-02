@@ -1,9 +1,31 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {fault,id,paymentCredit} from './domain.mjs';
 
-export function validCheckout(value){
+/**
+ * A sandbox-only client must never silently fall back to a production order.
+ * Missing header is reserved for the unchanged legacy checkout flow. When
+ * present, malformed, repeated or unexpected values are rejected.
+ */
+export function assertSandboxOrderIntent(value,sandbox){
+ if(value===undefined)return;
+ if(value!=='true')throw fault(400,'Cabeçalho de sandbox inválido.');
+ if(!sandbox)throw fault(409,'Este pedido de teste não pode ser criado em produção.');
+}
+/**
+ * Keep provider redirects in the same payment environment as the order.
+ * Official test sellers use init_point (www), but credit only sandbox Cookies.
+ * The returned URL is never sufficient evidence that a payment was approved.
+ */
+export function validCheckout(value,{sandbox,sellerIsTest=false}){
+ if(typeof value!=='string')throw fault(502,'Checkout inválido.');
  let url;try{url=new URL(value);}catch{throw fault(502,'Checkout inválido.');}
- if(url.protocol!=='https:'||url.username||url.password||!['www.mercadopago.com.br','www.mercadopago.com','sandbox.mercadopago.com.br','sandbox.mercadopago.com'].includes(url.hostname))throw fault(502,'Checkout inválido.');return url.href;
+ const prefix=sandbox&&!sellerIsTest?'sandbox':'www';
+ const allowed=new Set([prefix+'.mercadopago.com.br',prefix+'.mercadopago.com']);
+ if(url.protocol!=='https:'||url.username||url.password||url.port||url.hash||
+  !allowed.has(url.hostname)||url.pathname!=='/checkout/v1/redirect'||
+  url.searchParams.getAll('pref_id').length!==1||!url.searchParams.get('pref_id'))
+  throw fault(502,'Checkout inválido para o ambiente do pedido.');
+ return url.href;
 }
 export function preferenceBody(order,{apiUrl,siteUrl,now=Date.now()}){
  const back=new URL('/donate/',siteUrl);back.searchParams.set('order',order.id);
@@ -15,6 +37,7 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
  // Trust this exception only after /users/me identifies that exact seller as test_user.
  const expectedLiveMode=!sandbox||sellerIsTest;
  const mode=sandbox?'sandbox':'production',balanceField=sandbox?'cookiesBalanceSandbox':'cookiesBalance';
+ const checkoutEnvironment=Object.freeze({sandbox,sellerIsTest});
  const summary=order=>({id:order.id,priceCents:order.priceCents,cookies:order.cookies,status:order.status,mode:order.mode});
  async function createOrder(uid,packageId,key){
   id(packageId);id(key);const pack=Object.hasOwn(packages,packageId)?packages[packageId]:null;if(!pack)throw fault(400,'Pacote indisponível.');
@@ -31,12 +54,16 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
    const created={id:orderId,uid,packageId,...pack,mode,status:'created',sellerId:String(sellerId),expiresAt:now()+86_400_000,createdAt:FieldValue.serverTimestamp()};
    tx.create(ref,{...created,claim,creatingUntil:now()+60_000});tx.create(recent,summary(created));tx.update(recent,{createdAt:FieldValue.serverTimestamp()});return created;
   });
-  if(order.checkoutUrl)return {id:order.id,url:order.checkoutUrl};
+  // Treat persisted URLs as untrusted too, including idempotent retries.
+  if(order.checkoutUrl)return {id:order.id,
+   url:validCheckout(order.checkoutUrl,checkoutEnvironment)};
   // A single active creator per order prevents double-click/concurrent preferences.
   // The same key always refers to this immutable server-priced order.
   try{
    const preference=await mp('/checkout/preferences',{method:'POST',headers:{'X-Idempotency-Key':orderId},body:JSON.stringify(preferenceBody(order,{apiUrl,siteUrl,now:now()}))});
-   const url=validCheckout(sandbox&&!sellerIsTest?preference.sandbox_init_point:preference.init_point);
+   const url=validCheckout(
+    sandbox&&!sellerIsTest?preference.sandbox_init_point:preference.init_point,
+    checkoutEnvironment);
    await db.runTransaction(async tx=>{const current=(await tx.get(ref)).data();if(current.claim!==claim)throw fault(409,'Seu pagamento está sendo conferido. Tente novamente.');tx.update(ref,{checkoutUrl:url,preferenceId:preference.id,creatingUntil:0});});return {id:orderId,url};
   }catch(error){await db.runTransaction(async tx=>{const current=(await tx.get(ref)).data();if(current?.claim===claim)tx.update(ref,{creatingUntil:0});}).catch(()=>{});throw error;}
  }

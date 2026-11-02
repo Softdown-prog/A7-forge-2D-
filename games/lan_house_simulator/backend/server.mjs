@@ -8,7 +8,7 @@ import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
 import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
 import {DONATE_PACKAGES} from '../donate-packages.mjs';
 import {COOKIE_ITEMS,summarizeLedger,totalItemSpending} from '../cookie-items.mjs';
-import {createPayments} from './payments.mjs';
+import {createPayments,assertSandboxOrderIntent} from './payments.mjs';
 import {createVerificationEmail,authenticateAccount} from './verification-email.mjs';
 
 const projectId=process.env.GOOGLE_CLOUD_PROJECT;
@@ -29,7 +29,7 @@ if(paymentsEnabled&&(!process.env.MP_ACCESS_TOKEN||!process.env.MP_WEBHOOK_SECRE
 for(const p of Object.values(packages))if(!Number.isSafeInteger(p.priceCents)||p.priceCents<=0||!Number.isSafeInteger(p.cookies)||p.cookies<=0)throw Error('Pacote inválido.');
 app.use((req,res,next)=>{
  res.set({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
- if(req.headers.origin){if(!origins.has(req.headers.origin))return res.status(403).json({error:'Origem não autorizada.'});res.set({'Access-Control-Allow-Origin':req.headers.origin,'Vary':'Origin','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});}
+ if(req.headers.origin){if(!origins.has(req.headers.origin))return res.status(403).json({error:'Origem não autorizada.'});res.set({'Access-Control-Allow-Origin':req.headers.origin,'Vary':'Origin','Access-Control-Allow-Headers':'Authorization, Content-Type, Idempotency-Key, X-LHS-Sandbox-Only','Access-Control-Allow-Methods':'GET, POST, OPTIONS'});}
  if(req.method==='OPTIONS')return res.sendStatus(204);next();
 });
 app.use(express.json({limit:MAX_SAVE_BYTES,strict:true}));
@@ -113,6 +113,9 @@ async function mp(path,options={}){
 }
 let payments;
 app.post('/v1/orders',async(req,res)=>{
+ // Fail closed when a sandbox-only intent is malformed or mode changes.
+ // An absent header preserves the existing legacy checkout behavior.
+ assertSandboxOrderIntent(req.headers['x-lhs-sandbox-only'],sandbox);
  if(!paymentsEnabled)throw fault(503,'Doações ainda não disponíveis.');
  if(req.body.acceptedTerms!==true)throw fault(400,'Confirme os termos de Donate antes de continuar.');
  res.json(await payments.createOrder(req.uid,req.body.packageId,req.headers['idempotency-key']));

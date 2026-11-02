@@ -15,6 +15,13 @@
    <p>Créditos para itens cosméticos opcionais na Loja Cookies.</p>
    <button type="button" class="button" [attr.data-donate-package]="pack.id" disabled aria-disabled="true">Indisponível nesta prévia</button>
    <small>Este protótipo não inicia pagamentos.</small>
+   @if(availability()==='sandbox-ready'){
+    <button type="button" class="button secondary sandbox-review-button"
+     [attr.data-review-package]="pack.id" 
+     [disabled]="reviewState()==='loading'||reviewState()==='preparing'"
+     (click)="reviewPackage(pack.id)">
+     Revisar apoio de teste</button>
+   }
   </article>
  }
  </div>
@@ -23,9 +30,61 @@
   @case('loading'){Consultando disponibilidade do serviço…}
   @case('unavailable'){Doações não liberadas pelo serviço. Nenhum pagamento será iniciado.}
   @case('backend-active'){Serviço de pagamentos ativo, mas o checkout Angular ainda está bloqueado até a integração autenticada ser testada.}
+  @case('sandbox-ready'){Ambiente de testes ativo. Você pode simular a revisão ou preparar um pedido de teste. Nenhum pagamento será aberto automaticamente.}
   @default{Não foi possível consultar o serviço. O checkout permanece bloqueado.}
  }
  </p>
+ @if(availability()==='sandbox-ready'&&reviewState()!=='idle'){
+  <section class="donate-sandbox-review" aria-labelledby="sandbox-review-title">
+   <h3 id="sandbox-review-title">Revisão de apoio · ambiente de testes</h3>
+   <p id="sandbox-review-status" role="status" aria-live="polite">
+    @switch(reviewState()){
+     @case('loading'){Conferindo sua conta e os valores no servidor…}
+     @case('login-required'){Entre na sua conta antes de revisar o apoio.}
+     @case('verify-required'){Confirme seu email em Minha conta para continuar.}
+     @case('ready'){Confira o pacote e aceite os termos para finalizar a simulação.}
+     @case('preparing'){Preparando pedido sandbox no servidor…}
+     @case('prepared'){Pedido sandbox preparado. Nenhum pagamento foi confirmado e nenhum Cookie foi creditado.}
+     @case('prepare-error'){Não foi possível preparar o pedido sandbox. Confira sua sessão e tente novamente.}
+     @case('confirmed'){Revisão de teste concluída. Nenhum pedido, pagamento ou Cookie foi criado.}
+     @default{Não foi possível preparar a revisão. Nenhuma cobrança foi iniciada.}
+    }
+   </p>
+   @if(reviewState()==='login-required'||reviewState()==='verify-required'){
+    <a href="/conta/">Ir para Minha conta</a>
+   }
+   @if(reviewQuote();as quote){
+    <p id="sandbox-review-quote">
+     Pacote {{quote.packageId}} · R$ {{(quote.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}}
+     · {{quote.cookies}} Cookies previstos (sem crédito).
+    </p>
+   }
+   @if(reviewState()==='ready'){
+    <label class="sandbox-review-consent">
+     <input id="sandbox-terms" type="checkbox" [checked]="termsAccepted()"
+      (change)="toggleReviewTerms($event)"/>
+     Li os <a href="/termos/#donate" target="_blank" rel="noopener">termos de apoio</a>
+     e concordo em concluir apenas a simulação.
+    </label>
+    <button type="button" id="confirm-sandbox-review" class="button secondary"
+     [disabled]="!termsAccepted()" (click)="confirmReview()">Finalizar simulação sem pedido</button>
+    <button type="button" id="prepare-sandbox-order" class="button"
+     [disabled]="!termsAccepted()" (click)="prepareSandboxOrder()">Preparar pedido sandbox</button>
+   }
+   @if(reviewState()==='prepare-error'){
+    <button type="button" id="retry-sandbox-order" class="button"
+     (click)="prepareSandboxOrder()">Tentar novamente com a mesma chave</button>
+   }
+   @if(reviewState()==='prepared'&&sandboxOrderId();as orderId){
+    <p id="sandbox-order-id">Referência do pedido de teste: {{orderId}}…</p>
+    <p>Nenhum checkout foi aberto. Confira os pedidos em Minha conta.</p>
+   }
+   @if(reviewState()!=='loading'&&reviewState()!=='preparing'){
+    <button type="button" id="cancel-sandbox-review" class="button secondary"
+     (click)="cancelReview()">Fechar revisão</button>
+   }
+  </section>
+ }
 </section>
 <section class="wrap donate-account-link">
  <h2>Já apoiou o jogo?</h2>

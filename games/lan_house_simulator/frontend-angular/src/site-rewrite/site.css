@@ -181,3 +181,12 @@ h1{font-size:clamp(2.6rem,5vw,5.1rem);margin:12px 0 22px}h2{font-size:clamp(1.9r
 .donate-account-link{padding-bottom:35px}
 .donate-account-link a{color:var(--green);font-weight:700}
 @media(max-width:520px){.account-section-tabs button{flex:1;min-width:0}}
+
+/* Checkout REVIEW only: sandbox, no backend order writes. */
+.donate-card .sandbox-review-button{opacity:1;cursor:pointer;min-height:48px}
+.donate-sandbox-review{margin:24px 0;padding:clamp(16px,3vw,28px);background:#253d30;border:1px solid var(--green);border-radius:7px;overflow-wrap:anywhere}
+.donate-sandbox-review .sandbox-review-consent{display:flex;gap:12px;align-items:flex-start;margin:16px 0}
+.donate-sandbox-review #sandbox-terms{flex:none;width:21px;height:21px}
+.donate-sandbox-review .button{margin:12px 12px 4px 0;min-height:48px}
+.donate-sandbox-review .button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:520px){.donate-sandbox-review .button{width:100%;margin-right:0}}

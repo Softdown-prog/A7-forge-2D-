@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
 const output=resolve(import.meta.dirname,'../out/site-clean-angular');
 const manifest=JSON.parse(readFileSync(resolve(output,'angular-prerender-manifest.json'),'utf8'));
+const assets=JSON.parse(readFileSync(resolve(output,'angular-site-assets.json'),'utf8'));
 assert.equal(manifest.method,'isolated-chromium-public-snapshot');
 assert.deepEqual(manifest.paths,['/','/jogar/','/sobre-o-jogo/','/sobre-nos/',
  '/ajuda/','/contato/','/termos/','/privacidade/']);
@@ -16,7 +17,8 @@ for(const path of manifest.paths){
  assert.equal((html.match(/<footer\b/g)||[]).length,1,'Footer missing/duplicated: '+path);
  assert.equal((html.match(/<h1\b/g)||[]).length,1,'H1 missing/duplicated: '+path);
  assert.match(html,/<meta name="robots" content="noindex,nofollow">/);
- assert.match(html,/src="\/assets\/site\/main\.js"/);
+ assert.ok(html.includes('src="/assets/site/'+assets.main+'"'));
+ assert.ok(html.includes('href="/assets/site/'+assets.styles+'"'));
  assert.doesNotMatch(html,/react-entry\.js|website\/site\.mjs/i);
 }
 for(const path of manifest.excluded){
