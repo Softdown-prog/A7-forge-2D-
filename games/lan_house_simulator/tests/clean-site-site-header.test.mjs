@@ -16,8 +16,8 @@ test('the global Angular shell delegates all header navigation state to one stan
  assert.doesNotMatch(page,/<header\b|id="site-nav"|openMenu\(\)|toggleMenu\(\)|closeMenu\(\)/);
  assert.doesNotMatch(app,/openMenu|toggleMenu\(|closeMenu\(/);
  assert.match(owner,/selector:'lhs-site-header'/);
- assert.doesNotMatch(owner,/styles:\\s*\\[/,'CSP forbids inline Angular component styles');
- assert.match(read('site.css'),/lhs-site-header\\{display:block\\}/);
+ assert.doesNotMatch(owner,/styles:\s*\[/,'CSP forbids inline Angular component styles');
+ assert.match(read('site.css'),/lhs-site-header\{display:block\}/);
  assert.match(owner,/ChangeDetectionStrategy\.OnPush/);
  assert.match(owner,/readonly path=input\.required<SitePath>\(\)/);
  assert.match(owner,/readonly openMenu=signal\(false\)/);
