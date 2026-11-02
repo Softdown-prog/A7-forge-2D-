@@ -72,31 +72,7 @@
   }
  }
  @if(path==='/termos/'||path==='/privacidade/'){
-  <div class="wrap legal-grid">
-   <aside class="legal-index">
-    <h2>Esta página</h2>
-    <nav aria-label="Índice desta página">
-     @for(item of legalSections;track item.id;let i=$index){
-      <a [href]="path+'#'+item.id"><span>{{i+1}}.</span> {{item.title}}</a>
-     }
-    </nav>
-   </aside>
-   <article class="legal-body" aria-label="Conteúdo completo para revisão">
-    @for(item of legalSections;track item.id){
-     <section [id]="item.id" [attr.aria-labelledby]="'legal-'+item.id">
-      <h2 [id]="'legal-'+item.id">{{item.title}}</h2>
-      @for(paragraph of item.paragraphs;track $index){<p>{{paragraph}}</p>}
-      @if(item.links){
-       <p class="legal-related">
-        @for(link of item.links;track link.href){
-         <a [href]="link.href">{{link.label}}</a>
-        }
-       </p>
-      }
-     </section>
-    }
-   </article>
-  </div>
+  <lhs-legal-document [path]="path"></lhs-legal-document>
  }
  @if(path==='/'||path==='/sobre-o-jogo/'){
   <lhs-era-timeline></lhs-era-timeline>
