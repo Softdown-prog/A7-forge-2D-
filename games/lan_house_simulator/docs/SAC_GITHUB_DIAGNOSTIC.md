@@ -4,6 +4,8 @@ Esta etapa executa o Angular site-rewrite, sem enviar o Lan House Simulator à V
 
 O host CI gera chave HMAC efêmera em memória, assina a evidência do build e produz out/sac-angular-site-rewrite/report.json, disponível como artifact lhs-angular-sac-diagnostic. A Summary do workflow mostra os resultados.
 
-Esta é somente validação estática: browser_pass=false, browser=not-executed e deployment_authorized=false. A verificação Playwright do LHS e o Guardian SAC poderão ser integrados em outra microetapa; não é correto declarar aprovação do navegador agora.
+O Guardian agora roda somente depois de preflight, build Angular AOT e postflight aprovados. Ele testa interações reais em Chromium isolado (Docker sem rede) com dois casos: pausar animações no início e expandir perguntas na página de ajuda. A avaliação do navegador só recebe pass se ambos os casos passarem, houver sandbox declarado, comprovante de artefato e rede desativada. O resultado do CI fica em fail ou unverified quando Chromium falha ou não executa. deployment_authorized=false permanece em qualquer circunstância.
 
 Nenhum comando à VPS, nenhuma mudança ao Worker instalado, Cloudflare ou main. Não há API, deploy, chave persistida nem credenciais de escrita no repositório. O SAC de origem permanece em PR draft; atualizar o commit fixado exige revisão.
+
+O build `site-rewrite` inclui arquivos públicos de `src/site-rewrite/public/assets` no dist para evitar falhas HTTP artificiais. O Guardian não visita o site Cloudflare: ele serve uma cópia autenticada do dist em loopback dentro do container. O checkout do SAC e a imagem Playwright estão pinados por SHA/digest. Sem chaves de deploy, SSH, VPS ou acesso ao Worker produtivo.
