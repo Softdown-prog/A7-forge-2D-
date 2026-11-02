@@ -1,0 +1,51 @@
+name: LHS SAC Angular diagnosis (GitHub Actions only)
+on:
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/frontend-angular/**'
+      - 'games/lan_house_simulator/scripts/sac_diagnose_site_rewrite.mjs'
+      - '.github/workflows/lhs-sac-angular-diagnostic.yml'
+  push:
+    branches: ['feat/lhs-sac-actions-diagnostic']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  site-rewrite:
+    name: SAC pre/build/post on LHS site-rewrite
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - name: Checkout LHS
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Checkout pinned SAC revision
+        uses: actions/checkout@v4
+        with:
+          repository: Softdown-prog/Data_libray
+          ref: b4a4a9ec786e935bb8c5ddc287fe12f5ed03d8bb
+          path: .sac-toolchain
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Install SAC tooling
+        run: |
+          npm ci --prefix .sac-toolchain/packages/angular-core --ignore-scripts --no-audit --no-fund
+          npm ci --prefix .sac-toolchain/packages/angular-precompiler --ignore-scripts --no-audit --no-fund
+          npm ci --prefix .sac-toolchain/packages/angular-postcompiler --ignore-scripts --no-audit --no-fund
+      - name: Install LHS Angular
+        run: npm ci --prefix games/lan_house_simulator/frontend-angular --no-audit --no-fund
+      - name: Syntax-check harness
+        run: node --check games/lan_house_simulator/scripts/sac_diagnose_site_rewrite.mjs
+      - name: SAC preflight, Angular AOT build and postflight
+        run: node games/lan_house_simulator/scripts/sac_diagnose_site_rewrite.mjs
+      - name: Upload sanitized diagnostic result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-sac-diagnostic
+          path: games/lan_house_simulator/out/sac-angular-site-rewrite/report.json
+          retention-days: 14
+          if-no-files-found: warn
