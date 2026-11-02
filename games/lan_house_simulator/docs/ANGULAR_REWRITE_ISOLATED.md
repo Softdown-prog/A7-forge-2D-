@@ -125,3 +125,10 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - A etapa pede aceite explícito dos termos, mas **Finalizar simulação** apenas altera o estado visual. Não executa `POST /v1/orders`, não abre checkout, não credita Cookies e não faz pagamentos.
 - Sem sessão ou com email não verificado, encaminha o jogador a Minha conta. Mudanças de ambiente, respostas inválidas e erros falham sem pagamento. Fechar a revisão limpa valores e aceite.
 - O teste Chromium isolado usa login/refresh/lookup e catálogo sintéticos nas larguras 1280/414/360, exige zero requisições de pedido e não libera produção. O contrato completo de criação de pedido continua coberto apenas por unit tests com mock e sem conexão real.
+
+### Microetapa — orçamentos de bundle no Angular 22
+- As builds de produção `game-ui`, `site-shell` e `site-rewrite` passam a rejeitar bundles iniciais maiores que `1mb` e avisar acima de `500kb`, via `budgets` nativo do Angular CLI. O CI isolado bloqueia a mudança caso a build exceda o teto.
+- O build `site-rewrite` mediu `210,75 kB` no último workflow aprovado (antes da mudança). O valor é uma referência de build, não uma medição de rede em produção.
+- Mantemos `outputHashing: none` intencionalmente até a adaptação dos caminhos `main.js`/`styles.css` e da estratégia de cache, que dependem de nomes estáveis no gerador do site. **Não** ativar `all` sem revalidar pré-renderização, Chromium e Cloudflare Pages.
+- `tests/clean-site-angular-build-policy.test.mjs` testa os três budgets e confirma que as flags rigorosas do Angular/TypeScript continuam herdadas pelos projetos, sem exigir duplicações de flags implícitas em `strict`.
+- Sem alteração no deployment, nas rotas de checkout ou na `main`.

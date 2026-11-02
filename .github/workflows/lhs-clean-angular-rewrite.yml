@@ -32,6 +32,7 @@ jobs:
           npm run build:site:clean
           npm run check:site:clean
           ./frontend-angular/node_modules/.bin/tsc --ignoreConfig --noEmit --strict --noUnusedLocals --noUnusedParameters --noUncheckedIndexedAccess --exactOptionalPropertyTypes --noImplicitReturns --noFallthroughCasesInSwitch --noPropertyAccessFromIndexSignature --target ES2022 --module ES2022 --moduleResolution bundler --lib ES2022,DOM --skipLibCheck frontend-angular/src/site-rewrite/checkout-contract.ts
+          node --test tests/clean-site-angular-build-policy.test.mjs
           node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs tests/clean-site-local-data.test.mjs tests/clean-site-account.test.mjs tests/clean-site-email-confirmation.test.mjs tests/clean-site-donate.test.mjs tests/clean-site-donate-history.test.mjs tests/clean-site-checkout-contract.test.mjs tests/clean-site-checkout-safety.test.mjs
       - name: Real Chromium Android-like touch, F5 and iframe QA
         working-directory: games/lan_house_simulator
