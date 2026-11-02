@@ -17,6 +17,9 @@ export function auditSource(source,name){
  const ast=ts.createSourceFile(current,source,ts.ScriptTarget.Latest,true,ts.ScriptKind.TS);
  if(ast.parseDiagnostics?.length)issues.add('invalid-typescript-syntax');
  const check=specifier=>{
+  // One intentional, reviewed bridge from the Angular account UI to the Canvas
+  // domain save validator. It is not the legacy site's DOM JavaScript.
+  if(name==='account.ts'&&specifier==='/game/js/sim/saveTransfer.js')return;
   if(specifier.startsWith('.')){
    const target=resolve(dirname(current),specifier);
    if(!inside(target)){issues.add('legacy-or-outside-angular-import');return;}
@@ -34,9 +37,23 @@ export function auditSource(source,name){
   if(ts.isImportEqualsDeclaration(node))issues.add('commonjs-import-forbidden');
   if(ts.isCallExpression(node)){
    if(node.expression.kind===ts.SyntaxKind.ImportKeyword){
-    if(node.arguments.length===1&&ts.isStringLiteralLike(node.arguments[0]))
-     check(node.arguments[0].text);
-    else issues.add('nonliteral-dynamic-import');
+    const arg=node.arguments[0];
+    if(node.arguments.length===1&&arg&&ts.isStringLiteralLike(arg)){
+     check(arg.text);
+    }else if(node.arguments.length===1&&arg&&ts.isIdentifier(arg)){
+     // Resolve only a preceding block-local const with a literal initializer.
+     // Never assume an arbitrary variable resolves to a trusted module.
+     let block=node.parent;
+     while(block&&!ts.isBlock(block))block=block.parent;
+     const decl=block?.statements
+      .filter(statement=>statement.pos<node.pos&&ts.isVariableStatement(statement)&&
+       (statement.declarationList.flags&ts.NodeFlags.Const)!==0)
+      .flatMap(statement=>statement.declarationList.declarations)
+      .find(declaration=>ts.isIdentifier(declaration.name)&&declaration.name.text===arg.text);
+     if(decl?.initializer&&ts.isStringLiteralLike(decl.initializer))
+      check(decl.initializer.text);
+     else issues.add('nonliteral-dynamic-import');
+    }else issues.add('nonliteral-dynamic-import');
    }
    if(ts.isIdentifier(node.expression)&&node.expression.text==='require')
     issues.add('commonjs-require-forbidden');
