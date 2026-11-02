@@ -160,3 +160,24 @@ h1{font-size:clamp(2.6rem,5vw,5.1rem);margin:12px 0 22px}h2{font-size:clamp(1.9r
 .donate-faq details{padding:20px 0;border-top:1px solid var(--line)}
 .donate-faq summary{cursor:pointer;font-weight:700}
 @media(max-width:700px){.donate-cards,.donate-guide{grid-template-columns:1fr}}
+
+/* Read-only authenticated Donate history; mobile-first layout. */
+.account-order-history{padding-bottom:65px}
+.account-order-history #load-donate-history{margin:12px 0;min-height:48px}
+#account-order-status{padding:12px 16px;border-left:3px solid var(--line);overflow-wrap:anywhere}
+.donate-orders{list-style:none;padding:0;display:grid;gap:12px}
+.donate-orders li{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:20px;background:#253d30;border:1px solid var(--line);border-radius:7px}
+.donate-orders li>div{display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
+.donate-orders li strong{color:var(--green)}
+.donate-orders li small{color:var(--muted)}
+@media(max-width:700px){.donate-orders li>div{width:100%}.account-order-history #load-donate-history{width:100%}}
+
+/* Authenticated area navigation, preserving existing save dashboard by default. */
+.account-section-tabs{margin:26px 0 24px}
+.account-section-tabs button[aria-selected=true]{background:var(--green);color:var(--deep)}
+.account-section-tabs button:disabled{opacity:.65;cursor:wait}
+.account-order-history{min-width:0}
+.account-order-history h3{font-size:1.5rem}
+.donate-account-link{padding-bottom:35px}
+.donate-account-link a{color:var(--green);font-weight:700}
+@media(max-width:520px){.account-section-tabs button{flex:1;min-width:0}}

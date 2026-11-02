@@ -12,7 +12,18 @@ test('Donate is Angular-only and cannot create orders or checkout',()=>{
  assert.match(c,/paymentsEnabled/);
  assert.match(c,/paymentsMode.*production/);
  assert.match(c,/\'\/v1\/config\'/);
+ assert.doesNotMatch(c+h,/checkoutUrl|website\/|window\.location\.assign|\/v1\/orders\//);
+ const account=read('../frontend-angular/src/site-rewrite/account.ts');
+ const accountView=read('../frontend-angular/src/site-rewrite/account.html');
  assert.doesNotMatch(c+h,/\/v1\/orders|checkoutUrl|website\/|sessionStorage|window\.location\.assign/);
+ assert.doesNotMatch(h,/id="load-donate-history"|class="donate-orders"/);
+ assert.match(h,/href="\/conta\/#apoios"/);
+ assert.match(account,/readDonateOrders\(result\)/);
+ assert.match(account,/requireClient\(\)\.api\('\/v1\/orders'\)/);
+ assert.match(accountView,/id="account-tab-apoios"/);
+ assert.match(accountView,/id="load-account-orders"/);
+ assert.match(read('../frontend-angular/src/site-rewrite/account-client.ts'),
+  /path==='\/v1\/orders'&&body===undefined/);
  assert.match(h,/<button[^>]*\[attr\.data-donate-package\]="pack.id"[^>]*disabled/);
  assert.match(h,/aria-disabled="true"/);
  assert.match(h,/role="status" aria-live="polite"/);

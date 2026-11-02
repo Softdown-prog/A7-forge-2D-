@@ -23,6 +23,14 @@ test('Angular account uses independent transport, explicit upload and scoped ses
  assert.match(app,/this\.uploadedSave=payload/);
  assert.match(app,/dialog\.returnValue!=='confirm'/);
  assert.match(app,/error\.status===409/);
+ assert.match(app,/this\.orders\.set\(\[\]\)/);
+ assert.match(app,/readDonateOrders\(result\)/);
+ assert.match(app,/this\.view\(\)!=='dashboard'/);
+ assert.match(html,/role="tablist" aria-label="Áreas da conta"/);
+ assert.match(html,/id="account-tab-apoios"/);
+ assert.match(html,/role="tabpanel"/);
+ assert.match(html,/id="load-account-orders"/);
+ assert.match(html,/id="account-order-status" role="status"/);
  assert.match(html,/id="upload-save"/);
  assert.match(html,/id="confirm-upload"/);
  assert.match(html,/id="cancel-upload"/);

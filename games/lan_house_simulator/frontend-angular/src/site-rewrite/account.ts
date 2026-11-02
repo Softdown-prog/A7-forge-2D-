@@ -1,8 +1,11 @@
 import {ChangeDetectionStrategy,ChangeDetectorRef,Component,OnInit,inject,signal} from '@angular/core';
 import {AccountError,SiteAccountClient,validateAccountConfig} from './account-client';
 import type {AccountProfile,MainSave} from './account-client';
+import {readDonateOrders} from './donate-history';
+import type {DonateOrder} from './donate-history';
 type View='loading'|'disabled'|'auth'|'verify'|'dashboard';
 type Mode='login'|'signup'|'reset';
+type DashboardTab='salvamentos'|'apoios';
 /** Sole Angular owner of authentication, session, cloud save and account dashboard. */
 @Component({
  selector:'lhs-account',
@@ -20,6 +23,9 @@ export class AccountComponent implements OnInit {
  readonly cookies=signal<number|null>(null);
  readonly remote=signal<MainSave|null>(null);
  readonly filename=signal('');
+ readonly dashboardTab=signal<DashboardTab>(location.hash==='#apoios'?'apoios':'salvamentos');
+ readonly orderState=signal<'idle'|'loading'|'ready'|'error'>('idle');
+ readonly orders=signal<ReadonlyArray<DonateOrder>>([]);
  private readonly changeDetector=inject(ChangeDetectorRef);
  private client:SiteAccountClient|null=null;
  private uploadedSave:unknown=null;
@@ -80,6 +86,7 @@ export class AccountComponent implements OnInit {
  private clearDashboard():void{
   this.accountEmail.set('');this.cookies.set(null);
   this.remote.set(null);this.filename.set('');this.uploadedSave=null;
+  this.orders.set([]);this.orderState.set('idle');
  }
  setMode(value:Mode):void{
   if(this.busy())return;
@@ -167,6 +174,22 @@ export class AccountComponent implements OnInit {
    await this.requireClient().sendVerification();
    this.message.set('Email de confirmação reenviado. Confira também o spam.');
   });
+ }
+ selectDashboardTab(tab:DashboardTab):void{
+  if(!this.busy())this.dashboardTab.set(tab);
+ }
+ /** Query only on click, only after the account has passed verified login. */
+ async loadOrders():Promise<void>{
+  if(this.view()!=='dashboard'||this.busy()||this.orderState()==='loading')return;
+  this.orders.set([]);this.orderState.set('loading');
+  await this.execute(async()=>{
+   const result=await this.requireClient().api('/v1/orders');
+   if(this.destroyed)return;
+   this.orders.set(readDonateOrders(result));
+   this.orderState.set('ready');
+   this.message.set('Histórico consultado sem iniciar pagamentos.');
+  });
+  if(this.view()==='dashboard'&&this.orderState()==='loading')this.orderState.set('error');
  }
  signOut():void{
   if(this.busy())return;
