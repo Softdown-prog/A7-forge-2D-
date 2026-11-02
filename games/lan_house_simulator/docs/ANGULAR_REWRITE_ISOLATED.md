@@ -162,3 +162,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - `assertSandboxOrderIntent` rejeita valores incorretos, ausentes de conteúdo, repetidos ou com capitalização inesperada no cabeçalho `X-LHS-Sandbox-Only` (HTTP 400). Se o cabeçalho declara `true`, pedidos em `PAYMENTS_MODE=production` são recusados (HTTP 409), independentemente da última consulta do navegador.
 - A ausência do cabeçalho preserva o fluxo legado existente, sem remover as exigências de autenticação, email verificado, aceite dos termos e `PAYMENTS_ENABLED`.
 - Os testes unitários do backend cobrem combinações de modo e cabeçalho; a suíte de segurança Angular afirma a chamada explícita ao validador. Não são efetuadas transações reais.
+
+### Microetapa — URLs de checkout vinculadas ao ambiente do pedido
+- `validCheckout` passa a exigir HTTPS, origem exata do Mercado Pago, sem porta personalizada, credenciais ou fragmento, e o caminho `/checkout/v1/redirect` com um único `pref_id` preenchido.
+- Para sandbox comum, aceita apenas `sandbox.mercadopago.com.br` ou `sandbox.mercadopago.com`. Em produção, apenas `www.mercadopago.com.br` ou `www.mercadopago.com`. Um **vendedor de testes identificado pelo backend** pode usar o domínio `www` mesmo em sandbox, mas continua com carteira `cookiesBalanceSandbox`, nunca créditos reais.
+- A mesma validação é obrigatória ao criar preferências e ao devolver URLs persistidas em novas tentativas com a mesma chave; URLs incompatíveis resultam em erro 502, sem redirecionamento ou crédito.
+- `backend/tests/payments.test.mjs` exercita ambientes cruzados, URL hostil, caminho/fragmento/porta inválidos e repetição idempotente com URL adulterada. O checkout de produção permanece desabilitado na interface Angular e não houve deploy.
