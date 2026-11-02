@@ -118,7 +118,7 @@ test('checkout URLs are restricted to the server-owned payment environment',asyn
   id:'p',sandbox_init_point:live,init_point:live
  })});
  await assert.rejects(failure.service.createOrder('player','donate-5','wrong-provider-mode'),e=>e.status===502);
- assert.equal(failure.rows.get('accounts/player').cookiesBalanceSandbox,undefined);
+ assert.equal(failure.rows.has('accounts/player'),false);
  assert.equal(failure.rows.get('orders/'+(await import('node:crypto')).createHash('sha256')
   .update('sandbox:player:wrong-provider-mode').digest('hex')).checkoutUrl,undefined);
  const testSellerFailure=fixture({sandbox:true,sellerIsTest:true,provider:mkProvider({
