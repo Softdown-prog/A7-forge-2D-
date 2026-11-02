@@ -7,7 +7,7 @@
   [attr.aria-expanded]="openMenu()" (click)="toggleMenu()">Menu ☰</button>
  <nav id="site-nav" class="nav" [class.open]="openMenu()" aria-label="Navegação principal">
   @for(link of navigation;track link.href){
-   <a [href]="link.href" [attr.aria-current]="path===link.href?'page':null"
+   <a [href]="link.href" [attr.aria-current]="path()===link.href?'page':null"
     (click)="closeMenu()">{{link.label}}</a>
   }
  </nav>
