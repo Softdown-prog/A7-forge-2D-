@@ -1,19 +1,6 @@
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
-<div class="page" [class.reduce-motion]="reduceMotion()" (keydown.escape)="closeMenu()">
-<header class="header"><div class="wrap bar">
- <a class="brand" href="/" aria-label="Lan House Simulator, página inicial">
-  <img src="/assets/brand.svg" alt="" width="41" height="41"/>
-  <span>LAN HOUSE SIMULATOR<small>UM JOGO SOFTDOWN</small></span>
- </a>
- <button class="menu-button" type="button" aria-controls="site-nav"
-  [attr.aria-expanded]="openMenu()" (click)="toggleMenu()">Menu ☰</button>
- <nav id="site-nav" class="nav" [class.open]="openMenu()" aria-label="Navegação principal">
-  @for(link of navigation;track link.href){
-   <a [href]="link.href" [attr.aria-current]="path===link.href?'page':null"
-    (click)="closeMenu()">{{link.label}}</a>
-  }
- </nav>
-</div></header>
+<div class="page" [class.reduce-motion]="reduceMotion()">
+<lhs-site-header [path]="path"></lhs-site-header>
 <main id="conteudo">
  @switch(path){
   @case('/'){
@@ -115,16 +102,5 @@
   <lhs-era-timeline></lhs-era-timeline>
  }
 </main>
-<footer class="footer"><div class="wrap footer-grid">
- <div><a class="brand" href="/">LAN HOUSE SIMULATOR</a><p class="small">Seu bairro. Seu negócio. Sua história.</p></div>
- <nav aria-label="Explore o salão"><h2>EXPLORAR</h2>
-  @for(link of navigation;track link.href){<a [href]="link.href">{{link.label}}</a>}
- </nav>
- <nav aria-label="Informações"><h2>INFORMAÇÕES</h2>
-  @for(link of footerLinks;track link.href){<a [href]="link.href">{{link.label}}</a>}
- </nav>
-</div><div class="wrap footer-bottom"><span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span>
- <button type="button" id="motion-toggle" [attr.aria-pressed]="reduceMotion()"
-  (click)="toggleMotion()">{{reduceMotion()?'Animações pausadas':'Pausar animações'}}</button>
- <span>REESCRITA ANGULAR · NÃO PUBLICAR</span></div></footer>
+<lhs-site-footer [reduceMotion]="reduceMotion()" (motionToggle)="toggleMotion()"></lhs-site-footer>
 </div>

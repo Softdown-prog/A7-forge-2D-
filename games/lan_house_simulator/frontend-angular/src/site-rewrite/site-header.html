@@ -1,0 +1,14 @@
+<header class="header"><div class="wrap bar">
+ <a class="brand" href="/" aria-label="Lan House Simulator, página inicial">
+  <img src="/assets/brand.svg" alt="" width="41" height="41"/>
+  <span>LAN HOUSE SIMULATOR<small>UM JOGO SOFTDOWN</small></span>
+ </a>
+ <button class="menu-button" type="button" aria-controls="site-nav"
+  [attr.aria-expanded]="openMenu()" (click)="toggleMenu()">Menu ☰</button>
+ <nav id="site-nav" class="nav" [class.open]="openMenu()" aria-label="Navegação principal">
+  @for(link of navigation;track link.href){
+   <a [href]="link.href" [attr.aria-current]="path()===link.href?'page':null"
+    (click)="closeMenu()">{{link.label}}</a>
+  }
+ </nav>
+</div></header>
