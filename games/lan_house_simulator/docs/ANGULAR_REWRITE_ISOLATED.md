@@ -200,3 +200,4 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Preserva logo, links do catálogo Angular, `#site-nav`, `aria-expanded` e `aria-current`. Escape é tratado com um único `@HostListener` Angular, sem registro manual de listeners nativos.
 - Testes de fronteira e Chromium verificam montagem única, rota atual, abertura por toque/teclado, fechamento por Escape, reload F5 e comportamento responsivo.
 - A alteração fica na prévia Angular isolada: não modifica Canvas, saves, checkout, Cloudflare nem faz cutover.
+- A CSP estrita do site usa `style-src 'self'`: o cabeçalho não declara `styles:[]` inline no decorator. Sua regra `display:block` fica na folha externa `site.css`, e um teste impede reintroduzir estilos inline no componente.

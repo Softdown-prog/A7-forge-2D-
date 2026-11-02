@@ -7,8 +7,7 @@ import type {SitePath} from './site-data';
  selector:'lhs-site-header',
  standalone:true,
  changeDetection:ChangeDetectionStrategy.OnPush,
- templateUrl:'./site-header.html',
- styles:[':host{display:block}']
+ templateUrl:'./site-header.html'
 })
 export class SiteHeaderComponent{
  readonly path=input.required<SitePath>();
