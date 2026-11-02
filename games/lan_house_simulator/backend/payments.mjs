@@ -1,6 +1,16 @@
 import {createHash,randomUUID} from 'node:crypto';
 import {fault,id,paymentCredit} from './domain.mjs';
 
+/**
+ * A sandbox-only client must never silently fall back to a production order.
+ * Missing header is reserved for the unchanged legacy checkout flow. When
+ * present, malformed, repeated or unexpected values are rejected.
+ */
+export function assertSandboxOrderIntent(value,sandbox){
+ if(value===undefined)return;
+ if(value!=='true')throw fault(400,'Cabeçalho de sandbox inválido.');
+ if(!sandbox)throw fault(409,'Este pedido de teste não pode ser criado em produção.');
+}
 export function validCheckout(value){
  let url;try{url=new URL(value);}catch{throw fault(502,'Checkout inválido.');}
  if(url.protocol!=='https:'||url.username||url.password||!['www.mercadopago.com.br','www.mercadopago.com','sandbox.mercadopago.com.br','sandbox.mercadopago.com'].includes(url.hostname))throw fault(502,'Checkout inválido.');return url.href;

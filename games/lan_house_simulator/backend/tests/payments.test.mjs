@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPayments,preferenceBody,validCheckout} from '../payments.mjs';
+import {createPayments,preferenceBody,validCheckout,assertSandboxOrderIntent} from '../payments.mjs';
 import {DONATE_PACKAGES} from '../../donate-packages.mjs';
 
 // A serialized transaction fixture with atomic commit and Firestore's read-before-write rule.
@@ -71,4 +71,19 @@ test('authenticated reconciliation recovers a lost webhook and history belongs t
  let p;const f=fixture({provider:path=>path.startsWith('/checkout')?{id:'p',init_point:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=p'}:{results:[p]}});
  const order=await f.service.createOrder('player','donate-5','key');p=payment(order);assert.equal((await f.service.readOrder('player',order.id)).status,'approved');assert.equal(f.rows.get('accounts/player').cookiesBalance,50);
  assert.equal((await f.service.listOrders('player')).length,1);assert.equal((await f.service.listOrders('other')).length,0);
+});
+
+test('sandbox-only intent denies malformed or replayed headers and production fallback',()=>{
+ for(const header of ['true','TRUE','false','0','',null,['true'],['true','true']]){
+  if(header==='true'){
+   assert.doesNotThrow(()=>assertSandboxOrderIntent(header,true));
+   assert.throws(()=>assertSandboxOrderIntent(header,false),e=>e.status===409);
+  }else{
+   assert.throws(()=>assertSandboxOrderIntent(header,true),e=>e.status===400);
+   assert.throws(()=>assertSandboxOrderIntent(header,false),e=>e.status===400);
+  }
+ }
+ // Legacy clients without this header keep using the old guarded checkout.
+ assert.doesNotThrow(()=>assertSandboxOrderIntent(undefined,true));
+ assert.doesNotThrow(()=>assertSandboxOrderIntent(undefined,false));
 });

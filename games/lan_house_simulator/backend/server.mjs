@@ -8,7 +8,7 @@ import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
 import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
 import {DONATE_PACKAGES} from '../donate-packages.mjs';
 import {COOKIE_ITEMS,summarizeLedger,totalItemSpending} from '../cookie-items.mjs';
-import {createPayments} from './payments.mjs';
+import {createPayments,assertSandboxOrderIntent} from './payments.mjs';
 import {createVerificationEmail,authenticateAccount} from './verification-email.mjs';
 
 const projectId=process.env.GOOGLE_CLOUD_PROJECT;
@@ -113,10 +113,9 @@ async function mp(path,options={}){
 }
 let payments;
 app.post('/v1/orders',async(req,res)=>{
- // A sandbox-only caller must NEVER create a production checkout, even if
- // PAYMENTS_MODE changes after the browser reads /v1/config.
- if(req.headers['x-lhs-sandbox-only']==='true'&&!sandbox)
-  throw fault(409,'Este pedido de teste não pode ser criado em produção.');
+ // Fail closed when a sandbox-only intent is malformed or mode changes.
+ // An absent header preserves the existing legacy checkout behavior.
+ assertSandboxOrderIntent(req.headers['x-lhs-sandbox-only'],sandbox);
  if(!paymentsEnabled)throw fault(503,'Doações ainda não disponíveis.');
  if(req.body.acceptedTerms!==true)throw fault(400,'Confirme os termos de Donate antes de continuar.');
  res.json(await payments.createOrder(req.uid,req.body.packageId,req.headers['idempotency-key']));

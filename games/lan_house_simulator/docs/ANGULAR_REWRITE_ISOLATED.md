@@ -156,3 +156,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Após um pedido sandbox válido, a interface exibe apenas a referência reduzida do pedido (12 caracteres), nunca redireciona ao provedor, nunca usa dados de retorno de URL para dar crédito e não declara pagamento aprovado.
 - A UI não importa código legado, o backend bloqueia o cabeçalho sandbox em modo produção e o Chromium intercepta TODOS os pedidos para testar erro 503, repetição com mesma chave, sucesso e mudança do backend para produção antes do POST. **Nenhuma requisição real de pagamento é feita nos testes.**
 - Publicação, fusão na `main`, checkout de produção e recebimento de dinheiro seguem fora do escopo.
+
+
+### Microetapa — cabeçalho sandbox sem fallback de produção
+- `assertSandboxOrderIntent` rejeita valores incorretos, ausentes de conteúdo, repetidos ou com capitalização inesperada no cabeçalho `X-LHS-Sandbox-Only` (HTTP 400). Se o cabeçalho declara `true`, pedidos em `PAYMENTS_MODE=production` são recusados (HTTP 409), independentemente da última consulta do navegador.
+- A ausência do cabeçalho preserva o fluxo legado existente, sem remover as exigências de autenticação, email verificado, aceite dos termos e `PAYMENTS_ENABLED`.
+- Os testes unitários do backend cobrem combinações de modo e cabeçalho; a suíte de segurança Angular afirma a chamada explícita ao validador. Não são efetuadas transações reais.

@@ -19,7 +19,7 @@ test('the checkout contract is test-only and production Donate remains disabled'
  assert.match(markup,/id="retry-sandbox-order"/);
  assert.match(account,/async postSandboxOrder\(/);
  assert.match(account,/'X-LHS-Sandbox-Only':'true'/);
- assert.match(backend,/req\.headers\['x-lhs-sandbox-only'\]==='true'&&!sandbox/);
+ assert.match(backend,/assertSandboxOrderIntent\(req\.headers\['x-lhs-sandbox-only'\],sandbox\)/);
  assert.match(backend,/Idempotency-Key, X-LHS-Sandbox-Only/);
  assert.doesNotMatch(adapter,/location\.assign|window\.open/);
  assert.doesNotMatch(donate+markup,/\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
