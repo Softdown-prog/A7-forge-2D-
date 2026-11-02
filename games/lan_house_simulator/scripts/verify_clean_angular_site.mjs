@@ -91,6 +91,37 @@ try{
     await page.waitForFunction(()=>
      document.querySelector('.menu-button')?.getAttribute('aria-expanded')==='false');
    }
+   if(pathname==='/'||pathname==='/sobre-o-jogo/'){
+    assert.equal(await page.locator('lhs-era-timeline').count(),1);
+    const timeline=page.locator('lhs-era-timeline');
+    const buttons=timeline.locator('.era-tabs button');
+    assert.equal(await buttons.count(),4);
+    assert.equal(await buttons.nth(0).getAttribute('aria-pressed'),'true');
+    assert.equal(await timeline.locator('.era-panel h3').textContent(),'Três PCs e um sonho.');
+    const newer=buttons.getByText('2024');
+    if(mobile)await newer.tap();else await newer.click();
+    await page.waitForFunction(()=>
+     document.querySelector('lhs-era-timeline .era-panel h3')?.textContent===
+     'O salão vira uma arena.');
+    assert.equal(await newer.getAttribute('aria-pressed'),'true');
+    assert.equal(await buttons.nth(0).getAttribute('aria-pressed'),'false');
+    assert.equal(await timeline.locator('.era-panel img').getAttribute('src'),'/assets/pc-arena.svg');
+    if(mobile)await buttons.nth(1).tap();else await buttons.nth(1).click();
+    await page.waitForFunction(()=>
+     document.querySelector('lhs-era-timeline .era-panel h3')?.textContent===
+     'O LCD chega ao bairro.');
+    assert.equal(await buttons.nth(1).getAttribute('aria-pressed'),'true');
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-era-timeline').count(),1);
+    assert.equal(await page.locator('lhs-era-timeline .era-tabs button').first()
+     .getAttribute('aria-pressed'),'true');
+    assert.equal(await page.locator('lhs-era-timeline .era-panel h3').textContent(),
+     'Três PCs e um sonho.');
+   }else{
+    assert.equal(await page.locator('lhs-era-timeline').count(),0);
+   }
    if(pathname==='/ajuda/'){
     assert.equal(await page.locator('lhs-help-search').count(),1);
     const input=page.locator('#help-search');
