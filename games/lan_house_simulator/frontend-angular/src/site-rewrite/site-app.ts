@@ -4,7 +4,7 @@ import {SiteFooterComponent} from './site-footer';
 import {EraTimelineComponent} from './era-timeline';
 import {SiteHeaderComponent} from './site-header';
 import {HelpSearchComponent} from './help-search';
-import {termsSections,privacySections} from './legal-content';
+import {LegalDocumentComponent} from './legal-document';
 import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
@@ -14,13 +14,12 @@ import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
 export class SiteApp implements OnInit,OnDestroy{
  readonly path=pathOf(location.pathname);
- readonly legalSections=this.path==='/termos/'?termsSections:privacySections;
  readonly reduceMotion=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');
  private readonly mediaListener=(event:MediaQueryListEvent):void=>{

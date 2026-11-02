@@ -207,3 +207,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - `SiteApp` permanece dono do `reduceMotion` global e da sincronização com `prefers-reduced-motion`; o rodapé recebe o estado via `input.required<boolean>()` e comunica o clique com `output<void>()`. Sem estado duplicado, listeners manuais, persistência ou acesso ao Canvas.
 - A regra `display:block` permanece em `site.css`, não em estilos inline proibidos pela CSP. Testes Node verificam propriedade única; Chromium desktop/mobile confirma alternância, atualização da classe de movimento, restauração e F5.
 - Apenas a versão institucional Angular isolada é afetada. Sem merge, cutover, deploy ou mudanças financeiras.
+
+### Microetapa — índice e seções legais em componente Angular
+- `LegalDocumentComponent` standalone/OnPush recebe a rota por `input.required<SitePath>()` e seleciona os dados existentes de `legal-content.ts` via `computed`. Ele é dono único do índice e das 21 seções de Termos e Privacidade.
+- `SiteApp` mantém as introduções e os avisos de revisão, mas não importa nem controla mais o documento e o índice. Os links de âncora mantêm os caminhos, IDs e acessibilidade.
+- O host é estilizado por CSS externo, preservando a CSP `style-src 'self'`. Testes estruturais e Chromium verificam paridade, navegação por âncoras, F5 e exclusividade de montagem nas rotas legais.
+- Sem alterar Canvas, dados, pagamentos, conteúdo jurídico ainda em revisão ou deploy.

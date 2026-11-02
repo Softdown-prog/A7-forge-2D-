@@ -77,6 +77,10 @@ try{
     assert.equal(await currentLink.getAttribute('href'),pathname);
    }else assert.equal(await currentLink.count(),0);
    assert.equal(await page.locator('main h1').count(),1);
+   if(pathname==='/termos/'||pathname==='/privacidade/'){
+    assert.equal(await page.locator('lhs-legal-document').count(),1);
+    assert.equal(await page.locator('lhs-legal-document .legal-grid').count(),1);
+   }else assert.equal(await page.locator('lhs-legal-document').count(),0);
    assert.equal(await page.title(),pageMetadata[pathname].title+' · Lan House Simulator');
    assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),
     pageMetadata[pathname].description);
