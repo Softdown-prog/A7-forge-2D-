@@ -34,17 +34,7 @@
   @case('/jogar/'){
    <section class="wrap intro"><p class="eyebrow">ABRA O SALÃO</p><h1>Jogar Lan House Simulator</h1>
     <p class="lead">A partida é carregada apenas quando você solicitar. Salve seu progresso no menu do jogo.</p></section>
-   <section class="wrap game-shell">
-    @if(gameOpen()){
-     <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen></iframe>
-     <p><a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a></p>
-    }@else{
-     <div class="game-start">
-      <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
-      <button class="button" id="launch-game" type="button" (click)="startGame()">Abrir minha lan house</button>
-     </div>
-    }
-   </section>
+   <lhs-game-launcher></lhs-game-launcher>
   }
   @case('/sobre-o-jogo/'){
    <section class="wrap intro"><p class="eyebrow">SOBRE O JOGO</p><h1>Dos primeiros CRTs à sua própria arena.</h1>

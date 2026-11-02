@@ -1,0 +1,11 @@
+<section class="wrap game-shell">
+ @if(open()){
+  <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen></iframe>
+  <p><a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a></p>
+ }@else{
+  <div class="game-start">
+   <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
+   <button class="button" id="launch-game" type="button" (click)="launch()">Abrir minha lan house</button>
+  </div>
+ }
+</section>

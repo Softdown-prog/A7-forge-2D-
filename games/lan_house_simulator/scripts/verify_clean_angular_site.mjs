@@ -99,10 +99,21 @@ try{
     assert.equal(await page.locator('.faq details:visible').count(),0);
    }
    if(pathname==='/jogar/'){
+    assert.equal(await page.locator('lhs-game-launcher').count(),1);
     assert.equal(await page.locator('#game-frame').count(),0);
-    await page.locator('#launch-game').click();
+    if(mobile)await page.locator('#launch-game').tap();
+    else await page.locator('#launch-game').click();
+    assert.equal(await page.locator('#game-frame').count(),1);
     await page.frameLocator('#game-frame').locator('#menu-new')
       .waitFor({state:'visible',timeout:20000});
+    // Reload must restore the passive preview instead of automatically
+    // launching a second Canvas runtime or duplicating the iframe.
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+      document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-game-launcher').count(),1);
+    assert.equal(await page.locator('#game-frame').count(),0);
+    assert.equal(await page.locator('#launch-game').isVisible(),true);
    }
    if(pathname==='/donate/'){
     assert.equal(await page.locator('lhs-donate').count(),1);

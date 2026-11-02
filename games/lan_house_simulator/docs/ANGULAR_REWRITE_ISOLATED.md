@@ -176,3 +176,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Imports e reexports locais precisam permanecer na árvore canônica e apontar para arquivos presentes. Os imports externos permitidos são `@angular/*` e `rxjs`; imports de React, `website/`, `src/site/` e pacotes desconhecidos são rejeitados. Import dinâmico com destino não literal e CommonJS também reprovam. A única exceção explícita é o import via `const` local do validador de save do motor (`/game/js/sim/saveTransfer.js`) em `account.ts`, com caminho exato comprovado por AST; não é código do site institucional legado.
 - A CI isolada executa casos positivos, casos quebrados e falso positivo (texto e comentário contendo uma expressão semelhante a import). Conta, Donate, confirmações e demais componentes participam automaticamente da varredura.
 - O gate **não** substitui AOT, testes Playwright/Android, prova do bundle ou revisão de pagamentos. Não realiza cutover nem deploy, e o motor TypeScript/Canvas não foi alterado.
+
+### Microetapa — abertura do jogo encapsulada no Angular
+- A rota `/jogar/` passa a renderizar `GameLauncherComponent` standalone, OnPush, em `src/site-rewrite/game-launcher.ts` e `game-launcher.html`.
+- O componente é o único dono da prévia, botão e iframe `/game/`. O `SiteApp` deixa de controlar `gameOpen` e `startGame`, sem inserir listeners nativos nem mover o motor TypeScript/Canvas para o Angular.
+- A abertura continua explícita e o jogo não é carregado antes do clique; F5 volta à prévia. Testes estáticos verificam dono único e IDs; Chromium testa clique desktop, toque mobile, carregamento real do menu no iframe e F5 nas larguras 1280/414/360.
+- O site legado e a produção permanecem inalterados; não há manipulação de saves, pagamentos, merge ou deploy nesta etapa.

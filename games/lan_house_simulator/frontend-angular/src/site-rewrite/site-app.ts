@@ -5,11 +5,12 @@ import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
 import {DonateComponent} from './donate';
+import {GameLauncherComponent} from './game-launcher';
 import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
@@ -32,7 +33,6 @@ export class SiteApp implements OnInit,OnDestroy{
    return terms.every(term=>text.includes(term));
   });
  });
- readonly gameOpen=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');
  private readonly mediaListener=(event:MediaQueryListEvent):void=>{
   this.reduceMotion.set(event.matches);
@@ -57,5 +57,4 @@ export class SiteApp implements OnInit,OnDestroy{
  clearQuery(input:HTMLInputElement):void{
   this.query.set('');input.value='';input.focus();
  }
- startGame():void{this.gameOpen.set(true);}
 }
