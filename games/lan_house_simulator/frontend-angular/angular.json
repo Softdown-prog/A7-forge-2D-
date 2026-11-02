@@ -82,7 +82,13 @@
             "browser": "src/site-rewrite/main.ts",
             "polyfills": [],
             "tsConfig": "tsconfig.site-rewrite.json",
-            "assets": [],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "src/site-rewrite/public",
+                "output": "/"
+              }
+            ],
             "styles": [
               "src/site-rewrite/site.css"
             ]
