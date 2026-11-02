@@ -1,0 +1,11 @@
+<section class="wrap timeline" id="evolucao" aria-label="Evolução dos computadores">
+   <p class="eyebrow">UMA HISTÓRIA QUE EVOLUI</p><h2>A tecnologia muda com você.</h2>
+   <div class="era-tabs">
+    @for(item of eras;track item.year;let i=$index){
+     <button type="button" [attr.aria-pressed]="era()===i" [class.active]="era()===i"
+      (click)="selectEra(i)">{{item.year}}</button>
+    }
+   </div>
+   <div class="era-panel"><img [src]="selectedEra().image" [alt]="'Computador '+selectedEra().year" width="480" height="300"/>
+    <div><p class="eyebrow">{{selectedEra().year}}</p><h3>{{selectedEra().title}}</h3><p>{{selectedEra().text}}</p></div></div>
+  </section>

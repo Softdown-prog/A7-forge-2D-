@@ -188,3 +188,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - `faq` e `normalizeSearch` permanecem no catálogo Angular existente. A busca ignora caixa/acentos e não consulta rede ou JS legado; Limpar restaura sete respostas e o foco.
 - Testes estruturais mais Chromium validam busca com acentos, ausência de resultados, toque e clique, foco e F5 em desktop e mobile.
 - Só afeta a versão Angular isolada; nenhum deploy, cutover, alteração Canvas ou pagamento.
+
+### Microetapa — timeline de computadores Angular com estado isolado
+- `/ ` e `/sobre-o-jogo/` continuam a exibir os quatro marcos (1998, 2005, 2012 e 2024). A apresentação agora é controlada exclusivamente por `EraTimelineComponent` standalone em `era-timeline.ts` e `era-timeline.html` com OnPush + Signals.
+- `SiteApp` deixa de possuir `era`, `selectedEra` e `selectEra`. O catálogo permanece em `site-data.ts`; o simulador Canvas, as datas e regras da economia não são alterados.
+- Testes de arquitetura e Chromium desktop/mobile validam a troca de 2024 e 2005, os botões `aria-pressed`, imagens e o retorno à seleção inicial após F5, além da ausência nas demais rotas.
+- Mudança isolada em branch, sem deploy ou cutover.
