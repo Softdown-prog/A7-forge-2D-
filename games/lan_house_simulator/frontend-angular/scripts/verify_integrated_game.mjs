@@ -166,6 +166,8 @@ try{
   // The Angular search must filter the VISIBLE Angular projection,
   // not just the hidden native command catalog.
   await press(page.locator('[data-shop-category="equipment"]'));
+  await page.waitForFunction(()=>
+   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='true');
   const visibleCards=page.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card');
   await page.waitForFunction(()=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length>0);
@@ -181,6 +183,9 @@ try{
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===expected,originalCount);
   assert.equal(await visibleCards.count(),originalCount,'Clearing search restores all Angular cards');
   await press(page.locator('[data-shop-category="consoles"]'));
+  await page.waitForFunction(()=>
+   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor({state:'visible'});
   const ps1=shop.locator(':scope > article.shop-card').first();
@@ -998,6 +1003,9 @@ try{
   await press(page.locator('#menu-continue'));
   await press(page.locator('#open-shop'));
   await press(page.locator('[data-shop-category="consoles"]'));
+  await page.waitForFunction(()=>
+   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor();
   const ps1=shop.locator(':scope > article.shop-card').first().locator('button');

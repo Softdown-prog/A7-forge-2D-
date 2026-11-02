@@ -1,6 +1,8 @@
 import {
-  ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, signal
+  ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, computed, inject, signal
 } from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
+import {fromEvent} from 'rxjs';
 import { normalizeCatalogSearch, catalogSearchText } from './catalog-search';
 import { navigateToArea } from './navigation';
 
@@ -52,19 +54,21 @@ const SHOP_CATEGORIES = [
   templateUrl:'./templates/shop-categories.html',
   changeDetection:ChangeDetectionStrategy.OnPush
 })
-export class ShopCategoriesComponent implements OnInit,OnDestroy {
+export class ShopCategoriesComponent {
   readonly categories=SHOP_CATEGORIES;
   readonly current=signal('equipment');
-  private nav:HTMLElement|null=null;
-  private readonly selected=(event:Event):void=>{
-    const value=(event as CustomEvent<string>).detail;
-    if(SHOP_CATEGORIES.some(x=>x.id===value))this.current.set(value);
-  };
-  ngOnInit():void {
-    this.nav=document.getElementById('react-shop-categories');
-    this.nav?.addEventListener('lhs:shop-category-selected',this.selected);
+  private readonly host=inject<ElementRef<HTMLElement>>(ElementRef);
+  constructor(){
+    // Native TypeScript remains command owner; only its confirmed selection updates Angular.
+    // RxJS cleans up this listener when the Angular host is destroyed.
+    fromEvent<CustomEvent<string>>(this.host.nativeElement,'lhs:shop-category-selected')
+      .pipe(takeUntilDestroyed())
+      .subscribe(event=>{
+        const id=event.detail;
+        if(typeof id==='string'&&SHOP_CATEGORIES.some(category=>category.id===id))
+          this.current.set(id);
+      });
   }
-  ngOnDestroy():void { this.nav?.removeEventListener('lhs:shop-category-selected',this.selected); }
 }
 
 type QuickAction={id:string;label:string;detail:string;area?:string;page?:string;shop?:boolean;icon:string};
