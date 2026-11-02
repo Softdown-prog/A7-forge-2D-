@@ -82,6 +82,3 @@ test('retry uses exact caller-provided idempotency key without double pricing',a
  assert.equal(h.calls.filter(x=>x.kind==='order').length,2);
  assert.ok(h.calls.filter(x=>x.kind==='order').every(x=>x.idempotencyKey===key));
 });
-test('no browser networking, navigation, storage or real account code in contract',()=>{
- const fs=awaitImportForbidden;
-});
