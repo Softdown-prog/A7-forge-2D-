@@ -140,3 +140,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - A política `_headers` usa regras exatas para cada arquivo JavaScript/CSS com hash com `max-age=31536000, immutable`. HTML, `account-config.json`, `online-config.json` e `/game/*` não compartilham esse cache longo.
 - Verificações estáticas garantem nomes com hash, manifesto, referências no HTML, ausência de JS/CSS antigos e cache por arquivo. Os testes de pré-renderização e Chromium validam que o site inicializa e recarrega após o hash.
 - Nenhuma mudança no site publicado, em pagamentos, nos nomes do bundle do jogo ou na `main`. A política de produção Cloudflare Pages ainda precisa ser validada ao fazer o cutover.
+
+
+### Microetapa — transporte autenticado de pedidos SOMENTE sandbox (sem interface)
+- Um adapter TypeScript independente `checkout-sandbox-adapter.ts` é conectado a `simulateSandboxCheckout` apenas por testes de contrato. **Donate não importa nem chama esse adapter**; botões reais continuam bloqueados.
+- `SiteAccountClient.postSandboxOrder` valida pacote, aceite e UUID, exige sessão e consulta `GET /v1/config` em modo sandbox, revalida o email por Firebase e envia somente `{packageId,acceptedTerms:true}` com headers `Idempotency-Key`, `Authorization` e `X-LHS-Sandbox-Only: true`. Falhas 401 reutilizam a mesma chave de idempotência.
+- O backend reconhece `X-LHS-Sandbox-Only: true` e **rejeita** criação em `PAYMENTS_MODE=production`, mesmo se o ambiente mudar depois da checagem do navegador. Requisições antigas sem o header continuam com o fluxo existente, que permanece fora desta nova interface Angular.
+- Testes Node com transporte sintético verificam corpo, token, header, pacote, idempotência, modo produção, email não confirmado, sessão ausente e erros. Nenhuma solicitação real ao Firebase, Mercado Pago ou backend é feita pelos testes.
+- Não ocorre checkout, crédito de Cookies, deploy, merge ou habilitação do pagamento de produção. Integrar o botão a esse transporte requer uma etapa posterior e novos testes Chromium específicos.

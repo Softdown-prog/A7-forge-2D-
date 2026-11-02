@@ -7,8 +7,16 @@ test('the checkout contract is test-only and production Donate remains disabled'
  const donate=read('../frontend-angular/src/site-rewrite/donate.ts');
  const markup=read('../frontend-angular/src/site-rewrite/donate.html');
  const account=read('../frontend-angular/src/site-rewrite/account-client.ts');
+ const adapter=read('../frontend-angular/src/site-rewrite/checkout-sandbox-adapter.ts');
+ const backend=read('../backend/server.mjs');
  assert.doesNotMatch(source,/\bfetch\s*\(|window\.location|document\.location|location\.assign|localStorage|sessionStorage/);
  assert.match(donate,/validateSandboxQuote/);
+ assert.doesNotMatch(donate+markup,/checkout-sandbox-adapter|postSandboxOrder/);
+ assert.match(account,/async postSandboxOrder\(/);
+ assert.match(account,/'X-LHS-Sandbox-Only':'true'/);
+ assert.match(backend,/req\.headers\['x-lhs-sandbox-only'\]==='true'&&!sandbox/);
+ assert.match(backend,/Idempotency-Key, X-LHS-Sandbox-Only/);
+ assert.doesNotMatch(adapter,/location\.assign|window\.open/);
  assert.doesNotMatch(donate+markup+account,/simulateSandboxCheckout|createOrder\(|\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
  assert.match(donate,/this\.reviewState\.set\('confirmed'\)/);
  assert.match(donate,/this\.availability\(\)!=='sandbox-ready'/);
