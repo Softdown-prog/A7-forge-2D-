@@ -103,6 +103,7 @@ try{
     assert.equal(await page.locator('#game-frame').count(),0);
     if(mobile)await page.locator('#launch-game').tap();
     else await page.locator('#launch-game').click();
+    await page.locator('#game-frame').waitFor({state:'attached',timeout:10000});
     assert.equal(await page.locator('#game-frame').count(),1);
     await page.frameLocator('#game-frame').locator('#menu-new')
       .waitFor({state:'visible',timeout:20000});
