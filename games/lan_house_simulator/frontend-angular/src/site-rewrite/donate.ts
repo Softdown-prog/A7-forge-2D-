@@ -32,7 +32,7 @@ export class DonateComponent implements OnInit,OnDestroy{
  private destroyed=false;
  ngOnInit():void{void this.refresh();}
  ngOnDestroy():void{this.destroyed=true;this.abort.abort();}
- /** Reviews a sandbox-only server quote; NEVER calls POST /v1/orders or opens checkout. */
+ /** Reviews a sandbox-only server quote; never creates payment orders or opens checkout. */
  async reviewPackage(rawPackageId:string):Promise<void>{
   if(this.destroyed||this.availability()!=='sandbox-ready'||this.reviewState()==='loading')return;
   this.reviewQuote.set(null);this.termsAccepted.set(false);
