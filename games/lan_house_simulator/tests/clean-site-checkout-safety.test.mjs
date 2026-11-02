@@ -8,7 +8,12 @@ test('the checkout contract is test-only and production Donate remains disabled'
  const markup=read('../frontend-angular/src/site-rewrite/donate.html');
  const account=read('../frontend-angular/src/site-rewrite/account-client.ts');
  assert.doesNotMatch(source,/\bfetch\s*\(|window\.location|document\.location|location\.assign|localStorage|sessionStorage/);
- assert.doesNotMatch(donate+markup+account,/checkout-contract|simulateSandboxCheckout/);
+ assert.match(donate,/validateSandboxQuote/);
+ assert.doesNotMatch(donate+markup+account,/simulateSandboxCheckout|createOrder\\(|\\/v1\\/orders['"]\\s*,\\s*\\{|location\\.assign|window\\.open/);
+ assert.match(donate,/this\\.reviewState\\.set\\('confirmed'\\)/);
+ assert.match(donate,/this\\.availability\\(\\)!=='sandbox-ready'/);
+ assert.match(markup,/data-review-package/);
+ assert.match(markup,/id="confirm-sandbox-review"/);
  assert.match(markup,/<button[^>]*\[attr\.data-donate-package\]="pack.id"[^>]*disabled/);
  assert.match(markup,/aria-disabled="true"/);
  assert.doesNotMatch(account,/path==='\/v1\/orders'&&body!==undefined/);

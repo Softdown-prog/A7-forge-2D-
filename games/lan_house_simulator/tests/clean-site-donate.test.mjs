@@ -8,7 +8,13 @@ test('Donate is Angular-only and cannot create orders or checkout',()=>{
  const s=read('../frontend-angular/src/site-rewrite/site-app.ts');
  const host=read('../frontend-angular/src/site-rewrite/site-app.html');
  const qa=read('../scripts/verify_clean_angular_site.mjs');
- assert.match(c,/DONATE_PACKAGES=Object\.freeze/);
+ assert.match(c,/DONATE_PACKAGES=Object\\.freeze/);
+ assert.match(c,/validateSandboxQuote/);
+ assert.match(c,/client\\.restore\\(\\)/);
+ assert.match(c,/!profile\\.emailVerified/);
+ assert.match(h,/id="sandbox-review-quote"/);
+ assert.match(h,/id="confirm-sandbox-review"/);
+ assert.match(c,/this\\.reviewState\\.set\\('confirmed'\\)/);
  assert.match(c,/paymentsEnabled/);
  assert.match(c,/paymentsMode.*production/);
  assert.match(c,/\'\/v1\/config\'/);

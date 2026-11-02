@@ -44,6 +44,7 @@ jobs:
           node scripts/verify_clean_angular_account.mjs
           node scripts/verify_clean_angular_site.mjs
           node scripts/verify_clean_angular_donate_history.mjs
+          node scripts/verify_clean_angular_sandbox_review.mjs
       - name: Save browser evidence — research only
         if: always()
         uses: actions/upload-artifact@v4

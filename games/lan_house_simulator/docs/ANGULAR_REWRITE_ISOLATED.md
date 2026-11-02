@@ -117,3 +117,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - A rota `/donate/` mantém os dois botões desabilitados. A integração autenticada real `POST /v1/orders` **não** está ligada e exigirá revisão separada; o histórico privado em Minha conta continua só de leitura.
 - Esta etapa não muda a `main`, não faz deploy e não autoriza cobrança de usuário.
 - A CI também executa um `tsc --noEmit` dedicado ao contrato, com `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noUnusedLocals` e verificações rigorosas antes dos testes Node.
+
+
+### Microetapa — revisão de apoio no Angular, liberada somente em sandbox
+- O Angular passa a reconhecer `paymentsMode=sandbox` com `paymentsEnabled=true` e mostra exclusivamente nesse modo o botão **Revisar apoio de teste**, preservando os botões de pagamento real desabilitados.
+- Após um clique, a página exige sessão Firebase restaurada e email confirmado antes de consultar o catálogo `GET /v1/config`. A prévia utiliza `validateSandboxQuote` e mostra preço/Cookies autorizados pelo servidor, não valores de formulários ou parâmetros de URL.
+- A etapa pede aceite explícito dos termos, mas **Finalizar simulação** apenas altera o estado visual. Não executa `POST /v1/orders`, não abre checkout, não credita Cookies e não faz pagamentos.
+- Sem sessão ou com email não verificado, encaminha o jogador a Minha conta. Mudanças de ambiente, respostas inválidas e erros falham sem pagamento. Fechar a revisão limpa valores e aceite.
+- O teste Chromium isolado usa login/refresh/lookup e catálogo sintéticos nas larguras 1280/414/360, exige zero requisições de pedido e não libera produção. O contrato completo de criação de pedido continua coberto apenas por unit tests com mock e sem conexão real.

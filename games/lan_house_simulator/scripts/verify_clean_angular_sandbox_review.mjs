@@ -1,0 +1,120 @@
+/** Playwright verification: guarded sandbox review, no POST orders or checkout links. */
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,stat,mkdir,writeFile} from 'node:fs/promises';
+import {resolve,extname,sep} from 'node:path';
+import {chromium} from 'playwright';
+
+const root=resolve(import.meta.dirname,'../out/site-clean-angular');
+const evidence=resolve(import.meta.dirname,'../out/site-clean-angular-browser');
+const config=JSON.parse(await readFile(resolve(root,'account-config.json'),'utf8'));
+const apiOrigin=new URL(config.apiUrl).origin;
+const types={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
+ '.css':'text/css; charset=utf-8','.json':'application/json','.svg':'image/svg+xml',
+ '.webp':'image/webp'};
+const server=createServer(async(req,res)=>{
+ try{
+  const path=decodeURIComponent(new URL(req.url??'/','http://127.0.0.1').pathname);
+  if(path==='/favicon.ico'){res.writeHead(204).end();return;}
+  const file=resolve(root,'.'+path,path.endsWith('/')?'index.html':'');
+  if(!file.startsWith(root+sep)||!(await stat(file)).isFile())throw Error('Missing');
+  res.writeHead(200,{'Content-Type':types[extname(file)]??'application/octet-stream'});
+  res.end(await readFile(file));
+ }catch{res.writeHead(404).end('Not found');}
+});
+await mkdir(evidence,{recursive:true});
+await new Promise((ok,no)=>{server.once('error',no);server.listen(0,'127.0.0.1',ok);});
+const origin='http://127.0.0.1:'+server.address().port;
+const results=[];
+let browser;
+try{
+ browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ for(const width of [1280,414,360]){
+  const mobile=width<700;
+  const context=await browser.newContext({viewport:{width,height:850},
+   isMobile:mobile,hasTouch:mobile,serviceWorkers:'block'});
+  const page=await context.newPage();
+  const errors=[],unsafe=[];
+  let mode='production',verified=false,validQuote=true,quoteCalls=0;
+  page.on('pageerror',err=>errors.push(err.message));
+  await context.route('**/*',async route=>{
+   const request=route.request(),url=new URL(request.url());
+   if(url.origin===origin){await route.continue();return;}
+   const json=async content=>route.fulfill({contentType:'application/json',
+    body:JSON.stringify(content)});
+   if(url.origin===apiOrigin&&url.pathname==='/v1/config'&&request.method()==='GET'){
+    quoteCalls++;
+    await json({paymentsEnabled:true,paymentsMode:mode,packages:{
+     'donate-5':{priceCents:validQuote?500:-500,cookies:50},
+     'donate-10':{priceCents:1000,cookies:100}
+    }});return;
+   }
+   if(url.origin==='https://securetoken.googleapis.com'&&url.pathname==='/v1/token'&&
+    request.method()==='POST'){
+    await json({id_token:'sandbox-synthetic-id',refresh_token:'sandbox-synthetic-refresh'});return;
+   }
+   if(url.origin==='https://identitytoolkit.googleapis.com'&&
+    url.pathname==='/v1/accounts:lookup'&&request.method()==='POST'){
+    await json({users:[{email:'synthetic@example.invalid',emailVerified:verified}]});return;
+   }
+   unsafe.push(request.method()+' '+url.href);await route.abort();
+  });
+  await page.goto(origin+'/donate/',{waitUntil:'networkidle'});
+  await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+  assert.equal(await page.locator('[data-review-package]').count(),0,
+   'Real payment environment cannot expose sandbox reviewer');
+  assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+  mode='sandbox';
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('[data-review-package]').first().waitFor({state:'visible'});
+  assert.equal(await page.locator('[data-review-package]').count(),2);
+  const select=page.locator('[data-review-package="donate-5"]');
+  const choose=async()=>mobile?select.tap():select.click();
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Entre na sua conta'));
+  assert.equal(await page.locator('#sandbox-review-quote').count(),0);
+  await page.evaluate(cfg=>sessionStorage.setItem('lhs.account.session.v1',
+   JSON.stringify({apiUrl:new URL(cfg.apiUrl).origin,
+    firebaseApiKey:cfg.firebaseApiKey,idToken:'sandbox-synthetic-id',
+    refreshToken:'sandbox-synthetic-refresh',email:'synthetic@example.invalid',
+    createdAt:Date.now()})),config);
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confirme seu email'));
+  assert.equal(await page.locator('#sandbox-review-quote').count(),0);
+  verified=true;
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  const label=await page.locator('#sandbox-review-quote').innerText();
+  assert.ok(label.includes('R$ 5,00')&&label.includes('50 Cookies'));
+  assert.equal(await page.locator('#confirm-sandbox-review:disabled').count(),1);
+  await page.locator('#sandbox-terms').check();
+  await page.locator('#confirm-sandbox-review').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Nenhum pedido, pagamento ou Cookie foi criado'));
+  assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+  await page.locator('#cancel-sandbox-review').click();
+  assert.equal(await page.locator('#sandbox-review-quote').count(),0);
+  validQuote=false;
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Não foi possível preparar'));
+  assert.equal(await page.locator('#sandbox-review-quote').count(),0);
+  assert.deepEqual(unsafe,[],'No real APIs, checkout or order POST');
+  assert.deepEqual(errors,[],'No browser errors');
+  assert.ok(quoteCalls>=4);
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
+  results.push({width,verifiedGate:true,explicitConsent:true,
+   malformedQuoteRejected:true,orderWrites:0,realCheckout:false});
+  await page.screenshot({path:resolve(evidence,'checkout-review-'+width+'.png'),fullPage:true});
+  await context.close();
+ }
+ await writeFile(resolve(evidence,'checkout-review-results.json'),
+  JSON.stringify(results,null,2)+'\n');
+ console.log('Sandbox-only Donate review Chromium QA:',JSON.stringify(results));
+}finally{
+ await browser?.close();
+ await new Promise(ok=>server.close(ok));
+}
