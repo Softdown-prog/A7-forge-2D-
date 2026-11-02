@@ -45,5 +45,5 @@ test('fails closed for unhashed JS/CSS copied beside fingerprinted bundles',()=>
  });
 });
 test('fails closed when Angular lacks an expected generated bundle',()=>{
- fixture(folder=>assert.throws(()=>resolveAngularSiteAssets(html,folder)),[main,styles]);
+ fixture(folder=>assert.throws(()=>resolveAngularSiteAssets(html,folder)),[styles,chunk]);
 });
