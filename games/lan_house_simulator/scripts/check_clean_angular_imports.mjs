@@ -6,7 +6,9 @@ import {fileURLToPath} from 'node:url';
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const site=resolve(root,'frontend-angular/src/site-rewrite');
-const ts=createRequire(resolve(root,'frontend-angular/package.json'))('typescript');
+// The game compiles with TypeScript 7, whose native package is not the TS AST API.
+// Use the explicitly pinned TS6 compatibility compiler installed by the root npm ci.
+const ts=createRequire(resolve(root,'package.json'))('@typescript/typescript6');
 const inside=value=>value===site||value.startsWith(site+sep);
 const allowed=value=>value.startsWith('@angular/')||value==='rxjs'||value.startsWith('rxjs/');
 
