@@ -64,6 +64,25 @@ test('Angular shop category follows its host event, not global DOM listeners',()
   assert.match(html,/\[attr\.aria-pressed\]="current\(\) === category\.id"/);
 });
 
+test('Angular shop search subscriptions follow DestroyRef without leaking native events',()=>{
+  const source=file(root+'src/components.ts');
+  const native=file('src/ui/shopPanels.ts');
+  const ui=file(root+'src/templates/shop-search.html');
+  const block=source.split('export class ShopSearchComponent implements OnInit {')[1]
+    ?.split('\n}\n')[0];
+  assert.ok(block,'Shop search must remain a standalone Angular component');
+  assert.match(source,/DestroyRef, ElementRef/);
+  assert.match(block,/private readonly destroyRef=inject\(DestroyRef\)/);
+  for(const event of ['lhs:shop-catalog-updated','lhs:shop-category-selected','lhs:shop-cards-updated'])
+    assert.ok(block.includes('fromEvent<Event>(')&&block.includes("'"+event+"'"),event);
+  assert.equal((block.match(/takeUntilDestroyed\(this\.destroyRef\)/g)||[]).length,3);
+  assert.doesNotMatch(block,/addEventListener\(|removeEventListener\(|ngOnDestroy\(/);
+  assert.match(native,/nav\.dispatchEvent\(new CustomEvent<string>\('lhs:shop-category-selected'/);
+  assert.match(block,/categorySelected=\(\):void=>\{/);
+  assert.match(ui,/\[value\]="query\(\)"/);
+  assert.match(ui,/\(input\)="onSearch\(\$event\)"/);
+});
+
 test('Angular preview cannot accidentally replace the current React runtime',()=>{
   assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
   assert.match(file('scripts/build.mjs'),/src\/react\/entry\.jsx/);

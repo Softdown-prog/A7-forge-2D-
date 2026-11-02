@@ -182,7 +182,12 @@ try{
   await page.waitForFunction(expected=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===expected,originalCount);
   assert.equal(await visibleCards.count(),originalCount,'Clearing search restores all Angular cards');
+  // Switching category must reset a live query via the native shop selection event.
+  await page.locator('#react-shop-query').fill('zzz-qa-redefinir-categoria-999');
   await press(page.locator('[data-shop-category="consoles"]'));
+  await page.waitForFunction(()=>
+   (document.querySelector('#react-shop-query')?.value??'NOT_READY')==='');
+  assert.equal(await page.locator('#react-shop-query').inputValue(),'');
   await page.waitForFunction(()=>
    document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
    document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');

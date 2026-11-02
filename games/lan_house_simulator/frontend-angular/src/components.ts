@@ -1,5 +1,5 @@
 import {
-  ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, computed, inject, signal
+  ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnDestroy, OnInit, computed, inject, signal
 } from '@angular/core';
 import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {fromEvent} from 'rxjs';
@@ -119,11 +119,12 @@ export class AdminShortcutsComponent {
   templateUrl:'./templates/shop-search.html',
   changeDetection:ChangeDetectionStrategy.OnPush
 })
-export class ShopSearchComponent implements OnInit,OnDestroy {
+export class ShopSearchComponent implements OnInit {
   readonly query=signal('');
   readonly counts=signal({visible:0,total:0});
   private host:HTMLElement|null=null;
   private nav:HTMLElement|null=null;
+  private readonly destroyRef=inject(DestroyRef);
   // The native catalog rebuilds its cards on every refresh. Index once per
   // catalog-update event; input events must not re-read every text node.
   private nativeIndex:readonly {card:HTMLElement;text:string}[]=[];
@@ -153,16 +154,15 @@ export class ShopSearchComponent implements OnInit,OnDestroy {
   ngOnInit():void {
     this.host=document.getElementById('shop-catalog');
     this.nav=document.getElementById('react-shop-categories');
-    this.host?.addEventListener('lhs:shop-catalog-updated',this.updated);
-    this.nav?.addEventListener('lhs:shop-category-selected',this.categorySelected);
-    document.addEventListener('lhs:shop-cards-updated',this.receivedCards);
+    // Subscribe only while this Angular view exists; native ports remain authoritative.
+    if(this.host)fromEvent<Event>(this.host,'lhs:shop-catalog-updated')
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(this.updated);
+    if(this.nav)fromEvent<Event>(this.nav,'lhs:shop-category-selected')
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(this.categorySelected);
+    fromEvent<Event>(document,'lhs:shop-cards-updated')
+      .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(this.receivedCards);
     this.indexNativeCards();
     this.apply();
-  }
-  ngOnDestroy():void {
-    this.host?.removeEventListener('lhs:shop-catalog-updated',this.updated);
-    this.nav?.removeEventListener('lhs:shop-category-selected',this.categorySelected);
-    document.removeEventListener('lhs:shop-cards-updated',this.receivedCards);
   }
   onSearch(event:Event):void {
     if(!(event.target instanceof HTMLInputElement))return;
