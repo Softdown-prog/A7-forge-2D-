@@ -11,13 +11,18 @@ test('the checkout contract is test-only and production Donate remains disabled'
  const backend=read('../backend/server.mjs');
  assert.doesNotMatch(source,/\bfetch\s*\(|window\.location|document\.location|location\.assign|localStorage|sessionStorage/);
  assert.match(donate,/validateSandboxQuote/);
- assert.doesNotMatch(donate+markup,/checkout-sandbox-adapter|postSandboxOrder/);
+ assert.match(donate,/createAuthenticatedSandboxAdapter/);
+ assert.match(donate,/simulateSandboxCheckout/);
+ assert.match(donate,/this\.availability\(\)!=='sandbox-ready'/);
+ assert.doesNotMatch(donate,/location\.assign|window\.open|checkoutUrl/);
+ assert.match(markup,/id="prepare-sandbox-order"/);
+ assert.match(markup,/id="retry-sandbox-order"/);
  assert.match(account,/async postSandboxOrder\(/);
  assert.match(account,/'X-LHS-Sandbox-Only':'true'/);
  assert.match(backend,/req\.headers\['x-lhs-sandbox-only'\]==='true'&&!sandbox/);
  assert.match(backend,/Idempotency-Key, X-LHS-Sandbox-Only/);
  assert.doesNotMatch(adapter,/location\.assign|window\.open/);
- assert.doesNotMatch(donate+markup,/simulateSandboxCheckout|createOrder\(|\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
+ assert.doesNotMatch(donate+markup,/\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
  // The specialized account transport may POST; the generic api() allowlist stays read-only.
  assert.match(account,/if\(!\(path==='\/v1\/orders'&&body===undefined\)/);
  assert.match(donate,/this\.reviewState\.set\('confirmed'\)/);

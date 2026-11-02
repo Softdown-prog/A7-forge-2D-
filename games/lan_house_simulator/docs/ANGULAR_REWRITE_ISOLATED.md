@@ -148,3 +148,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - O backend reconhece `X-LHS-Sandbox-Only: true` e **rejeita** criação em `PAYMENTS_MODE=production`, mesmo se o ambiente mudar depois da checagem do navegador. Requisições antigas sem o header continuam com o fluxo existente, que permanece fora desta nova interface Angular.
 - Testes Node com transporte sintético verificam corpo, token, header, pacote, idempotência, modo produção, email não confirmado, sessão ausente e erros. Nenhuma solicitação real ao Firebase, Mercado Pago ou backend é feita pelos testes.
 - Não ocorre checkout, crédito de Cookies, deploy, merge ou habilitação do pagamento de produção. Integrar o botão a esse transporte requer uma etapa posterior e novos testes Chromium específicos.
+
+
+### Microetapa — preparo de pedido sandbox explícito na interface Angular
+- `/donate/` só exibe **Preparar pedido sandbox** após `paymentsMode=sandbox`, sessão restaurada, email verificado e aceite explícito dos termos. O botão de pagamentos reais continua desabilitado e a simulação local anterior permanece separada.
+- O cliente executa `simulateSandboxCheckout` com `createAuthenticatedSandboxAdapter`: valida o catálogo novamente, compara preço e Cookies com a revisão antes de enviar e mantém a mesma chave UUID por pacote em tentativas após incerteza de rede. Uma resposta 410 invalida a chave para a próxima tentativa.
+- Após um pedido sandbox válido, a interface exibe apenas a referência reduzida do pedido (12 caracteres), nunca redireciona ao provedor, nunca usa dados de retorno de URL para dar crédito e não declara pagamento aprovado.
+- A UI não importa código legado, o backend bloqueia o cabeçalho sandbox em modo produção e o Chromium intercepta TODOS os pedidos para testar erro 503, repetição com mesma chave, sucesso e mudança do backend para produção antes do POST. **Nenhuma requisição real de pagamento é feita nos testes.**
+- Publicação, fusão na `main`, checkout de produção e recebimento de dinheiro seguem fora do escopo.

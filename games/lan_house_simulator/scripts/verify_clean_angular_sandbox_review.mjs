@@ -36,6 +36,8 @@ try{
   const page=await context.newPage();
   const errors=[],unsafe=[];
   let mode='production',verified=false,validQuote=true,quoteCalls=0;
+  let orderStatus=200;
+  const orderWrites=[];
   page.on('pageerror',err=>errors.push(err.message));
   await context.route('**/*',async route=>{
    const request=route.request(),url=new URL(request.url());
@@ -48,6 +50,16 @@ try{
      'donate-5':{priceCents:validQuote?500:-500,cookies:50},
      'donate-10':{priceCents:1000,cookies:100}
     }});return;
+   }
+   if(url.origin===apiOrigin&&url.pathname==='/v1/orders'&&request.method()==='POST'){
+    const headers=request.headers(),body=request.postDataJSON();
+    orderWrites.push({headers,body});
+    await route.fulfill({status:orderStatus,contentType:'application/json',
+     body:JSON.stringify(orderStatus===200?{
+      id:'b'.repeat(64),
+      url:'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic'
+     }:{error:'Synthetic network failure'})});
+    return;
    }
    if(url.origin==='https://securetoken.googleapis.com'&&url.pathname==='/v1/token'&&
     request.method()==='POST'){
@@ -103,12 +115,51 @@ try{
   await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
    ?.textContent?.includes('Não foi possível preparar'));
   assert.equal(await page.locator('#sandbox-review-quote').count(),0);
-  assert.deepEqual(unsafe,[],'No real APIs, checkout or order POST');
+  // Explicit sandbox-order stage; mock API only, never Mercado Pago or real account.
+  validQuote=true;
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  assert.equal(await page.locator('#prepare-sandbox-order:disabled').count(),1);
+  await page.locator('#sandbox-terms').check();
+  orderStatus=503;
+  await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Não foi possível preparar o pedido sandbox'));
+  assert.equal(orderWrites.length,1);
+  assert.equal(orderWrites[0].headers['x-lhs-sandbox-only'],'true');
+  assert.deepEqual(orderWrites[0].body,{packageId:'donate-5',acceptedTerms:true});
+  assert.ok(/^[0-9a-f-]{36}$/.test(orderWrites[0].headers['idempotency-key']));
+  assert.equal(await page.locator('#sandbox-order-id').count(),0);
+  orderStatus=200;
+  await page.locator('#retry-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Pedido sandbox preparado'));
+  assert.equal(orderWrites.length,2);
+  assert.equal(orderWrites[0].headers['idempotency-key'],orderWrites[1].headers['idempotency-key']);
+  assert.equal(orderWrites[1].headers['authorization'],'Bearer sandbox-synthetic-id');
+  assert.ok((await page.locator('#sandbox-order-id').innerText()).includes('bbbbbbbbbbbb'));
+  assert.equal(await page.locator('a[href*="mercadopago"]').count(),0);
+  assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+  await page.locator('#cancel-sandbox-review').click();
+  await page.locator('#sandbox-order-id').waitFor({state:'detached'});
+  // Production mode revocation between review and POST must stop the POST.
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  await page.locator('#sandbox-terms').check();
+  mode='production';
+  await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Não foi possível preparar o pedido sandbox'));
+  assert.equal(orderWrites.length,2,'Mode change must not issue sandbox POST');
+  assert.deepEqual(unsafe,[],'No real APIs or checkout navigation');
   assert.deepEqual(errors,[],'No browser errors');
   assert.ok(quoteCalls>=4);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
   results.push({width,verifiedGate:true,explicitConsent:true,
-   malformedQuoteRejected:true,orderWrites:0,realCheckout:false});
+   malformedQuoteRejected:true,sandboxOrdersMocked:orderWrites.length,
+   keyReused:true,productionRevocationBlocked:true,realCheckout:false});
   await page.screenshot({path:resolve(evidence,'checkout-review-'+width+'.png'),fullPage:true});
   await context.close();
  }

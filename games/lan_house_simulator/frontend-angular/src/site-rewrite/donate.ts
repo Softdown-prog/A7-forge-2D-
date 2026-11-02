@@ -1,10 +1,11 @@
 import {ChangeDetectionStrategy,Component,OnInit,OnDestroy,signal} from '@angular/core';
 import {AccountError,SiteAccountClient,validateAccountConfig} from './account-client';
-import {approvedPackageId,validateSandboxQuote} from './checkout-contract';
-import type {ApprovedQuote} from './checkout-contract';
+import {approvedPackageId,simulateSandboxCheckout,validateSandboxQuote} from './checkout-contract';
+import {createAuthenticatedSandboxAdapter} from './checkout-sandbox-adapter';
+import type {ApprovedQuote,DonationPackageId} from './checkout-contract';
 export const DONATE_PACKAGES=Object.freeze([{id:'donate-5',priceCents:500,cookies:50},{id:'donate-10',priceCents:1000,cookies:100}] as const);
 type Availability='loading'|'unavailable'|'backend-active'|'sandbox-ready'|'error';
-type ReviewState='idle'|'loading'|'login-required'|'verify-required'|'ready'|'confirmed'|'error';
+type ReviewState='idle'|'loading'|'login-required'|'verify-required'|'ready'|'preparing'|'prepared'|'prepare-error'|'confirmed'|'error';
 /** Read-only capability discovery. This preview must never issue checkout orders. */
 export async function paymentAvailability(raw:unknown,request:typeof fetch=(input,init)=>fetch(input,init),signal?:AbortSignal):Promise<Availability>{
  const config=validateAccountConfig(raw);
@@ -28,13 +29,21 @@ export class DonateComponent implements OnInit,OnDestroy{
  readonly reviewState=signal<ReviewState>('idle');
  readonly reviewQuote=signal<ApprovedQuote|null>(null);
  readonly termsAccepted=signal(false);
+ readonly sandboxOrderId=signal<string|null>(null);
+ private reviewClient:SiteAccountClient|null=null;
+ private reviewVersion=0;
+ /** Reuse a key after uncertain network failures; never double-submit with fresh UUID. */
+ private readonly orderKeys=new Map<DonationPackageId,string>();
  private abort=new AbortController();
  private destroyed=false;
  ngOnInit():void{void this.refresh();}
- ngOnDestroy():void{this.destroyed=true;this.abort.abort();}
+ ngOnDestroy():void{this.destroyed=true;this.reviewVersion++;this.reviewClient=null;this.abort.abort();}
  /** Reviews a sandbox-only server quote; never creates payment orders or opens checkout. */
  async reviewPackage(rawPackageId:string):Promise<void>{
   if(this.destroyed||this.availability()!=='sandbox-ready'||this.reviewState()==='loading')return;
+  const version=++this.reviewVersion;
+  this.reviewClient=null;
+  this.sandboxOrderId.set(null);
   this.reviewQuote.set(null);this.termsAccepted.set(false);
   this.reviewState.set('loading');
   try{
@@ -49,7 +58,7 @@ export class DonateComponent implements OnInit,OnDestroy{
    const client=new SiteAccountClient(config);
    if(!client.hasSession){if(!this.destroyed)this.reviewState.set('login-required');return;}
    const profile=await client.restore();
-   if(this.destroyed||this.abort.signal.aborted)return;
+   if(this.destroyed||this.abort.signal.aborted||version!==this.reviewVersion)return;
    if(!profile){this.reviewState.set('login-required');return;}
    if(!profile.emailVerified){this.reviewState.set('verify-required');return;}
    const quoteResponse=await fetch(new URL('/v1/config',config.apiUrl),{
@@ -58,11 +67,13 @@ export class DonateComponent implements OnInit,OnDestroy{
    });
    if(!quoteResponse.ok)throw Error('Pacotes temporariamente indisponíveis.');
    const quote=validateSandboxQuote(await quoteResponse.json() as unknown,packageId);
-   if(this.destroyed||this.abort.signal.aborted)return;
+   if(this.destroyed||this.abort.signal.aborted||version!==this.reviewVersion)return;
+   this.reviewClient=client;
    this.reviewQuote.set(quote);
    this.reviewState.set('ready');
   }catch(error){
-   if(this.destroyed||this.abort.signal.aborted)return;
+   if(this.destroyed||this.abort.signal.aborted||version!==this.reviewVersion)return;
+   this.reviewClient=null;
    this.reviewState.set(error instanceof AccountError&&error.status===401?
     'login-required':'error');
   }
@@ -71,20 +82,61 @@ export class DonateComponent implements OnInit,OnDestroy{
   if(this.reviewState()!=='ready')return;
   if(event.target instanceof HTMLInputElement)this.termsAccepted.set(event.target.checked);
  }
+ /** Explicitly prepares an idempotent SANDBOX order, but never opens checkout. */
+ async prepareSandboxOrder():Promise<void>{
+  const quote=this.reviewQuote(),client=this.reviewClient;
+  if(this.destroyed||this.availability()!=='sandbox-ready'||
+   (this.reviewState()!=='ready'&&this.reviewState()!=='prepare-error')||
+   !quote||!client||!this.termsAccepted())return;
+  const version=this.reviewVersion;
+  const key=this.orderKeys.get(quote.packageId)??crypto.randomUUID();
+  this.orderKeys.set(quote.packageId,key);
+  this.sandboxOrderId.set(null);
+  this.reviewState.set('preparing');
+  try{
+   const adapter=createAuthenticatedSandboxAdapter(client);
+   const receipt=await simulateSandboxCheckout({
+    account:{emailVerified:true},packageId:quote.packageId,
+    acceptedTerms:true,idempotencyKey:key,
+    adapter:{
+     async readConfig():Promise<unknown>{
+      const fresh=await adapter.readConfig();
+      const latest=validateSandboxQuote(fresh,quote.packageId);
+      if(latest.priceCents!==quote.priceCents||latest.cookies!==quote.cookies)
+       throw new AccountError('Os valores mudaram. Reveja seu apoio antes de continuar.',409);
+      return fresh;
+     },
+     createOrder:(body,requestKey)=>adapter.createOrder(body,requestKey)
+    }
+   });
+   if(this.destroyed||this.reviewVersion!==version)return;
+   this.sandboxOrderId.set(receipt.orderId.slice(0,12));
+   this.reviewState.set('prepared');
+  }catch(error){
+   if(this.destroyed||this.reviewVersion!==version)return;
+   if(error instanceof AccountError&&error.status===410)this.orderKeys.delete(quote.packageId);
+   this.reviewState.set('prepare-error');
+  }
+ }
  confirmReview():void{
   if(this.reviewState()!=='ready'||!this.reviewQuote()||!this.termsAccepted())return;
   // This is deliberately a local UI transition: no API write, no checkout, no Cookies.
   this.reviewState.set('confirmed');
  }
  cancelReview():void{
-  if(this.reviewState()==='loading')return;
-  this.reviewQuote.set(null);this.termsAccepted.set(false);this.reviewState.set('idle');
+  if(this.reviewState()==='loading'||this.reviewState()==='preparing')return;
+  this.reviewVersion++;
+  this.reviewClient=null;this.reviewQuote.set(null);
+  this.sandboxOrderId.set(null);
+  this.termsAccepted.set(false);this.reviewState.set('idle');
  }
  async refresh():Promise<void>{
   this.abort.abort();this.abort=new AbortController();
   const signal=this.abort.signal;
   this.availability.set('loading');
-  this.cancelReview();
+  this.reviewVersion++;this.reviewClient=null;
+  this.reviewQuote.set(null);this.sandboxOrderId.set(null);
+  this.termsAccepted.set(false);this.reviewState.set('idle');
   try{
    const response=await fetch('/account-config.json',{
     cache:'no-store',credentials:'omit',referrerPolicy:'origin',

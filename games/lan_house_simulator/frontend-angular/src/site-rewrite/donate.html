@@ -28,7 +28,7 @@
   @case('loading'){Consultando disponibilidade do serviço…}
   @case('unavailable'){Doações não liberadas pelo serviço. Nenhum pagamento será iniciado.}
   @case('backend-active'){Serviço de pagamentos ativo, mas o checkout Angular ainda está bloqueado até a integração autenticada ser testada.}
-  @case('sandbox-ready'){Ambiente de testes ativo. Você pode revisar o apoio, sem criar pedidos ou realizar pagamento.}
+  @case('sandbox-ready'){Ambiente de testes ativo. Você pode simular a revisão ou preparar um pedido de teste. Nenhum pagamento será aberto automaticamente.}
   @default{Não foi possível consultar o serviço. O checkout permanece bloqueado.}
  }
  </p>
@@ -41,6 +41,9 @@
      @case('login-required'){Entre na sua conta antes de revisar o apoio.}
      @case('verify-required'){Confirme seu email em Minha conta para continuar.}
      @case('ready'){Confira o pacote e aceite os termos para finalizar a simulação.}
+     @case('preparing'){Preparando pedido sandbox no servidor…}
+     @case('prepared'){Pedido sandbox preparado. Nenhum pagamento foi confirmado e nenhum Cookie foi creditado.}
+     @case('prepare-error'){Não foi possível preparar o pedido sandbox. Confira sua sessão e tente novamente.}
      @case('confirmed'){Revisão de teste concluída. Nenhum pedido, pagamento ou Cookie foi criado.}
      @default{Não foi possível preparar a revisão. Nenhuma cobrança foi iniciada.}
     }
@@ -61,10 +64,20 @@
      Li os <a href="/termos/#donate" target="_blank" rel="noopener">termos de apoio</a>
      e concordo em concluir apenas a simulação.
     </label>
-    <button type="button" id="confirm-sandbox-review" class="button"
-     [disabled]="!termsAccepted()" (click)="confirmReview()">Finalizar simulação</button>
+    <button type="button" id="confirm-sandbox-review" class="button secondary"
+     [disabled]="!termsAccepted()" (click)="confirmReview()">Finalizar simulação sem pedido</button>
+    <button type="button" id="prepare-sandbox-order" class="button"
+     [disabled]="!termsAccepted()" (click)="prepareSandboxOrder()">Preparar pedido sandbox</button>
    }
-   @if(reviewState()!=='loading'){
+   @if(reviewState()==='prepare-error'){
+    <button type="button" id="retry-sandbox-order" class="button"
+     (click)="prepareSandboxOrder()">Tentar novamente com a mesma chave</button>
+   }
+   @if(reviewState()==='prepared'&&sandboxOrderId();as orderId){
+    <p id="sandbox-order-id">Referência do pedido de teste: {{orderId}}…</p>
+    <p>Nenhum checkout foi aberto. Confira os pedidos em Minha conta.</p>
+   }
+   @if(reviewState()!=='loading'&&reviewState()!=='preparing'){
     <button type="button" id="cancel-sandbox-review" class="button secondary"
      (click)="cancelReview()">Fechar revisão</button>
    }
