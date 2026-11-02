@@ -116,3 +116,4 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - O adapter é injetado apenas nos testes Node com fixtures sintéticas; nenhum acesso real ao Firebase, Mercado Pago ou ao backend acontece nesse fluxo.
 - A rota `/donate/` mantém os dois botões desabilitados. A integração autenticada real `POST /v1/orders` **não** está ligada e exigirá revisão separada; o histórico privado em Minha conta continua só de leitura.
 - Esta etapa não muda a `main`, não faz deploy e não autoriza cobrança de usuário.
+- A CI também executa um `tsc --noEmit` dedicado ao contrato, com `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `noUnusedLocals` e verificações rigorosas antes dos testes Node.
