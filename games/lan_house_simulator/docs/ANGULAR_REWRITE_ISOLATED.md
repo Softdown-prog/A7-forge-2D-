@@ -182,3 +182,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - O componente é o único dono da prévia, botão e iframe `/game/`. O `SiteApp` deixa de controlar `gameOpen` e `startGame`, sem inserir listeners nativos nem mover o motor TypeScript/Canvas para o Angular.
 - A abertura continua explícita e o jogo não é carregado antes do clique; F5 volta à prévia. Testes estáticos verificam dono único e IDs; Chromium testa clique desktop, toque mobile, carregamento real do menu no iframe e F5 nas larguras 1280/414/360.
 - O site legado e a produção permanecem inalterados; não há manipulação de saves, pagamentos, merge ou deploy nesta etapa.
+
+### Microetapa — Ajuda com componente Angular standalone
+- `/ajuda/` agora monta `<lhs-help-search>`, único dono do Signal de pesquisa, filtros, botão Limpar e lista de respostas. A raiz `SiteApp` não controla esse estado.
+- `faq` e `normalizeSearch` permanecem no catálogo Angular existente. A busca ignora caixa/acentos e não consulta rede ou JS legado; Limpar restaura sete respostas e o foco.
+- Testes estruturais mais Chromium validam busca com acentos, ausência de resultados, toque e clique, foco e F5 em desktop e mobile.
+- Só afeta a versão Angular isolada; nenhum deploy, cutover, alteração Canvas ou pagamento.

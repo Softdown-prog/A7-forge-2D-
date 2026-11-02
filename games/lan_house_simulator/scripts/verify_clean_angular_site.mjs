@@ -92,11 +92,26 @@ try{
      document.querySelector('.menu-button')?.getAttribute('aria-expanded')==='false');
    }
    if(pathname==='/ajuda/'){
+    assert.equal(await page.locator('lhs-help-search').count(),1);
     const input=page.locator('#help-search');
-    await input.fill('salvar');
+    await input.fill('SALVÁR');
+    await page.locator('.faq details:visible').first().waitFor({state:'visible'});
     assert.ok(await page.locator('.faq details:visible').count()>0);
     await input.fill('termo totalmente ausente z98765');
+    await page.locator('.faq').getByText('Nenhuma resposta encontrada.').waitFor();
     assert.equal(await page.locator('.faq details:visible').count(),0);
+    if(mobile)await page.locator('.faq button').tap();
+    else await page.locator('.faq button').click();
+    assert.equal(await input.inputValue(),'');
+    assert.equal(await input.evaluate(node=>document.activeElement===node),true);
+    await page.locator('.faq details:visible').first().waitFor();
+    assert.equal(await page.locator('.faq details:visible').count(),7);
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-help-search').count(),1);
+    assert.equal(await page.locator('#help-search').inputValue(),'');
+    assert.equal(await page.locator('.faq details:visible').count(),7);
    }
    if(pathname==='/jogar/'){
     assert.equal(await page.locator('lhs-game-launcher').count(),1);

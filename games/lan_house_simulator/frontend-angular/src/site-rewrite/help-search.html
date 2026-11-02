@@ -1,0 +1,10 @@
+<section class="wrap faq">
+    <label for="help-search">Buscar resposta</label>
+    <div class="search"><input #searchBox id="help-search" type="search"
+     autocomplete="off" placeholder="Ex.: salvar, conta" [value]="query()" (input)="changeQuery($event)"/>
+     <button type="button" class="button secondary" (click)="clearQuery(searchBox)">Limpar</button></div>
+    <p role="status" aria-live="polite">{{matched().length}} respostas encontradas</p>
+    @for(item of matched();track item[0]){
+     <details><summary>{{item[0]}}<span aria-hidden="true">+</span></summary><p>{{item[1]}}</p></details>
+    }@empty{<p>Nenhuma resposta encontrada.</p>}
+   </section>
