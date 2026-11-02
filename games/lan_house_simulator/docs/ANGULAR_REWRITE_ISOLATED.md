@@ -107,3 +107,12 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Conta, confirmação de email, Donate e dados locais **não** são pré-renderizados, evitando exposição de sessões ou informações privadas. `angular-prerender-manifest.json` documenta essa lista fechada.
 - Isto é um **snapshot de browser em build isolado**, não Angular SSR/hydration; mudanças de conteúdo dinâmico exigem novo build. Não cobre indexação completa nem autoriza publicar o domínio. `robots.txt` e `noindex,nofollow` permanecem bloqueando indexação.
 - O workflow de pesquisa executa a pré-renderização antes da bateria Chromium existente. O comando legado `build:site:clean` continua produzindo CSR como base; o snapshot é uma segunda etapa explicitamente invocada.
+
+
+### Microetapa — contrato de checkout simulado, sem transações reais
+- `frontend-angular/src/site-rewrite/checkout-contract.ts` define um contrato tipado e independente para a futura integração de pagamento, **sem ser importado pela UI pública**.
+- O contrato rejeita ausência de conta verificada, falta de aceite dos termos, pacote não aprovado, chave de idempotência inválida, catálogo de produção, resposta de preço incorreta e URLs que não pertençam ao domínio HTTPS de **sandbox** do Mercado Pago.
+- O preço/cookies são exclusivamente os valores do catálogo entregue pelo backend simulado (`GET /v1/config`); o futuro pedido usa somente `{packageId,acceptedTerms:true}` com chave de idempotência informada pelo chamador. A resposta permanece explicitamente `not-confirmed` e nunca altera saldo.
+- O adapter é injetado apenas nos testes Node com fixtures sintéticas; nenhum acesso real ao Firebase, Mercado Pago ou ao backend acontece nesse fluxo.
+- A rota `/donate/` mantém os dois botões desabilitados. A integração autenticada real `POST /v1/orders` **não** está ligada e exigirá revisão separada; o histórico privado em Minha conta continua só de leitura.
+- Esta etapa não muda a `main`, não faz deploy e não autoriza cobrança de usuário.
