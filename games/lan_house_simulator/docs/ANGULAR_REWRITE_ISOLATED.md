@@ -168,3 +168,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Para sandbox comum, aceita apenas `sandbox.mercadopago.com.br` ou `sandbox.mercadopago.com`. Em produção, apenas `www.mercadopago.com.br` ou `www.mercadopago.com`. Um **vendedor de testes identificado pelo backend** pode usar o domínio `www` mesmo em sandbox, mas continua com carteira `cookiesBalanceSandbox`, nunca créditos reais.
 - A mesma validação é obrigatória ao criar preferências e ao devolver URLs persistidas em novas tentativas com a mesma chave; URLs incompatíveis resultam em erro 502, sem redirecionamento ou crédito.
 - `backend/tests/payments.test.mjs` exercita ambientes cruzados, URL hostil, caminho/fragmento/porta inválidos e repetição idempotente com URL adulterada. O checkout de produção permanece desabilitado na interface Angular e não houve deploy.
+
+
+### Microetapa — gate de imports da migração Angular (AST)
+
+- `scripts/check_clean_angular_imports.mjs` inspeciona **todos** os arquivos TypeScript em `frontend-angular/src/site-rewrite/`, usando a AST do TypeScript já instalada no projeto Angular. Não executa nenhum módulo do aplicativo.
+- Imports e reexports locais precisam permanecer na árvore canônica e apontar para arquivos presentes. Os imports externos permitidos são `@angular/*` e `rxjs`; imports de React, `website/`, `src/site/` e pacotes desconhecidos são rejeitados. Import dinâmico com destino não literal e CommonJS também reprovam.
+- A CI isolada executa casos positivos, casos quebrados e falso positivo (texto e comentário contendo uma expressão semelhante a import). Conta, Donate, confirmações e demais componentes participam automaticamente da varredura.
+- O gate **não** substitui AOT, testes Playwright/Android, prova do bundle ou revisão de pagamentos. Não realiza cutover nem deploy, e o motor TypeScript/Canvas não foi alterado.
