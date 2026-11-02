@@ -4,7 +4,7 @@ import {buildSync} from 'esbuild';
 const entry=new URL('../frontend-angular/src/site-rewrite/checkout-sandbox-adapter.ts',import.meta.url).pathname;
 const result=buildSync({entryPoints:[entry],bundle:true,format:'esm',platform:'node',write:false});
 const moduleUrl='data:text/javascript;base64,'+Buffer.from(result.outputFiles[0].text).toString('base64');
-const {createAuthenticatedSandboxAdapter}=await import(moduleUrl);
+const {createAuthenticatedSandboxAdapter,SiteAccountClient}=await import(moduleUrl);
 const contractEntry=new URL('../frontend-angular/src/site-rewrite/checkout-contract.ts',import.meta.url).pathname;
 const contractResult=buildSync({entryPoints:[contractEntry],bundle:true,format:'esm',platform:'node',write:false});
 const {simulateSandboxCheckout}=await import('data:text/javascript;base64,'+
@@ -41,9 +41,8 @@ function fixture({mode='sandbox',verified=true,session=true,orderStatus=200}={})
 }
 test('sandbox request sends only authoritative package, terms, auth and same idempotency key',async()=>{
  const f=fixture();
- const accountModule=await import(moduleUrl);
  // The adapter is constructed with a real SiteAccountClient in the same bundled module.
- const client=accountModule.makeClientForTests(f.transport,f.storage,f.now);
+ const client=new SiteAccountClient(config,f.transport,f.storage,f.now);
  const adapter=createAuthenticatedSandboxAdapter(client,f.transport);
  const receipt=await simulateSandboxCheckout({
   account:{emailVerified:true},acceptedTerms:true,packageId:'donate-5',
@@ -64,8 +63,7 @@ for(const [name,opts] of [['production',{mode:'production'}],
  ['unverified',{verified:false}],['no session',{session:false}]])
  test('refuse sandbox POST for '+name,async()=>{
   const f=fixture(opts);
-  const accountModule=await import(moduleUrl);
-  const client=accountModule.makeClientForTests(f.transport,f.storage,f.now);
+   const client=new SiteAccountClient(config,f.transport,f.storage,f.now);
   const adapter=createAuthenticatedSandboxAdapter(client,f.transport);
   await assert.rejects(simulateSandboxCheckout({
    account:{emailVerified:true},acceptedTerms:true,packageId:'donate-5',
@@ -74,8 +72,8 @@ for(const [name,opts] of [['production',{mode:'production'}],
   assert.equal(f.calls.filter(x=>x.path==='/v1/orders').length,0);
  });
 test('invalid idempotency blocks all order POST requests',async()=>{
- const f=fixture();const accountModule=await import(moduleUrl);
- const client=accountModule.makeClientForTests(f.transport,f.storage,f.now);
+ const f=fixture();
+ const client=new SiteAccountClient(config,f.transport,f.storage,f.now);
  const adapter=createAuthenticatedSandboxAdapter(client,f.transport);
  await assert.rejects(simulateSandboxCheckout({
   account:{emailVerified:true},acceptedTerms:true,packageId:'donate-5',
@@ -84,8 +82,8 @@ test('invalid idempotency blocks all order POST requests',async()=>{
  assert.equal(f.calls.filter(x=>x.path==='/v1/orders').length,0);
 });
 test('failed provider response never represents a paid order',async()=>{
- const f=fixture({orderStatus:503});const accountModule=await import(moduleUrl);
- const client=accountModule.makeClientForTests(f.transport,f.storage,f.now);
+ const f=fixture({orderStatus:503});
+ const client=new SiteAccountClient(config,f.transport,f.storage,f.now);
  await assert.rejects(simulateSandboxCheckout({
   account:{emailVerified:true},acceptedTerms:true,packageId:'donate-5',
   idempotencyKey:key,adapter:createAuthenticatedSandboxAdapter(client,f.transport)

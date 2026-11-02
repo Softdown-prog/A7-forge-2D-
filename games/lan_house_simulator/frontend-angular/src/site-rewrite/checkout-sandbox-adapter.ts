@@ -25,9 +25,4 @@ export function createAuthenticatedSandboxAdapter(
  };
 }
 
-/** Test harness for the standalone adapter; never imported by a UI route. */
-export function makeClientForTests(request:typeof fetch,storage:Storage,
- now:()=>number):SiteAccountClient{
- return new SiteAccountClient({enabled:true,apiUrl:'https://api.example.invalid',
-  firebaseApiKey:'firebase-synthetic'},request,storage,now);
-}
+export {SiteAccountClient};
