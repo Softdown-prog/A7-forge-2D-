@@ -99,3 +99,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - A consulta é explicitamente acionada pelo jogador através do cliente Firebase Angular e usa somente `GET /v1/orders`, validando os dados com `readDonateOrders`.
 - Ao sair da conta, o histórico em memória é apagado. F5 não recarrega a lista sem novo clique. A navegação não credita Cookies, não cria pedidos nem abre checkout.
 - Os testes do Chromium exercitam login, email não confirmado, navegação Donate → Minha conta, F5, logout, Android e respostas sintéticas válidas/inválidas. Produção e `main` não são publicadas por esta etapa.
+
+
+### Microetapa — HTML público pré-renderizado por Chromium, antes do cutover
+- `scripts/prerender_clean_angular_site.mjs` executa o bundle Angular já compilado em um Chromium isolado, sem acessar a rede externa, e grava **HTML estático real** das oito páginas públicas: início, jogar, sobre o jogo, sobre nós, ajuda, contato, termos e privacidade.
+- O bundle Angular e seus eventos são preservados. Uma segunda passagem verifica que o JavaScript pode reabrir a página sem duplicar header, H1 ou footer; outra valida HTML acessível com JavaScript desativado.
+- Conta, confirmação de email, Donate e dados locais **não** são pré-renderizados, evitando exposição de sessões ou informações privadas. `angular-prerender-manifest.json` documenta essa lista fechada.
+- Isto é um **snapshot de browser em build isolado**, não Angular SSR/hydration; mudanças de conteúdo dinâmico exigem novo build. Não cobre indexação completa nem autoriza publicar o domínio. `robots.txt` e `noindex,nofollow` permanecem bloqueando indexação.
+- O workflow de pesquisa executa a pré-renderização antes da bateria Chromium existente. O comando legado `build:site:clean` continua produzindo CSR como base; o snapshot é uma segunda etapa explicitamente invocada.

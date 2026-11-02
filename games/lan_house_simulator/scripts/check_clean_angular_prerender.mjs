@@ -1,0 +1,27 @@
+/** Static no-JS snapshot integrity; called only after prerender_clean_angular_site.mjs. */
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {resolve} from 'node:path';
+const output=resolve(import.meta.dirname,'../out/site-clean-angular');
+const manifest=JSON.parse(readFileSync(resolve(output,'angular-prerender-manifest.json'),'utf8'));
+assert.equal(manifest.method,'isolated-chromium-public-snapshot');
+assert.deepEqual(manifest.paths,['/','/jogar/','/sobre-o-jogo/','/sobre-nos/',
+ '/ajuda/','/contato/','/termos/','/privacidade/']);
+assert.deepEqual(manifest.excluded,['/conta/','/conta/confirmar/','/donate/','/dados/']);
+for(const path of manifest.paths){
+ const html=readFileSync(resolve(output,'.'+path,'index.html'),'utf8');
+ assert.match(html,/<lhs-site data-lhs-public-prerender="true">/);
+ assert.equal((html.match(/<main\b/g)||[]).length,1,'Main missing/duplicated: '+path);
+ assert.equal((html.match(/<header\b/g)||[]).length,1,'Header missing/duplicated: '+path);
+ assert.equal((html.match(/<footer\b/g)||[]).length,1,'Footer missing/duplicated: '+path);
+ assert.equal((html.match(/<h1\b/g)||[]).length,1,'H1 missing/duplicated: '+path);
+ assert.match(html,/<meta name="robots" content="noindex,nofollow">/);
+ assert.match(html,/src="\/assets\/site\/main\.js"/);
+ assert.doesNotMatch(html,/react-entry\.js|website\/site\.mjs/i);
+}
+for(const path of manifest.excluded){
+ const html=readFileSync(resolve(output,'.'+path,'index.html'),'utf8');
+ assert.match(html,/<lhs-site><\/lhs-site>/,'Nonpublic route must remain CSR: '+path);
+ assert.doesNotMatch(html,/data-lhs-public-prerender/);
+}
+console.log('Angular public prerender verified (no private routes included)');

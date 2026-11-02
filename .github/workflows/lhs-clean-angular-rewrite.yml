@@ -37,6 +37,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
+          node scripts/prerender_clean_angular_site.mjs
+          node scripts/check_clean_angular_prerender.mjs
           node scripts/verify_clean_angular_confirmation.mjs
           node scripts/verify_clean_angular_account.mjs
           node scripts/verify_clean_angular_site.mjs
