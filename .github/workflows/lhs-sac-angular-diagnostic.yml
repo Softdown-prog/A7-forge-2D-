@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Softdown-prog/Data_libray
-          ref: b4a4a9ec786e935bb8c5ddc287fe12f5ed03d8bb
+          ref: 06a0c5756098009165397ff6c3c45db089493de8
           path: .sac-toolchain
           persist-credentials: false
       - uses: actions/setup-node@v4
