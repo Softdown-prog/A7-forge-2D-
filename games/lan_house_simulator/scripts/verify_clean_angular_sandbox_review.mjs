@@ -96,6 +96,7 @@ try{
    ?.textContent?.includes('Nenhum pedido, pagamento ou Cookie foi criado'));
   assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
   await page.locator('#cancel-sandbox-review').click();
+  await page.locator('#sandbox-review-quote').waitFor({state:'detached'});
   assert.equal(await page.locator('#sandbox-review-quote').count(),0);
   validQuote=false;
   await choose();
