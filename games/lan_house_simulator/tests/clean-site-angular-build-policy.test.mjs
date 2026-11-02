@@ -5,15 +5,16 @@ const readJSON=path=>JSON.parse(readFileSync(new URL(path,import.meta.url),'utf8
 const angular=readJSON('../frontend-angular/angular.json');
 const base=readJSON('../frontend-angular/tsconfig.json');
 const projects=['game-ui','site-shell','site-rewrite'];
-test('Angular production builds enforce initial bundle budgets without changing fixed asset names',()=>{
+test('Angular production builds enforce initial bundle budgets and isolated site hashing',()=>{
  for(const project of projects){
   const build=angular.projects[project].architect.build;
   const production=build.configurations.production;
   assert.deepEqual(production.budgets,[{
    type:'initial',maximumWarning:'500kb',maximumError:'1mb'
   }],project+' budget contract');
-  assert.equal(production.outputHashing,'none',
-   'Do not enable hashing until isolated cutover asset mapping and browser QA support it');
+  assert.equal(production.outputHashing,
+   project==='site-rewrite'?'all':'none',
+   'Only the canonical institutional site changes its asset names');
   assert.equal(build.defaultConfiguration,'production');
   assert.equal(production.sourceMap,false);
  }

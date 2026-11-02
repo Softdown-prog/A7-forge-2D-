@@ -132,3 +132,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Mantemos `outputHashing: none` intencionalmente até a adaptação dos caminhos `main.js`/`styles.css` e da estratégia de cache, que dependem de nomes estáveis no gerador do site. **Não** ativar `all` sem revalidar pré-renderização, Chromium e Cloudflare Pages.
 - `tests/clean-site-angular-build-policy.test.mjs` testa os três budgets e confirma que as flags rigorosas do Angular/TypeScript continuam herdadas pelos projetos, sem exigir duplicações de flags implícitas em `strict`.
 - Sem alteração no deployment, nas rotas de checkout ou na `main`.
+
+
+### Microetapa — cache busting com hash no site Angular isolado
+- Apenas `site-rewrite` de produção usa `outputHashing: all`; `game-ui` e `site-shell` permanecem com nomes fixos até uma migração própria, preservando a compatibilidade do motor de jogo.
+- O gerador lê o `index.html` real do Angular CLI, valida os nomes com hash e religa os caminhos para `/assets/site/<nome-com-hash>` sem presumir `main.js` ou `styles.css`. O manifesto `angular-site-assets.json` registra os arquivos gerados.
+- A política `_headers` usa regras exatas para cada arquivo JavaScript/CSS com hash com `max-age=31536000, immutable`. HTML, `account-config.json`, `online-config.json` e `/game/*` não compartilham esse cache longo.
+- Verificações estáticas garantem nomes com hash, manifesto, referências no HTML, ausência de JS/CSS antigos e cache por arquivo. Os testes de pré-renderização e Chromium validam que o site inicializa e recarrega após o hash.
+- Nenhuma mudança no site publicado, em pagamentos, nos nomes do bundle do jogo ou na `main`. A política de produção Cloudflare Pages ainda precisa ser validada ao fazer o cutover.

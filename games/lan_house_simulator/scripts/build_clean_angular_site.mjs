@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {cpSync,existsSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
 import {resolve,dirname,extname} from 'node:path';
+import {resolveAngularSiteAssets,rewriteAngularSiteIndex} from './clean_angular_site_assets.mjs';
 const root=resolve(import.meta.dirname,'..');
 const angular=resolve(root,'frontend-angular');
 const output=resolve(root,'out/site-clean-angular');
@@ -23,15 +24,15 @@ run(process.execPath,[resolve(angular,'scripts/build_cutover_candidate.mjs')]);
 run(npm,['run','build:site-rewrite','--prefix','frontend-angular']);
 const compiled=resolve(angular,'dist/site-rewrite/browser');
 let index=readFileSync(resolve(compiled,'index.html'),'utf8');
-assert.match(index,/src="main\.js"/);
-assert.match(index,/href="styles\.css"/);
-index=index.replace('src="main.js"','src="/assets/site/main.js"')
- .replace('href="styles.css"','href="/assets/site/styles.css"');
+const siteAssetsManifest=resolveAngularSiteAssets(index,compiled);
+index=rewriteAngularSiteIndex(index,siteAssetsManifest);
 assert.doesNotMatch(index,/website\/site\.mjs|react-entry\.js/);
 rmSync(output,{recursive:true,force:true});
 mkdirSync(resolve(output,'assets'),{recursive:true});
 cpSync(compiled,resolve(output,'assets/site'),{recursive:true});
 rmSync(resolve(output,'assets/site/index.html'),{force:true});
+writeFileSync(resolve(output,'angular-site-assets.json'),
+ JSON.stringify(siteAssetsManifest,null,2)+'\n');
 // All public assets for the new institutional site live inside Angular.
 const siteAssetRoot=resolve(angular,'src/site-rewrite/public/assets');
 const siteAssets=['brand.svg','icons.svg','sala.webp',
@@ -89,9 +90,19 @@ writeFileSync(resolve(output,'_headers'),[
  '  Referrer-Policy: strict-origin-when-cross-origin',
  // Only explicitly configured authenticated service origins may receive connections.
  "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+accountApiOrigin+"; frame-src 'self'; object-src 'none'; base-uri 'self'",
- '  Cache-Control: no-cache, must-revalidate',
- '/assets/*','  Cache-Control: no-cache, must-revalidate',
- '/game/*','  Cache-Control: no-cache, must-revalidate',''].join('\n'));
+ // HTML and account configuration must never get year-long browser cache entries.
+ ...paths.map(path=>path?'/'+path+'/':'/').flatMap(path=>
+  [path,'  Cache-Control: no-cache, must-revalidate']),
+ '/404.html','  Cache-Control: no-cache, must-revalidate',
+ '/account-config.json','  Cache-Control: no-store',
+ '/online-config.json','  Cache-Control: no-store',
+ '/robots.txt','  Cache-Control: no-cache, must-revalidate',
+ '/game/*','  Cache-Control: no-cache, must-revalidate',
+ // Exact paths, not a blanket /assets/site/*, because that folder can include
+ // unhashed images that must not receive immutable caching.
+ ...siteAssetsManifest.files.flatMap(name=>
+  ['/assets/site/'+name,'  Cache-Control: public, max-age=31536000, immutable']),
+ ''].join('\n'));
 const modules=readdirSync(resolve(output,'assets/site')).filter(file=>
  ['.js','.mjs'].includes(extname(file)));
 for(const name of modules)assert.doesNotMatch(

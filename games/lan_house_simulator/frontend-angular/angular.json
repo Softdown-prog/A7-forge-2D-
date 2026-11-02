@@ -117,7 +117,7 @@
                 },
                 "fonts": false
               },
-              "outputHashing": "none",
+              "outputHashing": "all",
               "sourceMap": false,
               "budgets": [
                 {
