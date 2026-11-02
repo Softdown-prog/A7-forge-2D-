@@ -32,7 +32,8 @@ test('Terms and Privacy retain 21 sections and a single Angular document owner',
  const forbidden=/(?:styles:\s*\[|\binnerHTML\b|fetch\(|\bdocument\.(?:querySelector|addEventListener|createElement|body|head)|\bwindow\.|website\/|\breact\b)/i;
  assert.doesNotMatch(owner,forbidden);
  assert.match("document.querySelector('#app')",forbidden,'Direct DOM manipulation must remain forbidden');
- assert.equal((template.match(/@for\(item of sections\(\);track item\.id\)/g)||[]).length,2);
+ assert.match(template,/@for\(item of sections\(\);track item\.id;let i=\$index\)/);
+ assert.match(template,/@for\(item of sections\(\);track item\.id\)/);
  assert.match(template,/\[attr\.aria-labelledby\]/);
  assert.match(template,/\[href\]="path\(\)\+'#'\+item\.id"/);
  assert.match(template,/<aside class="legal-index">/);
