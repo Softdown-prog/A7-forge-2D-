@@ -54,8 +54,9 @@ const guardian={
     {id:'motion-toggle',path:'/',expect_visible:['lhs-site h1','#motion-toggle'],
       actions:[{click:'#motion-toggle',expect_visible:'#motion-toggle[aria-pressed="true"]'}]},
     {id:'help-faq-expand',path:'/ajuda/',
-      expect_visible:['lhs-site h1','#help-search','details summary'],
-      actions:[{click:'details summary',expect_visible:'details[open] p'}]}
+      expect_visible:['lhs-site h1','#help-search','section.faq details:first-of-type summary'],
+      actions:[{click:'section.faq details:first-of-type summary',
+        expect_visible:'section.faq details:first-of-type[open] p'}]}
   ]
 };
 async function main(){
