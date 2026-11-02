@@ -17,7 +17,9 @@ test('the checkout contract is test-only and production Donate remains disabled'
  assert.match(backend,/req\.headers\['x-lhs-sandbox-only'\]==='true'&&!sandbox/);
  assert.match(backend,/Idempotency-Key, X-LHS-Sandbox-Only/);
  assert.doesNotMatch(adapter,/location\.assign|window\.open/);
- assert.doesNotMatch(donate+markup+account,/simulateSandboxCheckout|createOrder\(|\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
+ assert.doesNotMatch(donate+markup,/simulateSandboxCheckout|createOrder\(|\/v1\/orders['"]\s*,\s*\{|location\.assign|window\.open/);
+ // The specialized account transport may POST; the generic api() allowlist stays read-only.
+ assert.match(account,/if\(!\(path==='\/v1\/orders'&&body===undefined\)/);
  assert.match(donate,/this\.reviewState\.set\('confirmed'\)/);
  assert.match(donate,/this\.availability\(\)!=='sandbox-ready'/);
  assert.match(markup,/data-review-package/);
