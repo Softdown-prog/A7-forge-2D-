@@ -40,7 +40,7 @@ export class DonateComponent implements OnInit,OnDestroy{
  ngOnDestroy():void{this.destroyed=true;this.reviewVersion++;this.reviewClient=null;this.abort.abort();}
  /** Reviews a sandbox-only server quote; never creates payment orders or opens checkout. */
  async reviewPackage(rawPackageId:string):Promise<void>{
-  if(this.destroyed||this.availability()!=='sandbox-ready'||this.reviewState()==='loading')return;
+  if(this.destroyed||this.availability()!=='sandbox-ready'||(this.reviewState()==='loading'||this.reviewState()==='preparing'))return;
   const version=++this.reviewVersion;
   this.reviewClient=null;
   this.sandboxOrderId.set(null);

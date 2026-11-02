@@ -17,7 +17,9 @@
    <small>Este protótipo não inicia pagamentos.</small>
    @if(availability()==='sandbox-ready'){
     <button type="button" class="button secondary sandbox-review-button"
-     [attr.data-review-package]="pack.id" (click)="reviewPackage(pack.id)">
+     [attr.data-review-package]="pack.id" 
+     [disabled]="reviewState()==='loading'||reviewState()==='preparing'"
+     (click)="reviewPackage(pack.id)">
      Revisar apoio de teste</button>
    }
   </article>
