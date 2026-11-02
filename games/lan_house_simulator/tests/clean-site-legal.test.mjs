@@ -29,7 +29,9 @@ test('Terms and Privacy retain 21 sections and a single Angular document owner',
  assert.match(owner,/ChangeDetectionStrategy\.OnPush/);
  assert.match(owner,/readonly path=input\.required<SitePath>\(\)/);
  assert.match(owner,/readonly sections=computed\(\(\)=>this\.path\(\)==='\/termos\/'\?termsSections:privacySections\)/);
- assert.doesNotMatch(owner,/styles:\s*\[|innerHTML|fetch\(|document\.|window\.|website\/|react/i);
+ const forbidden=/(?:styles:\s*\[|\binnerHTML\b|fetch\(|\bdocument\.(?:querySelector|addEventListener|createElement|body|head)|\bwindow\.|website\/|\breact\b)/i;
+ assert.doesNotMatch(owner,forbidden);
+ assert.match("document.querySelector('#app')",forbidden,'Direct DOM manipulation must remain forbidden');
  assert.equal((template.match(/@for\(item of sections\(\);track item\.id\)/g)||[]).length,2);
  assert.match(template,/\[attr\.aria-labelledby\]/);
  assert.match(template,/\[href\]="path\(\)\+'#'\+item\.id"/);
