@@ -47,6 +47,23 @@ test('Angular owns existing menu/header/shop islands without reimplementing the 
   assert.match(file(root+'src/components.ts'),/lhs:shop-catalog-updated/);
 });
 
+test('Angular shop category follows its host event, not global DOM listeners',()=>{
+  const source=file(root+'src/components.ts');
+  const html=file(root+'src/templates/shop-categories.html');
+  const port=file('src/ui/shopPanels.ts');
+  const body=source.split('export class ShopCategoriesComponent {')[1]?.split('\ntype QuickAction=')[0];
+  assert.ok(body,'Shop category component must exist');
+  assert.match(source,/import \{takeUntilDestroyed\} from '@angular\/core\/rxjs-interop'/);
+  assert.match(source,/import \{fromEvent\} from 'rxjs'/);
+  assert.match(body,/inject<ElementRef<HTMLElement>>\(ElementRef\)/);
+  assert.match(body,/fromEvent<CustomEvent<string>>\(this\.host\.nativeElement,'lhs:shop-category-selected'\)/);
+  assert.match(body,/\.pipe\(takeUntilDestroyed\(\)\)/);
+  assert.match(body,/typeof id==='string'&&SHOP_CATEGORIES\.some/);
+  assert.doesNotMatch(body,/document\.getElementById|\.addEventListener\(|\.removeEventListener\(/);
+  assert.match(port,/nav\.dispatchEvent\(new CustomEvent<string>\('lhs:shop-category-selected'/);
+  assert.match(html,/\[attr\.aria-pressed\]="current\(\) === category\.id"/);
+});
+
 test('Angular preview cannot accidentally replace the current React runtime',()=>{
   assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
   assert.match(file('scripts/build.mjs'),/src\/react\/entry\.jsx/);
