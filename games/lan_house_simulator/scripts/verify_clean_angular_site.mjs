@@ -67,6 +67,9 @@ try{
     document.documentElement.dataset.siteFramework==='angular-rewrite');
    assert.equal(await page.locator('lhs-site').count(),1);
    assert.equal(await page.locator('lhs-site-header').count(),1);
+   assert.equal(await page.locator('lhs-site-footer').count(),1);
+   assert.equal(await page.locator('lhs-site-footer footer').count(),1);
+   assert.equal(await page.locator('lhs-site-footer nav').count(),2);
    assert.equal(await page.locator('header nav').count(),1);
    const currentLink=page.locator('lhs-site-header #site-nav a[aria-current="page"]');
    if(['/', '/jogar/', '/sobre-o-jogo/', '/ajuda/', '/donate/'].includes(pathname)){
@@ -87,6 +90,24 @@ try{
    await page.waitForFunction(()=>
     document.documentElement.dataset.siteFramework==='angular-rewrite');
    assert.equal(await page.locator('main h1').count(),1);
+   if(pathname==='/'){
+    const toggleMotion=page.locator('lhs-site-footer #motion-toggle');
+    const original=await toggleMotion.getAttribute('aria-pressed');
+    assert.ok(original==='true'||original==='false');
+    const next=original==='true'?'false':'true';
+    if(mobile)await toggleMotion.tap();else await toggleMotion.click();
+    await page.waitForFunction(expected=>
+     document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')===expected,next);
+    assert.equal(await page.locator('.page').evaluate(el=>el.classList.contains('reduce-motion')),next==='true');
+    if(mobile)await toggleMotion.tap();else await toggleMotion.click();
+    await page.waitForFunction(expected=>
+     document.querySelector('#motion-toggle')?.getAttribute('aria-pressed')===expected,original);
+    assert.equal(await page.locator('.page').evaluate(el=>el.classList.contains('reduce-motion')),original==='true');
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-site-footer').count(),1);
+    assert.equal(await page.locator('lhs-site-footer #motion-toggle').count(),1);
+   }
    if(mobile){
     const toggle=page.locator('.menu-button');
     await toggle.tap();

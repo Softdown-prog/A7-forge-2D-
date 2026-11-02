@@ -1,0 +1,12 @@
+<footer class="footer"><div class="wrap footer-grid">
+ <div><a class="brand" href="/">LAN HOUSE SIMULATOR</a><p class="small">Seu bairro. Seu negócio. Sua história.</p></div>
+ <nav aria-label="Explore o salão"><h2>EXPLORAR</h2>
+  @for(link of navigation;track link.href){<a [href]="link.href">{{link.label}}</a>}
+ </nav>
+ <nav aria-label="Informações"><h2>INFORMAÇÕES</h2>
+  @for(link of footerLinks;track link.href){<a [href]="link.href">{{link.label}}</a>}
+ </nav>
+</div><div class="wrap footer-bottom"><span>© 2026 SOFTDOWN · LAN HOUSE SIMULATOR</span>
+ <button type="button" id="motion-toggle" [attr.aria-pressed]="reduceMotion()"
+  (click)="requestMotionToggle()">{{reduceMotion()?'Animações pausadas':'Pausar animações'}}</button>
+ <span>REESCRITA ANGULAR · NÃO PUBLICAR</span></div></footer>

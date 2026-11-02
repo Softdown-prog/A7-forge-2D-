@@ -1,5 +1,6 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
-import {footerLinks,navigation,pathOf} from './site-data';
+import {pathOf} from './site-data';
+import {SiteFooterComponent} from './site-footer';
 import {EraTimelineComponent} from './era-timeline';
 import {SiteHeaderComponent} from './site-header';
 import {HelpSearchComponent} from './help-search';
@@ -13,14 +14,12 @@ import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent,SiteHeaderComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
 export class SiteApp implements OnInit,OnDestroy{
  readonly path=pathOf(location.pathname);
- readonly navigation=navigation;
- readonly footerLinks=footerLinks;
  readonly legalSections=this.path==='/termos/'?termsSections:privacySections;
  readonly reduceMotion=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');

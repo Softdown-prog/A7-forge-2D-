@@ -201,3 +201,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Testes de fronteira e Chromium verificam montagem única, rota atual, abertura por toque/teclado, fechamento por Escape, reload F5 e comportamento responsivo.
 - A alteração fica na prévia Angular isolada: não modifica Canvas, saves, checkout, Cloudflare nem faz cutover.
 - A CSP estrita do site usa `style-src 'self'`: o cabeçalho não declara `styles:[]` inline no decorator. Sua regra `display:block` fica na folha externa `site.css`, e um teste impede reintroduzir estilos inline no componente.
+
+### Microetapa — rodapé Angular independente com motion global
+- O novo `SiteFooterComponent` standalone (`OnPush`) assume links institucionais, layout do rodapé, botão `#motion-toggle` e feedback acessível `aria-pressed`.
+- `SiteApp` permanece dono do `reduceMotion` global e da sincronização com `prefers-reduced-motion`; o rodapé recebe o estado via `input.required<boolean>()` e comunica o clique com `output<void>()`. Sem estado duplicado, listeners manuais, persistência ou acesso ao Canvas.
+- A regra `display:block` permanece em `site.css`, não em estilos inline proibidos pela CSP. Testes Node verificam propriedade única; Chromium desktop/mobile confirma alternância, atualização da classe de movimento, restauração e F5.
+- Apenas a versão institucional Angular isolada é afetada. Sem merge, cutover, deploy ou mudanças financeiras.
