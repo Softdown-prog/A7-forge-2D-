@@ -38,6 +38,7 @@ test('concurrent double clicks reuse one preference; amounts, user and mode are 
 });
 test('verified approvals credit once, late pending cannot undo, refunds and chargebacks reverse once',async()=>{
  const f=fixture(),order=await f.service.createOrder('player','donate-5','key');const p=payment(order);
+ assert.equal(order.sandboxTestSeller,undefined,'Production response must not claim a test seller');
  await Promise.all([f.service.applyPayment(p),f.service.applyPayment(p)]);assert.equal(f.rows.get('accounts/player').cookiesBalance,50);
  await f.service.applyPayment({...p,status:'pending',date_last_updated:'2026-10-17T19:00:00Z'});assert.equal(f.rows.get('accounts/player').cookiesBalance,50);
  await f.service.applyPayment({...p,transaction_amount_refunded:2,date_last_updated:'2026-10-17T21:00:00Z'});assert.equal(f.rows.get('accounts/player').cookiesBalance,30);
@@ -51,11 +52,15 @@ test('wrong amount, currency, seller, application and environment cannot credit'
 });
 test('sandbox wallet never credits real Cookies and real orders are isolated',async()=>{
  const f=fixture({sandbox:true}),order=await f.service.createOrder('player','donate-5','key');await f.service.applyPayment(payment(order,{live_mode:false}));
+ assert.equal(order.sandboxTestSeller,undefined,'Ordinary sandbox response must never claim a test seller');
  assert.equal(f.rows.get('accounts/player').cookiesBalance,undefined);assert.equal(f.rows.get('accounts/player').cookiesBalanceSandbox,50);
 });
 test('verified test sellers may use live_mode=true but still only receive sandbox Cookies',async()=>{
  const f=fixture({sandbox:true,sellerIsTest:true}),order=await f.service.createOrder('player','donate-5','key');await f.service.applyPayment(payment(order));
  assert.equal(new URL(order.url).hostname,'www.mercadopago.com.br');
+ assert.deepEqual({mode:order.mode,sandboxTestSeller:order.sandboxTestSeller},
+  {mode:'sandbox',sandboxTestSeller:true});
+ assert.deepEqual(await f.service.createOrder('player','donate-5','key'),order);
  assert.equal(f.rows.get('accounts/player').cookiesBalance,undefined);assert.equal(f.rows.get('accounts/player').cookiesBalanceSandbox,50);
  await assert.rejects(f.service.applyPayment(payment(order,{collector_id:999})),e=>e.status===400);
 });

@@ -82,3 +82,36 @@ test('retry uses exact caller-provided idempotency key without double pricing',a
  assert.equal(h.calls.filter(x=>x.kind==='order').length,2);
  assert.ok(h.calls.filter(x=>x.kind==='order').every(x=>x.idempotencyKey===key));
 });
+
+test('backend-attested test sellers may use www only in sandbox and never credit Cookies',async()=>{
+ const h=harness();
+ const www='https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic';
+ h.options.adapter.createOrder=async(body,idempotencyKey)=>{
+  h.calls.push({kind:'order',body,idempotencyKey});
+  return {...order,url:www,mode:'sandbox',sandboxTestSeller:true};
+ };
+ const result=await checkout.simulateSandboxCheckout(h.options);
+ assert.equal(result.checkoutUrl,www);
+ assert.equal(result.paymentStatus,'not-confirmed');
+ assert.equal(Object.hasOwn(result,'credited'),false);
+ assert.equal(Object.hasOwn(result,'balance'),false);
+});
+test('www checkout is blocked unless both server sandbox mode and test seller claim match',()=>{
+ const www='https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic';
+ const inconsistent=[
+  {url:www},{url:www,mode:'sandbox'},{url:www,sandboxTestSeller:true},
+  {url:www,mode:'production',sandboxTestSeller:true},
+  {url:www,mode:'sandbox',sandboxTestSeller:false},
+  {url:www,mode:'sandbox',sandboxTestSeller:'true'},
+  {url:www,mode:'sandbox',sandboxTestSeller:1},
+  {url:'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic',
+   mode:'sandbox',sandboxTestSeller:true},
+  {url:'https://www.mercadopago.com.br/checkout/v1/redirect',
+   mode:'sandbox',sandboxTestSeller:true},
+  {url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=x&pref_id=y',
+   mode:'sandbox',sandboxTestSeller:true},
+  {url:'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=x#fragment',
+   mode:'sandbox',sandboxTestSeller:true}
+ ];
+ for(const fields of inconsistent)assert.throws(()=>checkout.validateSandboxOrder({...order,...fields}));
+});

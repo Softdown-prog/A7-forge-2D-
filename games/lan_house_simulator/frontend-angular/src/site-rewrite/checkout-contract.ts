@@ -1,7 +1,7 @@
 /**
- * Angular checkout CONTRACT only. Intentionally not wired into a live component,
- * account client, browser navigation or production API.
- * Tests MUST inject a synthetic backend; no real checkout can be started here.
+ * Angular sandbox order validation. Used only for explicitly confirmed
+ * sandbox-order preparation; never navigates to a checkout or credits Cookies.
+ * Production payments remain disabled in the Donate UI.
  */
 export type DonationPackageId='donate-5'|'donate-10';
 export interface VerifiedCheckoutAccount {
@@ -18,7 +18,7 @@ export interface SandboxCheckoutReceipt extends ApprovedQuote {
  readonly checkoutUrl:string;
  readonly paymentStatus:'not-confirmed';
 }
-/** No real requests are made unless a future explicitly-reviewed adapter is supplied. */
+/** Network transport is caller-owned; this contract itself performs no fetch. */
 export interface SandboxCheckoutAdapter {
  readConfig():Promise<unknown>;
  createOrder(
@@ -29,6 +29,9 @@ export interface SandboxCheckoutAdapter {
 const knownPackages:ReadonlySet<string>=new Set(['donate-5','donate-10']);
 const sandboxHosts:ReadonlySet<string>=new Set([
  'sandbox.mercadopago.com.br','sandbox.mercadopago.com'
+]);
+const verifiedTestSellerHosts:ReadonlySet<string>=new Set([
+ 'www.mercadopago.com.br','www.mercadopago.com'
 ]);
 function record(value:unknown):Record<string,unknown>{
  if(value===null||typeof value!=='object'||Array.isArray(value))
@@ -60,10 +63,19 @@ export function validateSandboxOrder(raw:unknown):Readonly<{orderId:string;check
  if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id))
   throw Error('Identificador do pedido inválido.');
  if(typeof order['url']!=='string')throw Error('Checkout inválido.');
+ // Accept live-looking www URLs ONLY for a backend-attested sandbox TEST seller.
+ // Neither the browser's payment mode nor a client-supplied parameter grants this.
+ const testSeller=order['mode']==='sandbox'&&order['sandboxTestSeller']===true;
+ if((order['mode']!==undefined&&order['mode']!=='sandbox')||
+  (order['sandboxTestSeller']!==undefined&&order['sandboxTestSeller']!==true)||
+  (order['sandboxTestSeller']===true&&!testSeller))
+  throw Error('Ambiente do checkout incompatível.');
  let url:URL;
  try{url=new URL(order['url']);}catch{throw Error('Checkout inválido.');}
+ const hosts=testSeller?verifiedTestSellerHosts:sandboxHosts;
  if(url.protocol!=='https:'||url.username||url.password||url.port||url.hash||
-  !sandboxHosts.has(url.hostname))
+  !hosts.has(url.hostname)||url.pathname!=='/checkout/v1/redirect'||
+  url.searchParams.getAll('pref_id').length!==1||!url.searchParams.get('pref_id'))
   throw Error('Destino de checkout não permitido para testes.');
  return {orderId:id,checkoutUrl:url.href};
 }
@@ -73,9 +85,9 @@ export function validateIdempotencyKey(value:string):string{
  return value;
 }
 /**
- * Model the full prospective handshake using INJECTED test-only responses.
- * Do NOT use with a real adapter until payment UX, permissions and guards are reviewed.
- * A retry must reuse the same caller-owned idempotency key.
+ * Validate sandbox quotes and order responses. The injected adapter can use
+ * authenticated sandbox transport, but this function neither opens checkout
+ * nor confirms a payment. Retries must retain the same idempotency key.
  */
 export async function simulateSandboxCheckout(options:Readonly<{
  readonly account:VerifiedCheckoutAccount|null;

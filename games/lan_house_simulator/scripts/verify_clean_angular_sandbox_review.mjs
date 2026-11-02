@@ -36,7 +36,7 @@ try{
   const page=await context.newPage();
   const errors=[],unsafe=[];
   let mode='production',verified=false,validQuote=true,quoteCalls=0;
-  let orderStatus=200;
+  let orderStatus=200,officialTestSeller=false,claimTestSeller=false;
   const orderWrites=[];
   page.on('pageerror',err=>errors.push(err.message));
   await context.route('**/*',async route=>{
@@ -57,7 +57,9 @@ try{
     await route.fulfill({status:orderStatus,contentType:'application/json',
      body:JSON.stringify(orderStatus===200?{
       id:'b'.repeat(64),
-      url:'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic'
+      url:(officialTestSeller?'https://www.mercadopago.com.br':
+       'https://sandbox.mercadopago.com.br')+'/checkout/v1/redirect?pref_id=synthetic',
+      ...(claimTestSeller?{mode:'sandbox',sandboxTestSeller:true}:{})
      }:{error:'Synthetic network failure'})});
     return;
    }
@@ -153,13 +155,35 @@ try{
   await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
    ?.textContent?.includes('Não foi possível preparar o pedido sandbox'));
   assert.equal(orderWrites.length,2,'Mode change must not issue sandbox POST');
+  // A www URL without backend test-seller attestation is never accepted.
+  mode='sandbox';officialTestSeller=true;claimTestSeller=false;
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  await page.locator('#sandbox-terms').check();
+  await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Não foi possível preparar o pedido sandbox'));
+  assert.equal(orderWrites.length,3);
+  assert.equal(await page.locator('#sandbox-order-id').count(),0);
+  // Reusing the same idempotency key now succeeds with backend-attested sandbox seller.
+  claimTestSeller=true;
+  await page.locator('#retry-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Pedido sandbox preparado'));
+  assert.equal(orderWrites.length,4);
+  assert.equal(orderWrites[2].headers['idempotency-key'],
+   orderWrites[3].headers['idempotency-key']);
+  assert.equal(await page.locator('a[href*="mercadopago"]').count(),0);
+  assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
   assert.deepEqual(unsafe,[],'No real APIs or checkout navigation');
   assert.deepEqual(errors,[],'No browser errors');
   assert.ok(quoteCalls>=4);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
   results.push({width,verifiedGate:true,explicitConsent:true,
    malformedQuoteRejected:true,sandboxOrdersMocked:orderWrites.length,
-   keyReused:true,productionRevocationBlocked:true,realCheckout:false});
+   keyReused:true,productionRevocationBlocked:true,
+   unattestedSellerUrlBlocked:true,verifiedTestSellerAccepted:true,realCheckout:false});
   await page.screenshot({path:resolve(evidence,'checkout-review-'+width+'.png'),fullPage:true});
   await context.close();
  }

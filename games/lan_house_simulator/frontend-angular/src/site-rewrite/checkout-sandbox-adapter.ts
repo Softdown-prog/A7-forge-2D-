@@ -1,4 +1,4 @@
-/** Standalone authenticated sandbox adapter, intentionally NOT imported by Donate UI.
+/** Authenticated adapter used for explicit sandbox order preparation by Donate.
  * All calls stay on the configured HTTPS API origin. No provider redirect occurs.
  */
 import {AccountError,SiteAccountClient} from './account-client';

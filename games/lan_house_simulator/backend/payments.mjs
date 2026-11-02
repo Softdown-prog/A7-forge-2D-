@@ -38,6 +38,10 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
  const expectedLiveMode=!sandbox||sellerIsTest;
  const mode=sandbox?'sandbox':'production',balanceField=sandbox?'cookiesBalanceSandbox':'cookiesBalance';
  const checkoutEnvironment=Object.freeze({sandbox,sellerIsTest});
+ // Only the server knows the seller is an official test user (verified at boot).
+ // The browser may inspect the URL but must never infer a paid status from it.
+ const checkoutResult=(id,url)=>sandbox&&sellerIsTest?
+  {id,url,mode:'sandbox',sandboxTestSeller:true}:{id,url};
  const summary=order=>({id:order.id,priceCents:order.priceCents,cookies:order.cookies,status:order.status,mode:order.mode});
  async function createOrder(uid,packageId,key){
   id(packageId);id(key);const pack=Object.hasOwn(packages,packageId)?packages[packageId]:null;if(!pack)throw fault(400,'Pacote indisponível.');
@@ -55,8 +59,8 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
    tx.create(ref,{...created,claim,creatingUntil:now()+60_000});tx.create(recent,summary(created));tx.update(recent,{createdAt:FieldValue.serverTimestamp()});return created;
   });
   // Treat persisted URLs as untrusted too, including idempotent retries.
-  if(order.checkoutUrl)return {id:order.id,
-   url:validCheckout(order.checkoutUrl,checkoutEnvironment)};
+  if(order.checkoutUrl)return checkoutResult(order.id,
+   validCheckout(order.checkoutUrl,checkoutEnvironment));
   // A single active creator per order prevents double-click/concurrent preferences.
   // The same key always refers to this immutable server-priced order.
   try{
@@ -64,7 +68,7 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
    const url=validCheckout(
     sandbox&&!sellerIsTest?preference.sandbox_init_point:preference.init_point,
     checkoutEnvironment);
-   await db.runTransaction(async tx=>{const current=(await tx.get(ref)).data();if(current.claim!==claim)throw fault(409,'Seu pagamento está sendo conferido. Tente novamente.');tx.update(ref,{checkoutUrl:url,preferenceId:preference.id,creatingUntil:0});});return {id:orderId,url};
+   await db.runTransaction(async tx=>{const current=(await tx.get(ref)).data();if(current.claim!==claim)throw fault(409,'Seu pagamento está sendo conferido. Tente novamente.');tx.update(ref,{checkoutUrl:url,preferenceId:preference.id,creatingUntil:0});});return checkoutResult(orderId,url);
   }catch(error){await db.runTransaction(async tx=>{const current=(await tx.get(ref)).data();if(current?.claim===claim)tx.update(ref,{creatingUntil:0});}).catch(()=>{});throw error;}
  }
  async function applyPayment(payment){
