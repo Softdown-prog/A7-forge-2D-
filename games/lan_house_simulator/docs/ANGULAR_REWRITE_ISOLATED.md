@@ -194,3 +194,9 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - `SiteApp` deixa de possuir `era`, `selectedEra` e `selectEra`. O catálogo permanece em `site-data.ts`; o simulador Canvas, as datas e regras da economia não são alterados.
 - Testes de arquitetura e Chromium desktop/mobile validam a troca de 2024 e 2005, os botões `aria-pressed`, imagens e o retorno à seleção inicial após F5, além da ausência nas demais rotas.
 - Mudança isolada em branch, sem deploy ou cutover.
+
+### Microetapa — cabeçalho e menu mobile encapsulados no Angular
+- `SiteHeaderComponent` standalone, OnPush, usa um Signal próprio para o menu e recebe a rota por `input.required<SitePath>()`. A raiz `SiteApp` não gerencia mais `openMenu` nem os handlers do cabeçalho.
+- Preserva logo, links do catálogo Angular, `#site-nav`, `aria-expanded` e `aria-current`. Escape é tratado com um único `@HostListener` Angular, sem registro manual de listeners nativos.
+- Testes de fronteira e Chromium verificam montagem única, rota atual, abertura por toque/teclado, fechamento por Escape, reload F5 e comportamento responsivo.
+- A alteração fica na prévia Angular isolada: não modifica Canvas, saves, checkout, Cloudflare nem faz cutover.

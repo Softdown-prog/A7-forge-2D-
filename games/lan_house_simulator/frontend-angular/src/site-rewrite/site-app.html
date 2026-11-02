@@ -1,19 +1,6 @@
 <a class="skip" href="#conteudo">Pular para o conteúdo</a>
-<div class="page" [class.reduce-motion]="reduceMotion()" (keydown.escape)="closeMenu()">
-<header class="header"><div class="wrap bar">
- <a class="brand" href="/" aria-label="Lan House Simulator, página inicial">
-  <img src="/assets/brand.svg" alt="" width="41" height="41"/>
-  <span>LAN HOUSE SIMULATOR<small>UM JOGO SOFTDOWN</small></span>
- </a>
- <button class="menu-button" type="button" aria-controls="site-nav"
-  [attr.aria-expanded]="openMenu()" (click)="toggleMenu()">Menu ☰</button>
- <nav id="site-nav" class="nav" [class.open]="openMenu()" aria-label="Navegação principal">
-  @for(link of navigation;track link.href){
-   <a [href]="link.href" [attr.aria-current]="path===link.href?'page':null"
-    (click)="closeMenu()">{{link.label}}</a>
-  }
- </nav>
-</div></header>
+<div class="page" [class.reduce-motion]="reduceMotion()">
+<lhs-site-header [path]="path"></lhs-site-header>
 <main id="conteudo">
  @switch(path){
   @case('/'){

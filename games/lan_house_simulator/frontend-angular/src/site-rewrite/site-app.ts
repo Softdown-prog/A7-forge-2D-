@@ -1,6 +1,7 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
 import {footerLinks,navigation,pathOf} from './site-data';
 import {EraTimelineComponent} from './era-timeline';
+import {SiteHeaderComponent} from './site-header';
 import {HelpSearchComponent} from './help-search';
 import {termsSections,privacySections} from './legal-content';
 import {LocalDataComponent} from './local-data';
@@ -12,7 +13,7 @@ import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,EraTimelineComponent,SiteHeaderComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
@@ -21,7 +22,6 @@ export class SiteApp implements OnInit,OnDestroy{
  readonly navigation=navigation;
  readonly footerLinks=footerLinks;
  readonly legalSections=this.path==='/termos/'?termsSections:privacySections;
- readonly openMenu=signal(false);
  readonly reduceMotion=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');
  private readonly mediaListener=(event:MediaQueryListEvent):void=>{
@@ -35,7 +35,5 @@ export class SiteApp implements OnInit,OnDestroy{
  }
  ngOnDestroy():void{this.media.removeEventListener('change',this.mediaListener);}
  pageTitle():string{return pageMetadata[this.path].title;}
- toggleMenu():void{this.openMenu.update(value=>!value);}
- closeMenu():void{this.openMenu.set(false);}
  toggleMotion():void{this.reduceMotion.update(value=>!value);}
 }
