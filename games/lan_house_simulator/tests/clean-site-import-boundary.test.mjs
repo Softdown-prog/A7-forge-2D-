@@ -50,3 +50,17 @@ test('comments and ordinary strings are not mistaken for imports',()=>{
   "const note = \"import React from 'react'\"; // import '../site/main'",
   'site-app.ts'),[]);
 });
+
+
+test('only the exact Canvas save validator is permitted in the Angular account',()=>{
+ const legitimate="async function validate(){const modulePath='/game/js/sim/saveTransfer.js';return await import(modulePath);}";
+ assert.deepEqual(auditSource(legitimate,'account.ts'),[]);
+ assert.ok(auditSource(legitimate,'site-app.ts')
+  .includes('non-angular-dependency-import'));
+ const attack="async function validate(){const modulePath='/game/js/site.mjs';return await import(modulePath);}";
+ assert.ok(auditSource(attack,'account.ts')
+  .includes('non-angular-dependency-import'));
+ const computed="async function validate(){const modulePath=location.hash;return await import(modulePath);}";
+ assert.ok(auditSource(computed,'account.ts')
+  .includes('nonliteral-dynamic-import'));
+});
