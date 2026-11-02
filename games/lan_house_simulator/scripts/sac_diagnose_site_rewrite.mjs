@@ -1,6 +1,7 @@
 // SAC LHS: trusted GitHub Actions host, no VPS, API, deployment or worker changes.
 import {execFileSync,spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
+import {siteRewriteEntrypoint} from './sac_site_rewrite_entry.mjs';
 import {appendFile,mkdir,readFile,rm,writeFile} from 'node:fs/promises';
 import {fileURLToPath,pathToFileURL} from 'node:url';
 import path from 'node:path';
@@ -67,10 +68,21 @@ async function main(){
   import(pathToFileURL(path.join(sac,'packages/angular-guardian/src/sandbox.mjs')).href)]);
  const angularVersion=JSON.parse(await readFile(path.join(workspace,'node_modules/@angular/core/package.json'),'utf8')).version;
  if(!/^22\.\d{1,3}\.\d{1,3}$/.test(angularVersion))throw Error('unsupported-angular-profile');
+ // SAC v1 signs an exact bundle name BEFORE postflight. Discover it by building
+ // once, then run the attested build again and refuse changed fingerprints.
+ const buildArgs=['node_modules/@angular/cli/bin/ng.js','build','site-rewrite',
+  '--configuration','production'];
+ const buildOptions={cwd:workspace,shell:false,stdio:'inherit',timeout:240000,
+  env:{...process.env,NG_CLI_ANALYTICS:'false',CI:'true'}};
+ await rm(path.join(workspace,'dist/site-rewrite'),{recursive:true,force:true});
+ const discovery=spawnSync(process.execPath,buildArgs,buildOptions);
+ if(discovery.status!==0||discovery.error)throw Error('angular-entrypoint-discovery-build-failed');
+ const discoveredEntry=await siteRewriteEntrypoint(
+  path.join(workspace,'dist/site-rewrite/browser'));
  const profile={schema_version:1,profile_id:'lhs-site-rewrite',angular_version:angularVersion,
   capabilities:['angular','workspace','static-dist'],mode:'angular-only',mount:'/',
   bundle_hints:{index:'index.html',angular_host:'lhs-site',
-    angular_entrypoints:['main.js'],assets:[],legacy_react_entrypoints:[]},
+    angular_entrypoints:[discoveredEntry],assets:[],legacy_react_entrypoints:[]},
   rules:['SAC-PRE001','SAC-P001'].map(rule_id=>({
     rule_id,version:'1.0.0',required:true,enforcement:'blocking'}))};
  const resources={workspace,dist:'dist/site-rewrite/browser',sourceFiles:sourceManifest()};
@@ -81,11 +93,16 @@ async function main(){
  let verifiedBrowser;
  if(session){
    await rm(path.join(workspace,'dist/site-rewrite'),{recursive:true,force:true});
-   const run=spawnSync(process.execPath,
-    ['node_modules/@angular/cli/bin/ng.js','build','site-rewrite','--configuration','production'],
-    {cwd:workspace,shell:false,stdio:'inherit',timeout:240000,
-      env:{...process.env,NG_CLI_ANALYTICS:'false',CI:'true'}});
-   const buildStatus=run.status===0&&!run.error?'pass':'fail';
+   const run=spawnSync(process.execPath,buildArgs,buildOptions);
+   let buildStatus=run.status===0&&!run.error?'pass':'fail';
+   if(buildStatus==='pass'){
+     const rebuiltEntry=await siteRewriteEntrypoint(
+       path.join(workspace,'dist/site-rewrite/browser'));
+     if(rebuiltEntry!==discoveredEntry){
+       console.error('SAC: Angular asset hash changed between builds; postflight blocked.');
+       buildStatus='fail';
+     }
+   }
    receipt=await sealBuild({...context,session,buildStatus});
    audit=await auditPipeline({...context,receipt});
    if(audit.static_pipeline_pass===true){
