@@ -9,7 +9,7 @@ test('preview depends on real NestJS but cannot affect the Express production en
  const live=JSON.parse(read('backend/package.json'));
  assert.equal(pkg.private,true);
  for(const name of ['@nestjs/common','@nestjs/core','@nestjs/platform-express'])
-  assert.equal(pkg.dependencies[name],'12.0.0');
+  assert.equal(pkg.dependencies[name],'12.1.3');
  assert.equal(live.scripts.start,'node server.mjs');
  assert.match(read('backend/server.mjs'),/const app=express\(\)/);
  assert.doesNotMatch(read('backend/server.mjs'),/nest-preview|NestFactory/);
