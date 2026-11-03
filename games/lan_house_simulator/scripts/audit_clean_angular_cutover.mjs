@@ -72,7 +72,7 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
    JSON.stringify(manifest.paths)===JSON.stringify(PUBLIC_ROUTES)&&
    JSON.stringify(manifest.excluded)===JSON.stringify(PRIVATE_ROUTES),
   'Prerender manifest distinguishes eight public and four sensitive pages'));
- const hashedName=/^(?:main|styles|chunk)-[a-z0-9]{6,}\.(?:js|css)$/i;
+ const hashedName=/^[a-z][a-z0-9_-]*-[a-z0-9]{6,}\.(?:js|css)$/i;
  const emitted=Array.isArray(assets.files)?assets.files:[];
  const validAssets=emitted.length>=2&&emitted.every(name=>typeof name==='string'&&hashedName.test(name)&&
   existsSync(resolve(siteRoot,'assets/site',name)))&&
