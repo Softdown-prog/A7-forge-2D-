@@ -33,3 +33,19 @@ test('the checkout contract is test-only and production Donate remains disabled'
  assert.match(markup,/aria-disabled="true"/);
  assert.doesNotMatch(account,/path==='\/v1\/orders'&&body!==undefined/);
 });
+
+test('expired sandbox authentication cannot keep a retry button or another login\'s idempotency key',()=>{
+ const source=read('../frontend-angular/src/site-rewrite/donate.ts');
+ const browser=read('../scripts/verify_clean_angular_sandbox_review.mjs');
+ assert.match(source,/error instanceof AccountError&&error\.status===401/);
+ for(const statement of [
+  'client.signOut();','this.orderKeys.clear();',
+  'this.reviewClient=null;','this.reviewQuote.set(null);',
+  'this.sandboxOrderId.set(null);','this.termsAccepted.set(false);',
+  "this.reviewState.set('login-required');"
+ ])assert.ok(source.includes(statement),'Missing expiration cleanup: '+statement);
+ assert.match(browser,/orderStatus=401/);
+ assert.match(browser,/New login needs new order key/);
+ assert.match(browser,/Auth expiry must clear the stored session/);
+ assert.match(browser,/401 refresh must preserve the order key/);
+});
