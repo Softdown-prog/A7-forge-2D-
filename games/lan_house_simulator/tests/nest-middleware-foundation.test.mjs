@@ -72,7 +72,7 @@ test('preview Firebase auth port fails closed, checks revocation and gates email
  assert.match(module,/consumer\.apply\(FirebaseAuthMiddleware\)/);
  // GET handlers in Express/Nest can implicitly answer HEAD, so guard every verb.
  for(const path of ['auth','verified','limited'])
-  assert.match(module,new RegExp("\\\\{path:'__nest_probe/"+path+"',method:RequestMethod\\\\.ALL\\\\}"));
+  assert.ok(module.includes("{path:'__nest_probe/"+path+"',method:RequestMethod.ALL}"));
 
  assert.match(module,/consumer\.apply\(VerifiedEmailMiddleware\)/);
  assert.match(controller,/@Get\('auth'\)/);
