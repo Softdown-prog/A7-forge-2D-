@@ -19,18 +19,20 @@ export class PreviewAppModule implements NestModule{
     {path:'__nest_probe/verified',method:RequestMethod.ALL},
     {path:'__nest_probe/limited',method:RequestMethod.ALL}
    );
+  // Secure all methods, including implicit HEAD responses to GET routes.
+  // OPTIONS is handled by OriginPolicyMiddleware before these guards.
   consumer.apply(FirebaseAuthMiddleware)
    .forRoutes(
-    {path:'__nest_probe/auth',method:RequestMethod.GET},
-    {path:'__nest_probe/verified',method:RequestMethod.GET},
-    {path:'__nest_probe/limited',method:RequestMethod.GET}
+    {path:'__nest_probe/auth',method:RequestMethod.ALL},
+    {path:'__nest_probe/verified',method:RequestMethod.ALL},
+    {path:'__nest_probe/limited',method:RequestMethod.ALL}
    );
   consumer.apply(VerifiedEmailMiddleware)
    .forRoutes(
-    {path:'__nest_probe/verified',method:RequestMethod.GET},
-    {path:'__nest_probe/limited',method:RequestMethod.GET}
+    {path:'__nest_probe/verified',method:RequestMethod.ALL},
+    {path:'__nest_probe/limited',method:RequestMethod.ALL}
    );
   consumer.apply(UserQuotaMiddleware)
-   .forRoutes({path:'__nest_probe/limited',method:RequestMethod.GET});
+   .forRoutes({path:'__nest_probe/limited',method:RequestMethod.ALL});
  }
 }

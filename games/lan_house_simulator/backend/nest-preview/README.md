@@ -44,6 +44,9 @@ NestJS is a Node.js framework; it does not replace Node.js itself.
 - `VerifiedEmailMiddleware` is applied **after authentication** only on
   `GET /__nest_probe/verified`, mirroring the current 403 email verification gate.
   The unverified diagnostic endpoint is `GET /__nest_probe/auth`.
+- Protected diagnostic paths register middleware for every HTTP method, including
+  implicit `HEAD` for `GET`. Preflight `OPTIONS` still terminates at the earlier
+  CORS middleware; unsupported methods do not bypass authentication.
 - This is **not** a Firebase Admin SDK integration: no actual users are verified.
   The existing `/v1/auth/verification-email` exception and Firestore rate limits
   remain exclusively in Express. Real Firebase connection and quota parity are

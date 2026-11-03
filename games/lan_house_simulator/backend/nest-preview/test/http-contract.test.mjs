@@ -266,3 +266,37 @@ test('quota-store errors fail closed without returning database details',async()
   assert.doesNotMatch(JSON.stringify(body),/secret|firestore|connection/);
  }finally{await app.close();}
 });
+
+
+test('implicit HEAD and unsupported verbs cannot skip Firebase, email or quota guards',async()=>{
+ const verifier={
+  async verifyIdToken(token,checkRevoked){
+   assert.equal(checkRevoked,true);
+   if(token==='verified')return {uid:'user-head',email_verified:true};
+   if(token==='unverified')return {uid:'user-head',email_verified:false};
+   throw new Error('Invalid preview token');
+  }
+ };
+ const isolated=await createPreviewApp(verifier);
+ await isolated.listen(0,'127.0.0.1');
+ const address=isolated.getHttpServer().address();
+ assert.ok(address&&typeof address==='object');
+ const url='http://127.0.0.1:'+address.port;
+ try{
+  for(const route of ['auth','verified','limited']){
+   const unauthenticated=await fetch(url+'/__nest_probe/'+route,{method:'HEAD'});
+   assert.equal(unauthenticated.status,401,'HEAD must require a token on '+route);
+   assert.match(unauthenticated.headers.get('x-lhs-trace-id')??'',/^[a-f0-9-]{36}$/);
+  }
+  const emailGate=await fetch(url+'/__nest_probe/verified',{
+   method:'HEAD',headers:{Authorization:'Bearer unverified'}
+  });
+  assert.equal(emailGate.status,403);
+  const quotaGate=await fetch(url+'/__nest_probe/limited',{
+   method:'HEAD',headers:{Authorization:'Bearer verified'}
+  });
+  assert.equal(quotaGate.status,503,'No quota store must never allow implicit HEAD');
+  const unsupported=await fetch(url+'/__nest_probe/limited',{method:'POST'});
+  assert.equal(unsupported.status,401,'Unsupported verbs should still fail authentication');
+ }finally{await isolated.close();}
+});
