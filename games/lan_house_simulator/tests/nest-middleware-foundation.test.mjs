@@ -13,7 +13,7 @@ test('preview depends on real NestJS but cannot affect the Express production en
  // A patch of an adapter must not require a manual rewrite of this guard.
  for(const name of ['@nestjs/common','@nestjs/core','@nestjs/platform-express']){
   const version=pkg.dependencies[name];
-  assert.match(version,/^12\\.\\d+\\.\\d+$/,name);
+  assert.match(version,/^12\.\d+\.\d+$/,name);
   assert.equal(lock.packages['node_modules/'+name]?.version,version,name);
  }
  const adapter=lock.packages['node_modules/@nestjs/platform-express'];
