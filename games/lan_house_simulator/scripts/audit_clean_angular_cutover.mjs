@@ -18,7 +18,8 @@ export const PRIVATE_ROUTES=Object.freeze([
 export const SITE_ROUTES=Object.freeze([...PUBLIC_ROUTES,...PRIVATE_ROUTES]);
 
 const file=(path)=>existsSync(path)?readFileSync(path,'utf8'):'';
-const siteIndex=(root,path)=>file(resolve(root,'.'+path,'index.html'));
+const siteIndex=(root,path)=>file(path==='/404/'?resolve(root,'404.html'):
+ resolve(root,'.'+path,'index.html'));
 const check=(id,passed,detail)=>({id,passed,detail});
 const block=(id,reason)=>({id,reason});
 
@@ -86,7 +87,7 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
    return html.length>0&&!/react-entry\.js|website\/site\.mjs|\/assets\/site\.mjs/i.test(html);
   })&&
   angularBuilder.includes("src/site-rewrite/public/assets")&&
-  !angularBuilder.includes("website/build.mjs"),
+  !angularBuilder.includes("run(process.execPath,[resolve(root,'website/build.mjs')"),
   'Candidate uses its own canonical Angular assets, not legacy site entry scripts'));
  const noindex=pagePaths.every(path=>siteIndex(siteRoot,path).includes(
   '<meta name="robots" content="noindex,nofollow">'))&&
