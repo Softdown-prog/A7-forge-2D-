@@ -87,7 +87,7 @@ test('quota is transaction-based and only applied after verified Firebase identi
  const quota=read(prefix+'src/user-quota.ts');
  const middleware=read(prefix+'src/middleware/user-quota.middleware.ts');
  assert.match(module,/consumer\.apply\(UserQuotaMiddleware\)/);
- assert.match(module,/\{path:'__nest_probe\/limited',method:RequestMethod.GET\}/);
+ assert.match(module,/\{path:'__nest_probe\/limited',method:RequestMethod.ALL\}/);
  assert.ok(module.indexOf('consumer.apply(VerifiedEmailMiddleware)')<
   module.indexOf('consumer.apply(UserQuotaMiddleware)'));
  assert.match(bootstrap,/quota:UserQuotaPort=disabledUserQuota/);
