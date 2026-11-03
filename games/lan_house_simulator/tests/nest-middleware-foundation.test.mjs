@@ -8,8 +8,26 @@ test('preview depends on real NestJS but cannot affect the Express production en
  const pkg=JSON.parse(read(prefix+'package.json'));
  const live=JSON.parse(read('backend/package.json'));
  assert.equal(pkg.private,true);
- for(const name of ['@nestjs/common','@nestjs/core','@nestjs/platform-express'])
-  assert.equal(pkg.dependencies[name],'12.1.3');
+ const lock=JSON.parse(read(prefix+'package-lock.json'));
+ // Nest packages must share the supported major and exactly match the lockfile.
+ // A patch of an adapter must not require a manual rewrite of this guard.
+ for(const name of ['@nestjs/common','@nestjs/core','@nestjs/platform-express']){
+  const version=pkg.dependencies[name];
+  assert.match(version,/^12\.\d+\.\d+$/,name);
+  assert.equal(lock.packages['node_modules/'+name]?.version,version,name);
+ }
+ const adapter=lock.packages['node_modules/@nestjs/platform-express'];
+ for(const name of ['@nestjs/common','@nestjs/core'])
+  assert.equal(adapter.peerDependencies[name],'^12.0.0',name+' peer range');
+ // Regression guard for CVE-2026-113872: Multer >=2.5.0 is required.
+ const multer=lock.packages['node_modules/multer'];
+ assert.ok(multer,'Multer is installed through the Nest Express adapter');
+ const parts=multer.version.split('.').map(Number);
+ assert.ok(parts[0]>2||(parts[0]===2&&parts[1]>=5),
+  'Security: reject Multer <2.5.0 (CVE-2026-113872)');
+ assert.equal(adapter.dependencies.multer,multer.version);
+ assert.equal(lock.packages[''].dependencies['@nestjs/platform-express'],
+  pkg.dependencies['@nestjs/platform-express']);
  assert.equal(live.scripts.start,'node server.mjs');
  assert.match(read('backend/server.mjs'),/const app=express\(\)/);
  assert.doesNotMatch(read('backend/server.mjs'),/nest-preview|NestFactory/);
