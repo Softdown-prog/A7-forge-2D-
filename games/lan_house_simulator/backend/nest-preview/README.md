@@ -47,3 +47,11 @@ NestJS is a Node.js framework; it does not replace Node.js itself.
   The existing `/v1/auth/verification-email` exception and Firestore rate limits
   remain exclusively in Express. Real Firebase connection and quota parity are
   separate review stages before any cutover.
+
+## User quota preview (mock transactional storage only)
+- UserQuotaMiddleware runs after Firebase token and email verification, only on GET /__nest_probe/limited.
+- The transactional adapter models rateLimits/{verified UID}: exactly 30 successful requests per fixed minute, then 429, with expiresAt at now + 120 seconds.
+- UID comes solely from verified Firebase claims; no headers, queries or bodies set it.
+- Default quota port denies all calls with 503. HTTP tests inject a mock transactional store; there is no live Firebase or Firestore connection.
+- Storage errors and corrupt counters fail closed as 503, never in-memory fallback.
+- Real Firestore integration and account API migration require separate approval.

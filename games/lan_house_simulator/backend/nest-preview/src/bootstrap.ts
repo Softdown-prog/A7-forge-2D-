@@ -5,14 +5,20 @@ import type {Express} from 'express';
 import {PreviewAppModule} from './app.module.js';
 import {disabledFirebaseVerifier,FIREBASE_TOKEN_VERIFIER} from './firebase-token-verifier.js';
 import type {FirebaseIdTokenVerifier} from './firebase-token-verifier.js';
+import {disabledUserQuota,USER_QUOTA_PORT} from './user-quota.js';
+import type {UserQuotaPort} from './user-quota.js';
 
 /** Inert by default; no socket is opened until the caller explicitly listens. */
 export async function createPreviewApp(
- verifier:FirebaseIdTokenVerifier=disabledFirebaseVerifier
+ verifier:FirebaseIdTokenVerifier=disabledFirebaseVerifier,
+ quota:UserQuotaPort=disabledUserQuota
 ):Promise<INestApplication>{
  const module:DynamicModule={
   module:PreviewAppModule,
-  providers:[{provide:FIREBASE_TOKEN_VERIFIER,useValue:verifier}]
+  providers:[
+   {provide:FIREBASE_TOKEN_VERIFIER,useValue:verifier},
+   {provide:USER_QUOTA_PORT,useValue:quota}
+  ]
  };
  const app=await NestFactory.create(module,{logger:false});
  const express=app.getHttpAdapter().getInstance() as Express;

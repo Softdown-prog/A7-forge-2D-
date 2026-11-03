@@ -16,4 +16,11 @@ export class PreviewController{
 
  @Get('verified')
  verified():{readonly verified:true}{return {verified:true};}
+
+ /** Never expose UID or quota counters in diagnostic responses. */
+ @Get('limited')
+ limited():{readonly allowed:true}{return {allowed:true};}
+
+ @Options('limited')
+ limitedPreflight():void{}
 }

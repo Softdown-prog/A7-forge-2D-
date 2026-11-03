@@ -5,6 +5,7 @@ import {SecurityHeadersMiddleware} from './middleware/security-headers.middlewar
 import {TraceMiddleware} from './middleware/trace.middleware.js';
 import {FirebaseAuthMiddleware} from './middleware/firebase-auth.middleware.js';
 import {VerifiedEmailMiddleware} from './middleware/verified-email.middleware.js';
+import {UserQuotaMiddleware} from './middleware/user-quota.middleware.js';
 import {PreviewController} from './preview.controller.js';
 
 /** One NestJS middleware chain; the Express business API remains canonical. */
@@ -15,14 +16,21 @@ export class PreviewAppModule implements NestModule{
    .forRoutes(
     {path:'__nest_probe/health',method:RequestMethod.ALL},
     {path:'__nest_probe/auth',method:RequestMethod.ALL},
-    {path:'__nest_probe/verified',method:RequestMethod.ALL}
+    {path:'__nest_probe/verified',method:RequestMethod.ALL},
+    {path:'__nest_probe/limited',method:RequestMethod.ALL}
    );
   consumer.apply(FirebaseAuthMiddleware)
    .forRoutes(
     {path:'__nest_probe/auth',method:RequestMethod.GET},
-    {path:'__nest_probe/verified',method:RequestMethod.GET}
+    {path:'__nest_probe/verified',method:RequestMethod.GET},
+    {path:'__nest_probe/limited',method:RequestMethod.GET}
    );
   consumer.apply(VerifiedEmailMiddleware)
-   .forRoutes({path:'__nest_probe/verified',method:RequestMethod.GET});
+   .forRoutes(
+    {path:'__nest_probe/verified',method:RequestMethod.GET},
+    {path:'__nest_probe/limited',method:RequestMethod.GET}
+   );
+  consumer.apply(UserQuotaMiddleware)
+   .forRoutes({path:'__nest_probe/limited',method:RequestMethod.GET});
  }
 }
