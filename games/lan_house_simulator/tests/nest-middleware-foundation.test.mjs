@@ -75,3 +75,28 @@ test('preview Firebase auth port fails closed, checks revocation and gates email
  assert.match(controller,/@Get\('verified'\)/);
  assert.doesNotMatch(bootstrap+module+auth+gate,/firebase-admin|createPayments|getFirestore|MP_ACCESS_TOKEN/);
 });
+
+test('quota is transaction-based and only applied after verified Firebase identity',()=>{
+ const module=read(prefix+'src/app.module.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const controller=read(prefix+'src/preview.controller.ts');
+ const quota=read(prefix+'src/user-quota.ts');
+ const middleware=read(prefix+'src/middleware/user-quota.middleware.ts');
+ assert.match(module,/consumer\.apply\(UserQuotaMiddleware\)/);
+ assert.match(module,/\{path:'__nest_probe\/limited',method:RequestMethod.GET\}/);
+ assert.ok(module.indexOf('consumer.apply(VerifiedEmailMiddleware)')<
+  module.indexOf('consumer.apply(UserQuotaMiddleware)'));
+ assert.match(bootstrap,/quota:UserQuotaPort=disabledUserQuota/);
+ assert.match(bootstrap,/provide:USER_QUOTA_PORT,useValue:quota/);
+ assert.match(controller,/@Get\('limited'\)/);
+ assert.match(quota,/runTransaction\(async tx=>/);
+ assert.match(quota,/collection\('rateLimits'\)\.doc\(uid\)/);
+ assert.match(quota,/count>=30/);
+ assert.match(quota,/new Date\(stamp\+120_000\)/);
+ assert.match(quota,/disabledUserQuota/);
+ assert.match(middleware,/quota\.reserve\(request\.uid\)/);
+ for(const status of [401,403,429,503])
+  assert.match(middleware,new RegExp('status\\('+status+'\\)'));
+ assert.doesNotMatch(quota+middleware+bootstrap,
+  /from ['"]firebase-admin|from ['"]@google-cloud\/firestore|createPayments|MP_WEBHOOK_SECRET/);
+});
