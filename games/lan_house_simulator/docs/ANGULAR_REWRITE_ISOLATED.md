@@ -222,3 +222,10 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - O relatório **sempre retorna `not-ready`** enquanto houver pendências de homologação. Build/testes verdes não significam aprovação para publicar: o candidato ainda usa `noindex,nofollow`, os termos/privacidade têm avisos de revisão, o checkout de produção está bloqueado e faltam Android físico, paridade com contas e pagamentos reais, cache/CDN e autorização de cutover.
 - Falhas de integridade observáveis (página ou manifest ausente, import de entrada legada, pagamento inesperadamente habilitado, snapshot indevido de rota sensível) **reprovam a CI**. Bloqueios conhecidos de produto e homologação são listados sem forçar uma migração prematura.
 - `tests/clean-site-cutover-readiness.test.mjs` cria fixtures temporárias para provar que o relatório não dá falso positivo quando a evidência é retirada ou quando se altera o workflow de publicação. O motor Canvas, saves, backend Express, Mercado Pago, branch `main` e publicação permanecem intactos.
+
+### Microetapa — sessão expirada no pedido Donate sandbox
+
+- Se o pedido sandbox devolver HTTP 401 após a tentativa de renovação de token, a UI Angular encerra a sessão de teste, apaga a cotação, aceite dos termos, referência parcial do pedido e chaves de idempotência pendentes, e mostra a orientação para login. Não permanece botão de retry com credencial inválida.
+- Falhas transitórias HTTP 503 **continuam usando a mesma chave** por pacote e não encerram uma sessão válida; alternância para modo produção continua bloqueando o POST sandbox.
+- Chromium em 1280/414/360 exercita 401 com renovação, ausência de novo POST sem autenticação, limpeza de `sessionStorage`, login renovado e criação de uma chave nova para outro contexto de sessão. Nenhum pagamento real é iniciado ou confirmado.
+- O projeto mantém a interface de checkout de produção desabilitada e não troca o `out/site` público nem altera o backend Express ou motor Canvas.

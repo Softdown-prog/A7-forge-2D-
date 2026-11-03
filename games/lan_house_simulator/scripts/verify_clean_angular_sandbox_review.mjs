@@ -153,13 +153,62 @@ try{
   await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
    ?.textContent?.includes('Não foi possível preparar o pedido sandbox'));
   assert.equal(orderWrites.length,2,'Mode change must not issue sandbox POST');
+  await page.locator('#cancel-sandbox-review').click();
+
+  // Session expiry after both token refresh attempts must return to login,
+  // clear the quote/consent and prevent a third authorized retry.
+  mode='sandbox';
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  await page.locator('#sandbox-terms').check();
+  orderStatus=401;
+  await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Entre na sua conta'));
+  assert.equal(orderWrites.length,4,'A 401 may retry once with a refreshed token');
+  assert.equal(orderWrites[2].headers['idempotency-key'],
+   orderWrites[3].headers['idempotency-key'],'401 refresh must preserve the order key');
+  assert.equal(await page.locator('#retry-sandbox-order').count(),0);
+  assert.equal(await page.locator('#sandbox-review-quote').count(),0);
+  assert.equal(await page.locator('#sandbox-order-id').count(),0);
+  assert.equal(await page.locator('#sandbox-terms').count(),0);
+  assert.equal(await page.evaluate(()=>
+   sessionStorage.getItem('lhs.account.session.v1')),null,
+   'Auth expiry must clear the stored session');
+  // No POST is allowed until a new, explicitly restored session and consent.
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Entre na sua conta'));
+  assert.equal(orderWrites.length,4);
+
+  // A fresh login must never inherit the previous (expired) idempotency key.
+  await page.evaluate(cfg=>sessionStorage.setItem('lhs.account.session.v1',
+   JSON.stringify({apiUrl:new URL(cfg.apiUrl).origin,
+    firebaseApiKey:cfg.firebaseApiKey,idToken:'sandbox-synthetic-id',
+    refreshToken:'sandbox-synthetic-refresh',email:'synthetic@example.invalid',
+    createdAt:Date.now()})),config);
+  orderStatus=200;
+  await choose();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Confira o pacote'));
+  assert.equal(orderWrites.length,4,'Review alone must not POST an order');
+  await page.locator('#sandbox-terms').check();
+  await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')
+   ?.textContent?.includes('Pedido sandbox preparado'));
+  assert.equal(orderWrites.length,5);
+  assert.notEqual(orderWrites[4].headers['idempotency-key'],
+   orderWrites[3].headers['idempotency-key'],'New login needs new order key');
+  assert.equal(await page.locator('a[href*="mercadopago"]').count(),0);
+
   assert.deepEqual(unsafe,[],'No real APIs or checkout navigation');
   assert.deepEqual(errors,[],'No browser errors');
   assert.ok(quoteCalls>=4);
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2));
   results.push({width,verifiedGate:true,explicitConsent:true,
    malformedQuoteRejected:true,sandboxOrdersMocked:orderWrites.length,
-   keyReused:true,productionRevocationBlocked:true,realCheckout:false});
+   keyReused:true,productionRevocationBlocked:true,expiredAuthCleared:true,realCheckout:false});
   await page.screenshot({path:resolve(evidence,'checkout-review-'+width+'.png'),fullPage:true});
   await context.close();
  }
