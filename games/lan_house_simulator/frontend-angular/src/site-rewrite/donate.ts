@@ -114,6 +114,18 @@ export class DonateComponent implements OnInit,OnDestroy{
    this.reviewState.set('prepared');
   }catch(error){
    if(this.destroyed||this.reviewVersion!==version)return;
+   if(error instanceof AccountError&&error.status===401){
+    // An invalid session must never leave an authenticated retry button or
+    // an idempotency key reusable by the next person signing into this tab.
+    client.signOut();
+    this.orderKeys.clear();
+    this.reviewClient=null;
+    this.reviewQuote.set(null);
+    this.sandboxOrderId.set(null);
+    this.termsAccepted.set(false);
+    this.reviewState.set('login-required');
+    return;
+   }
    if(error instanceof AccountError&&error.status===410)this.orderKeys.delete(quote.packageId);
    this.reviewState.set('prepare-error');
   }
