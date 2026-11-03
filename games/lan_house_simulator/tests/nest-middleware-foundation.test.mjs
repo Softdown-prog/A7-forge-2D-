@@ -51,3 +51,27 @@ test('preview has strict TS and isolated CI, with no deploy step',()=>{
  assert.doesNotMatch(workflow,/^\s*run:\s*.*(?:cloudflare|deploy|docker push|publish)/im);
  assert.doesNotMatch(read('backend/package.json'),/@nestjs\/|nest-preview/);
 });
+
+test('preview Firebase auth port fails closed, checks revocation and gates email',()=>{
+ const auth=read(prefix+'src/middleware/firebase-auth.middleware.ts');
+ const verifier=read(prefix+'src/firebase-token-verifier.ts');
+ const gate=read(prefix+'src/middleware/verified-email.middleware.ts');
+ const module=read(prefix+'src/app.module.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const controller=read(prefix+'src/preview.controller.ts');
+ assert.match(auth,/\^Bearer \(\\S\+\)\$/);
+ assert.match(auth,/verifyIdToken\(match\[1\]!,true\)/);
+ assert.match(auth,/status\(401\)/);
+ assert.match(auth,/request\.uid=identity\.uid/);
+ assert.match(gate,/email_verified!==true/);
+ assert.match(gate,/status\(403\)/);
+ assert.match(verifier,/disabledFirebaseVerifier/);
+ assert.match(verifier,/throw new Error\('Firebase verifier is not configured/);
+ assert.match(bootstrap,/useValue:verifier/);
+ assert.match(bootstrap,/disabledFirebaseVerifier/);
+ assert.match(module,/consumer\.apply\(FirebaseAuthMiddleware\)/);
+ assert.match(module,/consumer\.apply\(VerifiedEmailMiddleware\)/);
+ assert.match(controller,/@Get\('auth'\)/);
+ assert.match(controller,/@Get\('verified'\)/);
+ assert.doesNotMatch(bootstrap+module+auth+gate,/firebase-admin|createPayments|getFirestore|MP_ACCESS_TOKEN/);
+});

@@ -60,3 +60,72 @@ test('Firebase, saves, orders and webhook routes do not exist in preview',async(
   assert.equal(response.status,404,method+' '+path+' must not be available');
  }
 });
+
+test('auth preview is fail-closed by default, without Firebase SDK or credentials',async()=>{
+ const missing=await fetch(base+'/__nest_probe/auth');
+ assert.equal(missing.status,401);
+ assert.deepEqual(await missing.json(),{error:'Entre na conta para usar a nuvem.'});
+ const noVerifier=await fetch(base+'/__nest_probe/auth',{headers:{Authorization:'Bearer token'}});
+ assert.equal(noVerifier.status,401);
+ assert.deepEqual(await noVerifier.json(),{error:'Sessão inválida ou expirada.'});
+ const gate=await fetch(base+'/__nest_probe/verified',{headers:{Authorization:'Bearer token'}});
+ assert.equal(gate.status,401);
+});
+
+test('mock Firebase port enforces revoked-token checking and email verification parity',async()=>{
+ const calls=[];
+ const fake={
+  async verifyIdToken(token,checkRevoked){
+   calls.push({token,checkRevoked});
+   if(token==='active')return {uid:'user-a',email_verified:true};
+   if(token==='not-verified')return {uid:'user-b',email_verified:false};
+   if(token==='no-email-claim')return {uid:'user-c'};
+   if(token==='no-uid')return {uid:''};
+   throw new Error('Expired or revoked token: private provider details');
+  }
+ };
+ const isolated=await createPreviewApp(fake);
+ await isolated.listen(0,'127.0.0.1');
+ const address=isolated.getHttpServer().address();
+ assert.ok(address&&typeof address==='object');
+ const url='http://127.0.0.1:'+address.port;
+ try{
+  const before=calls.length;
+  for(const authorization of [undefined,'Basic active','bearer active','Bearer  active']){
+   const response=await fetch(url+'/__nest_probe/auth',{
+    headers:authorization?{Authorization:authorization}:{}
+   });
+   assert.equal(response.status,401,authorization);
+   assert.deepEqual(await response.json(),{error:'Entre na conta para usar a nuvem.'});
+  }
+  assert.equal(calls.length,before,'Malformed headers never reach Firebase');
+
+  for(const token of ['revoked','no-uid']){
+   const response=await fetch(url+'/__nest_probe/auth',
+    {headers:{Authorization:'Bearer '+token}});
+   assert.equal(response.status,401);
+   assert.deepEqual(await response.json(),{error:'Sessão inválida ou expirada.'});
+  }
+  for(const token of ['not-verified','no-email-claim']){
+   const headers={Authorization:'Bearer '+token};
+   const baseAuth=await fetch(url+'/__nest_probe/auth',{headers});
+   assert.equal(baseAuth.status,200);
+   assert.deepEqual(await baseAuth.json(),{authenticated:true});
+   const gated=await fetch(url+'/__nest_probe/verified',{headers});
+   assert.equal(gated.status,403);
+   assert.deepEqual(await gated.json(),{error:'Confirme seu email antes de usar a nuvem.'});
+  }
+  const granted=await fetch(url+'/__nest_probe/verified',
+   {headers:{Authorization:'Bearer active'}});
+  assert.equal(granted.status,200);
+  assert.deepEqual(await granted.json(),{verified:true});
+  assert.ok(calls.length>0);
+  assert.ok(calls.every(c=>c.checkRevoked===true),'All Firebase checks must reject revoked IDs');
+  assert.doesNotMatch(JSON.stringify(await (await fetch(url+'/__nest_probe/auth',
+   {headers:{Authorization:'Bearer active'}})).json()),/user-a|active|uid|email/);
+  const originDenied=await fetch(url+'/__nest_probe/verified',
+   {headers:{Authorization:'Bearer active',Origin:'https://evil.example.test'}});
+  assert.equal(originDenied.status,403);
+  assert.deepEqual(await originDenied.json(),{error:'Origem não autorizada.'});
+ }finally{await isolated.close();}
+});

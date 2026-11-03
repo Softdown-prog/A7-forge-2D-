@@ -32,3 +32,18 @@ Pay particular attention to signature validation, idempotency and refunds.
 Never run two backends on the production hostname during this rehearsal.
 
 NestJS is a Node.js framework; it does not replace Node.js itself.
+
+## Firebase authentication preview (no live Firebase connection)
+- The `FirebaseAuthMiddleware` receives a typed, injectable `FirebaseIdTokenVerifier` port.
+  The **default implementation rejects all tokens**, so a Nest preview process cannot
+  accidentally authenticate users or touch Firebase credentials.
+- Tests inject a fake verifier and verify revoked-token checks `verifyIdToken(token,true)`,
+  exact 401 responses for absent/invalid tokens, and UID sourced only from verified claims.
+  No UID, email, or bearer token appears in the diagnostic responses.
+- `VerifiedEmailMiddleware` is applied **after authentication** only on
+  `GET /__nest_probe/verified`, mirroring the current 403 email verification gate.
+  The unverified diagnostic endpoint is `GET /__nest_probe/auth`.
+- This is **not** a Firebase Admin SDK integration: no actual users are verified.
+  The existing `/v1/auth/verification-email` exception and Firestore rate limits
+  remain exclusively in Express. Real Firebase connection and quota parity are
+  separate review stages before any cutover.

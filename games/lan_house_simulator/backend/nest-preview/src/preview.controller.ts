@@ -9,4 +9,11 @@ export class PreviewController{
  }
  @Options('health')
  preflight():void{}
+
+ /** Diagnostic-only results; never return UID, bearer token, email or claims. */
+ @Get('auth')
+ authenticated():{readonly authenticated:true}{return {authenticated:true};}
+
+ @Get('verified')
+ verified():{readonly verified:true}{return {verified:true};}
 }
