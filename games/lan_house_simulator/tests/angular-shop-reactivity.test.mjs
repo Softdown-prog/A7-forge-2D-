@@ -19,8 +19,15 @@ test('normalized shop index handles accents and preserves native phrase matching
  assert.match(angularSearch,/replace\(\/\[\\u0300-\\u036f\]\/g, ''\)/);
 });
 
+test('Standalone Angular shop search module is the only owner of catalogue filtering',()=>{
+ const entry=src('main.ts'),search=src('shop-search.ts'),legacy=src('components.ts');
+ assert.match(entry,/import \{ShopSearchComponent\} from '\.\/shop-search'/);
+ assert.match(search,/export class ShopSearchComponent implements OnInit/);
+ assert.doesNotMatch(legacy,/export class ShopSearchComponent/);
+});
+
 test('Angular re-indexes on catalog refresh but never on each keystroke',()=>{
- const component=src('components.ts');
+ const component=src('shop-search.ts');
  const block=component.slice(component.indexOf('export class ShopSearchComponent'));
  const index=block.slice(block.indexOf('private indexNativeCards'),block.indexOf('private apply():void'));
  const apply=block.slice(block.indexOf('private apply():void'));
@@ -35,7 +42,7 @@ test('Angular re-indexes on catalog refresh but never on each keystroke',()=>{
 });
 
 test('Angular cart and finance state remain delegated to the authoritative DOM',()=>{
- const component=src('components.ts');
+ const component=src('shop-search.ts');
  const block=component.slice(component.indexOf('export class ShopSearchComponent'));
  assert.doesNotMatch(block,/fetch\(|localStorage|createGame\(|buyPs1\(|buyPs2\(/);
  assert.match(block,/lhs:shop-catalog-updated/);
