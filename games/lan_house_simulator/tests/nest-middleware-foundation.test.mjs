@@ -100,3 +100,31 @@ test('quota is transaction-based and only applied after verified Firebase identi
  assert.doesNotMatch(quota+middleware+bootstrap,
   /from ['"]firebase-admin|from ['"]@google-cloud\/firestore|createPayments|MP_WEBHOOK_SECRET/);
 });
+
+
+test('Firestore SDK can only connect to local emulator in explicitly isolated CI',()=>{
+ const sdk=read(prefix+'src/emulator-firestore.ts');
+ const main=read(prefix+'src/main.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const pkg=JSON.parse(read(prefix+'package.json'));
+ const ci=read('../../.github/workflows/lhs-nest-middleware-preview.yml');
+ assert.match(sdk,/assertLocalFirestoreEmulatorAllowed\(\)/);
+ assert.ok(sdk.indexOf('assertLocalFirestoreEmulatorAllowed();')<
+  sdk.indexOf("import('firebase-admin/app')"));
+ assert.match(sdk,/FIRESTORE_EMULATOR_HOST/);
+ assert.match(sdk,/LHS_NEST_EMULATOR_ENABLED/);
+ assert.match(sdk,/GOOGLE_APPLICATION_CREDENTIALS/);
+ assert.match(sdk,/NODE_ENV==='production'/);
+ assert.match(sdk,/demo-lhs-nest-quota/);
+ assert.match(sdk,/db\.runTransaction/);
+ assert.doesNotMatch(main+bootstrap,/emulator-firestore|openLocalFirestoreQuota/);
+ assert.doesNotMatch(read('backend/server.mjs'),/openLocalFirestoreQuota|nest-preview/);
+ assert.equal(pkg.devDependencies['firebase-admin'],'14.5.0');
+ assert.equal(pkg.devDependencies['firebase-tools'],'15.34.1');
+ assert.ok(existsSync(new URL('../'+prefix+'firebase.emulator.json',import.meta.url)));
+ assert.ok(existsSync(new URL('../'+prefix+'test/firestore-emulator.integration.mjs',import.meta.url)));
+ assert.match(ci,/actions\/setup-java@v4/);
+ assert.match(ci,/java-version: "21"/);
+ assert.match(ci,/LHS_NEST_EMULATOR_ENABLED: "1"/);
+ assert.match(ci,/npm run test:emulator:ci/);
+});

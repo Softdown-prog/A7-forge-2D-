@@ -25,7 +25,7 @@ concurrency:
 jobs:
   nest-middleware-preview:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -44,6 +44,16 @@ jobs:
       - name: Test real local NestJS middleware HTTP behavior
         working-directory: games/lan_house_simulator/backend/nest-preview
         run: npm run test
+      - name: Configure JDK 21 for official Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Test quota against real local Firestore emulator
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        env:
+          LHS_NEST_EMULATOR_ENABLED: "1"
+        run: npm run test:emulator:ci
       - name: Upload review-only dependency lock (never deployed)
         uses: actions/upload-artifact@v4
         with:

@@ -56,3 +56,26 @@ NestJS is a Node.js framework; it does not replace Node.js itself.
 - Default quota port denies all calls with 503. HTTP tests inject a mock transactional store; there is no live Firebase or Firestore connection.
 - Storage errors and corrupt counters fail closed as 503, never in-memory fallback.
 - Real Firestore integration and account API migration require separate approval.
+
+
+## Local Firestore emulator integration (no production access)
+
+A separate, guarded SDK adapter is available in src/emulator-firestore.ts,
+but is never referenced by main.ts, bootstrap.ts or the canonical Express backend.
+
+- The Firebase Admin SDK can be imported ONLY after four fail-closed checks:
+  explicit LHS_NEST_EMULATOR_ENABLED=1, a loopback-only host formatted
+  FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 (port configurable), NODE_ENV not
+  production, and no GOOGLE_APPLICATION_CREDENTIALS.
+- The project ID is always demo-lhs-nest-quota, with a uniquely named SDK app.
+  The local emulator receives transactions; no real Firebase project, service
+  account, credential, account or payment endpoint is used.
+- The isolated CI starts the official Firestore emulator using firebase-tools
+  15.34.1 and JDK21, then runs HTTP requests through the actual NestJS middleware.
+  It checks the 30/minute cutoff, HTTP429, expiry timestamp, minute rollover,
+  UID separation, and that protected/paid routes remain absent.
+- The emulator SDK and CLI are devDependencies of this preview only; they do
+  not change the canonical Express backend or its build and deployment.
+- A reviewed package-lock.json will still be required before any production
+  NestJS service is approved. This rehearsal is not a database migration.
+
