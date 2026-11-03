@@ -36,7 +36,7 @@ jobs:
         run: npm run build
       - name: Test real local NestJS middleware HTTP behavior
         working-directory: games/lan_house_simulator/backend/nest-preview
-        run: npm test
+        run: npm run test
       - name: Upload review-only dependency lock (never deployed)
         uses: actions/upload-artifact@v4
         with:
