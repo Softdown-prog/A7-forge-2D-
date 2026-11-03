@@ -213,3 +213,12 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - `SiteApp` mantém as introduções e os avisos de revisão, mas não importa nem controla mais o documento e o índice. Os links de âncora mantêm os caminhos, IDs e acessibilidade.
 - O host é estilizado por CSS externo, preservando a CSP `style-src 'self'`. Testes estruturais e Chromium verificam paridade, navegação por âncoras, F5 e exclusividade de montagem nas rotas legais.
 - Sem alterar Canvas, dados, pagamentos, conteúdo jurídico ainda em revisão ou deploy.
+
+### Microetapa — relatório reproduzível de prontidão do cutover Angular
+
+- `scripts/audit_clean_angular_cutover.mjs` inspeciona **o artefato isolado real**, produzido por `build:site:clean` e pré-renderizado por Chromium. O relatório `out/site-clean-angular-browser/cutover-readiness.json` é anexado às evidências do workflow, sem deploy.
+- O teste comprova o inventário de 12 rotas e 404, metadados, oito páginas com HTML estático e H1 único, quatro páginas sensíveis sem snapshots, bundle Angular com hash e ausência de entradas legadas.
+- Também registra a versão de site **realmente escolhida pelo workflow de produção**. Hoje o Cloudflare ainda usa `npm run build:site` e `out/site`, não `out/site-clean-angular`.
+- O relatório **sempre retorna `not-ready`** enquanto houver pendências de homologação. Build/testes verdes não significam aprovação para publicar: o candidato ainda usa `noindex,nofollow`, os termos/privacidade têm avisos de revisão, o checkout de produção está bloqueado e faltam Android físico, paridade com contas e pagamentos reais, cache/CDN e autorização de cutover.
+- Falhas de integridade observáveis (página ou manifest ausente, import de entrada legada, pagamento inesperadamente habilitado, snapshot indevido de rota sensível) **reprovam a CI**. Bloqueios conhecidos de produto e homologação são listados sem forçar uma migração prematura.
+- `tests/clean-site-cutover-readiness.test.mjs` cria fixtures temporárias para provar que o relatório não dá falso positivo quando a evidência é retirada ou quando se altera o workflow de publicação. O motor Canvas, saves, backend Express, Mercado Pago, branch `main` e publicação permanecem intactos.

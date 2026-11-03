@@ -34,6 +34,7 @@ jobs:
           ./frontend-angular/node_modules/.bin/tsc --ignoreConfig --noEmit --strict --noUnusedLocals --noUnusedParameters --noUncheckedIndexedAccess --exactOptionalPropertyTypes --noImplicitReturns --noFallthroughCasesInSwitch --noPropertyAccessFromIndexSignature --target ES2022 --module ES2022 --moduleResolution bundler --lib ES2022,DOM --skipLibCheck frontend-angular/src/site-rewrite/checkout-contract.ts frontend-angular/src/site-rewrite/checkout-sandbox-adapter.ts
           node --test tests/clean-site-angular-build-policy.test.mjs
           node --test tests/clean-site-angular-assets.test.mjs
+          node --test tests/clean-site-cutover-readiness.test.mjs
           node --test tests/sac-site-rewrite-entry.test.mjs
           node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs tests/clean-site-import-boundary.test.mjs tests/clean-site-game-launcher.test.mjs tests/clean-site-help-search.test.mjs tests/clean-site-era-timeline.test.mjs tests/clean-site-site-header.test.mjs tests/clean-site-site-footer.test.mjs tests/clean-site-local-data.test.mjs tests/clean-site-account.test.mjs tests/clean-site-email-confirmation.test.mjs tests/clean-site-donate.test.mjs tests/clean-site-donate-history.test.mjs tests/clean-site-checkout-contract.test.mjs tests/clean-site-checkout-safety.test.mjs tests/clean-site-checkout-sandbox-adapter.test.mjs
       - name: Real Chromium Android-like touch, F5 and iframe QA
@@ -43,6 +44,7 @@ jobs:
           npx playwright install --with-deps chromium
           node scripts/prerender_clean_angular_site.mjs
           node scripts/check_clean_angular_prerender.mjs
+          node scripts/audit_clean_angular_cutover.mjs
           node scripts/verify_clean_angular_confirmation.mjs
           node scripts/verify_clean_angular_account.mjs
           node scripts/verify_clean_angular_site.mjs
