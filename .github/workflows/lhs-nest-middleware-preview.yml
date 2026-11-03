@@ -6,6 +6,13 @@ on:
       - "games/lan_house_simulator/backend/nest-preview/**"
       - "games/lan_house_simulator/tests/nest-middleware-foundation.test.mjs"
       - ".github/workflows/lhs-nest-middleware-preview.yml"
+  push:
+    branches:
+      - "feat/lhs-nest-*"
+    paths:
+      - "games/lan_house_simulator/backend/nest-preview/**"
+      - "games/lan_house_simulator/tests/nest-middleware-foundation.test.mjs"
+      - ".github/workflows/lhs-nest-middleware-preview.yml"
   workflow_dispatch:
 
 permissions:
