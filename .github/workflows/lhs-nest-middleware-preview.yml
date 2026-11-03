@@ -33,11 +33,9 @@ jobs:
           node-version: "22.22.3"
       - name: Verify backend separation and middleware source contracts
         run: node --test games/lan_house_simulator/tests/nest-middleware-foundation.test.mjs
-      - name: Resolve dependencies only in the isolated sandbox
+      - name: Reproducible install from reviewed and committed package-lock.json
         working-directory: games/lan_house_simulator/backend/nest-preview
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          npm ci --ignore-scripts --no-audit --no-fund
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Compile strict TypeScript NestJS preview
         working-directory: games/lan_house_simulator/backend/nest-preview
         run: npm run build
@@ -54,10 +52,3 @@ jobs:
         env:
           LHS_NEST_EMULATOR_ENABLED: "1"
         run: npm run test:emulator:ci
-      - name: Upload review-only dependency lock (never deployed)
-        uses: actions/upload-artifact@v4
-        with:
-          name: lhs-nest-middleware-preview-lock
-          path: games/lan_house_simulator/backend/nest-preview/package-lock.json
-          retention-days: 14
-          if-no-files-found: error
