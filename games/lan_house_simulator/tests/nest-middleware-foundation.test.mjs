@@ -48,6 +48,6 @@ test('preview has strict TS and isolated CI, with no deploy step',()=>{
  assert.match(workflow,/npm ci --ignore-scripts/);
  assert.match(workflow,/npm run test/);
  assert.match(workflow,/node --test games\/lan_house_simulator\/tests\/nest-middleware-foundation\.test\.mjs/);
- assert.doesNotMatch(workflow,/^\\s*run:\\s*.*(?:cloudflare|deploy|docker push|publish)/im);
+ assert.doesNotMatch(workflow,/^\s*run:\s*.*(?:cloudflare|deploy|docker push|publish)/im);
  assert.doesNotMatch(read('backend/package.json'),/@nestjs\/|nest-preview/);
 });
