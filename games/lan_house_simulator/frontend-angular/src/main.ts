@@ -6,8 +6,9 @@ import { createComponent, type Type } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
 import {
   AdminShortcutsComponent, HeaderActionsComponent, MenuActionsComponent,
-  MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent, ShopSearchComponent
+  MenuTourComponent, QuickDeckComponent, ShopCategoriesComponent
 } from './components';
+import {ShopSearchComponent} from './shop-search';
 import {
   ComputerWorkspaceComponent,ServiceWorkspaceComponent,StockWorkspaceComponent,
   FinanceWorkspaceComponent,PricesWorkspaceComponent,LicensesWorkspaceComponent,
