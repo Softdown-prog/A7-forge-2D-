@@ -11,12 +11,12 @@ The actual NestJS AppModule registers three NestMiddleware classes in order:
    Mercado Pago's signed X-Request-Id.
 3. OriginPolicyMiddleware: exact ALLOWED_ORIGINS policy and CORS preflight.
 
-There is only a diagnostic GET/OPTIONS /__nest_probe/health route, and it is
-not mounted in the production backend. No accounts, saves or payments exist.
+The preview exposes diagnostic paths only: /__nest_probe/health, /auth,
+/verified and /limited (all under /__nest_probe). None are mounted in the
+production backend. No real account, save or payment routes exist.
 
 Local development, explicitly opt-in only:
-- npm install --package-lock-only --ignore-scripts
-- npm ci --ignore-scripts
+- npm ci --ignore-scripts --no-audit --no-fund (uses committed package-lock.json)
 - npm run build
 - npm test
 - LHS_NEST_PREVIEW_ENABLED=1 npm run start:preview
@@ -24,9 +24,9 @@ Local development, explicitly opt-in only:
 The local preview listens ONLY on 127.0.0.1:18080 by default. Production
 NODE_ENV refuses startup. Without an explicit flag, it also refuses startup.
 
-**Release blockers:** The initial CI resolves a disposable dependency lock
-and uploads it for review. Commit a reviewed lockfile and switch to npm ci
-before any deployment. This preview cannot replace Express until separate
+**Reproducible dependencies:** The reviewed npm v3 package-lock.json is
+versioned with this isolated preview. CI uses npm ci, never re-resolves
+packages or deploys this preview. This preview cannot replace Express until separate
 contract tests prove parity for /health, /healthz, /v1/config, auth, Firestore
 per-UID quotas, email verification, 2MB saves and all payment/webhook behavior.
 Pay particular attention to signature validation, idempotency and refunds.
@@ -79,6 +79,6 @@ but is never referenced by main.ts, bootstrap.ts or the canonical Express backen
   UID separation, and that protected/paid routes remain absent.
 - The emulator SDK and CLI are devDependencies of this preview only; they do
   not change the canonical Express backend or its build and deployment.
-- A reviewed package-lock.json will still be required before any production
-  NestJS service is approved. This rehearsal is not a database migration.
+- The committed package-lock.json makes CI reproducible but does **not** approve
+  any production NestJS service. This rehearsal is not a database migration.
 

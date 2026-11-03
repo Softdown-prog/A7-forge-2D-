@@ -132,3 +132,23 @@ test('Firestore SDK can only connect to local emulator in explicitly isolated CI
  assert.match(ci,/LHS_NEST_EMULATOR_ENABLED: "1"/);
  assert.match(ci,/npm run test:emulator:ci/);
 });
+
+
+test('lockfile is committed and CI never re-resolves dependency versions',()=>{
+ const pkg=JSON.parse(read(prefix+'package.json'));
+ const lock=JSON.parse(read(prefix+'package-lock.json'));
+ assert.equal(lock.lockfileVersion,3);
+ assert.equal(lock.name,pkg.name);
+ assert.deepEqual(lock.packages[''].dependencies,pkg.dependencies);
+ assert.deepEqual(lock.packages[''].devDependencies,pkg.devDependencies);
+ assert.deepEqual(lock.packages[''].engines,pkg.engines);
+ for(const [name,entry] of Object.entries(lock.packages)){
+  if(!name||!entry.resolved)continue;
+  assert.ok(entry.resolved.startsWith('https://registry.npmjs.org/'),name);
+  assert.match(entry.integrity??'',/^sha(?:256|384|512)-/,name);
+ }
+ const ci=read('../../.github/workflows/lhs-nest-middleware-preview.yml');
+ assert.match(ci,/npm ci --ignore-scripts --no-audit --no-fund/);
+ assert.doesNotMatch(ci,/npm install|npm update|package-lock-only/);
+ assert.ok(!ci.includes('actions/upload-artifact@'));
+});
