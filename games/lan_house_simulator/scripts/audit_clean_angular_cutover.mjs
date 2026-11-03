@@ -98,53 +98,9 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
   donate.includes('Indisponível nesta prévia')&&donate.includes("availability()==='sandbox-ready'");
  results.push(check('production-checkout-disabled',paymentsDisabled,
   'Production buttons are disabled while sandbox actions remain conditional'));
- // Match complete executable YAML lines. "build:site" is a prefix of
- // "build:site:clean" and substring tests would report a false deployment.
- const workflowCommand=name=>new RegExp('^\\s*npm run '+name+'\\s*
- results.push(check('active-deploy-identified',legacyIsLive||cleanIsLive,
-  'Identify the actual CI production site builder, not an unused candidate'));
- if(legacyIsLive)blockers.push(block('legacy-deployment',
-  'Cloudflare Pages workflow still publishes out/site via website/build.mjs'));
- if(!cleanIsLive&&!legacyIsLive)blockers.push(block('deployment-unverified',
-  'Production workflow does not prove that out/site-clean-angular is published'));
- if(noindex)blockers.push(block('seo-noindex',
-  'Candidate deliberately uses noindex,nofollow until SEO and public metadata sign-off'));
- if(app.includes('Versão Angular em revisão')||
-    app.includes('Esta política não substitui a publicada atualmente'))
-  blockers.push(block('legal-review',
-   'Angular terms/privacy still carry draft notices requiring editorial/legal approval'));
- if(paymentsDisabled)blockers.push(block('production-payments',
-  'Live payment buttons remain disabled; authenticated checkout parity is not released'));
- blockers.push(block('manual-acceptance',
-  'Physical Android/browser, live Firebase/save parity, payment provider and rollout/CDN validation require explicit sign-off'));
- for(const item of results.filter(r=>!r.passed))
-  blockers.push(block('failed-'+item.id,'Missing or invalid evidence: '+item.detail));
- return Object.freeze({
-  schemaVersion:1,
-  candidate:'out/site-clean-angular',
-  deployedBy:legacyIsLive?'legacy-out/site':cleanIsLive?'angular-out/site-clean-angular':'unknown',
-  status:'not-ready',
-  checks:results,
-  blockers
- });
-}
-
-const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
-if(invoked){
- const repoRoot=resolve(import.meta.dirname,'../../..');
- const siteRoot=resolve(import.meta.dirname,'../out/site-clean-angular');
- const report=auditCleanAngularCutover({repoRoot,siteRoot});
- const path=resolve(import.meta.dirname,'../out/site-clean-angular-browser/cutover-readiness.json');
- mkdirSync(resolve(import.meta.dirname,'../out/site-clean-angular-browser'),{recursive:true});
- writeFileSync(path,JSON.stringify(report,null,2)+'\n');
- console.log('Angular release readiness:',report.status);
- console.log('Deployed site:',report.deployedBy);
- console.log('Evidence:',report.checks.filter(x=>x.passed).length+'/'+report.checks.length);
- for(const blocker of report.blockers)console.log('BLOCKER '+blocker.id+': '+blocker.reason);
- console.log('Report:',path);
- if(report.checks.some(x=>!x.passed))process.exitCode=1;
-}
-,'m').test(workflow);
+ // Treat each CI command as a whole YAML line; "build:site" is
+ // a prefix of "build:site:clean" and must not create a false match.
+ const workflowCommand=name=>new RegExp('^\\s*npm run '+name+'\\s*$','m').test(workflow);
  const legacyBuild=workflowCommand('build:site');
  const legacyIsLive=legacyBuild&&workflowCommand('check:site')&&
   legacyBuilder.includes('out/site');
