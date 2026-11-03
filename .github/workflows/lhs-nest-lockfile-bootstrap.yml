@@ -1,0 +1,63 @@
+name: LHS Nest lockfile one-time import (isolated)
+on:
+  push:
+    branches:
+      - feat/lhs-nest-lockfile-reproducible-20261103
+    paths:
+      - .github/workflows/lhs-nest-lockfile-bootstrap.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  import-reviewed-lock:
+    if: github.ref == 'refs/heads/feat/lhs-nest-lockfile-reproducible-20261103'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: lhs-nest-middleware-preview-lock
+          run-id: 41710543357
+          github-token: ${{ github.token }}
+          path: games/lan_house_simulator/backend/nest-preview
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.3"
+      - name: Verify exact artifact contents and lockfile dependencies
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        run: |
+          echo 'ab41afba81ffa1e5acb058c04e0b6d3a448595cab6db14e57359d3606d43b4ad  package-lock.json' | sha256sum --check --status
+          node --input-type=module -e "
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const pkg=JSON.parse(fs.readFileSync('package.json','utf8'));
+          const lock=JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          assert.equal(lock.lockfileVersion,3);
+          assert.deepEqual(lock.packages[''].dependencies,pkg.dependencies);
+          assert.deepEqual(lock.packages[''].devDependencies,pkg.devDependencies);
+          for(const [name,entry] of Object.entries(lock.packages)){
+            if(!name)continue;
+            if(entry.resolved) {
+              assert.ok(entry.resolved.startsWith('https://registry.npmjs.org/'),name);
+              assert.match(entry.integrity??'',/^sha(512|384|256)-/,name);
+            }
+          }"
+      - name: Validate reproducible installation before committing
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
+          npm test
+      - name: Commit only the reviewed lockfile to the isolated feature branch
+        run: |
+          git add -- games/lan_house_simulator/backend/nest-preview/package-lock.json
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build(lhs-nest): lock reviewed preview dependencies'
+          git push origin HEAD:refs/heads/feat/lhs-nest-lockfile-reproducible-20261103
