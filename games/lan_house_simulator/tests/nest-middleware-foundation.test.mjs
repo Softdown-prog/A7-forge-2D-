@@ -26,7 +26,7 @@ test('middleware chain is typed, registered in order, and has no live business r
  const origins=read(prefix+'src/middleware/origin-policy.middleware.ts');
  const trace=read(prefix+'src/middleware/trace.middleware.ts');
  assert.match(module,/implements NestModule/);
- assert.match(module,/consumer\.apply\(SecurityHeadersMiddleware,OriginPolicyMiddleware,TraceMiddleware\)/);
+ assert.match(module,/consumer\.apply\(SecurityHeadersMiddleware,TraceMiddleware,OriginPolicyMiddleware\)/);
  assert.match(module,/RequestMethod\.ALL/);
  assert.match(controller,/@Controller\('__nest_probe'\)/);
  assert.match(controller,/@Get\('health'\)/);

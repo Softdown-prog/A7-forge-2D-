@@ -6,9 +6,10 @@ Docker image, VPS route, Firebase, save logic or Mercado Pago webhooks.
 
 The actual NestJS AppModule registers three NestMiddleware classes in order:
 1. SecurityHeadersMiddleware: Cache-Control no-store and nosniff.
-2. OriginPolicyMiddleware: exact ALLOWED_ORIGINS policy and CORS preflight.
-3. TraceMiddleware: generates X-LHS-Trace-Id for diagnosis. This does not
-   overwrite Mercado Pago's signed X-Request-Id.
+2. TraceMiddleware: generates X-LHS-Trace-Id for diagnosis, including for
+   subsequent CORS denials and preflight responses. This does not overwrite
+   Mercado Pago's signed X-Request-Id.
+3. OriginPolicyMiddleware: exact ALLOWED_ORIGINS policy and CORS preflight.
 
 There is only a diagnostic GET/OPTIONS /__nest_probe/health route, and it is
 not mounted in the production backend. No accounts, saves or payments exist.

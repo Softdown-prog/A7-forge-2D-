@@ -12,7 +12,7 @@ import {PreviewController} from './preview.controller.js';
 @Module({controllers:[PreviewController]})
 export class PreviewAppModule implements NestModule{
  configure(consumer:MiddlewareConsumer):void{
-  consumer.apply(SecurityHeadersMiddleware,OriginPolicyMiddleware,TraceMiddleware)
+  consumer.apply(SecurityHeadersMiddleware,TraceMiddleware,OriginPolicyMiddleware)
    .forRoutes(
     {path:'__nest_probe/health',method:RequestMethod.ALL},
     {path:'__nest_probe/auth',method:RequestMethod.ALL},

@@ -41,6 +41,7 @@ test('CORS only reflects exact origins from the allowlist',async()=>{
  assert.deepEqual(await no.json(),{error:'Origem não autorizada.'});
  assert.equal(no.headers.get('access-control-allow-origin'),null);
  assert.equal(no.headers.get('cache-control'),'no-store');
+ assert.match(no.headers.get('x-lhs-trace-id')??'',/^[a-f0-9-]{36}$/);
 });
 
 test('OPTIONS preflight exits early without invoking the controller',async()=>{
@@ -49,6 +50,7 @@ test('OPTIONS preflight exits early without invoking the controller',async()=>{
  assert.equal(response.status,204);
  assert.equal(response.headers.get('access-control-allow-origin'),allowed);
  assert.equal(response.headers.get('access-control-allow-methods'),'GET, POST, OPTIONS');
+ assert.match(response.headers.get('x-lhs-trace-id')??'',/^[a-f0-9-]{36}$/);
 });
 
 test('Firebase, saves, orders and webhook routes do not exist in preview',async()=>{
