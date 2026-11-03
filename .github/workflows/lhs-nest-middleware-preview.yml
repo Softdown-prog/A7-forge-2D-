@@ -1,0 +1,46 @@
+name: LHS Nest middleware preview (isolated, no deploy)
+
+on:
+  pull_request:
+    paths:
+      - "games/lan_house_simulator/backend/nest-preview/**"
+      - "games/lan_house_simulator/tests/nest-middleware-foundation.test.mjs"
+      - ".github/workflows/lhs-nest-middleware-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhs-nest-middleware-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nest-middleware-preview:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.22.3"
+      - name: Verify backend separation and middleware source contracts
+        run: node --test games/lan_house_simulator/tests/nest-middleware-foundation.test.mjs
+      - name: Resolve dependencies only in the isolated sandbox
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        run: |
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compile strict TypeScript NestJS preview
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        run: npm run build
+      - name: Test real local NestJS middleware HTTP behavior
+        working-directory: games/lan_house_simulator/backend/nest-preview
+        run: npm run test
+      - name: Upload review-only dependency lock (never deployed)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-nest-middleware-preview-lock
+          path: games/lan_house_simulator/backend/nest-preview/package-lock.json
+          retention-days: 14
+          if-no-files-found: error
