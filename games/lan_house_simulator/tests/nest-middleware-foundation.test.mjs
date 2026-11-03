@@ -150,5 +150,5 @@ test('lockfile is committed and CI never re-resolves dependency versions',()=>{
  const ci=read('../../.github/workflows/lhs-nest-middleware-preview.yml');
  assert.match(ci,/npm ci --ignore-scripts --no-audit --no-fund/);
  assert.doesNotMatch(ci,/npm install|npm update|package-lock-only/);
- assert.doesNotMatch(ci,/actions\\/upload-artifact@/);
+ assert.ok(!ci.includes('actions/upload-artifact@'));
 });
