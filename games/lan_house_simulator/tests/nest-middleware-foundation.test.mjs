@@ -51,3 +51,84 @@ test('preview has strict TS and isolated CI, with no deploy step',()=>{
  assert.doesNotMatch(workflow,/^\s*run:\s*.*(?:cloudflare|deploy|docker push|publish)/im);
  assert.doesNotMatch(read('backend/package.json'),/@nestjs\/|nest-preview/);
 });
+
+test('preview Firebase auth port fails closed, checks revocation and gates email',()=>{
+ const auth=read(prefix+'src/middleware/firebase-auth.middleware.ts');
+ const verifier=read(prefix+'src/firebase-token-verifier.ts');
+ const gate=read(prefix+'src/middleware/verified-email.middleware.ts');
+ const module=read(prefix+'src/app.module.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const controller=read(prefix+'src/preview.controller.ts');
+ assert.match(auth,/\^Bearer \(\\S\+\)\$/);
+ assert.match(auth,/verifyIdToken\(match\[1\]!,true\)/);
+ assert.match(auth,/status\(401\)/);
+ assert.match(auth,/request\.uid=identity\.uid/);
+ assert.match(gate,/email_verified!==true/);
+ assert.match(gate,/status\(403\)/);
+ assert.match(verifier,/disabledFirebaseVerifier/);
+ assert.match(verifier,/throw new Error\('Firebase verifier is not configured/);
+ assert.match(bootstrap,/useValue:verifier/);
+ assert.match(bootstrap,/disabledFirebaseVerifier/);
+ assert.match(module,/consumer\.apply\(FirebaseAuthMiddleware\)/);
+ // GET handlers in Express/Nest can implicitly answer HEAD, so guard every verb.
+ for(const path of ['auth','verified','limited'])
+  assert.ok(module.includes("{path:'__nest_probe/"+path+"',method:RequestMethod.ALL}"));
+
+ assert.match(module,/consumer\.apply\(VerifiedEmailMiddleware\)/);
+ assert.match(controller,/@Get\('auth'\)/);
+ assert.match(controller,/@Get\('verified'\)/);
+ assert.doesNotMatch(bootstrap+module+auth+gate,/firebase-admin|createPayments|getFirestore|MP_ACCESS_TOKEN/);
+});
+
+test('quota is transaction-based and only applied after verified Firebase identity',()=>{
+ const module=read(prefix+'src/app.module.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const controller=read(prefix+'src/preview.controller.ts');
+ const quota=read(prefix+'src/user-quota.ts');
+ const middleware=read(prefix+'src/middleware/user-quota.middleware.ts');
+ assert.match(module,/consumer\.apply\(UserQuotaMiddleware\)/);
+ assert.match(module,/\{path:'__nest_probe\/limited',method:RequestMethod.ALL\}/);
+ assert.ok(module.indexOf('consumer.apply(VerifiedEmailMiddleware)')<
+  module.indexOf('consumer.apply(UserQuotaMiddleware)'));
+ assert.match(bootstrap,/quota:UserQuotaPort=disabledUserQuota/);
+ assert.match(bootstrap,/provide:USER_QUOTA_PORT,useValue:quota/);
+ assert.match(controller,/@Get\('limited'\)/);
+ assert.match(quota,/runTransaction\(async tx=>/);
+ assert.match(quota,/collection\('rateLimits'\)\.doc\(uid\)/);
+ assert.match(quota,/count>=30/);
+ assert.match(quota,/new Date\(stamp\+120_000\)/);
+ assert.match(quota,/disabledUserQuota/);
+ assert.match(middleware,/quota\.reserve\(request\.uid\)/);
+ for(const status of [401,403,429,503])
+  assert.match(middleware,new RegExp('status\\('+status+'\\)'));
+ assert.doesNotMatch(quota+middleware+bootstrap,
+  /from ['"]firebase-admin|from ['"]@google-cloud\/firestore|createPayments|MP_WEBHOOK_SECRET/);
+});
+
+
+test('Firestore SDK can only connect to local emulator in explicitly isolated CI',()=>{
+ const sdk=read(prefix+'src/emulator-firestore.ts');
+ const main=read(prefix+'src/main.ts');
+ const bootstrap=read(prefix+'src/bootstrap.ts');
+ const pkg=JSON.parse(read(prefix+'package.json'));
+ const ci=read('../../.github/workflows/lhs-nest-middleware-preview.yml');
+ assert.match(sdk,/assertLocalFirestoreEmulatorAllowed\(\)/);
+ assert.ok(sdk.indexOf('assertLocalFirestoreEmulatorAllowed();')<
+  sdk.indexOf("import('firebase-admin/app')"));
+ assert.match(sdk,/FIRESTORE_EMULATOR_HOST/);
+ assert.match(sdk,/LHS_NEST_EMULATOR_ENABLED/);
+ assert.match(sdk,/GOOGLE_APPLICATION_CREDENTIALS/);
+ assert.match(sdk,/NODE_ENV==='production'/);
+ assert.match(sdk,/demo-lhs-nest-quota/);
+ assert.match(sdk,/db\.runTransaction/);
+ assert.doesNotMatch(main+bootstrap,/emulator-firestore|openLocalFirestoreQuota/);
+ assert.doesNotMatch(read('backend/server.mjs'),/openLocalFirestoreQuota|nest-preview/);
+ assert.equal(pkg.devDependencies['firebase-admin'],'14.5.0');
+ assert.equal(pkg.devDependencies['firebase-tools'],'15.34.1');
+ assert.ok(existsSync(new URL('../'+prefix+'firebase.emulator.json',import.meta.url)));
+ assert.ok(existsSync(new URL('../'+prefix+'test/firestore-emulator.integration.mjs',import.meta.url)));
+ assert.match(ci,/actions\/setup-java@v4/);
+ assert.match(ci,/java-version: "21"/);
+ assert.match(ci,/LHS_NEST_EMULATOR_ENABLED: "1"/);
+ assert.match(ci,/npm run test:emulator:ci/);
+});
