@@ -59,3 +59,22 @@ payment or save routes into the preview as a shortcut.
 
 The lockfile is fixed using `npm ci`, and this test is run by
 `npm test` after the Nest TypeScript compilation in isolated CI.
+
+## CORS and email gate regression matrix
+
+`test/cors-email-contract.test.mjs` extends the **Nest-only HTTP coverage**
+with eight deceptive Origin values, two explicitly allowed exact origins,
+unauthenticated OPTIONS preflight on all four diagnostic paths, allowed
+CORS headers, rejection before Firebase lookup, and no quota reservation
+when email verification is absent, false, or malformed. It also verifies
+that HEAD cannot skip the email gate and that invalid tokens cannot reach
+quota storage.
+
+To detect contract drift, this test reads the canonical Express
+`backend/server.mjs` **as text** and asserts its CORS and email policy
+markers still match. This is intentionally a source-anchored regression
+check, **not** a differential HTTP test against the complete Express
+production app. The separate auth test above exercises the actual
+exported Express authentication middleware. Changes to Express CORS,
+email policy, authorization middleware ordering, or production bootstrap
+still require dedicated integration tests and review before cutover.
