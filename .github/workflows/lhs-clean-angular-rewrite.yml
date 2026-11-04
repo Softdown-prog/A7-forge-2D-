@@ -36,7 +36,7 @@ jobs:
           node --test tests/clean-site-angular-assets.test.mjs
           node --test tests/clean-site-cutover-readiness.test.mjs
           node --test tests/sac-site-rewrite-entry.test.mjs
-          node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs tests/clean-site-import-boundary.test.mjs tests/clean-site-game-launcher.test.mjs tests/clean-site-help-search.test.mjs tests/clean-site-era-timeline.test.mjs tests/clean-site-site-header.test.mjs tests/clean-site-site-footer.test.mjs tests/clean-site-local-data.test.mjs tests/clean-site-account.test.mjs tests/clean-site-email-confirmation.test.mjs tests/clean-site-donate.test.mjs tests/clean-site-donate-history.test.mjs tests/clean-site-checkout-contract.test.mjs tests/clean-site-checkout-safety.test.mjs tests/clean-site-checkout-sandbox-adapter.test.mjs
+          node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs tests/clean-site-import-boundary.test.mjs tests/clean-site-game-launcher.test.mjs tests/clean-site-help-search.test.mjs tests/clean-site-contact.test.mjs tests/clean-site-era-timeline.test.mjs tests/clean-site-site-header.test.mjs tests/clean-site-site-footer.test.mjs tests/clean-site-local-data.test.mjs tests/clean-site-account.test.mjs tests/clean-site-email-confirmation.test.mjs tests/clean-site-donate.test.mjs tests/clean-site-donate-history.test.mjs tests/clean-site-checkout-contract.test.mjs tests/clean-site-checkout-safety.test.mjs tests/clean-site-checkout-sandbox-adapter.test.mjs
       - name: Real Chromium Android-like touch, F5 and iframe QA
         working-directory: games/lan_house_simulator
         run: |

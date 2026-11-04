@@ -207,3 +207,14 @@ lhs-legal-document{display:block}
 .help-guide article a{color:var(--green);text-decoration:underline}
 #duvidas{scroll-margin-top:110px}
 @media(max-width:520px){.help-jump-links{gap:8px}.help-jump-links a{flex:1;justify-content:center;text-align:center;padding:10px 8px}}
+
+/* Angular institutional contact: no form, tracking, or script-controlled support UI. */
+.contact-intro{min-height:0;padding-bottom:38px}
+lhs-contact{display:block}
+.contact-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-bottom:90px}
+.contact-card{min-width:0;padding:clamp(20px,3vw,32px);border:1px solid var(--line);border-radius:8px;background:#253d30;overflow-wrap:anywhere}
+.contact-card h2{font-size:clamp(1.55rem,2.5vw,2.1rem);margin:0 0 20px}
+.contact-card p{max-width:66ch}
+.contact-card p a{color:var(--green)}
+.contact-card .button{margin-top:10px;color:var(--paper)}
+@media(max-width:800px){.contact-grid{grid-template-columns:1fr}}

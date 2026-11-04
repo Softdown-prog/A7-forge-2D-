@@ -237,3 +237,10 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Este avanço trata **paridade de conteúdo da Ajuda**, não encerra migração ou homologação legal/financeira. Checkout de produção continua bloqueado, Cloudflare ainda publica `out/site`, e os controles do Canvas e backend permanecem inalterados.
 
 - A navegação dos três atalhos usa `/ajuda/#...` em vez de `#...`: o `<base href="/">` de Angular faria links relativos de fragmento abrirem a raiz do site. O Chromium verifica `pathname` e hash juntos para evitar regressão.
+
+### Microetapa — paridade da página Contato no Angular
+
+- Componente standalone `lhs-contact`, com cards de problemas/sugestões e suporte privado/privacidade. Mantém o email de suporte já anunciado e links nativos para Ajuda, Dados locais e Privacidade, sem formulários ou envio automático de dados.
+- O código do Angular não importa arquivos de `website/`. O teste de integridade compara o canal de email exibido com `website/config.mjs` apenas para detectar divergência enquanto o site legado estiver publicado.
+- O Chromium cobre 1280/414/360px, contagem de elementos, links, clique/tap em Ajuda, retorno e F5, sem rolagem horizontal. O pré-render da rota pública continua verificando HTML mesmo sem JavaScript.
+- Esta paridade não autoriza o corte de produção: Cloudflare ainda publica `out/site`, e permanecem pendentes revisões legais/SEO, pagamentos e homologação no Android físico.
