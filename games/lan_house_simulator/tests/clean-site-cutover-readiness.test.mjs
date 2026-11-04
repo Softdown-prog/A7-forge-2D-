@@ -112,3 +112,17 @@ test('removing mandatory evidence or enabling the production checkout fails clos
   assert.equal(report.status,'not-ready');
  });
 });
+test('canonical Angular configuration is identified without claiming a live deployment',()=>{
+ fixture(({root,site,save})=>{
+  save('games/lan_house_simulator/package.json',JSON.stringify({scripts:{
+   'build:site':'node scripts/build_canonical_angular_site.mjs',
+   'check:site':'node scripts/check_canonical_angular_site.mjs'
+  }}));
+  const report=auditCleanAngularCutover({repoRoot:root,siteRoot:site});
+  assert.equal(report.configuredBy,'angular-out/site');
+  assert.equal(report.deployedBy,'not-observed');
+  assert.ok(report.blockers.some(b=>b.id==='production-approval'));
+  assert.ok(!report.blockers.some(b=>b.id==='legacy-deployment'));
+  assert.equal(report.status,'not-ready');
+ });
+});

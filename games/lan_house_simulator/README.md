@@ -1,23 +1,36 @@
-## Frontend atual — Angular no site, React apenas como compatibilidade
+## Frontend canônico — Angular
 
-**Migração institucional completa (issue #78, a partir do PR #77):** o candidato canônico
-está em `frontend-angular/src/site-rewrite/` e produz `out/site-clean-angular`.
-Execute `npm run validate:site:clean` para os testes consolidados e consulte
-[paridade por rota, homologação, checkout por configuração e rollback](docs/ANGULAR_MIGRATION_DELIVERY.md).
-A publicação descrita abaixo continua ativa até o cutover autorizado.
+`npm run build:site` compila exclusivamente `frontend-angular/src/site-rewrite/`
+e produz o site completo em **`out/site`**, incluindo oito páginas públicas e 404
+pré-renderizadas. Conta, confirmação, Donate e dados permanecem privados/CSR.
+O jogo mantém o motor Canvas e o HUD Angular em `/game/`.
 
-O `npm run build:site` publica a versão **Angular** da interface do jogo em
-`/game/`, conservando o motor Canvas 2D em TypeScript e os comandos nativos.
-O teste de integração Angular é executado no Chromium em desktop e mobile,
-incluindo compras, saves, estação/energia e navegação. A página institucional
-continua estática (HTML/CSS/JS), sem exigir Angular para seu conteúdo.
+```sh
+npm ci
+npx playwright install --with-deps chromium
+npm run build:site
+npm run check:site
+```
 
-O build isolado `npm run build` mantém a entrada React 19 para ferramentas e
-cenários de regressão que usam o documento original `index.html`.
-Já o build do site passa `LHS_GAME_UI=angular`, evitando criar um
-`dist/js/react-entry.js` que seria descartado no cutover. A versão
-`LHS_SITE_UI=react npm run build:site` continua disponível para teste de
-compatibilidade, mas não é o padrão publicado.
+O **Dockerfile padrão serve esse frontend**, como usuário `node`, na porta 8080.
+A API usa `backend/Dockerfile` com o mesmo contexto de build:
+
+```sh
+docker build -t lhs-frontend .
+docker run --rm --read-only -p 127.0.0.1:8080:8080 lhs-frontend
+docker build -f backend/Dockerfile -t lhs-backend .
+```
+
+`build:site:legacy` e `check:site:legacy` existem somente para regressões e
+rollback em `out/site-legacy`; não sobrescrevem o artefato canônico. `npm run build`
+ainda gera a fixture React isolada em `dist/` usada pelos testes existentes.
+
+A publicação Pages é manual e exige SHA já mesclado na main e autorização
+explícita. O espelho recebe o artefato testado com hashes da fonte e dos arquivos;
+o comando padrão confere esses hashes e reutiliza os mesmos bytes no Cloudflare,
+sem recompilar. Nenhum merge ou deploy é executado pelo build/container.
+
+[Validação, aprovação e rollback](docs/ANGULAR_CANONICAL_DELIVERY.md).
 
 Antes de remover definitivamente as dependências React ou reescrever o
 documento-base, eliminar as referências legadas nos testes e ferramentas de

@@ -9,7 +9,7 @@ const root=resolve(import.meta.dirname,"..");
 // npm run build path retains React only for compatibility and regression QA.
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
 const angularSite=process.env.LHS_SITE_UI!=="react";
-const output=resolve(root,angularCandidate?"out/site-angular":"out/site");
+const output=resolve(root,angularCandidate?"out/site-angular":"out/site-legacy");
 export function validateConfig(c){
  if(!["preview","public"].includes(c.mode))throw Error("Modo do site inválido");
  if(c.origin){const u=new URL(c.origin);if(u.protocol!=="https:"||u.pathname!=="/"||u.search||u.hash||u.username||u.password)throw Error("origin deve ser um domínio HTTPS sem caminho");}

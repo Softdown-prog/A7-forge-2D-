@@ -4,6 +4,14 @@ Estado em 14/10/2026: **backend implantado e validado nos serviços reais**, ap�
 
 O backend é separado da simulação. Cloudflare continua servindo o HTML5. O container inclui apenas API e módulos puros do validador de save; não serve assets nem executa o loop do jogo.
 
+## Dockerfile e contexto exclusivos da API
+
+O Dockerfile padrão do LHS agora serve o frontend Angular. Para construir a API,
+use `docker build -f backend/Dockerfile -t lhs-backend .` no diretório do jogo.
+O wrapper PowerShell prepara um diretório temporário com esse Dockerfile e somente
+os inputs originais da API antes de `gcloud run deploy --source`; não inclui o
+frontend, arquivos de segredos ou a imagem do site. Requer Node 22+ localmente.
+
 ## Implantar ou atualizar
 
 No PowerShell 7+, a partir de `games/lan_house_simulator`:

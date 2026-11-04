@@ -63,8 +63,8 @@ test('complete site defaults to Angular in migration branch and allows explicit 
  assert.ok(build.includes('process.env.LHS_SITE_UI!=="react"'));
  assert.match(build,/frontend-angular\/scripts\/build_cutover_candidate\.mjs/);
  assert.match(check,/React não pode inicializar no site Angular/);
- assert.ok(build.includes('angularCandidate?"out/site-angular":"out/site"'));
- assert.ok(check.includes('angularCandidate?"../out/site-angular":"../out/site"'));
+ assert.ok(build.includes('angularCandidate?"out/site-angular":"out/site-legacy"'));
+ assert.ok(check.includes('angularCandidate?"../out/site-angular":"../out/site-legacy"'));
  assert.match(build,/game\/__angular/);
  assert.match(build,/build_cutover_candidate\.mjs/);
  assert.match(build,/__angular\/styles\.css/);

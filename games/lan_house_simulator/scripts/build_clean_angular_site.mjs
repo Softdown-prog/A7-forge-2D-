@@ -1,5 +1,6 @@
 /** Independent Angular site artifact. No production deploy and no legacy website/build.mjs. */
 import assert from 'node:assert/strict';
+import {versionAngularGame} from './version_angular_game.mjs';
 import {execFileSync} from 'node:child_process';
 import {cpSync,existsSync,mkdirSync,readFileSync,readdirSync,rmSync,writeFileSync} from 'node:fs';
 import {resolve,dirname,extname} from 'node:path';
@@ -56,6 +57,7 @@ gameIndex=gameIndex.replace(/<style>[\s\S]*?<\/style>/g,'<link rel="stylesheet" 
 writeFileSync(gameIndexPath,gameIndex);
 rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
 assert.ok(!existsSync(resolve(output,'game/js/react-entry.js')));
+versionAngularGame(output);
 for(const file of ['account-config.json','online-config.json'])
  cpSync(resolve(root,file),resolve(output,file));
 cpSync(resolve(angular,'src/site-rewrite/public/checkout-config.json'),resolve(output,'checkout-config.json'));

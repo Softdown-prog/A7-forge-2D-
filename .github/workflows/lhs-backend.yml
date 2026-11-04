@@ -4,6 +4,7 @@ on:
     paths:
       - 'games/lan_house_simulator/backend/**'
       - 'games/lan_house_simulator/Dockerfile'
+      - 'games/lan_house_simulator/scripts/prepare_backend_source.mjs'
       - 'games/lan_house_simulator/.dockerignore'
       - 'games/lan_house_simulator/package*.json'
       - 'games/lan_house_simulator/tsconfig.json'
@@ -13,6 +14,7 @@ on:
     paths:
       - 'games/lan_house_simulator/backend/**'
       - 'games/lan_house_simulator/Dockerfile'
+      - 'games/lan_house_simulator/scripts/prepare_backend_source.mjs'
       - 'games/lan_house_simulator/src/**'
       - '.github/workflows/lhs-backend.yml'
 permissions:
@@ -35,8 +37,15 @@ jobs:
       - run: node --test backend/tests/*.test.mjs
       - run: npm audit --omit=dev
         working-directory: games/lan_house_simulator/backend
+      - name: Parse deployment wrapper without running cloud commands
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) 'backend/infra/deploy.ps1'), [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count) { throw ($parseErrors | Out-String) }
       - name: Build API-only container
-        run: docker build -t lhs-backend:test .
+        run: docker build -f backend/Dockerfile -t lhs-backend:test .
       - name: Smoke-test container without cloud credentials
         shell: bash
         run: |

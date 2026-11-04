@@ -37,7 +37,7 @@ try{
   page.on("response",response=>{if(response.status()>=400)errors.push("HTTP "+response.status()+" "+response.url());});
   page.on("pageerror",error=>errors.push(String(error)));
   await page.goto("http://127.0.0.1:"+port+"/",{waitUntil:"networkidle"});
-  const img=page.locator(".screen img[src^='/assets/sala.webp']");
+  const img=page.locator(".hero-image[src^='/assets/sala.webp']");
   await img.waitFor({state:"visible",timeout:10000});
   assert.equal(await img.evaluate(x=>x.complete&&x.naturalWidth>0),true,
    "A vitrine do site deve mostrar uma imagem válida.");

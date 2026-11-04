@@ -111,15 +111,22 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
  // a prefix of "build:site:clean" and must not create a false match.
  const workflowCommand=name=>new RegExp('^\\s*npm run '+name+'\\s*$','m').test(workflow);
  const legacyBuild=workflowCommand('build:site');
- const legacyIsLive=legacyBuild&&workflowCommand('check:site')&&
+ let scripts={};
+ try{scripts=JSON.parse(file(resolve(lhs,'package.json'))).scripts??{};}catch{/* fixtures may have no package */}
+ const canonicalConfigured=legacyBuild&&workflowCommand('check:site')&&
+  scripts['build:site']==='node scripts/build_canonical_angular_site.mjs'&&
+  scripts['check:site']==='node scripts/check_canonical_angular_site.mjs';
+ const legacyIsLive=!canonicalConfigured&&legacyBuild&&workflowCommand('check:site')&&
   legacyBuilder.includes('out/site');
  const cleanIsLive=!legacyBuild&&workflowCommand('build:site:clean')&&
   workflowCommand('check:site:clean');
- results.push(check('active-deploy-identified',legacyIsLive||cleanIsLive,
-  'Identify the actual CI production site builder, not an unused candidate'));
+ results.push(check('active-deploy-identified',canonicalConfigured||legacyIsLive||cleanIsLive,
+  'Identify the configured site builder; a configuration is not proof of production deployment'));
+ if(canonicalConfigured)blockers.push(block('production-approval',
+  'Angular is the default build; production publication still requires explicit approval'));
  if(legacyIsLive)blockers.push(block('legacy-deployment',
   'Cloudflare Pages workflow still publishes out/site via website/build.mjs'));
- if(!cleanIsLive&&!legacyIsLive)blockers.push(block('deployment-unverified',
+ if(!canonicalConfigured&&!cleanIsLive&&!legacyIsLive)blockers.push(block('deployment-unverified',
   'Production workflow does not prove that out/site-clean-angular is published'));
  if(noindex)blockers.push(block('seo-noindex',
   'Candidate deliberately uses noindex,nofollow until SEO and public metadata sign-off'));
@@ -135,8 +142,9 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
   blockers.push(block('failed-'+item.id,'Missing or invalid evidence: '+item.detail));
  return Object.freeze({
   schemaVersion:1,
-  candidate:'out/site-clean-angular',
-  deployedBy:legacyIsLive?'legacy-out/site':cleanIsLive?'angular-out/site-clean-angular':'unknown',
+  candidate:canonicalConfigured?'out/site':'out/site-clean-angular',
+  configuredBy:canonicalConfigured?'angular-out/site':legacyIsLive?'legacy-out/site':cleanIsLive?'angular-out/site-clean-angular':'unknown',
+  deployedBy:canonicalConfigured?'not-observed':legacyIsLive?'legacy-out/site':cleanIsLive?'angular-out/site-clean-angular':'unknown',
   status:'not-ready',
   checks:results,
   blockers
@@ -146,13 +154,14 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
 const invoked=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
 if(invoked){
  const repoRoot=resolve(import.meta.dirname,'../../..');
- const siteRoot=resolve(import.meta.dirname,'../out/site-clean-angular');
+ const siteRoot=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../out/site'));
  const report=auditCleanAngularCutover({repoRoot,siteRoot});
  const path=resolve(import.meta.dirname,'../out/site-clean-angular-browser/cutover-readiness.json');
  mkdirSync(resolve(import.meta.dirname,'../out/site-clean-angular-browser'),{recursive:true});
  writeFileSync(path,JSON.stringify(report,null,2)+'\n');
  console.log('Angular release readiness:',report.status);
  console.log('Deployed site:',report.deployedBy);
+ console.log('Configured build:',report.configuredBy);
  console.log('Evidence:',report.checks.filter(x=>x.passed).length+'/'+report.checks.length);
  for(const blocker of report.blockers)console.log('BLOCKER '+blocker.id+': '+blocker.reason);
  console.log('Report:',path);

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {existsSync,readFileSync,readdirSync} from 'node:fs';
 import {resolve} from 'node:path';
-const root=resolve(import.meta.dirname,'../out/site-clean-angular');
+const root=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../out/site-clean-angular'));
 const assets=JSON.parse(readFileSync(resolve(root,'angular-site-assets.json'),'utf8'));
 const metadata=JSON.parse(readFileSync(resolve(import.meta.dirname,
  '../frontend-angular/src/site-rewrite/page-metadata.json'),'utf8'));
 for(const path of ['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato','conta',
  'conta/confirmar','donate','termos','privacidade','dados']){
  const html=readFileSync(resolve(root,path,'index.html'),'utf8');
- assert.match(html,/<lhs-site><\/lhs-site>/);
+ assert.match(html,/<lhs-site(?: data-lhs-public-prerender="true")?><\/lhs-site>|<lhs-site data-lhs-public-prerender="true">/);
  assert.ok(html.includes('src="/assets/site/'+assets.main+'"'));
  assert.ok(html.includes('href="/assets/site/'+assets.styles+'"'));
  assert.doesNotMatch(html,/\/assets\/site\.mjs|react-entry|data-angular-site-/i);

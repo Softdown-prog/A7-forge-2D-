@@ -35,8 +35,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-      - run: npm ci && npm run build:site && npm run check:site
+          node-version: '24'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build:site:legacy && npm run check:site:legacy
+      - run: node scripts/verify_legacy_account_navigation.mjs
+      - run: npm run build:site && npm run check:site
       - run: node --test tests/account-client.test.mjs tests/donate.test.mjs tests/email-confirmation.test.mjs tests/website.test.mjs
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
       - run: npx playwright install --with-deps chromium
