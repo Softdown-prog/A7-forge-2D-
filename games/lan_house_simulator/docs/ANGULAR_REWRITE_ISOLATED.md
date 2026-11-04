@@ -230,8 +230,8 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Chromium em 1280/414/360 exercita 401 com renovação, ausência de novo POST sem autenticação, limpeza de `sessionStorage`, login renovado e criação de uma chave nova para outro contexto de sessão. Nenhum pagamento real é iniciado ou confirmado.
 - O projeto mantém a interface de checkout de produção desabilitada e não troca o `out/site` público nem altera o backend Express ou motor Canvas.
 
-### Microetapa — conteúdo completo das respostas de Ajuda (paridade institucional)
+### Microetapa — página Ajuda completa (guia, anchors e FAQ Angular)
 
-- `frontend-angular/src/site-rewrite/site-data.ts` agora contém sete respostas completas e independentes do legado, incluindo instruções reais de saves locais/exportação/importação JSON, saves em nuvem, conta opcional, Donate, tela horizontal no Android e suporte sem dados pessoais. O novo site não importa `website/content.mjs`.
-- A suíte estrutural impede que instruções essenciais desapareçam silenciosamente; o Chromium confere a resposta efetivamente renderizada, pesquisa por texto acentuado, busca por nuvem/assinatura e abertura de `<details>` no desktop e no mobile.
+- `frontend-angular/src/site-rewrite/site-data.ts` agora contém sete respostas completas e independentes do legado, incluindo saves locais/JSON, nuvem, conta, Donate, tela horizontal no Android e suporte. `help-search.html` migra também o guia de primeiro dia e a transferência de saves, com as âncoras públicas `#comecar`, `#salvar`, `#duvidas` e avisos de importação e privacidade. O novo site não importa `website/content.mjs`.
+- A suíte estrutural impede que instruções essenciais e destinos de âncora desapareçam silenciosamente; o Chromium confere conteúdo renderizado, busca acentuada, nuvem/assinatura, abertura de `<details>`, clique em `#salvar` e deep link com F5 no desktop e no mobile.
 - Este avanço trata **paridade de conteúdo da Ajuda**, não encerra migração ou homologação legal/financeira. Checkout de produção continua bloqueado, Cloudflare ainda publica `out/site`, e os controles do Canvas e backend permanecem inalterados.
