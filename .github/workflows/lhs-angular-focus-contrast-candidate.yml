@@ -1,0 +1,41 @@
+name: LHS Angular focus and contrast candidate (no deploy)
+
+on:
+  push:
+    branches: ['feat/lhs-angular-focus-contrast-sac-20261104']
+    paths:
+      - 'games/lan_house_simulator/frontend-angular/src/workspace.css'
+      - 'games/lan_house_simulator/tests/angular-focus-contrast-css.test.mjs'
+      - '.github/workflows/lhs-angular-focus-contrast-candidate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lhs-angular-focus-contrast-candidate
+  cancel-in-progress: true
+
+jobs:
+  css-and-angular-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: games/lan_house_simulator/frontend-angular/package-lock.json
+      - name: Validate focus specificity and accessible contrast ratios
+        run: |
+          node --check games/lan_house_simulator/tests/angular-focus-contrast-css.test.mjs
+          node --test games/lan_house_simulator/tests/angular-focus-contrast-css.test.mjs
+      - name: Install isolated Angular build dependencies
+        run: npm ci --prefix games/lan_house_simulator/frontend-angular --no-audit --no-fund
+      - name: Run strict Angular lint
+        run: npm run lint --prefix games/lan_house_simulator/frontend-angular
+      - name: Build Angular production AOT without deploying
+        run: npm run build --prefix games/lan_house_simulator/frontend-angular
