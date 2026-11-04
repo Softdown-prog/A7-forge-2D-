@@ -15,14 +15,15 @@ export const eras=[
  {year:'2012',title:'Mais espaço para crescer.',text:'Mais opções de hardware, serviços e investimentos.',image:'/assets/pc-led.svg'},
  {year:'2024',title:'O salão vira uma arena.',text:'Equipamentos modernos convivem com máquinas clássicas.',image:'/assets/pc-arena.svg'}
 ] as const;
+/** Complete help content migrated from the institutional site; Angular is the owner. */
 export const faq=[
- ['O jogo é gratuito?','Sim. A campanha é gratuita e Cookies são opcionais para personalizações.'],
- ['Preciso instalar ou criar conta?','Não precisa instalar ou criar conta para jogar. A conta é opcional.'],
- ['Funciona no celular?','Sim, o jogo pode ser usado em navegadores modernos com suporte a Canvas 2D.'],
- ['Como salvo minha partida?','Use Salvar em arquivo no menu do jogo e guarde o arquivo antes de limpar os dados.'],
- ['Posso usar computadores antigos e novos?','Sim. A decisão de modernizar cada estação é sua.'],
- ['O dinheiro do jogo é real?','Não. Todos os valores pertencem à simulação.'],
- ['O que faço se o jogo ficar lento?','Feche abas pesadas e teste um navegador atualizado.']
+ ["O jogo é gratuito?","Sim. A campanha e a progressão são gratuitas. Cookies (biscoitos) permitem resgatar personalizações opcionais na Loja Cookies, em Minha Conta dentro do jogo. A conta opcional já permite gerenciar saves na nuvem."],
+ ["Preciso instalar ou criar uma conta?","Não precisa instalar nem criar uma conta para jogar. O login é opcional para gerenciar saves na nuvem e necessário para receber Cookies ao apoiar o projeto em Donate. Não há assinatura obrigatória."],
+ ["Funciona no celular?","Sim, a interface se adapta a telas menores e aceita toques. Para ver melhor o salão, você pode jogar com o aparelho na horizontal. Navegadores atuais com JavaScript e Canvas 2D são necessários; o desempenho depende do aparelho."],
+ ["Como salvo minha partida?","O progresso fica neste navegador. No menu do jogo, use Salvar em arquivo para baixar um JSON. Use Carregar arquivo no outro aparelho ou navegador para continuar. Mantenha uma cópia antes de limpar dados ou mudar de endereço."],
+ ["Posso misturar computadores antigos e novos?","Pode. Cada estação tem suas próprias peças, sistema operacional, placa de vídeo e monitor. Novas opções aparecem com os anos, e você decide onde investir."],
+ ["O dinheiro do jogo vale dinheiro real?","Não. Caixa, mercadorias, salários e preços pertencem à simulação. O jogo não promete ganhos reais nem substitui orientação profissional de gestão."],
+ ["O que faço se ficar lento?","Feche abas pesadas, use um navegador atualizado e reduza outras tarefas do aparelho. Para informar um problema, anote navegador, modelo do dispositivo e o que estava acontecendo; não envie documentos ou dados pessoais em relatos públicos."]
 ] as const;
 export const validPaths=[
  '/','/jogar/','/sobre-o-jogo/','/sobre-nos/','/ajuda/','/contato/','/conta/',

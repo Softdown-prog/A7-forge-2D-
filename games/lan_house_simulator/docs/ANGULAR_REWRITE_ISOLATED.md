@@ -229,3 +229,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - Falhas transitórias HTTP 503 **continuam usando a mesma chave** por pacote e não encerram uma sessão válida; alternância para modo produção continua bloqueando o POST sandbox.
 - Chromium em 1280/414/360 exercita 401 com renovação, ausência de novo POST sem autenticação, limpeza de `sessionStorage`, login renovado e criação de uma chave nova para outro contexto de sessão. Nenhum pagamento real é iniciado ou confirmado.
 - O projeto mantém a interface de checkout de produção desabilitada e não troca o `out/site` público nem altera o backend Express ou motor Canvas.
+
+### Microetapa — página Ajuda completa (guia, anchors e FAQ Angular)
+
+- `frontend-angular/src/site-rewrite/site-data.ts` agora contém sete respostas completas e independentes do legado, incluindo saves locais/JSON, nuvem, conta, Donate, tela horizontal no Android e suporte. `help-search.html` migra também o guia de primeiro dia e a transferência de saves, com as âncoras públicas `#comecar`, `#salvar`, `#duvidas` e avisos de importação e privacidade. O novo site não importa `website/content.mjs`.
+- A suíte estrutural impede que instruções essenciais e destinos de âncora desapareçam silenciosamente; o Chromium confere conteúdo renderizado, busca acentuada, nuvem/assinatura, abertura de `<details>`, clique em `#salvar` e deep link com F5 no desktop e no mobile.
+- Este avanço trata **paridade de conteúdo da Ajuda**, não encerra migração ou homologação legal/financeira. Checkout de produção continua bloqueado, Cloudflare ainda publica `out/site`, e os controles do Canvas e backend permanecem inalterados.
+
+- A navegação dos três atalhos usa `/ajuda/#...` em vez de `#...`: o `<base href="/">` de Angular faria links relativos de fragmento abrirem a raiz do site. O Chromium verifica `pathname` e hash juntos para evitar regressão.

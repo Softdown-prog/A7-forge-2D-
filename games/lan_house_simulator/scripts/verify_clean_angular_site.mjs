@@ -162,6 +162,20 @@ try{
    }
    if(pathname==='/ajuda/'){
     assert.equal(await page.locator('lhs-help-search').count(),1);
+    assert.equal(await page.locator('.help-jump-links a').count(),3);
+    assert.equal(await page.locator('#comecar').count(),1);
+    assert.equal(await page.locator('#salvar').count(),1);
+    assert.equal(await page.locator('#duvidas').count(),1);
+    await page.locator('.help-jump-links a[href="/ajuda/#salvar"]').click();
+    assert.equal(new URL(page.url()).pathname,'/ajuda/');
+    assert.equal(new URL(page.url()).hash,'#salvar');
+    assert.match(await page.locator('#salvar').innerText(),/Carregar arquivo/);
+    await page.waitForFunction(()=>{
+     const item=document.getElementById('salvar');
+     if(!item)return false;
+     const rect=item.getBoundingClientRect();
+     return rect.top<innerHeight&&rect.bottom>0;
+    });
     const input=page.locator('#help-search');
     await input.fill('SALVÁR');
     await page.locator('.faq details:visible').first().waitFor({state:'visible'});
@@ -175,12 +189,56 @@ try{
     assert.equal(await input.evaluate(node=>document.activeElement===node),true);
     await page.locator('.faq details:visible').first().waitFor();
     assert.equal(await page.locator('.faq details:visible').count(),7);
+    // Test rendered answer content, not only search state or TypeScript build.
+    await input.fill('JSON');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('salvo minha partida'));
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    const saves=page.locator('.faq details:visible').first();
+    assert.match(await saves.locator('summary').innerText(),/salvo minha partida/);
+    if(mobile)await saves.locator('summary').tap();
+    else await saves.locator('summary').click();
+    const savedAnswer=await saves.locator('p').innerText();
+    assert.match(savedAnswer,/Salvar em arquivo/);
+    assert.match(savedAnswer,/Carregar arquivo/);
+    assert.match(savedAnswer,/outro aparelho/);
+    await input.fill('horizontál');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('Funciona no celular'));
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    const mobileHelp=page.locator('.faq details:visible').first();
+    if(mobile)await mobileHelp.locator('summary').tap();
+    else await mobileHelp.locator('summary').click();
+    assert.match(await mobileHelp.locator('p').innerText(),/horizontal/);
+    await input.fill('nuvem');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===2);
+    assert.equal(await page.locator('.faq details:visible').count(),2);
+    await input.fill('assinatura');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('criar uma conta'));
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    const loginHelp=page.locator('.faq details:visible').first();
+    if(mobile)await loginHelp.locator('summary').tap();
+    else await loginHelp.locator('summary').click();
+    assert.match(await loginHelp.locator('p').innerText(),/assinatura obrigatória/);
     await page.reload({waitUntil:'networkidle'});
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteFramework==='angular-rewrite');
     assert.equal(await page.locator('lhs-help-search').count(),1);
     assert.equal(await page.locator('#help-search').inputValue(),'');
     assert.equal(await page.locator('.faq details:visible').count(),7);
+    // External links and F5 to /ajuda/#salvar must preserve the destination.
+    await page.goto(origin+'/ajuda/#salvar',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(new URL(page.url()).hash,'#salvar');
+    assert.equal(await page.locator('#salvar').count(),1);
+    assert.match(await page.locator('#salvar').innerText(),/Faça backup antes/);
+    await page.reload({waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(new URL(page.url()).hash,'#salvar');
+    assert.equal(await page.locator('#salvar').count(),1);
    }
    if(pathname==='/jogar/'){
     assert.equal(await page.locator('lhs-game-launcher').count(),1);
