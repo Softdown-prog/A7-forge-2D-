@@ -60,7 +60,7 @@ try{
      /\.(?:js|css|svg|webp|json)$/.test(new URL(response.url()).pathname))
     errors.push('HTTP '+response.status()+' '+response.url());
   });
-  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/jogar/','/termos/','/privacidade/','/dados/','/donate/']){
+  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/contato/','/jogar/','/termos/','/privacidade/','/dados/','/donate/']){
    let res=await page.goto(origin+pathname,{waitUntil:'networkidle'});
    assert.equal(res?.status(),200);
    await page.waitForFunction(()=>
@@ -72,7 +72,7 @@ try{
    assert.equal(await page.locator('lhs-site-footer nav').count(),2);
    assert.equal(await page.locator('header nav').count(),1);
    const currentLink=page.locator('lhs-site-header #site-nav a[aria-current="page"]');
-   if(['/', '/jogar/', '/sobre-o-jogo/', '/ajuda/', '/donate/'].includes(pathname)){
+   if(['/', '/jogar/', '/sobre-o-jogo/', '/ajuda/', '/contato/', '/donate/'].includes(pathname)){
     assert.equal(await currentLink.count(),1);
     assert.equal(await currentLink.getAttribute('href'),pathname);
    }else assert.equal(await currentLink.count(),0);
@@ -239,6 +239,31 @@ try{
      document.documentElement.dataset.siteFramework==='angular-rewrite');
     assert.equal(new URL(page.url()).hash,'#salvar');
     assert.equal(await page.locator('#salvar').count(),1);
+   }
+   if(pathname==='/contato/'){
+    const cards=page.locator('lhs-contact .contact-card');
+    assert.equal(await page.locator('lhs-contact').count(),1);
+    assert.equal(await cards.count(),2);
+    assert.deepEqual(await cards.locator('h2').allInnerTexts(),
+     ['Problemas e sugestões','Suporte privado e privacidade']);
+    assert.equal(await page.locator('lhs-contact a[href="mailto:softloady@gmail.com"]').count(),1);
+    assert.equal(await page.locator('lhs-contact a[href="/ajuda/"]').count(),1);
+    assert.equal(await page.locator('lhs-contact a[href="/dados/"]').count(),1);
+    assert.equal(await page.locator('lhs-contact a[href="/privacidade/"]').count(),1);
+    assert.equal(await page.locator('lhs-contact form, lhs-contact iframe').count(),0);
+    assert.ok((await cards.nth(0).innerText()).includes('etapas para reproduzir'));
+    assert.ok((await cards.nth(1).innerText()).includes('controles de dados locais'));
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),
+     'Angular Contact has horizontal overflow at '+width);
+    const help=page.locator('lhs-contact a[href="/ajuda/"]');
+    if(mobile)await help.tap();else await help.click();
+    await page.waitForURL(url=>url.pathname==='/ajuda/');
+    await page.locator('lhs-help-search').waitFor({state:'visible'});
+    await page.goto(origin+'/contato/',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-contact .contact-card').count(),2);
+    assert.equal(await page.locator('main h1').count(),1);
    }
    if(pathname==='/jogar/'){
     assert.equal(await page.locator('lhs-game-launcher').count(),1);
