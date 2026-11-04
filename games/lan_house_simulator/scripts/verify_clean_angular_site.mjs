@@ -175,6 +175,25 @@ try{
     assert.equal(await input.evaluate(node=>document.activeElement===node),true);
     await page.locator('.faq details:visible').first().waitFor();
     assert.equal(await page.locator('.faq details:visible').count(),7);
+    // Test rendered answer content, not only search state or TypeScript build.
+    await input.fill('JSON');
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    const saves=page.locator('.faq details:visible').first();
+    assert.match(await saves.locator('summary').innerText(),/salvo minha partida/);
+    if(mobile)await saves.locator('summary').tap();
+    else await saves.locator('summary').click();
+    const savedAnswer=await saves.locator('p').innerText();
+    assert.match(savedAnswer,/Salvar em arquivo/);
+    assert.match(savedAnswer,/Carregar arquivo/);
+    assert.match(savedAnswer,/outro aparelho/);
+    await input.fill('horizontál');
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    assert.match(await page.locator('.faq details:visible').first().innerText(),/horizontal/);
+    await input.fill('nuvem');
+    assert.equal(await page.locator('.faq details:visible').count(),2);
+    await input.fill('assinatura');
+    assert.equal(await page.locator('.faq details:visible').count(),1);
+    assert.match(await page.locator('.faq details:visible').first().innerText(),/assinatura obrigatória/);
     await page.reload({waitUntil:'networkidle'});
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteFramework==='angular-rewrite');
