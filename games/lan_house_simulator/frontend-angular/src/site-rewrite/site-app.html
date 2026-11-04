@@ -5,22 +5,32 @@
  @switch(path){
   @case('/'){
    <section class="wrap hero">
-    <div><p class="eyebrow">1998 · TERMINAL DE BAIRRO</p>
-     <h1>Sua lan house. Sua história.</h1>
-     <p class="lead">Comece com alguns computadores antigos. Cuide dos clientes, mantenha o estoque e evolua seu negócio de bairro.</p>
-     <div class="actions"><a class="button" href="/jogar/">Jogar agora</a><a class="button secondary" href="/sobre-o-jogo/">Conheça o jogo</a></div>
-     <p class="small">Simulação HTML5 em Canvas 2D · gratuito</p></div>
-    <img class="hero-image" src="/assets/sala.webp" alt="Salão do Lan House Simulator em perspectiva isométrica" width="780" height="480"/>
+    <div class="hero-copy"><p class="eyebrow"><span class="pixel" aria-hidden="true"></span>SEU SONHO COMEÇA EM 1998</p>
+     <h1>Sua lan house.<br>Uma época <em>inteira.</em><span class="cursor" aria-hidden="true">_</span></h1>
+     <p class="lead">Três computadores. Um pequeno salão.<br>E um bairro inteiro para conquistar.</p>
+     <div class="actions"><a class="button" href="/game/">Jogar agora <span aria-hidden="true">→</span></a><a class="button secondary" href="/sobre-o-jogo/">Conhecer o jogo <span aria-hidden="true">→</span></a></div>
+     <p class="hero-note"><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#computer"></use></svg>Grátis, no navegador <span>·</span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#save"></use></svg>Progresso local</p>
+    </div>
+    <div class="hero-art">
+     <span class="sticker"><span aria-hidden="true">✳</span>INTERNET, JOGOS<br>E BOAS IDEIAS.</span>
+     <div class="monitor"><div class="monitor-top"><span>SOFTDOWN / TERMINAL 01</span><i aria-hidden="true"></i></div>
+      <div class="screen"><img class="hero-image" src="/assets/sala.webp" alt="Salão do Lan House Simulator com computadores, clientes e balcão" width="1096" height="668" fetchpriority="high"></div>
+      <div class="monitor-bottom"><span class="vents" aria-hidden="true"></span><span>LAN HOUSE<small>HOME BUSINESS SYSTEM</small></span><span class="power" aria-hidden="true"></span></div>
+     </div>
+     <p class="art-caption"><span class="caption-line" aria-hidden="true"></span><span>Pequeno por fora.<br><strong>Cheio de possibilidades por dentro.</strong></span><span class="coordinate">01 / 1998</span></p>
+    </div>
    </section>
-   <section class="wrap features"><p class="eyebrow">GESTÃO DE BAIRRO</p><h2>Uma decisão de cada vez.</h2>
-    <div class="cards"><article><h3>Clientes</h3><p>Organize o atendimento e as filas.</p></article>
-     <article><h3>Computadores</h3><p>Troque componentes quando valer a pena.</p></article>
-     <article><h3>Finanças</h3><p>Planeje estoque, salários e preços.</p></article></div>
-   </section>
+   <div class="ticker" aria-label="Características do jogo"><span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#coins"></use></svg>GESTÃO DE BAIRRO</span><span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#chip"></use></svg>EVOLUÇÃO POR ÉPOCA</span><span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#users"></use></svg>CADA CLIENTE CONTA</span><span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#wall"></use></svg>SEU SALÃO, SEU JEITO</span></div>
+   <section class="paper features"><div class="wrap">
+    <div class="section-heading"><p class="eyebrow"><span class="pixel" aria-hidden="true"></span>DE DONO PARA DONO</p><h2>Comece pequeno.<br>Pense como dono.</h2><p>O bom negócio está nos detalhes: um PC funcionando, estoque em dia e dinheiro guardado para amanhã.</p></div>
+    <div class="steps"><article class="step"><div class="step-top"><span>01 / ADMINISTRE</span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#coins"></use></svg></div><h3>Faça o caixa respirar.</h3><p>Ajuste preços, acompanhe as contas e mantenha uma reserva. Crescer também significa saber quando esperar.</p></article>
+     <article class="step"><div class="step-top"><span>02 / ATENDA</span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#users"></use></svg></div><h3>Cuide de quem chega.</h3><p>Cada cliente tem seu ritmo. Organize as filas, reponha os lanches e faça do seu salão um lugar para voltar.</p></article>
+     <article class="step"><div class="step-top"><span>03 / EVOLUA</span><svg class="icon" aria-hidden="true"><use href="/assets/icons.svg#expand"></use></svg></div><h3>Dê espaço ao próximo passo.</h3><p>Amplie o salão e modernize uma máquina de cada vez. O próximo capítulo do bairro é você quem escreve.</p></article></div>
+   </div></section>
   }
   @case('/jogar/'){
    <section class="wrap intro"><p class="eyebrow">ABRA O SALÃO</p><h1>Jogar Lan House Simulator</h1>
-    <p class="lead">A partida é carregada apenas quando você solicitar. Salve seu progresso no menu do jogo.</p></section>
+    <p class="lead">Abra o menu completo do jogo, na mesma aba e neste site. Sua partida continua no mesmo navegador.</p></section>
    <lhs-game-launcher></lhs-game-launcher>
   }
   @case('/sobre-o-jogo/'){

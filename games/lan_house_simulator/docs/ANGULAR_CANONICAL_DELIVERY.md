@@ -12,6 +12,20 @@ repositório. **Não executa merge, publicação Pages ou implantação da API.*
 | `build:site:legacy` / `check:site:legacy` | Fixture de regressão e rollback em `out/site-legacy`; nunca substitui `out/site`. |
 | `build:site:clean` | Build de baixo nível para diagnóstico, antes do prerender. O comando padrão é `build:site`. |
 
+## Abertura do jogo e identidade visual
+
+Os links Jogar levam diretamente a `/game/`, na mesma aba e no mesmo domínio.
+O menu Canvas/HUD ocupa sua própria página; não existe iframe no site canônico.
+A rota `/jogar/` continua acessível para links antigos, com um link normal para
+abrir o jogo. O menu do jogo oferece Voltar ao site, levando à home Angular.
+O domínio, o caminho do jogo e a chave dos saves locais permanecem os mesmos.
+
+A apresentação Angular recupera a identidade Terminal de Bairro: monitor CRT,
+seções em papel claro, cronologia ilustrada e arte dos saves. Não carrega o CSS
+ou o JavaScript institucional legado. Os testes de navegador exercitam o jogo
+no documento principal, incluindo compras, PCs/hardware, F5, retorno ao site e
+continuação da partida preservada.
+
 ## Construir e executar localmente
 
 ```sh

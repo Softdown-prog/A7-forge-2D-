@@ -27,7 +27,7 @@ test('the global Angular shell delegates all header navigation state to one stan
  assert.match(markup,/<nav id="site-nav" class="nav"/);
  assert.match(markup,/\[attr\.aria-expanded\]="openMenu\(\)"/);
  assert.match(markup,/\[class\.open\]="openMenu\(\)"/);
- assert.match(markup,/\[attr\.aria-current\]="path\(\)===link\.href\?'page':null"/);
+ assert.ok(markup.includes("[attr.aria-current]=\"path()===link.href||(path()==='/jogar/'&&link.href==='/game/')?'page':null\""));
  assert.match(markup,/\(click\)="closeMenu\(\)"/);
 });
 

@@ -7,6 +7,7 @@ import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
+const {isValidSave}=await import(resolve(import.meta.dirname,'../../dist/js/sim/engine.js'));
 const root=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/site':'../../out/site-angular');
 const output=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/angular-site-default-browser':'../../out/angular-site-browser');
 const angularTools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
@@ -319,14 +320,20 @@ try{
   assert.ok((await page.locator('a[href="/donate/"]').count())>=1,
    'Site must keep Donate navigation');
   await page.locator('#launch-game').click();
-  const game=page.frameLocator('#game-frame');
+  const directGame=process.env.LHS_CHECK_DEFAULT_SITE==='1';
+  if(directGame)await page.waitForURL(url=>url.pathname==='/game/');
+  const game=directGame?page:page.frameLocator('#game-frame');
   await game.locator('#menu-new').waitFor({state:'visible',timeout:20000});
-  await page.waitForFunction(()=>{
-   const doc=document.querySelector('#game-frame')?.contentDocument;
+  await page.waitForFunction(direct=>{
+   const doc=direct?document:document.querySelector('#game-frame')?.contentDocument;
    return doc?.documentElement.dataset.uiFramework==='angular' &&
     doc?.documentElement.dataset.gameReady==='true';
-  },null,{timeout:20000});
-  assert.equal(await frame.isVisible(),true,'Site must reveal the loaded game');
+  },directGame,{timeout:20000});
+  if(directGame){
+   assert.equal(await page.locator('iframe').count(),0,'The game must be a full-page document');
+   assert.equal(await page.evaluate(()=>window.top===window.self),true);
+   assert.equal(await page.locator('lhs-site-header').count(),0);
+  }else assert.equal(await frame.isVisible(),true,'Site must reveal the loaded game');
   assert.equal(await game.locator('#angular-save-transfer #save-export').count(),1);
   assert.equal(await game.locator('#angular-notice-inbox #notices').count(),1);
   assert.equal(await game.locator('script[src*="react-entry.js"]').count(),0);
@@ -362,21 +369,42 @@ try{
    'Angular computer panel must not overflow at '+width+'px');
   await press(game.locator('#close-admin'));
   await game.locator('#admin').waitFor({state:'hidden'});
-  // Reload while a Canvas session is in progress, then reopen the game.
-  // This catches blank screens and stale Angular/Canvas bundles on F5.
+  if(directGame){
+   await press(game.locator('#open-menu'));
+   await game.locator('#menu-continue').waitFor({state:'visible'});
+   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('lhs-save-v1')??'null'));
+   assert.ok(isValidSave(saved),'Returning to the game menu must persist the real save');
+   const snapshot=({totalMinutes,cash,rng,installedPcs})=>({totalMinutes,cash,rng,installedPcs});
+   await press(game.locator('a.edition-label[href="/"]'));
+   await page.waitForURL(url=>url.pathname==='/');
+   await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+   const afterReturn=await page.evaluate(()=>JSON.parse(localStorage.getItem('lhs-save-v1')??'null'));
+   assert.deepEqual(snapshot(afterReturn),snapshot(saved),'Returning to the site must preserve the saved game');
+   await press(page.locator('.hero a[href="/game/"]'));
+   await page.waitForURL(url=>url.pathname==='/game/');
+   await game.locator('#menu-continue').waitFor({state:'visible',timeout:20000});
+   assert.equal(await game.locator('#menu-continue').isEnabled(),true);
+   await press(game.locator('#menu-continue'));
+   await game.locator('#game-app').waitFor({state:'visible'});
+  }
+  // Reload while a Canvas session is in progress: default output stays on the
+  // full-page game; the isolated legacy fixture keeps its historical iframe.
   const gameReload=await page.reload({waitUntil:'networkidle'});
-  assert.equal(gameReload?.status(),200,'In-game F5 should reload /jogar/');
-  await page.locator('#launch-game').waitFor({state:'visible',timeout:15000});
-  if(process.env.LHS_CHECK_DEFAULT_SITE==='1')assert.equal(await page.locator('#game-frame').count(),0);
-  else assert.equal(await page.locator('#game-frame').getAttribute('src'),null);
-  await page.locator('#launch-game').click();
+  assert.equal(gameReload?.status(),200,'In-game F5 should keep the game reachable');
+  if(directGame){
+   assert.equal(new URL(page.url()).pathname,'/game/');
+   assert.equal(await page.locator('iframe').count(),0);
+  }else{
+   await page.locator('#launch-game').waitFor({state:'visible',timeout:15000});
+   assert.equal(await frame.getAttribute('src'),null);
+   await page.locator('#launch-game').click();
+  }
   await game.locator('#menu-new').waitFor({state:'visible',timeout:20000});
-  await page.waitForFunction(()=>{
-   const frame=document.querySelector('#game-frame');
-   return !!frame&&!frame.hidden&&
-    frame.contentDocument?.documentElement.dataset.gameReady==='true'&&
-    frame.contentDocument?.documentElement.dataset.uiFramework==='angular';
-  },null,{timeout:20000});
+  await page.waitForFunction(direct=>{
+   const doc=direct?document:document.querySelector('#game-frame')?.contentDocument;
+   return doc?.documentElement.dataset.gameReady==='true'&&
+    doc?.documentElement.dataset.uiFramework==='angular';
+  },directGame,{timeout:20000});
   assert.ok(await game.locator('#menu-scene').evaluate(canvas=>{
    if(!(canvas instanceof HTMLCanvasElement))return false;
    const pixels=canvas.getContext('2d')?.getImageData(0,0,canvas.width,canvas.height).data;
@@ -384,19 +412,19 @@ try{
   }),'Canvas must draw after a full-page reload');
   assert.deepEqual(errors,[],'Production build CSP, resources and game must be error-free');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
-  results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
+  results.push({width,mobile,fullPageGame:directGame,lazyIframe:!directGame,angularBoot:true,canvasGame:true,
    shopCatalog:true,siteAngularNavigation:true,
    siteAngularTimeline:true,
    siteAngularHelp:true,
    siteAngularHeaderFooter:true,
-   adminComputer:true,wearIndicators:true,mobileTouch:mobile,
+   adminComputer:true,wearIndicators:true,returnPreservesSave:directGame,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    fullPageReload:true,deepLinkRefresh:true,canvasRestartAfterReload:true,
    resourceErrors:0,errorCount:errors.length});
   await context.close();
  }
  await writeFile(resolve(output,'results.json'),JSON.stringify({passed:true,results},null,2)+'\n');
- console.log('Angular full-site iframe QA:',JSON.stringify(results));
+ console.log('Angular full-site game navigation QA:',JSON.stringify(results));
 }finally{
  await browser?.close();
  await new Promise(done=>server.close(done));

@@ -1,19 +1,20 @@
 /** Self-contained content for the new Angular site; never imported from website/*.mjs. */
 export const navigation=[
- {href:'/',label:'Início'},{href:'/jogar/',label:'Jogar'},
+ {href:'/',label:'Início'},
  {href:'/sobre-o-jogo/',label:'O jogo'},{href:'/sobre-nos/',label:'Sobre nós'},
  {href:'/ajuda/',label:'Ajuda'},{href:'/contato/',label:'Contato'},
- {href:'/conta/',label:'Minha conta'},{href:'/donate/',label:'Donate'}
+ {href:'/conta/',label:'Minha conta'},{href:'/donate/',label:'Donate'},
+ {href:'/game/',label:'Jogar'}
 ] as const;
 export const footerLinks=[
  {href:'/termos/',label:'Termos de uso'},{href:'/privacidade/',label:'Privacidade'},
  {href:'/dados/',label:'Dados locais'}
 ] as const;
 export const eras=[
- {year:'1998',title:'Três PCs e um sonho.',text:'Um pequeno salão com monitores CRT e internet discada.',image:'/assets/pc-crt.svg'},
- {year:'2005',title:'O LCD chega ao bairro.',text:'Novos computadores e uma nova geração de telas.',image:'/assets/pc-lcd.svg'},
- {year:'2012',title:'Mais espaço para crescer.',text:'Mais opções de hardware, serviços e investimentos.',image:'/assets/pc-led.svg'},
- {year:'2024',title:'O salão vira uma arena.',text:'Equipamentos modernos convivem com máquinas clássicas.',image:'/assets/pc-arena.svg'}
+ {year:'1998',label:'As primeiras conexões',spec:'CRT · WINDOWS 98 · PRIMEIRO SALÃO',title:'Três PCs e um sonho.',text:'Um pequeno salão com monitores CRT e internet discada.',image:'/assets/pc-crt.svg'},
+ {year:'2005',label:'Um novo tipo de tela',spec:'LCD 4:3 · PEÇAS POR ESTAÇÃO',title:'O LCD chega ao bairro.',text:'Novos computadores e uma nova geração de telas.',image:'/assets/pc-lcd.svg'},
+ {year:'2012',label:'Mais espaço para crescer',spec:'LED · HARDWARE GERACIONAL',title:'Mais espaço para crescer.',text:'Mais opções de hardware, serviços e investimentos.',image:'/assets/pc-led.svg'},
+ {year:'2024',label:'A próxima geração',spec:'ARENA · WINDOWS 11 COMPATÍVEL',title:'O salão vira uma arena.',text:'Equipamentos modernos convivem com máquinas clássicas.',image:'/assets/pc-arena.svg'}
 ] as const;
 /** Complete help content migrated from the institutional site; Angular is the owner. */
 export const faq=[

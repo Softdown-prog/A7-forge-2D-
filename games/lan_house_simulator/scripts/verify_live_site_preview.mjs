@@ -43,22 +43,23 @@ try{
    "A vitrine do site deve mostrar uma imagem válida.");
   await page.goto("http://127.0.0.1:"+port+"/jogar/",{waitUntil:"networkidle"});
   await page.locator("#launch-game").click();
-  const frame=page.frameLocator("#game-frame");
+  await page.waitForURL(url=>url.pathname==="/game/");
+  const frame=page;
+  assert.equal(await page.locator("iframe").count(),0);
+  assert.equal(await page.evaluate(()=>window.self===window.top),true);
   // The old check saw Angular's HTML button before its Canvas bootstrap,
   // which hides the start screen until gameReady is set. Wait for both
-  // the site's lazy iframe reveal and the native TS engine handshake.
+  // the full-page document and the native TS engine handshake.
   try{
    await page.waitForFunction(()=>{
-    const iframe=document.querySelector("#game-frame");
-    return iframe&&!iframe.hidden&&
-      iframe.contentDocument?.documentElement.dataset.gameReady==="true";
+    return document.documentElement.dataset.gameReady==="true";
    },null,{timeout:30000});
    await frame.locator("#menu-new").waitFor({state:"visible",timeout:10000});
   }catch(error){
    const detail=await page.evaluate(()=>{
-    const iframe=document.querySelector("#game-frame"),doc=iframe?.contentDocument;
-    return {iframeHidden:iframe?.hidden,iframeSource:iframe?.getAttribute("src"),
-     framework:doc?.documentElement.dataset.uiFramework,
+    const doc=document;
+    return {fullPage:window.self===window.top,
+     framework:doc.documentElement.dataset.uiFramework,
      gameReady:doc?.documentElement.dataset.gameReady,
      startHidden:doc?.querySelector("#start-screen")?.hidden,
      gameAppHidden:doc?.querySelector("#game-app")?.hidden};
@@ -90,7 +91,7 @@ try{
   await frame.locator("#game").waitFor({state:"visible"});
   await frame.locator("#game").scrollIntoViewIfNeeded();
   await page.waitForFunction(()=>{
-   const c=document.querySelector("#game-frame")?.contentDocument?.querySelector("#game");
+   const c=document.querySelector("#game");
    if(!c)return false;
    const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
    return data.some((value,i)=>i%4===3&&value>0);

@@ -41,7 +41,7 @@ test('About game retains all six core experiences, canonical image and game CTA'
   'Estoque, reposições','divisórias','Salve sua partida em arquivo'])
   assert.ok(html.includes(text),'Missing gameplay explanation '+text);
  assert.match(html,/<img class="about-salon" src="\/assets\/sala\.webp"[^>]*alt="[^"]+"/);
- assert.match(html,/href="\/jogar\/"/);
+ assert.match(html,/href="\/game\/"/);
 });
 
 test('About us retains independent studio identity, truthful scope, and internal routes',()=>{
@@ -52,7 +52,7 @@ test('About us retains independent studio identity, truthful scope, and internal
   'experiência individual','progresso local','não estão incluídos',
   'Feito para quem viveu essa época'
  ])assert.ok(html.includes(text),'Missing studio information '+text);
- for(const dest of ['/contato/','/sobre-o-jogo/','/jogar/'])
+ for(const dest of ['/contato/','/sobre-o-jogo/','/game/'])
   assert.equal((html.match(new RegExp('href="'+dest+'"','g'))||[]).length,1);
  assert.match(html,/<img src="\/assets\/brand\.svg" alt="Marca Softdown"/);
  assert.match(css,/\.about-feature-grid\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);

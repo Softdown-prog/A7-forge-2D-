@@ -74,7 +74,7 @@ try{
    const currentLink=page.locator('lhs-site-header #site-nav a[aria-current="page"]');
    if(['/', '/jogar/', '/sobre-o-jogo/', '/sobre-nos/', '/ajuda/', '/contato/', '/donate/'].includes(pathname)){
     assert.equal(await currentLink.count(),1);
-    assert.equal(await currentLink.getAttribute('href'),pathname);
+    assert.equal(await currentLink.getAttribute('href'),pathname==='/jogar/'?'/game/':pathname);
    }else assert.equal(await currentLink.count(),0);
    assert.equal(await page.locator('main h1').count(),1);
    if(pathname==='/termos/'||pathname==='/privacidade/'){
@@ -136,7 +136,7 @@ try{
     assert.equal(await buttons.count(),4);
     assert.equal(await buttons.nth(0).getAttribute('aria-pressed'),'true');
     assert.equal(await timeline.locator('.era-panel h3').textContent(),'Três PCs e um sonho.');
-    const newer=buttons.getByText('2024');
+    const newer=buttons.filter({hasText:'2024'});
     if(mobile)await newer.tap();else await newer.click();
     await page.waitForFunction(()=>
      document.querySelector('lhs-era-timeline .era-panel h3')?.textContent===
@@ -170,11 +170,13 @@ try{
     assert.equal(await page.locator('lhs-about-game .about-salon').count(),1);
     assert.equal(await page.locator('lhs-era-timeline').count(),1,
      'The shared Angular timeline must not be duplicated');
-    const cta=page.locator('lhs-about-game .about-cta a[href="/jogar/"]');
+    const cta=page.locator('lhs-about-game .about-cta a[href="/game/"]');
     assert.equal(await cta.count(),1);
     if(mobile)await cta.tap();else await cta.click();
-    await page.waitForURL(url=>url.pathname==='/jogar/');
-    assert.equal(await page.locator('lhs-game-launcher').count(),1);
+    await page.waitForURL(url=>url.pathname==='/game/');
+    await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+    assert.equal(await page.locator('iframe').count(),0);
+    assert.equal(await page.evaluate(()=>window.top===window.self),true);
     await page.goto(origin+'/sobre-o-jogo/',{waitUntil:'networkidle'});
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteFramework==='angular-rewrite');
@@ -311,18 +313,20 @@ try{
     assert.equal(await page.locator('#game-frame').count(),0);
     if(mobile)await page.locator('#launch-game').tap();
     else await page.locator('#launch-game').click();
-    await page.locator('#game-frame').waitFor({state:'attached',timeout:10000});
-    assert.equal(await page.locator('#game-frame').count(),1);
-    await page.frameLocator('#game-frame').locator('#menu-new')
-      .waitFor({state:'visible',timeout:20000});
-    // Reload must restore the passive preview instead of automatically
-    // launching a second Canvas runtime or duplicating the iframe.
+    await page.waitForURL(url=>url.pathname==='/game/');
+    await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+    assert.equal(await page.locator('iframe').count(),0);
+    assert.equal(await page.evaluate(()=>window.top===window.self),true);
+    // F5 keeps the original full-page game menu and a single Canvas runtime.
     await page.reload({waitUntil:'networkidle'});
-    await page.waitForFunction(()=>
-      document.documentElement.dataset.siteFramework==='angular-rewrite');
+    await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+    assert.equal(await page.locator('#menu-scene').count(),1);
+    assert.equal(await page.locator('lhs-site-header').count(),0);
+    assert.equal(await page.locator('iframe').count(),0);
+    await page.goto(origin+'/jogar/',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
     assert.equal(await page.locator('lhs-game-launcher').count(),1);
-    assert.equal(await page.locator('#game-frame').count(),0);
-    assert.equal(await page.locator('#launch-game').isVisible(),true);
+    assert.equal(await page.locator('#launch-game').getAttribute('href'),'/game/');
    }
    if(pathname==='/donate/'){
     assert.equal(await page.locator('lhs-donate').count(),1);

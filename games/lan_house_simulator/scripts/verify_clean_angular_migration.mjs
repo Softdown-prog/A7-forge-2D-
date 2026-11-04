@@ -61,22 +61,27 @@ try{
    await page.waitForFunction(()=>document.querySelector('.menu-button')?.getAttribute('aria-expanded')==='false');
    assert.equal(await page.locator('.menu-button').getAttribute('aria-expanded'),'false');
   }
+  assert.equal(await page.locator('#launch-game').getAttribute('href'),'/game/');
   await page.locator('#launch-game').click();
-  await page.waitForFunction(()=>document.querySelector('#game-status')?.textContent?.includes('Jogo aberto'));
-  const game=page.frameLocator('#game-frame');await game.locator('#start-screen').waitFor();
-  assert.ok(await page.locator('#game-frame').evaluate(frame=>frame.getBoundingClientRect().top>=0),'Frame controls must be inside the viewport');
-  const privacy=game.locator('#privacy-banner');await privacy.waitFor({state:'visible'});
-  await game.locator('#privacy-reject').click();await privacy.waitFor({state:'hidden'});
+  await page.waitForURL(url=>url.pathname==='/game/');
+  await page.locator('#start-screen').waitFor();
+  await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+  assert.equal(await page.locator('iframe').count(),0);
+  assert.equal(await page.locator('lhs-site-header').count(),0);
+  assert.equal(await page.evaluate(()=>window.self===window.top),true);
+  const privacy=page.locator('#privacy-banner');await privacy.waitFor({state:'visible'});
+  await page.locator('#privacy-reject').click();await privacy.waitFor({state:'hidden'});
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('lhs.privacy-choice.v1')).choice),'rejected');
-  await page.reload({waitUntil:'networkidle'});assert.equal(await page.locator('#game-frame').count(),0);
-  // Failed HTTP load must expose a recoverable UI, retaining unrelated local data.
-  await context.route('**/game/',route=>route.fulfill({status:503,contentType:'text/html',body:'synthetic failure'}));
-  await page.locator('#launch-game').click();
-  await page.waitForFunction(()=>document.querySelector('#game-status')?.textContent?.includes('O jogo não carregou'));
-  assert.equal(await page.locator('#launch-game').innerText(),'Tentar abrir novamente');
+  await page.reload({waitUntil:'networkidle'});
+  await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+  assert.equal(await page.locator('iframe').count(),0);
+  // A failed full-page navigation remains recoverable by normal browser reload.
+  await context.route('**/game/',route=>route.fulfill({status:503,contentType:'text/html',body:'<h1>synthetic failure</h1>'}));
+  const failure=await page.reload({waitUntil:'networkidle'});assert.equal(failure.status(),503);
   await context.unroute('**/game/');
-  await page.locator('#launch-game').click();
-  await page.waitForFunction(()=>document.querySelector('#game-status')?.textContent?.includes('Jogo aberto'));
+  const retry=await page.reload({waitUntil:'networkidle'});assert.equal(retry.status(),200);
+  await page.locator('#menu-new').waitFor({state:'visible',timeout:20000});
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('lhs.privacy-choice.v1')).choice),'rejected');
   await page.goto(preview.origin+'/donate/',{waitUntil:'networkidle'});
   assert.equal(await page.locator('#review-production-5').count(),0);assert.equal(posts.length,0);
   productionGate=true;
@@ -106,7 +111,7 @@ try{
   assert.equal(posts.length,2,'Mode revocation must fail before POST');
   assert.deepEqual(errors,[]);assert.deepEqual(violations,[]);assert.deepEqual(external,[]);
   results.push({width,routes:13,unknown404:true,headers:true,cspViolations:0,skipLink:true,
-   launcherRetry:true,consentPreserved:true,productionGateDefault:false,mockedProductionPosts:posts.length,reloadIdempotency:true,providerOpened:false});
+   fullPageGame:true,nativeReloadRetry:true,consentPreserved:true,productionGateDefault:false,mockedProductionPosts:posts.length,reloadIdempotency:true,providerOpened:false});
   await context.close();
  }
  await writeFile(resolve(output,'migration-results.json'),JSON.stringify({passed:true,results},null,2)+'\n');

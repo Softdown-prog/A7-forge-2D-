@@ -1,28 +1,9 @@
-<section class="wrap game-shell" #gameShell>
- @if(open()){
-  <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen
-   #frame [attr.aria-busy]="state()==='loading'" (load)="loaded(frame)" (error)="failed()"></iframe>
- }@else{
-  <div class="game-start">
-   <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
-   <button class="button" id="launch-game" type="button" (click)="launch()">{{state()==='error'?'Tentar abrir novamente':'Abrir minha lan house'}}</button>
-  </div>
- }
- <p id="game-status" role="status" aria-live="polite">
-  @switch(state()){
-   @case('loading'){Abrindo o salão…}
-   @case('ready'){Jogo aberto. Use Menu para pausar e salvar em arquivo antes de sair.}
-   @case('error'){O jogo não carregou. Tente novamente ou abra em outra aba. Sua partida foi preservada.}
-   @default{No celular, experimente jogar na horizontal. Se já tem uma partida neste endereço, escolha Continuar no menu.}
-  }
- </p>
- <div class="actions">
-  @if(state()==='ready'&&fullscreenAvailable){
-   <button id="fullscreen" class="button secondary" type="button" (click)="toggleFullscreen(gameShell)">{{fullscreen()?'Sair da tela cheia':'Tela cheia'}}</button>
-  }
-  <a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a>
+<section class="wrap game-entry" aria-labelledby="game-entry-title">
+ <div class="game-entry-image"><img src="/assets/sala.webp" width="1096" height="668" alt="Seu salão, com computadores e clientes"></div>
+ <div><p class="eyebrow">O SALÃO É SEU</p><h2 id="game-entry-title">Seu primeiro dia<br>começa aqui.</h2>
+  <p>O jogo abre em sua própria tela, com o menu e todos os controles. Escolha uma nova partida ou continue de onde parou.</p>
+  <a id="launch-game" class="button" href="/game/">Abrir minha lan house <span aria-hidden="true">→</span></a>
+  <p id="game-status" role="status" class="small">No celular, experimente jogar na horizontal. Salve uma cópia em arquivo pelo menu antes de sair.</p>
+  <a class="text-link" href="/ajuda/#salvar">Como guardar minha partida <span aria-hidden="true">→</span></a>
  </div>
- @if(fullscreenError()){
-  <p role="status">Tela cheia indisponível. Você pode abrir o jogo em outra aba.</p>
- }
 </section>
