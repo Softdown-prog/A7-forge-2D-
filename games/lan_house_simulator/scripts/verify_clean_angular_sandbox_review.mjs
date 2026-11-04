@@ -54,11 +54,12 @@ try{
    if(url.origin===apiOrigin&&url.pathname==='/v1/orders'&&request.method()==='POST'){
     const headers=request.headers(),body=request.postDataJSON();
     orderWrites.push({headers,body});
+    if(orderStatus==='timeout'){await route.abort('timedout');return;}
     await route.fulfill({status:orderStatus,contentType:'application/json',
      body:JSON.stringify(orderStatus===200?{
       id:'b'.repeat(64),
       url:'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic'
-     }:{error:'Synthetic network failure'})});
+     }:{error:'Synthetic network failure '+orderStatus+' #'+orderWrites.length})});
     return;
    }
    if(url.origin==='https://securetoken.googleapis.com'&&url.pathname==='/v1/token'&&
@@ -201,6 +202,37 @@ try{
   assert.notEqual(orderWrites[4].headers['idempotency-key'],
    orderWrites[3].headers['idempotency-key'],'New login needs new order key');
   assert.equal(await page.locator('a[href*="mercadopago"]').count(),0);
+
+  // Conflicts, an uncertain timeout and bounded manual retries retain one intent.
+  await page.locator('#cancel-sandbox-review').click();
+  await page.locator('[data-review-package="donate-10"]').click();
+  await page.locator('#sandbox-terms').check();
+  const initial=orderWrites.length;
+  for(const failure of [409,503,'timeout']){
+   orderStatus=failure;
+   const button=page.locator(failure===409?'#prepare-sandbox-order':'#retry-sandbox-order');
+   await button.click();
+   await page.getByRole('alert').filter({hasText:failure==='timeout'?'Sem conexão':'Synthetic network failure '+failure}).waitFor();
+  }
+  assert.equal(orderWrites.length,initial+3);
+  assert.equal(new Set(orderWrites.slice(initial).map(x=>x.headers['idempotency-key'])).size,1);
+  await page.locator('#retry-sandbox-order').click();
+  await page.getByRole('alert').filter({hasText:'Limite de tentativas'}).waitFor();
+  assert.equal(orderWrites.length,initial+3,'Retry limit prevents further POSTs');
+  // A definitive 410 requires a fresh review and consent before a fresh key.
+  await page.evaluate(()=>{
+   for(const key of Object.keys(sessionStorage))if(key.startsWith('lhs.checkout.sandbox.v1:'))sessionStorage.removeItem(key);
+  });
+  await page.locator('#cancel-sandbox-review').click();
+  await choose();await page.locator('#sandbox-terms').check();
+  orderStatus=410;await page.locator('#prepare-sandbox-order').click();
+  await page.waitForFunction(()=>document.querySelector('#sandbox-review-status')?.textContent?.includes('Não foi possível preparar a revisão'));
+  assert.equal(await page.locator('#retry-sandbox-order').count(),0);
+  const expiredKey=orderWrites.at(-1).headers['idempotency-key'];
+  await choose();await page.locator('#sandbox-terms').check();
+  orderStatus=200;await page.locator('#prepare-sandbox-order').click();
+  await page.locator('#sandbox-order-id').waitFor();
+  assert.notEqual(orderWrites.at(-1).headers['idempotency-key'],expiredKey);
 
   assert.deepEqual(unsafe,[],'No real APIs or checkout navigation');
   assert.deepEqual(errors,[],'No browser errors');

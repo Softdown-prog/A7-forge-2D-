@@ -45,10 +45,20 @@ for(const name of siteAssets){
  cpSync(source,destination);
 }
 cpSync(resolve(root,'out/angular-cutover-candidate'),resolve(output,'game'),{recursive:true});
+// Preserve the game transformation while serving its compatibility CSS externally.
+// No unsafe-inline exception is needed for the institutional or embedded document.
+const gameIndexPath=resolve(output,'game/index.html');
+let gameIndex=readFileSync(gameIndexPath,'utf8');
+const compatibilityStyles=[...gameIndex.matchAll(/<style>([\s\S]*?)<\/style>/g)];
+assert.equal(compatibilityStyles.length,1,'Expected the reviewed Angular game compatibility style');
+writeFileSync(resolve(output,'game/__angular/compatibility.css'),compatibilityStyles.map(match=>match[1]).join('\n'));
+gameIndex=gameIndex.replace(/<style>[\s\S]*?<\/style>/g,'<link rel="stylesheet" href="./__angular/compatibility.css">');
+writeFileSync(gameIndexPath,gameIndex);
 rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
 assert.ok(!existsSync(resolve(output,'game/js/react-entry.js')));
 for(const file of ['account-config.json','online-config.json'])
  cpSync(resolve(root,file),resolve(output,file));
+cpSync(resolve(angular,'src/site-rewrite/public/checkout-config.json'),resolve(output,'checkout-config.json'));
 const pageMetadata=JSON.parse(readFileSync(resolve(angular,'src/site-rewrite/page-metadata.json'),'utf8'));
 const paths=['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato',
  'conta','conta/confirmar','donate','termos','privacidade','dados'];
@@ -88,14 +98,16 @@ writeFileSync(resolve(output,'robots.txt'),'User-agent: *\nDisallow: /\n');
 writeFileSync(resolve(output,'_headers'),[
  '/*','  X-Content-Type-Options: nosniff',
  '  Referrer-Policy: strict-origin-when-cross-origin',
+ '  Permissions-Policy: camera=(), microphone=(), geolocation=()',
  // Only explicitly configured authenticated service origins may receive connections.
- "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+accountApiOrigin+"; frame-src 'self'; object-src 'none'; base-uri 'self'",
+ "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com "+accountApiOrigin+"; frame-src 'self'; object-src 'none'; base-uri 'self'",
  // HTML and account configuration must never get year-long browser cache entries.
  ...paths.map(path=>path?'/'+path+'/':'/').flatMap(path=>
   [path,'  Cache-Control: no-cache, must-revalidate']),
  '/404.html','  Cache-Control: no-cache, must-revalidate',
  '/account-config.json','  Cache-Control: no-store',
  '/online-config.json','  Cache-Control: no-store',
+ '/checkout-config.json','  Cache-Control: no-store',
  '/robots.txt','  Cache-Control: no-cache, must-revalidate',
  '/game/*','  Cache-Control: no-cache, must-revalidate',
  // Exact paths, not a blanket /assets/site/*, because that folder can include

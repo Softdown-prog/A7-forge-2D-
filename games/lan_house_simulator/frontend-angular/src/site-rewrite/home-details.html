@@ -1,0 +1,13 @@
+  <section class="wrap home-save" aria-labelledby="home-save-title">
+   <p class="eyebrow">UMA PARTIDA DO SEU JEITO</p><h2 id="home-save-title">Seu progresso. No seu navegador.</h2>
+   <p>A partida é salva localmente. Para continuar em outro aparelho, exporte seu save em arquivo e importe pelo menu do jogo. Mudar de endereço não transfere o progresso automaticamente.</p>
+   <a class="button secondary" href="/ajuda/#salvar">Entender os saves</a>
+  </section>
+  <section class="wrap faq" aria-labelledby="home-faq-title">
+   <h2 id="home-faq-title">Uma dúvida rápida?</h2>
+   @for(item of homeFaq;track item[0]){
+    <details><summary>{{item[0]}}</summary><p>{{item[1]}}</p></details>
+   }
+   <p><a href="/ajuda/">Ver todas as dicas</a></p>
+   <a class="button" href="/jogar/">Começar minha lan house</a>
+  </section>

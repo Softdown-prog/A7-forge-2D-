@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy,Component,HostListener,input,signal} from '@angular/core';
+import {ChangeDetectionStrategy,Component,ElementRef,HostListener,inject,input,signal,viewChild} from '@angular/core';
 import {navigation} from './site-data';
 import type {SitePath} from './site-data';
 
@@ -13,8 +13,19 @@ export class SiteHeaderComponent{
  readonly path=input.required<SitePath>();
  readonly navigation=navigation;
  readonly openMenu=signal(false);
+ private readonly host=inject<ElementRef<HTMLElement>>(ElementRef);
+ private readonly toggle=viewChild<ElementRef<HTMLButtonElement>>('menuToggle');
  toggleMenu():void{this.openMenu.update(value=>!value);}
  closeMenu():void{this.openMenu.set(false);}
  @HostListener('document:keydown.escape')
- onEscape():void{this.closeMenu();}
+ onEscape():void{
+  if(!this.openMenu())return;
+  this.closeMenu();this.toggle()?.nativeElement.focus();
+ }
+ @HostListener('document:pointerdown',['$event'])
+ onPointerDown(event:PointerEvent):void{
+  if(event.target instanceof Node&&!this.host.nativeElement.contains(event.target))this.closeMenu();
+ }
+ @HostListener('window:resize')
+ onResize():void{if(innerWidth>800)this.closeMenu();}
 }

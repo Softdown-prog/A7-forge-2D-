@@ -21,7 +21,8 @@ test('Donate is Angular-only and cannot create orders or checkout',()=>{
  assert.doesNotMatch(c+h,/checkoutUrl|website\/|window\.location\.assign|\/v1\/orders\//);
  const account=read('../frontend-angular/src/site-rewrite/account.ts');
  const accountView=read('../frontend-angular/src/site-rewrite/account.html');
- assert.doesNotMatch(c+h,/\/v1\/orders|checkoutUrl|website\/|sessionStorage|window\.location\.assign/);
+ assert.doesNotMatch(c+h,/\/v1\/orders|checkoutUrl|website\/|window\.location\.assign/);
+ assert.match(c,/new CheckoutAttempts\(config\.apiUrl\+'\|'\+profile\.email,storage\)/);
  assert.doesNotMatch(h,/id="load-donate-history"|class="donate-orders"/);
  assert.match(h,/href="\/conta\/#apoios"/);
  assert.match(account,/readDonateOrders\(result\)/);

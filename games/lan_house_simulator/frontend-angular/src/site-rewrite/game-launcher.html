@@ -1,11 +1,28 @@
-<section class="wrap game-shell">
+<section class="wrap game-shell" #gameShell>
  @if(open()){
-  <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen></iframe>
-  <p><a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a></p>
+  <iframe id="game-frame" src="/game/" title="Jogo Lan House Simulator" allowfullscreen
+   #frame [attr.aria-busy]="state()==='loading'" (load)="loaded(frame)" (error)="failed()"></iframe>
  }@else{
   <div class="game-start">
    <img src="/assets/sala.webp" width="780" height="480" alt="Prévia do salão"/>
-   <button class="button" id="launch-game" type="button" (click)="launch()">Abrir minha lan house</button>
+   <button class="button" id="launch-game" type="button" (click)="launch()">{{state()==='error'?'Tentar abrir novamente':'Abrir minha lan house'}}</button>
   </div>
+ }
+ <p id="game-status" role="status" aria-live="polite">
+  @switch(state()){
+   @case('loading'){Abrindo o salão…}
+   @case('ready'){Jogo aberto. Use Menu para pausar e salvar em arquivo antes de sair.}
+   @case('error'){O jogo não carregou. Tente novamente ou abra em outra aba. Sua partida foi preservada.}
+   @default{No celular, experimente jogar na horizontal. Se já tem uma partida neste endereço, escolha Continuar no menu.}
+  }
+ </p>
+ <div class="actions">
+  @if(state()==='ready'&&fullscreenAvailable){
+   <button id="fullscreen" class="button secondary" type="button" (click)="toggleFullscreen(gameShell)">{{fullscreen()?'Sair da tela cheia':'Tela cheia'}}</button>
+  }
+  <a href="/game/" target="_blank" rel="noopener">Jogar em uma nova aba</a>
+ </div>
+ @if(fullscreenError()){
+  <p role="status">Tela cheia indisponível. Você pode abrir o jogo em outra aba.</p>
  }
 </section>

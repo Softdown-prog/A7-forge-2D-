@@ -6,8 +6,7 @@ import {eras} from './site-data';
  selector:'lhs-era-timeline',
  standalone:true,
  changeDetection:ChangeDetectionStrategy.OnPush,
- templateUrl:'./era-timeline.html',
- styles:[':host{display:block}']
+ templateUrl:'./era-timeline.html'
 })
 export class EraTimelineComponent{
  readonly eras=eras;

@@ -27,7 +27,8 @@
     "typecheck": "tsc --noEmit && tsc -p tsconfig.engine.json",
     "build:site:angular:candidate": "node scripts/build_angular_site_candidate.mjs",
     "build:site:clean": "node scripts/build_clean_angular_site.mjs",
-    "check:site:clean": "node scripts/check_clean_angular_site.mjs"
+    "check:site:clean": "node scripts/check_clean_angular_site.mjs",
+    "validate:site:clean": "node scripts/validate_clean_angular_migration.mjs"
   },
   "devDependencies": {
     "typescript": "7.0.2",

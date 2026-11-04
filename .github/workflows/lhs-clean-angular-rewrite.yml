@@ -15,42 +15,34 @@ permissions:
 jobs:
   rewrite:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Install independent game and Angular toolchains
         working-directory: games/lan_house_simulator
         run: |
           npm ci --no-audit --no-fund
           npm ci --prefix frontend-angular --no-audit --no-fund
-      - name: Build clean Angular-only static artifact
+      - name: Install backend contract toolchain and isolated Chromium
         working-directory: games/lan_house_simulator
         run: |
-          npm run build:site:clean
-          npm run check:site:clean
-          ./frontend-angular/node_modules/.bin/tsc --ignoreConfig --noEmit --strict --noUnusedLocals --noUnusedParameters --noUncheckedIndexedAccess --exactOptionalPropertyTypes --noImplicitReturns --noFallthroughCasesInSwitch --noPropertyAccessFromIndexSignature --target ES2022 --module ES2022 --moduleResolution bundler --lib ES2022,DOM --skipLibCheck frontend-angular/src/site-rewrite/checkout-contract.ts frontend-angular/src/site-rewrite/checkout-sandbox-adapter.ts
-          node --test tests/clean-site-angular-build-policy.test.mjs
-          node --test tests/clean-site-angular-assets.test.mjs
-          node --test tests/clean-site-cutover-readiness.test.mjs
-          node --test tests/sac-site-rewrite-entry.test.mjs
-          node --test tests/clean-site-legal.test.mjs tests/clean-site-canonical.test.mjs tests/clean-site-import-boundary.test.mjs tests/clean-site-game-launcher.test.mjs tests/clean-site-help-search.test.mjs tests/clean-site-contact.test.mjs tests/clean-site-about-pages.test.mjs tests/clean-site-era-timeline.test.mjs tests/clean-site-site-header.test.mjs tests/clean-site-site-footer.test.mjs tests/clean-site-local-data.test.mjs tests/clean-site-account.test.mjs tests/clean-site-email-confirmation.test.mjs tests/clean-site-donate.test.mjs tests/clean-site-donate-history.test.mjs tests/clean-site-checkout-contract.test.mjs tests/clean-site-checkout-safety.test.mjs tests/clean-site-checkout-sandbox-adapter.test.mjs
-      - name: Real Chromium Android-like touch, F5 and iframe QA
-        working-directory: games/lan_house_simulator
-        run: |
+          npm ci --prefix backend --no-audit --no-fund
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
           npx playwright install --with-deps chromium
-          node scripts/prerender_clean_angular_site.mjs
-          node scripts/check_clean_angular_prerender.mjs
-          node scripts/audit_clean_angular_cutover.mjs
-          node scripts/verify_clean_angular_confirmation.mjs
-          node scripts/verify_clean_angular_account.mjs
-          node scripts/verify_clean_angular_site.mjs
-          node scripts/verify_clean_angular_donate_history.mjs
-          node scripts/verify_clean_angular_sandbox_review.mjs
-      - name: Save browser evidence — research only
+      - name: Validate complete migration, engine, accounts and payment contracts
+        working-directory: games/lan_house_simulator
+        run: npm run validate:site:clean
+      - name: Save canonical Angular staging artifact (no deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-angular-staging-${{ github.sha }}
+          path: games/lan_house_simulator/out/site-clean-angular
+          if-no-files-found: error
+          retention-days: 14
+      - name: Save validation and browser evidence — no production deployment
         if: always()
         uses: actions/upload-artifact@v4
         with:

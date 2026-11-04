@@ -1,5 +1,11 @@
 ## Frontend atual — Angular no site, React apenas como compatibilidade
 
+**Migração institucional completa (issue #78, a partir do PR #77):** o candidato canônico
+está em `frontend-angular/src/site-rewrite/` e produz `out/site-clean-angular`.
+Execute `npm run validate:site:clean` para os testes consolidados e consulte
+[paridade por rota, homologação, checkout por configuração e rollback](docs/ANGULAR_MIGRATION_DELIVERY.md).
+A publicação descrita abaixo continua ativa até o cutover autorizado.
+
 O `npm run build:site` publica a versão **Angular** da interface do jogo em
 `/game/`, conservando o motor Canvas 2D em TypeScript e os comandos nativos.
 O teste de integração Angular é executado no Chromium em desktop e mobile,
