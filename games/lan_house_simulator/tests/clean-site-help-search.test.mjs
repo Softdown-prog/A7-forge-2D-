@@ -53,7 +53,8 @@ test('FAQ preserves seven fully documented help answers without depending on leg
   'placa de vídeo e monitor','não promete ganhos reais',
   'não envie documentos ou dados pessoais'
  ])assert.ok(all.includes(detail),'Missing essential FAQ instruction: '+detail);
- assert.doesNotMatch(source,/import.*(?:website\/|content\.mjs)|require\(/);
+ // Import isolation is enforced by the TypeScript AST gate, not prose comments.
+ assert.doesNotMatch(source,/^\s*(?:import|export)\s+.*(?:website\/|content\.mjs)/m);
 });
 
 test('first-day and save-transfer guide retains navigable anchors and privacy warnings',()=>{
