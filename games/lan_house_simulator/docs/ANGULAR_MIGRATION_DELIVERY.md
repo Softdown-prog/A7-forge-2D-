@@ -1,4 +1,7 @@
-# Migração institucional Angular — entrega da issue #78 no PR #77
+# Migração institucional Angular — entrega consolidada da issue #78
+
+Base: PR #77, mesclado externamente durante a execução. As alterações restantes
+estão em um único PR de conclusão, branch `feat/lhs-angular-migration-complete-78`.
 
 Destino único: `frontend-angular/src/site-rewrite/`. O artefato de homologação é
 `out/site-clean-angular/`. O workflow `lhs-clean-angular-rewrite.yml` constrói,

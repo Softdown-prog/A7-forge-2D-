@@ -2,7 +2,8 @@
 
 **Entrega consolidada da issue #78:** veja [matriz por rota, validação completa,
 checkout por feature gate, cutover e rollback](ANGULAR_MIGRATION_DELIVERY.md).
-O trabalho continua no PR #77 / `feat/lhs-angular-about-pages-parity-20261103`.
+O PR #77 foi mesclado externamente durante a execução. A entrega da issue #78
+continua num único PR de conclusão, na branch `feat/lhs-angular-migration-complete-78`.
 As microetapas abaixo são histórico de implementação; a matriz consolidada
 descreve o estado atual. Homologação não autoriza merge nem publicação.
 
