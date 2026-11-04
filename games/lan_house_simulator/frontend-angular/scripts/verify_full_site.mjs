@@ -7,11 +7,6 @@ import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
-if(process.env.LHS_CHECK_DEFAULT_SITE==='1'){
- const {execFileSync}=await import('node:child_process');
- execFileSync(process.execPath,[resolve(import.meta.dirname,'../../scripts/verify_canonical_angular_site.mjs')],{stdio:'inherit'});
- process.exit(0);
-}
 const root=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/site':'../../out/site-angular');
 const output=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/angular-site-default-browser':'../../out/angular-site-browser');
 const angularTools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
@@ -90,10 +85,10 @@ try{
    const reloaded=await page.reload({waitUntil:'networkidle'});
    assert.equal(reloaded?.status(),200,'Refreshing must keep HTTP 200: '+pathname);
    await page.locator('#conteudo').waitFor({state:'visible',timeout:12000});
-   assert.equal(await page.locator('header.site-header').count(),1);
-   assert.equal(await page.locator('footer.site-footer').count(),1);
+   assert.equal(await page.locator('header.site-header, lhs-site-header header').count(),1);
+   assert.equal(await page.locator('footer.site-footer, lhs-site-footer footer').count(),1);
    assert.equal(await page.locator('nav#site-nav').count(),1);
-   assert.equal(await page.locator('button#menu-toggle').count(),1);
+   assert.equal(await page.locator('button#menu-toggle, button.menu-button').count(),1);
    assert.equal(await page.locator('#motion-toggle').count(),1);
    if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
     await page.waitForFunction(()=>
@@ -102,22 +97,22 @@ try{
     assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0);
    }else{
     await page.waitForFunction(()=>
-     document.documentElement.classList.contains('js-enabled'));
+     document.documentElement.classList.contains('js-enabled')||document.documentElement.dataset.siteFramework==='angular-rewrite');
    }
    const siteLogo=page.locator('header .brand img');
    assert.ok(await siteLogo.evaluate(img=>img.complete&&img.naturalWidth>0),
     'Brand image must survive reload on '+pathname);
    if(mobile){
-    const toggle=page.locator('#menu-toggle');
+    const toggle=page.locator('#menu-toggle, .menu-button');
     await toggle.tap();
     await page.waitForFunction(()=>
-     document.querySelector('#menu-toggle')?.getAttribute('aria-expanded')==='true' &&
-     document.querySelector('#site-nav')?.classList.contains('is-open'));
+     document.querySelector('#menu-toggle, .menu-button')?.getAttribute('aria-expanded')==='true' &&
+     (document.querySelector('#site-nav')?.classList.contains('is-open')||document.querySelector('#site-nav')?.classList.contains('open')));
     assert.ok(await page.locator('#site-nav').isVisible(),
      'Mobile nav should open after F5 at '+pathname);
     await page.keyboard.press('Escape');
     await page.waitForFunction(()=>
-     document.querySelector('#menu-toggle')?.getAttribute('aria-expanded')==='false');
+     document.querySelector('#menu-toggle, .menu-button')?.getAttribute('aria-expanded')==='false');
    }
    if(pathname==='/ajuda/'){
     if(process.env.LHS_CHECK_DEFAULT_SITE!=='1')
@@ -127,12 +122,13 @@ try{
     await search.fill('salvar');
     await page.waitForFunction(()=>
      /respostas? encontradas?/.test(
-      document.querySelector('#help-search-results')?.textContent??''));
-    assert.ok(await page.locator('#help-questions details:visible').count()>0,
+      document.querySelector('#help-search-results, lhs-help-search .faq [role="status"]')?.textContent??''));
+    assert.ok(await page.locator('#help-questions details:visible, lhs-help-search .faq details:visible').count()>0,
      'FAQ search must work after F5');
    }
    if(pathname==='/jogar/'){
-    assert.equal(await page.locator('#game-frame').getAttribute('src'),null,
+    if(process.env.LHS_CHECK_DEFAULT_SITE==='1')assert.equal(await page.locator('#game-frame').count(),0,'No iframe before explicit launch');
+    else assert.equal(await page.locator('#game-frame').getAttribute('src'),null,
      'Refresh must not autoplay iframe or retain a stale game document');
     assert.ok(await page.locator('#launch-game').isVisible(),
      'Refresh should restore the playable launch control');
@@ -140,7 +136,9 @@ try{
    assert.deepEqual(errors,[],'Reload errors at '+pathname+' width '+width);
   }
   await page.goto(origin+'/',{waitUntil:'networkidle'});
-  const siteModule=await page.request.get(origin+'/assets/site.mjs');
+  const canonicalAssets=process.env.LHS_CHECK_DEFAULT_SITE==='1'?JSON.parse(await readFile(resolve(root,'angular-site-assets.json'),'utf8')):null;
+  const siteModule=await page.request.get(origin+(canonicalAssets?'/assets/site/'+canonicalAssets.main:'/assets/site.mjs'));
+  assert.equal(siteModule.status(),200);
   assert.match(siteModule.headers()['cache-control']??'',/no-cache/,
    'Public JS must always revalidate after a deployment');
   if(process.env.LHS_CHECK_DEFAULT_SITE!=='1'){
@@ -245,7 +243,7 @@ try{
    assert.equal(await footer.count(),1);
    assert.equal(await header.locator('a.brand[href="/"]').count(),1);
    assert.equal(await footer.locator('a.brand[href="/"]').count(),1);
-   assert.equal(await page.locator('#menu-toggle').count(),1);
+   assert.equal(await page.locator('#menu-toggle, .menu-button').count(),1);
    assert.equal(await page.locator('#motion-toggle').count(),1);
    assert.equal(await footer.locator('nav.footer-links').count(),2);
    for(const href of ['/jogar/','/ajuda/','/contato/','/termos/','/privacidade/','/dados/'])
@@ -288,15 +286,15 @@ try{
    assert.equal(await nav.evaluate(el=>el.scrollWidth-el.clientWidth)<=3,true,
     'Site navigation must not overflow its own width');
    if(mobile){
-    await page.locator('#menu-toggle').click();
-    assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'true');
+    await page.locator('#menu-toggle, .menu-button').click();
+    assert.equal(await page.locator('#menu-toggle, .menu-button').getAttribute('aria-expanded'),'true');
     await page.waitForFunction(()=>
-     document.querySelector('#site-nav')?.classList.contains('is-open'),
+     (document.querySelector('#site-nav')?.classList.contains('is-open')||document.querySelector('#site-nav')?.classList.contains('open')),
      null,{timeout:5000});
     assert.ok(await nav.isVisible(),'Mobile Angular menu must actually open');
     await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#menu-toggle').getAttribute('aria-expanded'),'false');
-    await page.locator('#menu-toggle').click();
+    assert.equal(await page.locator('#menu-toggle, .menu-button').getAttribute('aria-expanded'),'false');
+    await page.locator('#menu-toggle, .menu-button').click();
     await nav.locator('a[href="/ajuda/"]').click();
     await page.waitForURL('**/ajuda/');
     await page.waitForFunction(()=>
@@ -310,9 +308,12 @@ try{
     'React must never bootstrap institutional site navigation');
   }
   const frame=page.locator('#game-frame');
+  if(process.env.LHS_CHECK_DEFAULT_SITE==='1')assert.equal(await frame.count(),0,'No iframe before launch');
+  else{
   assert.equal(await frame.getAttribute('src'),null,'Game must not load before launch');
   assert.match(await frame.getAttribute('data-src'),/^\/game\/\?v=[0-9a-f]{12}$/);
   assert.equal(await frame.isHidden(),true,'No autoplay iframe');
+  }
   assert.ok((await page.locator('a[href="/conta/"]').count())>=1,
    'Site must keep account navigation');
   assert.ok((await page.locator('a[href="/donate/"]').count())>=1,
@@ -348,6 +349,10 @@ try{
   await press(game.locator('#angular-admin-area-navigation [data-angular-admin-tab="computers"]'));
   await game.locator('#angular-computer-workspace .angular-pc-health')
    .waitFor({state:'visible',timeout:10000});
+  const wearFills=await game.locator('.wear-track i').evaluateAll(nodes=>
+   nodes.map(node=>node.style.width));
+  assert.ok(wearFills.length>0&&wearFills.every(width=>/^\d+(?:\.\d+)?%$/.test(width)),
+   'Native PC wear indicators must retain their dynamic widths under strict CSP');
   await press(game.locator('#angular-computer-workspace [data-angular-task="hardware"]'));
   await game.locator('#page-computers-hardware').waitFor({state:'visible'});
   assert.ok(await game.locator('#hardware-select-0').count()>0,
@@ -362,7 +367,8 @@ try{
   const gameReload=await page.reload({waitUntil:'networkidle'});
   assert.equal(gameReload?.status(),200,'In-game F5 should reload /jogar/');
   await page.locator('#launch-game').waitFor({state:'visible',timeout:15000});
-  assert.equal(await page.locator('#game-frame').getAttribute('src'),null);
+  if(process.env.LHS_CHECK_DEFAULT_SITE==='1')assert.equal(await page.locator('#game-frame').count(),0);
+  else assert.equal(await page.locator('#game-frame').getAttribute('src'),null);
   await page.locator('#launch-game').click();
   await game.locator('#menu-new').waitFor({state:'visible',timeout:20000});
   await page.waitForFunction(()=>{
@@ -379,11 +385,11 @@ try{
   assert.deepEqual(errors,[],'Production build CSP, resources and game must be error-free');
   await page.screenshot({path:resolve(output,'site-angular-'+width+'.png'),fullPage:true});
   results.push({width,mobile,lazyIframe:true,angularBoot:true,canvasGame:true,
-   shopCatalog:true,siteAngularNavigation:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
-   siteAngularTimeline:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
-   siteAngularHelp:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
-   siteAngularHeaderFooter:process.env.LHS_CHECK_DEFAULT_SITE!=='1',
-   adminComputer:true,mobileTouch:mobile,
+   shopCatalog:true,siteAngularNavigation:true,
+   siteAngularTimeline:true,
+   siteAngularHelp:true,
+   siteAngularHeaderFooter:true,
+   adminComputer:true,wearIndicators:true,mobileTouch:mobile,
    reactScript:false,csp:true,revisionedGameImports:true,
    fullPageReload:true,deepLinkRefresh:true,canvasRestartAfterReload:true,
    resourceErrors:0,errorCount:errors.length});
@@ -394,4 +400,9 @@ try{
 }finally{
  await browser?.close();
  await new Promise(done=>server.close(done));
+}
+
+if(process.env.LHS_CHECK_DEFAULT_SITE==='1'){
+ const {execFileSync}=await import('node:child_process');
+ execFileSync(process.execPath,[resolve(import.meta.dirname,'../../scripts/verify_canonical_angular_site.mjs')],{stdio:'inherit'});
 }

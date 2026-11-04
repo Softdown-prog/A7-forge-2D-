@@ -83,7 +83,10 @@ export function presentComputerOperations(stations:ReadonlyArray<ComputerOperati
   if(!station)continue;
   const {index:i,wear,broken}=station;
   label.className="pc-label";
-  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+station.windows+' · '+station.model+'</small><small>'+station.cpu+' · RAM '+station.ram+' · '+station.storage+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i style="width:'+wear+'%"></i></span></span>';
+  label.innerHTML=iconMarkup("computer")+'<span><b>Estação '+String(i+1).padStart(2,"0")+(broken?' <span class="pc-stopped">· Parada</span>':'')+'</b><small>'+station.windows+' · '+station.model+'</small><small>'+station.cpu+' · RAM '+station.ram+' · '+station.storage+'</small><small>Desgaste '+Math.round(wear)+'%</small><span class="wear-track"><i></i></span></span>';
+  // Assign the dynamic width through CSSOM so strict CSP accepts the indicator.
+  const wearFill=label.querySelector<HTMLElement>(".wear-track i");
+  if(wearFill)wearFill.style.width=wear+"%";
  }
 }
 
