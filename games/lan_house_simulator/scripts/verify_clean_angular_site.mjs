@@ -166,7 +166,8 @@ try{
     assert.equal(await page.locator('#comecar').count(),1);
     assert.equal(await page.locator('#salvar').count(),1);
     assert.equal(await page.locator('#duvidas').count(),1);
-    await page.locator('.help-jump-links a[href="#salvar"]').click();
+    await page.locator('.help-jump-links a[href="/ajuda/#salvar"]').click();
+    assert.equal(new URL(page.url()).pathname,'/ajuda/');
     assert.equal(new URL(page.url()).hash,'#salvar');
     assert.match(await page.locator('#salvar').innerText(),/Carregar arquivo/);
     await page.waitForFunction(()=>{

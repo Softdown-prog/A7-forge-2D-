@@ -62,7 +62,7 @@ test('first-day and save-transfer guide retains navigable anchors and privacy wa
  for(const anchor of ['comecar','salvar','duvidas']){
   assert.match(html,new RegExp('id="'+anchor+'"'));
   assert.equal((html.match(new RegExp('id="'+anchor+'"','g'))||[]).length,1);
-  assert.match(html,new RegExp('href="#'+anchor+'"'));
+  assert.match(html,new RegExp('href="/ajuda/#'+anchor+'"'));
  }
  for(const detail of [
   'Seu primeiro dia','Abra Administrar','Use Compras',
@@ -70,6 +70,8 @@ test('first-day and save-transfer guide retains navigable anchors and privacy wa
   'A importação substitui a partida atual','Não abra saves de origem desconhecida',
   'Navegação privada','/conta/'
  ])assert.ok(html.includes(detail),'Lost institutional help guidance: '+detail);
+ // Root base href makes fragment-only links resolve to the homepage.
+ assert.doesNotMatch(html,/href="#(?:comecar|salvar|duvidas)"/);
  assert.match(html,/aria-label="Neste guia"/);
  assert.match(html,/class="wrap faq" id="duvidas"/);
  assert.match(css,/\.help-guide article\{scroll-margin-top:/);
