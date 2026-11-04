@@ -44,7 +44,7 @@
  border:1px solid #d2d5bf;background:#e4e6d6;border-radius:10px;padding:6px}
 #admin .angular-admin-tab{min-height:52px;min-width:0;padding:9px 7px;line-height:1.3;
  white-space:normal;overflow-wrap:anywhere;text-align:center;background:#fffef5;
- color:#4b614e;border:1px solid #cbd6c2;border-radius:7px;font-size:11px;font-weight:650;cursor:pointer}
+ color:#4b614e;border:1px solid #cbd6c2;border-radius:7px;font-size:11px;font-weight:650;cursor:pointer;transition:none}
 #admin .angular-admin-tab[aria-selected="true"]{background:#234334;color:#f7f8ea;border-color:#234334}
 #admin .angular-admin-tab:hover:not(:disabled){border-color:#80a173}
 /* Keep selected text on the dark surface even during pointer hover and keyboard focus. */

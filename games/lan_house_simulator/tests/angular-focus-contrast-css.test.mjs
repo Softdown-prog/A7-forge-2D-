@@ -43,3 +43,9 @@ test('the patch only changes presentation; native controller selectors remain un
   assert.match(css,/html\[data-ui-framework="angular"\] #admin \.admin-tabs\{display:none!important\}/);
   assert.match(css,/#admin \.angular-admin-tab\[aria-selected="true"\]/);
 });
+
+test('admin tab colors switch atomically without the global 160ms background transition',()=>{
+  const tab=rule('#admin \\.angular-admin-tab');
+  assert.match(tab,/transition:none/);
+  assert.ok(css.includes('transition:none'));
+});
