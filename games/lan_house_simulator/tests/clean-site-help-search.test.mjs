@@ -33,3 +33,25 @@ test('Angular FAQ handles normalized queries, clear focus, semantic answers and 
  assert.match(html,/<details><summary>/);
  assert.doesNotMatch(component,/fetch\(|localStorage|document\.querySelector|innerHTML|website\/|react/);
 });
+
+test('FAQ preserves seven fully documented help answers without depending on legacy scripts',()=>{
+ const source=read('site-data.ts');
+ const raw=source.match(/export const faq=(\[[\s\S]*?\]) as const;/)?.[1];
+ assert.ok(raw,'FAQ must be a standalone constant with literal, auditable answers');
+ const faq=JSON.parse(raw);
+ assert.equal(faq.length,7);
+ assert.equal(new Set(faq.map(item=>item[0])).size,7,'No duplicated questions');
+ for(const item of faq){
+  assert.equal(item.length,2);
+  assert.ok(item.every(s=>typeof s==='string'&&s.length>15));
+ }
+ const all=faq.map(item=>item[1]).join(' ');
+ for(const detail of [
+  'Loja Cookies','saves na nuvem','Não há assinatura obrigatória',
+  'aparelho na horizontal','JavaScript e Canvas 2D',
+  'Salvar em arquivo','Carregar arquivo','outro aparelho',
+  'placa de vídeo e monitor','não promete ganhos reais',
+  'não envie documentos ou dados pessoais'
+ ])assert.ok(all.includes(detail),'Missing essential FAQ instruction: '+detail);
+ assert.doesNotMatch(source,/import.*(?:website\/|content\.mjs)|require\(/);
+});
