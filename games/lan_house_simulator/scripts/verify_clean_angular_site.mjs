@@ -60,7 +60,7 @@ try{
      /\.(?:js|css|svg|webp|json)$/.test(new URL(response.url()).pathname))
     errors.push('HTTP '+response.status()+' '+response.url());
   });
-  for(const pathname of ['/','/sobre-o-jogo/','/ajuda/','/contato/','/jogar/','/termos/','/privacidade/','/dados/','/donate/']){
+  for(const pathname of ['/','/sobre-o-jogo/','/sobre-nos/','/ajuda/','/contato/','/jogar/','/termos/','/privacidade/','/dados/','/donate/']){
    let res=await page.goto(origin+pathname,{waitUntil:'networkidle'});
    assert.equal(res?.status(),200);
    await page.waitForFunction(()=>
@@ -159,6 +159,47 @@ try{
      'Três PCs e um sonho.');
    }else{
     assert.equal(await page.locator('lhs-era-timeline').count(),0);
+   }
+   if(pathname==='/sobre-o-jogo/'){
+    assert.equal(await page.locator('lhs-about-game').count(),1);
+    const features=page.locator('lhs-about-game .about-feature');
+    assert.equal(await features.count(),6);
+    assert.deepEqual(await features.locator('h3').allInnerTexts(),
+     ['Administração','Cada PC tem uma história','Anos que abrem possibilidades',
+      'Comércio no balcão','Um salão para crescer','Sua partida vai com você']);
+    assert.equal(await page.locator('lhs-about-game .about-salon').count(),1);
+    assert.equal(await page.locator('lhs-era-timeline').count(),1,
+     'The shared Angular timeline must not be duplicated');
+    const cta=page.locator('lhs-about-game .about-cta a[href="/jogar/"]');
+    assert.equal(await cta.count(),1);
+    if(mobile)await cta.tap();else await cta.click();
+    await page.waitForURL(url=>url.pathname==='/jogar/');
+    assert.equal(await page.locator('lhs-game-launcher').count(),1);
+    await page.goto(origin+'/sobre-o-jogo/',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-about-game .about-feature').count(),6);
+    assert.equal(await page.locator('main h1').count(),1);
+   }
+   if(pathname==='/sobre-nos/'){
+    assert.equal(await page.locator('lhs-about-us').count(),1);
+    assert.equal(await page.locator('lhs-about-us .about-studio-seal img').count(),1);
+    assert.match(await page.locator('lhs-about-us .about-editorial').innerText(),
+     /Terminal de Bairro/);
+    assert.match(await page.locator('lhs-about-us .about-editorial').innerText(),
+     /progresso local/);
+    assert.equal(await page.locator('lhs-about-us a[href="/contato/"]').count(),1);
+    const aboutGameLink=page.locator('lhs-about-us a[href="/sobre-o-jogo/"]');
+    assert.equal(await aboutGameLink.count(),1);
+    assert.equal(await page.locator('lhs-era-timeline').count(),0);
+    if(mobile)await aboutGameLink.tap();else await aboutGameLink.click();
+    await page.waitForURL(url=>url.pathname==='/sobre-o-jogo/');
+    await page.locator('lhs-about-game').waitFor({state:'visible'});
+    await page.goto(origin+'/sobre-nos/',{waitUntil:'networkidle'});
+    await page.waitForFunction(()=>
+     document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-about-us').count(),1);
+    assert.equal(await page.locator('main h1').count(),1);
    }
    if(pathname==='/ajuda/'){
     assert.equal(await page.locator('lhs-help-search').count(),1);
@@ -504,7 +545,7 @@ try{
   assert.ok(await page.evaluate(()=>
     document.documentElement.scrollWidth<=innerWidth+2),'No horizontal jump while scrolling');
   await page.screenshot({path:resolve(output,'angular-clean-'+width+'.png'),fullPage:true});
-  results.push({width,routeReloads:8,legalRoutes:2,donateReadOnly:true,localDataVerified:true,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
+  results.push({width,routeReloads:10,legalRoutes:2,donateReadOnly:true,localDataVerified:true,angularOnly:true,scrollTest:mobile?'touch-cdp':'wheel',
    gameReload:true,errors:errors.length});
   await context.close();
  }

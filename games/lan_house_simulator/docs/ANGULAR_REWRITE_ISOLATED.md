@@ -244,3 +244,11 @@ Esta etapa avança a migração, mas **não declara o frontend inteiro concluíd
 - O código do Angular não importa arquivos de `website/`. O teste de integridade compara o canal de email exibido com `website/config.mjs` apenas para detectar divergência enquanto o site legado estiver publicado.
 - O Chromium cobre 1280/414/360px, contagem de elementos, links, clique/tap em Ajuda, retorno e F5, sem rolagem horizontal. O pré-render da rota pública continua verificando HTML mesmo sem JavaScript.
 - Esta paridade não autoriza o corte de produção: Cloudflare ainda publica `out/site`, e permanecem pendentes revisões legais/SEO, pagamentos e homologação no Android físico.
+
+### Microetapa — conteúdo integral de Sobre o jogo e Sobre nós
+
+- Dois componentes standalone (`lhs-about-game` e `lhs-about-us`) passam a ser donos exclusivos das respectivas páginas institucionais, preservando a única timeline Angular existente para `/sobre-o-jogo/`.
+- `Sobre o jogo`: narrativa do primeiro salão, imagem canônica, **seis recursos** (administração, peças individuais por PC, gerações, comércio, expansão e save por arquivo), link para jogar e timeline.
+- `Sobre nós`: marca Softdown, identidade Terminal de Bairro, implementação independente com programação/desenho procedural/simulação, participação de quem joga, limite da experiência individual com progresso local, links para Contato, jogo e começar partida.
+- Testes estruturais impedem cópia de JS/CSS de `website/`, duplicação de timeline e perda de links e seções. Chromium cobre navegação, toque, recarregamento, H1 único, seis cards e ausência de rolagem horizontal em 1280/414/360 pixels.
+- Este avanço **não autoriza** o deploy: Cloudflare continua usando `npm run build:site` e `out/site`, mantendo bloqueios de SEO, jurídico, checkout real e Android físico.
