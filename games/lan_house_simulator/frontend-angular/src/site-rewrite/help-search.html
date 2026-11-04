@@ -1,4 +1,34 @@
-<section class="wrap faq">
+
+<section class="wrap help-guide" aria-label="Primeiros passos e salvamento">
+ <nav class="help-jump-links" aria-label="Neste guia">
+  <a href="#comecar">Começar</a>
+  <a href="#salvar">Salvar e transferir</a>
+  <a href="#duvidas">Perguntas</a>
+ </nav>
+ <article id="comecar">
+  <h2>Seu primeiro dia</h2>
+  <ol>
+   <li>Abra a <a href="/jogar/">página do jogo</a> e escolha Abrir minha lan house. No menu, inicie ou continue uma partida.</li>
+   <li>Observe a entrada, o pagamento no balcão e o uso dos computadores.</li>
+   <li>Abra Administrar para conferir preços, manutenção, estoque e finanças.</li>
+   <li>Mantenha uma reserva para despesas. Escolha uma máquina por vez para modernizar.</li>
+   <li>Use Compras para expandir e organizar o salão. Pressione Escape ou use Menu para pausar.</li>
+  </ol>
+ </article>
+ <article id="salvar">
+  <h2>Salvar e levar para outro aparelho</h2>
+  <p>O progresso fica no armazenamento deste navegador e deste endereço. Ele só é enviado à nuvem quando você exporta um JSON e confirma o envio manual em <a href="/conta/">Minha conta</a>.</p>
+  <ol>
+   <li>Abra Menu e escolha Salvar em arquivo.</li>
+   <li>Guarde o JSON baixado em um local que você controla.</li>
+   <li>No outro aparelho, abra o jogo, escolha Carregar arquivo e selecione esse JSON.</li>
+  </ol>
+  <p>A importação substitui a partida atual após a confirmação do jogo. Faça backup antes. Não abra saves de origem desconhecida e não publique dados pessoais em arquivos.</p>
+  <p>Mudar de domínio, navegador ou dispositivo não transfere a partida automaticamente. Navegação privada, limpeza de dados ou bloqueio de armazenamento podem impedir a conservação do progresso.</p>
+ </article>
+</section>
+<section class="wrap faq" id="duvidas">
+ <h2>Perguntas frequentes</h2>
     <label for="help-search">Buscar resposta</label>
     <div class="search"><input #searchBox id="help-search" type="search"
      autocomplete="off" placeholder="Ex.: salvar, conta" [value]="query()" (input)="changeQuery($event)"/>
