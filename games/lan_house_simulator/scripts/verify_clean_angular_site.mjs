@@ -72,7 +72,7 @@ try{
    assert.equal(await page.locator('lhs-site-footer nav').count(),2);
    assert.equal(await page.locator('header nav').count(),1);
    const currentLink=page.locator('lhs-site-header #site-nav a[aria-current="page"]');
-   if(['/', '/jogar/', '/sobre-o-jogo/', '/ajuda/', '/contato/', '/donate/'].includes(pathname)){
+   if(['/', '/jogar/', '/sobre-o-jogo/', '/sobre-nos/', '/ajuda/', '/contato/', '/donate/'].includes(pathname)){
     assert.equal(await currentLink.count(),1);
     assert.equal(await currentLink.getAttribute('href'),pathname);
    }else assert.equal(await currentLink.count(),0);
