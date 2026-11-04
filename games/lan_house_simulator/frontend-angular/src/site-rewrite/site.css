@@ -193,3 +193,17 @@ lhs-legal-document{display:block}
 .donate-sandbox-review .button{margin:12px 12px 4px 0;min-height:48px}
 .donate-sandbox-review .button:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:520px){.donate-sandbox-review .button{width:100%;margin-right:0}}
+
+
+/* Institutional help guide, owned by the standalone Angular help component. */
+.help-guide{padding-bottom:38px}
+.help-jump-links{display:flex;flex-wrap:wrap;gap:12px;margin:0 0 30px}
+.help-jump-links a{display:inline-flex;align-items:center;min-height:44px;padding:10px 16px;border:1px solid var(--line);border-radius:6px;color:var(--green);font-weight:700}
+.help-guide article{scroll-margin-top:110px;max-width:82ch;padding:20px 0 28px;border-bottom:1px solid var(--line)}
+.help-guide article h2{margin:0 0 18px}
+.help-guide article ol{padding-left:24px}
+.help-guide article li{padding-left:4px;margin-bottom:12px}
+.help-guide article p,.help-guide article li{line-height:1.65}
+.help-guide article a{color:var(--green);text-decoration:underline}
+#duvidas{scroll-margin-top:110px}
+@media(max-width:520px){.help-jump-links{gap:8px}.help-jump-links a{flex:1;justify-content:center;text-align:center;padding:10px 8px}}
