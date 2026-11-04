@@ -5,6 +5,8 @@ import {EraTimelineComponent} from './era-timeline';
 import {SiteHeaderComponent} from './site-header';
 import {HelpSearchComponent} from './help-search';
 import {ContactComponent} from './contact';
+import {AboutGameComponent} from './about-game';
+import {AboutUsComponent} from './about-us';
 import {LegalDocumentComponent} from './legal-document';
 import {LocalDataComponent} from './local-data';
 import {AccountComponent} from './account';
@@ -15,7 +17,7 @@ import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
+ imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,AboutGameComponent,AboutUsComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
