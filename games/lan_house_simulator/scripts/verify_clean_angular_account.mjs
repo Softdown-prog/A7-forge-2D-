@@ -4,7 +4,7 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile,stat} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
-const root=resolve(import.meta.dirname,'../out/site-clean-angular');
+const root=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../out/site-clean-angular'));
 const reportDir=resolve(import.meta.dirname,'../out/site-clean-angular-browser');
 const accountConfig=JSON.parse(await readFile(resolve(root,'account-config.json'),'utf8'));
 const apiOrigin=new URL(accountConfig.apiUrl).origin;

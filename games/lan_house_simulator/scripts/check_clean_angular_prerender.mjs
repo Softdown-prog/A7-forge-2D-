@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
-const output=resolve(import.meta.dirname,'../out/site-clean-angular');
+const output=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../out/site-clean-angular'));
 const manifest=JSON.parse(readFileSync(resolve(output,'angular-prerender-manifest.json'),'utf8'));
 const assets=JSON.parse(readFileSync(resolve(output,'angular-site-assets.json'),'utf8'));
 assert.equal(manifest.method,'isolated-chromium-public-snapshot');

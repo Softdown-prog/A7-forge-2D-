@@ -1,5 +1,8 @@
 # Migração institucional Angular — entrega consolidada da issue #78
 
+**Atualização:** [Angular como build e container canônicos](ANGULAR_CANONICAL_DELIVERY.md)
+substitui as instruções históricas de publicação e os caminhos de saída abaixo.
+
 Base: PR #77, mesclado externamente durante a execução. As alterações restantes
 estão em um único PR de conclusão, branch `feat/lhs-angular-migration-complete-78`.
 

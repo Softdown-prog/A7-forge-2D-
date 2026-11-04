@@ -39,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lhs-angular-staging-${{ github.sha }}
-          path: games/lan_house_simulator/out/site-clean-angular
+          path: games/lan_house_simulator/out/site
           if-no-files-found: error
           retention-days: 14
       - name: Save validation and browser evidence — no production deployment
@@ -49,3 +49,37 @@ jobs:
           name: lhs-clean-angular-browser-evidence
           path: games/lan_house_simulator/out/site-clean-angular-browser
           if-no-files-found: ignore
+
+  frontend-container:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - name: Build default Angular frontend image
+        run: docker build -t lhs-frontend:test .
+      - name: Validate immutable frontend container with Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --rm --name lhs-frontend-test --read-only --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8081:8080 lhs-frontend:test
+          trap 'docker logs lhs-frontend-test; docker stop lhs-frontend-test' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8081/health; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8081/health
+          LHS_SITE_PREVIEW_URL=http://127.0.0.1:8081 node scripts/verify_clean_angular_migration.mjs
+          test "$(docker inspect --format '{{.Config.User}}' lhs-frontend-test)" = node
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lhs-angular-container-evidence
+          path: games/lan_house_simulator/out/site-clean-angular-browser

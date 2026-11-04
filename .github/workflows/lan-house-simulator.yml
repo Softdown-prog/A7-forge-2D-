@@ -76,6 +76,7 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: |
+          npx playwright install --with-deps chromium
           npm run build:site
           npm run check:site
       - name: Install Chromium for real Canvas validation

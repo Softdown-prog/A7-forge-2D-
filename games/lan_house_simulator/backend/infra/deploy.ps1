@@ -24,6 +24,7 @@ Cloud storage buckets update "gs://$Bucket" --uniform-bucket-level-access --publ
 Cloud storage buckets add-iam-policy-binding "gs://$Bucket" --member="serviceAccount:$sa" --role=roles/storage.objectUser
 $conditionFile=Join-Path $PSScriptRoot 'condition.generated.yaml'
 $envFile=Join-Path $PSScriptRoot 'env.generated.yaml'
+$backendSource=Join-Path ([IO.Path]::GetTempPath()) ('lhs-api-'+[guid]::NewGuid())
 try {
  @("title: lhs-database-only",('expression: '+(('resource.name == "projects/'+$Project+'/databases/'+$Database+'"') | ConvertTo-Json -Compress))) | Set-Content $conditionFile -Encoding utf8
  Cloud projects add-iam-policy-binding $Project --member="serviceAccount:$sa" --role=roles/datastore.user --condition-from-file=$conditionFile --quiet --format='value(version)'
@@ -40,7 +41,10 @@ try {
  elseif($existing.StatusCode -eq 200){Invoke-RestMethod -Method Patch -Uri "https://firebaserules.googleapis.com/v1/$($release.name)" -Headers $headers -ContentType 'application/json' -Body (@{release=$release;updateMask='rulesetName'} | ConvertTo-Json) | Out-Null}
  else{throw "Não foi possível verificar as regras: HTTP $($existing.StatusCode)"}
  @("GOOGLE_CLOUD_PROJECT: $Project","FIRESTORE_DATABASE_ID: $Database","SAVES_BUCKET: $Bucket",('ALLOWED_ORIGINS: '+(($AllowedOrigins -join ',') | ConvertTo-Json -Compress)),"PAYMENTS_ENABLED: 'false'","PAYMENTS_MODE: sandbox") | Set-Content $envFile -Encoding utf8
- $source=Resolve-Path (Join-Path $PSScriptRoot '../..')
+ $sourceRoot=Resolve-Path (Join-Path $PSScriptRoot '../..')
+ & node (Join-Path $sourceRoot 'scripts/prepare_backend_source.mjs') $backendSource
+ if($LASTEXITCODE -ne 0){throw 'Falha ao preparar o Dockerfile exclusivo da API.'}
+ $source=$backendSource
  $services=Cloud run services list --project=$Project --region=$Region --format='value(metadata.name)'
  # Never replace payment variables or secret references on an existing service.
  if('lhs-backend' -in @($services)){
@@ -52,5 +56,6 @@ try {
  }
  Cloud run services describe lhs-backend --project=$Project --region=$Region --format='yaml(status.url,status.conditions,spec.template.spec.containers.resources,spec.template.metadata.annotations)'
 } finally {
+ if(Test-Path -LiteralPath $backendSource){Remove-Item -LiteralPath $backendSource -Recurse -Force}
  foreach($path in @($conditionFile,$envFile)){if(Test-Path -LiteralPath $path){Remove-Item -LiteralPath $path}}
 }

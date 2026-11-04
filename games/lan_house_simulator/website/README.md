@@ -1,3 +1,7 @@
+> Legado de regressão/rollback: este builder produz `out/site-legacy`.
+> O build padrão e o Dockerfile do LHS usam Angular em `out/site`.
+> Consulte `../docs/ANGULAR_CANONICAL_DELIVERY.md`.
+
 # Site legado — somente manutenção da produção
 
 Esta pasta é a implementação institucional **antiga**. A nova implementação canônica está em `../frontend-angular/src/site-rewrite/`, inteiramente Angular.

@@ -7,6 +7,11 @@ import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {readFile,mkdir,stat,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
+if(process.env.LHS_CHECK_DEFAULT_SITE==='1'){
+ const {execFileSync}=await import('node:child_process');
+ execFileSync(process.execPath,[resolve(import.meta.dirname,'../../scripts/verify_canonical_angular_site.mjs')],{stdio:'inherit'});
+ process.exit(0);
+}
 const root=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/site':'../../out/site-angular');
 const output=resolve(import.meta.dirname,process.env.LHS_CHECK_DEFAULT_SITE==='1'?'../../out/angular-site-default-browser':'../../out/angular-site-browser');
 const angularTools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));

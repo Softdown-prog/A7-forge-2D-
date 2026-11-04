@@ -4,7 +4,7 @@ import {resolve,dirname,extname,relative,sep} from "node:path";
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
-const root=resolve(import.meta.dirname,angularCandidate?"../out/site-angular":"../out/site");
+const root=resolve(import.meta.dirname,angularCandidate?"../out/site-angular":"../out/site-legacy");
 const angularSite=process.env.LHS_SITE_UI!=="react";
 const walk=p=>readdirSync(p).flatMap(n=>{const f=resolve(p,n);return statSync(f).isDirectory()?walk(f):[f];});
 const files=walk(root),html=files.filter(f=>extname(f)===".html"),titles=new Set();let references=0;
