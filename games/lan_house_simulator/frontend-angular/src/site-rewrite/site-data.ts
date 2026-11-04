@@ -23,7 +23,7 @@ export const faq=[
  ["Como salvo minha partida?","O progresso fica neste navegador. No menu do jogo, use Salvar em arquivo para baixar um JSON. Use Carregar arquivo no outro aparelho ou navegador para continuar. Mantenha uma cópia antes de limpar dados ou mudar de endereço."],
  ["Posso misturar computadores antigos e novos?","Pode. Cada estação tem suas próprias peças, sistema operacional, placa de vídeo e monitor. Novas opções aparecem com os anos, e você decide onde investir."],
  ["O dinheiro do jogo vale dinheiro real?","Não. Caixa, mercadorias, salários e preços pertencem à simulação. O jogo não promete ganhos reais nem substitui orientação profissional de gestão."],
- ["O que faço se ficar lento?","Feche abas pesadas, use um navegador atualizado e reduza outras tarefas do aparelho. Para informar um problema, anote navegador, modelo do dispositivo e o que estava acontecendo; não envie documentos ou dados pessoais em relatos públicos."],
+ ["O que faço se ficar lento?","Feche abas pesadas, use um navegador atualizado e reduza outras tarefas do aparelho. Para informar um problema, anote navegador, modelo do dispositivo e o que estava acontecendo; não envie documentos ou dados pessoais em relatos públicos."]
 ] as const;
 export const validPaths=[
  '/','/jogar/','/sobre-o-jogo/','/sobre-nos/','/ajuda/','/contato/','/conta/',
