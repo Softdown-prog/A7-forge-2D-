@@ -55,3 +55,23 @@ test('FAQ preserves seven fully documented help answers without depending on leg
  ])assert.ok(all.includes(detail),'Missing essential FAQ instruction: '+detail);
  assert.doesNotMatch(source,/import.*(?:website\/|content\.mjs)|require\(/);
 });
+
+test('first-day and save-transfer guide retains navigable anchors and privacy warnings',()=>{
+ const html=read('help-search.html'),css=read('site.css');
+ for(const anchor of ['comecar','salvar','duvidas']){
+  assert.match(html,new RegExp('id="'+anchor+'"'));
+  assert.equal((html.match(new RegExp('id="'+anchor+'"','g'))||[]).length,1);
+  assert.match(html,new RegExp('href="#'+anchor+'"'));
+ }
+ for(const detail of [
+  'Seu primeiro dia','Abra Administrar','Use Compras',
+  'Salvar e levar para outro aparelho','Carregar arquivo',
+  'A importação substitui a partida atual','Não abra saves de origem desconhecida',
+  'Navegação privada','/conta/'
+ ])assert.ok(html.includes(detail),'Lost institutional help guidance: '+detail);
+ assert.match(html,/aria-label="Neste guia"/);
+ assert.match(html,/class="wrap faq" id="duvidas"/);
+ assert.match(css,/\.help-guide article\{scroll-margin-top:/);
+ assert.match(css,/#duvidas\{scroll-margin-top:/);
+ assert.doesNotMatch(html,/<script|\[innerHTML\]|onclick=|website\/|react-entry/i);
+});
