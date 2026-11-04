@@ -66,7 +66,7 @@ try{
  await context.close();
  assert.deepEqual(errors,[],'No external requests or JavaScript errors during render');
  // Verify content without JavaScript and that client bootstrap does not duplicate navigation.
- const staticContext=await browser.newContext({javaScriptEnabled:false,serviceWorkers:'block'});
+ const staticContext=await browser.newContext({javaScriptEnabled:false,serviceWorkers:'block',viewport:{width:360,height:850}});
  const dynamicContext=await browser.newContext({serviceWorkers:'block'});
  try{
   for(const path of renderPaths){
@@ -76,6 +76,8 @@ try{
     await staticPage.goto(origin+path,{waitUntil:'load',timeout:30000});
     assert.equal(await staticPage.locator('main h1').count(),1,'Missing no-JS H1: '+path);
     assert.equal(await staticPage.locator('header nav').count(),1,'Missing no-JS navigation: '+path);
+    assert.ok(await staticPage.locator('#site-nav').isVisible(),'Mobile no-JS links must remain visible: '+path);
+    assert.equal(await staticPage.locator('.menu-button').isVisible(),false,'No dead mobile menu toggle without JS: '+path);
     assert.equal(await staticPage.locator('footer').count(),1,'Missing no-JS footer: '+path);
     assert.equal(await staticPage.locator('lhs-site[data-lhs-public-prerender]').count(),1);
     await dynamicPage.goto(origin+path,{waitUntil:'networkidle',timeout:30000});

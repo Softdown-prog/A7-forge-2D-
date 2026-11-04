@@ -69,6 +69,11 @@ separados; `cutover-readiness.json` permanece `not-ready` nesta entrega.
 A habilitação requer alteração explícita desse arquivo e aprovação do dono e
 do provedor; a flag do backend sozinha não habilita a interface Angular.
 
+O padrão versionado e a validação de homologação permanecem desligados. Após
+aprovação, aplicar a configuração no `checkout-config.json` da publicação;
+desligar esse mesmo arquivo é o rollback financeiro. Não usar o perfil de
+homologação com gate fechado como autorização para ativar pagamentos.
+
 Quando aprovado/configurado, o fluxo pede sessão restaurada, email confirmado,
 cotação autoritativa e aceite. O POST envia apenas pacote/termos e a chave de
 idempotência; preço e Cookies nunca são aceitos do formulário. Mudança do modo ou
