@@ -191,6 +191,8 @@ try{
     assert.equal(await page.locator('.faq details:visible').count(),7);
     // Test rendered answer content, not only search state or TypeScript build.
     await input.fill('JSON');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('salvo minha partida'));
     assert.equal(await page.locator('.faq details:visible').count(),1);
     const saves=page.locator('.faq details:visible').first();
     assert.match(await saves.locator('summary').innerText(),/salvo minha partida/);
@@ -201,14 +203,19 @@ try{
     assert.match(savedAnswer,/Carregar arquivo/);
     assert.match(savedAnswer,/outro aparelho/);
     await input.fill('horizontál');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('Funciona no celular'));
     assert.equal(await page.locator('.faq details:visible').count(),1);
     const mobileHelp=page.locator('.faq details:visible').first();
     if(mobile)await mobileHelp.locator('summary').tap();
     else await mobileHelp.locator('summary').click();
     assert.match(await mobileHelp.locator('p').innerText(),/horizontal/);
     await input.fill('nuvem');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===2);
     assert.equal(await page.locator('.faq details:visible').count(),2);
     await input.fill('assinatura');
+    await page.waitForFunction(()=>document.querySelectorAll('.faq details').length===1&&
+     document.querySelector('.faq details summary')?.textContent?.includes('criar uma conta'));
     assert.equal(await page.locator('.faq details:visible').count(),1);
     const loginHelp=page.locator('.faq details:visible').first();
     if(mobile)await loginHelp.locator('summary').tap();
