@@ -1,5 +1,6 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
 import {pathOf} from './site-data';
+import {HomeDetailsComponent} from './home-details';
 import {SiteFooterComponent} from './site-footer';
 import {EraTimelineComponent} from './era-timeline';
 import {SiteHeaderComponent} from './site-header';
@@ -17,12 +18,13 @@ import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,AboutGameComponent,AboutUsComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
+ imports:[HomeDetailsComponent,LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,AboutGameComponent,AboutUsComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
 export class SiteApp implements OnInit,OnDestroy{
  readonly path=pathOf(location.pathname);
+ readonly skipHref=location.pathname+'#conteudo';
  readonly reduceMotion=signal(false);
  private readonly media=window.matchMedia('(prefers-reduced-motion: reduce)');
  private readonly mediaListener=(event:MediaQueryListEvent):void=>{

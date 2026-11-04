@@ -1,0 +1,26 @@
+@if(enabled()){
+ <section class="wrap production-checkout" aria-labelledby="production-checkout-title">
+  <h2 id="production-checkout-title">Apoio com pagamento único</h2>
+  <p>Revise os valores do serviço antes de preparar seu pagamento. Jogar continua gratuito.</p>
+  <div class="actions">
+   <button class="button" type="button" id="review-production-5" [disabled]="busy()" (click)="review('donate-5')">Revisar apoio de R$ 5</button>
+   <button class="button" type="button" id="review-production-10" [disabled]="busy()" (click)="review('donate-10')">Revisar apoio de R$ 10</button>
+  </div>
+  <p role="status" id="production-status">{{busy()?'Conferindo o serviço…':message()}}</p>
+  @if(quote();as pack){
+   <p id="production-quote">R$ {{(pack.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}} · {{pack.cookies}} Cookies</p>
+   @if(!receipt()){
+    <label><input #terms id="production-terms" type="checkbox" [checked]="accepted()" [disabled]="busy()" (change)="accepted.set(terms.checked)"/>
+     Li e aceito os <a href="/termos/#donate" target="_blank" rel="noopener">termos de apoio</a>.</label>
+    <button class="button" type="button" id="prepare-production-order" [disabled]="busy()||!accepted()" (click)="prepare()">Preparar pagamento</button>
+   }
+  }
+  @if(receipt();as order){
+   <p>Pedido {{order.id.slice(0,12)}} preparado. Nenhum pagamento foi confirmado.</p>
+   <a class="button" id="open-production-checkout" [href]="order.url" target="_blank" rel="noopener noreferrer">Abrir pagamento seguro</a>
+   <p>Somente a confirmação do serviço credita Cookies. Retorne a <a href="/conta/#apoios">Minha conta</a> para consultar seu apoio.</p>
+  }
+  <p><a href="/conta/#apoios">Conferir meus apoios</a></p>
+  <button type="button" class="button secondary" id="close-production-review" [disabled]="busy()" (click)="close()">Fechar revisão</button>
+ </section>
+}

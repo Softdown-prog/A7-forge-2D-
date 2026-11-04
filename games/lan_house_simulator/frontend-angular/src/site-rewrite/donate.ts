@@ -2,6 +2,8 @@ import {ChangeDetectionStrategy,Component,OnInit,OnDestroy,signal} from '@angula
 import {AccountError,SiteAccountClient,validateAccountConfig} from './account-client';
 import {approvedPackageId,simulateSandboxCheckout,validateSandboxQuote} from './checkout-contract';
 import {createAuthenticatedSandboxAdapter} from './checkout-sandbox-adapter';
+import {CheckoutAttempts} from './checkout-attempts';
+import {ProductionCheckoutComponent} from './production-checkout';
 import type {ApprovedQuote,DonationPackageId} from './checkout-contract';
 export const DONATE_PACKAGES=Object.freeze([{id:'donate-5',priceCents:500,cookies:50},{id:'donate-10',priceCents:1000,cookies:100}] as const);
 type Availability='loading'|'unavailable'|'backend-active'|'sandbox-ready'|'error';
@@ -22,7 +24,7 @@ export async function paymentAvailability(raw:unknown,request:typeof fetch=(inpu
  if(flags['paymentsMode']==='production')return 'backend-active';
  return flags['paymentsMode']==='sandbox'?'sandbox-ready':'unavailable';
 }
-@Component({selector:'lhs-donate',standalone:true,changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./donate.html'})
+@Component({selector:'lhs-donate',standalone:true,imports:[ProductionCheckoutComponent],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./donate.html'})
 export class DonateComponent implements OnInit,OnDestroy{
  readonly packages=DONATE_PACKAGES;
  readonly availability=signal<Availability>('loading');
@@ -30,10 +32,12 @@ export class DonateComponent implements OnInit,OnDestroy{
  readonly reviewQuote=signal<ApprovedQuote|null>(null);
  readonly termsAccepted=signal(false);
  readonly sandboxOrderId=signal<string|null>(null);
+ readonly prepareError=signal('');
  private reviewClient:SiteAccountClient|null=null;
  private reviewVersion=0;
  /** Reuse a key after uncertain network failures; never double-submit with fresh UUID. */
  private readonly orderKeys=new Map<DonationPackageId,string>();
+ private attempts:CheckoutAttempts|null=null;
  private abort=new AbortController();
  private destroyed=false;
  ngOnInit():void{void this.refresh();}
@@ -61,6 +65,9 @@ export class DonateComponent implements OnInit,OnDestroy{
    if(this.destroyed||this.abort.signal.aborted||version!==this.reviewVersion)return;
    if(!profile){this.reviewState.set('login-required');return;}
    if(!profile.emailVerified){this.reviewState.set('verify-required');return;}
+   let storage:Storage|null=null;
+   try{storage=window.sessionStorage;}catch{/* Order preparation will fail closed. */}
+   this.attempts=new CheckoutAttempts(config.apiUrl+'|'+profile.email,storage);
    const quoteResponse=await fetch(new URL('/v1/config',config.apiUrl),{
     method:'GET',cache:'no-store',credentials:'omit',referrerPolicy:'origin',
     signal:AbortSignal.any([this.abort.signal,AbortSignal.timeout(15000)])
@@ -89,11 +96,14 @@ export class DonateComponent implements OnInit,OnDestroy{
    (this.reviewState()!=='ready'&&this.reviewState()!=='prepare-error')||
    !quote||!client||!this.termsAccepted())return;
   const version=this.reviewVersion;
-  const key=this.orderKeys.get(quote.packageId)??crypto.randomUUID();
-  this.orderKeys.set(quote.packageId,key);
   this.sandboxOrderId.set(null);
+  this.prepareError.set('');
   this.reviewState.set('preparing');
   try{
+   if(!this.attempts)throw Error('Reabra a revisão do apoio.');
+   const attempts=this.attempts;
+   const key=attempts.keyFor(quote.packageId);
+   this.orderKeys.set(quote.packageId,key);
    const adapter=createAuthenticatedSandboxAdapter(client);
    const receipt=await simulateSandboxCheckout({
     account:{emailVerified:true},packageId:quote.packageId,
@@ -106,7 +116,11 @@ export class DonateComponent implements OnInit,OnDestroy{
        throw new AccountError('Os valores mudaram. Reveja seu apoio antes de continuar.',409);
       return fresh;
      },
-     createOrder:(body,requestKey)=>adapter.createOrder(body,requestKey)
+     createOrder:(body,requestKey)=>{
+      if(this.destroyed||this.reviewVersion!==version)throw Error('Revisão encerrada.');
+      attempts.next(quote.packageId);
+      return adapter.createOrder(body,requestKey);
+     }
     }
    });
    if(this.destroyed||this.reviewVersion!==version)return;
@@ -119,6 +133,8 @@ export class DonateComponent implements OnInit,OnDestroy{
     // an idempotency key reusable by the next person signing into this tab.
     client.signOut();
     this.orderKeys.clear();
+    try{this.attempts?.clear();}catch{/* Session is already invalid. */}
+    this.attempts=null;
     this.reviewClient=null;
     this.reviewQuote.set(null);
     this.sandboxOrderId.set(null);
@@ -126,7 +142,13 @@ export class DonateComponent implements OnInit,OnDestroy{
     this.reviewState.set('login-required');
     return;
    }
-   if(error instanceof AccountError&&error.status===410)this.orderKeys.delete(quote.packageId);
+   if(error instanceof AccountError&&error.status===410){
+    this.orderKeys.delete(quote.packageId);
+    try{this.attempts?.expire(quote.packageId);}catch{/* Fail closed on next attempt. */}
+    this.reviewClient=null;this.reviewQuote.set(null);this.termsAccepted.set(false);
+    this.reviewState.set('error');return;
+   }
+   this.prepareError.set(error instanceof Error?error.message:'Serviço indisponível.');
    this.reviewState.set('prepare-error');
   }
  }

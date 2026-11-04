@@ -1,5 +1,11 @@
 # Reescrita institucional Angular — branch isolada
 
+**Entrega consolidada da issue #78:** veja [matriz por rota, validação completa,
+checkout por feature gate, cutover e rollback](ANGULAR_MIGRATION_DELIVERY.md).
+O trabalho continua no PR #77 / `feat/lhs-angular-about-pages-parity-20261103`.
+As microetapas abaixo são histórico de implementação; a matriz consolidada
+descreve o estado atual. Homologação não autoriza merge nem publicação.
+
 **Branch:** `rewrite/lhs-angular-site-clean`. **PROIBIDO merge na main ou deploy enquanto a reescrita não estiver completa.**
 
 A implementação anterior não era uma reescrita: `website/build.mjs` renderiza o HTML, `website/site.mjs` registra handlers globais e `frontend-angular/src/site/main.ts` monta ilhas Angular por cima. Esse desenho cria duas autoridades para o mesmo DOM, especialmente navegação, FAQ e animações. Não afirmar que Bootstrap ou Alpine existam sem evidência.

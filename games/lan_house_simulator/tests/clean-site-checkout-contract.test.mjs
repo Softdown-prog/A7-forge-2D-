@@ -61,6 +61,11 @@ for(const url of ['http://sandbox.mercadopago.com.br/x',
  'javascript:alert(1)','https://sandbox.mercadopago.com.br.evil.invalid/',
  'https://me:secret@sandbox.mercadopago.com.br/x',
  'https://sandbox.mercadopago.com.br:8443/x',
+ 'https://sandbox.mercadopago.com.br/not-a-checkout?pref_id=x',
+ 'https://sandbox.mercadopago.com.br/checkout/v1/redirect',
+ 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=',
+ 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=x&pref_id=y',
+ 'https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=x&redirect_uri=https://evil.invalid',
  'https://sandbox.mercadopago.com.br/x#secret'])
  test('reject malicious or production checkout target: '+url,()=>{
  assert.throws(()=>checkout.validateSandboxOrder({...order,url}));

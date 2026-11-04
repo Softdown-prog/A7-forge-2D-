@@ -12,6 +12,8 @@ const output=resolve(import.meta.dirname,'../out/site-clean-angular');
 const pages=['/','/jogar/','/sobre-o-jogo/','/sobre-nos/','/ajuda/',
  '/contato/','/termos/','/privacidade/'];
 const excluded=['/conta/','/conta/confirmar/','/donate/','/dados/'];
+const renderPaths=[...pages,'/404/'];
+const filenameFor=path=>path==='/404/'?resolve(output,'404.html'):resolve(output,'.'+path,'index.html');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json',
  '.webp':'image/webp','.png':'image/png','.ico':'image/x-icon'};
@@ -19,7 +21,7 @@ const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url??'/','http://127.0.0.1').pathname);
   if(pathname==='/favicon.ico'){res.writeHead(204).end();return;}
-  const filename=resolve(output,'.'+pathname,pathname.endsWith('/')?'index.html':'');
+  const filename=pathname==='/404/'?filenameFor(pathname):resolve(output,'.'+pathname,pathname.endsWith('/')?'index.html':'');
   if(!filename.startsWith(output+sep)||!(await stat(filename)).isFile())throw Error('Not found');
   res.writeHead(200,{'Content-Type':mime[extname(filename)]??'application/octet-stream',
    'Cache-Control':'no-store'});
@@ -38,7 +40,7 @@ try{
   if(url.origin!==origin){errors.push('Unexpected external request '+url.origin);await route.abort();return;}
   await route.continue();
  });
- for(const path of pages){
+ for(const path of renderPaths){
   const page=await context.newPage();
   page.on('pageerror',error=>errors.push(path+': '+error.message));
   try{
@@ -52,7 +54,7 @@ try{
    assert.ok(markup.length>300&&markup.length<400000,'Incomplete Angular HTML: '+path);
    assert.match(markup,/<main\b[^>]*\bid="conteudo"/);
    assert.doesNotMatch(markup,/<script\b|\bonclick=|\bonerror=/i);
-   const filename=resolve(output,'.'+path,'index.html');
+   const filename=filenameFor(path);
    const existing=await readFile(filename,'utf8');
    assert.match(existing,/<meta name="robots" content="noindex,nofollow">/);
    const target='<lhs-site></lhs-site>';
@@ -67,7 +69,7 @@ try{
  const staticContext=await browser.newContext({javaScriptEnabled:false,serviceWorkers:'block'});
  const dynamicContext=await browser.newContext({serviceWorkers:'block'});
  try{
-  for(const path of pages){
+  for(const path of renderPaths){
    const staticPage=await staticContext.newPage();
    const dynamicPage=await dynamicContext.newPage();
    try{
@@ -91,7 +93,7 @@ try{
  }
  await writeFile(resolve(output,'angular-prerender-manifest.json'),
   JSON.stringify({version:1,method:'isolated-chromium-public-snapshot',
-   paths:pages,excluded},null,2)+'\n');
+   paths:pages,excluded,notFound:true},null,2)+'\n');
  console.log('Angular public browser snapshots prerendered:',pages.join(', '));
 }finally{
  await browser?.close();

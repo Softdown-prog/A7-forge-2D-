@@ -147,7 +147,7 @@ export class SiteAccountClient {
   const token=this.activeSession().refreshToken;
   if(this.refreshing)return this.refreshing;
   const epoch=this.epoch;
-  const promise=(async()=>{
+  const promise=(async():Promise<void>=>{
    try{
     const result=await this.json('https://securetoken.googleapis.com/v1/token?key='+
      encodeURIComponent(this.config.firebaseApiKey),{method:'POST',
@@ -202,7 +202,7 @@ export class SiteAccountClient {
  }
  /**
   * Isolated sandbox-only order transport. Not available through the generic api()
-  * allowlist and not wired to any Donate button. The backend ALSO refuses this
+  * allowlist; used only by the explicit sandbox button. The backend ALSO refuses this
   * request in production even if its mode changes between the preflight and POST.
   */
  async postSandboxOrder(body:Readonly<{packageId:DonationPackageId;acceptedTerms:true}>,
@@ -233,6 +233,35 @@ export class SiteAccountClient {
    if(error instanceof AccountError&&error.status===401&&!retried&&epoch===this.epoch){
     await this.refresh();
     return this.postSandboxOrder(body,key,true);
+   }
+   throw error;
+  }
+ }
+ /** Only the separately configured production UI can request this transport.
+  * No automatic redirect. Default gate is closed, including after a 401 retry. */
+ async postProductionOrder(body:Readonly<{packageId:DonationPackageId;acceptedTerms:true}>,
+  idempotencyKey:string,enabled=false,retried=false):Promise<RequestJson>{
+  if(enabled!==true)throw new AccountError('Checkout de produção não autorizado.');
+  const packageId=approvedPackageId(body.packageId),key=validateIdempotencyKey(idempotencyKey);
+  if(body.acceptedTerms!==true)throw new AccountError('Confirme os termos de Donate.');
+  const epoch=this.epoch;this.activeSession();
+  const settings=await this.json(this.apiOrigin+'/v1/config');
+  if(settings['paymentsEnabled']!==true||settings['paymentsMode']!=='production')
+   throw new AccountError('Pagamento de produção indisponível.',409);
+  const profile=await this.profile();
+  if(!profile.emailVerified)throw new AccountError('Confirme seu email antes de apoiar.',403);
+  if(epoch!==this.epoch)throw new AccountError('Sessão encerrada.',401);
+  const token=this.activeSession().idToken;
+  try{
+   const result=await this.json(this.apiOrigin+'/v1/orders',{
+    method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',
+     'Idempotency-Key':key},body:JSON.stringify({packageId,acceptedTerms:true})
+   });
+   if(epoch!==this.epoch)throw new AccountError('Sessão encerrada.',401);
+   return result;
+  }catch(error){
+   if(error instanceof AccountError&&error.status===401&&!retried&&epoch===this.epoch){
+    await this.refresh();return this.postProductionOrder(body,key,enabled,true);
    }
    throw error;
   }

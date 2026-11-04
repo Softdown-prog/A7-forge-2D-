@@ -1,7 +1,7 @@
-<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<a class="skip" [href]="skipHref">Pular para o conteúdo</a>
 <div class="page" [class.reduce-motion]="reduceMotion()">
 <lhs-site-header [path]="path"></lhs-site-header>
-<main id="conteudo">
+<main id="conteudo" tabindex="-1">
  @switch(path){
   @case('/'){
    <section class="wrap hero">
@@ -72,6 +72,9 @@
  }
  @if(path==='/'||path==='/sobre-o-jogo/'){
   <lhs-era-timeline></lhs-era-timeline>
+ }
+ @if(path==='/'){
+  <lhs-home-details></lhs-home-details>
  }
 </main>
 <lhs-site-footer [reduceMotion]="reduceMotion()" (motionToggle)="toggleMotion()"></lhs-site-footer>

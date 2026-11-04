@@ -60,6 +60,11 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
  });
  results.push(check('public-pages-prerendered',allPublic,
   'All eight public pages include real static content with one main and one H1'));
+ const notFoundHtml=siteIndex(siteRoot,'/404/');
+ results.push(check('not-found-prerendered',manifest.notFound===true&&
+  notFoundHtml.includes('data-lhs-public-prerender="true"')&&
+  (notFoundHtml.match(/<h1\b/g)||[]).length===1,
+  'The not-found document includes usable static content without JavaScript'));
  const allPrivate=PRIVATE_ROUTES.every(path=>{
   const html=siteIndex(siteRoot,path);
   return html.includes('<lhs-site></lhs-site>')&&
@@ -98,6 +103,10 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
   donate.includes('Indisponível nesta prévia')&&donate.includes("availability()==='sandbox-ready'");
  results.push(check('production-checkout-disabled',paymentsDisabled,
   'Production buttons are disabled while sandbox actions remain conditional'));
+ let checkoutPolicy;
+ try{checkoutPolicy=JSON.parse(file(resolve(siteRoot,'checkout-config.json')));}catch{/* explicit failed check */}
+ results.push(check('production-feature-gate-closed',checkoutPolicy?.productionCheckoutEnabled===false,
+  'The emitted production checkout configuration remains explicitly disabled'));
  // Treat each CI command as a whole YAML line; "build:site" is
  // a prefix of "build:site:clean" and must not create a false match.
  const workflowCommand=name=>new RegExp('^\\s*npm run '+name+'\\s*$','m').test(workflow);
@@ -119,7 +128,7 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
   blockers.push(block('legal-review',
    'Angular terms/privacy still carry draft notices requiring editorial/legal approval'));
  if(paymentsDisabled)blockers.push(block('production-payments',
-  'Live payment buttons remain disabled; authenticated checkout parity is not released'));
+  'Production checkout is implemented behind a closed feature gate; provider/owner approval is required before activation'));
  blockers.push(block('manual-acceptance',
   'Physical Android/browser, live Firebase/save parity, payment provider and rollout/CDN validation require explicit sign-off'));
  for(const item of results.filter(r=>!r.passed))

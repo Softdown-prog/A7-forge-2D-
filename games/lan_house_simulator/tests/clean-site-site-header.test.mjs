@@ -35,7 +35,10 @@ test('the responsive header is keyboard accessible without legacy listeners or s
  const owner=read('site-header.ts'),markup=read('site-header.html');
  assert.match(owner,/readonly navigation=navigation/);
  assert.match(owner,/toggleMenu\(\):void\{this\.openMenu\.update\(value=>!value\);\}/);
- assert.match(owner,/onEscape\(\):void\{this\.closeMenu\(\);\}/);
+ assert.match(owner,/onEscape\(\):void\{/);
+ assert.match(owner,/this\.toggle\(\)\?\.nativeElement\.focus\(\)/);
+ assert.match(owner,/@HostListener\('document:pointerdown'/);
+ assert.match(owner,/@HostListener\('window:resize'\)/);
  assert.match(markup,/aria-controls="site-nav"/);
  assert.match(markup,/aria-label="Navegação principal"/);
  assert.doesNotMatch(owner,/localStorage|fetch\(|document\.addEventListener|window\.addEventListener|react|website\/|innerHTML/i);

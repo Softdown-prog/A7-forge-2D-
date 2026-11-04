@@ -23,11 +23,12 @@ function fixture(run){
  for(const path of PRIVATE_ROUTES)
   save('out/site-clean-angular/'+path.slice(1)+'index.html',
    html('<lhs-site></lhs-site>'));
- save('out/site-clean-angular/404.html',html('<lhs-site></lhs-site>'));
+ save('out/site-clean-angular/404.html',html('<lhs-site data-lhs-public-prerender="true"><main><h1>Not found</h1></main></lhs-site>'));
  save('out/site-clean-angular/robots.txt','User-agent: *\nDisallow: /\n');
+ save('out/site-clean-angular/checkout-config.json','{"productionCheckoutEnabled":false}');
  save('out/site-clean-angular/angular-prerender-manifest.json',JSON.stringify({
   version:1,method:'isolated-chromium-public-snapshot',
-  paths:PUBLIC_ROUTES,excluded:PRIVATE_ROUTES
+  paths:PUBLIC_ROUTES,excluded:PRIVATE_ROUTES,notFound:true
  }));
  const fileNames=['chunk-123abcde.js','main-123abcde.js','styles-123abcde.css'];
  save('out/site-clean-angular/angular-site-assets.json',JSON.stringify({

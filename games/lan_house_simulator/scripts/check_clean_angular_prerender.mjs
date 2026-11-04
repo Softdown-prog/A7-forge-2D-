@@ -9,8 +9,9 @@ assert.equal(manifest.method,'isolated-chromium-public-snapshot');
 assert.deepEqual(manifest.paths,['/','/jogar/','/sobre-o-jogo/','/sobre-nos/',
  '/ajuda/','/contato/','/termos/','/privacidade/']);
 assert.deepEqual(manifest.excluded,['/conta/','/conta/confirmar/','/donate/','/dados/']);
-for(const path of manifest.paths){
- const html=readFileSync(resolve(output,'.'+path,'index.html'),'utf8');
+assert.equal(manifest.notFound,true);
+for(const path of [...manifest.paths,'/404/']){
+ const html=readFileSync(path==='/404/'?resolve(output,'404.html'):resolve(output,'.'+path,'index.html'),'utf8');
  assert.match(html,/<lhs-site data-lhs-public-prerender="true">/);
  assert.equal((html.match(/<main\b/g)||[]).length,1,'Main missing/duplicated: '+path);
  assert.equal((html.match(/<header\b/g)||[]).length,1,'Header missing/duplicated: '+path);

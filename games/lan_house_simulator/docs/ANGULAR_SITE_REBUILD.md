@@ -1,5 +1,9 @@
 # Reconstrução progressiva do site LHS em Angular
 
+Registro histórico da implementação por ilhas. Para a aplicação institucional
+única em `src/site-rewrite/`, consulte a [entrega consolidada da issue #78](ANGULAR_MIGRATION_DELIVERY.md).
+Não adicionar funcionalidades institucionais à árvore transitória `src/site/`.
+
 ## Estado auditado (01/11/2026)
 - `website/content.mjs`, `website/build.mjs` e `website/site.css` geram o site institucional estático; `site.mjs` mantém as interações de menu, eras, FAQ e abertura do iframe.
 - `frontend-angular/src/main.ts` é o Angular do **jogo**; `frontend-angular/src/site/main.ts` é um entrypoint **separado** e novo para o site.

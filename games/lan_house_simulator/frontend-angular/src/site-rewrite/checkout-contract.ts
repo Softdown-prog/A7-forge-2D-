@@ -1,7 +1,6 @@
 /**
- * Angular checkout CONTRACT only. Intentionally not wired into a live component,
- * account client, browser navigation or production API.
- * Tests MUST inject a synthetic backend; no real checkout can be started here.
+ * Checkout validation used by the sandbox UI and injected contract tests.
+ * Production order creation and navigation stay disabled in this release.
  */
 export type DonationPackageId='donate-5'|'donate-10';
 export interface VerifiedCheckoutAccount {
@@ -63,7 +62,9 @@ export function validateSandboxOrder(raw:unknown):Readonly<{orderId:string;check
  let url:URL;
  try{url=new URL(order['url']);}catch{throw Error('Checkout inválido.');}
  if(url.protocol!=='https:'||url.username||url.password||url.port||url.hash||
-  !sandboxHosts.has(url.hostname))
+  !sandboxHosts.has(url.hostname)||url.pathname!=='/checkout/v1/redirect'||
+  url.searchParams.getAll('pref_id').length!==1||!url.searchParams.get('pref_id')?.trim()||
+  [...url.searchParams.keys()].some(key=>key!=='pref_id'))
   throw Error('Destino de checkout não permitido para testes.');
  return {orderId:id,checkoutUrl:url.href};
 }

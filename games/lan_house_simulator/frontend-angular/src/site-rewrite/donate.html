@@ -29,7 +29,7 @@
  @switch(availability()){
   @case('loading'){Consultando disponibilidade do serviço…}
   @case('unavailable'){Doações não liberadas pelo serviço. Nenhum pagamento será iniciado.}
-  @case('backend-active'){Serviço de pagamentos ativo, mas o checkout Angular ainda está bloqueado até a integração autenticada ser testada.}
+  @case('backend-active'){Serviço de pagamentos ativo. A abertura do checkout depende da configuração aprovada desta versão.}
   @case('sandbox-ready'){Ambiente de testes ativo. Você pode simular a revisão ou preparar um pedido de teste. Nenhum pagamento será aberto automaticamente.}
   @default{Não foi possível consultar o serviço. O checkout permanece bloqueado.}
  }
@@ -72,6 +72,7 @@
      [disabled]="!termsAccepted()" (click)="prepareSandboxOrder()">Preparar pedido sandbox</button>
    }
    @if(reviewState()==='prepare-error'){
+    <p role="alert">{{prepareError()}}</p>
     <button type="button" id="retry-sandbox-order" class="button"
      (click)="prepareSandboxOrder()">Tentar novamente com a mesma chave</button>
    }
@@ -86,6 +87,7 @@
   </section>
  }
 </section>
+<lhs-production-checkout></lhs-production-checkout>
 <section class="wrap donate-account-link">
  <h2>Já apoiou o jogo?</h2>
  <p>Veja o histórico dos seus pedidos em <a href="/conta/#apoios">Minha conta · Pagamentos e apoios</a>. O histórico é privado e exige login.</p>
