@@ -188,12 +188,18 @@ try{
     assert.match(savedAnswer,/outro aparelho/);
     await input.fill('horizontál');
     assert.equal(await page.locator('.faq details:visible').count(),1);
-    assert.match(await page.locator('.faq details:visible').first().innerText(),/horizontal/);
+    const mobileHelp=page.locator('.faq details:visible').first();
+    if(mobile)await mobileHelp.locator('summary').tap();
+    else await mobileHelp.locator('summary').click();
+    assert.match(await mobileHelp.locator('p').innerText(),/horizontal/);
     await input.fill('nuvem');
     assert.equal(await page.locator('.faq details:visible').count(),2);
     await input.fill('assinatura');
     assert.equal(await page.locator('.faq details:visible').count(),1);
-    assert.match(await page.locator('.faq details:visible').first().innerText(),/assinatura obrigatória/);
+    const loginHelp=page.locator('.faq details:visible').first();
+    if(mobile)await loginHelp.locator('summary').tap();
+    else await loginHelp.locator('summary').click();
+    assert.match(await loginHelp.locator('p').innerText(),/assinatura obrigatória/);
     await page.reload({waitUntil:'networkidle'});
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteFramework==='angular-rewrite');
