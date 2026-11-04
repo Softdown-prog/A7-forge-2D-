@@ -1,11 +1,8 @@
 <section class="wrap timeline" id="evolucao" aria-label="Evolução dos computadores">
-   <p class="eyebrow">UMA HISTÓRIA QUE EVOLUI</p><h2>A tecnologia muda com você.</h2>
-   <div class="era-tabs">
-    @for(item of eras;track item.year;let i=$index){
-     <button type="button" [attr.aria-pressed]="era()===i" [class.active]="era()===i"
-      (click)="selectEra(i)">{{item.year}}</button>
-    }
-   </div>
-   <div class="era-panel"><img [src]="selectedEra().image" [alt]="'Computador '+selectedEra().year" width="480" height="300"/>
-    <div><p class="eyebrow">{{selectedEra().year}}</p><h3>{{selectedEra().title}}</h3><p>{{selectedEra().text}}</p></div></div>
-  </section>
+ <div class="section-heading"><p class="eyebrow"><span class="pixel" aria-hidden="true"></span>UMA HISTÓRIA QUE EVOLUI</p><h2>O tempo passa.<br>Sua lan house também muda.</h2><p>Do primeiro CRT à sua própria arena. Cada época abre possibilidades; o ritmo de crescer é seu.</p></div>
+ <div class="era-layout"><div class="era-tabs" aria-label="Explore as épocas">
+  @for(item of eras;track item.year;let i=$index){<button type="button" [attr.aria-pressed]="era()===i" [class.active]="era()===i" aria-controls="era-panel" (click)="selectEra(i)"><span>{{item.year}}</span><small>{{item.label}}</small><span aria-hidden="true">→</span></button>}
+ </div>
+ <div class="era-panel" id="era-panel" aria-live="polite"><div class="era-art"><img [src]="selectedEra().image" [alt]="'Computador '+selectedEra().year" width="480" height="300"><span class="era-stamp">{{selectedEra().year}}</span></div>
+  <p class="eyebrow">{{selectedEra().spec}}</p><h3>{{selectedEra().title}}</h3><p>{{selectedEra().text}}</p></div></div>
+</section>
