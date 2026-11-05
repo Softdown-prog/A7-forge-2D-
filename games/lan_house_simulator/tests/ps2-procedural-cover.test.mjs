@@ -44,6 +44,8 @@ test("headless or disabled Canvas retains a checked-in SVG for every PS2 game",(
  for(const game of PS2_GAME_CATALOG){
   const fallback="assets/ps2/covers/"+game.id+".svg";
   assert.ok(existsSync(new URL("../"+fallback,import.meta.url)),fallback);
+  assert.ok(existsSync(new URL("../dist/"+fallback,import.meta.url)),
+   "production game build must include local PS2 cover: "+fallback);
   const source=readFileSync(new URL("../"+fallback,import.meta.url),"utf8");
   assert.match(source,/viewBox="0 0 420 560"/);
   assert.match(source,/<svg\b/);
