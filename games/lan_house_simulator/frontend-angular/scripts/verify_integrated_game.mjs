@@ -198,7 +198,7 @@ try{
   const ps1Covers=shop.locator('.angular-console-grid').first().locator('img.angular-ps1-cover');
   assert.equal(await ps1Covers.count(),5,'Five original PS1 covers are projected');
   await page.waitForFunction(()=>Array.from(document.querySelectorAll(
-   '.angular-console-grid:first-of-type img.angular-ps1-cover')).length===5 &&
+   '.angular-ps1-cover')).length===5 &&
    Array.from(document.querySelectorAll('.angular-ps1-cover')).every(img=>
     img.complete && img.naturalWidth===420 && img.naturalHeight===560));
   const coverSources=await ps1Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
