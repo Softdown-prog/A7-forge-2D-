@@ -205,6 +205,19 @@ try{
   assert.ok(coverSources.every(src=>src?.startsWith('data:image/png;base64,')),
    'Procedural PS1 art must not depend on requests to external paths');
   assert.equal(new Set(coverSources).size,5,'Each PS1 game must have unique artwork');
+
+  // PS2 catalogue was already buyable. Its five original game covers must now
+  // be visibly painted and fully decoded across desktop and mobile.
+  const ps2Covers=shop.locator('.angular-console-grid').last().locator('img.angular-ps2-cover');
+  assert.equal(await ps2Covers.count(),5,'All existing PS2 games have actual covers');
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll(
+   '.angular-ps2-cover')).length===5 &&
+   Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
+    img.complete && img.naturalWidth===420 && img.naturalHeight===560));
+  const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
+  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')),
+   'PS2 covers must be generated locally without external artwork requests');
+  assert.equal(new Set(ps2CoverSources).size,5,'Each existing PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
   const slots=await page.locator('#angular-ps1-placement option').evaluateAll(
