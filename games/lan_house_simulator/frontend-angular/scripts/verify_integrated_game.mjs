@@ -1000,8 +1000,11 @@ try{
  // Real engine eligibility tests: no fabricated Angular DTOs or purchase events.
  const blocked=[];
  for(const scenario of [
-  {year:2002,cash:15000,width:1280,reason:'PS2 not released'},
-  {year:2006,cash:0,width:414,reason:'Insufficient cash'}
+  {year:2002,cash:15000,width:1280,reason:'PS2 not released',ps1Count:7,nextYear:2003},
+  {year:2003,cash:15000,width:414,reason:'PS2 not released',ps1Count:9,nextYear:2004},
+  {year:2004,cash:15000,width:360,reason:'PS2 not released',ps1Count:11,nextYear:2005},
+  {year:2005,cash:15000,width:414,reason:'PS2 not released',ps1Count:13,nextYear:null},
+  {year:2006,cash:0,width:414,reason:'Insufficient cash',ps1Count:13,nextYear:null}
  ]){
   const mobile=scenario.width<700;
   const context=await browser.newContext({
@@ -1037,6 +1040,30 @@ try{
    document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor();
+  // Browser contract: future PS1 games must stay out of the actual store.
+  await page.waitForFunction(expected=>document.querySelectorAll('.angular-ps1-cover').length===expected,
+   scenario.ps1Count);
+  const ps1Cards=shop.locator('.angular-console-grid').first().locator('article.shop-card');
+  assert.equal(await ps1Cards.count(),scenario.ps1Count,'PS1 release count for '+scenario.year);
+  const visibleTitles=await ps1Cards.locator('h4').allTextContents();
+  const originals=['Turbo Circuito','Gol de Rua','Ilha dos Cristais','Luta Neon','Cosmo Blocos'];
+  const annual=[
+   [2002,['Rally do Deserto','Sombras do Castelo']],
+   [2003,['Defensores do Espaço','Selva Perdida']],
+   [2004,['Dragões de Aço','Ritmo da Cidade']],
+   [2005,['Agentes da Noite','Oceano Profundo']]
+  ];
+  const expectedTitles=[...originals,...annual.filter(([year])=>year<=scenario.year)
+   .flatMap(([,titles])=>titles)];
+  assert.deepEqual(visibleTitles,expectedTitles,
+   'PS1 annual unlocks must match released game titles, not just card count');
+  const teaser=shop.locator('.ps1-next-games');
+  if(scenario.nextYear!==null){
+   assert.equal(await teaser.count(),1,'The next annual release is teased');
+   assert.match(await teaser.innerText(),new RegExp('2 jogos desbloqueados em '+scenario.nextYear));
+   for(const [,titles] of annual.filter(([year])=>year>scenario.year))
+    for(const title of titles)assert.ok(!visibleTitles.includes(title),'Unreleased title leaked: '+title);
+  }else assert.equal(await teaser.count(),0,'PS1 release teasers end in 2005');
   const ps1=shop.locator(':scope > article.shop-card').first().locator('button');
   const ps2=shop.locator(':scope > article.shop-card').nth(1).locator('button');
   assert.equal(await ps2.isDisabled(),true,scenario.reason+' must block PS2');
@@ -1055,6 +1082,7 @@ try{
    fullPage:true
   });
   blocked.push({year:scenario.year,cash:scenario.cash,width:scenario.width,
+   ps1Available:scenario.ps1Count,nextPs1Release:scenario.nextYear,
    ps1Disabled:await ps1.isDisabled(),ps2Disabled:await ps2.isDisabled()});
   await context.close();
  }
