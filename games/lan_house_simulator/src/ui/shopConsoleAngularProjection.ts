@@ -1,5 +1,5 @@
 /** Read-only PS1/PS2 projections; all purchase rules remain in the game ports. */
-import type {Ps1ShopDiscRow} from "../application/ps1ShopDiscPort.js";
+import {nextPs1DiscReleaseYear,type Ps1ShopDiscRow} from "../application/ps1ShopDiscPort.js";
 import {ps1ProceduralCover} from "./ps1CoverArt.js";
 import type {Ps1ShopPlacementSpot} from "../application/ps1ShopPlacementPort.js";
 import type {Ps1ShopOffer} from "../application/ps1ShopOfferPort.js";
@@ -12,7 +12,8 @@ export interface ConsoleGameView {
 export interface ConsoleShopView {
  readonly ps1:{readonly offerText:string;readonly offerDisabled:boolean;
   readonly slots:readonly Ps1ShopPlacementSpot[];readonly selected:string|null;
-  readonly artwork:string|null;readonly discs:readonly ConsoleGameView[]|null};
+  readonly artwork:string|null;readonly nextReleaseYear:number|null;
+  readonly discs:readonly ConsoleGameView[]|null};
  readonly ps2:{readonly benchText:string;readonly benchDisabled:boolean;
   readonly slots:readonly {id:string;label:string}[];
   readonly games:readonly ConsoleGameView[];readonly artwork:string|null};
@@ -37,7 +38,8 @@ export function projectConsoleShop(
  return {
   ps1:{offerText:ps1.text,offerDisabled:ps1.disabled,slots,
    selected:slots.some(s=>s.id===selected)?selected:slots[0]?.id??null,
-   artwork:artworkPs1,discs:discs?.map(projectPs1Disc)??null},
+   artwork:artworkPs1,nextReleaseYear:nextPs1DiscReleaseYear(discs),
+   discs:discs?.map(projectPs1Disc)??null},
   ps2:{benchText:ps2?ps2.benchText+" · "+money(ps2.benchPrice):"PS2 indisponível",
    benchDisabled:ps2?.benchDisabled??true,slots:ps2?.slots??[],
    games:ps2?.games.map(projectPs2Game)??[],artwork:artworkPs2}
