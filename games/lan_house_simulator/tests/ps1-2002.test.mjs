@@ -332,7 +332,7 @@ test("CDs PS1: troca, cópias físicas exclusivas, dinheiro e saves legados",()=
  assert.equal(buyPs1Disc(inYear(),"turbo-circuito").ok,false);
 });
 
-test("cinco CDs têm minijogos CRT exclusivos, determinísticos e animados",()=>{
+test("treze CDs têm minijogos CRT exclusivos, determinísticos e animados",()=>{
  const snapshots=new Set();
  for(const disc of PS1_CD_CATALOG){
   const data=ps1MiniGameFrame(disc.id,1.25);
@@ -356,7 +356,7 @@ test("cinco CDs têm minijogos CRT exclusivos, determinísticos e animados",()=>
   drawPs1MiniGame(collect,disc.id,2.25);
   assert.notEqual(serialized,JSON.stringify(image),disc.title+" deve animar no tempo");
  }
- assert.equal(snapshots.size,5);
+ assert.equal(snapshots.size,13);
 });
 
 test("a seleção física por bancada muda o jogo da TV sem tocar no preço",()=>{
