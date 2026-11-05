@@ -3,6 +3,7 @@
  * PNG data URLs are compatible with Angular's image sanitizer and site CSP. */
 export interface Ps1CoverDisc {
  readonly id:string;readonly title:string;readonly genre:string;
+ readonly releaseYear?:number;
 }
 const cache=new Map<string,string>();
 const W=420,H=560;
@@ -12,14 +13,30 @@ const THEMES:Record<string,readonly [string,string,string]>={
  "gol-de-rua":["#062b3c","#2ad9a3","#ffe193"],
  "ilha-dos-cristais":["#112b5b","#8a7eff","#a0ffef"],
  "luta-neon":["#160c38","#ff467e","#45e9f8"],
- "cosmo-blocos":["#111e4f","#9f5bff","#f7d65a"]
+ "cosmo-blocos":["#111e4f","#9f5bff","#f7d65a"],
+ "rally-do-deserto":["#572c35","#d67839","#ffe2a1"],
+ "sombras-do-castelo":["#141e40","#7762a2","#dde3ff"],
+ "defensores-do-espaco":["#061e4b","#4276b8","#96faff"],
+ "selva-perdida":["#133934","#3e9760","#f7e7a2"],
+ "dragoes-de-aco":["#2c233d","#ba5976","#eebc95"],
+ "ritmo-da-cidade":["#211744","#c4479c","#79f6ff"],
+ "agentes-da-noite":["#111d35","#346b7a","#d9f9f3"],
+ "oceano-profundo":["#062b4f","#178e9e","#a9f8e6"]
 };
 const TITLES:Record<string,readonly string[]>={
  "turbo-circuito":["TURBO","CIRCUITO"],
  "gol-de-rua":["GOL DE","RUA"],
  "ilha-dos-cristais":["ILHA DOS","CRISTAIS"],
  "luta-neon":["LUTA","NEON"],
- "cosmo-blocos":["COSMO","BLOCOS"]
+ "cosmo-blocos":["COSMO","BLOCOS"],
+ "rally-do-deserto":["RALLY DO","DESERTO"],
+ "sombras-do-castelo":["SOMBRAS DO","CASTELO"],
+ "defensores-do-espaco":["DEFENSORES","DO ESPAÇO"],
+ "selva-perdida":["SELVA","PERDIDA"],
+ "dragoes-de-aco":["DRAGÕES","DE AÇO"],
+ "ritmo-da-cidade":["RITMO DA","CIDADE"],
+ "agentes-da-noite":["AGENTES","DA NOITE"],
+ "oceano-profundo":["OCEANO","PROFUNDO"]
 };
 function path(ctx:CanvasRenderingContext2D,points:readonly Point[],color:string):void{
  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(...points[0]!);
@@ -133,6 +150,108 @@ function blocks(ctx:CanvasRenderingContext2D):void{
  }
  ctx.restore();
 }
+
+/** Motivos geométricos próprios para os oito lançamentos anuais adicionais. */
+function annualArt(ctx:CanvasRenderingContext2D,id:string):void{
+ switch(id){
+ case "rally-do-deserto":{
+  circle(ctx,322,132,83,"#ffe5a8");
+  path(ctx,[[0,295],[105,238],[216,294],[335,212],[420,282],[420,458],[0,458]],"#db9555");
+  path(ctx,[[0,363],[153,294],[260,342],[420,276],[420,468],[0,468]],"#b76c4b");
+  path(ctx,[[171,247],[234,247],[388,459],[34,459]],"#685260");
+  line(ctx,[[171,247],[34,459]],"#f5cc87",8);line(ctx,[[234,247],[388,459]],"#f5cc87",8);
+  path(ctx,[[91,348],[132,301],[275,301],[327,348],[340,388],[79,388]],"#367e94");
+  path(ctx,[[135,305],[167,272],[247,272],[279,305]],"#a8e9d8");
+  for(const x of [105,309])circle(ctx,x,391,23,"#25243b");
+  line(ctx,[[120,348],[156,348]],"#fff2bc",9);break;
+ }
+ case "sombras-do-castelo":{
+  circle(ctx,315,133,75,"#eaedff");
+  for(const [x,h] of [[25,190],[117,150],[205,212],[310,177]] as const){
+   path(ctx,[[x,410],[x,h],[x+26,h-47],[x+52,h],[x+52,410]],"#172443");
+   path(ctx,[[x+14,h+36],[x+26,h+18],[x+37,h+36],[x+37,h+83],[x+14,h+83]],"#ffe1a3");
+  }
+  path(ctx,[[0,408],[420,408],[420,465],[0,465]],"#272948");
+  path(ctx,[[168,400],[187,331],[206,318],[230,340],[245,400]],"#7b9bbb");
+  circle(ctx,208,315,23,"#c3d6df");line(ctx,[[220,345],[285,302]],"#f4db9a",9);
+  break;
+ }
+ case "defensores-do-espaco":{
+  circle(ctx,331,130,88,"#6e8cda");circle(ctx,313,115,53,"#9dcbf5");
+  for(let i=0;i<17;i++)circle(ctx,22+(i*103)%376,55+(i*73)%303,2+(i%3),"#dcf9ff");
+  path(ctx,[[210,193],[254,302],[361,375],[254,363],[212,408],[168,363],[61,375],[168,302]],"#72d3de");
+  path(ctx,[[210,205],[229,320],[210,384],[191,320]],"#d1f5fd");
+  path(ctx,[[163,358],[184,386],[160,442]],"#ffb2a1");
+  path(ctx,[[237,386],[256,358],[260,442]],"#ffb2a1");
+  for(const x of [80,323]){path(ctx,[[x,231],[x+29,252],[x+5,269],[x-23,252]],"#f7a6c1");}
+  break;
+ }
+ case "selva-perdida":{
+  circle(ctx,316,137,81,"#f8edaa");
+  for(let i=0;i<7;i++){
+   const x=-18+i*73;
+   path(ctx,[[x,73],[x+70,45],[x+115,115],[x+43,162]],i%2?"#1b5b43":"#267e5b");
+   line(ctx,[[x+43,58],[x+43,360]],"#1b473e",12);
+  }
+  path(ctx,[[0,375],[78,299],[141,346],[209,250],[279,348],[359,301],[420,356],[420,458],[0,458]],"#194d42");
+  path(ctx,[[142,346],[159,279],[207,253],[253,284],[269,346]],"#baae86");
+  path(ctx,[[175,308],[230,308],[235,346],[170,346]],"#294a50");
+  path(ctx,[[0,412],[420,412],[420,466],[0,466]],"#347f5a");
+  break;
+ }
+ case "dragoes-de-aco":{
+  circle(ctx,301,125,88,"#efac9b");
+  path(ctx,[[20,322],[123,245],[187,305],[267,212],[411,299],[355,351],[284,323],[213,364],[157,332],[77,380]],"#a9bdca");
+  path(ctx,[[120,289],[171,201],[236,242],[255,318],[197,384],[143,350]],"#687f9d");
+  path(ctx,[[236,250],[294,217],[357,240],[385,276],[346,304],[285,283]],"#b4c8c9");
+  circle(ctx,350,253,8,"#ffe4af");
+  path(ctx,[[176,344],[186,419],[209,445],[240,415],[263,344]],"#7084a8");
+  for(const x of [35,95,323])line(ctx,[[x,435],[x+34,395]],"#eb866e",5);
+  break;
+ }
+ case "ritmo-da-cidade":{
+  circle(ctx,312,131,84,"#ef8bd1");
+  for(let i=0;i<14;i++){
+   const h=55+(i*51)%169,x=5+i*30;
+   ctx.fillStyle=i%2?"#82e9ec":"#ffbc9e";ctx.fillRect(x,385-h,19,h);
+  }
+  path(ctx,[[82,248],[338,248],[357,393],[67,393]],"#1d2552");
+  path(ctx,[[95,261],[326,261],[332,380],[90,380]],"#56648c");
+  for(const x of [148,279]){
+   circle(ctx,x,326,48,"#101c44");circle(ctx,x,326,29,"#88e4ed");circle(ctx,x,326,13,"#d4b2f6");
+  }
+  line(ctx,[[194,281],[239,281]],"#f6d6fa",10);break;
+ }
+ case "agentes-da-noite":{
+  circle(ctx,326,135,80,"#b5f2e9");
+  for(let i=0;i<10;i++){
+   const x=i*47,h=135+(i*37)%129;
+   ctx.fillStyle=i%2?"#172f49":"#203c50";ctx.fillRect(x,445-h,43,h);
+   for(let j=0;j<3;j++){ctx.fillStyle="#ffdd9f77";ctx.fillRect(x+11,450-h+j*30,8,12);}
+  }
+  path(ctx,[[0,425],[420,425],[420,467],[0,467]],"#112a3e");
+  path(ctx,[[165,403],[175,350],[194,323],[216,329],[227,405]],"#86a7b8");
+  circle(ctx,198,318,23,"#a3c8cb");
+  path(ctx,[[166,304],[183,271],[210,271],[229,304]],"#1d3447");
+  line(ctx,[[242,340],[341,283]],"#c7f5eb",6);
+  break;
+ }
+ case "oceano-profundo":{
+  circle(ctx,334,134,82,"#56aec8");
+  for(let i=0;i<20;i++)circle(ctx,27+(i*57)%364,67+(i*113)%307,2+i%4,"#b9fff199");
+  path(ctx,[[0,397],[67,354],[154,397],[253,349],[339,399],[420,355],[420,465],[0,465]],"#186c78");
+  path(ctx,[[106,278],[151,236],[280,236],[324,278],[316,326],[114,326]],"#f4cd77");
+  path(ctx,[[144,242],[180,211],[243,211],[279,242]],"#9bf3e2");
+  for(const x of [171,246]){circle(ctx,x,286,29,"#1d677f");circle(ctx,x,286,18,"#8de5e5");}
+  path(ctx,[[322,276],[374,255],[374,343],[317,329]],"#d9a96e");
+  for(const [x,y] of [[38,239],[359,195],[332,368]] as const){
+   path(ctx,[[x-22,y],[x,y-13],[x+21,y],[x,y+13]],"#b7e5b2");
+  }
+  break;
+ }
+ }
+}
+
 function paint(ctx:CanvasRenderingContext2D,disc:Ps1CoverDisc):void{
  const colors=THEMES[disc.id]??["#171c3f","#6fa6dc","#ffd87f"];
  const gradient=ctx.createLinearGradient(0,0,420,560);
@@ -150,7 +269,7 @@ function paint(ctx:CanvasRenderingContext2D,disc:Ps1CoverDisc):void{
   case "ilha-dos-cristais":island(ctx);break;
   case "luta-neon":combat(ctx);break;
   case "cosmo-blocos":blocks(ctx);break;
-  default:blocks(ctx);
+  default:annualArt(ctx,disc.id);
  }
  const panel=ctx.createLinearGradient(0,380,0,560);
  panel.addColorStop(0,"#0d173700");panel.addColorStop(.23,"#071126ed");panel.addColorStop(1,"#060b1e");
@@ -159,7 +278,7 @@ function paint(ctx:CanvasRenderingContext2D,disc:Ps1CoverDisc):void{
  ctx.fillStyle="#e7f1fc";ctx.font="bold 18px Arial, sans-serif";
  ctx.fillText("SOFTDOWN",20,28);
  ctx.fillStyle=colors[2];ctx.font="bold 12px Arial, sans-serif";
- ctx.textAlign="right";ctx.fillText("CD-ROM · 2002",400,28);ctx.textAlign="left";
+ ctx.textAlign="right";ctx.fillText("CD-ROM · "+(disc.releaseYear??2002),400,28);ctx.textAlign="left";
  const lines=TITLES[disc.id]??[disc.title.toLocaleUpperCase("pt-BR")];
  ctx.textBaseline="top";
  ctx.shadowColor="#000b";ctx.shadowBlur=5;
@@ -182,7 +301,7 @@ function paint(ctx:CanvasRenderingContext2D,disc:Ps1CoverDisc):void{
 export function ps1ProceduralCover(disc:Ps1CoverDisc,doc?:Pick<Document,"createElement">):string{
  const safeId=/^[a-z0-9-]+$/.test(disc.id)?disc.id:"cosmo-blocos";
  const fallback="assets/ps1/covers/"+safeId+".svg";
- const key=disc.id+"\u0000"+disc.title+"\u0000"+disc.genre;
+ const key=disc.id+"\u0000"+disc.title+"\u0000"+disc.genre+"\u0000"+(disc.releaseYear??2002);
  const saved=cache.get(key);if(saved)return saved;
  const target=doc??(typeof document!=="undefined"?document:undefined);
  if(!target)return fallback;

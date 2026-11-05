@@ -1,5 +1,5 @@
 /** PS1 CD cards; clicks continue to use the existing delegated shop handler. */
-import type {Ps1ShopDiscPort} from "../application/ps1ShopDiscPort.js";
+import {nextPs1DiscReleaseYear,type Ps1ShopDiscPort} from "../application/ps1ShopDiscPort.js";
 import {ps1ProceduralCover} from "./ps1CoverArt.js";
 
 export function renderPs1ShopDiscCatalog(
@@ -13,7 +13,11 @@ export function renderPs1ShopDiscCatalog(
  heading.textContent="Jogos de PlayStation 1 · CDs físicos";
  host.append(heading);
  const note=doc.createElement("p");note.className="catalog-game-note ps1-shop-note";
- note.textContent="Compre um CD definitivo para começar a atender. Cada cópia equipa apenas uma bancada por vez; os títulos são fictícios e não exigem licenciamento por PC.";
+ const nextYear=nextPs1DiscReleaseYear(rows);
+ note.textContent=nextYear!==null?
+  "Novidade chegando: +2 jogos serão desbloqueados em "+nextYear+
+  ". Cada CD é uma compra definitiva e equipa uma bancada por vez.":
+  "Catálogo PS1 completo: 13 jogos disponíveis desde 2005. O PS2 estreia em 2006. Cada CD equipa uma bancada por vez.";
  host.append(note);
  for(const disc of rows){
   const card=doc.createElement("article");card.className="shop-card ps1-cd-shop-card";
@@ -26,7 +30,7 @@ export function renderPs1ShopDiscCatalog(
   cover.width=420;cover.height=560;
   const spine=doc.createElement("span");spine.className="ps1-cd-spine";
   jewel.append(cover,spine);art.append(jewel);
-  const category=doc.createElement("small");category.textContent="CD de PS1 · "+disc.genre;
+  const category=doc.createElement("small");category.textContent="CD de PS1 · "+disc.genre+" · "+disc.releaseYear;
   const title=doc.createElement("h3");title.textContent=disc.title;
   const description=doc.createElement("p");
   description.textContent="Cópias no acervo: "+disc.copies+

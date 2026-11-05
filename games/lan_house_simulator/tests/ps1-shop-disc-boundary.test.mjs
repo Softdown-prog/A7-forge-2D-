@@ -48,7 +48,7 @@ test("partida clássica não libera CDs mesmo em 2004",()=>{
 });
 test("catálogo conserva títulos, ordem, preços e não altera save",()=>{
  const s=inYear(),before=JSON.stringify(s),rows=createPs1ShopDiscPort(()=>s).snapshot();
- assert.deepEqual(rows.map(row=>row.id),PS1_CD_CATALOG.map(row=>row.id));
+ assert.deepEqual(rows.map(row=>row.id),PS1_CD_CATALOG.filter(d=>d.releaseYear<=2002).map(row=>row.id));
  for(const row of rows){
   const original=PS1_CD_CATALOG.find(d=>d.id===row.id);
   assert.equal(row.title,original.title);assert.equal(row.genre,original.genre);
@@ -90,20 +90,20 @@ test("outra aba nunca consulta o port nem monta cards",()=>{
  renderPs1ShopDiscCatalog(x.host,{snapshot:()=>null},true,x.doc);
  assert.equal(x.host.children.length,1);
 });
-test("cinco cartões ficam junto ao console e conservam capa, dataset e formatação",()=>{
+test("sete cartões em 2002 ficam junto ao console e conservam capa e compra",()=>{
  const s=station(inYear()),x=harness(),port=createPs1ShopDiscPort(()=>s);
  renderPs1ShopDiscCatalog(x.host,port,true,x.doc);
  assert.equal(x.host.children[0],x.consoleCard);
  assert.equal(x.host.children[1].className,"ps1-shop-heading");
  assert.equal(x.host.children[2].className,"catalog-game-note ps1-shop-note");
- const cards=x.host.children.slice(3);assert.equal(cards.length,PS1_CD_CATALOG.length);
+ const cards=x.host.children.slice(3);assert.equal(cards.length,7);
  for(let i=0;i<cards.length;i++){
   const [art,category,title,description,button]=cards[i].children,disc=PS1_CD_CATALOG[i];
   assert.equal(art.attrs["aria-hidden"],"true");
   assert.equal(art.children[0].children[0].src,"assets/ps1/covers/"+disc.id+".svg");
   assert.equal(art.children[0].children[0].loading,"lazy");
   assert.equal(art.children[0].children[0].width,420);
-  assert.equal(category.textContent,"CD de PS1 · "+disc.genre);
+  assert.equal(category.textContent,"CD de PS1 · "+disc.genre+" · "+disc.releaseYear);
   assert.equal(title.textContent,disc.title);
   assert.equal(description.textContent,"Cópias no acervo: 0 · compra definitiva, sem renovação.");
   assert.equal(button.dataset.buyPs1Disc,disc.id);
@@ -114,7 +114,7 @@ test("cinco cartões ficam junto ao console e conservam capa, dataset e formata�
 test("sem cartão de console, catálogo ainda é renderizado",()=>{
  const s=inYear(),x=harness(false);
  renderPs1ShopDiscCatalog(x.host,createPs1ShopDiscPort(()=>s),true,x.doc);
- assert.equal(x.host.children.length,PS1_CD_CATALOG.length+2);
+ assert.equal(x.host.children.length,7+2);
  assert.equal(x.host.children[0].className,"ps1-shop-heading");
  assert.equal(x.host.children[2].children[4].textContent,"Instale uma bancada primeiro");
 });

@@ -32,7 +32,7 @@ export function createPs1AdminPort(getState:()=>GameState):Ps1AdminPort{
     const occupied=s.customers.filter(c=>c.ps1StationIndex===index&&
      ["to_pc","sitting","using","standing"].includes(c.stage)).length;
     const isBusy=occupied>0,playableDisc=ps1PlayableDisc(s,index);
-    const discOptions=PS1_CD_CATALOG.flatMap(disc=>{
+    const discOptions=PS1_CD_CATALOG.filter(d=>d.releaseYear<=year).flatMap(disc=>{
      const copies=ps1DiscCopies(s,disc.id);
      if(!copies)return [];
      const used=stations.filter((other,i)=>i!==index&&other.discId===disc.id).length;
