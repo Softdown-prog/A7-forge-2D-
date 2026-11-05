@@ -97,9 +97,9 @@ test("native shop has one portrait image per PS2 title, no generic game thumbnai
   assert.equal(card.children.at(-1).disabled,true,"visual change must not unlock game");
  }
 });
-test("PS1 retains the original five real, purchasable physical games and procedural covers",()=>{
- assert.equal(PS1_CD_CATALOG.length,5);
- assert.deepEqual(PS1_CD_CATALOG.map(g=>g.id),[
+test("PS1 retains the five original physical games and covers during future catalog expansions",()=>{
+ assert.ok(PS1_CD_CATALOG.length>=5);
+ assert.deepEqual(PS1_CD_CATALOG.slice(0,5).map(g=>g.id),[
   "turbo-circuito","gol-de-rua","ilha-dos-cristais","luta-neon","cosmo-blocos"
  ]);
  for(const game of PS1_CD_CATALOG){
