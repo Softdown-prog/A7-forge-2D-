@@ -1119,6 +1119,8 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 .night-reopening-announcement[hidden]{display:none}
 @media(max-width:650px){.night-reopening-announcement{font-size:11px;padding:6px 8px}}
 
+/* Native PS2 discs use original, readable portrait covers. */
+.ps2-game-card .ps2-game-cover{display:block;width:min(100%,165px);height:auto;aspect-ratio:3/4;object-fit:cover;margin:0 auto 9px;border:2px solid #d8e4ee;border-left-width:7px;box-shadow:3px 6px 10px #09121d66;background:#151d37}
 /* PS2 uses the existing console cards and native mobile controls. */
 .ps2-shop-preview{display:block;width:100%;max-width:300px;height:auto;margin:0 auto 8px;border-radius:8px;background:#172b38}
 .ps2-bench-card select,#ps2-stations select{max-width:100%;width:100%;min-height:40px}
