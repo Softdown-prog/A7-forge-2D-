@@ -45,7 +45,7 @@ test("five distinct procedural covers are deterministic, cached and dimension-sa
 test("without browser Canvas, fallback remains the original checked-in SVG art",()=>{
  for(const disc of PS1_CD_CATALOG){
   const expected="assets/ps1/covers/"+disc.id+".svg";
-  assert.equal(ps1ProceduralCover(disc,{createElement:()=>({})}),expected);
+  assert.equal(ps1ProceduralCover({...disc,title:disc.title+" headless"},{createElement:()=>({})}),expected);
   assert.ok(existsSync(new URL("../"+expected,import.meta.url)),expected+" must exist");
  }
 });
@@ -59,7 +59,7 @@ test("real Angular catalogue projects the same UI-only cover generator",()=>{
  assert.match(source,/cover:ps1ProceduralCover\(row\)/);
  assert.match(readFileSync(new URL("../src/ui/ps1ShopDiscCatalog.ts",import.meta.url),"utf8"),
   /cover\.src=ps1ProceduralCover\(disc,doc\)/);
- const row={...PS1_CD_CATALOG[0],copies:0,disabled:false,noStation:false,full:false,price:44};
+ const row={...PS1_CD_CATALOG[0],title:"Turbo Circuito headless projection",copies:0,disabled:false,noStation:false,full:false,price:44};
  const view=projectPs1Disc(row);
  assert.equal(view.cover,"assets/ps1/covers/turbo-circuito.svg",
   "headless runs keep the same relative static fallback");
