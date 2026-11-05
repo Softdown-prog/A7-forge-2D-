@@ -6,7 +6,7 @@ import type {Ps1ShopOffer} from "../application/ps1ShopOfferPort.js";
 import type {Ps2Snapshot} from "../application/ps2Port.js";
 export interface ConsoleGameView {
  readonly id:string;readonly title:string;readonly genre:string;
- readonly copies:number;readonly buttonText:string;readonly disabled:boolean;
+ readonly copies:number;readonly releaseYear:number|null;readonly buttonText:string;readonly disabled:boolean;
  readonly cover:string|null;
 }
 export interface ConsoleShopView {
@@ -20,13 +20,13 @@ export interface ConsoleShopView {
 const money=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 export function projectPs1Disc(row:Ps1ShopDiscRow):ConsoleGameView{
  const price=money(row.price);
- return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,
+ return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,releaseYear:row.releaseYear,
   buttonText:row.noStation?"Instale uma bancada primeiro":row.full?"Acervo completo":
    row.disabled?"Caixa insuficiente · "+price:"Comprar CD · "+price,
   disabled:row.disabled,cover:ps1ProceduralCover(row)};
 }
 export function projectPs2Game(row:Ps2Snapshot["games"][number]):ConsoleGameView{
- return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,
+ return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,releaseYear:null,
   buttonText:row.buyText+" · "+money(row.price),disabled:row.disabled,cover:null};
 }
 export function projectConsoleShop(
