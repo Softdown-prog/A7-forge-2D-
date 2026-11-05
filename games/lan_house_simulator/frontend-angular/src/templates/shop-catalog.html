@@ -44,6 +44,9 @@
       </article>
       @if(consoleShop.ps1.discs){
         <h4>Jogos PS1 · CDs físicos (novidades até 2005)</h4>
+        @if(consoleShop.ps1.nextReleaseYear){
+          <p class="ps1-next-games">Próxima novidade: 2 jogos desbloqueados em {{consoleShop.ps1.nextReleaseYear}}.</p>
+        }
         <div class="angular-console-grid">
           @for(disc of consoleShop.ps1.discs;track disc.id){
             <article class="shop-card">
