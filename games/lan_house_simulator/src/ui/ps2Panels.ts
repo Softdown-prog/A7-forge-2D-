@@ -1,6 +1,7 @@
 /** DOM presentation only; prices, availability and commands come from the application. */
 import type {Ps2Port} from "../application/ps2Port.js";
 import {drawPs2Station} from "../render/ps2Art.js";
+import {ps2ProceduralCover} from "./ps2CoverArt.js";
 const money=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 function text<K extends keyof HTMLElementTagNameMap>(doc:Document,tag:K,value:string){const el=doc.createElement(tag);el.textContent=value;return el;}
 function button(doc:Document,value:string,disabled:boolean,key:string,index:string){
@@ -21,13 +22,10 @@ export function renderPs2ShopCatalog(host:HTMLElement,port:Ps2Port,doc:Document)
  card.append(canvas,text(doc,"h3","Bancada PlayStation 2"),text(doc,"p","Console, TV, bancada, cadeira e controle. Jogos comprados separadamente. Até 3 PS2, além dos PS1. Internet não é necessária."),label,select,buy);host.append(card);
  for(const g of s.games){
   const item=doc.createElement("article");item.className="shop-card ps2-game-card";
-  // Original code-drawn cover, no external image or commercial artwork.
-  const cover=doc.createElement("canvas");cover.width=240;cover.height=120;cover.className="ps2-shop-preview";
-  const c=cover.getContext("2d");if(c){
-   c.fillStyle=["#244e76","#59508b","#2a7056","#22305f","#765480"][s.games.indexOf(g)]!;c.fillRect(0,0,240,120);
-   c.fillStyle="#c4e2e8";for(let i=0;i<9;i++)c.fillRect(14+i*26,10+(i%3)*13,14,28);
-   c.fillStyle="#fff";c.font="bold 17px system-ui";c.fillText(g.title,12,91,218);c.font="12px system-ui";c.fillText("PS2 · "+g.genre,12,110);
-  }
+  const cover=doc.createElement("img");cover.className="ps2-game-cover";
+  cover.src=ps2ProceduralCover(g,doc);
+  cover.alt="Capa procedural de "+g.title;
+  cover.loading="lazy";cover.decoding="async";cover.width=420;cover.height=560;
   item.append(cover,text(doc,"h3",g.title),text(doc,"p",g.genre+" · "+g.copies+" cópia(s) no acervo. Cada mídia equipa uma bancada."),
    button(doc,g.buyText+" · "+money(g.price),g.disabled,"buyPs2Game",g.id));host.append(item);
  }
