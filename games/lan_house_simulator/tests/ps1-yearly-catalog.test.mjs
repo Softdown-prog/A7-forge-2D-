@@ -5,7 +5,7 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {PS1_CD_CATALOG,PS1_MAX_STATIONS,ps1ReleasedDiscs,
  buyPs1Station,ps1PlacementSlots,buyPs1Disc,setPs1StationDisc,ps1PlayableDisc,
  ps1DiscPrice} from "../dist/js/sim/ps1.js";
-import {createPs1ShopDiscPort} from "../dist/js/application/ps1ShopDiscPort.js";
+import {createPs1ShopDiscPort,nextPs1DiscReleaseYear} from "../dist/js/application/ps1ShopDiscPort.js";
 import {createPs1AdminPort} from "../dist/js/application/ps1AdminPort.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 
@@ -101,4 +101,20 @@ test("old PS1 stock and stations continue to work in 2006 without new PS1 games"
  assert.equal(createPs1ShopDiscPort(()=>s).snapshot().length,13);
  for(const disc of last)assert.equal(s.ps1Discs[disc.id],1);
  assert.equal(PS1_MAX_STATIONS,3);
+});
+
+test("anticipation: exactly two next-year CDs teased until 2005 without early purchase",async()=>{
+ const next=[[2001,null],[2002,2003],[2003,2004],[2004,2005],[2005,null],[2006,null],[2030,null]];
+ for(const [year,expected] of next){
+  const rows=createPs1ShopDiscPort(()=>state(year)).snapshot();
+  assert.equal(nextPs1DiscReleaseYear(rows),expected,"next release milestone in "+year);
+  if(expected!==null){
+   assert.equal(PS1_CD_CATALOG.filter(d=>d.releaseYear===expected).length,2);
+   assert.ok(rows.every(row=>row.releaseYear<=year),"future games stay locked");
+  }
+ }
+ assert.equal(nextPs1DiscReleaseYear(null),null);
+ const source=new URL("../frontend-angular/src/templates/shop-catalog.html",import.meta.url);
+ const {readFileSync}=await import("node:fs");
+ assert.match(readFileSync(source,"utf8"),/Próxima novidade: 2 jogos desbloqueados em/);
 });
