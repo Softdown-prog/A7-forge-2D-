@@ -13,6 +13,7 @@ interface Card{
 }
 interface ConsoleGame {
  readonly id:string;readonly title:string;readonly genre:string;readonly copies:number;
+ readonly releaseYear:number|null;
  readonly buttonText:string;readonly disabled:boolean;readonly cover:string|null;
 }
 interface Slot{readonly id:string;readonly label:string;}
