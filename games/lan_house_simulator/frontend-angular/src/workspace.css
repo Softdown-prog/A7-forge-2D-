@@ -139,7 +139,7 @@ html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
 .angular-console-shop .shop-card button{white-space:normal}
 .angular-console-shop .angular-console-grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .angular-console-shop .shop-card img{max-width:100%;max-height:164px;object-fit:contain}
-.angular-console-shop .angular-console-grid .angular-ps1-cover{display:block;width:min(100%,150px);height:auto;max-height:200px;aspect-ratio:3/4;object-fit:cover;margin:0 auto 8px;border:2px solid #d9e5ed;border-left-width:6px;box-shadow:3px 5px 9px #101f2c55;background:#101a35}
+.angular-console-shop .angular-console-grid .angular-ps1-cover,.angular-console-shop .angular-console-grid .angular-ps2-cover{display:block;width:min(100%,150px);height:auto;max-height:200px;aspect-ratio:3/4;object-fit:cover;margin:0 auto 8px;border:2px solid #d9e5ed;border-left-width:6px;box-shadow:3px 5px 9px #101f2c55;background:#101a35}
 .angular-console-shop .shop-card h4{margin:0}
 @media(max-width:600px){.angular-console-shop .angular-console-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
