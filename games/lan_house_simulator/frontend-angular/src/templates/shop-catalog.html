@@ -43,12 +43,12 @@
         <button type="button" [disabled]="consoleShop.ps1.offerDisabled" (click)="buyPs1()">{{consoleShop.ps1.offerText}}</button>
       </article>
       @if(consoleShop.ps1.discs){
-        <h4>Jogos PS1 · CDs físicos</h4>
+        <h4>Jogos PS1 · CDs físicos (novidades até 2005)</h4>
         <div class="angular-console-grid">
           @for(disc of consoleShop.ps1.discs;track disc.id){
             <article class="shop-card">
               @if(disc.cover){<img class="angular-ps1-cover" [src]="disc.cover" [alt]="'Capa procedural de '+disc.title" loading="lazy" width="420" height="560"/>}
-              <small>{{disc.genre}} · {{disc.copies}} cópia(s)</small>
+              <small>{{disc.genre}} · {{disc.releaseYear}} · {{disc.copies}} cópia(s)</small>
               <h4>{{disc.title}}</h4>
               <button type="button" [disabled]="disc.disabled" (click)="buyPs1Disc(disc.id)">{{disc.buttonText}}</button>
             </article>
