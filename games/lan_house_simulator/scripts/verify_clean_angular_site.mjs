@@ -458,7 +458,7 @@ try{
      'Every legal section must be present in the Angular DOM on '+pathname);
     assert.equal(await index.count(),expected,
      'Legal index and document must have matching sections');
-    assert.equal(await page.locator('.draft-notice').count(),1);
+    assert.equal(await page.locator('.draft-notice').count(),0);
     assert.equal(await page.locator('main h1').count(),1);
     assert.equal(await page.locator('script[src*="site.mjs"]').count(),0);
     const anchor=index.first();

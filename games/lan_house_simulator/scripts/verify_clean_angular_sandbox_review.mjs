@@ -76,7 +76,8 @@ try{
   await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
   assert.equal(await page.locator('[data-review-package]').count(),0,
    'Real payment environment cannot expose sandbox reviewer');
-  assert.equal(await page.locator('[data-donate-package]:disabled').count(),2);
+  assert.equal(await page.locator('#review-production-5').count(),1);
+  assert.equal(await page.locator('[data-donate-package]').count(),0);
   mode='sandbox';
   await page.reload({waitUntil:'networkidle'});
   await page.locator('[data-review-package]').first().waitFor({state:'visible'});

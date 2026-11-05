@@ -11,6 +11,12 @@ export function assertSandboxOrderIntent(value,sandbox){
  if(value!=='true')throw fault(400,'Cabeçalho de sandbox inválido.');
  if(!sandbox)throw fault(409,'Este pedido de teste não pode ser criado em produção.');
 }
+/** Reject a production intent if the server changes payment environment. */
+export function assertProductionOrderIntent(value,sandbox){
+ if(value===undefined)return;
+ if(value!=='production')throw fault(400,'Ambiente de produção inválido.');
+ if(sandbox)throw fault(409,'Este pedido de produção não pode ser criado em sandbox.');
+}
 /**
  * Keep provider redirects in the same payment environment as the order.
  * Official test sellers use init_point (www), but credit only sandbox Cookies.
@@ -47,6 +53,8 @@ export function createPayments({db,FieldValue,mp,packages,sandbox,apiUrl,siteUrl
    if(existing){
     if(existing.packageId!==packageId||existing.uid!==uid||existing.mode!==mode)throw fault(409,'Chave já usada para outro apoio.');
     if(existing.expiresAt<=now())throw fault(410,'Este apoio expirou. Escolha novamente o valor para continuar.');
+    if(['approved','authorized','refunded','charged_back'].includes(existing.status))
+     throw fault(410,'Este apoio já foi concluído. Confira seus apoios ou escolha um novo pagamento.');
     if(existing.checkoutUrl)return existing;
     if(existing.creatingUntil>now())throw fault(409,'Seu pagamento está sendo preparado. Aguarde e tente novamente.');
     tx.update(ref,{claim,creatingUntil:now()+60_000});return existing;

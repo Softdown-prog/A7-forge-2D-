@@ -111,6 +111,11 @@
     <section class="account-order-history" id="account-panel-apoios" role="tabpanel"
      aria-labelledby="account-tab-apoios">
      <h3>Meus apoios</h3>
+     @if(returnedOrder();as orderId){
+      <p>Você retornou do pagamento. Consulte o provedor para atualizar a situação deste pedido.</p>
+      <button type="button" class="button" id="reconcile-returned-order" [disabled]="busy()"
+       (click)="reconcileOrder(orderId)">Conferir pagamento e saldo</button>
+     }
      <p>Consulte os pedidos vinculados à sua conta. Nenhum pagamento é iniciado nesta área. Os créditos só são confirmados pelo servidor.</p>
      <button type="button" class="button secondary" id="load-account-orders"
       [disabled]="busy()||orderState()==='loading'" (click)="loadOrders()">Consultar meus apoios</button>
@@ -132,6 +137,8 @@
            <small>{{order.mode==='sandbox'?'Ambiente de testes':'Produção'}}</small></div>
           <div><span>R$ {{(order.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}} · {{order.cookies}} Cookies previstos</span>
            <strong>{{order.statusLabel}}</strong></div>
+          <button type="button" class="button secondary" [disabled]="busy()"
+           [attr.data-reconcile-order]="order.id" (click)="reconcileOrder(order.id)">Atualizar situação</button>
          </li>
         }
        </ul>

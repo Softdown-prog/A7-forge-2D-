@@ -3,6 +3,8 @@ import {AccountError,SiteAccountClient,validateAccountConfig} from './account-cl
 import {approvedPackageId,simulateSandboxCheckout,validateSandboxQuote} from './checkout-contract';
 import {createAuthenticatedSandboxAdapter} from './checkout-sandbox-adapter';
 import {CheckoutAttempts} from './checkout-attempts';
+import {ViewChild} from '@angular/core';
+import {returnedOrderId} from './donate-history';
 import {ProductionCheckoutComponent} from './production-checkout';
 import type {ApprovedQuote,DonationPackageId} from './checkout-contract';
 export const DONATE_PACKAGES=Object.freeze([{id:'donate-5',priceCents:500,cookies:50},{id:'donate-10',priceCents:1000,cookies:100}] as const);
@@ -27,6 +29,9 @@ export async function paymentAvailability(raw:unknown,request:typeof fetch=(inpu
 @Component({selector:'lhs-donate',standalone:true,imports:[ProductionCheckoutComponent],changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./donate.html'})
 export class DonateComponent implements OnInit,OnDestroy{
  readonly packages=DONATE_PACKAGES;
+ readonly returnedOrder=returnedOrderId(location.search);
+ @ViewChild(ProductionCheckoutComponent) private production?:ProductionCheckoutComponent;
+ async refreshAvailability():Promise<void>{await Promise.all([this.refresh(),this.production?.refresh()]);}
  readonly availability=signal<Availability>('loading');
  readonly reviewState=signal<ReviewState>('idle');
  readonly reviewQuote=signal<ApprovedQuote|null>(null);

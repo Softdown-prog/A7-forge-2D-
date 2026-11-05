@@ -101,7 +101,7 @@ try{
   status=200;await page.locator('#prepare-production-order').click();
   await page.locator('#open-production-checkout').waitFor();assert.equal(posts.length,2);
   assert.equal(posts[0].headers['idempotency-key'],posts[1].headers['idempotency-key']);
-  assert.deepEqual(posts[1].body,{packageId:'donate-5',acceptedTerms:true});
+  assert.deepEqual(posts[1].body,{packageId:'donate-5',acceptedTerms:true,expectedMode:'production'});
   assert.equal(await page.locator('#open-production-checkout').getAttribute('href'),'https://www.mercadopago.com.br/checkout/v1/redirect?pref_id=synthetic');
   assert.equal(context.pages().length,1,'No automatic provider navigation');
   await page.locator('#close-production-review').click();

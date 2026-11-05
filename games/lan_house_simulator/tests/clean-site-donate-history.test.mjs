@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {buildSync} from 'esbuild';
 const source=new URL('../frontend-angular/src/site-rewrite/donate-history.ts',import.meta.url).pathname;
 const bundle=buildSync({entryPoints:[source],bundle:true,format:'esm',platform:'node',write:false});
-const {readDonateOrders}=await import('data:text/javascript;base64,'+
+const {readDonateOrders,returnedOrderId}=await import('data:text/javascript;base64,'+
  Buffer.from(bundle.outputFiles[0].text).toString('base64'));
 const example={id:'a'.repeat(64),priceCents:500,cookies:50,status:'approved',mode:'production'};
 test('typed history models only provider summaries, never browser URL data',()=>{
@@ -29,4 +29,11 @@ for(const bad of [null,{}, {orders:{}},{orders:Array(11).fill(example)},
 test('unrecognized provider statuses are never falsely labeled paid',()=>{
  assert.equal(readDonateOrders({orders:[{...example,status:'unexpected'}]})[0].statusLabel,
  'Status não reconhecido');
+});
+
+test('return parameters are references only, reject ambiguous or invalid order IDs',()=>{
+ const id='a'.repeat(64);
+ assert.equal(returnedOrderId('?order='+id+'&status=approved'),id);
+ for(const query of ['', '?status=approved','?order=bad','?order='+id+'&order='+id,'?order='+id.toUpperCase()])
+  assert.equal(returnedOrderId(query),null);
 });

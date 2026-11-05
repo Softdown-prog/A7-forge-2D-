@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
-test('the checkout contract is test-only and production Donate remains disabled',()=>{
+test('the sandbox contract cannot silently create production orders',()=>{
  const source=read('../frontend-angular/src/site-rewrite/checkout-contract.ts');
  const donate=read('../frontend-angular/src/site-rewrite/donate.ts');
  const markup=read('../frontend-angular/src/site-rewrite/donate.html');

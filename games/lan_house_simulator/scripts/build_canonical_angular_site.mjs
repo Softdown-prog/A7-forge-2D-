@@ -1,6 +1,6 @@
 /** The default site build is exclusively Angular, including public prerender. */
 import {execFileSync} from 'node:child_process';
-import {cpSync,rmSync,writeFileSync,existsSync} from 'node:fs';
+import {cpSync,rmSync,writeFileSync,readFileSync,existsSync} from 'node:fs';
 import {resolve} from 'node:path';
 import {verifyApprovedArtifact} from './approved_site_artifact.mjs';
 const root=resolve(import.meta.dirname,'..');
@@ -20,5 +20,5 @@ rmSync(output,{recursive:true,force:true});
 cpSync(resolve(root,'out/site-clean-angular'),output,{recursive:true});
 writeFileSync(resolve(output,'site-build.json'),JSON.stringify({schemaVersion:1,
  framework:'angular',source:'frontend-angular/src/site-rewrite',publicPrerender:true,
- productionCheckoutEnabled:false},null,2)+'\n');
+ productionCheckoutEnabled:JSON.parse(readFileSync(resolve(output,'checkout-config.json'),'utf8')).productionCheckoutEnabled},null,2)+'\n');
 console.log('Canonical Angular site:',output);

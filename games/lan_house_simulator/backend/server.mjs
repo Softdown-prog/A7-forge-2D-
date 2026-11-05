@@ -8,7 +8,7 @@ import {parseImportedSave,serializeSave} from '../dist/js/sim/saveTransfer.js';
 import {MAX_SAVE_BYTES,fault,id,requireRevision,verifyWebhook} from './domain.mjs';
 import {DONATE_PACKAGES} from '../donate-packages.mjs';
 import {COOKIE_ITEMS,summarizeLedger,totalItemSpending} from '../cookie-items.mjs';
-import {createPayments,assertSandboxOrderIntent} from './payments.mjs';
+import {createPayments,assertProductionOrderIntent,assertSandboxOrderIntent} from './payments.mjs';
 import {createVerificationEmail,authenticateAccount} from './verification-email.mjs';
 
 const projectId=process.env.GOOGLE_CLOUD_PROJECT;
@@ -116,6 +116,7 @@ app.post('/v1/orders',async(req,res)=>{
  // Fail closed when a sandbox-only intent is malformed or mode changes.
  // An absent header preserves the existing legacy checkout behavior.
  assertSandboxOrderIntent(req.headers['x-lhs-sandbox-only'],sandbox);
+ assertProductionOrderIntent(req.body.expectedMode,sandbox);
  if(!paymentsEnabled)throw fault(503,'Doações ainda não disponíveis.');
  if(req.body.acceptedTerms!==true)throw fault(400,'Confirme os termos de Donate antes de continuar.');
  res.json(await payments.createOrder(req.uid,req.body.packageId,req.headers['idempotency-key']));

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
-test('Donate is Angular-only and cannot create orders or checkout',()=>{
+test('Donate keeps sandbox transport separate from production checkout',()=>{
  const c=read('../frontend-angular/src/site-rewrite/donate.ts');
  const h=read('../frontend-angular/src/site-rewrite/donate.html');
  const s=read('../frontend-angular/src/site-rewrite/site-app.ts');

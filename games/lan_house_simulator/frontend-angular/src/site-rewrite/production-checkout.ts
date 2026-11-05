@@ -7,6 +7,8 @@ import type {ProductionQuote} from './production-checkout-contract';
  changeDetection:ChangeDetectionStrategy.OnPush,templateUrl:'./production-checkout.html'})
 export class ProductionCheckoutComponent implements OnInit,OnDestroy{
  readonly enabled=signal(false);
+ readonly packages=signal<ReadonlyArray<ProductionQuote>>([]);
+ readonly needsAccount=signal(false);
  readonly busy=signal(false);
  readonly quote=signal<ProductionQuote|null>(null);
  readonly accepted=signal(false);
@@ -15,6 +17,7 @@ export class ProductionCheckoutComponent implements OnInit,OnDestroy{
  private client:SiteAccountClient|null=null;
  private attempts:CheckoutAttempts|null=null;
  private version=0;
+ private discoveryVersion=0;
  private destroyed=false;
  private readonly abort=new AbortController();
  ngOnInit():void{void this.discover();}
@@ -26,8 +29,21 @@ export class ProductionCheckoutComponent implements OnInit,OnDestroy{
   return await response.json() as unknown;
  }
  private async gate():Promise<boolean>{return productionCheckoutEnabled(await this.json('/checkout-config.json'));}
+ async refresh():Promise<void>{
+  if(this.busy()||this.destroyed)return;
+  this.close();this.enabled.set(false);this.packages.set([]);
+  await this.discover();
+ }
  private async discover():Promise<void>{
-  try{const enabled=await this.gate();if(!this.destroyed)this.enabled.set(enabled);}catch{/* Closed by default. */}
+  const version=++this.discoveryVersion;
+  try{
+   if(!await this.gate())return;
+   const config=validateAccountConfig(await this.json('/account-config.json'));
+   if(!config.enabled)return;
+   const raw=await this.json(config.apiUrl+'/v1/config');
+   const packages=['donate-5','donate-10'].map(id=>productionQuote(raw,id));
+   if(!this.destroyed&&version===this.discoveryVersion){this.packages.set(packages);this.enabled.set(true);}
+  }catch{/* Unavailable or invalid catalog: no payment action. */}
  }
  async review(id:string):Promise<void>{
   if(this.busy()||this.destroyed||!this.enabled())return;
@@ -36,7 +52,7 @@ export class ProductionCheckoutComponent implements OnInit,OnDestroy{
    if(!await this.gate())throw Error('Checkout não liberado.');
    const config=validateAccountConfig(await this.json('/account-config.json'));
    const client=new SiteAccountClient(config),profile=await client.restore();
-   if(!profile?.emailVerified)throw Error('Entre em Minha conta e confirme seu email.');
+   if(!profile?.emailVerified){this.needsAccount.set(true);throw Error('Entre em Minha conta e confirme seu email.');}
    const quote=productionQuote(await this.json(config.apiUrl+'/v1/config'),id);
    if(this.destroyed||version!==this.version)return;
    let storage:Storage|null=null;try{storage=sessionStorage;}catch{/* POST fails closed. */}
@@ -47,7 +63,7 @@ export class ProductionCheckoutComponent implements OnInit,OnDestroy{
  }
  async prepare():Promise<void>{
   const quote=this.quote(),client=this.client,attempts=this.attempts;
-  if(this.busy()||this.destroyed||!quote||!client||!attempts||!this.accepted())return;
+  if(this.busy()||this.destroyed||this.receipt()||!quote||!client||!attempts||!this.accepted())return;
   const version=this.version;this.busy.set(true);this.receipt.set(null);this.message.set('');
   try{
    const enabled=await this.gate();
@@ -75,6 +91,6 @@ export class ProductionCheckoutComponent implements OnInit,OnDestroy{
  }
  close():void{
   this.version++;this.client=null;this.attempts=null;this.quote.set(null);
-  this.accepted.set(false);this.receipt.set(null);this.message.set('');
+  this.accepted.set(false);this.receipt.set(null);this.message.set('');this.needsAccount.set(false);
  }
 }

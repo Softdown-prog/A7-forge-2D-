@@ -23,7 +23,7 @@ test('Terms and Privacy retain 21 sections and a single Angular document owner',
  assert.match(page,/@if\(path==='\/termos\/'\|\|path==='\/privacidade\/'\)\{\s*<lhs-legal-document \[path\]="path"><\/lhs-legal-document>/);
  assert.equal((page.match(/<lhs-legal-document\b/g)||[]).length,1);
  assert.doesNotMatch(page,/class="wrap legal-grid"|class="legal-index"|class="legal-body"|legalSections/);
- assert.match(page,/Versão Angular em revisão/);
+ assert.doesNotMatch(page,/Versão Angular em revisão|draft-notice/);
  assert.doesNotMatch(page,/Conteúdo integral pendente de migração/);
  assert.match(owner,/selector:'lhs-legal-document'/);
  assert.match(owner,/ChangeDetectionStrategy\.OnPush/);

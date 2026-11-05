@@ -1,7 +1,7 @@
 import {ChangeDetectionStrategy,ChangeDetectorRef,Component,OnInit,inject,signal} from '@angular/core';
 import {AccountError,SiteAccountClient,validateAccountConfig} from './account-client';
 import type {AccountProfile,MainSave} from './account-client';
-import {readDonateOrders} from './donate-history';
+import {readDonateOrders,returnedOrderId} from './donate-history';
 import type {DonateOrder} from './donate-history';
 type View='loading'|'disabled'|'auth'|'verify'|'dashboard';
 type Mode='login'|'signup'|'reset';
@@ -23,7 +23,8 @@ export class AccountComponent implements OnInit {
  readonly cookies=signal<number|null>(null);
  readonly remote=signal<MainSave|null>(null);
  readonly filename=signal('');
- readonly dashboardTab=signal<DashboardTab>(location.hash==='#apoios'?'apoios':'salvamentos');
+ readonly dashboardTab=signal<DashboardTab>(location.hash==='#apoios'||returnedOrderId(location.search)?'apoios':'salvamentos');
+ readonly returnedOrder=signal(returnedOrderId(location.search));
  readonly orderState=signal<'idle'|'loading'|'ready'|'error'>('idle');
  readonly orders=signal<ReadonlyArray<DonateOrder>>([]);
  private readonly changeDetector=inject(ChangeDetectorRef);
@@ -190,6 +191,24 @@ export class AccountComponent implements OnInit {
    this.message.set('Histórico consultado sem iniciar pagamentos.');
   });
   if(this.view()==='dashboard'&&this.orderState()==='loading')this.orderState.set('error');
+ }
+ /** Explicit provider reconciliation also recovers a delayed webhook. */
+ async reconcileOrder(id:string):Promise<void>{
+  if(this.view()!=='dashboard'||this.busy()||!/^[a-f0-9]{64}$/.test(id))return;
+  await this.execute(async()=>{
+   const client=this.requireClient();
+   const result=await client.api('/v1/orders/'+id);
+   const [order]=readDonateOrders({orders:[result]});
+   if(!order||order.id!==id)throw new AccountError('Resposta de pagamento inválida.');
+   const account=await client.api('/v1/account');
+   const balance=account['cookiesBalance'];
+   if(typeof balance!=='number'||!Number.isSafeInteger(balance))throw new AccountError('Saldo inválido recebido da API.');
+   const orders=readDonateOrders(await client.api('/v1/orders'));
+   if(this.destroyed)return;
+   this.cookies.set(balance);this.orders.set(orders);this.orderState.set('ready');
+   this.returnedOrder.set(null);
+   this.message.set('Situação conferida: '+order.statusLabel+'. Saldo atualizado pelo serviço.');
+  });
  }
  signOut():void{
   if(this.busy())return;

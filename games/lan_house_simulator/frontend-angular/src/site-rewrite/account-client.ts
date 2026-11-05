@@ -181,6 +181,7 @@ export class SiteAccountClient {
  }
  async api(path:string,body?:RequestJson,retried=false):Promise<RequestJson>{
   if(!(path==='/v1/orders'&&body===undefined)&&
+   !(/^\/v1\/orders\/[a-f0-9]{64}$/.test(path)&&body===undefined)&&
    !/^\/v1\/(?:account|saves\/main(?:\?backup=true)?|auth\/verification-email)$/.test(path))
    throw new AccountError('Rota não autorizada.');
   const session=this.activeSession(),epoch=this.epoch;
@@ -255,7 +256,7 @@ export class SiteAccountClient {
   try{
    const result=await this.json(this.apiOrigin+'/v1/orders',{
     method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',
-     'Idempotency-Key':key},body:JSON.stringify({packageId,acceptedTerms:true})
+     'Idempotency-Key':key},body:JSON.stringify({packageId,acceptedTerms:true,expectedMode:'production'})
    });
    if(epoch!==this.epoch)throw new AccountError('Sessão encerrada.',401);
    return result;

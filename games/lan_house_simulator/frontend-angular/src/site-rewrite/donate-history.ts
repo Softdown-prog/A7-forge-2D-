@@ -36,3 +36,9 @@ export function readDonateOrders(raw:unknown):DonateOrder[]{
   return {id,priceCents,cookies,mode,statusLabel:labels[status]??'Status não reconhecido'};
  });
 }
+
+/** A return URL is only an order reference, never proof of payment. */
+export function returnedOrderId(search:string):string|null{
+ const values=new URLSearchParams(search).getAll('order');
+ return values.length===1&&/^[a-f0-9]{64}$/.test(values[0]??'')?values[0]??null:null;
+}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createPayments,preferenceBody,validCheckout,assertSandboxOrderIntent} from '../payments.mjs';
+import {createPayments,preferenceBody,validCheckout,assertProductionOrderIntent,assertSandboxOrderIntent} from '../payments.mjs';
 import {DONATE_PACKAGES} from '../../donate-packages.mjs';
 
 // A serialized transaction fixture with atomic commit and Firestore's read-before-write rule.
@@ -136,3 +136,24 @@ test('idempotent retry revalidates persisted URL before returning it',async()=>{
  stored.checkoutUrl=order.url;
  assert.deepEqual(await f.service.createOrder('player','donate-5','safe-key'),order);
 });
+
+test('production intent cannot create sandbox orders after a mode change',()=>{
+ assert.doesNotThrow(()=>assertProductionOrderIntent(undefined,true));
+ assert.doesNotThrow(()=>assertProductionOrderIntent('production',false));
+ for(const value of ['false','TRUE',['true'],''])
+  assert.throws(()=>assertProductionOrderIntent(value,false),e=>e.status===400);
+ assert.throws(()=>assertProductionOrderIntent('production',true),e=>e.status===409);
+});
+
+for(const status of ['approved','authorized','refunded','charged_back'])
+ test('completed '+status+' orders cannot reopen their payment preference',async()=>{
+  const f=fixture();
+  const receipt=await f.service.createOrder('player','donate-5','same-key');
+  const path='orders/'+receipt.id;
+  f.rows.set(path,{...f.rows.get(path),status});
+  await assert.rejects(f.service.createOrder('player','donate-5','same-key'),e=>e.status===410);
+  assert.equal(f.calls(),1);
+  const next=await f.service.createOrder('player','donate-5','new-key');
+  assert.notEqual(next.id,receipt.id);
+  assert.equal(f.calls(),2,'A separate explicit intent can prepare another support payment');
+ });

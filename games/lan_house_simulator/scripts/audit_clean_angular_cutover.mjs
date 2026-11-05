@@ -100,13 +100,17 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
  results.push(check('preview-remains-noindex',noindex,
   'Pre-release artifact cannot be indexed by search engines'));
  const paymentsDisabled=donate.includes('disabled aria-disabled="true"')&&
-  donate.includes('Indisponível nesta prévia')&&donate.includes("availability()==='sandbox-ready'");
- results.push(check('production-checkout-disabled',paymentsDisabled,
-  'Production buttons are disabled while sandbox actions remain conditional'));
+  (donate.includes('Indisponível nesta prévia')||donate.includes('Pagamento indisponível no momento'))&&donate.includes("availability()==='sandbox-ready'");
+ results.push(check('unavailable-checkout-disabled',paymentsDisabled,
+  'Unavailable catalog actions remain disabled and sandbox actions stay conditional'));
  let checkoutPolicy;
  try{checkoutPolicy=JSON.parse(file(resolve(siteRoot,'checkout-config.json')));}catch{/* explicit failed check */}
- results.push(check('production-feature-gate-closed',checkoutPolicy?.productionCheckoutEnabled===false,
-  'The emitted production checkout configuration remains explicitly disabled'));
+ const productionSource=file(resolve(angular,'production-checkout.ts'));
+ const paymentGuarded=checkoutPolicy?.productionCheckoutEnabled===false||
+  (checkoutPolicy?.productionCheckoutEnabled===true&&productionSource.includes('productionQuote(raw,id)')&&
+   productionSource.includes('if(!await this.gate())return;')&&productionSource.includes('!this.accepted()'));
+ results.push(check('production-checkout-guarded',paymentGuarded,
+  'Checkout is disabled or requires a valid production catalog and explicit consent'));
  // Treat each CI command as a whole YAML line; "build:site" is
  // a prefix of "build:site:clean" and must not create a false match.
  const workflowCommand=name=>new RegExp('^\\s*npm run '+name+'\\s*$','m').test(workflow);
@@ -134,7 +138,7 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
     app.includes('Esta política não substitui a publicada atualmente'))
   blockers.push(block('legal-review',
    'Angular terms/privacy still carry draft notices requiring editorial/legal approval'));
- if(paymentsDisabled)blockers.push(block('production-payments',
+ if(checkoutPolicy?.productionCheckoutEnabled===false)blockers.push(block('production-payments',
   'Production checkout is implemented behind a closed feature gate; provider/owner approval is required before activation'));
  blockers.push(block('manual-acceptance',
   'Physical Android/browser, live Firebase/save parity, payment provider and rollout/CDN validation require explicit sign-off'));

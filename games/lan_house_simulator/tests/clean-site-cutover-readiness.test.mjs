@@ -107,7 +107,7 @@ test('removing mandatory evidence or enabling the production checkout fails clos
    '<button>Pay now</button>');
   save('out/site-clean-angular/privacidade/index.html','<h1>broken</h1>');
   const report=auditCleanAngularCutover({repoRoot:root,siteRoot:site});
-  assert.equal(byId(report,'production-checkout-disabled').passed,false);
+  assert.equal(byId(report,'unavailable-checkout-disabled').passed,false);
   assert.equal(byId(report,'preview-remains-noindex').passed,false);
   assert.equal(report.status,'not-ready');
  });
