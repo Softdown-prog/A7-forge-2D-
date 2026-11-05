@@ -30,17 +30,17 @@ function canvasHarness(){
  }};
  return {doc,count:()=>creations};
 }
-test("five distinct procedural covers are deterministic, cached and dimension-safe",()=>{
+test("all yearly procedural covers are distinct, deterministic and cached",()=>{
  const {doc,count}=canvasHarness();
  const all=PS1_CD_CATALOG.map(d=>ps1ProceduralCover(d,doc));
- assert.equal(all.length,5);
+ assert.equal(all.length,13);
  assert.equal(new Set(all).size,5,"different games need visibly different drawings");
  assert.ok(all.every(x=>x.startsWith("data:image/png;base64,")));
- assert.equal(count(),5,"one rasterization per game");
+ assert.equal(count(),13,"one rasterization per game");
  for(let i=0;i<all.length;i++){
   assert.equal(ps1ProceduralCover(PS1_CD_CATALOG[i],doc),all[i]);
  }
- assert.equal(count(),5,"shop refresh must not repaint cached images");
+ assert.equal(count(),13,"shop refresh must not repaint cached images");
 });
 test("without browser Canvas, fallback remains the original checked-in SVG art",()=>{
  for(const disc of PS1_CD_CATALOG){
