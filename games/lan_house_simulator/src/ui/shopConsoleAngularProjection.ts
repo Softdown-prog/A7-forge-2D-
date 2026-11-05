@@ -1,6 +1,7 @@
 /** Read-only PS1/PS2 projections; all purchase rules remain in the game ports. */
 import type {Ps1ShopDiscRow} from "../application/ps1ShopDiscPort.js";
 import {ps1ProceduralCover} from "./ps1CoverArt.js";
+import {ps2ProceduralCover} from "./ps2CoverArt.js";
 import type {Ps1ShopPlacementSpot} from "../application/ps1ShopPlacementPort.js";
 import type {Ps1ShopOffer} from "../application/ps1ShopOfferPort.js";
 import type {Ps2Snapshot} from "../application/ps2Port.js";
@@ -27,7 +28,7 @@ export function projectPs1Disc(row:Ps1ShopDiscRow):ConsoleGameView{
 }
 export function projectPs2Game(row:Ps2Snapshot["games"][number]):ConsoleGameView{
  return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,
-  buttonText:row.buyText+" · "+money(row.price),disabled:row.disabled,cover:null};
+  buttonText:row.buyText+" · "+money(row.price),disabled:row.disabled,cover:ps2ProceduralCover(row)};
 }
 export function projectConsoleShop(
  ps1:Ps1ShopOffer,slots:readonly Ps1ShopPlacementSpot[],
