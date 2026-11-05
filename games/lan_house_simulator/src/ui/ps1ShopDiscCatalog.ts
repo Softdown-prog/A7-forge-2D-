@@ -13,7 +13,7 @@ export function renderPs1ShopDiscCatalog(
  heading.textContent="Jogos de PlayStation 1 · CDs físicos";
  host.append(heading);
  const note=doc.createElement("p");note.className="catalog-game-note ps1-shop-note";
- note.textContent="Compre um CD definitivo para começar a atender. Cada cópia equipa apenas uma bancada por vez; os títulos são fictícios e não exigem licenciamento por PC.";
+ note.textContent="Compre CDs físicos para atender clientes. Novos títulos chegam anualmente até 2005; o PS2 estreia em 2006. Cada cópia equipa uma bancada por vez.";
  host.append(note);
  for(const disc of rows){
   const card=doc.createElement("article");card.className="shop-card ps1-cd-shop-card";
@@ -26,7 +26,7 @@ export function renderPs1ShopDiscCatalog(
   cover.width=420;cover.height=560;
   const spine=doc.createElement("span");spine.className="ps1-cd-spine";
   jewel.append(cover,spine);art.append(jewel);
-  const category=doc.createElement("small");category.textContent="CD de PS1 · "+disc.genre;
+  const category=doc.createElement("small");category.textContent="CD de PS1 · "+disc.genre+" · "+disc.releaseYear;
   const title=doc.createElement("h3");title.textContent=disc.title;
   const description=doc.createElement("p");
   description.textContent="Cópias no acervo: "+disc.copies+
