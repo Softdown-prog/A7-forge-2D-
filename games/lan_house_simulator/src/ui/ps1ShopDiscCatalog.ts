@@ -1,5 +1,6 @@
 /** PS1 CD cards; clicks continue to use the existing delegated shop handler. */
 import type {Ps1ShopDiscPort} from "../application/ps1ShopDiscPort.js";
+import {ps1ProceduralCover} from "./ps1CoverArt.js";
 
 export function renderPs1ShopDiscCatalog(
  host:Element,port:Ps1ShopDiscPort,inConsoleTab:boolean,
@@ -20,7 +21,7 @@ export function renderPs1ShopDiscCatalog(
   art.setAttribute("aria-hidden","true");
   const jewel=doc.createElement("div");jewel.className="ps1-cd-jewel";
   const cover=doc.createElement("img");cover.className="ps1-cd-cover";
-  cover.src="assets/ps1/covers/"+disc.id+".svg";
+  cover.src=ps1ProceduralCover(disc,doc);
   cover.alt="";cover.loading="lazy";cover.decoding="async";
   cover.width=420;cover.height=560;
   const spine=doc.createElement("span");spine.className="ps1-cd-spine";

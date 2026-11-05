@@ -1,5 +1,6 @@
 /** Read-only PS1/PS2 projections; all purchase rules remain in the game ports. */
 import type {Ps1ShopDiscRow} from "../application/ps1ShopDiscPort.js";
+import {ps1ProceduralCover} from "./ps1CoverArt.js";
 import type {Ps1ShopPlacementSpot} from "../application/ps1ShopPlacementPort.js";
 import type {Ps1ShopOffer} from "../application/ps1ShopOfferPort.js";
 import type {Ps2Snapshot} from "../application/ps2Port.js";
@@ -22,7 +23,7 @@ export function projectPs1Disc(row:Ps1ShopDiscRow):ConsoleGameView{
  return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,
   buttonText:row.noStation?"Instale uma bancada primeiro":row.full?"Acervo completo":
    row.disabled?"Caixa insuficiente · "+price:"Comprar CD · "+price,
-  disabled:row.disabled,cover:"assets/ps1/covers/"+row.id+".svg"};
+  disabled:row.disabled,cover:ps1ProceduralCover(row)};
 }
 export function projectPs2Game(row:Ps2Snapshot["games"][number]):ConsoleGameView{
  return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,
