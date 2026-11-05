@@ -1,5 +1,5 @@
 /** PS1 CD cards; clicks continue to use the existing delegated shop handler. */
-import type {Ps1ShopDiscPort} from "../application/ps1ShopDiscPort.js";
+import {nextPs1DiscReleaseYear,type Ps1ShopDiscPort} from "../application/ps1ShopDiscPort.js";
 import {ps1ProceduralCover} from "./ps1CoverArt.js";
 
 export function renderPs1ShopDiscCatalog(
@@ -13,7 +13,11 @@ export function renderPs1ShopDiscCatalog(
  heading.textContent="Jogos de PlayStation 1 · CDs físicos";
  host.append(heading);
  const note=doc.createElement("p");note.className="catalog-game-note ps1-shop-note";
- note.textContent="Compre CDs físicos para atender clientes. Novos títulos chegam anualmente até 2005; o PS2 estreia em 2006. Cada cópia equipa uma bancada por vez.";
+ const nextYear=nextPs1DiscReleaseYear(rows);
+ note.textContent=nextYear!==null?
+  "Novidade chegando: +2 jogos serão desbloqueados em "+nextYear+
+  ". Cada CD é uma compra definitiva e equipa uma bancada por vez.":
+  "Catálogo PS1 completo: 13 jogos disponíveis desde 2005. O PS2 estreia em 2006. Cada CD equipa uma bancada por vez.";
  host.append(note);
  for(const disc of rows){
   const card=doc.createElement("article");card.className="shop-card ps1-cd-shop-card";
