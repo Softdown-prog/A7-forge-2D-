@@ -193,18 +193,18 @@ try{
    document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor({state:'visible'});
-  // Production-style browser QA: all five procedural covers must have visible,
+  // Production-style browser QA: all thirteen procedural covers must have visible,
   // decoded artwork in the actual Angular game (not just image elements).
   const ps1Covers=shop.locator('.angular-console-grid').first().locator('img.angular-ps1-cover');
-  assert.equal(await ps1Covers.count(),5,'Five original PS1 covers are projected');
+  assert.equal(await ps1Covers.count(),13,'All PS1 covers are projected by 2006');
   await page.waitForFunction(()=>Array.from(document.querySelectorAll(
-   '.angular-ps1-cover')).length===5 &&
+   '.angular-ps1-cover')).length===13 &&
    Array.from(document.querySelectorAll('.angular-ps1-cover')).every(img=>
     img.complete && img.naturalWidth===420 && img.naturalHeight===560));
   const coverSources=await ps1Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
   assert.ok(coverSources.every(src=>src?.startsWith('data:image/png;base64,')),
    'Procedural PS1 art must not depend on requests to external paths');
-  assert.equal(new Set(coverSources).size,5,'Each PS1 game must have unique artwork');
+  assert.equal(new Set(coverSources).size,13,'Each PS1 game must have unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
   const slots=await page.locator('#angular-ps1-placement option').evaluateAll(
