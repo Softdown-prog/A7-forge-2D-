@@ -2,11 +2,20 @@
  <section class="wrap production-checkout" aria-labelledby="production-checkout-title">
   <h2 id="production-checkout-title">Apoio com pagamento único</h2>
   <p>Revise os valores do serviço antes de preparar seu pagamento. Jogar continua gratuito.</p>
-  <div class="actions">
-   <button class="button" type="button" id="review-production-5" [disabled]="busy()" (click)="review('donate-5')">Revisar apoio de R$ 5</button>
-   <button class="button" type="button" id="review-production-10" [disabled]="busy()" (click)="review('donate-10')">Revisar apoio de R$ 10</button>
+  <div class="donate-cards">
+   @for(pack of packages();track pack.packageId){
+    <article class="donate-card">
+     <p class="eyebrow">APOIO OPCIONAL · PAGAMENTO ÚNICO</p>
+     <h3>R$ {{(pack.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}}</h3>
+     <p class="donate-credit"><strong>{{pack.cookies}}</strong> Cookies</p>
+     <p>Créditos para itens cosméticos opcionais na Loja Cookies.</p>
+     <button class="button" type="button" [id]="pack.packageId==='donate-5'?'review-production-5':'review-production-10'"
+      [disabled]="busy()" (click)="review(pack.packageId)">Revisar apoio</button>
+    </article>
+   }
   </div>
   <p role="status" id="production-status">{{busy()?'Conferindo o serviço…':message()}}</p>
+  @if(needsAccount()){<p><a class="button secondary" href="/conta/">Entrar ou confirmar email</a></p>}
   @if(quote();as pack){
    <p id="production-quote">R$ {{(pack.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}} · {{pack.cookies}} Cookies</p>
    @if(!receipt()){
@@ -21,6 +30,8 @@
    <p>Somente a confirmação do serviço credita Cookies. Retorne a <a href="/conta/#apoios">Minha conta</a> para consultar seu apoio.</p>
   }
   <p><a href="/conta/#apoios">Conferir meus apoios</a></p>
+  @if(quote()||message()){
   <button type="button" class="button secondary" id="close-production-review" [disabled]="busy()" (click)="close()">Fechar revisão</button>
+  }
  </section>
 }

@@ -143,14 +143,15 @@ lhs-legal-document{display:block}
 .confirmation-layout .actions{margin-top:24px}
 #confirmation-status{min-height:3em}
 
-/* Independent Angular Donate; all payment controls disabled until checkout migration. */
+/* Canonical Donate catalog and explicit payment review. */
 .donate-intro{padding-block:55px 35px;max-width:940px}
 .donate-catalog{padding-bottom:65px}
 .donate-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin:25px 0}
 .donate-card{min-width:0;background:#253d30;border:1px solid var(--line);border-radius:7px;padding:clamp(18px,3vw,34px)}
 .donate-card h3{font-size:clamp(1.8rem,4vw,2.6rem)}
 .donate-credit strong{font-size:clamp(2rem,5vw,3.2rem);color:var(--green)}
-.donate-card button{display:block;width:100%;margin:20px 0 10px;opacity:.58;cursor:not-allowed}
+.donate-card button{display:block;width:100%;margin:20px 0 10px}
+.donate-card button:disabled{opacity:.58;cursor:not-allowed}
 .donate-card small{color:var(--muted)}
 .donate-readiness{border-left:3px solid var(--green);background:#193629;padding:17px 20px;min-height:54px}
 .donate-guide{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:25px;padding-bottom:65px}
@@ -399,3 +400,13 @@ h1,h2,h3{margin:0 0 .6em;letter-spacing:-.035em}
 }
 @media(max-width:420px){.wrap{width:calc(100% - 32px)}.brand{gap:8px;font-size:12px}.brand img{width:35px;height:35px}.brand small{font-size:8px}.menu-button{padding:9px 10px;font-size:14px}.hero-copy h1{font-size:clamp(2.65rem,12vw,3.5rem)}.hero .actions{gap:10px}.hero .actions .button{padding:12px 14px;font-size:13px;flex:1}.hero-note{font-size:10px}.hero-note>span{padding-inline:1px}.hero-art{padding-right:7px}.monitor{padding:19px 17px 14px}.monitor-top{font-size:7px}.monitor-bottom{font-size:11px}.vents{width:46px}.power{width:20px;height:20px}.ticker{font-size:9px;gap:18px 9px}.ticker .icon{width:16px;height:16px}.footer-grid{gap:30px 18px}.section-heading h2{font-size:2rem}.closing h2{font-size:1.9rem}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+lhs-production-checkout{display:block}
+.production-checkout{padding-bottom:65px}
+.production-checkout label{display:flex;gap:12px;align-items:flex-start;margin-block:20px}
+.production-checkout input[type=checkbox]{flex:none;width:21px;height:21px}
+.production-checkout #prepare-production-order{margin-bottom:20px}
+.production-checkout #open-production-checkout{margin-block:12px}
+.production-checkout #close-production-review{margin-top:16px;min-height:48px}
+.production-checkout .button:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:520px){.production-checkout>.button{width:100%}}

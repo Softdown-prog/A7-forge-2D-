@@ -25,7 +25,7 @@ const steps=[
  ...['audit_clean_angular_cutover',
   'verify_clean_angular_confirmation','verify_clean_angular_account','verify_clean_angular_site',
   'verify_clean_angular_donate_history','verify_clean_angular_sandbox_review',
-  'verify_clean_angular_migration'].map(name=>[name,process.execPath,['scripts/'+name+'.mjs']])
+  'verify_clean_angular_migration','verify_site_payment_completion'].map(name=>[name,process.execPath,['scripts/'+name+'.mjs']])
 ];
 const report={sourceSha:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
  workingTreeDirty:!!execFileSync('git',['status','--porcelain'],{cwd:root,encoding:'utf8'}).trim(),

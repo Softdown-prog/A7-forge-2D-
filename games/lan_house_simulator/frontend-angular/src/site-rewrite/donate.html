@@ -3,6 +3,14 @@
  <p class="lead">Seu apoio ajuda a desenvolver Lan House Simulator e oferece Cookies para cosméticos opcionais. A progressão do jogo continua gratuita.</p>
  <a class="button secondary" href="/conta/">Minha conta</a>
 </section>
+@if(returnedOrder){
+ <section class="wrap donate-account-link" aria-labelledby="payment-return-title">
+  <h2 id="payment-return-title">Confira a situação do seu apoio</h2>
+  <p>O retorno do Mercado Pago não confirma a cobrança. Consulte o servidor com sua conta para atualizar o pagamento e o saldo.</p>
+  <a id="check-returned-order" class="button" [href]="'/conta/?order='+returnedOrder+'#apoios'">Consultar pagamento</a>
+ </section>
+}
+@if(!production.enabled()){
 <section class="wrap donate-catalog" aria-labelledby="donate-pricing">
  <p class="eyebrow">PAGAMENTOS ÚNICOS · SEM ASSINATURA</p><h2 id="donate-pricing">Escolha seu apoio</h2>
  <p>R$ 0,10 por Cookie.</p>
@@ -13,8 +21,8 @@
    <h3>R$ {{(pack.priceCents/100).toLocaleString('pt-BR',{minimumFractionDigits:2})}}</h3>
    <p class="donate-credit"><strong>{{pack.cookies}}</strong> Cookies</p>
    <p>Créditos para itens cosméticos opcionais na Loja Cookies.</p>
-   <button type="button" class="button" [attr.data-donate-package]="pack.id" disabled aria-disabled="true">Indisponível nesta prévia</button>
-   <small>Este protótipo não inicia pagamentos.</small>
+   <button type="button" class="button" [attr.data-donate-package]="pack.id" disabled aria-disabled="true">Pagamento indisponível no momento</button>
+   <small>Consulte a disponibilidade abaixo.</small>
    @if(availability()==='sandbox-ready'){
     <button type="button" class="button secondary sandbox-review-button"
      [attr.data-review-package]="pack.id" 
@@ -29,11 +37,12 @@
  @switch(availability()){
   @case('loading'){Consultando disponibilidade do serviço…}
   @case('unavailable'){Doações não liberadas pelo serviço. Nenhum pagamento será iniciado.}
-  @case('backend-active'){Serviço de pagamentos ativo. A abertura do checkout depende da configuração aprovada desta versão.}
+  @case('backend-active'){Serviço de pagamentos ativo. Se os pacotes não estiverem disponíveis, atualize a disponibilidade ou consulte o suporte.}
   @case('sandbox-ready'){Ambiente de testes ativo. Você pode simular a revisão ou preparar um pedido de teste. Nenhum pagamento será aberto automaticamente.}
-  @default{Não foi possível consultar o serviço. O checkout permanece bloqueado.}
+  @default{Não foi possível consultar o serviço. Tente novamente em instantes.}
  }
  </p>
+ <button type="button" class="button secondary" id="refresh-donate" [disabled]="availability()==='loading'||reviewState()==='loading'||reviewState()==='preparing'" (click)="refreshAvailability()">Atualizar disponibilidade</button>
  @if(availability()==='sandbox-ready'&&reviewState()!=='idle'){
   <section class="donate-sandbox-review" aria-labelledby="sandbox-review-title">
    <h3 id="sandbox-review-title">Revisão de apoio · ambiente de testes</h3>
@@ -87,7 +96,8 @@
   </section>
  }
 </section>
-<lhs-production-checkout></lhs-production-checkout>
+}
+<lhs-production-checkout #production></lhs-production-checkout>
 <section class="wrap donate-account-link">
  <h2>Já apoiou o jogo?</h2>
  <p>Veja o histórico dos seus pedidos em <a href="/conta/#apoios">Minha conta · Pagamentos e apoios</a>. O histórico é privado e exige login.</p>
@@ -95,7 +105,8 @@
 <section class="wrap donate-guide" id="como-doar">
  <div><h2>Como funciona</h2><ol>
   <li>Crie sua conta opcional e confirme o email.</li>
-  <li>Quando liberado, escolha R$ 5 ou R$ 10 para pagar no provedor.</li>
+  <li>Escolha um dos pacotes disponíveis, revise os valores e aceite os termos.</li>
+  <li>Prepare o pedido e abra o pagamento seguro no Mercado Pago.</li>
   <li>Os Cookies só serão creditados depois que o backend confirmar o pagamento.</li>
  </ol><p>Voltar do provedor ou alterar parâmetros na URL não confirma o pagamento.</p></div>
  <aside><h2>O jogo permanece gratuito</h2><p>Cookies são cosméticos e não dinheiro fictício da lan house. Eles não podem ser sacados ou transferidos.</p>

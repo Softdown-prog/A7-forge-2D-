@@ -22,6 +22,8 @@ if(!existsSync(resolve(angular,'node_modules/@angular/cli/package.json')))
 run(process.execPath,[resolve(root,'scripts/build.mjs')],{...process.env,LHS_GAME_UI:'angular'});
 run(npm,['run','build','--prefix','frontend-angular']);
 run(process.execPath,[resolve(angular,'scripts/build_cutover_candidate.mjs')]);
+// A repeated build must not copy obsolete hashed bundles into the release.
+rmSync(resolve(angular,'dist/site-rewrite'),{recursive:true,force:true});
 run(npm,['run','build:site-rewrite','--prefix','frontend-angular']);
 const compiled=resolve(angular,'dist/site-rewrite/browser');
 let index=readFileSync(resolve(compiled,'index.html'),'utf8');
