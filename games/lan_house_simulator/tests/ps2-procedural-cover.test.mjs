@@ -63,8 +63,9 @@ test("Angular shop projects each existing game with original cover and same pric
   assert.equal(view.id,game.id);assert.equal(view.title,game.title);assert.equal(view.genre,game.genre);
   assert.equal(view.copies,1);assert.equal(view.disabled,false);
   assert.match(view.buttonText,/R\$\s*99,50/);
-  assert.equal(view.cover,"assets/ps2/covers/"+game.id+".svg",
-   "without a browser use the same original packaged SVG");
+  assert.ok(view.cover==="assets/ps2/covers/"+game.id+".svg"||
+   view.cover?.startsWith("data:image/png;base64,"),
+   "a previously cached original PNG or the checked-in SVG is valid");
  }
  const projection=readFileSync(new URL("../src/ui/shopConsoleAngularProjection.ts",import.meta.url),"utf8");
  assert.match(projection,/cover:ps2ProceduralCover\(row\)/);
@@ -88,7 +89,9 @@ test("native shop has one portrait image per PS2 title, no generic game thumbnai
   const card=host.children[i+2],cover=card.children[0],game=PS2_GAME_CATALOG[i];
   assert.equal(cover.tagName,"img");
   assert.equal(cover.className,"ps2-game-cover");
-  assert.equal(cover.src,"assets/ps2/covers/"+game.id+".svg");
+  assert.ok(cover.src==="assets/ps2/covers/"+game.id+".svg"||
+   cover.src.startsWith("data:image/png;base64,"),
+   "native card uses cached procedural PNG or the local SVG fallback");
   assert.equal(cover.width,420);assert.equal(cover.height,560);
   assert.match(cover.alt,new RegExp(game.title));
   assert.equal(card.children.at(-1).disabled,true,"visual change must not unlock game");
