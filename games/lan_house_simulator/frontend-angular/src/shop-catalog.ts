@@ -13,13 +13,15 @@ interface Card{
 }
 interface ConsoleGame {
  readonly id:string;readonly title:string;readonly genre:string;readonly copies:number;
+ readonly releaseYear:number|null;
  readonly buttonText:string;readonly disabled:boolean;readonly cover:string|null;
 }
 interface Slot{readonly id:string;readonly label:string;}
 interface ConsoleView{
  readonly ps1:{readonly offerText:string;readonly offerDisabled:boolean;
   readonly slots:readonly Slot[];readonly selected:string|null;
-  readonly artwork:string|null;readonly discs:readonly ConsoleGame[]|null};
+  readonly artwork:string|null;readonly nextReleaseYear:number|null;
+  readonly discs:readonly ConsoleGame[]|null};
  readonly ps2:{readonly benchText:string;readonly benchDisabled:boolean;
   readonly slots:readonly Slot[];readonly games:readonly ConsoleGame[];
   readonly artwork:string|null};
