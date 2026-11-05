@@ -1,6 +1,12 @@
-name: LHS - publicar main no Cloudflare Pages
+name: LHS - validar e publicar main no Cloudflare Pages
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lhs-pages-sync.yml'
   workflow_dispatch:
     inputs:
       source_sha:
@@ -22,26 +28,30 @@ concurrency:
 
 jobs:
   sync:
-    if: ${{ inputs.approve_production == true && github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.approve_production == true)) }}
     environment: lhs-production
     runs-on: ubuntu-24.04
     timeout-minutes: 35
+    env:
+      SOURCE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.source_sha }}
+      RELEASE_TRIGGER: ${{ github.event_name }}
     steps:
       - name: Obter o commit que disparou a publicação
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_sha }}
+          ref: ${{ env.SOURCE_SHA }}
           fetch-depth: 0
           path: source
           persist-credentials: false
 
-      - name: Validar SHA aprovado na história da main
+      - name: Validar SHA do commit na história da main
         working-directory: source
-        env:
-          APPROVED_SHA: ${{ inputs.source_sha }}
+        shell: bash
         run: |
-          [[ "$APPROVED_SHA" =~ ^[0-9a-f]{40}$ ]]
-          git merge-base --is-ancestor "$APPROVED_SHA" origin/main
+          set -euo pipefail
+          [[ "$SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          git fetch origin main
+          git merge-base --is-ancestor "$SOURCE_SHA" origin/main
 
       - name: Preparar Node 24
         uses: actions/setup-node@v4
@@ -56,7 +66,7 @@ jobs:
           npx playwright install --with-deps chromium
           npm run build:site
           npm run check:site
-          node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/customer-feedback.test.mjs tests/website.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/email-confirmation.test.mjs tests/privacy-notice.test.mjs tests/customer-choices.test.mjs tests/customer-spending.test.mjs tests/merchandise.test.mjs tests/ps1-2002.test.mjs tests/counter-queue.test.mjs
+          node --test tests/multiroom-collision.test.mjs tests/customer-stall-recovery.test.mjs tests/customer-feedback.test.mjs tests/website.test.mjs tests/account-client.test.mjs tests/donate.test.mjs tests/email-confirmation.test.mjs tests/privacy-notice.test.mjs tests/customer-choices.test.mjs tests/customer-spending.test.mjs tests/merchandise.test.mjs tests/ps1-2002.test.mjs tests/counter-queue.test.mjs tests/canonical-site-delivery.test.mjs
 
       - name: Conferir abertura real antes de publicar
         working-directory: source/games/lan_house_simulator
@@ -89,7 +99,25 @@ jobs:
           path: source/games/lan_house_simulator/out/angular-site-default-browser
           if-no-files-found: ignore
 
+      - name: Evitar que um push antigo substitua uma versão nova
+        id: release_guard
+        working-directory: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$RELEASE_TRIGGER" = 'push' ]; then
+            CURRENT_MAIN="$(git ls-remote origin refs/heads/main | cut -f1)"
+            [[ "$CURRENT_MAIN" =~ ^[0-9a-f]{40}$ ]]
+            if [ "$CURRENT_MAIN" != "$SOURCE_SHA" ]; then
+              echo "::notice::A main avançou; a revisão mais nova fará a publicação."
+              echo 'deploy=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo 'deploy=true' >> "$GITHUB_OUTPUT"
+
       - name: Conferir credencial dedicada do espelho
+        if: steps.release_guard.outputs.deploy == 'true'
         env:
           MIRROR_KEY: ${{ secrets.LHS_PAGES_MIRROR_SSH_KEY }}
         run: |
@@ -99,6 +127,7 @@ jobs:
           fi
 
       - name: Obter o repositório ligado ao Pages
+        if: steps.release_guard.outputs.deploy == 'true'
         uses: actions/checkout@v4
         with:
           repository: Softdown-prog/a7-forge-2d
@@ -108,11 +137,18 @@ jobs:
           ssh-strict: true
 
       - name: Sincronizar somente o LHS e publicar
+        if: steps.release_guard.outputs.deploy == 'true'
         shell: bash
-        env:
-          SOURCE_SHA: ${{ inputs.source_sha }}
         run: |
           set -euo pipefail
+          if [ "$RELEASE_TRIGGER" = 'push' ]; then
+            CURRENT_MAIN="$(git -C "$GITHUB_WORKSPACE/source" ls-remote origin refs/heads/main | cut -f1)"
+            [[ "$CURRENT_MAIN" =~ ^[0-9a-f]{40}$ ]]
+            if [ "$CURRENT_MAIN" != "$SOURCE_SHA" ]; then
+              echo '::notice::Um novo commit chegou antes da sincronização; publicação antiga ignorada.'
+              exit 0
+            fi
+          fi
           mkdir -p mirror/games/lan_house_simulator
           rsync -a --checksum --delete \
             --exclude 'node_modules/' --exclude 'dist/' --exclude 'out/' --exclude '.angular/' --exclude '.angular-browser-tools/' \
@@ -130,6 +166,13 @@ jobs:
             MESSAGE="[CF-Pages-Skip] sync(lhs): atualizar origem ${SOURCE_SHA:0:12}"
           else
             MESSAGE="sync(lhs): publicar main ${SOURCE_SHA:0:12}"
+          fi
+          if [ "$RELEASE_TRIGGER" = 'push' ]; then
+            CURRENT_MAIN="$(git -C "$GITHUB_WORKSPACE/source" ls-remote origin refs/heads/main | cut -f1)"
+            [[ "$CURRENT_MAIN" =~ ^[0-9a-f]{40}$ && "$CURRENT_MAIN" = "$SOURCE_SHA" ]] || {
+              echo '::notice::A main avançou durante a preparação; a publicação antiga será ignorada.'
+              exit 0
+            }
           fi
           git -c user.name='github-actions[bot]' \
               -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \

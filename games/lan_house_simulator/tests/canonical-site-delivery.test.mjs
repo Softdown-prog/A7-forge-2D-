@@ -16,10 +16,35 @@ test('default build owns Angular; legacy cannot overwrite the canonical artifact
  assert.match(readFileSync(resolve(root,'backend/Dockerfile'),'utf8'),/CMD \["node", "server.mjs"\]/);
  const workflow=readFileSync(resolve(root,'../../.github/workflows/lhs-pages-sync.yml'),'utf8');
  assert.match(workflow,/workflow_dispatch:/);
- assert.doesNotMatch(workflow,/^\s+push:/m);
+ assert.match(workflow,/^  push:/m);
+ assert.match(workflow,/branches:\s*\n\s+- main/);
+ assert.match(workflow,/games\/lan_house_simulator\/\*\*/);
+ assert.match(workflow,/github\.event_name == 'push'/);
+ assert.match(workflow,/SOURCE_SHA: \$\{\{ github\.event_name == 'push' && github\.sha \|\| inputs\.source_sha \}\}/);
  assert.match(workflow,/inputs\.approve_production == true/);
  assert.match(workflow,/environment: lhs-production/);
  assert.match(workflow,/git merge-base --is-ancestor/);
+ assert.match(workflow,/git ls-remote origin refs\/heads\/main/);
+ assert.match(workflow,/id: release_guard/);
+ assert.equal((workflow.match(/if: steps\.release_guard\.outputs\.deploy == 'true'/g)||[]).length,3);
+ assert.match(workflow,/concurrency:\s*\n\s+group: lhs-pages-production-sync/);
+});
+test('Pages release verifies Angular and Chromium before accessing deploy secrets',()=>{
+ const workflow=readFileSync(resolve(root,'../../.github/workflows/lhs-pages-sync.yml'),'utf8');
+ const positions=[
+  'npm run build:site',
+  'npm run check:site',
+  'LHS_CHECK_DEFAULT_SITE=1 node frontend-angular/scripts/verify_full_site.mjs',
+  'id: release_guard',
+  'MIRROR_KEY: ${{ secrets.LHS_PAGES_MIRROR_SSH_KEY }}',
+  'git push origin HEAD:main'
+ ].map(part=>workflow.indexOf(part));
+ assert.ok(positions.every(index=>index>=0),'Deployment gates must all exist');
+ assert.deepEqual(positions,[...positions].sort((a,b)=>a-b),
+  'Never access mirror credentials or push before the real browser gate');
+ assert.match(workflow,/\[ "\$RELEASE_TRIGGER" = 'push' \]/);
+ assert.match(workflow,/\[\[ "\$CURRENT_MAIN" =~ \^\[0-9a-f\]\{40\}\$ && "\$CURRENT_MAIN" = "\$SOURCE_SHA" \]\]/);
+ assert.doesNotMatch(workflow,/pull_request_target/);
 });
 test('Cloud Run staging selects the API Dockerfile and excludes frontend/secrets',()=>{
  const base=mkdtempSync(join(tmpdir(),'lhs-api-source-'));
