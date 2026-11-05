@@ -1,7 +1,7 @@
 /** Read-only PS1 disc purchase projections, always using the currently loaded save. */
 import type {GameState} from "../sim/types.js";
 import {gameYear} from "../sim/era.js";
-import {PS1_MAX_STATIONS,PS1_UNLOCK_YEAR,ps1ReleasedDiscs,ps1DiscCopies,ps1DiscPrice} from "../sim/ps1.js";
+import {PS1_MAX_STATIONS,PS1_UNLOCK_YEAR,PS1_CD_CATALOG,ps1ReleasedDiscs,ps1DiscCopies,ps1DiscPrice} from "../sim/ps1.js";
 
 export interface Ps1ShopDiscRow {
  readonly id:string;
@@ -13,6 +13,12 @@ export interface Ps1ShopDiscRow {
  readonly noStation:boolean;
  readonly full:boolean;
  readonly disabled:boolean;
+}
+/** Shows the next yearly milestone without exposing unreleased titles or changing saves. */
+export function nextPs1DiscReleaseYear(rows:ReadonlyArray<Pick<Ps1ShopDiscRow,"releaseYear">>|null):number|null{
+ if(!rows?.length)return null;
+ const last=rows[rows.length-1]!.releaseYear;
+ return PS1_CD_CATALOG.find(d=>d.releaseYear>last)?.releaseYear??null;
 }
 export interface Ps1ShopDiscPort {
  snapshot():ReadonlyArray<Ps1ShopDiscRow>|null;
