@@ -301,7 +301,7 @@ function paint(ctx:CanvasRenderingContext2D,disc:Ps1CoverDisc):void{
 export function ps1ProceduralCover(disc:Ps1CoverDisc,doc?:Pick<Document,"createElement">):string{
  const safeId=/^[a-z0-9-]+$/.test(disc.id)?disc.id:"cosmo-blocos";
  const fallback="assets/ps1/covers/"+safeId+".svg";
- const key=disc.id+"\u0000"+disc.title+"\u0000"+disc.genre;
+ const key=disc.id+"\u0000"+disc.title+"\u0000"+disc.genre+"\u0000"+(disc.releaseYear??2002);
  const saved=cache.get(key);if(saved)return saved;
  const target=doc??(typeof document!=="undefined"?document:undefined);
  if(!target)return fallback;
