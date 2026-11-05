@@ -1,7 +1,8 @@
 # Angular como build, artefato e container canônicos
 
-A continuação do PR #79 promove o aplicativo institucional Angular a padrão do
-repositório. **Não executa merge, publicação Pages ou implantação da API.**
+O frontend institucional Angular é canônico. Compilar e testar localmente não
+publica por si só; a sincronização é responsabilidade do GitHub Actions após
+atualização da `main`.
 
 | Comando/arquivo | Resultado |
 | --- | --- |
@@ -55,29 +56,47 @@ de Cloud Run monta um contexto temporário com somente os inputs da API; não us
 Dockerfile padrão do frontend. O parser PowerShell é verificado sem executar
 comandos de nuvem.
 
-## Publicação Pages sob autorização
+## Publicação automática no Cloudflare Pages
 
-O workflow `lhs-pages-sync.yml` tem apenas `workflow_dispatch`. Exige:
+O workflow `lhs-pages-sync.yml` executa **automaticamente após um push ou merge
+na `main`** que modifique `games/lan_house_simulator/**` ou o próprio workflow.
+Não executa em pushes de outras branches nem em PRs não mesclados.
 
-1. Executar a definição da `main`, passando `source_sha` completo de um commit
-   já mesclado nela e `approve_production: true`.
-2. Passar build, checks, Chromium, contas e regressões existentes antes de acessar
-   a credencial do espelho. O ambiente GitHub `lhs-production` permite configurar
-   revisores obrigatórios; essa configuração externa não é presumida como feita.
-3. Copiar para o espelho os mesmos bytes de `out/site` que foram testados. O
-   manifesto `.lhs-approved-site.json`, fora da pasta pública, vincula SHA aprovado,
-   hash dos inputs e hash do artefato.
-4. No Cloudflare, `npm run build:site` reconhece esse manifesto, confere os hashes
-   e executa o check canônico sem recompilar. A saída continua `out/site`; o build
-   do espelho não precisa de Chromium nem de um segundo toolchain Angular.
+1. Usa exclusivamente o SHA do evento de `push` da `main`, sem exigir input manual.
+2. Instala dependências, compila Angular, executa contratos e o gate Chromium
+   (site real, navegação, checkout e regressões) antes de consultar qualquer
+   segredo de publicação. Falha em qualquer etapa impede a sincronização.
+3. Confere se o SHA ainda é o HEAD remoto da `main`. Se outro commit chegou
+   durante o teste ou a preparação, ignora a publicação obsoleta; uma execução
+   da revisão mais recente assume a atualização. A mesma proteção é repetida
+   antes do push ao espelho.
+4. Publica o mesmo `out/site` aprovado no espelho
+   `Softdown-prog/a7-forge-2d`, preservando o hash dos inputs e o manifesto
+   `.lhs-approved-site.json`; o Cloudflare recebe o push do espelho.
 
-Alterar fonte ou artefato depois da aprovação reprova a verificação. Ausência do
-manifesto no repositório fonte usa a compilação Angular normal. O manifesto não
-autoriza publicação: essa autorização pertence ao workflow manual e ao dono.
+A concorrência `lhs-pages-production-sync` impede publicações simultâneas.
+Quando uma revisão já está espelhada, o workflow não cria novo commit.
+O workflow **não implanta a API do Cloud Run**, não credita Cookies nem altera
+o modo de pagamentos: essas ações seguem controles independentes.
 
-Nenhum workflow de PR nem um push/merge na `main` aciona esta publicação. As
-configurações efetivas da hospedagem e de revisores do ambiente devem ser conferidas
-antes da ativação; não foram alteradas por esta tarefa.
+### Publicação manual e rollback
+
+`workflow_dispatch` continua disponível para recuperação e rollback:
+executar na `main`, informar um `source_sha` com 40 caracteres que pertença
+à história da `main` e marcar `approve_production: true`. A execução manual
+também passa pelos mesmos testes. O mecanismo de bloqueio de commits antigos
+é aplicado apenas ao gatilho automático, para permitir rollback explícito.
+
+O job conserva o environment `lhs-production` e a credencial
+`LHS_PAGES_MIRROR_SSH_KEY`. **Se houver aprovadores obrigatórios nesse environment,
+o GitHub continuará exigindo aprovação humana inclusive para o gatilho automático.**
+A liberação dessa regra ou a disponibilidade do segredo são configurações externas
+do repositório, não assumidas nem alteradas pelo workflow.
+
+A publicação do front-end, mesmo com testes verdes, não significa aprovação
+jurídica, SEO, homologação de pagamentos reais ou validação em Android físico.
+Para pagamentos, o front-end só apresenta o checkout se o catálogo e o backend
+indicarem produção, e o crédito depende de confirmação pelo servidor.
 
 ## Rollback
 
@@ -91,6 +110,7 @@ publicação revisada, não um fallback silencioso.
 Não restaurar bancos, apagar armazenamento local, sobrescrever saves ou reprocessar
 pedidos. O endpoint remoto da API, a origem do site e as chaves locais não mudam.
 
-`noindex`, avisos jurídicos e `productionCheckoutEnabled: false` permanecem. A
-promoção do build não equivale a aprovação jurídica/SEO, do provedor financeiro,
-de Android físico, de indexação ou de publicação.
+O `noindex` e a revisão jurídica/SEO continuam questões independentes.
+`productionCheckoutEnabled: true` habilita apenas a apresentação do checkout
+quando a configuração remota do provedor é válida; não comprova o backend
+implantado nem autoriza créditos sem confirmação do pagamento.
