@@ -43,7 +43,7 @@ export function createTopGamesShopPort(getState:()=>GameState):TopGamesShopPort{
   return {title:TOP_GAMES_TITLE,available,active,received,total:TOP_GAMES_ISSUES.length,
    editionPrice,nextIssueNumber:next?received+1:null,nextDueDay:due,
    actionId,actionDisabled,buttonText,status:status+
-    (available&&received<TOP_GAMES_ISSUES.length?" Entrega física pelo carteiro será integrada na próxima etapa.":"")+
+    (available&&received<TOP_GAMES_ISSUES.length?" O carteiro traz uma edição até o balcão de Tony na data prevista; a cobrança ocorre somente na entrega.":"")+
     (available?" Cada revista apresenta um jogo; a mídia é comprada separadamente.":"")+
     (available?" Valor por edição: "+currency(editionPrice)+".":"")};
  }};
