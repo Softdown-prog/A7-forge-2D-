@@ -83,6 +83,9 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
  for(const job of s.repairJobs??[])if(job.pc>=count)job.pc++;
  for(const job of s.gpuGameInstallJobs??[])if(job.pc>=count)job.pc++;
+ // A instalação real acompanha o PC do anexo quando os índices se deslocam.
+ if(s.windowsInstallJobs?.length)s.windowsInstallJobs=s.windowsInstallJobs.map(job=>
+  job.pc>=count?{...job,pc:job.pc+1}:job);
  (s.pcWear??=[]).splice(count,0,0);
  (s.pcTiers??=[]).splice(count,0,1);
  (s.pcWindows??=[]).splice(count,0,"win98");
