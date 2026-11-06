@@ -116,7 +116,7 @@ test("assinatura e revistas recebidas invalidam cache sem mover campos históric
  x.state().topGamesSubscriptionDay=(2002-1998)*360+1;
  x.state().topGamesSubscriptionActive=true;
  x.state().topGamesReceivedIssues=[];
- assert.equal(x.port.snapshot("consoles")[21],undefined,"legacy policy is read without coercion");
+ assert.equal(x.port.snapshot("consoles")[21],"magazines","new historical campaign opts in to discovery");
  assert.equal(x.port.snapshot("consoles")[22],x.state().topGamesSubscriptionDay);
  assert.equal(x.port.snapshot("consoles")[23],true);
  assert.deepEqual(x.port.snapshot("consoles")[24],[]);
