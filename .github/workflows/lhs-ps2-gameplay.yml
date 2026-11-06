@@ -5,6 +5,17 @@ on:
     paths:
       - 'games/lan_house_simulator/**'
       - '.github/workflows/lhs-ps2-gameplay.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/**'
+      - '.github/workflows/lhs-ps2-gameplay.yml'
+
+# Superseded PR revisions should not saturate the test queue.
+# Every merged main revision still receives its own completed validation.
+concurrency:
+  group: lhs-ps2-gameplay-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 permissions:
   contents: read
 jobs:
@@ -43,5 +54,6 @@ jobs:
           path: |
             games/lan_house_simulator/out/ps2-integrated/
             games/lan_house_simulator/out/ps1-regression/
-          if-no-files-found: error
+          # Missing screenshots after an earlier test failure must not mask that failure.
+          if-no-files-found: warn
           retention-days: 14
