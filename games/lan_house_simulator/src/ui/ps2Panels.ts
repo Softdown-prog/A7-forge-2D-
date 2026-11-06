@@ -2,6 +2,7 @@
 import type {Ps2Port} from "../application/ps2Port.js";
 import {drawPs2Station} from "../render/ps2Art.js";
 import {ps2ProceduralCover} from "./ps2CoverArt.js";
+import {UNKNOWN_TOP_GAMES_TITLE,UNKNOWN_TOP_GAMES_GENRE,UNKNOWN_TOP_GAMES_HINT} from "./topGamesConcealment.js";
 const money=(n:number)=>n.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
 function text<K extends keyof HTMLElementTagNameMap>(doc:Document,tag:K,value:string){const el=doc.createElement(tag);el.textContent=value;return el;}
 function button(doc:Document,value:string,disabled:boolean,key:string,index:string){
@@ -26,12 +27,21 @@ export function renderPs2ShopCatalog(host:HTMLElement,port:Ps2Port,doc:Document)
  }
  for(const g of s.games){
   const item=doc.createElement("article");item.className="shop-card ps2-game-card";
-  const cover=doc.createElement("img");cover.className="ps2-game-cover";
-  cover.src=ps2ProceduralCover(g,doc);
-  cover.alt="Capa procedural de "+g.title;
-  cover.loading="lazy";cover.decoding="async";cover.width=420;cover.height=560;
-  item.append(cover,text(doc,"h3",g.title),text(doc,"p",g.genre+" · "+g.releaseYear+" · "+g.copies+" cópia(s) no acervo. Cada mídia equipa uma bancada."),
-   button(doc,g.buyText+" · "+money(g.price),g.disabled,"buyPs2Game",g.id));host.append(item);
+  if(g.magazineLocked){
+   const unknown=doc.createElement("span");unknown.className="top-games-secret-cover";
+   unknown.textContent="?";unknown.setAttribute("aria-hidden","true");item.append(unknown);
+  }else{
+   const cover=doc.createElement("img");cover.className="ps2-game-cover";
+   cover.src=ps2ProceduralCover(g,doc);
+   cover.alt="Capa procedural de "+g.title;
+   cover.loading="lazy";cover.decoding="async";cover.width=420;cover.height=560;
+   item.append(cover);
+  }
+  item.append(text(doc,"h3",g.magazineLocked?UNKNOWN_TOP_GAMES_TITLE:g.title),
+   text(doc,"p",g.magazineLocked?UNKNOWN_TOP_GAMES_GENRE+" · "+g.releaseYear+" · "+UNKNOWN_TOP_GAMES_HINT:
+    g.genre+" · "+g.releaseYear+" · "+g.copies+" cópia(s) no acervo. Cada mídia equipa uma bancada."),
+   button(doc,g.magazineLocked?"Leia a revista Top Games":g.buyText+" · "+money(g.price),
+    g.disabled,"buyPs2Game",g.id));host.append(item);
  }
 }
 const rendered=new WeakMap<Element,string>();
