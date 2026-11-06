@@ -35,7 +35,6 @@ export const PS2_GAME_CATALOG=[
 export function ps2ReleasedGames(year:number):ReadonlyArray<typeof PS2_GAME_CATALOG[number]>{
  return PS2_GAME_CATALOG.filter(g=>year>=g.releaseYear);
 }
-;
 export type Ps2GameId=typeof PS2_GAME_CATALOG[number]["id"];
 export type Ps2GameSpec=typeof PS2_GAME_CATALOG[number];
 export type Ps2Station={slotId:string;wear:number;gameId?:Ps2GameId;secondSeat?:boolean;poweredOff?:boolean};
@@ -47,7 +46,8 @@ export function ps2Unlocked(s:Pick<GameState,"totalMinutes"|"economyVersion">):b
 export function ps2BenchPrice(s:GameState):number{return money(PS2_BASE_BENCH_PRICE*eraFactor(s));}
 export function ps2GamePrice(s:GameState,id:Ps2GameId):number{
  const title=PS2_GAME_CATALOG.find(g=>g.id===id);
- return title?money(title.basePrice*priceIndex(yearFromMinutes(s.totalMinutes))/priceIndex(title.releaseYear)):0;
+ return title&&yearFromMinutes(s.totalMinutes)>=title.releaseYear?
+  money(title.basePrice*priceIndex(yearFromMinutes(s.totalMinutes))/priceIndex(title.releaseYear)):0;
 }
 export function ps2DefaultHourlyPrice(s:GameState):number{
  const proposed=Math.floor(PS2_BASE_HOURLY_RATE*eraFactor(s)*4+1e-8)/4;
