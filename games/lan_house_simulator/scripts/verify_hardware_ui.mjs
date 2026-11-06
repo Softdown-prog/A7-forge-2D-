@@ -68,11 +68,21 @@ try{
    assert.equal(await page.locator("#hardware-power-1").isDisabled(),true);
    assert.ok(await page.locator(".windows-install-status progress").count()>=1);
    // Advance the real-browser clock without waiting eighty actual minutes.
-   await page.clock.fastForward(80*60*1000);
-   await page.waitForFunction(key=>{
+   // Allow a safety margin beyond the deadline and execute interval callbacks
+   // deterministically: fastForward jumps time, runFor drives scheduled timers.
+   await page.clock.fastForward(81*60*1000);
+   await page.clock.runFor(1500);
+   const persisted=await page.evaluate(key=>{
     const save=JSON.parse(localStorage.getItem(key)||"{}");
-    return save.pcWindows?.[1]==="win11"&&save.windowsInstallJobs?.length===0;
+    return {now:Date.now(),windows:save.pcWindows?.[1],
+     jobs:save.windowsInstallJobs??[],off:save.pcPoweredOff?.[1],
+     license:save.pcWindowsLicenses?.[1]};
    },GAME_SAVE_KEY);
+   assert.equal(persisted.windows,"win11",
+    "Windows did not finalize after wall-clock deadline: "+JSON.stringify(persisted));
+   assert.equal(persisted.jobs.length,0,
+    "Completed Windows install must not remain in save: "+JSON.stringify(persisted));
+   assert.equal(persisted.off,true,"PC remains off after Windows installation");
    // Completion leaves the PC off. Re-enable it explicitly for customer sessions.
    await selectTask(page,"computers","hardware");
    await click('[data-hardware-tab="ram"] .ui-icon');await click('[data-hardware-part="ram64d5"] .ui-icon');
