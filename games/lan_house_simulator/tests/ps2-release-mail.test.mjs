@@ -20,7 +20,11 @@ test("exactly two releases announced annually; the launch in 2006 preserves five
   assert.equal(release.id,ps2ReleaseMailId(year));
   const games=PS2_GAME_CATALOG.filter(g=>g.releaseYear===year);
   assert.equal(games.length,year===2006?7:2);
-  for(const game of games.slice(-2))assert.ok(release.body.includes(game.title));
+  assert.match(release.body,/revista Top Games/);
+  assert.match(release.body,/carteiro/);
+  for(const game of games)
+   assert.equal(release.body.includes(game.title),false,
+    "new campaign must discover "+game.title+" from the magazine, not the release notice");
   assert.ok(release.body.includes(String(ps2ReleasedGames(year).length)));
   if(year!==2010)assert.match(release.body,new RegExp(String(year+1)));
   else assert.match(release.body,/completo por enquanto/);
@@ -34,6 +38,22 @@ test("exactly two releases announced annually; the launch in 2006 preserves five
   assert.equal(s.cash,cash,"launch notices do not purchase titles");
   assert.equal(s.expenses,expenses);
   assert.equal(isValidSave(s),true);
+ }
+});
+test("legacy saves still receive their original PS2 release titles, without enabling magazine gates",()=>{
+ for(const year of PS2_RELEASE_MAIL_YEARS){
+  const old=createGame(year,"historical");
+  delete old.topGamesUnlockMode; // previously exported campaigns are grandfathered
+  at(old,year,1);
+  const release=duePs2ReleaseAnnouncement(old);
+  assert.ok(release);
+  const titles=PS2_GAME_CATALOG.filter(g=>g.releaseYear===year).slice(-2);
+  for(const game of titles)assert.ok(release.body.includes(game.title),game.title);
+  assert.doesNotMatch(release.body,/revista Top Games/);
+  assert.equal(old.topGamesSubscriptionDay,undefined);
+  reviewNotices(old);
+  assert.equal(mails(old).length,1);
+  assert.equal(isValidSave(parseImportedSave(serializeSave(old))),true);
  }
 });
 test("no pre-release or classic-mode notices; saved campaigns do not backfill previous years",()=>{
