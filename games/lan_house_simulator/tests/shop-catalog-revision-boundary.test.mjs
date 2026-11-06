@@ -19,10 +19,10 @@ function legacy(s,category){
   s.interiorWalls,s.interiorDoors,
   s.linuxResearchStartedDay,s.linuxMailSeenIds,s.pcLinuxModels,s.pcOperatingSystems];
 }
-test("projeção preserva 21 campos anteriores e acrescenta quatro campos Top Games",()=>{
+test("projeção preserva 21 campos anteriores e acrescenta cinco campos Top Games",()=>{
  const x=fixture(),s=x.state();
  assert.deepEqual(x.port.snapshot("equipment").slice(0,21),legacy(s,"equipment"));
- assert.equal(x.port.snapshot("equipment").length,25);
+ assert.equal(x.port.snapshot("equipment").length,26);
 });
 test("categoria indefinida preserva undefined e posições do vetor",()=>{
  const x=fixture(),v=x.port.snapshot(undefined);
@@ -116,10 +116,11 @@ test("assinatura e revistas recebidas invalidam cache sem mover campos históric
  x.state().topGamesSubscriptionDay=(2002-1998)*360+1;
  x.state().topGamesSubscriptionActive=true;
  x.state().topGamesReceivedIssues=[];
- assert.equal(x.port.snapshot("consoles")[21],x.state().topGamesSubscriptionDay);
- assert.equal(x.port.snapshot("consoles")[22],true);
- assert.deepEqual(x.port.snapshot("consoles")[23],[]);
- assert.equal(x.port.snapshot("consoles")[24],undefined);
+ assert.equal(x.port.snapshot("consoles")[21],undefined,"legacy policy is read without coercion");
+ assert.equal(x.port.snapshot("consoles")[22],x.state().topGamesSubscriptionDay);
+ assert.equal(x.port.snapshot("consoles")[23],true);
+ assert.deepEqual(x.port.snapshot("consoles")[24],[]);
+ assert.equal(x.port.snapshot("consoles")[25],undefined);
  const changed=createPanelRevisionCache();
  assert.equal(changed("shop",old,false),true);
  assert.equal(changed("shop",x.port.snapshot("consoles"),false),true);
