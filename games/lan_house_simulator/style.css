@@ -1121,6 +1121,17 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 
 /* Native PS2 discs use original, readable portrait covers. */
 .ps2-game-card .ps2-game-cover{display:block;width:min(100%,165px);height:auto;aspect-ratio:3/4;object-fit:cover;margin:0 auto 9px;border:2px solid #d8e4ee;border-left-width:7px;box-shadow:3px 6px 10px #09121d66;background:#151d37}
+/* Undiscovered Top Games issues keep portrait slots without exposing game artwork.
+   Real covers are only generated after the edition arrives. */
+.top-games-secret-cover{
+  display:grid;place-items:center;width:min(100%,165px);aspect-ratio:3/4;
+  margin:0 auto 9px;border:2px solid #879da5;border-left-width:7px;
+  border-radius:4px;background:linear-gradient(145deg,#243c49,#131e2b 65%,#344a50);
+  color:#e2f1dc;font:700 clamp(38px,8vw,60px)/1 system-ui,sans-serif;
+  box-shadow:3px 6px 10px #09121d55;user-select:none
+}
+.ps1-cd-jewel > .top-games-secret-cover{width:100%;height:100%;margin:0;border:0;border-radius:0}
+.angular-console-grid .top-games-secret-cover{max-width:165px}
 /* PS2 uses the existing console cards and native mobile controls. */
 .ps2-shop-preview{display:block;width:100%;max-width:300px;height:auto;margin:0 auto 8px;border-radius:8px;background:#172b38}
 .ps2-bench-card select,#ps2-stations select{max-width:100%;width:100%;min-height:40px}

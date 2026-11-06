@@ -10,7 +10,7 @@ import {projectPs2Game} from "../dist/js/ui/shopConsoleAngularProjection.js";
 import {readFileSync,existsSync} from "node:fs";
 
 function state(year){
- const s=createGame(2010,"historical");
+ const s=createGame(2010,"historical");delete s.topGamesUnlockMode;
  s.totalMinutes=(year-1998)*360*DAY_MINUTES;
  s.cash=15000;
  return s;

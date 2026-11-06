@@ -9,6 +9,8 @@ import {renderPs1ShopOfferButton} from "./ps1ShopOfferButton.js";
 import {renderPs1ShopPlacement} from "./ps1ShopPlacementPicker.js";
 import {renderPs1ShopDiscCatalog} from "./ps1ShopDiscCatalog.js";
 import {renderPs2ShopCatalog} from "./ps2Panels.js";
+import {renderTopGamesSubscription} from "./topGamesShopPanel.js";
+import type {TopGamesShopPort} from "../application/topGamesShopPort.js";
 import {regularShopCardView,publishAngularShopCatalog,
  type AngularShopCardView} from "./shopCatalogAngularProjection.js";
 import {projectConsoleShop,publishAngularConsoleShop} from "./shopConsoleAngularProjection.js";
@@ -34,6 +36,7 @@ export interface ShopCatalogRenderOptions {
  readonly selectPs1Slot:(id:string|null)=>void;
  readonly discs:Ps1ShopDiscPort;
  readonly ps2?:Ps2Port;
+ readonly topGames?:TopGamesShopPort;
 }
 
 export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
@@ -74,6 +77,8 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
  });
  renderPs1ShopDiscCatalog(options.host,options.discs,options.currentCategory()==="consoles",options.doc);
  if(options.ps2&&options.currentCategory()==="consoles")renderPs2ShopCatalog(options.host,options.ps2,options.doc);
+ if(options.topGames&&currentCategory==="consoles")
+  renderTopGamesSubscription(options.host,options.topGames.snapshot(),options.doc);
  if(currentCategory==="consoles"&&typeof options.doc.getElementById==="function"&&
   options.doc.getElementById("angular-shop-catalog")){
   const ps1Card=options.host.querySelector<HTMLButtonElement>('button[data-buy="ps1"]')?.closest(".shop-card");
@@ -82,7 +87,8 @@ export function renderShopCatalog(options:ShopCatalogRenderOptions):void {
   const ps2Artwork=ps2Canvas?.toDataURL()??null;
   publishAngularConsoleShop(options.doc,projectConsoleShop(
    options.ps1Offer(),options.ps1Slots(),options.selectedPs1Slot(),
-   options.discs.snapshot(),options.ps2?.snapshot()??null,ps1Artwork,ps2Artwork
+   options.discs.snapshot(),options.ps2?.snapshot()??null,ps1Artwork,ps2Artwork,
+   options.topGames?.snapshot()??null
   ));
  }
  // Only alert presentation controls after the original DOM catalogue is complete.

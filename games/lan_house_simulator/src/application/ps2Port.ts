@@ -6,6 +6,7 @@ import {PS2_GAME_CATALOG,ps2ReleasedGames,ps2Unlocked,ps2BenchPrice,ps2GamePrice
  buyPs2SecondSeat,repairPs2,setPs2Power,setPs2HourlyPrice,type Ps2GameId} from "../sim/ps2.js";
 import {ps1PlacementLabel} from "../sim/ps1.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
+import {topGamesCanBuy} from "../sim/topGamesUnlockGate.js";
 export interface Ps2StationView{
  index:number;wear:number;occupied:number;capacity:number;gameId:string;
  gameName:string;poweredOff:boolean;busy:boolean;available:boolean;
@@ -18,7 +19,7 @@ export interface Ps2Snapshot{
  benchPrice:number;benchDisabled:boolean;benchText:string;secondSeatPrice:number;repairPrice:number;
  nextReleaseYear:number|null;
  slots:ReadonlyArray<{id:string;label:string}>;
- games:ReadonlyArray<{id:string;title:string;genre:string;releaseYear:number;price:number;copies:number;disabled:boolean;buyText:string}>;
+ games:ReadonlyArray<{id:string;title:string;genre:string;releaseYear:number;price:number;copies:number;magazineLocked:boolean;disabled:boolean;buyText:string}>;
  stations:ReadonlyArray<Ps2StationView>;
 }
 export interface Ps2Port{
@@ -56,8 +57,11 @@ export function createPs2Port(getState:()=>GameState):Ps2Port{
     secondSeatPrice:ps2SecondSeatPrice(s),repairPrice:ps2RepairPrice(s),slots,nextReleaseYear,
     games:availableGames.map(g=>{
      const copies=ps2GameCopies(s,g.id),price=ps2GamePrice(s,g.id),hasStation=stations.length>0;
-     return {...g,price,copies,disabled:!unlocked||!hasStation||copies>=3||s.cash<price,
-      buyText:!unlocked?"Disponível em 2006":!hasStation?"Instale uma bancada PS2":copies>=3?"Acervo completo":s.cash<price?"Caixa insuficiente":"Comprar jogo"};
+     const magazineLocked=!topGamesCanBuy(s,"ps2",g.id,copies);
+     return {...g,price,copies,magazineLocked,
+      disabled:!unlocked||!hasStation||magazineLocked||copies>=3||s.cash<price,
+      buyText:!unlocked?"Disponível em 2006":!hasStation?"Instale uma bancada PS2":
+       magazineLocked?"Leia a revista Top Games":copies>=3?"Acervo completo":s.cash<price?"Caixa insuficiente":"Comprar jogo"};
     }),stations:view};
   },
   buyStation(slot){return buyPs2Station(getState(),slot);},

@@ -7,8 +7,9 @@ import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstM
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {duePs2ReleaseAnnouncement,recordPs2ReleaseMail,type Ps2ReleaseNoticeId} from "./ps2ReleaseMail.js";
 import {nextLinuxLetter,recordLinuxMail,isLinuxPc,type LinuxMailId} from "./linuxQuest.js";
+import type {TopGamesIssueId} from "./topGamesMagazines.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId|LinuxMailId|Ps2ReleaseNoticeId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId|LinuxMailId|Ps2ReleaseNoticeId|TopGamesIssueId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -29,6 +30,13 @@ function deliver(s:GameState,id:NoticeId,title:string,body:string,severity:GameN
 }
 /** Mail appears only when the physical courier has completed the handoff to Tony. */
 export function deliverLinuxMagazineNotice(s:GameState,id:LinuxMailId,title:string,body:string):void{
+ deliver(s,id,title,body,"info");
+}
+/** Printed gaming magazines are announced only by the courier after payment.
+ * This method never delivers a magazine during the daily notice review. */
+export function deliverTopGamesMagazineNotice(
+ s:GameState,id:TopGamesIssueId,title:string,body:string
+):void{
  deliver(s,id,title,body,"info");
 }
 export function reviewNotices(s:GameState):void{

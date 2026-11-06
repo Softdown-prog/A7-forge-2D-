@@ -6,6 +6,7 @@ import {consolePoint,consoleSeat,consoleApproach,consoleBusy,consoleFootprints} 
 import {layoutGoals,layoutPlacementIssue,objectTouchesCustomer} from "./layoutGeometry.js";
 import {navigableRoute,canTraverseLocalStep,routesForCurrentCustomers} from "./navigation.js";
 import {entrance} from "./simulationState.js";
+import {topGamesCanBuy} from "./topGamesUnlockGate.js";
 import {activeRetailQueuesReachable} from "./retailQueue.js";
 
 export const PS2_UNLOCK_YEAR=2006;
@@ -129,6 +130,8 @@ export function buyPs2Game(s:GameState,id:Ps2GameId):Result{
  if(!ps2Unlocked(s)||!s.ps2Stations?.length)return {ok:false,message:"Instale primeiro uma bancada PS2 em 2006."};
  if(yearFromMinutes(s.totalMinutes)<game.releaseYear)
   return {ok:false,message:game.title+" estará disponível em "+game.releaseYear+"."};
+ if(!topGamesCanBuy(s,"ps2",id,ps2GameCopies(s,id)))
+  return {ok:false,message:"Tony precisa receber a revista Top Games que apresenta "+game.title+" antes de comprar o DVD."};
  if(ps2GameCopies(s,id)>=3)return {ok:false,message:"Já há três cópias deste jogo PS2."};
  const price=ps2GamePrice(s,id);
  if(!Number.isFinite(s.cash)||s.cash<price)return {ok:false,message:"Caixa insuficiente para "+game.title+"."};

@@ -13,7 +13,7 @@ function snapshot(c){return c&&{
  usedMinutes:c.usedMinutes
 };}
 export function simulatePs1CrowdedCycle(){
- const s=createGame(291,"historical");
+ const s=createGame(291,"historical");delete s.topGamesUnlockMode;
  s.totalMinutes=4*360*DAY_MINUTES+24;
  s.cash=5000;
  s.pcPoweredOff=Array.from({length:pcCount(s)},()=>true);

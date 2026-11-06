@@ -7,7 +7,9 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import {createAngularCutoverDocument} from './cutover_document.mjs';
-import {createGame} from '../../dist/js/sim/engine.js';
+import {createGame,isValidSave} from '../../dist/js/sim/engine.js';
+import {buyPs1Station} from '../../dist/js/sim/ps1.js';
+import {TOP_GAMES_ISSUES} from '../../dist/js/sim/topGamesMagazines.js';
 import {DAY_MINUTES,GAME_SAVE_KEY} from '../../dist/js/sim/types.js';
 import {PS2_GAME_CATALOG} from '../../dist/js/sim/ps2.js';
 const tools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
@@ -42,7 +44,7 @@ try{
  for(const width of [1280,414,360]){
   const mobile=width<700;
   const context=await browser.newContext({viewport:{width,height:900},isMobile:mobile,hasTouch:mobile});
-  const fixture=createGame(2200+width,'historical');
+  const fixture=createGame(2200+width,'historical');delete fixture.topGamesUnlockMode;
   fixture.totalMinutes=8*360*DAY_MINUTES+35; // 2006
   fixture.cash=15000;fixture.pcPoweredOff=[true,true,true];
   fixture.pcWear=[19,53,82]; // Deterministic real-save wear for health UI QA.
@@ -210,13 +212,29 @@ try{
   // be visibly painted and fully decoded across desktop and mobile.
   const ps2Covers=shop.locator('.angular-console-grid').last().locator('img.angular-ps2-cover');
   assert.equal(await ps2Covers.count(),7,'Seven PS2 launch-year games have artwork');
-  await page.waitForFunction(()=>Array.from(document.querySelectorAll(
-   '.angular-ps2-cover')).length===7 &&
-   Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
-    img.complete && img.naturalWidth===420 && img.naturalHeight===560));
+  // The browser intentionally lazy-loads covers far below the PS1 catalogue.
+  // Bring every real PS2 card into view to request/paint it before checking decode.
+  // Otherwise waiting for offscreen loading="lazy" images can never complete.
+  for(let i=0;i<await ps2Covers.count();i++){
+   const image=ps2Covers.nth(i);
+   await image.scrollIntoViewIfNeeded();
+   try{
+    await image.evaluate(img=>img.decode());
+   }catch(error){
+    const diagnostic=await image.evaluate(img=>({
+     src:img.getAttribute('src')?.slice(0,100),complete:img.complete,
+     width:img.naturalWidth,height:img.naturalHeight
+    }));
+    throw new Error('PS2 cover '+i+' failed to decode: '+JSON.stringify(diagnostic),{cause:error});
+   }
+   const dimension=await image.evaluate(img=>({width:img.naturalWidth,height:img.naturalHeight}));
+   assert.ok(dimension.width>0&&dimension.height>0,
+    'PS2 cover '+i+' has no decoded dimensions: '+JSON.stringify(dimension));
+  }
   const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
-  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')),
-   'PS2 covers must be generated locally without external artwork requests');
+  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')||
+    ((src?.startsWith('assets/ps2/covers/')||src?.startsWith('./assets/ps2/covers/'))&&src.endsWith('.svg'))),
+   'PS2 artwork must be original PNG or bundled local SVG, never external images');
   assert.equal(new Set(ps2CoverSources).size,7,'Each 2006 PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
@@ -1097,6 +1115,29 @@ try{
   assert.equal(current.ps1Stations?.length??0,0,'No locked PS1 purchase');
   assert.equal(current.ps2Stations?.length??0,0,'No locked PS2 purchase');
   assert.deepEqual(errors,[],'No runtime errors in locked shop');
+  // Top Games Angular card delegates both commands to the existing shop port.
+  const magazine=shop.locator('.angular-top-games');
+  assert.equal(await magazine.count(),1,'Top Games subscription shown in consoles');
+  assert.match(await magazine.innerText(),/Top Games/);
+  assert.match(await magazine.innerText(),/Revistas recebidas: 0 de 28/);
+  if(scenario.year===2002){
+   const subscribe=magazine.locator('button');
+   assert.equal(await subscribe.innerText(),'Assinar Top Games');
+   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   await press(subscribe);
+   await page.waitForFunction(()=>document.querySelector('.angular-top-games button')?.textContent?.includes('Pausar assinatura'));
+   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(after.topGamesSubscriptionActive,true);
+   assert.equal(after.topGamesReceivedIssues?.length,0);
+   assert.equal(after.cash,before.cash,'Subscribe without delivery must not bill');
+   assert.equal(after.expenses,before.expenses);
+   await press(magazine.locator('button'));
+   await page.waitForFunction(()=>document.querySelector('.angular-top-games button')?.textContent?.includes('Retomar assinatura'));
+   const paused=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(paused.topGamesSubscriptionActive,false);
+   assert.equal(paused.cash,before.cash,'Pause must not bill');
+  }
+  assert.deepEqual(errors,[],'No runtime errors in Top Games subscription');
   await page.screenshot({
    path:resolve(output,'locked-'+scenario.year+'-'+scenario.width+'.png'),
    fullPage:true
@@ -1107,7 +1148,77 @@ try{
    ps1Disabled:await ps1.isDisabled(),ps2Disabled:await ps2.isDisabled()});
   await context.close();
  }
- await writeFile(resolve(output,'results.json'),JSON.stringify({reports,blocked,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults,passed:true},null,2));
+ // Real Angular storefront: a newly created campaign must block an unknown
+ // title and enable precisely that game once its magazine is in the real save.
+ const magazineShop=[];
+ for(const {year,received} of [{year:2002,received:false},{year:2002,received:true},{year:2006,received:false}]){
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  const fixture=createGame(received?9002:9001,'historical');
+  fixture.totalMinutes=((year-1998)*360+14)*DAY_MINUTES;
+  fixture.cash=10000;fixture.pcPoweredOff=[true,true,true];
+  fixture.offlineUntil=fixture.totalMinutes+500;
+  assert.equal(buyPs1Station(fixture,'floor-2').ok,true);
+  if(received){
+   fixture.topGamesSubscriptionDay=(2002-1998)*360+1;
+   fixture.topGamesSubscriptionActive=true;
+   fixture.topGamesReceivedIssues=[TOP_GAMES_ISSUES[0].id];
+   fixture.topGamesLastDeliveryDay=(2002-1998)*360+15;
+  }
+  assert.equal(isValidSave(fixture),true);
+  await context.addInitScript(({key,save})=>{
+   localStorage.setItem(key,JSON.stringify(save));
+   localStorage.setItem('lhs.sound','off');
+   localStorage.setItem('lhs.privacy-choice.v1',JSON.stringify({version:1,choice:'rejected',at:Date.now()}));
+  },{key:GAME_SAVE_KEY,save:fixture});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
+  await page.locator('#menu-continue').click();
+  await page.locator('#open-shop').click();
+  await page.locator('[data-shop-category="consoles"]').click();
+  const ps1Cards=page.locator('.angular-console-grid').first().locator('article.shop-card');
+  const ps1Card=ps1Cards.first(),purchase=ps1Card.locator('button');
+  await purchase.waitFor({state:'visible'});
+  assert.equal(await ps1Card.locator('h4').innerText(),
+   received?'Turbo Circuito':'Jogo não revelado');
+  assert.equal(await ps1Cards.count(),year===2006?13:7);
+  assert.equal(await ps1Cards.locator('img.angular-ps1-cover').count(),received?1:0,
+   'No PS1 cover may be loaded before its specific magazine arrives');
+  assert.equal(await ps1Cards.locator('.top-games-secret-cover').count(),
+   (year===2006?13:7)-(received?1:0));
+  assert.equal(await purchase.isDisabled(),!received,
+   'New saves may buy a title only when Tony received its own magazine');
+  if(!received){
+   assert.match(await purchase.innerText(),/Leia a revista Top Games/);
+   assert.equal((await ps1Cards.locator('h4').allTextContents())
+    .every(title=>title==='Jogo não revelado'),true);
+   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   await purchase.evaluate(button=>button.click());
+   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(after.ps1Discs?.['turbo-circuito'],undefined);
+   assert.equal(after.cash,before.cash,'Locked Angular button cannot charge');
+  }else{
+   await purchase.click();
+   await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key))?.ps1Discs?.['turbo-circuito']===1,GAME_SAVE_KEY);
+   const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(saved.ps1Discs['turbo-circuito'],1);
+   assert.equal(saved.topGamesReceivedIssues[0],TOP_GAMES_ISSUES[0].id);
+  }
+  if(year===2006){
+   const ps2Cards=page.locator('.angular-console-grid').last().locator('article.shop-card');
+   assert.equal(await ps2Cards.count(),7,'All launch-year PS2 cards remain present');
+   assert.deepEqual(await ps2Cards.locator('h4').allTextContents(),
+    Array(7).fill('Jogo não revelado'),
+    'PS2 titles are discovered only from the corresponding Top Games issue');
+   assert.equal(await ps2Cards.locator('img.angular-ps2-cover').count(),0);
+   assert.equal(await ps2Cards.locator('.top-games-secret-cover').count(),7);
+  }
+  assert.deepEqual(errors,[],'No Angular runtime error during magazine purchase gating');
+  magazineShop.push({year,received,buttonDisabled:!received,errors:errors.length});
+  await context.close();
+ }
+ await writeFile(resolve(output,'results.json'),JSON.stringify({reports,blocked,magazineShop,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults,passed:true},null,2));
  console.log('Integrated LHS Angular QA:',JSON.stringify({reports,blocked,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults}));
 }finally{
  await browser?.close();

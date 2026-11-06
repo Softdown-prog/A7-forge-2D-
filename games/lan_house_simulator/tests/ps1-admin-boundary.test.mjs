@@ -11,11 +11,13 @@ import {renderPs1AdminPanel} from "../dist/js/ui/ps1AdminPanel.js";
 
 function year2002(){
  const state=createGame(945,"historical");
+ // Historical PS1 administration fixture represents a save predating Top Games.
+ delete state.topGamesUnlockMode;
  state.totalMinutes=4*360*DAY_MINUTES;
  state.cash=10000;return state;
 }
 test("antes de 2002 painel do console bloqueia preços e mostra desbloqueio",()=>{
- const state=createGame(901,"historical");
+ const state=createGame(901,"historical");delete state.topGamesUnlockMode;
  const view=createPs1AdminPort(()=>state).snapshot();
  assert.equal(view.consoleReady,false);
  assert.equal(view.stationCount,0);

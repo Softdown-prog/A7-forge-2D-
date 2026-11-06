@@ -8,7 +8,7 @@ import {buyPs1Station,buyPs1Disc,buyPs1SecondSeat,ps1SecondSeatPrice,
 import {serializeSave,parseImportedSave,snapshotGameState} from "../dist/js/sim/saveTransfer.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
 function setup(){
- const s=createGame(314,"historical");
+ const s=createGame(314,"historical");delete s.topGamesUnlockMode;
  s.totalMinutes=4*360*DAY_MINUTES;s.cash=5000;
  ok(buyPs1Station(s,"floor-2"));ok(buyPs1Disc(s,"gol-de-rua"));
  return s;

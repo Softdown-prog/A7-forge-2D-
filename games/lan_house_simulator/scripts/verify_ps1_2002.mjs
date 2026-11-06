@@ -69,7 +69,7 @@ try{
   await page.locator("#section-consoles").screenshot({path:resolve(out,"ps1_admin_"+width+".png")});
   // Outra partida salva com cliente usando o controle no salão; exercício
   // do render real e da posição do personagem sobre a cadeira.
-  const active=createGame(1100+width,"historical");active.totalMinutes=4*360*DAY_MINUTES;
+  const active=createGame(1100+width,"historical");delete active.topGamesUnlockMode;active.totalMinutes=4*360*DAY_MINUTES;
   active.cash=5000;
   const slot=ps1PlacementSlots(active)[0];
   assert.ok(slot);assert.equal(buyPs1Station(active,slot.id).ok,true);

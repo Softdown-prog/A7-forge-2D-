@@ -17,7 +17,7 @@ const server=createServer(async(req,res)=>{try{const p=decodeURIComponent(new UR
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));const url='http://127.0.0.1:'+server.address().port;
 const ok=r=>assert.equal(r.ok,true,r.message);
 function fixture(year=2006,installed=true,visitors=false){
- const s=createGame(314,'historical');s.totalMinutes=(year-1998)*360*DAY_MINUTES+35;s.cash=10000;
+ const s=createGame(314,'historical');delete s.topGamesUnlockMode;s.totalMinutes=(year-1998)*360*DAY_MINUTES+35;s.cash=10000;
  s.pcPoweredOff=[true,true,true];s.offlineUntil=s.totalMinutes+500;s.inventory={soda:0,candy:0,snacks:0};
  ok(buyPs1Station(s,'floor-1'));ok(buyPs1Disc(s,'turbo-circuito'));
  if(installed){ok(buyPs2Station(s,'floor-2'));ok(buyPs2Game(s,'cidade-em-fuga'));ok(buyPs2SecondSeat(s,0));}

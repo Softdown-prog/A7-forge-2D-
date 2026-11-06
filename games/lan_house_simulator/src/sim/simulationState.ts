@@ -20,7 +20,7 @@ export function createGame(seed=72421,economyMode:"classic"|"historical"="classi
     cash: INITIAL_CASH, revenue: 0, expenses: 0, reputation: 75,
     monthPcUsedMinutes:0,monthPcCapacityMinutes:0,monthRevenueBase:0,monthExpensesBase:0,
     pricePerHour:economyMode==="historical"?2.5:12,
-    ...(economyMode==="historical"?{economyVersion:2 as const}:{retailPrices:{soda:8,candy:5,snacks:9}}),
+    ...(economyMode==="historical"?{economyVersion:2 as const,topGamesUnlockMode:"magazines" as const}:{retailPrices:{soda:8,candy:5,snacks:9}}),
     pcTiers:[1,1,1], pcGpus:[null,null,null], internetTier: 1, offlineUntil: 0, licensedGames: false,
     expansionLevel: 0, roomExtensions:{west:0,east:0,south:0,north:0}, installedPcs:3, furniture:{poster:0,plant:0,table:0}, pcWear: [0,0,0], inventory: { soda: 12, candy: 15, snacks: 10 },
     customers: [], nextCustomerId: 1, served: 0, lostCustomers: 0, purchases: 0,

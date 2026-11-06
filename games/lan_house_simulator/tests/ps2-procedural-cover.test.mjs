@@ -60,7 +60,7 @@ test("unsafe and unknown ids cannot construct arbitrary relative asset paths",()
 });
 test("Angular shop projects each existing game with original cover and same price/button",()=>{
  for(const game of PS2_GAME_CATALOG){
-  const row={...game,copies:1,price:99.5,disabled:false,buyText:"Comprar jogo"};
+  const row={...game,copies:1,price:99.5,magazineLocked:false,disabled:false,buyText:"Comprar jogo"};
   const view=projectPs2Game(row);
   assert.equal(view.id,game.id);assert.equal(view.title,game.title);assert.equal(view.genre,game.genre);
   assert.equal(view.copies,1);assert.equal(view.disabled,false);
@@ -69,9 +69,12 @@ test("Angular shop projects each existing game with original cover and same pric
   assert.ok(view.cover==="assets/ps2/covers/"+game.id+".svg"||
    view.cover?.startsWith("data:image/png;base64,"),
    "a previously cached original PNG or the checked-in SVG is valid");
+  const hidden=projectPs2Game({...row,magazineLocked:true,disabled:true});
+  assert.equal(hidden.cover,null,"unknown PS2 title must not generate a cover");
+  assert.equal(hidden.title,"Jogo não revelado");
  }
  const projection=readFileSync(new URL("../src/ui/shopConsoleAngularProjection.ts",import.meta.url),"utf8");
- assert.match(projection,/cover:ps2ProceduralCover\(row\)/);
+ assert.match(projection,/cover:row\.magazineLocked\?null:ps2ProceduralCover\(row\)/);
  const template=readFileSync(new URL("../frontend-angular/src/templates/shop-catalog.html",import.meta.url),"utf8");
  assert.match(template,/class="angular-ps2-cover"/);
 });
@@ -85,7 +88,7 @@ test("native shop has one portrait image per PS2 title, no generic game thumbnai
  const doc={createElement:tag=>new Node(tag)};
  const host=new Node("section");
  const port={snapshot(){return {benchDisabled:true,benchText:"Disponível em 2006",benchPrice:980,slots:[],
-  games:PS2_GAME_CATALOG.map(g=>({...g,price:100,copies:0,disabled:true,buyText:"Disponível em 2006"}))};}};
+  games:PS2_GAME_CATALOG.map(g=>({...g,price:100,copies:0,magazineLocked:false,disabled:true,buyText:"Disponível em 2006"}))};}};
  renderPs2ShopCatalog(host,port,doc);
  assert.equal(host.children.length,2+PS2_GAME_CATALOG.length,"heading, console and all games");
  for(let i=0;i<PS2_GAME_CATALOG.length;i++){

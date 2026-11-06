@@ -14,7 +14,7 @@ const snapshot=c=>({
 });
 
 export function simulatePs1RealCycle(){
- const s=createGame(314,"historical");
+ const s=createGame(314,"historical");delete s.topGamesUnlockMode;
  s.totalMinutes=4*360*DAY_MINUTES+18;
  s.cash=5000;
  // Com todos os PCs desligados, não surgem NPCs extras enquanto a única

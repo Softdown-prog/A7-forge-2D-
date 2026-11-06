@@ -56,11 +56,14 @@ test("an unexpected disc id never creates an untrusted asset path",()=>{
 });
 test("real Angular catalogue projects the same UI-only cover generator",()=>{
  const source=readFileSync(new URL("../src/ui/shopConsoleAngularProjection.ts",import.meta.url),"utf8");
- assert.match(source,/cover:ps1ProceduralCover\(row\)/);
+ assert.match(source,/cover:row\.magazineLocked\?null:ps1ProceduralCover\(row\)/);
  assert.match(readFileSync(new URL("../src/ui/ps1ShopDiscCatalog.ts",import.meta.url),"utf8"),
   /cover\.src=ps1ProceduralCover\(disc,doc\)/);
- const row={...PS1_CD_CATALOG[0],title:"Turbo Circuito headless projection",copies:0,disabled:false,noStation:false,full:false,price:44};
+ const row={...PS1_CD_CATALOG[0],title:"Turbo Circuito headless projection",copies:0,disabled:false,noStation:false,magazineLocked:false,full:false,price:44};
  const view=projectPs1Disc(row);
  assert.equal(view.cover,"assets/ps1/covers/turbo-circuito.svg",
   "headless runs keep the same relative static fallback");
+ const hidden=projectPs1Disc({...row,magazineLocked:true,disabled:true});
+ assert.equal(hidden.cover,null,"unknown PS1 title must not generate a cover");
+ assert.equal(hidden.title,"Jogo não revelado");
 });

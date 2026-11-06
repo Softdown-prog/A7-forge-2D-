@@ -1,6 +1,7 @@
 /** Read-only PS1 disc purchase projections, always using the currently loaded save. */
 import type {GameState} from "../sim/types.js";
 import {gameYear} from "../sim/era.js";
+import {topGamesCanBuy} from "../sim/topGamesUnlockGate.js";
 import {PS1_MAX_STATIONS,PS1_UNLOCK_YEAR,PS1_CD_CATALOG,ps1ReleasedDiscs,ps1DiscCopies,ps1DiscPrice} from "../sim/ps1.js";
 
 export interface Ps1ShopDiscRow {
@@ -11,6 +12,7 @@ export interface Ps1ShopDiscRow {
  readonly copies:number;
  readonly price:number;
  readonly noStation:boolean;
+ readonly magazineLocked:boolean;
  readonly full:boolean;
  readonly disabled:boolean;
 }
@@ -30,9 +32,10 @@ export function createPs1ShopDiscPort(getState:()=>GameState):Ps1ShopDiscPort{
   return ps1ReleasedDiscs(gameYear(game)).map(disc=>{
    const copies=ps1DiscCopies(game,disc.id),price=ps1DiscPrice(game,disc.id);
    const noStation=!(game.ps1Stations?.length),full=copies>=PS1_MAX_STATIONS;
+   const magazineLocked=!topGamesCanBuy(game,"ps1",disc.id,copies);
    return {
-    id:disc.id,title:disc.title,releaseYear:disc.releaseYear,genre:disc.genre,copies,price,noStation,full,
-    disabled:noStation||full||game.cash<price
+    id:disc.id,title:disc.title,releaseYear:disc.releaseYear,genre:disc.genre,copies,price,noStation,full,magazineLocked,
+    disabled:noStation||full||magazineLocked||game.cash<price
    };
   });
  }};

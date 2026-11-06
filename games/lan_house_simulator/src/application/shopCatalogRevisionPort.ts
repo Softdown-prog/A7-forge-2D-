@@ -17,6 +17,8 @@ export function createShopCatalogRevisionPort(getState:()=>GameState):ShopCatalo
    s.roomExtensions,s.furniture,s.furniturePlacements,s.objectPlacements,
    s.removedBuiltPosters,s.interiorWalls,s.interiorDoors,
    s.linuxResearchStartedDay,s.linuxMailSeenIds,s.pcLinuxModels,s.pcOperatingSystems,
+   s.topGamesUnlockMode,s.topGamesSubscriptionDay,s.topGamesSubscriptionActive,
+   s.topGamesReceivedIssues,s.topGamesLastDeliveryDay,
    ...(s.ps2Stations!==undefined?[s.ps2Stations,s.ps2Games]:[])
   ];
  }};

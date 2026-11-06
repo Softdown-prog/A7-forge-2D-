@@ -60,7 +60,7 @@ test("jogo de GPU respeita desbloqueios e operacoes de download",()=>{
 });
 
 test("PlayStation compra, troca, manutencao e recarregamento preservam a partida",()=>{
- let state=createGame(92,"historical");
+ let state=createGame(92,"historical");delete state.topGamesUnlockMode;
  state.totalMinutes=(2002-1998)*360*DAY_MINUTES;state.cash=5000;
  const port=createPs1ActionsPort(()=>state);
  const before=JSON.stringify(state);

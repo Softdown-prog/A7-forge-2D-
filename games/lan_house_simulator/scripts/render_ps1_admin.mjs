@@ -12,7 +12,7 @@ import {buyPs1Disc,buyPs1Station,ps1PlacementSlots} from "../dist/js/sim/ps1.js"
 const root=resolve(import.meta.dirname,"../dist");
 const output=resolve(process.argv[2]??"out/forge-ps1");
 await mkdir(output,{recursive:true});
-const game=createGame(303,"historical");
+const game=createGame(303,"historical");delete game.topGamesUnlockMode;
 game.totalMinutes=(2002-1998)*360*DAY_MINUTES+12;
 game.cash=5000;
 for(let i=0;i<2;i++){
@@ -66,7 +66,7 @@ try{
   if(oldPrice===nextPrice)throw Error("Preço da hora PS1 não muda ao clicar");
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await selectTask(page,"consoles","discs");await page.locator("#ps1-open-shop").click();
-  await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
+  await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===7);
   // O comprador não deve encontrar coordenadas do Canvas em nenhum seletor.
   // Os valores de option continuam sendo os IDs técnicos, apenas o texto muda.
   const placements=await page.locator('#ps1-placement option').evaluateAll(options=>
@@ -140,13 +140,13 @@ try{
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
    const images=[...document.querySelectorAll(".ps1-cd-cover")];
-   if(images.length!==5)throw Error("Faltam capas de PS1 na loja");
+   if(images.length!==7)throw Error("Faltam as sete capas de PS1 de 2002 na loja");
    for(const img of images)img.loading="eager";
    await Promise.all(images.map(img=>img.decode()));
    if(images.some(img=>img.naturalWidth!==420||img.naturalHeight!==560))
     throw Error("Capas sem dimensão esperada de 420×560");
-   if(new Set(images.map(img=>img.src)).size!==5)
-    throw Error("As cinco capas precisam de imagens diferentes");
+   if(new Set(images.map(img=>img.src)).size!==7)
+    throw Error("As sete capas de 2002 precisam de imagens diferentes");
   });
   if(tag==="desktop"){
    // Contato com cinco capas em resolução alta, usado na revisão de arte.
