@@ -210,13 +210,24 @@ try{
   // be visibly painted and fully decoded across desktop and mobile.
   const ps2Covers=shop.locator('.angular-console-grid').last().locator('img.angular-ps2-cover');
   assert.equal(await ps2Covers.count(),7,'Seven PS2 launch-year games have artwork');
-  await page.waitForFunction(()=>Array.from(document.querySelectorAll(
-   '.angular-ps2-cover')).length===7 &&
-   Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
-    img.complete && img.naturalWidth===420 && img.naturalHeight===560));
+  // Canvas PNG is preferred, bundled local SVG is an intentional fallback.
+  // Require a real decoded image, not one particular browser's intrinsic SVG size.
+  try{
+   await page.waitForFunction(()=>Array.from(document.querySelectorAll(
+    '.angular-ps2-cover')).length===7 &&
+    Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
+     img.complete && img.naturalWidth>0 && img.naturalHeight>0),null,{timeout:15000});
+  }catch(error){
+   const diagnostics=await ps2Covers.evaluateAll(images=>images.map(img=>({
+    src:img.getAttribute('src')?.slice(0,90),complete:img.complete,
+    width:img.naturalWidth,height:img.naturalHeight
+   })));
+   throw new Error('PS2 covers failed to decode: '+JSON.stringify(diagnostics),{cause:error});
+  }
   const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
-  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')),
-   'PS2 covers must be generated locally without external artwork requests');
+  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')||
+    /^\\.?\\/?assets\\/ps2\\/covers\\/[a-z0-9-]+\\.svg$/.test(src??'')),
+   'PS2 artwork must be original PNG or bundled local SVG, never external images');
   assert.equal(new Set(ps2CoverSources).size,7,'Each 2006 PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
