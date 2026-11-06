@@ -29,16 +29,16 @@ function canvasHarness(){
   }}
  };
 }
-test("five existing PS2 titles have distinct original, deterministic, cached 420x560 covers",()=>{
- assert.equal(PS2_GAME_CATALOG.length,5);
+test("all PS2 titles have distinct original, deterministic, cached 420x560 covers",()=>{
+ assert.equal(PS2_GAME_CATALOG.length,15);
  const h=canvasHarness();
  const images=PS2_GAME_CATALOG.map(g=>ps2ProceduralCover(g,h.doc));
- assert.equal(images.length,5);
- assert.equal(new Set(images).size,5,"each game must show a different original drawing");
+ assert.equal(images.length,PS2_GAME_CATALOG.length);
+ assert.equal(new Set(images).size,PS2_GAME_CATALOG.length,"each game must show a different original drawing");
  assert.ok(images.every(v=>v.startsWith("data:image/png;base64,")));
- assert.equal(h.count(),5);
+ assert.equal(h.count(),PS2_GAME_CATALOG.length);
  for(let i=0;i<images.length;i++)assert.equal(ps2ProceduralCover(PS2_GAME_CATALOG[i],h.doc),images[i]);
- assert.equal(h.count(),5,"reopening shop must not rerasterize artworks");
+ assert.equal(h.count(),PS2_GAME_CATALOG.length,"reopening shop must not rerasterize artworks");
 });
 test("headless or disabled Canvas retains a checked-in SVG for every PS2 game",()=>{
  for(const game of PS2_GAME_CATALOG){
@@ -64,6 +64,7 @@ test("Angular shop projects each existing game with original cover and same pric
   const view=projectPs2Game(row);
   assert.equal(view.id,game.id);assert.equal(view.title,game.title);assert.equal(view.genre,game.genre);
   assert.equal(view.copies,1);assert.equal(view.disabled,false);
+  assert.equal(view.releaseYear,game.releaseYear);
   assert.match(view.buttonText,/R\$\s*99,50/);
   assert.ok(view.cover==="assets/ps2/covers/"+game.id+".svg"||
    view.cover?.startsWith("data:image/png;base64,"),
@@ -86,7 +87,7 @@ test("native shop has one portrait image per PS2 title, no generic game thumbnai
  const port={snapshot(){return {benchDisabled:true,benchText:"Disponível em 2006",benchPrice:980,slots:[],
   games:PS2_GAME_CATALOG.map(g=>({...g,price:100,copies:0,disabled:true,buyText:"Disponível em 2006"}))};}};
  renderPs2ShopCatalog(host,port,doc);
- assert.equal(host.children.length,7,"heading, PS2 console and five games");
+ assert.equal(host.children.length,2+PS2_GAME_CATALOG.length,"heading, console and all games");
  for(let i=0;i<PS2_GAME_CATALOG.length;i++){
   const card=host.children[i+2],cover=card.children[0],game=PS2_GAME_CATALOG[i];
   assert.equal(cover.tagName,"img");
