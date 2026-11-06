@@ -127,6 +127,7 @@ export function validTopGamesState(s:Partial<GameState>):boolean{
     TOP_GAMES_ISSUES[i]?.id===id&&
     TOP_GAMES_ISSUES[i]!.publicationDay<=today(s as GameState)))return false;
  if(received.length===0)return last===undefined;
- return Number.isInteger(last)&&last!>=start&&last!<=today(s as GameState)&&
-  last!>=TOP_GAMES_ISSUES[received.length-1]!.publicationDay;
+ if(last===undefined||!Number.isInteger(last))return false;
+ return last>=start&&last<=today(s as GameState)&&
+  last>=TOP_GAMES_ISSUES[received.length-1]!.publicationDay;
 }
