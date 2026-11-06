@@ -65,10 +65,10 @@ try{
  const trace=await page.evaluate(()=>({kind:'integrated app clock; real checkout and routes; no staged poses',trace:window.__ps2Trace,state:{sessions:window.__ps2Observed.ps2Sessions,revenue:window.__ps2Observed.ps2Revenue}}));
  assert.ok(trace.state.sessions>=2);assert.ok(trace.state.revenue>=6);assert.deepEqual(errors,[]);await writeFile(resolve(output,'ps2-gameplay-trace.json'),JSON.stringify(trace,null,2));
  const raw=await page.video().path();await cycle.close();await rename(raw,resolve(output,'ps2_ciclo_integrado.webm'));
- // Five game animations use full real scenes with real, previously served players.
+ // All fifteen release-year scenes use real sold games and served players.
  const titles=await browser.newContext({viewport:{width:1000,height:610}}),show=await titles.newPage();await show.goto(url);
  for(const game of PS2_GAME_CATALOG){
-  const s=fixture(2006,true,true);
+  const s=fixture(game.releaseYear,true,true);
   await show.evaluate(async({state,id})=>{
    const [{buyPs2Game,setPs2StationGame},{SceneRenderer}]=await Promise.all([import('./js/sim/ps2.js'),import('./js/render/scene.js')]);
    state.customers=[];if(id!=='cidade-em-fuga'){if(!buyPs2Game(state,id).ok||!setPs2StationGame(state,0,id).ok)throw Error('game unavailable');}
@@ -91,7 +91,9 @@ try{
   const {page,errors}=await open(context,fixture(2006,false));await page.locator('#open-shop').click();await page.locator('[data-shop-category="consoles"]').click();
   const buy=page.locator('button[data-buy="ps2"]');assert.equal(await buy.isDisabled(),false);
   await page.locator('#ps2-placement').selectOption('floor-2');await buy.click();
-  for(const g of PS2_GAME_CATALOG)await page.locator('[data-buy-ps2-game="'+g.id+'"]').click();
+  const available=PS2_GAME_CATALOG.filter(g=>g.releaseYear<=2006);
+  assert.equal(available.length,7,'2006 must start with exactly seven purchasable PS2 titles');
+  for(const g of available)await page.locator('[data-buy-ps2-game="'+g.id+'"]').click();
   await page.locator('.ps2-bench-card').screenshot({path:resolve(output,'ps2_loja_'+tag+'.png')});
   await page.locator('#close-shop').click();await page.locator('#open-admin').click();await selectAdminArea(page,'consoles');
   await selectTask(page,'consoles','pricing');const rate=await page.locator('#ps2-hourly').innerText();await page.locator('#ps2-price-up').click();assert.notEqual(await page.locator('#ps2-hourly').innerText(),rate);
@@ -102,7 +104,7 @@ try{
   await page.locator('#close-admin').click();await canvasFor(page).screenshot({path:resolve(output,'ps2_idle_'+tag+'.png')});
   await page.screenshot({path:resolve(output,'ps2_tela_'+tag+'.png')});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);assert.ok(overflow<=3);
-  await page.locator('#open-menu').click();const stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.equal(stored.ps2Stations.length,1);assert.equal(stored.ps2Stations[0].secondSeat,true);assert.equal(stored.ps2Stations[0].gameId,'cosmos-2006');assert.equal(Object.keys(stored.ps2Games).length,5);
+  await page.locator('#open-menu').click();const stored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.equal(stored.ps2Stations.length,1);assert.equal(stored.ps2Stations[0].secondSeat,true);assert.equal(stored.ps2Stations[0].gameId,'cosmos-2006');assert.equal(Object.keys(stored.ps2Games).length,7);
   // Reopen in a fresh context without the fixture init script.
   const storage=await context.storageState();await context.close();const reopened=await browser.newContext({viewport:{width,height:850},storageState:storage});
   const again=await reopened.newPage();await again.goto(url);await again.locator('#menu-continue').click();await again.locator('#open-admin').click();await selectAdminArea(again,'consoles');await selectTask(again,'consoles','stations');
@@ -117,6 +119,6 @@ try{
  await m.page.screenshot({path:resolve(output,'ps2_mobile_dupla.png')});assert.deepEqual(m.errors,[]);await mobile.close();
  // 2005 shop remains locked in the real UI.
  const locked=await browser.newContext({viewport:{width:1000,height:800}});const l=await open(locked,fixture(2005,false));await l.page.locator('#open-shop').click();await l.page.locator('[data-shop-category="consoles"]').click();assert.equal(await l.page.locator('[data-buy="ps2"]').isDisabled(),true);await locked.close();
- await writeFile(resolve(output,'ps2-browser-report.json'),JSON.stringify({reports,locked2005:true},null,2));console.log('PS2 integrated gameplay, five games, desktop/mobile purchase/admin/save checks passed.');
+ await writeFile(resolve(output,'ps2-browser-report.json'),JSON.stringify({reports,locked2005:true},null,2));console.log('PS2 integrated gameplay, all fifteen yearly scenes and seven 2006 launch games, desktop/mobile purchase/admin/save checks passed.');
 }finally{await browser?.close();await new Promise(ok=>server.close(ok));}
 function canvasFor(page){return page.locator('#game');}
