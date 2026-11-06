@@ -43,12 +43,20 @@ Tony assina a revista fictícia **Top Games**. Cada exemplar que o carteiro entr
 - `frontend-angular/scripts/verify_integrated_game.mjs` passou a exigir dois cenários reais de loja Angular: sem revista correspondente (compra bloqueada) e com a primeira edição recebida (compra efetiva e salva).
 - `src/sim/ps2ReleaseMail.ts`: nas campanhas novas, os avisos anuais anunciam **quantos jogos foram publicados**, mas reservam os nomes e a autorização de compra para a revista efetivamente entregue. Saves anteriores preservam os títulos nos avisos de lançamento, conforme sua progressão antiga. `tests/ps2-release-mail.test.mjs` cobre ambas as políticas.
 
+## Microtarefa 5 — Sigilo visual dos títulos até a revista (implementada nesta branch)
+
+- A projeção `src/ui/shopConsoleAngularProjection.ts` publica **"Jogo não revelado"**, `cover:null` e o botão **"Leia a revista Top Games"** enquanto `magazineLocked` for verdadeiro. O Angular só recebe a visão mascarada; não gera nem requisita imagens de jogos desconhecidos.
+- `src/ui/ps1ShopDiscCatalog.ts` e `src/ui/ps2Panels.ts` usam a **mesma flag dos ports de aplicação** para ocultar capa, nome, gênero e descrição na loja DOM nativa, sem modificar o catálogo real, a lógica de compras ou a arte original. Os cartões preservam sua posição e mostram uma capa genérica com `?`, em vez de renderizar o jogo oculto.
+- A revelação acontece na próxima atualização de loja após a entrega física da edição correspondente. **Só aquele jogo é revelado**; as demais capas e títulos permanecem desconhecidos.
+- Os saves anteriores à Top Games continuam revelando normalmente todos os jogos publicados. Jogos que já possuem mídia física no inventário também permanecem visíveis, mesmo se o registro da revista não existir.
+- `tests/top-games-shop-secrecy.test.mjs`: valida PS1/PS2 nos dois renderizadores, antes/depois da revista, compatibilidade com save legado, mídia possuída e ausência de fontes de imagens secretas; o teste integrado `frontend-angular/scripts/verify_integrated_game.mjs` confere no Chromium os cartões mascarados de PS1 (2002 e 2006) e PS2 (2006) e a revelação do primeiro título.
+
 ## Antes de mesclar
 
 1. **Verificar todos os workflows**: typecheck, SAC, regressões da simulação, Playwright Chromium desktop/mobile e ausência de erros de runtime. O build sozinho não aprova a feature.
 2. O script `scripts/render_ps1_admin.mjs` tinha contagem obsoleta de cinco capas apesar de sete lançamentos em 2002; agora valida as sete, mantendo as exigências de arte decodificada e geometria da interface.
 3. O Playwright Angular de PS2 passava a aguardar indefinidamente dimensões intrínsecas de PNG mesmo quando o próprio componente usava seu fallback local SVG. Agora aceita **PNG original ou SVG local decodificado**, jamais fonte externa, e inclui diagnósticos de dimensão e URL caso falhe.
-4. Considerar num passo posterior esconder nomes/capas de títulos ainda desconhecidos e substituir avisos anuais que usam a expressão “desbloqueado em {ano}” por “publicado em {ano}”. A trava de compra já está no motor.
+4. Os nomes e capas desconhecidos já estão mascarados pela microtarefa 5. Permanece a limpeza editorial dos avisos **de próximo lançamento** que ainda usam “desbloqueado em {ano}” onde “publicado em {ano}” seria mais preciso, sem alterar a regra do motor.
 
 ## Critérios de aceite da etapa 1
 
