@@ -41,6 +41,7 @@ Tony assina a revista fictícia **Top Games**. Cada exemplar que o carteiro entr
 - `isValidSave` valida o novo marcador e impede marcadores malformados ou modo clássico com política de revista. O histórico das 28 edições segue validado separadamente.
 - Testes: `tests/top-games-discovery-gate.test.mjs` comprova tentativa de compra direta bloqueada (sem alterar estado), chegada física real da primeira edição, liberação seletiva, acervo separado, política de save antigo, trava PS2, import/export, validação de marcador e projeções Angular. Testes antigos de contratos de consoles representam explicitamente saves anteriores à coleção.
 - `frontend-angular/scripts/verify_integrated_game.mjs` passou a exigir dois cenários reais de loja Angular: sem revista correspondente (compra bloqueada) e com a primeira edição recebida (compra efetiva e salva).
+- `src/sim/ps2ReleaseMail.ts`: nas campanhas novas, os avisos anuais anunciam **quantos jogos foram publicados**, mas reservam os nomes e a autorização de compra para a revista efetivamente entregue. Saves anteriores preservam os títulos nos avisos de lançamento, conforme sua progressão antiga. `tests/ps2-release-mail.test.mjs` cobre ambas as políticas.
 
 ## Antes de mesclar
 
