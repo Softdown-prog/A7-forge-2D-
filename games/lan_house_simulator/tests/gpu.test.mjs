@@ -23,8 +23,8 @@ test("interface informa diferença de satisfação e custo integral de troca",()
  assert.ok(projection.includes("model.bonus-(current?.bonus??0)"));
  assert.ok(projection.includes("ganho adicional"));
 });
-test("cinco GPUs distintas e desenhos SVG autênticos do jogo",()=>{
- assert.deepEqual(GPU_CATALOG.map(x=>x.year),[2005,2007,2009,2011,2013]);
+test("treze GPUs distintas de 2005 a 2030 e desenhos SVG originais do jogo",()=>{
+ assert.deepEqual(GPU_CATALOG.map(x=>x.year),[2005,2007,2009,2011,2013,2015,2017,2019,2021,2023,2025,2028,2030]);
  for(const spec of GPU_CATALOG){
   const svg=readFileSync(new URL("../assets/gpu/"+spec.id+".svg",import.meta.url),"utf8");
   assert.match(svg,/<svg /);assert.match(svg,/<path /);assert.match(svg,/<circle /);

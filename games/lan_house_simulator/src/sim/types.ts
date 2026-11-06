@@ -164,7 +164,7 @@ export interface GameState {
   /** Peças por estação; null/ausente usa a configuração CRT legada do nível. */
   pcComponents?: Array<import("./hardwareCatalog.js").PcComponents|null>;
   /** GPU por computador; ausente em saves anteriores. */
-  pcGpus?: Array<"gpu05"|"gpu07"|"gpu09"|"gpu11"|"gpu13"|null>;
+  pcGpus?: Array<import("./gpuCatalog.js").GpuId|null>;
   pcLcdModels?: Array<"lcd05"|"lcd08"|"lcd12"|"lcd17"|"lcd24"|null>;
   /** Contrato de atacado opcional para saves antigos: 1 padrão, 2 parceiro. */
   supplierTier?: 1 | 2;
