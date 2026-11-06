@@ -12,7 +12,7 @@ import {buyPs1Disc,buyPs1Station,ps1PlacementSlots} from "../dist/js/sim/ps1.js"
 const root=resolve(import.meta.dirname,"../dist");
 const output=resolve(process.argv[2]??"out/forge-ps1");
 await mkdir(output,{recursive:true});
-const game=createGame(303,"historical");
+const game=createGame(303,"historical");delete game.topGamesUnlockMode;
 game.totalMinutes=(2002-1998)*360*DAY_MINUTES+12;
 game.cash=5000;
 for(let i=0;i<2;i++){
