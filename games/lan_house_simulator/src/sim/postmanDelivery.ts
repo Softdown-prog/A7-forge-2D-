@@ -104,18 +104,39 @@ export function tickPostman(s:GameState):void{
   job.moving=false;
   job.progress++;
   if(job.progress>=POSTMAN_HANDOFF_MINUTES){
-   const magazine=LINUX_MAGAZINE_TITLES[job.issueIndex];
-   const letter=nextLinuxLetter(s);
-   if(magazine&&letter?.id===magazine.id&&s.cash>=LINUX_MAGAZINE_ISSUE_COST){
-    const before=s.linuxMagazineIssuesReceived??0;
-    recordLinuxMail(s,magazine.id);
-    if(s.linuxMagazineIssuesReceived===before+1){
-     deliverLinuxMagazineNotice(s,letter.id,letter.title,
-      letter.body.replace("A nova revista impressa chegou da banca!",
-       "O carteiro veio até o balcão, tirou o exemplar da bolsa e o entregou a Tony!"));
-     s.eventLog.unshift("D"+linuxDay(s)+" · Carteiro entregou a revista "+
-       (before+1)+"/6 a Tony · R$ "+LINUX_MAGAZINE_ISSUE_COST+".");
-     s.eventLog.splice(14);
+   if(job.magazine==="top-games"){
+    const issue=TOP_GAMES_ISSUES[job.issueIndex];
+    // Recheck at the physical handoff: pausing or spending the cash
+    // while the postman walks must cancel this delivery without cost.
+    if(issue&&issue.id===job.issueId){
+     const paid=receiveTopGamesIssue(s,issue.id);
+     if(paid.ok){
+      const count=s.topGamesReceivedIssues?.length??0;
+      deliverTopGamesMagazineNotice(s,issue.id,
+       "Top Games · edição "+count+"/"+TOP_GAMES_ISSUES.length+" — "+issue.gameTitle,
+       "O carteiro entrou na lan house e entregou a nova revista Top Games a Tony! "+
+       "Nesta edição ele conheceu "+issue.gameTitle+" ("+issue.platform.toUpperCase()+
+       "). Para oferecer o jogo, ainda será preciso comprar a mídia física na loja.");
+      s.eventLog.unshift("D"+linuxDay(s)+" · Carteiro entregou Top Games "+
+       count+"/"+TOP_GAMES_ISSUES.length+": "+issue.gameTitle+
+       " · R$ "+topGamesIssuePrice(s).toFixed(2)+".");
+      s.eventLog.splice(14);
+     }
+    }
+   }else{
+    const magazine=LINUX_MAGAZINE_TITLES[job.issueIndex];
+    const letter=nextLinuxLetter(s);
+    if(magazine&&letter?.id===magazine.id&&s.cash>=LINUX_MAGAZINE_ISSUE_COST){
+     const before=s.linuxMagazineIssuesReceived??0;
+     recordLinuxMail(s,magazine.id);
+     if(s.linuxMagazineIssuesReceived===before+1){
+      deliverLinuxMagazineNotice(s,letter.id,letter.title,
+       letter.body.replace("A nova revista impressa chegou da banca!",
+        "O carteiro veio até o balcão, tirou o exemplar da bolsa e o entregou a Tony!"));
+      s.eventLog.unshift("D"+linuxDay(s)+" · Carteiro entregou a revista "+
+        (before+1)+"/6 a Tony · R$ "+LINUX_MAGAZINE_ISSUE_COST+".");
+      s.eventLog.splice(14);
+     }
     }
    }
    job.phase="leaving";job.progress=0;job.route=undefined;job.target=undefined;
