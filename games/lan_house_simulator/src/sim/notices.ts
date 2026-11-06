@@ -5,9 +5,10 @@ import type {StoryNoticeId} from "./storyEvents.js";
 import {ERIC_FIRST_MAIL_ID,ERIC_FIRST_MAIL_TITLE,ERIC_FIRST_MAIL_BODY,ericFirstMailDue,
  ERIC_SECOND_MAIL_ID,ERIC_SECOND_MAIL_TITLE,ERIC_SECOND_MAIL_BODY,ericSecondMailDue} from "./ericStory.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
+import {duePs2ReleaseAnnouncement,recordPs2ReleaseMail,type Ps2ReleaseNoticeId} from "./ps2ReleaseMail.js";
 import {nextLinuxLetter,recordLinuxMail,isLinuxPc,type LinuxMailId} from "./linuxQuest.js";
 import {isSporadicMailId,sporadicMailDue,recordMailDelivery,fixedYearMailWindowDue} from "./mailCalendar.js";
-export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId|LinuxMailId;
+export type NoticeId="safety"|"windows"|"games"|"copyright"|"windows-fine"|"y2k-warning"|typeof ERIC_FIRST_MAIL_ID|typeof ERIC_SECOND_MAIL_ID|DecisionId|StoryNoticeId|LinuxMailId|Ps2ReleaseNoticeId;
 export interface GameNotice {
  id:NoticeId; title:string; body:string; day:number; read:boolean; resolved?:string; severity:"info"|"warning"|"urgent";
 }
@@ -58,6 +59,13 @@ export function reviewNotices(s:GameState):void{
    deliver(s,"y2k-warning","Especial de 1999: o Bug do Milênio",
      "Dezembro de 1999. O ano 2000 está chegando e o bairro inteiro comenta sobre o Bug do Milênio! Alguns computadores e programas antigos podem confundir 2000 com 1900. Antes da virada, faça cópias de segurança, confira o relógio e a data das máquinas e verifique os programas. Se algum PC precisar de reinstalação, programe sua formatação depois do expediente, com a estação desocupada e desligada. Não é preciso formatar todos: o importante é verificar a compatibilidade. Que venha o ano 2000!","info");
    s.y2kNoticeDelivered=true;
+ }
+ // Novos CDs do PS2: duas novidades por ano, sem entregar cartas antigas em lote.
+ // O calendário da loja continua sendo autoridade para desbloqueio e preço.
+ const release=duePs2ReleaseAnnouncement(s);
+ if(release){
+  deliver(s,release.id,release.title,release.body,"info");
+  recordPs2ReleaseMail(s,release.year);
  }
  // Notificação única: a multa por prazo vencido não substitui regularização.
  if(s.electricalDeadlineDay!==undefined&&d>s.electricalDeadlineDay&&
