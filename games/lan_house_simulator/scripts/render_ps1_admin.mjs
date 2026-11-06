@@ -66,7 +66,7 @@ try{
   if(oldPrice===nextPrice)throw Error("Preço da hora PS1 não muda ao clicar");
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await selectTask(page,"consoles","discs");await page.locator("#ps1-open-shop").click();
-  await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===5);
+  await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===7);
   // O comprador não deve encontrar coordenadas do Canvas em nenhum seletor.
   // Os valores de option continuam sendo os IDs técnicos, apenas o texto muda.
   const placements=await page.locator('#ps1-placement option').evaluateAll(options=>
