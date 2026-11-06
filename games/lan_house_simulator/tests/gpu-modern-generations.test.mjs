@@ -8,6 +8,7 @@ import {validGpuIds} from "../dist/js/sim/gpuCatalog.js";
 import {buyPart,buyPlatform,hardwareFor,requiredPsuWatts} from "../dist/js/sim/hardware.js";
 import {energyCostPerMinute} from "../dist/js/sim/economy.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
+import {windowsInstallFor,finishWindowsInstallations} from "../dist/js/sim/windowsInstallation.js";
 import {GPU_GAME_CATALOG,gpuGameCompatible} from "../dist/js/sim/gpuGames.js";
 import {createGpuCatalogPort} from "../dist/js/application/gpuCatalogPort.js";
 import {withStationOff} from "./station-power-fixture.mjs";
@@ -105,6 +106,8 @@ test("2025 GPU still supports previously licensed 2013-era GPU games",()=>{
  const s=ready(2025);
  accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform24")));
  accept(withStationOff(s,0,()=>licenseWindows(s,0,"win11")));
+ const setup=windowsInstallFor(s,0);assert.ok(setup);
+ assert.equal(finishWindowsInstallations(s,setup.finishedAtMs).length,1);
  accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu25")));
  assert.equal(gpuGameCompatible(s,0,GPU_GAME_CATALOG[2]),true);
  assert.equal(isValidSave(s),true);

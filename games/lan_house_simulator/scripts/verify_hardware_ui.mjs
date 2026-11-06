@@ -18,7 +18,8 @@ try{
   const context=await browser.newContext({viewport:{width,height:950}}),s=createGame();
   s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=10000;s.licensedGames=true;s.contentFilterInstalled=true;s.pcWindowsLicenses=[true,true,true];
   await context.addInitScript(({key,state})=>{if(!localStorage.getItem(key))localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");},{key:GAME_SAVE_KEY,state:s});
-  const page=await context.newPage();page.on("pageerror",e=>errors.push(String(e)));
+  const page=await context.newPage();await page.clock.install({time:new Date()});
+  page.on("pageerror",e=>errors.push(String(e)));
   page.on("response",r=>{if(r.status()>=400)errors.push(r.status()+" "+r.url());});
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
   const open=async()=>{await page.locator("#menu-continue").click();await page.locator("#open-admin").click();await selectAdminArea(page,'computers');};
@@ -61,6 +62,28 @@ try{
    await selectTask(page,"computers","windows");
    assert.equal(await page.locator('[data-win-pc="1"][data-win-edition="win11"]').isEnabled(),true);
    await click('[data-win-pc="1"][data-win-edition="win11"] .ui-icon');
+   const pending=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(pending.windowsInstallJobs?.[0]?.edition,"win11");
+   assert.notEqual(pending.pcWindows?.[1],"win11","Payment does not instantly install Windows 11");
+   assert.equal(await page.locator("#hardware-power-1").isDisabled(),true);
+   assert.ok(await page.locator(".windows-install-status progress").count()>=1);
+   // Advance the real-browser clock without waiting eighty actual minutes.
+   // Allow a safety margin beyond the deadline and execute interval callbacks
+   // deterministically: fastForward jumps time, runFor drives scheduled timers.
+   await page.clock.fastForward(81*60*1000);
+   await page.clock.runFor(1500);
+   const persisted=await page.evaluate(key=>{
+    const save=JSON.parse(localStorage.getItem(key)||"{}");
+    return {now:Date.now(),windows:save.pcWindows?.[1],
+     jobs:save.windowsInstallJobs??[],off:save.pcPoweredOff?.[1],
+     license:save.pcWindowsLicenses?.[1]};
+   },GAME_SAVE_KEY);
+   assert.equal(persisted.windows,"win11",
+    "Windows did not finalize after wall-clock deadline: "+JSON.stringify(persisted));
+   assert.equal(persisted.jobs.length,0,
+    "Completed Windows install must not remain in save: "+JSON.stringify(persisted));
+   assert.equal(persisted.off,true,"PC remains off after Windows installation");
+   // Completion leaves the PC off. Re-enable it explicitly for customer sessions.
    await selectTask(page,"computers","hardware");
    await click('[data-hardware-tab="ram"] .ui-icon');await click('[data-hardware-part="ram64d5"] .ui-icon');
    await click('[data-hardware-tab="storage"] .ui-icon');await click('[data-hardware-part="nvme4000"] .ui-icon');

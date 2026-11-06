@@ -6,6 +6,8 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {hardwareFor,buildParts,buildIssues,buyPart,buyPlatform,quotePart,quotePlatform,componentSatisfactionBonus,
  HARDWARE_CATALOG,PLATFORM_KITS,windowsHardwareIssues,requiredPsuWatts} from "../dist/js/sim/hardware.js";
 import {licenseWindows,installedWindows,WINDOWS_ERAS} from "../dist/js/sim/era.js";
+import {windowsInstallFor,finishWindowsInstallations} from "../dist/js/sim/windowsInstallation.js";
+import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {upgradeComputer,energyCostPerMinute,hardwareSatisfactionBonus} from "../dist/js/sim/economy.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
@@ -14,6 +16,11 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 const year=(s,y)=>s.totalMinutes=(y-1998)*360*DAY_MINUTES;
 const state=(y=2024)=>{const s=createGame();s.cash=50000;year(s,y);return s;};
 const act=r=>assert.equal(r.ok,true,r.message);
+function finishWindows(s,pc,boot=false){
+ const job=windowsInstallFor(s,pc);assert.ok(job);
+ assert.equal(finishWindowsInstallations(s,job.finishedAtMs).length,1);
+ if(boot)act(toggleStationPower(s,pc));
+}
 test("Windows 98 mostra a máquina inicial concreta; leitura não muda o save",()=>{
  const s=createGame(),before=structuredClone(s),p=buildParts(hardwareFor(s,0));
  assert.equal(p.cpu.mhz,350);assert.equal(p.cpu.cores,1);assert.equal(p.ram.ramMb,64);
@@ -89,10 +96,13 @@ test("migração preserva capacidade de RAM e disco, com preço explícito de me
  assert.equal(disk.pcComponents[0].storage,"hd1000");assert.equal(buildParts(hardwareFor(disk,0)).storage.capacityGb,1000);
 });
 test("Windows 98 a 11: requisitos, lançamento e licença continuam por PC",()=>{
- const s=state(2001);act(withStationOff(s,0,()=>licenseWindows(s,0,"winxp")));assert.equal(installedWindows(s,0),"winxp");assert.equal(installedWindows(s,1),"win98");
+ const s=state(2001);act(withStationOff(s,0,()=>licenseWindows(s,0,"winxp")));assert.equal(installedWindows(s,0),"win98");
+ finishWindows(s,0);assert.equal(installedWindows(s,0),"winxp");assert.equal(installedWindows(s,1),"win98");
  year(s,2007);const before=structuredClone(s);assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"winvista")).ok,false);assert.deepEqual(s,before);
  year(s,2021);assert.ok(windowsHardwareIssues(s,1,"win11").length>=3);assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"win11")).ok,false);
- act(withStationOff(s,1,()=>buyPlatform(s,1,"platform17")));act(withStationOff(s,1,()=>licenseWindows(s,1,"win11")));assert.deepEqual(windowsHardwareIssues(s,1,"win11"),[]);
+ act(withStationOff(s,1,()=>buyPlatform(s,1,"platform17")));act(withStationOff(s,1,()=>licenseWindows(s,1,"win11")));
+ assert.equal(installedWindows(s,1),"win98");finishWindows(s,1);
+ assert.deepEqual(windowsHardwareIssues(s,1,"win11"),[]);
  assert.equal(installedWindows(s,0),"winxp");assert.equal(installedWindows(s,2),"win98");
  assert.equal(s.pcWindowsLicenses[1],true);const again=structuredClone(s);assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"win11")).ok,false);assert.deepEqual(s,again);
  assert.deepEqual(WINDOWS_ERAS.map(e=>e.id),["win98","win2000","winxp","winvista","win7","win8","win10","win11"]);
@@ -116,13 +126,19 @@ test("save mantém fichas e novos Windows e rejeita combinações inválidas",()
 });
 test("ficha do anexo é deslocada junto com Windows/GPU após comprar PC original",()=>{
  const s=state();s.roomExtensions={west:1,east:0,south:0,north:0};act(installAnnexComputer(s,availableAnnexComputers(s)[0].id));
- act(withStationOff(s,3,()=>buyPlatform(s,3,"platform17")));act(withStationOff(s,3,()=>licenseWindows(s,3,"win11")));const old=hardwareFor(s,3);
- s.expansionLevel=1;act(buyComputer(s));assert.deepEqual(hardwareFor(s,4),old);assert.equal(installedWindows(s,4),"win11");
+ act(withStationOff(s,3,()=>buyPlatform(s,3,"platform17")));act(withStationOff(s,3,()=>licenseWindows(s,3,"win11")));
+ const old=hardwareFor(s,3),pending=windowsInstallFor(s,3);assert.ok(pending);
+ s.expansionLevel=1;act(buyComputer(s));assert.deepEqual(hardwareFor(s,4),old);
+ assert.equal(windowsInstallFor(s,3),null);
+ assert.equal(windowsInstallFor(s,4)?.finishedAtMs,pending.finishedAtMs);
+ assert.equal(installedWindows(s,4),"win98");finishWindows(s,4);
+ assert.equal(installedWindows(s,4),"win11");
  assert.deepEqual(hardwareFor(s,3),PLATFORM_KITS[0].components);assert.equal(installedWindows(s,3),"win98");
  s.roomExtensions.west=2;act(installAnnexComputer(s,availableAnnexComputers(s)[0].id));assert.deepEqual(hardwareFor(s,5),PLATFORM_KITS[0].components);
 });
 test("configuração moderna participa de uso, energia e contabilidade reais",()=>{
  const s=state();const capital=s.cash;act(withStationOff(s,1,()=>buyPlatform(s,1,"platform24")));act(withStationOff(s,1,()=>licenseWindows(s,1,"win11")));
+ finishWindows(s,1,true);
  assert.ok(componentSatisfactionBonus(s,1)>componentSatisfactionBonus(s,0));assert.ok(energyCostPerMinute(s,1)>0);
  for(let minute=0;minute<720*3;minute+=120)stepGame(s,120);
  assert.ok(s.served>0);assert.equal(s.cash,capital+s.revenue-s.expenses);

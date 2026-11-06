@@ -7,6 +7,7 @@ import {workPhaseLabel} from "../sim/staffPresentation.js";
 import {serviceVisitCost} from "../sim/historicalEconomy.js";
 import {gameYear} from "../sim/era.js";
 import {isLinuxPc} from "../sim/linuxQuest.js";
+import {windowsInstallProgress} from "../sim/windowsInstallation.js";
 
 export interface PcOperationRow {
  index:number;
@@ -60,7 +61,7 @@ export function createPcOperationsPort(getState:()=>GameState):PcOperationsPort{
    const game=getState(),year=gameYear(game);
    return Array.from({length:pcCount(game)},(_,i)=>{
     const wear=pcWear(game,i),isOn=stationPoweredOn(game,i),busy=stationHasCustomer(game,i);
-    const job=game.repairJobs?.find(j=>j.pc===i);
+    const job=game.repairJobs?.find(j=>j.pc===i),installation=windowsInstallProgress(game,i);
     const tier=game.pcTiers?.[i]??1,hardwareYear=tier===1?2000:2003;
     const repairLabel=job?
      "Técnico · "+workPhaseLabel("technician",job)+(job.phase==="working"?" · "+Math.floor(job.progress/job.duration*100)+"%":""):
@@ -70,17 +71,19 @@ export function createPcOperationsPort(getState:()=>GameState):PcOperationsPort{
      index:i,poweredOn:isOn,
      label:"PC "+(i+1)+" · "+(isOn?"LIGADO":"DESLIGADO")+
       " · desgaste "+Math.round(wear)+"%"+(pcBroken(game,i)?" · MANUTENÇÃO":"")+
-      " · hardware nível "+tier+(isLinuxPc(game,i)?" · Linux":" · Windows"),
+      " · hardware nível "+tier+(isLinuxPc(game,i)?" · Linux":" · Windows")+
+      (installation?" · INSTALANDO "+installation.name+" "+installation.percent+"%":""),
      powerLabel:isOn?"Desligar estação":"Ligar estação",
-     powerDisabled:isOn?busy:!!game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving"),
-     powerTitle:isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?
+     powerDisabled:!!installation||(isOn?busy:!!game.repairJobs?.some(j=>j.pc===i&&j.phase!=="leaving")),
+     powerTitle:installation?"Aguarde a instalação do Windows terminar.":isOn&&busy?"Aguarde o cliente sair para desligar.":isOn?
       "Economize energia e libere atualizações.":"Religue para receber clientes.",
      repairLabel,
-     repairDisabled:wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage)),
-     progress:job?{max:job.duration,value:job.progress,ariaLabel:"Reparo do PC "+(i+1)}:null,
+     repairDisabled:!!installation||wear<1||!!job||game.customers.some(c=>c.pcIndex===i&&["using","sitting","standing","to_pc"].includes(c.stage)),
+     progress:job?{max:job.duration,value:job.progress,ariaLabel:"Reparo do PC "+(i+1)}:
+      installation?{max:100,value:installation.percent,ariaLabel:"Instalação de "+installation.name+" no PC "+(i+1)}:null,
      upgradeLabel:tier>=3?"Ver Peças e configuração":
       "Kit CRT "+hardwareYear+" · "+(year<hardwareYear?"🔒 "+hardwareYear:"R$ "+(tier*240)),
-     upgradeDisabled:tier>=3||year<hardwareYear||game.cash<tier*240||isOn||busy||!!job
+     upgradeDisabled:!!installation||tier>=3||year<hardwareYear||game.cash<tier*240||isOn||busy||!!job
     };
    });
   }

@@ -11,5 +11,11 @@ export function withStationOff(s,index,action){
  const shutdown=toggleStationPower(s,index);
  if(!shutdown.ok)throw Error(shutdown.message);
  try{return action();}
- finally{if(had)s.pcPoweredOff=saved;else delete s.pcPoweredOff;}
+ finally{
+  // A real Windows setup must remain physically OFF after a successful purchase.
+  // Restoring the former power state would create an invalid/unsafe save.
+  if(!s.windowsInstallJobs?.some(job=>job.pc===index)){
+   if(had)s.pcPoweredOff=saved;else delete s.pcPoweredOff;
+  }
+ }
 }

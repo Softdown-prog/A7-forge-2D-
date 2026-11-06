@@ -1292,3 +1292,8 @@ html:not([data-game-ready="true"]) #react-quick-deck{visibility:hidden}
 .react-shop-no-match{margin:0!important;flex:0 0 100%;color:#71583e;font-size:12px}
 #shop-catalog>.shop-card[hidden]{display:none!important}
 @media(max-width:700px){.react-shop-search{padding:11px;gap:7px}.react-shop-search-count{flex:0 0 100%}}
+
+/* Installation countdown is a native progress element, shared by Windows and maintenance panels. */
+.windows-install-status{padding:10px 14px;margin:10px 0;border:1px solid #729282;border-radius:6px;background:rgba(20,50,46,.65)}
+.windows-install-status p{margin:6px 0;color:inherit;font-size:.9rem}
+.windows-install-status progress{display:block;width:100%;height:13px;accent-color:#7ec3a0}

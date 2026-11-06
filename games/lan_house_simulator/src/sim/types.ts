@@ -175,6 +175,7 @@ export interface GameState {
   pcWindows?: Array<"win98"|"win2000"|"winxp"|"winvista"|"win7"|"win8"|"win10"|"win11">;
   /** Licenças pagas por PC; saves anteriores mantêm o Windows 98 preinstalado. */
   pcWindowsLicenses?: boolean[];
+  windowsInstallJobs?: import("./windowsInstallation.js").WindowsInstallJob[];
   internetTier: number;
   offlineUntil: number;
   licensedGames: boolean;

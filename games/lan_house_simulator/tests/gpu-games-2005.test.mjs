@@ -9,6 +9,8 @@ import {licenseGames,sessionRevenue} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
+import {windowsInstallFor,finishWindowsInstallations} from "../dist/js/sim/windowsInstallation.js";
+import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
 import {
  GPU_GAME_CATALOG,quoteGpuGame,licenseGpuGame,gpuGameEligiblePcs,
@@ -18,6 +20,11 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 function year(s,y){s.totalMinutes=(y-1998)*360*DAY_MINUTES;}
 function accept(result,what){assert.equal(result.ok,true,what+": "+result.message);}
+function finishWindowsAndBoot(s,pc){
+ const job=windowsInstallFor(s,pc);assert.ok(job);
+ assert.equal(finishWindowsInstallations(s,job.finishedAtMs).length,1);
+ accept(toggleStationPower(s,pc),"turn PC on after setup");
+}
 function setup(y=2005,pc=1){
  const s=createGame(9,"historical");
  s.cash=25000;year(s,y);
@@ -25,6 +32,10 @@ function setup(y=2005,pc=1){
  accept(withStationOff(s,pc,()=>buyPlatform(s,pc,"platform05")),"platform 2024");
  accept(withStationOff(s,pc,()=>buyGpu(s,pc,"gpu05")),"GPU");
  accept(withStationOff(s,pc,()=>licenseWindows(s,pc,"winxp")),"Windows");
+ const job=windowsInstallFor(s,pc);
+ assert.ok(job);
+ assert.equal(finishWindowsInstallations(s,job.finishedAtMs).length,1);
+ accept(toggleStationPower(s,pc),"start after OS installation");
  return s;
 }
 test("catálogo GPU exige 2005, licenciamento básico e pelo menos uma máquina compatível",()=>{
@@ -78,6 +89,10 @@ test("níveis adicionais exigem GPU/Windows; título bloqueado não gera licenç
  accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"plataforma 2008");
  accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU 2009");
  accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows 7");
+ const win7=windowsInstallFor(s,0);
+ assert.ok(win7);
+ assert.equal(finishWindowsInstallations(s,win7.finishedAtMs).length,1);
+ accept(toggleStationPower(s,0),"reopen after Windows 7");
  assert.equal(quoteGpuGame(s,"circuito-competitivo").ok,true);
  accept(licenseGpuGame(s,"circuito-competitivo"),"2009");
  const quote=quoteGpuGame(s,"arena-do-futuro");
@@ -190,6 +205,7 @@ test("preços de títulos diferentes respeitam o bônus da licença pedida, nunc
  accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"platform");
  accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU");
  accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows");
+ finishWindowsAndBoot(s,0);
  accept(licenseGpuGame(s,"circuito-competitivo"),"circuito");
  const neon=gpuGameHourlyRate(s,0,"neon-rush");
  const circuit=gpuGameHourlyRate(s,0,"circuito-competitivo");
@@ -221,6 +237,7 @@ test("NPC procura sua licença específica, mesmo quando outro PC roda título d
  accept(withStationOff(s,0,()=>buyPlatform(s,0,"platform08")),"plataforma circuito");
  accept(withStationOff(s,0,()=>buyGpu(s,0,"gpu09")),"GPU circuito");
  accept(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows circuito");
+ finishWindowsAndBoot(s,0);
  accept(licenseGpuGame(s,"circuito-competitivo"),"circuito");
  assert.equal(gpuGamePlayableOnPc(s,0,"neon-rush"),true,
   "PC moderno também consegue executar jogo antigo");

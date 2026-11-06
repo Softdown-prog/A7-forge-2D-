@@ -22,7 +22,16 @@ export function renderWindowsLicensePanel(panel:HTMLElement,port:WindowsLicenseP
    linux.title=row.linuxAction.title;
    choices.appendChild(linux);
   }
-  line.append(title,choices);next.appendChild(line);
+  line.append(title);
+  if(row.installation){
+   const box=document.createElement("div");box.className="windows-install-status";
+   const info=document.createElement("p");info.textContent="Instalando "+row.installation.name+" · "+
+    row.installation.percent+"% · "+Math.ceil(row.installation.remainingSeconds/60)+" min reais restantes";
+   const meter=document.createElement("progress");meter.max=100;meter.value=row.installation.percent;
+   meter.setAttribute("aria-label","Instalação de "+row.installation.name+" no PC "+(row.index+1));
+   box.append(info,meter);line.append(box);
+  }
+  line.append(choices);next.appendChild(line);
  }
  syncPanelChildren(panel,next);
 }
