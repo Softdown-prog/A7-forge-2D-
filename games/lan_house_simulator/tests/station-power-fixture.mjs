@@ -14,7 +14,8 @@ export function withStationOff(s,index,action){
  finally{
   // A real Windows setup must remain physically OFF after a successful purchase.
   // Restoring the former power state would create an invalid/unsafe save.
-  if(s.windowsInstallJobs?.some(job=>job.pc===index))return;
-  if(had)s.pcPoweredOff=saved;else delete s.pcPoweredOff;
+  if(!s.windowsInstallJobs?.some(job=>job.pc===index)){
+   if(had)s.pcPoweredOff=saved;else delete s.pcPoweredOff;
+  }
  }
 }
