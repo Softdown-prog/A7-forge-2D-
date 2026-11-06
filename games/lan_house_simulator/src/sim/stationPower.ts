@@ -1,4 +1,5 @@
 import type {GameState,Result} from "./types.js";
+import {windowsInstallFor} from "./windowsInstallation.js";
 /** Saves antigos sem campo de energia mantêm todas as estações ligadas. */
 export function stationPoweredOn(s:Partial<GameState>,index:number):boolean{return s.pcPoweredOff?.[index]!==true;}
 export function validStationPower(s:Partial<GameState>):boolean{
@@ -15,6 +16,7 @@ export function stationReadyForSessions(s:GameState,index:number):boolean{
  if((s.pcWear?.[index]??0)>=100)return false;
  if(s.repairJobs?.some(job=>job.pc===index&&job.phase!=="leaving"))return false;
  if(s.gpuGameInstallJobs?.some(job=>job.pc===index))return false;
+ if(windowsInstallFor(s,index))return false;
  return true;
 }
 export function stationPowerCount(s:GameState):number{
@@ -30,6 +32,7 @@ export function stationUpgradeIssue(s:GameState,index:number):string|null{
  if(stationHasCustomer(s,index))return "Aguarde o cliente liberar esta estação.";
  if(stationPoweredOn(s,index))return "Desligue o PC "+(index+1)+" antes de atualizar.";
  if(s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving"))return "Aguarde o técnico concluir o reparo.";
+ if(windowsInstallFor(s,index))return "Aguarde a instalação do Windows terminar.";
  return null;
 }
 export function toggleStationPower(s:GameState,index:number):Result{
@@ -43,6 +46,7 @@ export function toggleStationPower(s:GameState,index:number):Result{
  }
  if(s.repairJobs?.some(j=>j.pc===index&&j.phase!=="leaving"))
   return {ok:false,message:"Aguarde a manutenção terminar antes de religar este PC."};
+ if(windowsInstallFor(s,index))return {ok:false,message:"Windows está instalando no PC "+(index+1)+". Aguarde para ligar."};
  s.pcPoweredOff=Array.from({length:stationPowerCount(s)},(_,i)=>s.pcPoweredOff?.[i]===true);
  s.pcPoweredOff[index]=false;
  return {ok:true,message:"PC "+(index+1)+" ligado e disponível para clientes."};
