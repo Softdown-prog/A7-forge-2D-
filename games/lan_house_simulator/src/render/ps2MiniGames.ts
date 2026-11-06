@@ -1,4 +1,4 @@
-/** Five original PS2-era visual loops; display-only, never interactive gameplay.
+/** Original PS2-era visual loops; display-only, never interactive gameplay.
  * Coordinates belong to the TV viewport [0,1], independent of zoom or FPS.
  */
 import type {Ps2GameId} from "../sim/ps2.js";
@@ -48,7 +48,7 @@ export function drawPs2MiniGame(pixel:ScreenPixel,id:Ps2GameId,seconds:number):v
   p(ship,.62,.20,.13,"#a1f4f0");p(ship+.07,.52,.06,.12,"#f5fff1");
   p(ship+.035,.76,.048,.11,"#e7b779");p(ship+.12,.76,.048,.11,"#e7b779");
   p((phase*.025)%1,.17,.08,.10,"#ff9aab");
- }else{
+ }else if(id==="batida-de-rua"){
   p(0,0,1,1,"#323269");p(0,.76,1,.24,"#695d92");
   for(let i=0;i<4;i++){
    p(.13+i*.20,.06,.165,.80,i%2?"#6477b3":"#4b629a");
@@ -56,7 +56,83 @@ export function drawPs2MiniGame(pixel:ScreenPixel,id:Ps2GameId,seconds:number):v
    p(.15+i*.20,y,.12,.08,["#8affdb","#ffd58b","#eeaaff","#b5dafa"][i]!);
   }
   p(.10,.82,.80,.032,"#e7eee6");p(.14,.91,.22,.04,"#b6e4de");
+
   p(.55,.91,.23,.04,"#f4d79c");
+ }else{
+  // Ten yearly originals. Each shares the TV viewport but draws its own
+  // distinctive environment and moving focal action.
+  const palettes:Record<string,readonly [string,string,string]>={
+   "pistas-da-montanha":["#406e8d","#9ac5d5","#fdb66c"],
+   "templo-da-aurora":["#6a527b","#efcb8d","#a7e8d9"],
+   "robos-da-fronteira":["#253c62","#5c8aaa","#85ecd3"],
+   "misterio-do-farol":["#1c3d56","#6a94a5","#f6e1aa"],
+   "lendas-do-vulcao":["#4f2941","#d27868","#ffcf8b"],
+   "volei-na-praia":["#58aeb4","#f4cb8e","#9ae6e3"],
+   "corrida-no-gelo":["#709eaf","#ddf6ff","#69dbe5"],
+   "cidade-dos-inventores":["#625277","#c8a887","#f9d187"],
+   "guardioes-do-oceano":["#106a84","#5db3ac","#bcf9e6"],
+   "batidas-do-futuro":["#2d285c","#907ac4","#e899e7"]
+  };
+  const [dark,light,accent]=palettes[id]??["#25344d","#8ba9bd","#ffe3af"];
+  p(0,0,1,1,dark);p(0,.12,1,.30,light);
+  for(let i=0;i<7;i++)p(i*.16,.14+(i%3)*.05,.095,.13,i%2?"#446481":"#385772");
+  p(0,.73,1,.27,"#253849");
+  for(let i=0;i<5;i++)p(i*.23,.84,.10,.028,"#9cc4c9");
+  const move=Math.sin(tick*.14)*.13,beat=Math.cos(tick*.19)*.08;
+  if(id==="pistas-da-montanha"||id==="corrida-no-gelo"){
+   p(0,.39,1,.57,id==="corrida-no-gelo"?"#92b7c6":"#5a6076");
+   p(.47,.40,.06,.58,"#faf1cd");
+   p(.20+move,.69,.35,.17,accent);p(.28+move,.62,.19,.08,"#d9f9f9");
+   dot(.24+move,.83,"#192a3c",.07);dot(.46+move,.83,"#192a3c",.07);
+   for(let i=0;i<4;i++)p(i*.28,.20,.15,.21,id==="corrida-no-gelo"?"#eaffff":"#628094");
+  }else if(id==="templo-da-aurora"){
+   p(.15,.29,.70,.50,"#cfb392");p(.12,.25,.76,.10,"#fce5ae");
+   for(let i=0;i<5;i++)p(.18+i*.13,.31,.055,.40,"#6f6282");
+   p(.43+move,.58,.14,.19,"#a6f0db");dot(.48+move,.50,"#ffeacc",.08);
+  }else if(id==="robos-da-fronteira"){
+   p(.12+move,.41,.22,.36,"#79ead9");p(.17+move,.33,.12,.14,"#e9f5e4");
+   p(.66-move,.41,.22,.36,"#e6a4c6");p(.70-move,.33,.12,.14,"#f7f0d2");
+   p(.20+move,.37,.045,.035,"#fff0ac");p(.74-move,.37,.045,.035,"#fff0ac");
+   p(.36,.45+beat,.27,.06,"#f0db9a");
+  }else if(id==="misterio-do-farol"){
+   p(.46,.22,.11,.56,"#f2dcba");p(.44,.19,.15,.075,"#ffe2aa");
+   p(.48,.12,.07,.10,"#223e5c");
+   p(.50,.17,.50,.10,"#fff8c099");
+   for(let i=0;i<5;i++)p(i*.23,.81+beat,.12,.025,"#d8f9ed");
+   dot(.25+move,.69,"#fef6d1",.085);
+  }else if(id==="lendas-do-vulcao"){
+   p(.29,.27,.42,.51,"#714454");p(.41,.19,.18,.30,"#ff9564");
+   for(let i=0;i<6;i++)dot((.15+i*.15+move*.4)%1,.42+(i%3)*.07,"#ffd48b",.046);
+   p(.38+move,.62,.16,.14,"#a4c1c5");dot(.45+move,.55,"#fbecdd",.08);
+  }else if(id==="volei-na-praia"){
+   p(0,.39,1,.13,"#58b8c3");p(0,.52,1,.48,"#edd098");
+   p(.49,.35,.025,.54,"#f7f9dc");p(.12,.39,.76,.022,"#f7f9dc");
+   for(let i=0;i<5;i++)p(.12,.42+i*.065,.76,.012,"#fff8d2");
+   dot(.30+move,.65,"#f59b82",.12);dot(.70-move,.65,"#a6edf1",.12);
+   dot(.46+move,.28+beat,"#fff4d4",.09);
+  }else if(id==="cidade-dos-inventores"){
+   for(let i=0;i<5;i++)p(i*.23,.25,.12,.46,"#676382");
+   for(const [x,y,size] of [[.24,.50,.18],[.56,.43,.15],[.44,.65,.13]] as const){
+    dot(x+move*.15,y,accent,size);dot(x+size*.27+move*.15,y+size*.28,"#5a617d",size*.48);
+   }
+   dot(.45+move,.29,"#a6f5e9",.085);
+  }else if(id==="guardioes-do-oceano"){
+   p(0,.39,1,.58,"#276c82");
+   for(let i=0;i<6;i++)dot((i*.21+phase*.002)%1,.18+(i%3)*.17,"#e1f9ef",.035);
+   p(.22+move,.60,.54,.18,"#efcf9c");p(.30+move,.53,.29,.08,"#9ce3e6");
+   for(let i=0;i<3;i++)dot(.35+i*.13+move,.64,"#b7fff2",.06);
+   dot(.82-move,.50,"#f2e99e",.095);
+  }else{
+   // Batidas do Futuro: falling notes and a bright twin-speaker rhythm track.
+   for(let i=0;i<4;i++){
+    p(.10+i*.21,.09,.15,.74,i%2?"#8e9bc9":"#56618f");
+    p(.12+i*.21,(phase*.031+i*.18)%0.74,.11,.085,["#aaffdf","#fff0b1","#f6aae9","#a9eafa"][i]!);
+   }
+   dot(.26+beat,.77,"#f9e6e0",.11);dot(.66-beat,.77,accent,.11);
+  }
+  // Two continuous HUD indicators, different from the stage palette.
+  p(.04,.06,.40,.048,"#ffdc92");p(.57,.06,.38,.048,"#c6f2f5");
+  dot(.86+beat*.4,.80,"#fff5be",.075);
  }
  // A gentle raster effect helps keep the visual style coherent across sets.
  p(0,.29,1,.012,"rgba(12,18,32,.10)");
