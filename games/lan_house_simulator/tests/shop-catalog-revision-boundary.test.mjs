@@ -19,15 +19,15 @@ function legacy(s,category){
   s.interiorWalls,s.interiorDoors,
   s.linuxResearchStartedDay,s.linuxMailSeenIds,s.pcLinuxModels,s.pcOperatingSystems];
 }
-test("projeção conserva dezessete campos originais e acrescenta quatro do Linux",()=>{
+test("projeção preserva 21 campos anteriores e acrescenta quatro campos Top Games",()=>{
  const x=fixture(),s=x.state();
- assert.deepEqual(x.port.snapshot("equipment"),legacy(s,"equipment"));
- assert.equal(x.port.snapshot("equipment").length,21);
+ assert.deepEqual(x.port.snapshot("equipment").slice(0,21),legacy(s,"equipment"));
+ assert.equal(x.port.snapshot("equipment").length,25);
 });
 test("categoria indefinida preserva undefined e posições do vetor",()=>{
  const x=fixture(),v=x.port.snapshot(undefined);
  assert.equal(v[0],undefined);
- assert.deepEqual(v,legacy(x.state(),undefined));
+ assert.deepEqual(v.slice(0,21),legacy(x.state(),undefined));
 });
 test("a categoria da loja não é normalizada nem convertida",()=>{
  const x=fixture();
@@ -107,9 +107,25 @@ test("troca de save é lida sem criar outra porta",()=>{
  const x=fixture(),old=x.state(),original=JSON.stringify(old);
  const fresh=createGame(7652,"classic");fresh.cash=7892;
  x.swap(fresh);
- assert.deepEqual(x.port.snapshot("equipment"),legacy(fresh,"equipment"));
+ assert.deepEqual(x.port.snapshot("equipment").slice(0,21),legacy(fresh,"equipment"));
  assert.equal(x.port.snapshot("equipment")[1],7892);
  assert.equal(JSON.stringify(old),original);
+});
+test("assinatura e revistas recebidas invalidam cache sem mover campos históricos",()=>{
+ const x=fixture(),old=x.port.snapshot("consoles");
+ x.state().topGamesSubscriptionDay=(2002-1998)*360+1;
+ x.state().topGamesSubscriptionActive=true;
+ x.state().topGamesReceivedIssues=[];
+ assert.equal(x.port.snapshot("consoles")[21],x.state().topGamesSubscriptionDay);
+ assert.equal(x.port.snapshot("consoles")[22],true);
+ assert.deepEqual(x.port.snapshot("consoles")[23],[]);
+ assert.equal(x.port.snapshot("consoles")[24],undefined);
+ const changed=createPanelRevisionCache();
+ assert.equal(changed("shop",old,false),true);
+ assert.equal(changed("shop",x.port.snapshot("consoles"),false),true);
+ assert.equal(changed("shop",x.port.snapshot("consoles"),false),false);
+ x.state().topGamesReceivedIssues=["top-games-ps1-turbo-circuito"];
+ assert.equal(changed("shop",x.port.snapshot("consoles"),false),true);
 });
 test("leitura repetida não modifica a partida nem o RNG",()=>{
  const x=fixture(),before=JSON.stringify(x.state());
