@@ -10,7 +10,7 @@ import {createPs1ShopDiscPort} from "../dist/js/application/ps1ShopDiscPort.js";
 import {renderPs1ShopDiscCatalog} from "../dist/js/ui/ps1ShopDiscCatalog.js";
 
 function inYear(year=2002,mode="historical"){
- const s=createGame(97001,mode);s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=10000;return s;
+ const s=createGame(97001,mode);delete s.topGamesUnlockMode;s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=10000;return s;
 }
 function station(s){
  assert.equal(buyPs1Station(s,ps1PlacementSlots(s)[0].id).ok,true);
