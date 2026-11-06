@@ -267,6 +267,8 @@ export interface GameState {
   mailSeenIds?: import("./mailCalendar.js").SporadicMailId[];
   /** Carta histórica única do Bug do Milênio, também após compactar o correio. */
   y2kNoticeDelivered?: boolean;
+  /** Anos de lançamentos PS2 notificados, únicos mesmo após limpar a caixa. */
+  ps2ReleaseMailSeenYears?: import("./ps2ReleaseMail.js").Ps2ReleaseMailYear[];
   /** Eric: carta pessoal de 2000 entregue, mesmo após compactação do correio. */
   ericFirstMailDelivered?: boolean;
   /** Carta pessoal do primo Eric em meados de 2000; registro persistente. */
