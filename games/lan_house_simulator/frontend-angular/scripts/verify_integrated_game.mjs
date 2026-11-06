@@ -226,7 +226,7 @@ try{
   }
   const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
   assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')||
-    /^\\.?\\/?assets\\/ps2\\/covers\\/[a-z0-9-]+\\.svg$/.test(src??'')),
+    ((src?.startsWith('assets/ps2/covers/')||src?.startsWith('./assets/ps2/covers/'))&&src.endsWith('.svg'))),
    'PS2 artwork must be original PNG or bundled local SVG, never external images');
   assert.equal(new Set(ps2CoverSources).size,7,'Each 2006 PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
