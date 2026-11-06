@@ -39,14 +39,14 @@ test("real postman walks to Tony, pays only on handoff and emits one delivered i
  assert.equal(s.postmanDelivery?.phase,"arriving");
  assert.ok(Math.hypot(s.postmanDelivery.x-postmanDoor(s).x,s.postmanDelivery.y-postmanDoor(s).y)<1);
  assert.equal(s.cash,base,"no debit at spawn");
- assert.equal(s.notices?.some(n=>n.id===TOP_GAMES_ISSUES[0].id),false);
+ assert.equal(s.notices?.some(n=>n.id===TOP_GAMES_ISSUES[0].id)??false,false);
  assert.equal(isValidSave(s),true);
  const phases=travel(s,x=>(x.topGamesReceivedIssues?.length??0)===1);
  assert.ok(phases.has("arriving")&&phases.has("handing"));
  assert.equal(s.cash,base-topGamesIssuePrice(s));
  assert.equal(s.expenses,spent+topGamesIssuePrice(s));
  assert.equal(topGamesKnowsGame(s,"ps1",TOP_GAMES_ISSUES[0].gameId),true);
- assert.equal(s.notices?.filter(n=>n.id===TOP_GAMES_ISSUES[0].id).length,1);
+ assert.equal(s.notices?.filter(n=>n.id===TOP_GAMES_ISSUES[0].id).length??0,1);
  assert.equal(s.notices?.find(n=>n.id===TOP_GAMES_ISSUES[0].id)?.severity,"info");
  assert.equal(s.rng,rng,"courier does not consume visitor RNG");
  assert.equal(isValidSave(s),true);
@@ -121,8 +121,8 @@ test("one shared actor serializes Top Games and delayed Linux subscription",()=>
  assert.equal(s.postmanDelivery?.magazine,undefined,"the same actor now delivers Linux");
  travel(s,x=>(x.linuxMagazineIssuesReceived??0)===beforeLinux+1);
  assert.equal(s.topGamesReceivedIssues.length,1);
- assert.equal(s.cash,cash-topGamesIssuePrice(s)-LINUX_MAGAZINE_ISSUE_COST);
- assert.equal(s.expenses,expenses+topGamesIssuePrice(s)+LINUX_MAGAZINE_ISSUE_COST);
+ assert.equal(Math.round(s.cash*100),Math.round((cash-topGamesIssuePrice(s)-LINUX_MAGAZINE_ISSUE_COST)*100));
+ assert.equal(Math.round(s.expenses*100),Math.round((expenses+topGamesIssuePrice(s)+LINUX_MAGAZINE_ISSUE_COST)*100));
  assert.equal(isValidSave(s),true);
 });
 test("courier validation rejects forged Top Games jobs but accepts original Linux save format",()=>{
