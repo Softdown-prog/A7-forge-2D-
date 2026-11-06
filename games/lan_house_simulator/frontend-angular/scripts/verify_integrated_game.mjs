@@ -212,19 +212,24 @@ try{
   // be visibly painted and fully decoded across desktop and mobile.
   const ps2Covers=shop.locator('.angular-console-grid').last().locator('img.angular-ps2-cover');
   assert.equal(await ps2Covers.count(),7,'Seven PS2 launch-year games have artwork');
-  // Canvas PNG is preferred, bundled local SVG is an intentional fallback.
-  // Require a real decoded image, not one particular browser's intrinsic SVG size.
-  try{
-   await page.waitForFunction(()=>Array.from(document.querySelectorAll(
-    '.angular-ps2-cover')).length===7 &&
-    Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
-     img.complete && img.naturalWidth>0 && img.naturalHeight>0),null,{timeout:15000});
-  }catch(error){
-   const diagnostics=await ps2Covers.evaluateAll(images=>images.map(img=>({
-    src:img.getAttribute('src')?.slice(0,90),complete:img.complete,
-    width:img.naturalWidth,height:img.naturalHeight
-   })));
-   throw new Error('PS2 covers failed to decode: '+JSON.stringify(diagnostics),{cause:error});
+  // The browser intentionally lazy-loads covers far below the PS1 catalogue.
+  // Bring every real PS2 card into view to request/paint it before checking decode.
+  // Otherwise waiting for offscreen loading="lazy" images can never complete.
+  for(let i=0;i<await ps2Covers.count();i++){
+   const image=ps2Covers.nth(i);
+   await image.scrollIntoViewIfNeeded();
+   try{
+    await image.evaluate(img=>img.decode());
+   }catch(error){
+    const diagnostic=await image.evaluate(img=>({
+     src:img.getAttribute('src')?.slice(0,100),complete:img.complete,
+     width:img.naturalWidth,height:img.naturalHeight
+    }));
+    throw new Error('PS2 cover '+i+' failed to decode: '+JSON.stringify(diagnostic),{cause:error});
+   }
+   const dimension=await image.evaluate(img=>({width:img.naturalWidth,height:img.naturalHeight}));
+   assert.ok(dimension.width>0&&dimension.height>0,
+    'PS2 cover '+i+' has no decoded dimensions: '+JSON.stringify(dimension));
   }
   const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
   assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')||
