@@ -8,6 +8,8 @@ import {toggleStationPower,stationReadyForSessions,stationUpgradeIssue} from "..
 import {createWindowsLicensePort} from "../dist/js/application/windowsLicensePort.js";
 import {createHardwarePanelPort} from "../dist/js/application/hardwarePanelPort.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {dispatchHiredStaff,startRepair} from "../dist/js/sim/services.js";
+import {hireEmployee} from "../dist/js/sim/staff.js";
 import {readFileSync} from "node:fs";
 function ready(){
  const s=createGame(682,"historical");s.cash=10000;return s;
@@ -59,6 +61,19 @@ test("simulation speed cannot finish install; wall clock finishes once and leave
  assert.equal(toggleStationPower(s,0).ok,true);
  assert.equal(stationReadyForSessions(s,0),true);
  assert.equal(isValidSave(s),true);
+});
+test("manual and automatic maintenance leave installing PCs alone",()=>{
+ const s=ready();off(s,0);
+ s.pcWear=[100,100,0];
+ begin(s,0);
+ const cash=s.cash,expenses=s.expenses;
+ assert.match(startRepair(s,0).message,/instalação do Windows/);
+ assert.equal(s.cash,cash);
+ assert.equal(s.expenses,expenses);
+ assert.equal(s.repairJobs?.length??0,0);
+ assert.equal(hireEmployee(s,"technician").ok,true);
+ dispatchHiredStaff(s);
+ assert.deepEqual(s.repairJobs?.map(job=>job.pc),[1]);
 });
 test("two PC jobs finish independently and only the correct license is enabled",()=>{
  const s=ready();off(s,0);off(s,1);

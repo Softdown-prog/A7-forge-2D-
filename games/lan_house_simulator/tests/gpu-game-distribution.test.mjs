@@ -6,9 +6,8 @@ import {licenseGames,expandShop} from "../dist/js/sim/economy.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import {licenseGpuGame,toggleGpuGameInstallation,installGpuGameOnAvailablePcs,gpuGameInstalledOnPc,gpuGamePlayableOnPc,gpuGameInstallJob,tickGpuGameInstallations,gpuGameDownloadSlots} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
@@ -25,7 +24,7 @@ function setup(){
  for(const i of [0,1,2]){
   ok(withStationOff(s,i,()=>buyPlatform(s,i,"platform05")));
   ok(withStationOff(s,i,()=>buyGpu(s,i,"gpu05")));
-  ok(withStationOff(s,i,()=>licenseWindows(s,i,"winxp")));
+  ok(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"winxp")));
  }
  ok(licenseGpuGame(s,"neon-rush"));
  return s;
@@ -67,7 +66,7 @@ test("instalar em estação nova após criar lista explícita não duplica títu
  assert.deepEqual(s.gpuGameInstalls,[["neon-rush"],["neon-rush"],[],[]]);
  ok(withStationOff(s,3,()=>buyPlatform(s,3,"platform05")));
  ok(withStationOff(s,3,()=>buyGpu(s,3,"gpu05")));
- ok(withStationOff(s,3,()=>licenseWindows(s,3,"winxp")));
+ ok(withStationOff(s,3,()=>licenseAndCompleteWindows(s,3,"winxp")));
  assert.equal(gpuGameInstalledOnPc(s,3,"neon-rush"),false);
  ok(toggleGpuGameInstallation(s,3,"neon-rush"));
  assert.deepEqual(s.gpuGameInstalls[3],[]);

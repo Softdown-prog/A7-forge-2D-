@@ -5,13 +5,12 @@ import {readFileSync} from "node:fs";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERA_GAME_CATALOG,quoteEraGame} from "../dist/js/sim/eraGames.js";
 import {gamePopularityPercent} from "../dist/js/sim/gamePopularity.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {createClassicGamesCatalogPort} from "../dist/js/application/classicGamesCatalogPort.js";
 import {renderClassicGamesCatalog} from "../dist/js/ui/classicGamesCatalogPanel.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 const at=(year=1998,mode="historical")=>{
  const s=createGame(44021,mode);s.cash=5000;s.totalMinutes=(year-1998)*360*DAY_MINUTES;return s;
 };
@@ -29,7 +28,7 @@ test("licença básica e Windows tornam os cartões elegíveis sem cobrar na lei
  const s=at(),port=createClassicGamesCatalogPort(()=>s);
  assert.equal(licenseGames(s).ok,true);
  assert.equal(port.snapshot().sections[0].cards[0].buttonDisabled,true);
- assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
  const quote=quoteEraGame(s,ERA_GAME_CATALOG[0].id),cash=s.cash;
  const card=port.snapshot().sections[0].cards[0];
  assert.equal(card.buttonDisabled,!quote.ok);
@@ -41,7 +40,7 @@ test("licença básica e Windows tornam os cartões elegíveis sem cobrar na lei
 test("compra mostra licença permanente, custo e bônus de nostalgia",()=>{
  const s=at(),port=createClassicGamesCatalogPort(()=>s);
  assert.equal(licenseGames(s).ok,true);
- assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
  assert.equal(licenseEraGame(s,"turbo-98").ok,true);
  let view=port.snapshot();
  assert.equal(view.sections[0].cards[0].buttonLabel,"✓ Licenciado");
@@ -82,7 +81,7 @@ test("save importado é lido sem prender a porta à partida anterior",()=>{
  const port=createClassicGamesCatalogPort(()=>s);
  s=parseImportedSave(serializeSave(s));assert.equal(isValidSave(s),true);
  assert.equal(licenseGames(s).ok,true);
- assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
  assert.equal(licenseEraGame(s,"blocos-e-cores").ok,true);
  assert.equal(port.snapshot().sections[0].cards[3].owned,true);
  assert.equal(JSON.stringify(original),before);

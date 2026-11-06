@@ -5,9 +5,8 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,sessionRevenue} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import {licenseGpuGame,gpuGamePlayableOnPc,gpuGameInstalledOnPc,toggleGpuGameInstallation,validGpuGameInstalls,gpuGameSessionPrice,hasPlayableGpuGame,tickGpuGameInstallations,gpuGameInstallJob} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
@@ -22,7 +21,7 @@ function ready(year=2005){
  for(const i of [0,1]){
   ok(withStationOff(s,i,()=>buyPlatform(s,i,"platform05")));
   ok(withStationOff(s,i,()=>buyGpu(s,i,"gpu05")));
-  ok(withStationOff(s,i,()=>licenseWindows(s,i,"winxp")));
+  ok(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"winxp")));
  }
  ok(licenseGpuGame(s,"neon-rush"));
  return s;
@@ -77,14 +76,14 @@ test("novas licenças e upgrades de GPU exigem PC compatível e instalação exp
  for(const i of [0]){
   ok(withStationOff(s,i,()=>buyPlatform(s,i,"platform08")));
   ok(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
-  ok(withStationOff(s,i,()=>licenseWindows(s,i,"win7")));
+  ok(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win7")));
  }
  ok(licenseGpuGame(s,"circuito-competitivo"));
  assert.equal(gpuGameInstalledOnPc(s,0,"circuito-competitivo"),true);
  assert.equal(gpuGameInstalledOnPc(s,1,"circuito-competitivo"),false);
  ok(withStationOff(s,1,()=>buyPlatform(s,1,"platform08")));
  ok(withStationOff(s,1,()=>buyGpu(s,1,"gpu09")));
- ok(withStationOff(s,1,()=>licenseWindows(s,1,"win7")));
+ ok(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"win7")));
  assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),false);
  ok(toggleGpuGameInstallation(s,1,"circuito-competitivo"));
  assert.equal(gpuGamePlayableOnPc(s,1,"circuito-competitivo"),false);

@@ -4,11 +4,10 @@ import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {weekdayName,weekdayIndex,nextFridayDay,campaignDate,currentCampaignDay} from "../dist/js/sim/campaignWeek.js";
 import {firstFridayEligibility,draftFridayMeetup,cancelFridayMeetupDraft} from "../dist/js/sim/fridayMeetup.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 test("semana de 7 dias permanece contínua nos meses de 30 e anos de 360 dias",()=>{
  assert.equal(weekdayName(1),"quinta-feira");
@@ -36,7 +35,7 @@ function ready(){
  s.multiplayerRoundsPlayed=1;
  assert.equal(licenseGames(s).ok,true);
  for(let i=0;i<3;i++)
-  assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
+  assert.equal(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")).ok,true);
  assert.equal(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID).ok,true);
  return s;
 }

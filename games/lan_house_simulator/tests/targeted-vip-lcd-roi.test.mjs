@@ -1,9 +1,9 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {gameYear,licenseWindows} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {installedGpu,buyGpu} from "../dist/js/sim/gpu.js";
 import {installedLcd,buyLcdKit,LCD_CATALOG} from "../dist/js/sim/computerModels.js";
 import {
@@ -35,7 +35,7 @@ function baseShop(seed,size) {
  if(size===7)accept(expandShop(s));
  while(pcCount(s)<size)accept(buyComputer(s));
  for(let i=0;i<size;i++){
-  accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+  accept(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")));
   accept(withStationOff(s,i,()=>upgradeComputer(s,i)));accept(withStationOff(s,i,()=>upgradeComputer(s,i)));
   accept(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }

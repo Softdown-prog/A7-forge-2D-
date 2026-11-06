@@ -10,6 +10,8 @@ import {buyComputer} from '../dist/js/sim/shop.js';
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/architecture-baseline-b73c5aa.json',import.meta.url),'utf8'));
 for(const fixture of baseline)test(`three-day replay matches b73c5aa byte-for-byte: ${fixture.mode}/${fixture.seed}`,()=>{
  const state=createGame(fixture.seed,fixture.mode);state.cash=50000;
+ // A referência antecede o desbloqueio por revistas e representa um save legado.
+ delete state.topGamesUnlockMode;
  const actions=[];
  for(let i=0;i<2;i++){actions.push(expandShop(state),buyComputer(state),buyComputer(state));}
  assert.ok(actions.every(action=>action.ok),'including sixth and seventh PCs');

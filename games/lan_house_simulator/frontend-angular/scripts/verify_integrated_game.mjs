@@ -1122,7 +1122,8 @@ try{
   const magazine=shop.locator('.angular-top-games');
   assert.equal(await magazine.count(),1,'Top Games subscription shown in consoles');
   assert.match(await magazine.innerText(),/Top Games/);
-  assert.match(await magazine.innerText(),/Revistas recebidas: 0 de 28/);
+  assert.equal(await magazine.locator('.top-games-progress').textContent(),
+   `Revistas recebidas: 0 de ${TOP_GAMES_ISSUES.length}.`);
   if(scenario.year===2002){
    const subscribe=magazine.locator('button');
    assert.equal(await subscribe.innerText(),'Assinar Top Games');

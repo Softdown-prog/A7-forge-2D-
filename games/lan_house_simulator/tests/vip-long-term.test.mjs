@@ -1,10 +1,9 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
 import {vipArrivalEligible,vipReputationAdjustment,serviceReputationImpact} from "../dist/js/sim/vip.js";
 import {licenseGames,setHourlyPrice,wholesaleCost,stockItem} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
@@ -56,7 +55,7 @@ function campaign(hourly,seed,days=720){
  assert.equal(setHourlyPrice(s,hourly).ok,true);
  assert.equal(licenseGames(s).ok,true);
  assert.equal(hireContentProgrammer(s).ok,true);
- for(let pc=0;pc<pcCount(s);pc++)assert.equal(withStationOff(s,pc,()=>licenseWindows(s,pc,"win98")).ok,true);
+ for(let pc=0;pc<pcCount(s);pc++)assert.equal(withStationOff(s,pc,()=>licenseAndCompleteWindows(s,pc,"win98")).ok,true);
  let vipSamples=0,peopleSamples=0;
  const quarters=[];
  for(let day=1;day<=days;day++){

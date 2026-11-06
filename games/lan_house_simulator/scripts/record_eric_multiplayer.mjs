@@ -1,3 +1,4 @@
+import {licenseAndCompleteWindows} from "../tests/station-power-fixture.mjs";
 // Captura a interface REAL do Lan House Simulator no Chromium.
 // Todos os jogadores entram, pagam, caminham, sentam e jogam por stepGame()
 // acionado pelo loop normal de main.ts. Não há cena especial ou teletransporte.
@@ -7,7 +8,6 @@ import {mkdir,readFile,writeFile,rename} from "node:fs/promises";
 import {extname,resolve,sep} from "node:path";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
@@ -43,7 +43,7 @@ function requireOk(label,result){
 requireOk("licença básica",licenseGames(s));
 for(let pc=0;pc<3;pc++){
  requireOk("desligar PC "+pc,toggleStationPower(s,pc));
- requireOk("Windows PC "+pc,licenseWindows(s,pc,"win98"));
+ requireOk("Windows PC "+pc,licenseAndCompleteWindows(s,pc,"win98"));
  requireOk("religar PC "+pc,toggleStationPower(s,pc));
 }
 requireOk("Setor Zero",licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID));

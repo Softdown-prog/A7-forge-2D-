@@ -9,6 +9,7 @@ import { accrueEmployeeDay,employeeHired } from "./staff.js";
 import { cleanerWorkPoint,technicianContactPoint,technicianWorkPoint } from "./staffWorksites.js";
 import type { GameState,Point,Result } from "./types.js";
 import { workerRoute } from "./workerNavigation.js";
+import { windowsInstallFor } from "./windowsInstallation.js";
 export interface RepairJob {pc:number;x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;duration:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean}
 export interface CleaningJob {x:number;y:number;phase:"arriving"|"working"|"leaving";progress:number;route?:Point[];target?:Point;stuck?:number;facing?:ActorDirection;moving?:boolean;coveredByContract?:boolean;binIndex?:number}
 export const REPAIR_DURATION=24;
@@ -19,6 +20,7 @@ function approach(a:{x:number;y:number},b:Point,speed:number):boolean{
 }
 export function startRepair(s:GameState,pc:number):Result{
  if(!Number.isInteger(pc)||pc<0||pc>=pcCount(s))return {ok:false,message:"PC inexistente."};
+ if(windowsInstallFor(s,pc))return {ok:false,message:"Aguarde a instalação do Windows terminar."};
  if(s.repairJobs?.some(j=>j.pc===pc))return {ok:false,message:"Já existe um técnico atendendo esse PC."};
  if(employeeHired(s,"technician")&&s.repairJobs?.length)return {ok:false,message:"O técnico contratado já está atendendo outro PC."};
  const wear=Math.max(0,Math.min(100,s.pcWear?.[pc]??0));
@@ -113,7 +115,7 @@ export function dispatchHiredStaff(s:GameState):void{
   requestCleaning(s);
  if(employeeHired(s,"technician")&&!(s.repairJobs?.length)){
   for(let pc=0;pc<pcCount(s);pc++){
-   if((s.pcWear?.[pc]??0)<100||(s.repairJobs??[]).some(j=>j.pc===pc))continue;
+   if((s.pcWear?.[pc]??0)<100||windowsInstallFor(s,pc))continue;
    if(s.customers.some(c=>c.pcIndex===pc&&["to_pc","sitting","using","standing"].includes(c.stage)))continue;
    startRepair(s,pc);break;
   }

@@ -11,9 +11,8 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseGpuGame} from "../dist/js/sim/gpuGames.js";
-import {withStationOff} from "../tests/station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "../tests/station-power-fixture.mjs";
 
 const out=resolve(process.argv[2]??"out/validation");
 await mkdir(out,{recursive:true});
@@ -27,7 +26,7 @@ for(const result of [
  licenseGames(s),
  withStationOff(s,1,()=>buyPlatform(s,1,"platform05")),
  withStationOff(s,1,()=>buyGpu(s,1,"gpu05")),
- withStationOff(s,1,()=>licenseWindows(s,1,"winxp")),
+ withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")),
  licenseGpuGame(s,"neon-rush")
 ])assert.equal(result.ok,true,result.message);
 s.gpuGameDemand={

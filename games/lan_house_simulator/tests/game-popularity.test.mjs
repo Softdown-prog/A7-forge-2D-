@@ -4,7 +4,6 @@ import {readFileSync} from "node:fs";
 import {createGame,visitorArrivalChance,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {ERA_GAME_CATALOG,licenseEraGame,eraGameVisitorMultiplier} from "../dist/js/sim/eraGames.js";
 import {GAME_POPULARITY_NOSTALGIA_FLOOR,gamePopularityWeight,gamePopularityPercent} from "../dist/js/sim/gamePopularity.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
@@ -12,7 +11,7 @@ import {buyGpu} from "../dist/js/sim/gpu.js";
 import {toggleStationPower,stationReadyForSessions} from "../dist/js/sim/stationPower.js";
 import {licenseGpuGame,gpuGameAttraction,gpuGameVisitorMultiplier,toggleGpuGameInstallation,tickGpuGameInstallations} from "../dist/js/sim/gpuGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const setYear=(s,year)=>{s.totalMinutes=(year-1998)*360*DAY_MINUTES;};
 const ok=result=>assert.equal(result.ok,true,result.message);
@@ -30,7 +29,7 @@ test("popularidade nasce em 100%, decai anualmente e tem nostalgia permanente",(
 
 test("títulos 1998/1999 renovam a procura sem renovar licença, desconto ou venda inventada",()=>{
  const s=createGame(1928,"historical");s.cash=10000;
- ok(licenseGames(s));ok(withStationOff(s,0,()=>licenseWindows(s,0,"win98")));
+ ok(licenseGames(s));ok(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")));
  const rng=s.rng,revenue=s.revenue,served=s.served;
  for(const title of ERA_GAME_CATALOG.filter(x=>x.year===1998))ok(licenseEraGame(s,title.id));
  near(eraGameVisitorMultiplier(s),1.075);
@@ -60,7 +59,7 @@ test("jogo de GPU atrai clientes só com licença, instalação e PC compatível
  assert.equal(gpuGameVisitorMultiplier(s),1);
  ok(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")));
  ok(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")));
- ok(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")));
+ ok(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")));
  near(visitorArrivalChance(s,0),originalChance);
  ok(licenseGpuGame(s,"neon-rush"));
  near(gpuGameAttraction(s,"neon-rush"),.025);
@@ -135,7 +134,7 @@ test("PCs quebrados, interditados e desligados nao criam capacidade fantasma",()
 
 test("licencas classicas nao anunciam jogo se o unico Windows licenciado esta fora de servico",()=>{
  const s=createGame(991,"historical");s.cash=5000;
- ok(licenseGames(s));ok(withStationOff(s,1,()=>licenseWindows(s,1,"win98")));
+ ok(licenseGames(s));ok(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"win98")));
  ok(licenseEraGame(s,"turbo-98"));
  near(eraGameVisitorMultiplier(s),1.015);
  const chance=visitorArrivalChance(s,0),rng=s.rng,revenue=s.revenue;
@@ -158,7 +157,7 @@ test("jogo GPU sem PC operacional perde apelo temporariamente, sem perder licenc
  ok(licenseGames(s));
  ok(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")));
  ok(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")));
- ok(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")));
+ ok(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")));
  ok(licenseGpuGame(s,"neon-rush"));
  near(gpuGameAttraction(s,"neon-rush"),.025);
  s.pcWear[1]=100;

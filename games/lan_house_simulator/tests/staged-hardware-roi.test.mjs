@@ -1,9 +1,9 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {licenseWindows,gameYear} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {buyPart,buyPlatform,hardwareFor,quotePart,quotePlatform,buildIssues} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {licenseGames,contractSupplier,upgradeInternet,setHourlyPrice,stockItem,wholesaleCost} from "../dist/js/sim/economy.js";
@@ -43,13 +43,13 @@ function prep(year,seed,strategy){
   if(strategy==="partial"){
    for(const [kind,id] of Object.entries(parts))
     requireOk(withStationOff(s,i,()=>buyPart(s,i,kind,id)),"partial "+kind+" PC "+i);
-   requireOk(withStationOff(s,i,()=>licenseWindows(s,i,"winxp")),"XP partial "+i);
+   requireOk(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"winxp")),"XP partial "+i);
   }else if(strategy==="one-kit"&&i===0||strategy==="all-kits"||strategy==="all-kits-gpu"){
    requireOk(withStationOff(s,i,()=>buyPlatform(s,i,catalog[year].kit)),"full kit PC "+i);
    if(strategy==="all-kits-gpu")
     requireOk(withStationOff(s,i,()=>buyGpu(s,i,catalog[year].gpu)),"graphics PC "+i);
-   requireOk(withStationOff(s,i,()=>licenseWindows(s,i,catalog[year].windows)),"modern Windows PC "+i);
-  }else requireOk(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"legacy Windows PC "+i);
+   requireOk(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,catalog[year].windows)),"modern Windows PC "+i);
+  }else requireOk(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")),"legacy Windows PC "+i);
   assert.equal(buildIssues(hardwareFor(s,i),s.pcGpus?.[i])[0],undefined);
  }
  const initialSpend=s.expenses;
@@ -132,7 +132,7 @@ test("2005: upgrade gradual real respeita socket, RAM, disco, Windows e custo",(
  requireOk(withStationOff(game,0,()=>buyPart(game,0,"cpu","cpu00")),"CPU Slot 1");
  requireOk(withStationOff(game,0,()=>buyPart(game,0,"ram","ram256")),"SDRAM");
  requireOk(withStationOff(game,0,()=>buyPart(game,0,"storage","hd20")),"IDE");
- requireOk(withStationOff(game,0,()=>licenseWindows(game,0,"winxp")),"XP");
+ requireOk(withStationOff(game,0,()=>licenseAndCompleteWindows(game,0,"winxp")),"XP");
  assert.equal(game.cash,old-180-100-120-260);
  assert.equal(hardwareFor(game,0).cpu,"cpu00");
  assert.equal(withStationOff(game,0,()=>quotePlatform(game,0,"platform05")).ok,true);
@@ -144,7 +144,7 @@ test("2012: kit completo + GPU mantém peças e salva sem alterar economia clás
  s.totalMinutes=annualMinutes(2012);s.cash=30000;
  requireOk(withStationOff(s,0,()=>buyPlatform(s,0,"platform12")),"platform 2012");
  requireOk(withStationOff(s,0,()=>buyGpu(s,0,"gpu11")),"GPU 2011");
- requireOk(withStationOff(s,0,()=>licenseWindows(s,0,"win7")),"Windows 7");
+ requireOk(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win7")),"Windows 7");
  assert.equal(hardwareFor(s,0).storage,"ssd512");
  assert.equal(hardwareFor(s,0).motherboard,"board12");
  assert.equal(parseImportedSave(serializeSave(s)).pcGpus[0],"gpu11");

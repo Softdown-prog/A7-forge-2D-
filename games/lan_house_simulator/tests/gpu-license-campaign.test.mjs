@@ -9,12 +9,11 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,stockItem,wholesaleCost} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {GPU_GAME_CATALOG,licenseGpuGame,gpuGamePlayableOnPc} from "../dist/js/sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "../dist/js/sim/gpuDemand.js";
 import {requestCleaning,startRepair} from "../dist/js/sim/services.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const DAYS=process.env.LHS_GPU_LICENSE_AUDIT==="1"?90:8;
 const ENDOWMENT=100000;
@@ -32,7 +31,7 @@ function setup(config,seed,pcs,withLicense){
  for(let i=0;i<pcs;i++){
   accept(withStationOff(s,i,()=>buyPlatform(s,i,config.platform)),"plataforma PC "+i);
   accept(withStationOff(s,i,()=>buyGpu(s,i,config.gpu)),"GPU PC "+i);
-  accept(withStationOff(s,i,()=>licenseWindows(s,i,config.windows)),"Windows PC "+i);
+  accept(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,config.windows)),"Windows PC "+i);
  }
  if(withLicense)accept(licenseGpuGame(s,config.id),"licença do jogo");
  for(let i=0;i<pcs;i++)

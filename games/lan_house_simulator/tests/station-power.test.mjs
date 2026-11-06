@@ -7,6 +7,7 @@ import {buyGpu} from "../dist/js/sim/gpu.js";
 import {buyPart} from "../dist/js/sim/hardware.js";
 import {buyLcdKit} from "../dist/js/sim/computerModels.js";
 import {licenseWindows} from "../dist/js/sim/era.js";
+import {finishWindowsInstallations,windowsInstallFor} from "../dist/js/sim/windowsInstallation.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 
@@ -48,6 +49,8 @@ test("upgrade de peça e Windows exige PC livre e desligado, sem cobrança na re
  assert.equal(toggleStationPower(s,0).ok,true);
  assert.equal(upgradeComputer(s,0).ok,true);
  assert.equal(licenseWindows(s,0,"winxp").ok,true);
+ assert.equal(toggleStationPower(s,0).ok,false);
+ finishWindowsInstallations(s,windowsInstallFor(s,0).finishedAtMs);
  assert.equal(toggleStationPower(s,0).ok,true);
 });
 test("todos PCs desligados continuam com gastos fixos do salão, mas não consomem energia de estação",()=>{

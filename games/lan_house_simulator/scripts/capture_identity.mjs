@@ -83,6 +83,24 @@ try{
   await selectTask(page,"licenses","windows");
   assert.equal(await page.locator('[data-era-game-buy="asfalto-noturno"]').isDisabled(),true);
   await page.locator('#windows-license-list [data-win-pc="0"][data-win-edition="win98"]').click();
+  // A licença agora inicia uma instalação de 10 minutos reais. Avance o
+  // relógio somente neste teste visual, sem reduzir a duração do jogo.
+  await page.waitForFunction(key=>{
+   const state=JSON.parse(localStorage.getItem(key)??"null");
+   return state?.windowsInstallJobs?.some(job=>job.pc===0&&job.edition==="win98");
+  },GAME_SAVE_KEY);
+  const install=await page.evaluate(key=>{
+   const state=JSON.parse(localStorage.getItem(key));
+   return state.windowsInstallJobs.find(job=>job.pc===0);
+  },GAME_SAVE_KEY);
+  assert.equal(install.finishedAtMs-install.startedAtMs,10*60*1000);
+  await page.clock.install({time:new Date(install.finishedAtMs+1000)});
+  await page.reload({waitUntil:"networkidle"});
+  await dismissPrivacyNotice(page);
+  await page.locator("#menu-continue").click();
+  await page.locator("#game-app").waitFor({state:"visible"});
+  await page.locator("#open-admin").click();
+  await selectAdminArea(page,"licenses");
   await selectTask(page,"licenses","classic");
   await page.locator('[data-era-game-buy="turbo-98"]').click();
   const licensed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);

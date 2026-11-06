@@ -1,3 +1,4 @@
+import {licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,isValidSave,displayTime,visitorArrivalChance} from "../dist/js/sim/engine.js";
@@ -6,7 +7,6 @@ import {draftFridayMeetup} from "../dist/js/sim/fridayMeetup.js";
 import {confirmFridayMeetup} from "../dist/js/sim/nightMeetup.js";
 import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {nightReopeningPresentation} from "../dist/js/render/nightReopening.js";
@@ -21,7 +21,7 @@ function makeSaturday(seed,seats,format){
  assert.equal(licenseGames(s).ok,true);
  for(let pc=0;pc<3;pc++){
   assert.equal(toggleStationPower(s,pc).ok,true);
-  assert.equal(licenseWindows(s,pc,"win98").ok,true);
+  assert.equal(licenseAndCompleteWindows(s,pc,"win98").ok,true);
   assert.equal(toggleStationPower(s,pc).ok,true);
  }
  assert.equal(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID).ok,true);
