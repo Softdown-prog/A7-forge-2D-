@@ -1,6 +1,6 @@
 /** Top Games: original monthly videogame magazine collection.
- * Domain only: the existing physical postman will perform handoffs in a separate
- * integration step. No free unlock or automatic debit on simulation ticks.
+ * The same physical postman as Linux hands every issue to Tony.
+ * No free unlock or automatic debit on simulation ticks.
  * The PS1/PS2 catalogues are the sole source of game IDs and release years.
  */
 import type {GameState,Result} from "./types.js";
@@ -14,8 +14,9 @@ export const TOP_GAMES_MONTHLY_BASE_PRICE=12;
 /** Original PS1/PS2 artwork and game titles; never copyrighted brand magazine art. */
 export const TOP_GAMES_TITLE="Top Games";
 export type TopGamesPlatform="ps1"|"ps2";
+export type TopGamesIssueId=`top-games-${TopGamesPlatform}-${string}`;
 export interface TopGamesIssue{
- readonly id:string;
+ readonly id:TopGamesIssueId;
  readonly gameId:string;
  readonly gameTitle:string;
  readonly platform:TopGamesPlatform;
@@ -41,13 +42,13 @@ export const TOP_GAMES_ISSUES:ReadonlyArray<TopGamesIssue>=catalogue.map(g=>{
  months.set(g.releaseYear,month);
  if(month>12)throw Error("Top Games: mais de 12 jogos no mesmo ano");
  return {
-  id:"top-games-"+g.platform+"-"+g.gameId,
+  id:("top-games-"+g.platform+"-"+g.gameId) as TopGamesIssueId,
   gameId:g.gameId,gameTitle:g.gameTitle,platform:g.platform,
   releaseYear:g.releaseYear,releaseMonth:month,
   publicationDay:(g.releaseYear-1998)*360+(month-1)*30+15
  };
 });
-const ids=new Set(TOP_GAMES_ISSUES.map(issue=>issue.id));
+const ids=new Set<string>(TOP_GAMES_ISSUES.map(issue=>issue.id));
 const today=(s:Pick<GameState,"totalMinutes">):number=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 const cents=(n:number):number=>Math.round(n*100)/100;
 
