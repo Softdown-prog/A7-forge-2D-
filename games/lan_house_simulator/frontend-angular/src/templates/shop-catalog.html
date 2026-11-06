@@ -50,7 +50,7 @@
         <div class="angular-console-grid">
           @for(disc of consoleShop.ps1.discs;track disc.id){
             <article class="shop-card">
-              @if(disc.cover){<img class="angular-ps1-cover" [src]="disc.cover" [alt]="'Capa procedural de '+disc.title" loading="lazy" width="420" height="560"/>}
+              @if(disc.cover){<img class="angular-ps1-cover" [src]="disc.cover" [alt]="'Capa procedural de '+disc.title" loading="lazy" width="420" height="560"/>} @else {<span class="top-games-secret-cover" aria-hidden="true">?</span>}
               <small>{{disc.genre}} · {{disc.releaseYear}} · {{disc.copies}} cópia(s)</small>
               <h4>{{disc.title}}</h4>
               <button type="button" [disabled]="disc.disabled" (click)="buyPs1Disc(disc.id)">{{disc.buttonText}}</button>
@@ -73,7 +73,7 @@
       <div class="angular-console-grid">
         @for(game of consoleShop.ps2.games;track game.id){
           <article class="shop-card">
-            @if(game.cover){<img class="angular-ps2-cover" [src]="game.cover" [alt]="'Capa procedural de '+game.title" loading="lazy" width="420" height="560"/>}
+            @if(game.cover){<img class="angular-ps2-cover" [src]="game.cover" [alt]="'Capa procedural de '+game.title" loading="lazy" width="420" height="560"/>} @else {<span class="top-games-secret-cover" aria-hidden="true">?</span>}
             <small>{{game.genre}} · {{game.releaseYear}} · {{game.copies}} cópia(s)</small>
             <h4>{{game.title}}</h4>
             <button type="button" [disabled]="game.disabled" (click)="buyPs2Game(game.id)">{{game.buttonText}}</button>
