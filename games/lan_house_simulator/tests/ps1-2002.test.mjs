@@ -16,7 +16,7 @@ import {ps1PlacementSlots,ps1PlacementLabel,buyPs1Station,ps1StationPoint,ps1Sea
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
 function inYear(year=2002){
- const s=createGame(314,"historical");s.totalMinutes=(year-1998)*360*DAY_MINUTES;
+ const s=createGame(314,"historical");delete s.topGamesUnlockMode;s.totalMinutes=(year-1998)*360*DAY_MINUTES;
  s.cash=5000;return s;
 }
 function setup(){
