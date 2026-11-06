@@ -5,6 +5,7 @@ import {PS2_GAME_CATALOG,ps2ReleasedGames,ps2Unlocked,ps2BenchPrice,ps2GamePrice
  ps2SecondSeatPrice,ps2RepairPrice,buyPs2Station,buyPs2Game,setPs2StationGame,
  buyPs2SecondSeat,repairPs2,setPs2Power,setPs2HourlyPrice,type Ps2GameId} from "../sim/ps2.js";
 import {ps1PlacementLabel} from "../sim/ps1.js";
+import {yearFromMinutes} from "../sim/historicalEconomy.js";
 export interface Ps2StationView{
  index:number;wear:number;occupied:number;capacity:number;gameId:string;
  gameName:string;poweredOff:boolean;busy:boolean;available:boolean;
@@ -32,7 +33,7 @@ export function createPs2Port(getState:()=>GameState):Ps2Port{
  return {
   snapshot(){
    const s=getState(),unlocked=ps2Unlocked(s),stations=s.ps2Stations??[];
-   const year=Math.floor(s.totalMinutes/(360*1440))+1998;
+   const year=yearFromMinutes(s.totalMinutes);
    const availableGames=unlocked?ps2ReleasedGames(year):[];
    const nextReleaseYear=unlocked?PS2_GAME_CATALOG.find(g=>g.releaseYear>year)?.releaseYear??null:null;
    const price=ps2BenchPrice(s),slots=unlocked&&stations.length<3?ps2PlacementSlots(s).map(p=>({id:p.id,label:ps1PlacementLabel(p)})):[];
