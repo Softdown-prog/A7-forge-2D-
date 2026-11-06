@@ -11,6 +11,8 @@ import {renderPs1AdminPanel} from "../dist/js/ui/ps1AdminPanel.js";
 
 function year2002(){
  const state=createGame(945,"historical");
+ // Historical PS1 administration fixture represents a save predating Top Games.
+ delete state.topGamesUnlockMode;
  state.totalMinutes=4*360*DAY_MINUTES;
  state.cash=10000;return state;
 }
