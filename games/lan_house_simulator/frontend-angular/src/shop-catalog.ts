@@ -17,7 +17,15 @@ interface ConsoleGame {
  readonly buttonText:string;readonly disabled:boolean;readonly cover:string|null;
 }
 interface Slot{readonly id:string;readonly label:string;}
+interface TopGamesView{
+ readonly title:string;readonly available:boolean;readonly active:boolean;
+ readonly received:number;readonly total:number;readonly editionPrice:number;
+ readonly nextIssueNumber:number|null;readonly nextDueDay:number|null;
+ readonly actionId:"top-games-subscribe"|"top-games-cancel";
+ readonly actionDisabled:boolean;readonly buttonText:string;readonly status:string;
+}
 interface ConsoleView{
+ readonly topGames:TopGamesView|null;
  readonly ps1:{readonly offerText:string;readonly offerDisabled:boolean;
   readonly slots:readonly Slot[];readonly selected:string|null;
   readonly artwork:string|null;readonly nextReleaseYear:number|null;
