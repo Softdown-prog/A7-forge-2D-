@@ -5,13 +5,19 @@ import type {ActorDirection,GameState,Point} from "./types.js";
 import {linuxDay,linuxNextMagazineDueDay,LINUX_MAGAZINE_ISSUE_COST,
  LINUX_MAGAZINE_TITLES,nextLinuxLetter,recordLinuxMail} from "./linuxQuest.js";
 import {entrance} from "./simulationState.js";
+import {TOP_GAMES_ISSUES,dueTopGamesIssue,nextTopGamesDeliveryDay,
+ topGamesIssuePrice,receiveTopGamesIssue,type TopGamesIssueId} from "./topGamesMagazines.js";
 import {counterQueue} from "./route.js";
 import {workerRoute} from "./workerNavigation.js";
 import {canTraverseLocalStep} from "./navigation.js";
 import {directionFromDelta} from "./direction.js";
-import {deliverLinuxMagazineNotice} from "./notices.js";
+import {deliverLinuxMagazineNotice,deliverTopGamesMagazineNotice} from "./notices.js";
 
 export interface PostmanDelivery {
+ /** Absent in old save files: legacy magazine is always Linux. */
+ magazine?:"top-games";
+ /** Immutable ID of a Top Games edition in the courier's bag. */
+ issueId?:TopGamesIssueId;
  issueIndex:number;
  x:number;y:number;
  phase:"arriving"|"handing"|"leaving";
