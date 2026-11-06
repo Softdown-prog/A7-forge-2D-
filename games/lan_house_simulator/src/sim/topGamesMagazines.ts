@@ -8,6 +8,8 @@ import {DAY_MINUTES} from "./types.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {PS1_CD_CATALOG} from "./ps1.js";
 import {PS2_GAME_CATALOG} from "./ps2.js";
+import {topGamesKnowsGame} from "./topGamesUnlockGate.js";
+export {topGamesKnowsGame} from "./topGamesUnlockGate.js";
 
 export const TOP_GAMES_FIRST_YEAR=2002;
 export const TOP_GAMES_MONTHLY_BASE_PRICE=12;
@@ -109,9 +111,6 @@ export function receiveTopGamesIssue(s:GameState,id:string):Result{
  s.topGamesLastDeliveryDay=today(s);
  return {ok:true,message:"Top Games entregue: Tony conheceu "+issue.gameTitle+
   " ("+issue.platform.toUpperCase()+"). Valor: R$ "+price.toFixed(2)+"."};
-}
-export function topGamesKnowsGame(s:GameState,platform:TopGamesPlatform,gameId:string):boolean{
- return (s.topGamesReceivedIssues??[]).includes("top-games-"+platform+"-"+gameId);
 }
 /** Optional schema for older saves. When enabled, all received issues must form
  * a valid chronological prefix and must belong to already-published editions.
