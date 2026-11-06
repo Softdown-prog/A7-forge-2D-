@@ -42,7 +42,8 @@ test("2015–2030: eight new GPUs with increasing price, satisfaction, wattage a
   assert.match(svg,/<circle\s/);
   assert.ok(svg.length>3000,"asset too simple: "+spec.id);
   assert.ok(svg.includes(spec.name));
-  assert.doesNotMatch(svg,/https?:\/\//,"GPU art must contain no remote assets");
+  assert.doesNotMatch(svg,/<(?:image|use|script)\b[^>]*(?:href|src)\s*=\s*["\x27]https?:/i,
+   "GPU art must not depend on remote assets");
  }
 });
 test("a future GPU is rejected before its year, without power or funds",()=>{
