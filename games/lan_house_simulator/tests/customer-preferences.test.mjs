@@ -60,7 +60,8 @@ test("quick visitor buys 30 minutes, rather than an unwanted 90-minute session",
  assert.equal(isValidSave(loaded),false);
 });
 test("economy visitor chooses cheaper PS1 when both services are available",()=>{
- const s=createGame(31,"historical");s.totalMinutes=4*360*DAY_MINUTES;
+ const s=createGame(31,"historical");delete s.topGamesUnlockMode; // legacy PS1 inventory fixture
+ s.totalMinutes=4*360*DAY_MINUTES;
  s.cash=5000;s.reputation=10;
  const pos=ps1PlacementSlots(s)[0];assert.ok(pos);
  assert.equal(buyPs1Station(s,pos.id).ok,true);
