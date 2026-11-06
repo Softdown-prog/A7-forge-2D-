@@ -151,7 +151,9 @@ export function tickPostman(s:GameState):void{
 export function validPostmanDelivery(s:Partial<GameState>):boolean{
  const job=s.postmanDelivery;
  if(job===undefined)return true;
- if(!job||!Number.isInteger(job.issueIndex)||job.issueIndex<0||job.issueIndex>=6||
+ if(!job||(job.magazine!==undefined&&job.magazine!=="top-games")||
+  !Number.isInteger(job.issueIndex)||job.issueIndex<0||
+  job.issueIndex>=(job.magazine==="top-games"?TOP_GAMES_ISSUES.length:6)||
   !["arriving","handing","leaving"].includes(job.phase)||
   !Number.isInteger(job.progress)||job.progress<0||job.progress>POSTMAN_HANDOFF_MINUTES||
   !Number.isFinite(job.x)||!Number.isFinite(job.y)||Math.abs(job.x)>100||Math.abs(job.y)>100||
@@ -161,6 +163,19 @@ export function validPostmanDelivery(s:Partial<GameState>):boolean{
   (job.stuck!==undefined&&(!Number.isInteger(job.stuck)||job.stuck<0||job.stuck>1e6))||
   (job.facing!==undefined&&!["north","south","east","west"].includes(job.facing))||
   (job.moving!==undefined&&typeof job.moving!=="boolean"))return false;
+ if(job.magazine==="top-games"){
+  const issue=TOP_GAMES_ISSUES[job.issueIndex];
+  const start=s.topGamesSubscriptionDay,received=s.topGamesReceivedIssues;
+  if(!issue||job.issueId!==issue.id||!Number.isInteger(start)||
+    !Array.isArray(received)||issue.publicationDay>linuxDay(s as GameState)||
+    start!>linuxDay(s as GameState))return false;
+  const count=received.length;
+  return s.economyVersion===2&&
+   (job.phase==="leaving"?count===job.issueIndex||count===job.issueIndex+1:
+    count===job.issueIndex);
+ }
+ // Legacy Linux saves have no magazine discriminator and no issueId.
+ if(job.issueId!==undefined)return false;
  const count=s.linuxMagazineIssuesReceived??0;
  return s.economyVersion===2&&s.linuxMagazineSubscriptionDay!==undefined&&
   s.linuxMagazineSubscriptionDay<=linuxDay(s as GameState)&&
