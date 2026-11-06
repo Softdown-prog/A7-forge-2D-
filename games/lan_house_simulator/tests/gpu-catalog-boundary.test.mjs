@@ -11,7 +11,7 @@ import {createGpuCatalogPort} from "../dist/js/application/gpuCatalogPort.js";
 import {renderGpuCatalogPanel} from "../dist/js/ui/gpuCatalogPanel.js";
 const campaign=year=>{const s=createGame(6804,"historical");s.cash=50000;s.totalMinutes=(year-1998)*360*DAY_MINUTES;return s;};
 
-test("1998: cinco GPUs bloqueadas e leitura sem editar o save",()=>{
+test("1998: treze GPUs bloqueadas e leitura sem editar o save",()=>{
  const s=campaign(1998),before=JSON.stringify(s),view=createGpuCatalogPort(()=>s).snapshot(0);
  assert.equal(view.stations.length,pcCount(s));
  assert.deepEqual(view.stations.map(x=>x.selected),[true,false,false]);
