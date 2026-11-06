@@ -92,7 +92,7 @@ test("pause or empty balance while walking cancels handoff without charge",()=>{
   assert.deepEqual(s.topGamesReceivedIssues,[]);
   assert.equal(s.expenses,0);
   assert.equal(s.cash,reason==="pause"?start:0);
-  assert.equal(s.notices?.some(n=>n.id===TOP_GAMES_ISSUES[0].id),false);
+  assert.equal(s.notices?.some(n=>n.id===TOP_GAMES_ISSUES[0].id)??false,false);
   assert.equal(isValidSave(s),true);
   if(reason==="pause")assert.equal(subscribeTopGames(s).ok,true);
   else s.cash=start;
