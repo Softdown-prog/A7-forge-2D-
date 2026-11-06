@@ -11,7 +11,7 @@ import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 
 const years=[[2001,0],[2002,7],[2003,9],[2004,11],[2005,13],[2006,13],[2030,13]];
 function state(year){
- const s=createGame(21019,"historical");
+ const s=createGame(21019,"historical");delete s.topGamesUnlockMode;
  s.totalMinutes=(year-1998)*360*DAY_MINUTES;
  s.cash=10000;
  return s;
