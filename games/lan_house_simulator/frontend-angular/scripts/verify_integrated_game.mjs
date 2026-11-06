@@ -7,7 +7,9 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
 import {createAngularCutoverDocument} from './cutover_document.mjs';
-import {createGame} from '../../dist/js/sim/engine.js';
+import {createGame,isValidSave} from '../../dist/js/sim/engine.js';
+import {buyPs1Station} from '../../dist/js/sim/ps1.js';
+import {TOP_GAMES_ISSUES} from '../../dist/js/sim/topGamesMagazines.js';
 import {DAY_MINUTES,GAME_SAVE_KEY} from '../../dist/js/sim/types.js';
 import {PS2_GAME_CATALOG} from '../../dist/js/sim/ps2.js';
 const tools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
@@ -1141,7 +1143,60 @@ try{
    ps1Disabled:await ps1.isDisabled(),ps2Disabled:await ps2.isDisabled()});
   await context.close();
  }
- await writeFile(resolve(output,'results.json'),JSON.stringify({reports,blocked,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults,passed:true},null,2));
+ // Real Angular storefront: a newly created campaign must block an unknown
+ // title and enable precisely that game once its magazine is in the real save.
+ const magazineShop=[];
+ for(const received of [false,true]){
+  const context=await browser.newContext({viewport:{width:1280,height:900}});
+  const fixture=createGame(received?9002:9001,'historical');
+  fixture.totalMinutes=((2002-1998)*360+14)*DAY_MINUTES;
+  fixture.cash=10000;fixture.pcPoweredOff=[true,true,true];
+  fixture.offlineUntil=fixture.totalMinutes+500;
+  assert.equal(buyPs1Station(fixture,'floor-2').ok,true);
+  if(received){
+   fixture.topGamesSubscriptionDay=(2002-1998)*360+1;
+   fixture.topGamesSubscriptionActive=true;
+   fixture.topGamesReceivedIssues=[TOP_GAMES_ISSUES[0].id];
+   fixture.topGamesLastDeliveryDay=(2002-1998)*360+15;
+  }
+  assert.equal(isValidSave(fixture),true);
+  await context.addInitScript(({key,save})=>{
+   localStorage.setItem(key,JSON.stringify(save));
+   localStorage.setItem('lhs.sound','off');
+   localStorage.setItem('lhs.privacy-choice.v1',JSON.stringify({version:1,choice:'rejected',at:Date.now()}));
+  },{key:GAME_SAVE_KEY,save:fixture});
+  const page=await context.newPage(),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  await page.goto(origin,{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>!document.querySelector('#menu-continue')?.disabled);
+  await page.locator('#menu-continue').click();
+  await page.locator('#open-shop').click();
+  await page.locator('[data-shop-category="consoles"]').click();
+  const ps1Card=page.locator('.angular-console-grid').first().locator('article.shop-card').first();
+  const purchase=ps1Card.locator('button');
+  await purchase.waitFor({state:'visible'});
+  assert.equal(await ps1Card.locator('h4').innerText(),'Turbo Circuito');
+  assert.equal(await purchase.isDisabled(),!received,
+   'New saves may buy a title only when Tony received its own magazine');
+  if(!received){
+   assert.match(await purchase.innerText(),/Leia a revista Top Games/);
+   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   await purchase.evaluate(button=>button.click());
+   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(after.ps1Discs?.['turbo-circuito'],undefined);
+   assert.equal(after.cash,before.cash,'Locked Angular button cannot charge');
+  }else{
+   await purchase.click();
+   await page.waitForFunction(key=>JSON.parse(localStorage.getItem(key))?.ps1Discs?.['turbo-circuito']===1,GAME_SAVE_KEY);
+   const saved=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(saved.ps1Discs['turbo-circuito'],1);
+   assert.equal(saved.topGamesReceivedIssues[0],TOP_GAMES_ISSUES[0].id);
+  }
+  assert.deepEqual(errors,[],'No Angular runtime error during magazine purchase gating');
+  magazineShop.push({received,buttonDisabled:!received,errors:errors.length});
+  await context.close();
+ }
+ await writeFile(resolve(output,'results.json'),JSON.stringify({reports,blocked,magazineShop,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults,passed:true},null,2));
  console.log('Integrated LHS Angular QA:',JSON.stringify({reports,blocked,privacyChoices,layoutEditorResults,accountDonationResults,stockManagementResults}));
 }finally{
  await browser?.close();
