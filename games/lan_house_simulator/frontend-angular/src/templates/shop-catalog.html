@@ -33,15 +33,6 @@
   }
   @if(catalog().consolesPending && consoles();as consoleShop){
     <section class="angular-console-shop" aria-label="PlayStation 1 e 2">
-      @if(consoleShop.topGames;as magazine){
-        <article class="shop-card angular-top-games" aria-label="Assinatura Top Games">
-          <h3>{{magazine.title}} · assinatura mensal</h3>
-          <p class="top-games-status">{{magazine.status}}</p>
-          <small class="top-games-progress">Revistas recebidas: {{magazine.received}} de {{magazine.total}}.</small>
-          <button type="button" [disabled]="magazine.actionDisabled"
-            (click)="purchase(magazine.actionId)">{{magazine.buttonText}}</button>
-        </article>
-      }
       <h3>PlayStation 1 · bancadas e CDs</h3>
       <article class="shop-card">
         @if(consoleShop.ps1.artwork){<img class="angular-console-art" [src]="consoleShop.ps1.artwork" alt="Bancada PS1 procedural"/>}
@@ -89,6 +80,15 @@
           </article>
         }
       </div>
+      @if(consoleShop.topGames;as magazine){
+        <article class="shop-card angular-top-games" aria-label="Assinatura Top Games">
+          <h3>{{magazine.title}} · assinatura mensal</h3>
+          <p class="top-games-status">{{magazine.status}}</p>
+          <small class="top-games-progress">Revistas recebidas: {{magazine.received}} de {{magazine.total}}.</small>
+          <button type="button" [disabled]="magazine.actionDisabled"
+            (click)="purchase(magazine.actionId)">{{magazine.buttonText}}</button>
+        </article>
+      }
     </section>
   } @else if(catalog().consolesPending){
     <p class="angular-catalog-pending">As ofertas de consoles serão carregadas pela partida.</p>
