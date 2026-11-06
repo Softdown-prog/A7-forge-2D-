@@ -9,6 +9,7 @@ import {reviewNotices,readNotice} from "../dist/js/sim/notices.js";
 import {startLinuxResearch,LINUX_MAGAZINE_ISSUE_COST} from "../dist/js/sim/linuxQuest.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {actorStyleFor} from "../dist/js/render/actorArt.js";
+import {workerRoute} from "../dist/js/sim/workerNavigation.js";
 const at=(s,year,month=1,day=1)=>{
  s.totalMinutes=((year-1998)*360+(month-1)*30+day-1)*DAY_MINUTES;
  return s;
@@ -124,6 +125,25 @@ test("one shared actor serializes Top Games and delayed Linux subscription",()=>
  assert.equal(Math.round(s.cash*100),Math.round((cash-topGamesIssuePrice(s)-LINUX_MAGAZINE_ISSUE_COST)*100));
  assert.equal(Math.round(s.expenses*100),Math.round((expenses+topGamesIssuePrice(s)+LINUX_MAGAZINE_ISSUE_COST)*100));
  assert.equal(isValidSave(s),true);
+});
+test("wall blocking Tony's counter cannot produce a phantom magazine or payment",()=>{
+ const s=game();assert.equal(subscribeTopGames(s).ok,true);
+ at(s,2002,1,15);
+ const before=s.cash;
+ // A complete closed dividing wall: this geometry is deliberately
+ // unreachable and cannot be built legally through the editor.
+ s.interiorWalls=Array.from({length:8},(_,x)=>({axis:"x",x,y:4}));
+ assert.equal(workerRoute(s,postmanDoor(s),postmanCounter(s)),null);
+ for(let i=0;i<75;i++)step(s);
+ assert.equal(s.postmanDelivery,undefined);
+ assert.equal(s.topGamesReceivedIssues.length,0);
+ assert.equal(s.cash,before);
+ assert.equal(s.notices?.some(n=>n.id===TOP_GAMES_ISSUES[0].id)??false,false);
+ // When the obstruction is cleared, the same issue is still pending.
+ s.interiorWalls=[];
+ travel(s,x=>(x.topGamesReceivedIssues?.length??0)===1);
+ assert.equal(s.topGamesReceivedIssues.length,1);
+ assert.equal(s.cash,before-topGamesIssuePrice(s));
 });
 test("courier validation rejects forged Top Games jobs but accepts original Linux save format",()=>{
  const s=game(),original=TOP_GAMES_ISSUES[0];
