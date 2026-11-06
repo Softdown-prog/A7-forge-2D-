@@ -1,0 +1,67 @@
+name: LHS Windows OS installation — real-time regression
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/src/sim/windowsInstallation.ts'
+      - 'games/lan_house_simulator/src/sim/era.ts'
+      - 'games/lan_house_simulator/src/sim/stationPower.ts'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/application/**'
+      - 'games/lan_house_simulator/src/ui/windowsLicensePanel.ts'
+      - 'games/lan_house_simulator/src/ui/hardwarePanel.ts'
+      - 'games/lan_house_simulator/tests/windows-*.test.mjs'
+      - 'games/lan_house_simulator/tests/era.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_hardware_ui.mjs'
+      - '.github/workflows/lhs-windows-installation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/src/sim/windowsInstallation.ts'
+      - 'games/lan_house_simulator/src/sim/era.ts'
+      - 'games/lan_house_simulator/src/sim/stationPower.ts'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/application/**'
+      - 'games/lan_house_simulator/tests/windows-*.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_hardware_ui.mjs'
+      - '.github/workflows/lhs-windows-installation.yml'
+concurrency:
+  group: lhs-windows-installation-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+jobs:
+  windows-os-install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: games/lan_house_simulator/package-lock.json
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript strict check and application build
+        run: npm run typecheck && npm run build
+      - name: OS real-clock, save and GPU interaction tests
+        run: node --test tests/windows-real-installation.test.mjs tests/windows-license-boundary.test.mjs tests/era.test.mjs tests/gpu-games-2005.test.mjs
+      - name: Install Chromium browser
+        run: npx playwright install --with-deps chromium
+      - name: Exercise Windows 11 licensing and 80 minute completion on real UI
+        run: node scripts/verify_hardware_ui.mjs out/windows-realtime-browser
+      - name: Upload Windows installation browser audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-windows-realtime-browser
+          path: games/lan_house_simulator/out/windows-realtime-browser
+          if-no-files-found: warn
+          retention-days: 14
