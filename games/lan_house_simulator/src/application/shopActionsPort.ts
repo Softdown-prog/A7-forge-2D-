@@ -8,6 +8,7 @@ import {expandShop} from "../sim/economy.js";
 import {expandDirection,type ExtensionDirection} from "../sim/room.js";
 import {buyPs2Station} from "../sim/ps2.js";
 import {buyPs1Station} from "../sim/ps1.js";
+import {subscribeTopGames,cancelTopGames} from "../sim/topGamesMagazines.js";
 
 export interface ShopActionsPort {
  canPlace(kind:string):boolean;
@@ -26,6 +27,8 @@ export function createShopActionsPort(getState:()=>GameState):ShopActionsPort{
     case "linux-lab-99":case "linux-dev-99":return buyComputer(s,linuxMachineSpec(id)!.id);
     case "ps1":return buyPs1Station(s,ps1SlotId);
     case "ps2":return buyPs2Station(s,ps1SlotId);
+    case "top-games-subscribe":return subscribeTopGames(s);
+    case "top-games-cancel":return cancelTopGames(s);
     case "disc-copier":return buyDiscCopier(s);
     case "printer":return buyPrinter(s);
     default: {
