@@ -140,13 +140,13 @@ try{
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
    const images=[...document.querySelectorAll(".ps1-cd-cover")];
-   if(images.length!==5)throw Error("Faltam capas de PS1 na loja");
+   if(images.length!==7)throw Error("Faltam as sete capas de PS1 de 2002 na loja");
    for(const img of images)img.loading="eager";
    await Promise.all(images.map(img=>img.decode()));
    if(images.some(img=>img.naturalWidth!==420||img.naturalHeight!==560))
     throw Error("Capas sem dimensão esperada de 420×560");
-   if(new Set(images.map(img=>img.src)).size!==5)
-    throw Error("As cinco capas precisam de imagens diferentes");
+   if(new Set(images.map(img=>img.src)).size!==7)
+    throw Error("As sete capas de 2002 precisam de imagens diferentes");
   });
   if(tag==="desktop"){
    // Contato com cinco capas em resolução alta, usado na revisão de arte.
