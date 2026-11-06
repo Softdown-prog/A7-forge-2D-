@@ -61,6 +61,8 @@ test("when no computer is free, after a patient wait visitor chooses affordable 
 });
 test("console fallback serves waiting visitor when all PCs are off, with real CD and budget",()=>{
  const s=createGame(314,"historical");
+ // Existing customer-behavior fixture models a pre-magazine save with a PS1 CD.
+ delete s.topGamesUnlockMode;
  s.totalMinutes=4*360*DAY_MINUTES;s.cash=5000;s.reputation=10;
  const slot=ps1PlacementSlots(s)[0];assert.ok(slot);
  assert.equal(buyPs1Station(s,slot.id).ok,true);

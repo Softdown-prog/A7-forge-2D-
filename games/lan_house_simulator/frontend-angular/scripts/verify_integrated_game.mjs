@@ -1034,6 +1034,9 @@ try{
    viewport:{width:scenario.width,height:900},isMobile:mobile,hasTouch:mobile
   });
   const state=createGame(3200+scenario.year+scenario.width,'historical');
+  // This release-calendar rehearsal uses the pre-magazine policy on purpose:
+  // released titles are visible. New campaign secrecy is tested separately.
+  delete state.topGamesUnlockMode;
   state.totalMinutes=(scenario.year-1998)*360*DAY_MINUTES+35;
   state.cash=scenario.cash;state.pcPoweredOff=[true,true,true];
   state.offlineUntil=state.totalMinutes+500;
