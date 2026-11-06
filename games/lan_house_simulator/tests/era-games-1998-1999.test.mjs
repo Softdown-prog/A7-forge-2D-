@@ -1,18 +1,17 @@
 import {sourceModule} from "./helpers/composition.mjs";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {createGame,isValidSave,visitorArrivalChance} from "../dist/js/sim/engine.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier} from "../dist/js/sim/eraGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 function setup(mode="historical"){
  const s=createGame(18,mode);s.cash=4000;
  assert.equal(licenseGames(s).ok,true);
- assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
  return s;
 }
 test("cinco jogos por ano e capas distintas",()=>{
@@ -26,7 +25,7 @@ test("restrições: contrato base, Windows, ano e dinheiro",()=>{
  assert.match(quoteEraGame(s,"turbo-98").message,/direitos básicos/);
  assert.equal(licenseGames(s).ok,true);
  assert.match(quoteEraGame(s,"turbo-98").message,/Windows/);
- assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+ assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
  assert.equal(quoteEraGame(s,"turbo-98").ok,true);
  assert.match(quoteEraGame(s,"asfalto-noturno").message,/1999/);
  assert.equal(licenseEraGame(s,"asfalto-noturno").ok,false);

@@ -8,9 +8,8 @@ import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseGpuGame} from "../dist/js/sim/gpuGames.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const observed=(s,id)=>gpuDemandReport(s).find(r=>r.id===id);
 const accept=(result)=>assert.equal(result.ok,true,result.message);
@@ -49,7 +48,7 @@ test("clientes reais registram pedidos, uso e cobranças sem sessão artificial"
  accept(licenseGames(s));
  accept(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")));
  accept(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")));
- accept(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")));
+ accept(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")));
  accept(licenseGpuGame(s,"neon-rush"));
  for(let i=0;i<4*DAY_MINUTES;i+=120)stepGame(s,120);
  const row=observed(s,"neon-rush");

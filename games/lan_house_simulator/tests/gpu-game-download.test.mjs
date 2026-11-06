@@ -5,9 +5,8 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import {licenseGpuGame,toggleGpuGameInstallation,gpuGameInstallJob,gpuGamePlayableOnPc,
  gpuGameInstallDuration,gpuGameInstallPausedReason,tickGpuGameInstallations,cancelGpuGameInstallation,
  validGpuGameInstallJobs} from "../dist/js/sim/gpuGames.js";
@@ -19,7 +18,7 @@ function ready(){
  ok(licenseGames(s));
  ok(withStationOff(s,0,()=>buyPlatform(s,0,"platform05")));
  ok(withStationOff(s,0,()=>buyGpu(s,0,"gpu05")));
- ok(withStationOff(s,0,()=>licenseWindows(s,0,"winxp")));
+ ok(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"winxp")));
  ok(licenseGpuGame(s,"neon-rush"));
  ok(toggleGpuGameInstallation(s,0,"neon-rush"));
  return s;

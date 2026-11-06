@@ -1,11 +1,11 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
 import {buyGpu,installedGpu} from "../dist/js/sim/gpu.js";
-import {gameYear,licenseWindows} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {expandShop,licenseGames,upgradeInternet,upgradeComputer,setHourlyPrice,contractSupplier,stockItem,wholesaleCost} from "../dist/js/sim/economy.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
@@ -18,7 +18,7 @@ function setup(seed,price){
  act(setHourlyPrice(s,price));act(licenseGames(s));act(hireContentProgrammer(s));act(contractSupplier(s));
  act(expandShop(s));act(buyComputer(s));act(buyComputer(s));
  act(upgradeInternet(s));act(upgradeInternet(s));
- for(let i=0;i<pcCount(s);i++)act(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+ for(let i=0;i<pcCount(s);i++)act(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")));
  for(const i of [3,4]){
   act(withStationOff(s,i,()=>upgradeComputer(s,i)));act(withStationOff(s,i,()=>upgradeComputer(s,i)));act(withStationOff(s,i,()=>buyGpu(s,i,"gpu09")));
  }

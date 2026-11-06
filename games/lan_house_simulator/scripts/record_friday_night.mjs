@@ -1,3 +1,4 @@
+import {licenseAndCompleteWindows} from "../tests/station-power-fixture.mjs";
 // Filmagem do jogo REAL no navegador, de sexta 21h59 até depois da meia-noite.
 // Sem desenhar clientes por fora do Canvas e sem mexer na simulação após iniciar.
 import {chromium} from "playwright";
@@ -6,7 +7,6 @@ import {mkdir,readFile,writeFile,rename} from "node:fs/promises";
 import {resolve,sep,extname} from "node:path";
 import {createGame,isValidSave} from "../dist/js/sim/engine.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {DAY_MINUTES,GAME_SAVE_KEY} from "../dist/js/sim/types.js";
@@ -35,7 +35,7 @@ s.cash=8000;s.multiplayerRoundsPlayed=1;
 function ok(r){if(!r.ok)throw Error(r.message);}
 ok(licenseGames(s));
 for(let pc=0;pc<3;pc++){
- ok(toggleStationPower(s,pc));ok(licenseWindows(s,pc,"win98"));ok(toggleStationPower(s,pc));
+ ok(toggleStationPower(s,pc));ok(licenseAndCompleteWindows(s,pc,"win98"));ok(toggleStationPower(s,pc));
 }
 ok(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID));
 const friday=firstFridayEligibility(s).friday;

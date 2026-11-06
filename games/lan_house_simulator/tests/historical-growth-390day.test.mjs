@@ -1,9 +1,9 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {licenseWindows,gameYear} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {licenseGames,contractSupplier,stockItem,wholesaleCost,expandShop,monthlyBills} from "../dist/js/sim/economy.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {buyComputer,shopPrice} from "../dist/js/sim/shop.js";
@@ -19,7 +19,7 @@ const must=(result,label)=>assert.equal(result.ok,true,label+": "+result.message
 function upkeep(s){
  for(let pc=0;pc<pcCount(s);pc++){
   if(!(s.pcWindowsLicenses?.[pc])&&s.cash>=250+RESERVE)
-   must(withStationOff(s,pc,()=>licenseWindows(s,pc,"win98")),"Windows 98 on "+pc);
+   must(withStationOff(s,pc,()=>licenseAndCompleteWindows(s,pc,"win98")),"Windows 98 on "+pc);
  }
  if((s.pcWindowsLicenses??[]).slice(0,pcCount(s)).every(Boolean)&&
     s.supplierTier!==2&&s.cash>=180+RESERVE)

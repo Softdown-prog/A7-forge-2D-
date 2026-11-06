@@ -10,8 +10,7 @@ import {hasPlayableGpuGame,licenseGpuGame} from "../dist/js/sim/gpuGames.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const id="gpu-games-2005";
 const at=(s,y,d)=>{s.totalMinutes=((y-GAME_FIRST_YEAR)*DAYS_PER_YEAR+d-1)*DAY_MINUTES;};
@@ -125,7 +124,7 @@ test("apenas comprar GPU e Windows não ativa procura premium sem jogo licenciad
  assert.equal(licenseGames(s).ok,true);
  assert.equal(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")).ok,true);
  assert.equal(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")).ok,true);
- assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")).ok,true);
+ assert.equal(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")).ok,true);
  assert.equal(hasPlayableGpuGame(s),false);
  assert.equal(chooseDecision(s,id,"gpu-survey").ok,true);
  assert.equal((s.storyVisitorEffects??[]).some(e=>e.id===id+":start"),false);
@@ -143,7 +142,7 @@ test("licença avançada + estação compatível liberam divulgação sem vender
  assert.equal(licenseGames(s).ok,true);
  assert.equal(withStationOff(s,1,()=>buyPlatform(s,1,"platform05")).ok,true);
  assert.equal(withStationOff(s,1,()=>buyGpu(s,1,"gpu05")).ok,true);
- assert.equal(withStationOff(s,1,()=>licenseWindows(s,1,"winxp")).ok,true);
+ assert.equal(withStationOff(s,1,()=>licenseAndCompleteWindows(s,1,"winxp")).ok,true);
  assert.equal(licenseGpuGame(s,"neon-rush").ok,true);
  assert.equal(hasPlayableGpuGame(s),true);
  const previousRevenue=s.revenue,previousServed=s.served,previousCash=s.cash;

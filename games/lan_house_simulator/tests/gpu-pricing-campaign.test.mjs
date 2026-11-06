@@ -10,12 +10,11 @@ import {licenseGames,setHourlyPrice,stockItem,wholesaleCost} from "../dist/js/si
 import {allowableHourlyPrice,annualHourlyCeiling,yearFromMinutes} from "../dist/js/sim/historicalEconomy.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {GPU_GAME_CATALOG,licenseGpuGame,gpuGamePlayableOnPc} from "../dist/js/sim/gpuGames.js";
 import {gpuDemandReport,gpuLicenseCoverage} from "../dist/js/sim/gpuDemand.js";
 import {requestCleaning,startRepair} from "../dist/js/sim/services.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const DAYS=process.env.LHS_GPU_PRICING_AUDIT==="1"?90:8;
 const SEEDS=[23,137],PC_CHOICES=[1,2],POLICIES=["reference","intermediate","maximum"];
@@ -41,7 +40,7 @@ function initialize(plan,seed,compatiblePcs,policy,licensed){
  for(let pc=0;pc<compatiblePcs;pc++){
   ok(withStationOff(s,pc,()=>buyPlatform(s,pc,plan.platform)),"Plataforma PC "+pc);
   ok(withStationOff(s,pc,()=>buyGpu(s,pc,plan.gpu)),"GPU PC "+pc);
-  ok(withStationOff(s,pc,()=>licenseWindows(s,pc,plan.windows)),"Windows PC "+pc);
+  ok(withStationOff(s,pc,()=>licenseAndCompleteWindows(s,pc,plan.windows)),"Windows PC "+pc);
  }
  if(licensed)ok(licenseGpuGame(s,plan.id),"Licença avançada");
  const legalCap=allowableHourlyPrice(s),rate=tariff(s,policy);

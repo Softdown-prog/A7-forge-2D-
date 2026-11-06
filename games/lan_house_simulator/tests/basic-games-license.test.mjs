@@ -6,10 +6,9 @@ import {createGame,isValidSave,visitorArrivalChance} from "../dist/js/sim/engine
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {priceIndex} from "../dist/js/sim/historicalEconomy.js";
 import {licenseGames,basicGamesLicenseCost,BASIC_GAMES_LICENSE_COST_1998} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,eraGameVisitorMultiplier} from "../dist/js/sim/eraGames.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const money=n=>Math.round(n*100)/100;
 
@@ -64,7 +63,7 @@ test("regularizar não cria procura; licenciar título específico gera só o b�
   assert.equal(licenseGames(s).ok,true);
   assert.equal(eraGameVisitorMultiplier(s),1);
   assert.equal(visitorArrivalChance(s,0),before);
-  assert.equal(withStationOff(s,0,()=>licenseWindows(s,0,"win98")).ok,true);
+  assert.equal(withStationOff(s,0,()=>licenseAndCompleteWindows(s,0,"win98")).ok,true);
   assert.equal(licenseEraGame(s,"turbo-98").ok,true);
   assert.equal(eraGameVisitorMultiplier(s),1.015);
   assert.ok(Math.abs(visitorArrivalChance(s,0)/before-1.015)<1e-10);

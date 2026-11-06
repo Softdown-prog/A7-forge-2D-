@@ -1,9 +1,9 @@
+import {licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import {sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseGames,contractSupplier,stockItem,wholesaleCost,expandShop,setHourlyPrice} from "../dist/js/sim/economy.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {buyComputer,shopPrice} from "../dist/js/sim/shop.js";
@@ -22,7 +22,7 @@ const ok=(result,label)=>assert.equal(result.ok,true,label+": "+result.message);
 function upkeep(s){
  for(let i=0;i<pcCount(s);i++)
   if(s.pcWindowsLicenses?.[i]!==true&&s.cash>=250+RESERVE)
-   ok(licenseWindows(s,i,"win98"),"Windows PC "+i);
+   ok(licenseAndCompleteWindows(s,i,"win98"),"Windows PC "+i);
  if((s.pcWindowsLicenses??[]).slice(0,pcCount(s)).every(Boolean)&&
     s.supplierTier!==2&&s.cash>=180+RESERVE)
   ok(contractSupplier(s),"supplier");

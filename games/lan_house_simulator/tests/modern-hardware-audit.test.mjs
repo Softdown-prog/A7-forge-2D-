@@ -1,11 +1,11 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear,chooseAvailablePc} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,contractSupplier,upgradeComputer,upgradeInternet,expandShop,stockItem,wholesaleCost,setHourlyPrice,hardwareSatisfactionBonus} from "../dist/js/sim/economy.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
-import {gameYear,licenseWindows} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
@@ -23,7 +23,7 @@ function setup(year,price,seed,modern){
  act(setHourlyPrice(s,price));act(licenseGames(s));act(hireContentProgrammer(s));act(contractSupplier(s));
  act(expandShop(s));act(buyComputer(s));act(buyComputer(s));
  act(upgradeInternet(s));act(upgradeInternet(s));
- for(let i=0;i<pcCount(s);i++)act(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+ for(let i=0;i<pcCount(s);i++)act(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")));
  if(modern){
   // Placas atuais em PCs ao FUNDO: exercita alocação VIP sem mexer no layout.
   for(const i of [3,4]){

@@ -7,14 +7,13 @@ import {DAYS_PER_YEAR} from "../dist/js/sim/mailCalendar.js";
 import {ERIC_SECOND_MAIL_ID,ERIC_FIRST_MAIL_ID,ericFirstMailDayOfYear,ericSecondMailDayOfYear} from "../dist/js/sim/ericStory.js";
 import {ERIC_MULTIPLAYER_GAME_ID,ERA_GAME_CATALOG,quoteEraGame,licenseEraGame,eraGameVisitorMultiplier,multiplayerEligiblePcs,multiplayerGameKnown} from "../dist/js/sim/eraGames.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 const at=(s,year,day=1)=>{s.totalMinutes=((year-1998)*DAYS_PER_YEAR+day-1)*DAY_MINUTES;};
 const letters=(s,id)=>(s.notices??[]).filter(n=>n.id===id);
-const licensePc=(s,i)=>assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
+const licensePc=(s,i)=>assert.equal(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")).ok,true);
 
 test("segunda mensagem de Eric aparece uma vez em junho/julho de 2000",()=>{
  for(const seed of [1,77,1998,72421]){

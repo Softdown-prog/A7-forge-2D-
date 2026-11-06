@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {tickMultiplayerVisitors,waitForMultiplayerFriends} from "../dist/js/sim/multiplayerVisitors.js";
 import {tryServe} from "../dist/js/sim/customerDecisions.js";
@@ -13,7 +12,7 @@ import {isReserved} from "../dist/js/sim/customerFlow.js";
 import {counterQueueSlot} from "../dist/js/sim/checkoutQueue.js";
 import {toggleStationPower} from "../dist/js/sim/stationPower.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 
 function prepared(seed=721){
  const s=createGame(seed,"historical");
@@ -21,7 +20,7 @@ function prepared(seed=721){
  s.ericSecondMailDelivered=true;
  assert.equal(licenseGames(s).ok,true);
  for(let i=0;i<3;i++)
-  assert.equal(withStationOff(s,i,()=>licenseWindows(s,i,"win98")).ok,true);
+  assert.equal(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")).ok,true);
  assert.equal(licenseEraGame(s,ERIC_MULTIPLAYER_GAME_ID).ok,true);
  const firstDay=2*360+1;
  const nextDay=firstDay+((seed%7-firstDay%7+7)%7);

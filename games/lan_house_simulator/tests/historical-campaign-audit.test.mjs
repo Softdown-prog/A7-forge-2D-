@@ -1,9 +1,9 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {gameYear,licenseWindows} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {buyLcdKit} from "../dist/js/sim/computerModels.js";
@@ -42,8 +42,8 @@ function prepare(year,seed,variant){
    accept(withStationOff(s,i,()=>buyPlatform(s,i,kit[year])),"platform "+year+" #"+i);
    accept(withStationOff(s,i,()=>buyGpu(s,i,gpu[year])),"gpu "+year+" #"+i);
    accept(withStationOff(s,i,()=>buyLcdKit(s,i,lcd[year])),"lcd "+year+" #"+i);
-   accept(withStationOff(s,i,()=>licenseWindows(s,i,windows[year])),"windows "+year+" #"+i);
-  }else accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"legacy windows #"+i);
+   accept(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,windows[year])),"windows "+year+" #"+i);
+  }else accept(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")),"legacy windows #"+i);
  }
  const quality=qualityMultiplier(s);
  const permitted=allowableHourlyPrice(s);
@@ -189,7 +189,7 @@ function openingBusiness(seed){
  for(let day=1;day<=120;day++){
   for(let i=0;i<3;i++){
    if(!(s.pcWindowsLicenses?.[i])&&s.cash>=250)
-    accept(withStationOff(s,i,()=>licenseWindows(s,i,"win98")),"startup Windows "+i);
+    accept(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")),"startup Windows "+i);
   }
   if(s.pcWindowsLicenses?.every(Boolean)&&s.supplierTier!==2&&s.cash>=350){
    accept(contractSupplier(s),"startup supplier");supplierBought=true;

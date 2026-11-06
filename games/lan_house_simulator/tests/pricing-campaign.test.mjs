@@ -1,11 +1,10 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {licenseGames,contractSupplier,upgradeComputer,upgradeInternet,expandShop,stockItem,wholesaleCost,setHourlyPrice} from "../dist/js/sim/economy.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
@@ -26,7 +25,7 @@ function runScenario(year,price,upgraded){
   doIt(buyComputer(s));doIt(buyComputer(s));
   doIt(upgradeInternet(s));doIt(upgradeInternet(s));
  }
- for(let i=0;i<pcCount(s);i++)doIt(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+ for(let i=0;i<pcCount(s);i++)doIt(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")));
  if(upgraded){
   assert.equal(year,2009);
   for(let i=0;i<3;i++)doIt(withStationOff(s,i,()=>upgradeComputer(s,i)));

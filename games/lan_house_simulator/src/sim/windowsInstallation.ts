@@ -60,11 +60,12 @@ export function finishWindowsInstallations(s:GameState,now=Date.now()):WindowsIn
  const count=stationCount(s);
  const windows=Array.from({length:count},(_,i)=>installedWindows(s,i));
  const licenses=Array.from({length:count},(_,i)=>s.pcWindowsLicenses?.[i]===true);
- const modes=Array.from({length:count},(_,i)=>s.pcOperatingSystems?.[i]==="linux"?"linux" as const:"windows" as const);
  for(const job of completed){
-  windows[job.pc]=job.edition;licenses[job.pc]=true;modes[job.pc]="windows";
+  windows[job.pc]=job.edition;licenses[job.pc]=true;
+  if(s.pcOperatingSystems?.[job.pc]==="linux")s.pcOperatingSystems[job.pc]="windows";
  }
- s.pcWindows=windows;s.pcWindowsLicenses=licenses;s.pcOperatingSystems=modes;
- s.windowsInstallJobs=jobs.filter(job=>job.finishedAtMs>now);
+ s.pcWindows=windows;s.pcWindowsLicenses=licenses;
+ if(completed.length===jobs.length)delete s.windowsInstallJobs;
+ else s.windowsInstallJobs=jobs.filter(job=>job.finishedAtMs>now);
  return completed;
 }

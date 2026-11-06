@@ -1,11 +1,10 @@
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,stepGame,pcCount,pcWear} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {expandShop,upgradeComputer,upgradeInternet,licenseGames,contractSupplier,stockItem,wholesaleCost} from "../dist/js/sim/economy.js";
 import {buyComputer} from "../dist/js/sim/shop.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {chooseDecision,decisionOptions} from "../dist/js/sim/decisions.js";
@@ -23,7 +22,7 @@ function setup(size,seed){
  const extra={pequena:0,media:2,grande:4}[size];
  for(let i=0;i<extra/2;i++)action(expandShop(s));
  for(let i=0;i<extra;i++)action(buyComputer(s));
- for(let i=0;i<pcCount(s);i++)action(withStationOff(s,i,()=>licenseWindows(s,i,"win98")));
+ for(let i=0;i<pcCount(s);i++)action(withStationOff(s,i,()=>licenseAndCompleteWindows(s,i,"win98")));
  if(size!=="pequena"){
   action(upgradeInternet(s));
   for(let i=0;i<Math.min(2,pcCount(s));i++)action(withStationOff(s,i,()=>upgradeComputer(s,i)));

@@ -91,7 +91,7 @@ test("o snapshot nunca altera a partida nem RNG",()=>{
 });
 test("o aplicativo não contém DOM, timers ou escrita no save",()=>{
  const source=readFileSync(new URL("../src/application/stationRevisionPort.ts",import.meta.url),"utf8");
- for(const term of ["document","window","HTMLElement","localStorage","setInterval","requestAnimationFrame"])assert.equal(source.includes(term),false);
+ assert.doesNotMatch(source,/\b(document|window|HTMLElement|localStorage|setInterval|requestAnimationFrame)\b/);
  for(const term of ["stepGame","applyResult","saveGame"])assert.equal(source.includes(term),false);
 });
 test("o main injeta o save atual e utiliza snapshot nos dois painéis",()=>{

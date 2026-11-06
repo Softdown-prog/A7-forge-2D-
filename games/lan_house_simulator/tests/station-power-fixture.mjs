@@ -1,4 +1,13 @@
 import {stationPoweredOn,stationPowerCount,stationHasCustomer,toggleStationPower} from "../dist/js/sim/stationPower.js";
+import {licenseWindows} from "../dist/js/sim/era.js";
+import {finishWindowsInstallations,windowsInstallFor} from "../dist/js/sim/windowsInstallation.js";
+
+/** Conclui a instalação pelo prazo real em cenários que testam outros sistemas. */
+export function licenseAndCompleteWindows(s,index,edition){
+ const result=licenseWindows(s,index,edition);
+ if(result.ok)finishWindowsInstallations(s,windowsInstallFor(s,index).finishedAtMs);
+ return result;
+}
 /** Simula desligar e religar antes de uma instalação nos testes preexistentes.
  * Restaura exatamente o estado inicial de energia para manter asserções
  * atômicas antigas; não remove ocupantes nem bypassa a validação de produção.

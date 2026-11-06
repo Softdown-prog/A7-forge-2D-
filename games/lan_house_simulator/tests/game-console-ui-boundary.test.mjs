@@ -9,10 +9,9 @@ import {createPs1ActionsPort} from "../dist/js/application/ps1ActionsPort.js";
 import {installGameLicensingControls} from "../dist/js/ui/gameLicensingControls.js";
 import {installPs1Controls} from "../dist/js/ui/ps1Controls.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {buyPlatform} from "../dist/js/sim/hardware.js";
 import {buyGpu} from "../dist/js/sim/gpu.js";
-import {withStationOff} from "./station-power-fixture.mjs";
+import {withStationOff,licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 const ok=result=>assert.equal(result.ok,true,result.message);
 
@@ -28,7 +27,7 @@ test("licencas historicas passam pela porta e seguem o save recarregado",()=>{
  assert.equal(port.cancelDownload(100,"neon-rush").ok,false);
  assert.equal(JSON.stringify(state),before);
  ok(licenseGames(state));
- ok(withStationOff(state,0,()=>licenseWindows(state,0,"win98")));
+ ok(withStationOff(state,0,()=>licenseAndCompleteWindows(state,0,"win98")));
  ok(port.licenseEra("turbo-98"));
  assert.equal(state.licensedEraGames?.includes("turbo-98"),true);
  assert.equal(isValidSave(state),true);
@@ -46,7 +45,7 @@ test("jogo de GPU respeita desbloqueios e operacoes de download",()=>{
  ok(licenseGames(state));
  ok(withStationOff(state,0,()=>buyPlatform(state,0,"platform05")));
  ok(withStationOff(state,0,()=>buyGpu(state,0,"gpu05")));
- ok(withStationOff(state,0,()=>licenseWindows(state,0,"winxp")));
+ ok(withStationOff(state,0,()=>licenseAndCompleteWindows(state,0,"winxp")));
  ok(port.licenseGpu("neon-rush"));
  assert.equal(port.licenseGpu("neon-rush").ok,false);
  ok(port.toggleInstallation(0,"neon-rush"));

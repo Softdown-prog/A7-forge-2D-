@@ -1,3 +1,4 @@
+import {licenseAndCompleteWindows} from "../tests/station-power-fixture.mjs";
 // Verifica a página de planejamento dentro do JOGO ORIGINAL em Chromium.
 // Não há cena artificial nem alteração do relógio para provar que uma noite funciona.
 import {chromium} from "playwright";
@@ -9,7 +10,6 @@ import {draftFridayMeetup,firstFridayEligibility} from "../dist/js/sim/fridayMee
 import {confirmFridayMeetup} from "../dist/js/sim/nightMeetup.js";
 import {selectNightTournament} from "../dist/js/sim/nightTournament.js";
 import {licenseGames} from "../dist/js/sim/economy.js";
-import {licenseWindows} from "../dist/js/sim/era.js";
 import {licenseEraGame,ERIC_MULTIPLAYER_GAME_ID} from "../dist/js/sim/eraGames.js";
 import {toggleStationPower,stationHasCustomer} from "../dist/js/sim/stationPower.js";
 import {startRepair} from "../dist/js/sim/services.js";
@@ -39,7 +39,7 @@ function ok(result){if(!result.ok)throw Error(result.message);}
 ok(licenseGames(state));
 for(let i=0;i<3;i++){
  ok(toggleStationPower(state,i));
- ok(licenseWindows(state,i,"win98"));
+ ok(licenseAndCompleteWindows(state,i,"win98"));
  ok(toggleStationPower(state,i));
 }
 ok(licenseEraGame(state,ERIC_MULTIPLAYER_GAME_ID));

@@ -1,8 +1,9 @@
+import {licenseAndCompleteWindows} from "./station-power-fixture.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
-import {gameYear,licenseWindows} from "../dist/js/sim/era.js";
+import {gameYear} from "../dist/js/sim/era.js";
 import {
  contractSupplier,expandShop,licenseGames,upgradeInternet,setHourlyPrice,
  stockItem,wholesaleCost,energyCostPerMinute
@@ -34,7 +35,7 @@ function setup(seed,size,policy){
  accept(expandShop(s));
  if(size===7)accept(expandShop(s));
  while(pcCount(s)<size)accept(buyComputer(s));
- for(let i=0;i<size;i++)accept(licenseWindows(s,i,"win98"));
+ for(let i=0;i<size;i++)accept(licenseAndCompleteWindows(s,i,"win98"));
  assert.equal(pcCount(s),size);
  assert.equal(gameYear(s),2011);
  assert.equal(s.cash,START-s.expenses);
