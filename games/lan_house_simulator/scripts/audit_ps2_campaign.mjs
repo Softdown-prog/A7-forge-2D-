@@ -9,7 +9,7 @@ const output=resolve(process.argv[2]??'out/ps2-integrated');await mkdir(output,{
 const ok=r=>{if(!r.ok)throw Error(r.message);};
 const reports=[];
 for(const year of [2006,2010,2020,2030])for(const rate of (year===2006?[2.5,4,5]:[null])){
- const s=createGame(314,'historical');s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=100000;
+ const s=createGame(314,'historical');delete s.topGamesUnlockMode;s.totalMinutes=(year-1998)*360*DAY_MINUTES;s.cash=100000;
  s.licensedGames=true;ok(buyPs1Station(s,'floor-1'));ok(buyPs1Disc(s,'turbo-circuito'));
  const before=s.expenses;ok(buyPs2Station(s,'floor-2'));ok(buyPs2Game(s,'cidade-em-fuga'));ok(buyPs2SecondSeat(s,0));
  if(rate!==null)ok(setPs2HourlyPrice(s,rate));
