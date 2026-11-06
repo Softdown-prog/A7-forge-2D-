@@ -15,7 +15,7 @@ function year2002(){
  state.cash=10000;return state;
 }
 test("antes de 2002 painel do console bloqueia preços e mostra desbloqueio",()=>{
- const state=createGame(901,"historical");
+ const state=createGame(901,"historical");delete state.topGamesUnlockMode;
  const view=createPs1AdminPort(()=>state).snapshot();
  assert.equal(view.consoleReady,false);
  assert.equal(view.stationCount,0);
