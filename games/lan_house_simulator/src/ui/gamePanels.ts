@@ -71,7 +71,7 @@ const shopCatalogRefresh=createShopCatalogRefresh({
   ps1Slots:()=>ps1ShopPlacementPort.snapshot(),
   selectedPs1Slot:()=>state.selection.selectedPs1PlacementId,
   selectPs1Slot:id=>{state.selection.selectedPs1PlacementId=id;},
-  discs:ps1ShopDiscPort,ps2:ports.ps2Port
+  discs:ps1ShopDiscPort,ps2:ports.ps2Port,topGames:ports.topGamesShopPort
  })
 });
 function renderShop(force=true):void{shopCatalogRefresh.refresh(force);}
