@@ -80,6 +80,11 @@ try{
    if(pathname==='/termos/'||pathname==='/privacidade/'){
     assert.equal(await page.locator('lhs-legal-document').count(),1);
     assert.equal(await page.locator('lhs-legal-document .legal-grid').count(),1);
+    assert.equal(await page.locator('.draft-notice, .legal-intro .notice, .legal-copy > .notice').count(),0,
+     'Legal pages must not show internal draft banners');
+    assert.doesNotMatch(await page.locator('main').innerText(),
+     /Versão Angular em revisão|Este texto não substitui os termos atualmente publicados|Prévia para revisão/,
+     'Legal pages cannot show internal review notices');
    }else assert.equal(await page.locator('lhs-legal-document').count(),0);
    assert.equal(await page.title(),pageMetadata[pathname].title+' · Lan House Simulator');
    assert.equal(await page.locator('meta[name="description"]').getAttribute('content'),

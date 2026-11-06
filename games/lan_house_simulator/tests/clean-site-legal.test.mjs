@@ -10,6 +10,7 @@ test('Terms and Privacy retain 21 sections and a single Angular document owner',
  const owner=read('../frontend-angular/src/site-rewrite/legal-document.ts');
  const template=read('../frontend-angular/src/site-rewrite/legal-document.html');
  const css=read('../frontend-angular/src/site-rewrite/site.css');
+ const legacy=read('../website/content.mjs');
  const browser=read('../scripts/verify_clean_angular_site.mjs');
  assert.equal((legal.match(/"id":/g)||[]).length,21);
  for(const id of ['projeto','acesso','donate','direitos','responsavel',
@@ -24,6 +25,9 @@ test('Terms and Privacy retain 21 sections and a single Angular document owner',
  assert.equal((page.match(/<lhs-legal-document\b/g)||[]).length,1);
  assert.doesNotMatch(page,/class="wrap legal-grid"|class="legal-index"|class="legal-body"|legalSections/);
  assert.doesNotMatch(page,/Versão Angular em revisão|draft-notice/);
+ assert.doesNotMatch(template,/Versão Angular em revisão|Prévia para revisão|draft-notice/);
+ assert.doesNotMatch(css,/\.draft-notice\s*\{/);
+ assert.doesNotMatch(legacy,/Prévia para revisão|<p class="notice">/);
  assert.doesNotMatch(page,/Conteúdo integral pendente de migração/);
  assert.match(owner,/selector:'lhs-legal-document'/);
  assert.match(owner,/ChangeDetectionStrategy\.OnPush/);
