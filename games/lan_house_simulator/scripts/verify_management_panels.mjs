@@ -116,8 +116,9 @@ try{
    products.push(...await page.locator('[data-buy]').evaluateAll(nodes=>nodes.map(n=>n.dataset.buy)));
    assert.ok(await page.locator('#shop-catalog .shop-card').count()<25,'One category is built at a time');
   }
-  assert.deepEqual([...new Set(products)].sort(),[...SHOP_CATALOG.map(item=>item.id),'ps2'].sort(),
-   'Every existing shop item and the new PS2 bench remain accessible');
+  assert.deepEqual([...new Set(products)].sort(),
+   [...SHOP_CATALOG.map(item=>item.id),'ps2','top-games-subscribe'].sort(),
+   'All shop items, the PS2 bench and the Top Games subscription remain accessible');
   assert.ok(products.includes('linux-lab-99')&&products.includes('linux-dev-99'),
    'Two Linux workstations from the magazine mission must be available in the catalog');
   await press(page.locator('#close-shop'));await page.locator('#scene-viewport').scrollIntoViewIfNeeded();
