@@ -24,7 +24,7 @@ interface ConsoleView{
   readonly discs:readonly ConsoleGame[]|null};
  readonly ps2:{readonly benchText:string;readonly benchDisabled:boolean;
   readonly slots:readonly Slot[];readonly games:readonly ConsoleGame[];
-  readonly artwork:string|null};
+  readonly artwork:string|null;readonly nextReleaseYear:number|null};
 }
 interface Catalog{
  readonly category:string;readonly cards:readonly Card[];
