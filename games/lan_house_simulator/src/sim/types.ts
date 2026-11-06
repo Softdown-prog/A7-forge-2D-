@@ -141,6 +141,8 @@ export interface GameState {
   linuxMagazineIssuesReceived?:number;
   linuxMagazineLastDeliveryDay?:number;
   /** Assinatura Top Games: opcional para saves legados; cobrança apenas ao receber a revista. */
+  /** New historical saves discover console titles through magazines; absent in pre-feature saves. */
+  topGamesUnlockMode?:"magazines";
   topGamesSubscriptionDay?:number;
   topGamesSubscriptionActive?:boolean;
   topGamesReceivedIssues?:string[];
