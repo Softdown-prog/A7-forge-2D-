@@ -15,7 +15,7 @@ import {buildWall} from '../dist/js/sim/walls.js';
 import {setPs1HourlyPrice} from '../dist/js/sim/ps1.js';
 import {createFinancialAdminOverviewPort} from '../dist/js/application/financialAdminOverviewPort.js';
 const ok=r=>assert.equal(r.ok,true,r.message);
-function game(year=2006){const s=createGame(314,'historical');s.totalMinutes=(year-1998)*360*DAY_MINUTES+40;s.cash=10000;return s;}
+function game(year=2006){const s=createGame(314,'historical');delete s.topGamesUnlockMode;s.totalMinutes=(year-1998)*360*DAY_MINUTES+40;s.cash=10000;return s;}
 function installed(duo=false){const s=game();ok(p.buyPs2Station(s,'floor-2'));ok(p.buyPs2Game(s,'cidade-em-fuga'));if(duo)ok(p.buyPs2SecondSeat(s,0));return s;}
 function visitor(id=5,minutes=45){return {id,stage:'waiting',x:1.55,y:2.56,target:{x:1.55,y:2.56},route:[],queueIndex:0,
  pcIndex:null,costume:'regular',usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true,sessionMinutes:minutes,wallet:30,
