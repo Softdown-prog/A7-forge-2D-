@@ -40,6 +40,15 @@ export function renderHardwarePanel(view:HardwarePanelView,doc:Document=document
    choice.dataset.winPc=String(index);choice.dataset.winEdition=release.id;choice.id="hardware-windows-"+release.id;choice.disabled=release.disabled;choice.title=release.title;
    const option=element("div","os-option");option.append(choice,element("small","",release.detail));choices.append(option);
   }
+  if(view.installation){
+   const status=element("div","windows-install-status");
+   status.append(element("strong","","Instalando "+view.installation.name),
+    element("p","",view.installation.percent+"% concluído · "+
+     Math.ceil(view.installation.remainingSeconds/60)+" minutos reais restantes"));
+   const meter=element("progress");meter.max=100;meter.value=view.installation.percent;
+   meter.setAttribute("aria-label","Progresso do "+view.installation.name);
+   status.append(meter);os.append(status);
+  }
   os.append(choices);
   if(view.currentWindowsIssue)os.append(element("p","part-status",view.currentWindowsIssue));
   if(view.nextWindowsIssue)os.append(element("p","hardware-note",view.nextWindowsIssue));root.append(os);return root;
