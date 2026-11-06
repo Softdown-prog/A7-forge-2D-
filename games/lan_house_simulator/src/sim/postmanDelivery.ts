@@ -62,12 +62,24 @@ const step=(s:GameState,job:PostmanDelivery,to:Point,speed:number):boolean=>{
  if(distance(job,waypoint)<.12)job.route?.shift();
  return distance(job,to)<.28;
 };
-function dueIssue(s:GameState):number|null{
+function dueLinuxIssue(s:GameState):number|null{
  const n=s.linuxMagazineIssuesReceived??0;
  if(!s.economyVersion||s.linuxMagazineSubscriptionDay===undefined||n>=6)return null;
  const due=linuxNextMagazineDueDay(s);
  if(due===null||linuxDay(s)<due||s.cash<LINUX_MAGAZINE_ISSUE_COST)return null;
  return n;
+}
+/** Select the longest-waiting eligible parcel. A single courier and route
+ * serve both subscriptions, with the earlier due magazine going first. */
+function dueDelivery(s:GameState):Pick<PostmanDelivery,"issueIndex"|"magazine"|"issueId">|null{
+ const linux=dueLinuxIssue(s),top=dueTopGamesIssue(s);
+ const topReady=top!==null&&s.cash>=topGamesIssuePrice(s);
+ if(linux===null&&!topReady)return null;
+ if(linux!==null&&(!topReady||
+    (linuxNextMagazineDueDay(s)??Infinity)<=(nextTopGamesDeliveryDay(s)??Infinity)))
+  return {issueIndex:linux};
+ const index=TOP_GAMES_ISSUES.findIndex(issue=>issue.id===top!.id);
+ return index<0?null:{magazine:"top-games",issueId:top!.id,issueIndex:index};
 }
 /** Runs once per simulation minute. Keeps the NPC independent of paid staff.
  * A blocked doorway does not magically deliver the issue or charge money.
@@ -75,11 +87,11 @@ function dueIssue(s:GameState):number|null{
 export function tickPostman(s:GameState):void{
  let job=s.postmanDelivery;
  if(!job){
-  const n=dueIssue(s);
-  if(n===null)return;
+  const parcel=dueDelivery(s);
+  if(parcel===null)return;
   const door=postmanDoor(s),counter=postmanCounter(s);
   if(!workerRoute(s,door,counter))return;
-  job={issueIndex:n,x:door.x,y:door.y,phase:"arriving",progress:0,
+  job={...parcel,x:door.x,y:door.y,phase:"arriving",progress:0,
    facing:"north",moving:false};
   s.postmanDelivery=job;
  }
