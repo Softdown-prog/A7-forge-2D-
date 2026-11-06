@@ -1,0 +1,67 @@
+name: LHS GPUs 2015-2030 — catalogue, power and browser
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'games/lan_house_simulator/src/sim/gpu*.ts'
+      - 'games/lan_house_simulator/src/sim/hardware.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/src/application/gpuCatalogPort.ts'
+      - 'games/lan_house_simulator/src/ui/gpuCatalogPanel.ts'
+      - 'games/lan_house_simulator/assets/gpu/**'
+      - 'games/lan_house_simulator/index.html'
+      - 'games/lan_house_simulator/tests/gpu*.test.mjs'
+      - 'games/lan_house_simulator/tests/hardware-components.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_gpu_modern_browser.mjs'
+      - '.github/workflows/lhs-gpu-generations.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'games/lan_house_simulator/src/sim/gpu*.ts'
+      - 'games/lan_house_simulator/src/sim/hardware.ts'
+      - 'games/lan_house_simulator/src/sim/types.ts'
+      - 'games/lan_house_simulator/src/sim/engine.ts'
+      - 'games/lan_house_simulator/assets/gpu/**'
+      - 'games/lan_house_simulator/index.html'
+      - 'games/lan_house_simulator/tests/gpu*.test.mjs'
+      - 'games/lan_house_simulator/scripts/verify_gpu_modern_browser.mjs'
+      - '.github/workflows/lhs-gpu-generations.yml'
+concurrency:
+  group: lhs-gpu-generations-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+permissions:
+  contents: read
+jobs:
+  gpu-generations:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    defaults:
+      run:
+        working-directory: games/lan_house_simulator
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: games/lan_house_simulator/package-lock.json
+      - name: Install pinned dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck and build game assets
+        run: npm run typecheck && npm run build
+      - name: Test historical and modern GPUs, hardware and save validation
+        run: node --test tests/gpu.test.mjs tests/gpu-modern-generations.test.mjs tests/gpu-catalog-boundary.test.mjs tests/hardware-components.test.mjs tests/gpu-games-2005.test.mjs
+      - name: Install Chromium for real GPU shop QA
+        run: npx playwright install --with-deps chromium
+      - name: Buy GPUs in the real UI at desktop and mobile widths
+        run: node scripts/verify_gpu_modern_browser.mjs out/gpu-modern-browser
+      - name: Upload browser screenshots and reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lhs-gpu-modern-browser
+          path: games/lan_house_simulator/out/gpu-modern-browser
+          if-no-files-found: warn
+          retention-days: 14
