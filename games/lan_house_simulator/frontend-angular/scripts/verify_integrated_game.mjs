@@ -42,7 +42,7 @@ try{
  for(const width of [1280,414,360]){
   const mobile=width<700;
   const context=await browser.newContext({viewport:{width,height:900},isMobile:mobile,hasTouch:mobile});
-  const fixture=createGame(2200+width,'historical');
+  const fixture=createGame(2200+width,'historical');delete fixture.topGamesUnlockMode;
   fixture.totalMinutes=8*360*DAY_MINUTES+35; // 2006
   fixture.cash=15000;fixture.pcPoweredOff=[true,true,true];
   fixture.pcWear=[19,53,82]; // Deterministic real-save wear for health UI QA.
