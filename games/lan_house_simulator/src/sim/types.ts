@@ -140,6 +140,11 @@ export interface GameState {
   linuxMagazineSubscriptionDay?:number;
   linuxMagazineIssuesReceived?:number;
   linuxMagazineLastDeliveryDay?:number;
+  /** Assinatura Top Games: opcional para saves legados; cobrança apenas ao receber a revista. */
+  topGamesSubscriptionDay?:number;
+  topGamesSubscriptionActive?:boolean;
+  topGamesReceivedIssues?:string[];
+  topGamesLastDeliveryDay?:number;
   /** Visiting postman delivering the next paid printed magazine. */
   postmanDelivery?:import("./postmanDelivery.js").PostmanDelivery;
   linuxMailSeenIds?:import("./linuxQuest.js").LinuxMailId[];
