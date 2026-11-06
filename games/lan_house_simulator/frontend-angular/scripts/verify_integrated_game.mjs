@@ -1097,6 +1097,29 @@ try{
   assert.equal(current.ps1Stations?.length??0,0,'No locked PS1 purchase');
   assert.equal(current.ps2Stations?.length??0,0,'No locked PS2 purchase');
   assert.deepEqual(errors,[],'No runtime errors in locked shop');
+  // Top Games Angular card delegates both commands to the existing shop port.
+  const magazine=shop.locator('.angular-top-games');
+  assert.equal(await magazine.count(),1,'Top Games subscription shown in consoles');
+  assert.match(await magazine.innerText(),/Top Games/);
+  assert.match(await magazine.innerText(),/Revistas recebidas: 0 de 28/);
+  if(scenario.year===2002){
+   const subscribe=magazine.locator('button');
+   assert.equal(await subscribe.innerText(),'Assinar Top Games');
+   const before=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   await press(subscribe);
+   await page.waitForFunction(()=>document.querySelector('.angular-top-games button')?.textContent?.includes('Pausar assinatura'));
+   const after=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(after.topGamesSubscriptionActive,true);
+   assert.equal(after.topGamesReceivedIssues?.length,0);
+   assert.equal(after.cash,before.cash,'Subscribe without delivery must not bill');
+   assert.equal(after.expenses,before.expenses);
+   await press(magazine.locator('button'));
+   await page.waitForFunction(()=>document.querySelector('.angular-top-games button')?.textContent?.includes('Retomar assinatura'));
+   const paused=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+   assert.equal(paused.topGamesSubscriptionActive,false);
+   assert.equal(paused.cash,before.cash,'Pause must not bill');
+  }
+  assert.deepEqual(errors,[],'No runtime errors in Top Games subscription');
   await page.screenshot({
    path:resolve(output,'locked-'+scenario.year+'-'+scenario.width+'.png'),
    fullPage:true
