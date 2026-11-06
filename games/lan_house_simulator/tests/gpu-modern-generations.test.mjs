@@ -77,6 +77,8 @@ test("modern replacement keeps old saves, never refunds and refuses downgrade",(
  accept(withStationOff(s,1,()=>buyGpu(s,1,"gpu13")));
  const legacy=parseImportedSave(serializeSave(s));
  assert.equal(installedGpu(legacy,1),"gpu13");
+ // GPU 2030 cannot be powered by the legacy 350 W PSU: upgrade it first.
+ accept(withStationOff(s,1,()=>buyPart(s,1,"psu","psu650")));
  const cash=s.cash,spent=s.expenses;
  accept(withStationOff(s,1,()=>buyGpu(s,1,"gpu30")));
  assert.equal(s.cash,cash-9250);
