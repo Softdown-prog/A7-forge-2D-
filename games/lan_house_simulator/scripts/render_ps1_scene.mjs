@@ -45,7 +45,7 @@ try{
   document.body.append(canvas);
   const ctx=canvas.getContext("2d");
   if(!ctx)throw Error("Canvas 2D ausente");
-  const game=createGame(314,"historical");
+  const game=createGame(314,"historical");delete game.topGamesUnlockMode;
   game.totalMinutes=(2002-1998)*360*DAY_MINUTES;
   game.furniture={poster:0,plant:0,table:0};
   const slot=ps1PlacementSlots(game)[0];
