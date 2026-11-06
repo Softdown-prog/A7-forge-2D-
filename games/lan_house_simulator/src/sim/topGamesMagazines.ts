@@ -8,7 +8,6 @@ import {DAY_MINUTES} from "./types.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {PS1_CD_CATALOG} from "./ps1.js";
 import {PS2_GAME_CATALOG} from "./ps2.js";
-import {topGamesKnowsGame} from "./topGamesUnlockGate.js";
 export {topGamesKnowsGame} from "./topGamesUnlockGate.js";
 
 export const TOP_GAMES_FIRST_YEAR=2002;
