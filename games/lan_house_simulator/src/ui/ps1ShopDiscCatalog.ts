@@ -39,7 +39,7 @@ export function renderPs1ShopDiscCatalog(
   button.dataset.buyPs1Disc=disc.id;
   button.disabled=disc.disabled;
   const money=disc.price.toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-  button.textContent=disc.noStation?"Instale uma bancada primeiro":disc.full?
+  button.textContent=disc.noStation?"Instale uma bancada primeiro":disc.magazineLocked?"Leia a revista Top Games":disc.full?
    "Acervo completo":disc.disabled?"Caixa insuficiente · "+money:"Comprar CD · "+money;
   card.append(art,category,title,description,button);
   host.append(card);
