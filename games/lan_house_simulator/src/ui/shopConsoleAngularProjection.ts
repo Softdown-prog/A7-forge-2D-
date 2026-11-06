@@ -26,7 +26,7 @@ const money=(v:number):string=>v.toLocaleString("pt-BR",{style:"currency",curren
 export function projectPs1Disc(row:Ps1ShopDiscRow):ConsoleGameView{
  const price=money(row.price);
  return {id:row.id,title:row.title,genre:row.genre,copies:row.copies,releaseYear:row.releaseYear,
-  buttonText:row.noStation?"Instale uma bancada primeiro":row.full?"Acervo completo":
+  buttonText:row.noStation?"Instale uma bancada primeiro":row.magazineLocked?"Leia a revista Top Games":row.full?"Acervo completo":
    row.disabled?"Caixa insuficiente · "+price:"Comprar CD · "+price,
   disabled:row.disabled,cover:ps1ProceduralCover(row)};
 }
