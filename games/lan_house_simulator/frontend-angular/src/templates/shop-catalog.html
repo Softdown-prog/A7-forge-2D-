@@ -58,7 +58,10 @@
           }
         </div>
       }
-      <h3>PlayStation 2 · 2006</h3>
+      <h3>PlayStation 2 · 2006–2010</h3>
+      @if(consoleShop.ps2.nextReleaseYear){
+        <p class="ps2-next-games">Próxima novidade: 2 jogos PS2 desbloqueados em {{consoleShop.ps2.nextReleaseYear}}.</p>
+      }
       <article class="shop-card">
         @if(consoleShop.ps2.artwork){<img class="angular-console-art" [src]="consoleShop.ps2.artwork" alt="Bancada PS2 procedural"/>}
         <label for="angular-ps2-placement">Local da bancada PS2</label>
@@ -70,7 +73,8 @@
       <div class="angular-console-grid">
         @for(game of consoleShop.ps2.games;track game.id){
           <article class="shop-card">
-            <small>{{game.genre}} · {{game.copies}} cópia(s)</small>
+            @if(game.cover){<img class="angular-ps2-cover" [src]="game.cover" [alt]="'Capa procedural de '+game.title" loading="lazy" width="420" height="560"/>}
+            <small>{{game.genre}} · {{game.releaseYear}} · {{game.copies}} cópia(s)</small>
             <h4>{{game.title}}</h4>
             <button type="button" [disabled]="game.disabled" (click)="buyPs2Game(game.id)">{{game.buttonText}}</button>
           </article>

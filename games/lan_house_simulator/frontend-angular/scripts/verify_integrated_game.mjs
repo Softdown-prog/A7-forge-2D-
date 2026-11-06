@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {createAngularCutoverDocument} from './cutover_document.mjs';
 import {createGame} from '../../dist/js/sim/engine.js';
 import {DAY_MINUTES,GAME_SAVE_KEY} from '../../dist/js/sim/types.js';
+import {PS2_GAME_CATALOG} from '../../dist/js/sim/ps2.js';
 const tools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
 const {chromium}=tools('playwright');
 const gameRoot=resolve(import.meta.dirname,'../../dist');
@@ -205,6 +206,18 @@ try{
   assert.ok(coverSources.every(src=>src?.startsWith('data:image/png;base64,')),
    'Procedural PS1 art must not depend on requests to external paths');
   assert.equal(new Set(coverSources).size,13,'Each PS1 game must have unique artwork');
+  // PS2 yearly catalogue has seven released games in 2006. Their covers must
+  // be visibly painted and fully decoded across desktop and mobile.
+  const ps2Covers=shop.locator('.angular-console-grid').last().locator('img.angular-ps2-cover');
+  assert.equal(await ps2Covers.count(),7,'Seven PS2 launch-year games have artwork');
+  await page.waitForFunction(()=>Array.from(document.querySelectorAll(
+   '.angular-ps2-cover')).length===7 &&
+   Array.from(document.querySelectorAll('.angular-ps2-cover')).every(img=>
+    img.complete && img.naturalWidth===420 && img.naturalHeight===560));
+  const ps2CoverSources=await ps2Covers.evaluateAll(images=>images.map(img=>img.getAttribute('src')));
+  assert.ok(ps2CoverSources.every(src=>src?.startsWith('data:image/png;base64,')),
+   'PS2 covers must be generated locally without external artwork requests');
+  assert.equal(new Set(ps2CoverSources).size,7,'Each 2006 PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
   const slots=await page.locator('#angular-ps1-placement option').evaluateAll(
@@ -988,8 +1001,15 @@ try{
  // Real engine eligibility tests: no fabricated Angular DTOs or purchase events.
  const blocked=[];
  for(const scenario of [
-  {year:2002,cash:15000,width:1280,reason:'PS2 not released'},
-  {year:2006,cash:0,width:414,reason:'Insufficient cash'}
+  {year:2002,cash:15000,width:1280,reason:'PS2 not released',ps1Count:7,nextYear:2003,ps2Count:0,ps2Next:null},
+  {year:2003,cash:15000,width:414,reason:'PS2 not released',ps1Count:9,nextYear:2004,ps2Count:0,ps2Next:null},
+  {year:2004,cash:15000,width:360,reason:'PS2 not released',ps1Count:11,nextYear:2005,ps2Count:0,ps2Next:null},
+  {year:2005,cash:15000,width:414,reason:'PS2 not released',ps1Count:13,nextYear:null,ps2Count:0,ps2Next:null},
+  {year:2006,cash:0,width:414,reason:'Insufficient cash',ps1Count:13,nextYear:null,ps2Count:7,ps2Next:2007},
+  {year:2007,cash:0,width:360,reason:'Insufficient cash',ps1Count:13,nextYear:null,ps2Count:9,ps2Next:2008},
+  {year:2008,cash:0,width:414,reason:'Insufficient cash',ps1Count:13,nextYear:null,ps2Count:11,ps2Next:2009},
+  {year:2009,cash:0,width:360,reason:'Insufficient cash',ps1Count:13,nextYear:null,ps2Count:13,ps2Next:2010},
+  {year:2010,cash:0,width:414,reason:'Insufficient cash',ps1Count:13,nextYear:null,ps2Count:15,ps2Next:null}
  ]){
   const mobile=scenario.width<700;
   const context=await browser.newContext({
@@ -1025,6 +1045,45 @@ try{
    document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor();
+  // Browser contract: future PS1 games must stay out of the actual store.
+  await page.waitForFunction(expected=>document.querySelectorAll('.angular-ps1-cover').length===expected,
+   scenario.ps1Count);
+  const ps1Cards=shop.locator('.angular-console-grid').first().locator('article.shop-card');
+  assert.equal(await ps1Cards.count(),scenario.ps1Count,'PS1 release count for '+scenario.year);
+  const visibleTitles=await ps1Cards.locator('h4').allTextContents();
+  const originals=['Turbo Circuito','Gol de Rua','Ilha dos Cristais','Luta Neon','Cosmo Blocos'];
+  const annual=[
+   [2002,['Rally do Deserto','Sombras do Castelo']],
+   [2003,['Defensores do Espaço','Selva Perdida']],
+   [2004,['Dragões de Aço','Ritmo da Cidade']],
+   [2005,['Agentes da Noite','Oceano Profundo']]
+  ];
+  const expectedTitles=[...originals,...annual.filter(([year])=>year<=scenario.year)
+   .flatMap(([,titles])=>titles)];
+  assert.deepEqual(visibleTitles,expectedTitles,
+   'PS1 annual unlocks must match released game titles, not just card count');
+  const teaser=shop.locator('.ps1-next-games');
+  if(scenario.nextYear!==null){
+   assert.equal(await teaser.count(),1,'The next annual release is teased');
+   assert.match(await teaser.innerText(),new RegExp('2 jogos desbloqueados em '+scenario.nextYear));
+   for(const [,titles] of annual.filter(([year])=>year>scenario.year))
+    for(const title of titles)assert.ok(!visibleTitles.includes(title),'Unreleased title leaked: '+title);
+  }else assert.equal(await teaser.count(),0,'PS1 release teasers end in 2005');
+  // Actual Angular cards and original artworks must follow the PS2 calendar.
+  const ps2Cards=shop.locator('.angular-console-grid').last().locator('article.shop-card');
+  assert.equal(await ps2Cards.count(),scenario.ps2Count,
+   'PS2 visible released titles in '+scenario.year);
+  const expectedPs2=PS2_GAME_CATALOG.filter(g=>g.releaseYear<=scenario.year);
+  assert.deepEqual(await ps2Cards.locator('h4').allTextContents(),
+   expectedPs2.map(g=>g.title),'No early PS2 releases in the real shop');
+  assert.equal(await ps2Cards.locator('img.angular-ps2-cover').count(),scenario.ps2Count,
+   'PS2 cards always show their local original artwork');
+  const ps2Teaser=shop.locator('.ps2-next-games');
+  if(scenario.ps2Next!==null){
+   assert.equal(await ps2Teaser.count(),1);
+   assert.match(await ps2Teaser.innerText(),
+    new RegExp('2 jogos PS2 desbloqueados em '+scenario.ps2Next));
+  }else assert.equal(await ps2Teaser.count(),0,'No annual PS2 teaser outside the release years');
   const ps1=shop.locator(':scope > article.shop-card').first().locator('button');
   const ps2=shop.locator(':scope > article.shop-card').nth(1).locator('button');
   assert.equal(await ps2.isDisabled(),true,scenario.reason+' must block PS2');
@@ -1043,6 +1102,8 @@ try{
    fullPage:true
   });
   blocked.push({year:scenario.year,cash:scenario.cash,width:scenario.width,
+   ps1Available:scenario.ps1Count,nextPs1Release:scenario.nextYear,
+   ps2Available:scenario.ps2Count,nextPs2Release:scenario.ps2Next,
    ps1Disabled:await ps1.isDisabled(),ps2Disabled:await ps2.isDisabled()});
   await context.close();
  }

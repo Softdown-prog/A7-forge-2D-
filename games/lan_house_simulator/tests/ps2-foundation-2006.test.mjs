@@ -5,7 +5,7 @@ import {createGame} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {PS1_UNLOCK_YEAR} from "../dist/js/sim/ps1.js";
 import {
- PS2_UNLOCK_YEAR,PS2_MAX_STATIONS,PS2_GAME_CATALOG,PS2_BASE_BENCH_PRICE,
+ PS2_UNLOCK_YEAR,PS2_MAX_STATIONS,PS2_GAME_CATALOG,ps2ReleasedGames,PS2_BASE_BENCH_PRICE,
  ps2Unlocked,ps2BenchPrice,ps2GamePrice,ps2DefaultHourlyPrice,ps2SessionPrice
 } from "../dist/js/sim/ps2.js";
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
@@ -26,11 +26,12 @@ test("o PS1 permanece em 2002 e o PS2 tem marco próprio em 2006",()=>{
  assert.equal(ps2Unlocked(atYear(2030)),true);
  assert.equal(ps2Unlocked(atYear(2006,"classic")),false);
 });
-test("cinco jogos PS2 originais com IDs exclusivos, separados dos CDs PS1",async()=>{
+test("five launch PS2 originals plus ten annual releases, separate from PS1 CDs",async()=>{
  const {PS1_CD_CATALOG}=await import("../dist/js/sim/ps1.js");
- assert.equal(PS2_GAME_CATALOG.length,5);
+ assert.equal(PS2_GAME_CATALOG.length,15);
+ assert.equal(PS2_GAME_CATALOG.slice(0,5).every(g=>g.releaseYear===2006),true);
  const ids=PS2_GAME_CATALOG.map(x=>x.id),ps1=new Set(PS1_CD_CATALOG.map(x=>x.id));
- assert.equal(new Set(ids).size,5);
+ assert.equal(new Set(ids).size,15);
  assert.ok(ids.every(id=>!ps1.has(id)));
  assert.equal(PS2_MAX_STATIONS,3);
 });
@@ -40,7 +41,8 @@ test("preços são cotações de 2006, sem debitar dinheiro ou mudar save",()=>{
  assert.equal(ps2DefaultHourlyPrice(s),4);
  assert.equal(ps2SessionPrice(s,30),2);
  assert.equal(ps2SessionPrice(s,45),3);
- assert.ok(PS2_GAME_CATALOG.every(x=>ps2GamePrice(s,x.id)===x.basePrice));
+ assert.ok(ps2ReleasedGames(2006).every(x=>ps2GamePrice(s,x.id)===x.basePrice));
+ assert.ok(PS2_GAME_CATALOG.filter(x=>x.releaseYear>2006).every(x=>ps2GamePrice(s,x.id)===0));
  assert.equal(JSON.stringify(s),before);
 });
 test("a cotação respeita teto histórico de tarifa até 2030",()=>{
@@ -50,7 +52,8 @@ test("a cotação respeita teto histórico de tarifa até 2030",()=>{
   assert.equal(Math.round(price*4),price*4,"passos de R$ 0,25");
   assert.ok(ps2BenchPrice(s)>=PS2_BASE_BENCH_PRICE);
   for(const game of PS2_GAME_CATALOG){
-   assert.ok(ps2GamePrice(s,game.id)>=game.basePrice);
+   if(year>=game.releaseYear)assert.ok(ps2GamePrice(s,game.id)>=game.basePrice);
+   else assert.equal(ps2GamePrice(s,game.id),0);
   }
  }
 });

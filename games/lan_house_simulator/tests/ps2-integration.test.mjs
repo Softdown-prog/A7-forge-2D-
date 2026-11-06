@@ -55,8 +55,8 @@ test('five physical games require copies; buying does not replace a busy game',(
  const s=installed();ok(p.buyPs2Station(s,'floor-3'));
  assert.equal(p.setPs2StationGame(s,1,'cidade-em-fuga').ok,false);ok(p.buyPs2Game(s,'cidade-em-fuga'));
  assert.equal(s.ps2Stations[1].gameId,'cidade-em-fuga');
- for(const g of p.PS2_GAME_CATALOG){if(!p.ps2GameCopies(s,g.id))ok(p.buyPs2Game(s,g.id));ok(p.setPs2StationGame(s,0,g.id));assert.equal(p.ps2PlayableGame(s,0),g.id);}
- assert.equal(Object.keys(s.ps2Games).length,5);assert.equal(p.buyPs2Game(s,'gol-de-rua').ok,false);
+ for(const g of p.ps2ReleasedGames(2006)){if(!p.ps2GameCopies(s,g.id))ok(p.buyPs2Game(s,g.id));ok(p.setPs2StationGame(s,0,g.id));assert.equal(p.ps2PlayableGame(s,0),g.id);}
+ assert.equal(Object.keys(s.ps2Games).length,7);assert.equal(p.buyPs2Game(s,'gol-de-rua').ok,false);
  ok(p.setPs2StationGame(s,0,null));assert.equal(p.ps2OpenSeat(s,0),null);
  ok(p.setPs2StationGame(s,0,'cidade-em-fuga'));const c=visitor();s.customers=[c];tryServe(s,c);
  assert.equal(c.ps2StationIndex,0);const snapshot=JSON.stringify(s.ps2Stations);
@@ -148,7 +148,7 @@ test('layout editing and walls cannot invade a PS2; PS1 shop also sees its occup
  assert.equal(buildWall(s,{axis:'x',x:2,y:5}).ok,false);
 });
 test('application follows restored game and reports PS2 separately in finance',()=>{
- let s=installed(),port=createPs2Port(()=>s);assert.equal(port.snapshot().games.length,5);assert.equal(port.snapshot().count,1);
+ let s=installed(),port=createPs2Port(()=>s);assert.equal(port.snapshot().games.length,7);assert.equal(port.snapshot().count,1);
  const c=visitor();s.customers=[c];tryServe(s,c);
  const v=port.snapshot();assert.equal(v.occupied,1);assert.equal(v.sessions,1);assert.equal(v.revenue,3);
  const financial=createFinancialAdminOverviewPort(()=>s).snapshot();assert.match(financial.activity,/PCs 0/);assert.match(financial.activity,/PS2 1/);

@@ -37,7 +37,7 @@ test("PS2 controllers use the correct mirrored grip for both seats; PS1 still us
  assert.equal(actorRequiresLiveGamepadRig({gamepad:false,modernGamepad:true,gamepadGrip:{x:1,y:-22}}),false);
  assert.equal(actorRequiresLiveGamepadRig({gamepad:true,modernGamepad:true}),false);
 });
-test("PS2 five game scenes retain distinct, high-contrast visible animated elements",()=>{
+test("PS2 fifteen game scenes retain distinct, high-contrast visible animated elements",()=>{
  const unique=new Set();
  for(const game of PS2_GAME_CATALOG){
   const boxes=[];
@@ -57,7 +57,7 @@ test("PS2 five game scenes retain distinct, high-contrast visible animated eleme
   assert.notDeepEqual(boxes.map(b=>[b.x,b.y,b.w,b.h,b.color]),after,game.id+" must animate");
   unique.add(boxes.map(b=>b.color).join(","));
  }
- assert.equal(unique.size,5);
+ assert.equal(unique.size,PS2_GAME_CATALOG.length);
 });
 test("PS2 art remains procedural Canvas 2D and renders its real screen at idle / in use",()=>{
  const traces=[];
