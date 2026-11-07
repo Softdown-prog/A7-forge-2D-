@@ -25,7 +25,11 @@ try{
    ...(filming?{recordVideo:{dir:resolve(output,"recording"),size:{width:1440,height:950}}}:{})});
   // Keep PC 01 unavailable until its real technician action is exercised.
   const state=createGame(1998);state.cash=5000;state.pcWear=[100,10,0];
-  await context.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");},{key:GAME_SAVE_KEY,state});
+  // Seed each clean browser context once; never overwrite a save on reload.
+  await context.addInitScript(({key,state})=>{
+   if(localStorage.getItem(key)===null)localStorage.setItem(key,JSON.stringify(state));
+   localStorage.setItem("lhs.sound","off");
+  },{key:GAME_SAVE_KEY,state});
   const page=await context.newPage();
   page.on("pageerror",e=>errors.push(config.name+": "+e));
   page.on("response",r=>{if(r.status()>=400)errors.push(config.name+": HTTP "+r.status()+" "+r.url());});
@@ -96,9 +100,18 @@ try{
   assert.equal(install.finishedAtMs-install.startedAtMs,10*60*1000);
   await page.clock.install({time:new Date(install.finishedAtMs+1000)});
   await page.reload({waitUntil:"networkidle"});
+  // The reload must preserve the paid basic-games license and pending Windows job.
+  const restored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
+  assert.equal(restored.licensedGames,true,"Reload cannot erase the basic games license.");
+  assert.equal(restored.windowsInstallJobs?.[0]?.edition,"win98",
+   "Reload cannot replace the paid Windows installation with the initial fixture.");
   await dismissPrivacyNotice(page);
   await page.locator("#menu-continue").click();
   await page.locator("#game-app").waitFor({state:"visible"});
+  await page.waitForFunction(key=>{
+   const state=JSON.parse(localStorage.getItem(key)??"null");
+   return state?.pcWindowsLicenses?.[0]===true&&state?.pcWindows?.[0]==="win98";
+  },GAME_SAVE_KEY);
   await page.locator("#open-admin").click();
   await selectAdminArea(page,"licenses");
   await selectTask(page,"licenses","classic");
