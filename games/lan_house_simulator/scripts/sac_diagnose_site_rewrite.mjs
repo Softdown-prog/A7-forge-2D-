@@ -11,7 +11,7 @@ const workspace=path.join(game,'frontend-angular');
 const sac=path.join(repo,'.sac-toolchain');
 const reportDir=path.join(game,'out/sac-angular-site-rewrite');
 const sourceSha=process.env.GITHUB_SHA;
-const sacSha='f0ce4850a00688744015ecd1e25ea6eada243c40';
+const sacSha='98ca6986b79fa81f6a1595fb8a6d4950c757fe86';
 const validStatuses=new Set(['pass','fail','unverified','infra-error','not-applicable']);
 const status=x=>validStatuses.has(x?.status)?x.status:'unverified';
 const code=x=>typeof x?.code==='string'&&/^[a-z][a-z0-9-]{0,63}$/.test(x.code)?x.code:'none';
