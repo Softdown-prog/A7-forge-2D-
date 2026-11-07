@@ -1,5 +1,6 @@
 export { FURNITURE_SLOTS,FurnitureKind,furnitureLimit,furnitureLocations,furnitureSlots,occupiedFurnitureSlots,PlacementSlot } from "./furnitureLayout.js";
 import { installedLcd } from "./computerModels.js";
+import {installedWindows} from "./eraCatalog.js";
 import {linuxMachineSpec,linuxMachineFor,type LinuxMachineId} from "./linuxMachines.js";
 import {linuxUnlocked} from "./linuxQuest.js";
 import { DISC_COPIER_COST } from "./discCopy.js";
@@ -78,6 +79,12 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para o PC."};
  const {shifted,issue}=plannedMainComputer(s,count);
  if(issue)return {ok:false,message:issue};
+ // An annex can exist before explicit Windows arrays have ever been created.
+ // Normalize the old PC slots BEFORE inserting the new main-room station:
+ // splice(count, 0, ...) on [] would otherwise insert at index 0, not count.
+ const oldPcCount=count+(s.annexPcs?.length??0);
+ const windows=Array.from({length:oldPcCount},(_,i)=>installedWindows(s,i));
+ const windowsLicenses=Array.from({length:oldPcCount},(_,i)=>s.pcWindowsLicenses?.[i]===true);
  if(shifted)s.objectPlacements=shifted;
  // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
  for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
@@ -88,8 +95,8 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
   job.pc>=count?{...job,pc:job.pc+1}:job);
  (s.pcWear??=[]).splice(count,0,0);
  (s.pcTiers??=[]).splice(count,0,1);
- (s.pcWindows??=[]).splice(count,0,"win98");
- (s.pcWindowsLicenses??=[]).splice(count,0,false);
+ windows.splice(count,0,"win98");s.pcWindows=windows;
+ windowsLicenses.splice(count,0,false);s.pcWindowsLicenses=windowsLicenses;
  (s.pcGpus??=[]).splice(count,0,null);
  // The new PC is a physical station: never overwrite or shift an annex station's OS or model.
  if(linuxModel||s.pcOperatingSystems||s.pcLinuxInstalled||s.pcLinuxModels){
