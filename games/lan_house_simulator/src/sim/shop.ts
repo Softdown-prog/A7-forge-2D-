@@ -87,7 +87,13 @@ export function buyComputer(s:GameState,linuxModel?:LinuxMachineId):Result{
  const windowsLicenses=Array.from({length:oldPcCount},(_,i)=>s.pcWindowsLicenses?.[i]===true);
  if(shifted)s.objectPlacements=shifted;
  // Ao inserir um PC original depois de PCs anexos, preservar os índices existentes.
- for(const visitor of s.customers)if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
+ for(const visitor of s.customers){
+  if(visitor.pcIndex!==null&&visitor.pcIndex>=count)visitor.pcIndex++;
+  // An unpaid LAN group may have reserved the annex without sitting yet.
+  // Keep the reservation attached to that same physical PC.
+  if(visitor.multiplayerAssignedPc!==undefined&&visitor.multiplayerAssignedPc>=count)
+   visitor.multiplayerAssignedPc++;
+ }
  for(const job of s.repairJobs??[])if(job.pc>=count)job.pc++;
  for(const job of s.gpuGameInstallJobs??[])if(job.pc>=count)job.pc++;
  // A instalação real acompanha o PC do anexo quando os índices se deslocam.
