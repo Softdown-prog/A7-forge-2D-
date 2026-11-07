@@ -26,12 +26,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Softdown-prog/Data_libray
-          ref: f0ce4850a00688744015ecd1e25ea6eada243c40
+          ref: 98ca6986b79fa81f6a1595fb8a6d4950c757fe86
           path: .sac-toolchain
           persist-credentials: false
       - name: Assert current pinned SAC checkout
         shell: bash
-        run: test "$(git -C .sac-toolchain rev-parse HEAD)" = 'f0ce4850a00688744015ecd1e25ea6eada243c40'
+        run: test "$(git -C .sac-toolchain rev-parse HEAD)" = '98ca6986b79fa81f6a1595fb8a6d4950c757fe86'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -41,6 +41,28 @@ jobs:
           npm ci --prefix .sac-toolchain/packages/angular-precompiler --ignore-scripts --no-audit --no-fund
           npm ci --prefix .sac-toolchain/packages/angular-postcompiler --ignore-scripts --no-audit --no-fund
           npm install --prefix .sac-toolchain/packages/angular-guardian --ignore-scripts --no-audit --no-fund
+      - name: Install SAC trusted TypeScript parser for Canvas inventory
+        run: npm ci --prefix .sac-toolchain/packages/angular-postcompiler/smoke --ignore-scripts --no-audit --no-fund
+      - name: Scan real LHS procedural and Canvas sources without executing the game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p games/lan_house_simulator/out/sac-angular-site-rewrite
+          node .sac-toolchain/packages/sac-multistack/bin/canvas-stream.mjs . games/lan_house_simulator \
+            > games/lan_house_simulator/out/sac-angular-site-rewrite/canvas-source.json
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import {readFileSync} from "node:fs";
+            const report=JSON.parse(readFileSync(process.argv[1],"utf8"));
+            assert.equal(report.scan_completed,true);
+            assert.equal(report.inventory.parse_error_files,0);
+            assert.ok(report.inventory.source_files>=300,"missing game source coverage");
+            assert.equal(report.status,"unverified","static scan is not a gameplay approval");
+            assert.equal(report.runtime_verified,false);
+            assert.equal(report.deployment_authorized,false);
+            console.log("SAC Canvas source inventory:",report.inventory.source_files,
+              "sources, no parse errors; runtime remains unverified");
+          ' games/lan_house_simulator/out/sac-angular-site-rewrite/canvas-source.json
       - name: Install LHS Angular
         run: npm ci --prefix games/lan_house_simulator/frontend-angular --no-audit --no-fund
       - name: Verify SAC hash-entrypoint contract and harness syntax
@@ -58,6 +80,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lhs-angular-sac-diagnostic
-          path: games/lan_house_simulator/out/sac-angular-site-rewrite/report.json
+          path: |
+            games/lan_house_simulator/out/sac-angular-site-rewrite/report.json
+            games/lan_house_simulator/out/sac-angular-site-rewrite/canvas-source.json
           retention-days: 14
           if-no-files-found: warn
