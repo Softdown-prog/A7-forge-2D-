@@ -9,6 +9,7 @@ import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {DAYS_PER_YEAR} from "../dist/js/sim/mailCalendar.js";
 import {orderMerchandise,merchandiseStock,availableProducts,quoteOrder} from "../dist/js/sim/merchandise.js";
 import {buyPs1Station,buyPs1Disc,ps1PlacementSlots} from "../dist/js/sim/ps1.js";
+import {subscribeTopGames,topGamesKnowsGame,TOP_GAMES_ISSUES} from "../dist/js/sim/topGamesMagazines.js";
 import {hireEmployee} from "../dist/js/sim/staff.js";
 import {expandDirection} from "../dist/js/sim/room.js";
 import {installAnnexComputer} from "../dist/js/sim/stations.js";
@@ -45,10 +46,15 @@ ok(hireEmployee(campaign,"technician"));
 const ps1Slot=ps1PlacementSlots(campaign)[0];
 assert.ok(ps1Slot,"PS1 needs a physical free slot");
 ok(buyPs1Station(campaign,ps1Slot.id));
-ok(buyPs1Disc(campaign,"turbo-circuito"));
+ok(subscribeTopGames(campaign));
+const beforeMagazinePurchase=campaign.cash;
+assert.equal(buyPs1Disc(campaign,"turbo-circuito").ok,false,
+ "The disc must remain unavailable until the postman hands over its magazine.");
+assert.equal(campaign.cash,beforeMagazinePurchase,"Locked discs must not charge the customer.");
 // Force genuinely needed contracted work without inventing a service charge.
 campaign.binFill=[80,80];campaign.pcWear[0]=100;
 let s=campaign,placedUnits=0,delayedPlaced=0,deliveriesSeen=0;
+let ps1DiscBought=false,firstMagazineDeliveryDay=null;
 const stockAtStart=availableProducts(s).reduce((n,p)=>n+merchandiseStock(s,p.id),0);
 function purchase(id,supplier,packs=1){
  const p=availableProducts(s).find(p=>p.id===id);
@@ -87,6 +93,13 @@ for(let day=0;day<35;day++){
  for(let minute=0;minute<DAY_MINUTES;minute+=60){
   const start=performance.now();
   stepGame(s,60);
+  // Exercise the actual monthly Top Games handoff, not a fabricated unlock.
+  if(!ps1DiscBought&&topGamesKnowsGame(s,"ps1","turbo-circuito")){
+   assert.deepEqual(s.topGamesReceivedIssues?.slice(0,1),[TOP_GAMES_ISSUES[0].id]);
+   ok(buyPs1Disc(s,"turbo-circuito"));
+   firstMagazineDeliveryDay=day+1;
+   ps1DiscBought=true;
+  }
   remainingSamples.push(performance.now()-start);
   assert.ok(Number.isFinite(s.cash)&&Number.isFinite(s.revenue)&&Number.isFinite(s.expenses));
  }
@@ -99,6 +112,9 @@ for(let day=0;day<35;day++){
 }
 assert.ok(s.served>30,"Actual customers should complete sessions across the 35-day game");
 assert.ok(s.purchases>10,"Actual customers should buy individual products");
+assert.equal(ps1DiscBought,true,"Real courier must deliver the first Top Games edition during the campaign");
+assert.ok(firstMagazineDeliveryDay>=15&&firstMagazineDeliveryDay<=35,
+ "Magazine handoff must happen after the first edition is published.");
 assert.ok((s.ps1Sessions??0)>0,"Purchased PS1 with a CD should serve real customers");
 assert.ok(s.employeeWorkedDays?.cleaner||s.employeeWorkedDays?.technician||s.lastPaidMonthlyBill,
  "Contracted staff and monthly billing must be represented in the same game");
@@ -135,6 +151,7 @@ assert.equal(isValidSave(crowded),true);
 
 const results={
  longCampaign:{days:35,gameYear:2002,served:s.served,ps1Sessions:s.ps1Sessions??0,
+  firstMagazineDeliveryDay,ps1DiscBought,
   purchases:s.purchases,delayedOrdersPlaced:delayedPlaced,daysWithDelivery:deliveriesSeen,
   staffWorkedDays:s.employeeWorkedDays??{},monthlyBillPaid:!!s.lastPaidMonthlyBill,
   finalCash:cents(s.cash),simulationChunkP95Ms:+quantile(remainingSamples,.95).toFixed(2),
