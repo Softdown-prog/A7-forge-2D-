@@ -26,9 +26,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Softdown-prog/Data_libray
-          ref: 06a0c5756098009165397ff6c3c45db089493de8
+          ref: f0ce4850a00688744015ecd1e25ea6eada243c40
           path: .sac-toolchain
           persist-credentials: false
+      - name: Assert current pinned SAC checkout
+        shell: bash
+        run: test "$(git -C .sac-toolchain rev-parse HEAD)" = 'f0ce4850a00688744015ecd1e25ea6eada243c40'
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
