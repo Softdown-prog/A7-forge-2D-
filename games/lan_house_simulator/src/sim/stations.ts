@@ -1,5 +1,5 @@
 export { ANNEX_PC_COST,annexComputerPosition,AnnexComputerSlot,annexComputerSlots,availableAnnexComputers,validAnnexComputers } from "./stationLayout.js";
-import { fixedLayoutObjects,layoutPlacementIssue } from "./layoutGeometry.js";
+import { fixedLayoutObjects,layoutPlacementIssue,objectTouchesCustomer } from "./layoutGeometry.js";
 import { navigableRoute } from "./navigation.js";
 import { computerSeat,counterQueue } from "./route.js";
 import { emptyStationAccount } from "./stationAccounting.js";
@@ -17,6 +17,8 @@ export function installAnnexComputer(s:GameState,slotId:string):Result{
  const candidate={...s,annexPcs:[...(s.annexPcs??[]),{slotId}]};
  const object=fixedLayoutObjects(candidate).find(o=>o.id==="pc:"+index)!;
  if(layoutPlacementIssue(candidate,object))return {ok:false,message:"O espaço desse PC está ocupado por um objeto ou divisória. Reorganize o salão."};
+ if(s.customers.some(customer=>objectTouchesCustomer(object,customer)))
+  return {ok:false,message:"Aguarde os clientes saírem da posição do PC no anexo."};
  s.cash-=ANNEX_PC_COST;s.expenses+=ANNEX_PC_COST;
  (s.annexPcs??=[]).push({slotId});
  if(s.stationLedger){

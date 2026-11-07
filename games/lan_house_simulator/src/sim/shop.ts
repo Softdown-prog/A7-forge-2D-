@@ -60,6 +60,8 @@ function plannedMainComputer(s:GameState,count:number):{
  if(!nextPc)return {shifted,issue:"Não foi possível localizar a próxima vaga do computador."};
  const placement=layoutPlacementIssue(candidate,nextPc);
  if(placement)return {shifted,issue:"Próximo PC sem encaixe: "+placement+" Reorganize o salão."};
+ if(s.customers.some(customer=>objectTouchesCustomer(nextPc,customer)))
+  return {shifted,issue:"Aguarde os clientes saírem da posição do próximo PC."};
  if(layoutGoals(candidate).some(p=>!navigableRoute(candidate,entrance(candidate),p)))
   return {shifted,issue:"O próximo PC bloquearia uma passagem. Reorganize o salão."};
  return {shifted,issue:null};
