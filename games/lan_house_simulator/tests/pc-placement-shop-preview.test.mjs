@@ -52,6 +52,30 @@ test("a prévia e o botão usam o mesmo motivo da recusa",()=>{
  assert.equal(buyComputer(x.game).message,message);
  assert.equal(JSON.stringify(x.game),before);
 });
+test("a loja não instala um PC sobre um cliente que está passando pelo espaço",()=>{
+ const x=setup();assert.equal(expandShop(x.game).ok,true);
+ const pc=nextPcLocation(x.game);
+ const customer={id:1001,x:pc.x+.5,y:pc.y+.3,stage:"arriving",
+  target:{x:pc.x+.5,y:pc.y+.3},costume:"regular",pcIndex:null,
+  usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
+ x.game.customers.push(customer);
+ const cash=x.game.cash,expenses=x.game.expenses;
+ const reason=nextComputerPlacementIssue(x.game);
+ assert.match(reason,/clientes saírem/);
+ assert.equal(x.offers.snapshot("computer").disabled,true,"a prévia bloqueia compra perigosa");
+ const rejected=buyComputer(x.game);
+ assert.equal(rejected.ok,false);
+ assert.equal(rejected.message,reason,"prévia e compra explicam o mesmo bloqueio");
+ assert.equal(x.game.installedPcs,3);
+ assert.equal(x.game.cash,cash);
+ assert.equal(x.game.expenses,expenses);
+ customer.x=6.5;customer.y=4.5;customer.target={x:6.5,y:4.5};
+ assert.equal(nextComputerPlacementIssue(x.game),null,"o PC volta a ficar disponível");
+ assert.equal(x.offers.snapshot("computer").disabled,false);
+ assert.equal(buyComputer(x.game).ok,true);
+ assert.equal(x.game.installedPcs,4);
+ assert.equal(x.game.cash,cash-320);
+});
 test("reorganizar o objeto bloqueador reabilita o botão sem reiniciar",()=>{
  const x=setup();expandShop(x.game);blockNextPc(x.game);
  assert.equal(x.offers.snapshot("computer").disabled,true);

@@ -69,3 +69,26 @@ test("a LAN group keeps its reserved annex PC when the main room gains a new PC"
  assert.equal(isReserved(s,3),false,"new main PC is not reserved by the annex guest");
  assert.equal(isReserved(s,4),true,"the original annex remains reserved");
 });
+
+test("PC no anexo não surge em cima de um visitante e pode ser instalado depois",()=>{
+ const s=createGame(2027);s.cash=10000;
+ assert.equal(expandDirection(s,"north").ok,true);
+ const slot=annexComputerSlots(s).find(p=>p.id==="pc-north-1");
+ assert.ok(slot);
+ const guest={id:42,x:slot.position.x+.5,y:slot.position.y+.3,stage:"arriving",
+  target:{x:slot.position.x+.5,y:slot.position.y+.3},costume:"regular",pcIndex:null,
+  usedMinutes:0,waitingMinutes:0,offlineWait:0,happy:true};
+ s.customers.push(guest);
+ const cash=s.cash,expenses=s.expenses;
+ const refused=installAnnexComputer(s,slot.id);
+ assert.equal(refused.ok,false);
+ assert.match(refused.message,/clientes saírem/);
+ assert.equal(s.cash,cash,"o PC não foi cobrado");
+ assert.equal(s.expenses,expenses,"nenhuma despesa sem instalação");
+ assert.equal(s.annexPcs?.length??0,0);
+ guest.x=6.5;guest.y=4.5;guest.target={x:6.5,y:4.5};
+ const installed=installAnnexComputer(s,slot.id);
+ assert.equal(installed.ok,true,installed.message);
+ assert.equal(pcCount(s),4);
+ assert.equal(s.annexPcs?.[0]?.slotId,slot.id);
+});
