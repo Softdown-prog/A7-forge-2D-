@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {createGame,isValidSave,stepGame} from "../dist/js/sim/engine.js";
+import {expandDirection} from "../dist/js/sim/room.js";
+import {installAnnexComputer} from "../dist/js/sim/stations.js";
+import {expandShop} from "../dist/js/sim/economy.js";
+import {buyComputer} from "../dist/js/sim/shop.js";
 import {WINDOWS_ERAS,installedWindows,licenseWindows} from "../dist/js/sim/era.js";
 import {windowsInstallDurationMs,windowsInstallProgress,windowsInstallFor,
  finishWindowsInstallations,validWindowsInstallJobs} from "../dist/js/sim/windowsInstallation.js";
@@ -127,4 +131,55 @@ test("real Windows and hardware panels show per-PC progress and disable operatio
  const panel=readFileSync(new URL("../src/ui/hardwarePanel.ts",import.meta.url),"utf8");
  assert.ok(native.includes('createElement("progress")'));
  assert.ok(panel.includes('element("progress")'));
+});
+
+test("adding a main PC before an annex normalizes sparse Windows indices and keeps pending setup on the same machine",()=>{
+ const s=ready();
+ assert.equal(expandDirection(s,"north").ok,true);
+ assert.equal(installAnnexComputer(s,"pc-north-1").ok,true);
+ assert.equal(s.installedPcs,3);
+ assert.equal(s.annexPcs.length,1);
+ assert.equal(s.pcWindows,undefined,"old saves may have no explicit Windows array");
+ assert.equal(s.pcWindowsLicenses,undefined,"unlicensed PCs have no license array initially");
+ off(s,3);
+ const job=begin(s,3);
+ assert.equal(expandShop(s).ok,true);
+ const beforeCash=s.cash;
+ const buy=buyComputer(s);
+ assert.equal(buy.ok,true,buy.message);
+ assert.equal(s.cash,beforeCash-320);
+ assert.equal(s.installedPcs,4);
+ assert.equal(s.pcWindows.length,5,"one slot for every installed PC, including annexes");
+ assert.equal(s.pcWindowsLicenses.length,5);
+ assert.deepEqual(s.pcWindows,Array(5).fill("win98"));
+ assert.deepEqual(s.pcWindowsLicenses,Array(5).fill(false));
+ assert.equal(windowsInstallFor(s,3),null,"new main PC cannot inherit annex setup");
+ assert.equal(windowsInstallFor(s,4)?.startedAtMs,job.startedAtMs);
+ assert.equal(s.pcPoweredOff?.[3],false,"new main PC starts powered on");
+ assert.equal(s.pcPoweredOff?.[4],true,"annex setup keeps its shutdown state");
+ assert.equal(isValidSave(s),true);
+ const restored=parseImportedSave(serializeSave(s));
+ assert.equal(windowsInstallFor(restored,4)?.finishedAtMs,job.finishedAtMs);
+ assert.equal(finishWindowsInstallations(restored,job.finishedAtMs).length,1);
+ assert.equal(restored.pcWindowsLicenses[3],false);
+ assert.equal(restored.pcWindowsLicenses[4],true,"only the original annex is licensed");
+ assert.equal(isValidSave(restored),true);
+});
+
+test("main PC insertion preserves a previously installed annex Windows license",()=>{
+ const s=ready();
+ assert.equal(expandDirection(s,"north").ok,true);
+ assert.equal(installAnnexComputer(s,"pc-north-1").ok,true);
+ off(s,3);
+ const job=begin(s,3);
+ assert.equal(finishWindowsInstallations(s,job.finishedAtMs).length,1);
+ assert.equal(s.pcWindowsLicenses?.[3],true);
+ assert.equal(expandShop(s).ok,true);
+ const purchase=buyComputer(s);
+ assert.equal(purchase.ok,true,purchase.message);
+ assert.equal(s.pcWindowsLicenses?.[3],false,"new main PC has not purchased a license");
+ assert.equal(s.pcWindowsLicenses?.[4],true,"annex retains its purchased license");
+ assert.equal(s.pcWindows?.length,5);
+ assert.equal(s.pcWindowsLicenses?.length,5);
+ assert.equal(isValidSave(parseImportedSave(serializeSave(s))),true);
 });
