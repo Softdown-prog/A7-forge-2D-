@@ -103,8 +103,11 @@ try{
   // The reload must preserve the paid basic-games license and pending Windows job.
   const restored=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);
   assert.equal(restored.licensedGames,true,"Reload cannot erase the basic games license.");
-  assert.equal(restored.windowsInstallJobs?.[0]?.edition,"win98",
-   "Reload cannot replace the paid Windows installation with the initial fixture.");
+  assert.ok(
+   restored.windowsInstallJobs?.some(job=>job.pc===0&&job.edition==="win98")||
+   (restored.pcWindows?.[0]==="win98"&&restored.pcWindowsLicenses?.[0]===true),
+   "Reload must preserve the paid installation or its completed Windows license."
+  );
   await dismissPrivacyNotice(page);
   await page.locator("#menu-continue").click();
   await page.locator("#game-app").waitFor({state:"visible"});
