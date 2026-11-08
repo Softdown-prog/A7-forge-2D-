@@ -19,8 +19,16 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-24.04
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
   ps2-gameplay:
-    runs-on: ubuntu-24.04
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 15
     defaults:
       run:

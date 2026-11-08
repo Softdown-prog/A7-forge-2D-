@@ -27,10 +27,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-24.04
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
   sync:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.approve_production == true)) }}
     environment: lhs-production
-    runs-on: ubuntu-24.04
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 35
     env:
       SOURCE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.source_sha }}
