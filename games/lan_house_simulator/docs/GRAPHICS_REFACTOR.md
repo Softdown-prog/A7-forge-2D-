@@ -110,6 +110,23 @@ Verificação: `tests/actor-art-polish.test.mjs` (contornos, 13 tipos × 10 pose
 - **Correção pós-merge (vista diagonal):** ao andar, o cliente aparece de três quartos. O olho distante tinha só 0,85 unidade de largura e, com esclera, íris e pupila, virava uma bolinha escura ao lado do olho próximo, que mostrava a íris azul. Agora o olho distante tem 1,2 de largura (mais estreito que o próximo, por causa do ângulo, mas com esclera e íris visíveis). Coelho e rato continuam com olho de conta preta por desenho. Teste: em `front-left` e `front-right` as duas íris têm largura mínima de 1 unidade e proporção parecida.
 - **Sem custo novo:** nada depende do relógio de parede nem de aleatoriedade; âncoras, poses, hitbox e paletas ficam iguais. Os testes novos cobrem a repetição a cada quatro `id`, a ausência de variação nas outras fantasias, as orelhas de costas e o nariz curvo. `verify_actor_sprites`: erro médio máximo de 9,9 contra o artista vetorial (limite 14) e nenhum pixel opaco faltando.
 
+### Balcão do Tony: computador, impressora, copiadora e balcão
+
+![Balcão do Tony, antes e depois, nas quatro orientações, parado e em uso](../../../docs/quality/lhs_counter_equipment_before_after.png)
+
+![Balcão na cena real, antes e depois (tela de densidade 2)](../../../docs/quality/lhs_counter_scene_before_after.png)
+
+Só arte procedural; o espaço do balcão (1,75 × 0,72), a posição de cada equipamento, a hitbox, a rota do Tony e os preços não mudaram.
+
+- **Balcão:** portas da frente com relevo (luz em cima, sombra embaixo), placa de latão chanfrada com o "CAIXA" gravado, puxadores de latão, rodapé escuro e sombra do tampo sobre as portas, recortada no contorno do painel. As laterais e a traseira ganharam gradiente, moldura e a mesma sombra. O tampo tem brilho de verniz e desgaste na borda onde o cliente apoia as mãos.
+- **Computador do caixa:** pad de couro sob o teclado, teclado com fileiras e barra de espaço, mouse com fio, base e sombra de contato. O CRT tem moldura, vidro com linhas de varredura e reflexo diagonal, LED de energia, ventilação lateral e traseira com o selo e a porta de cabo. A tela mostra uma barra de título e linhas de terminal.
+- **Registradora e acessórios:** visor com brilho, rolo de papel, bloco de pedidos com caneta, sino de balcão de latão, porta-canetas com três canetas e um cartão de preços (menor que o da primeira versão, para não cobrir o monitor).
+- **Impressora:** carcaça em duas tonalidades sobre uma base escura, tampa do scanner com vidro e reflexo, puxador, bandeja de papel traseira com folhas, bandeja de saída com folhas impressas, painel com visor verde e botões, ventilação e sombra de contato. Em uso, a folha sai pela fenda, o LED pisca em âmbar e uma linha de luz percorre o vidro do scanner.
+- **Copiadora de discos:** torre com base, visor com barra de progresso, quatro gavetas com botão de ejetar e LED, grelha de entrada de ar, ventilação lateral, ventoinha na traseira e, no topo, um pino com pilha de discos. Em uso, a gaveta sai com um disco desenhado no plano (brilho de arco-íris, aro e furo central). O disco anterior era uma elipse com anel e miolo escuro, que parecia um olho.
+- **Cache:** impressora e copiadora passaram a usar o mesmo cache de raster do balcão (corpo estático em bitmap; LED, folha, barra, gaveta e disco ao vivo). A comparação cache contra desenho direto, em 128 combinações (escala 1 e 2, quatro zooms, quatro rotações, parado e em uso, duas posições), não tem nenhum pixel com diferença forte (acima de 48); impressora e copiadora ficam praticamente idênticas (até 16 pixels). As diferenças pequenas ficam na sombra em gradiente sob o tampo, onde o navegador dispersa o gradiente conforme a posição em pixels. O cache da torre e o da impressora reservam 160 unidades para cada lado, porque a medição mostrou que a torre chega a 140 unidades em rotação de 90°.
+- **Verificação:** `tests/counter-equipment-art.test.mjs` (coordenadas finitas em todas as rotações, zooms e estados, determinismo, o quadro "em uso" pinta formas a mais sobre o mesmo corpo, impressora e copiadora cabem no próprio raster, sem imagens, aleatoriedade, relógio de parede, modos de mistura ou desfoque) e `scripts/verify_counter_equipment.mjs`.
+- **Fora desta rodada:** as ilustrações da loja (`drawPrinterShop` e `drawDiscCopier`) continuam como estavam.
+
 ## 6. Desempenho
 
 Medido em Chromium headless **sem aceleração por GPU** (pior caso: toda a composição é por software), cena de teste com dono, um cliente sentado e um andando às 17:30 simuladas, ms por quadro de `SceneRenderer.draw`:
