@@ -1,0 +1,39 @@
+name: LHS | diagnostico do runner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-24.04
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
+  check:
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
+    timeout-minutes: 5
+    steps:
+      - name: Mostrar destino selecionado e arquitetura real
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Runner: $RUNNER_NAME"
+          echo "Sistema: $RUNNER_OS / $RUNNER_ARCH"
+          uname -m
+          echo "Node: $(node --version || true)"
+          for executable in git curl docker rsync ffmpeg pwsh; do
+            if command -v "$executable" >/dev/null 2>&1; then
+              echo "OK: $executable"
+            else
+              echo "::warning::Faltando no runner: $executable"
+            fi
+          done
+          if command -v docker >/dev/null 2>&1; then
+            docker info --format 'Docker daemon acessivel: {{.ServerVersion}}' || true
+          fi
