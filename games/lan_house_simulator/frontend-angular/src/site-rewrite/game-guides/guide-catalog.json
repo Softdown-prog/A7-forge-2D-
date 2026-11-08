@@ -223,7 +223,7 @@
     "groupCode": "G",
     "groupTitle": "Internet e conectividade",
     "title": "Planos de internet: Discada, Via rádio, Fibra óptica e quedas de rede",
-    "summary": "Compare os três níveis de internet do jogo, reduza o risco e a duração de quedas de sinal e acelere os downloads de jogos com GPU.",
+    "summary": "Compare internet discada, via rádio e fibra, as épocas de desbloqueio e o efeito da conexão nos serviços e downloads.",
     "unlockBadge": "Discada em 1998 · Via rádio e Fibra óptica para upgrade",
     "uiPath": "Administrar → Serviços → Internet e contrato"
   },
@@ -235,7 +235,7 @@
     "groupCode": "H",
     "groupTitle": "Consoles: PlayStation 1 e PlayStation 2",
     "title": "PlayStation 1 (2002): bancadas com TV de tubo, tarifas e 13 CDs",
-    "summary": "Instale até 4 bancadas de PlayStation 1 a partir de 2002, ajuste o preço por hora dos consoles e conheça os 13 CDs que atraem fãs para o salão.",
+    "summary": "Instale até 3 bancadas de PlayStation 1 a partir de 2002, compre CDs reais do catálogo do jogo e acompanhe a coleção revelada pelas revistas Top Games.",
     "unlockBadge": "A partir de 2002 (jogos de 2002 a 2005)",
     "uiPath": "Compras → Videogames e CDs · Administrar → Videogames"
   },
@@ -247,7 +247,7 @@
     "groupCode": "H",
     "groupTitle": "Consoles: PlayStation 1 e PlayStation 2",
     "title": "PlayStation 2 (2006): bancadas de nova geração e 15 DVDs",
-    "summary": "Amplie a área de consoles em 2006 com até 4 bancadas de PlayStation 2, tarifa horária dedicada e 15 jogos em DVD lançados até 2010.",
+    "summary": "Monte até 3 bancadas PS2 a partir de 2006 e adquira os 15 DVDs originais conforme o ano e as revistas individuais Top Games.",
     "unlockBadge": "A partir de 2006 (jogos de 2006 a 2010)",
     "uiPath": "Compras → Videogames e CDs · Administrar → Videogames"
   },
@@ -259,7 +259,7 @@
     "groupCode": "I",
     "groupTitle": "Revistas Top Games e desbloqueios",
     "title": "Revistas Top Games (2002–2010): entregas do carteiro e desbloqueio de jogos",
-    "summary": "Entenda como as 28 edições da revista Top Games revelam os lançamentos de PS1 e PS2, quanto custa cada exemplar e como pedir edições atrasadas.",
+    "summary": "Acompanhe as 28 revistas Top Games, cada uma dedicada a um jogo PS1 ou PS2, entregues pelo carteiro após a assinatura.",
     "unlockBadge": "De 2002 a 2010 (28 edições)",
     "uiPath": "Correio · Administrar → Videogames → Jogos PS1 / PS2"
   },
@@ -271,7 +271,7 @@
     "groupCode": "J",
     "groupTitle": "Loja, mercadorias e estoque",
     "title": "Estoque, fornecedores, pedidos de reposição e entregas",
-    "summary": "Compare os 4 fornecedores de bebidas, doces e salgadinhos, equilibre preço, prazo e confiabilidade e acompanhe os pedidos em trânsito.",
+    "summary": "Compare os fornecedores reais do catálogo de mercadorias, organize pedidos por lote e acompanhe entregas e estoque.",
     "unlockBadge": "Disponível desde 1998 (Dia 1)",
     "uiPath": "Administrar → Estoque → Fornecedores / Entregas"
   },
@@ -282,9 +282,9 @@
     "path": "/sobre-o-jogo/guias/024-mercadorias-precos-de-varejo-e-consumo-dos-clientes/",
     "groupCode": "J",
     "groupTitle": "Loja, mercadorias e estoque",
-    "title": "Mercadorias (2000+), preços de venda e necessidades dos clientes",
-    "summary": "Gerencie os 12 produtos detalhados liberados no ano 2000, ajuste os preços nas máquinas e prateleira e entenda como sede e fome geram vendas.",
-    "unlockBadge": "Preços desde 1998 · Catálogo de 12 mercadorias em 2000",
+    "title": "Mercadorias de 1998 a 2020: catálogo, preços e necessidades dos clientes",
+    "summary": "Gerencie os 12 produtos reais do jogo, com oito disponíveis desde 1998 e novidades em 2001, 2005, 2010 e 2020.",
+    "unlockBadge": "Primeiros 8 produtos em 1998; novidades até 2020",
     "uiPath": "Administrar → Estoque → Mercadorias · Administrar → Preços → Produtos"
   },
   {
@@ -295,7 +295,7 @@
     "groupCode": "K",
     "groupTitle": "Funcionários e serviços de balcão",
     "title": "Equipe e limpeza: lixeiras, faxineiro e técnico de manutenção",
-    "summary": "Saiba quando chamar serviços avulsos ou contratar faxineiro e técnico fixos, como funcionam as diárias no fim do mês e o impacto da limpeza.",
+    "summary": "Contrate faxineiro e técnico por dias trabalhados, acompanhe as lixeiras e saiba quando o reparo precisa de passagem livre.",
     "unlockBadge": "Disponível desde 1998 (Dia 1)",
     "uiPath": "Administrar → Serviços → Equipe e limpeza"
   },
@@ -306,8 +306,8 @@
     "path": "/sobre-o-jogo/guias/026-impressora-precos-por-pagina-e-manutencao/",
     "groupCode": "K",
     "groupTitle": "Funcionários e serviços de balcão",
-    "title": "Serviço de impressão: compra da impressora, preço por página e reparos",
-    "summary": "Transforme o balcão em ponto de impressão rápida, ajuste o valor por página, atenda pedidos avulsos e de sessão e cuide do desgaste do equipamento.",
+    "title": "Serviço de impressão: páginas, papel, tinta e limite diário",
+    "summary": "Compre a impressora por R$ 320, ajuste o preço da página e controle os custos de papel e tinta, sem desgaste fictício.",
     "unlockBadge": "Disponível desde 1998 (Dia 1)",
     "uiPath": "Compras → Computadores e serviços → Impressora · Administrar → Preços → Impressões"
   },
@@ -318,8 +318,8 @@
     "path": "/sobre-o-jogo/guias/027-copiadora-de-cd-e-dvd-precos-e-operacao/",
     "groupCode": "K",
     "groupTitle": "Funcionários e serviços de balcão",
-    "title": "Copiadora de CD e DVD: gravação de mídias, preços e cuidados",
-    "summary": "Instale a torre duplicadora de discos, configure o preço por mídia gravada, aumente o ticket médio no balcão e mantenha a gravadora revisada.",
+    "title": "Copiadora de CD e DVD: gravação, preços e limite diário",
+    "summary": "Adquira a copiadora a partir de 2001, configure tarifas separadas de CD e DVD e acompanhe os custos das mídias.",
     "unlockBadge": "Disponível desde 1998 (Dia 1)",
     "uiPath": "Compras → Computadores e serviços → Copiadora · Administrar → Preços → Cópias CD / DVD"
   },
@@ -354,8 +354,8 @@
     "path": "/sobre-o-jogo/guias/030-divulgacao-reputacao-e-opinioes-dos-clientes/",
     "groupCode": "L",
     "groupTitle": "Administração, preços e finanças",
-    "title": "Campanhas de divulgação, reputação do salão e opiniões dos clientes",
-    "summary": "Impulsione o movimento em +28% por 3 dias com divulgação no bairro, proteja sua nota de reputação e interprete os comentários dos frequentadores.",
+    "title": "Divulgação no bairro, reputação e avaliações dos clientes",
+    "summary": "Contrate panfletagem válida no dia atual para aumentar em 40% a chance de novos visitantes até 20h30.",
     "unlockBadge": "Disponível desde 1998 (Dia 1)",
     "uiPath": "Administrar → Finanças → Divulgação / Opiniões dos clientes"
   },
@@ -378,9 +378,9 @@
     "path": "/sobre-o-jogo/guias/032-clientes-vip-requisitos-e-bonus-de-receita/",
     "groupCode": "M",
     "groupTitle": "Clientes, VIPs e dinâmica do salão",
-    "title": "Clientes VIP: como atrair e ganhar +25% nas sessões",
-    "summary": "Veja os critérios exatos de reputação e qualidade de hardware para atrair clientes VIP e faturar 25% a mais por sessão atendida.",
-    "unlockBadge": "Quando reputação ≥ 78 e houver PC de nível 2+",
+    "title": "Clientes VIP: reputação, atendimento e avaliações",
+    "summary": "Entenda quando os clientes VIP podem chegar, como a reputação altera a frequência deles e como avaliam o atendimento.",
+    "unlockBadge": "VIPs elegíveis a partir de 55 pontos de reputação",
     "uiPath": "Administrar → Computadores → Receita por PC (coluna VIP)"
   },
   {
