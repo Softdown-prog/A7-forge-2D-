@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['scripts/ci/**', '.github/workflows/lhs-runner-*.yml']
   push:
-    branches: [main, fix/lhs-isolated-vps-runner-20261108]
+    branches: [main, fix/lhs-isolated-vps-runner-20261108, fix/lhs-runner-storage-20261108]
     paths: ['scripts/ci/**', '.github/workflows/lhs-runner-*.yml']
   workflow_dispatch:
 permissions:
@@ -44,9 +44,14 @@ jobs:
           print(a['browser_download_url'],digest)
           PY
           read -r url digest < /tmp/runner-download
-          curl -fL "$url" -o scripts/ci/runner.tar.gz
-          echo "$digest  scripts/ci/runner.tar.gz" | sha256sum -c -
+          curl -fL "$url" -o /tmp/runner.tar.gz
+          echo "$digest  /tmp/runner.tar.gz" | sha256sum -c -
           docker build -f scripts/ci/runner.Dockerfile -t lhs-runner:test scripts/ci
+          docker volume create lhs-runner-test
+          trap 'docker volume rm lhs-runner-test >/dev/null' EXIT
+          docker run --rm --network none -v lhs-runner-test:/runner -v /tmp/runner.tar.gz:/run/secrets/runner-package:ro lhs-runner:test bash -c 'test -z "$(ls -A /runner)" && tar -xzf /run/secrets/runner-package -C /runner'
+          docker run --rm --network none -v lhs-runner-test:/runner lhs-runner:test /runner/bin/Runner.Listener --version
+          docker run --rm --network none lhs-runner:test bash -c 'test ! -e /runner/bin/Runner.Listener && test ! -e /tmp/runner.tar.gz && test "$RUNNER_MANUALLY_TRAP_SIG" = 1'
           docker run --rm --network none --security-opt no-new-privileges:true lhs-runner:test bash -c 'test ! -S /var/run/docker.sock; test -f "$ACTIONS_RUNNER_HOOK_JOB_STARTED"; test -f "$ACTIONS_RUNNER_HOOK_JOB_COMPLETED"; [[ "$ACTIONS_RUNNER_HOOK_JOB_STARTED" == *.sh && "$ACTIONS_RUNNER_HOOK_JOB_COMPLETED" == *.sh ]]; ! unshare --mount true'
           docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=push -e GITHUB_REF=refs/heads/main lhs-runner:test /usr/local/bin/lhs-runner-admission.sh
           if docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=pull_request lhs-runner:test /usr/local/bin/lhs-runner-admission.sh; then exit 1; fi

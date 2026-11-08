@@ -29,7 +29,7 @@ print(assets[0]["browser_download_url"],(assets[0].get("digest") or "").removepr
 [[ "$package_url" =~ ^https://github.com/actions/runner/releases/download/ ]]
 [[ "$package_sha" =~ ^[a-fA-F0-9]{64}$ ]]
 build_tmp="$(mktemp -d /tmp/lhs-runner-build.XXXXXX)"
-trap 'rm -f -- "$build_tmp/runner.tar.gz" "$install_dir/runner.tar.gz"; rmdir -- "$build_tmp"' EXIT
+trap 'rm -f -- "$build_tmp/runner.tar.gz"; rmdir -- "$build_tmp"' EXIT
 curl -fL --retry 2 "$package_url" -o "$build_tmp/runner.tar.gz"
 printf '%s  %s\n' "$package_sha" "$build_tmp/runner.tar.gz" | sha256sum -c -
 install -d -m 0755 "$install_dir"
@@ -37,11 +37,14 @@ for file in runner.Dockerfile runner.compose.yaml runner-entrypoint.sh runner-ad
   install -m 0644 "$source_dir/$file" "$install_dir/$file"
 done
 # Only this build context is sent to Docker, not application data or credentials.
-cp -- "$build_tmp/runner.tar.gz" "$install_dir/runner.tar.gz"
 docker build -f "$install_dir/runner.Dockerfile" -t lhs-actions-runner:isolated "$install_dir"
-rm -- "$install_dir/runner.tar.gz"
 cd "$install_dir"
 docker compose -f runner.compose.yaml config --quiet
+# The verified binary exists only in its persistent volume, not twice in image layers.
+docker compose -f runner.compose.yaml run --rm --no-deps \
+  -v "$build_tmp/runner.tar.gz:/run/secrets/runner-package:ro" runner /bin/bash -c '
+    test -z "$(ls -A /runner)" && tar -xzf /run/secrets/runner-package -C /runner
+  '
 # Registration token is a one-time read-only mount, absent from the permanent container.
 docker compose -f runner.compose.yaml run --rm --no-deps \
   -v "$RUNNER_TOKEN_FILE:/run/secrets/registration-token:ro" \
