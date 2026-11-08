@@ -297,35 +297,37 @@ export const guidesIL:readonly GameGuide[]=[
   groupCode:'K',
   groupTitle:'Funcionários e serviços de balcão',
   title:'Equipe e limpeza: lixeiras, faxineiro e técnico de manutenção',
-  summary:'Saiba quando chamar serviços avulsos ou contratar faxineiro e técnico fixos, como funcionam as diárias no fim do mês e o impacto da limpeza.',
+  summary:"Contrate faxineiro e técnico por dias trabalhados, acompanhe as lixeiras e saiba quando o reparo precisa de passagem livre.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Administrar → Serviços → Equipe e limpeza',
   whatIs:[
-   'O salão possui duas lixeiras físicas que acumulam resíduos tanto pela passagem natural do tempo (+2% a cada 70 minutos do expediente) quanto pelo consumo de bebidas (+5%) e doces/salgadinhos (+3%). A média das duas lixeiras define o nível de sujeira do ambiente (de 0% a 100%).',
-   'Para manter o salão limpo e os computadores funcionando, você conta com dois profissionais em Administrar → Serviços → Equipe e limpeza: o Faxineiro e o Técnico de manutenção, que podem ser acionados por visita avulsa ou contratados para a equipe fixa.'
+   "O salão oferece limpeza e manutenção de computadores, por serviço avulso ou por funcionário contratado. O faxineiro recolhe o lixo das lixeiras; o técnico conserta PCs desgastados.",
+   "Funcionários contratados recebem diárias somente nos dias em que trabalham, registradas para pagamento no fechamento mensal.",
   ],
   whyItMatters:[
    'Quando o nível de sujeira passa de 55%, os clientes começam a perder satisfação com o conforto do ambiente; se passar de 70% (ou chegar a 100% com lixeiras transbordando), as reclamações derrubam sua reputação a cada sessão encerrada.',
    'Contratar a equipe fixa automatiza a operação: o faxineiro contratado entra sozinho sempre que qualquer lixeira atinge 55% ou mais, e o técnico contratado entra sozinho sempre que um PC livre quebra (100% de desgaste).'
   ],
   whenAvailable:[
-   'Disponível desde o Dia 1 (1998) em Administrar → Serviços → sub-aba Equipe e limpeza (ou pelo botão rápido Serviços abaixo do cabeçalho).'
+   "Os serviços de limpeza, manutenção e contratação de equipe podem ser usados desde o início da campanha, conforme a necessidade do salão.",
   ],
   howToUse:[
-   'Abra Administrar → Serviços → sub-aba Equipe e limpeza.',
-   'Para pedir uma limpeza imediata sem vínculo fixo, clique em Chamar faxineiro avulso · R$ ... (exige pelo menos 5% de sujeira nas lixeiras).',
-   'Para automatizar a limpeza, clique em Contratar faxineiro. Com ele contratado, você também pode clicar em Solicitar limpeza agora sem custo extra no ato.',
-   'Para automatizar o conserto de computadores, clique em Contratar técnico. Você pode demitir qualquer um dos dois a qualquer momento clicando em Dispensar faxineiro ou Dispensar técnico (sem multa rescisória).'
+   "Abra Administrar → Serviços e encontre o painel de equipe e limpeza.",
+   "Para limpeza avulsa, espere haver sujeira suficiente e chame o faxineiro. Ele precisa conseguir chegar à lixeira; portas e divisórias podem bloquear o caminho.",
+   "Para reparar um PC, aguarde o cliente terminar, confirme que não há instalação do Windows em andamento e chame o técnico para a estação.",
+   "Contrate um faxineiro ou técnico quando quiser atendimento automático das demandas elegíveis. O funcionário não cobra diária por dias em que não executou trabalho.",
+   "Confira o movimento do trabalhador no salão e a folha acumulada para o fechamento mensal.",
   ],
   whatHappensNext:[
-   'Quando acionado, o faxineiro entra pela porta da lan house, caminha até a Lixeira 1 (limpa por 12 minutos do jogo), vai até a Lixeira 2 (limpa por mais 12 minutos), zera toda a sujeira do salão e vai embora.',
-   'Regra de ouro da folha salarial: funcionários contratados NÃO cobram salário nos dias em que não precisarem entrar no salão! A diária só é lançada na folha mensal nos dias em que o profissional realiza pelo menos um atendimento.'
+   "O faxineiro desloca-se até as lixeiras acessíveis, trabalha por nove minutos de jogo em cada lixeira atendida e depois vai embora. O lixo inacessível permanece até haver passagem.",
+   "O técnico de PC trabalha durante 24 minutos de jogo após chegar à estação e zera o desgaste daquele computador ao concluir. O equipamento fica indisponível enquanto é reparado.",
   ],
   costsAndLimits:[
-   'Custo do faxineiro avulso no modo histórico: varia conforme a sujeira acumulada (em 1998, de R$ 2,94 com 5% de lixo até R$ 11,50 com 100% de lixo, corrigido pelo IPCA).',
-   'Diária do faxineiro contratado (cobrada apenas nos dias trabalhados, paga no fechamento mensal de 30 dias): R$ 4,50/dia trabalhado em 1998 (corrigido pelo IPCA).',
-   'Diária do técnico contratado (cobrada apenas nos dias trabalhados, paga no fechamento mensal de 30 dias): R$ 7,50/dia trabalhado em 1998 (corrigido pelo IPCA).',
-   'Duração física do trabalho: Faxineiro leva 24 minutos do jogo (12 min por lixeira); Técnico leva 24 minutos do jogo por equipamento.'
+   "Faxineiro contratado: base de R$ 210,00 por 30 dias de trabalho em 1998, equivalente a R$ 7,00 por dia efetivamente trabalhado, reajustado pelo índice da campanha.",
+   "Técnico contratado: base de R$ 330,00 por 30 dias de trabalho em 1998, equivalente a R$ 11,00 por dia efetivamente trabalhado, reajustado pelo índice da campanha.",
+   "Serviços avulsos têm custo calculado conforme a necessidade; confira a cotação na interface antes de chamar.",
+   "Técnico: 24 minutos de jogo de trabalho por PC após a chegada. Faxineiro: nove minutos de jogo por lixeira limpa, além do deslocamento.",
+   "O faxineiro contratado é acionado automaticamente quando as lixeiras atingem o patamar de atenção; o técnico contratado atende PCs com 100% de desgaste, um de cada vez.",
   ],
   table:{
    caption:'Comparativo entre Serviço Avulso e Equipe Contratada (valores base 1998 × IPCA)',
@@ -358,46 +360,48 @@ export const guidesIL:readonly GameGuide[]=[
   path:'/sobre-o-jogo/guias/026-impressora-precos-por-pagina-e-manutencao/',
   groupCode:'K',
   groupTitle:'Funcionários e serviços de balcão',
-  title:'Serviço de impressão: compra da impressora, preço por página e reparos',
-  summary:'Transforme o balcão em ponto de impressão rápida, ajuste o valor por página, atenda pedidos avulsos e de sessão e cuide do desgaste do equipamento.',
+  title:"Serviço de impressão: páginas, papel, tinta e limite diário",
+  summary:"Compre a impressora por R$ 320, ajuste o preço da página e controle os custos de papel e tinta, sem desgaste fictício.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Compras → Computadores e serviços → Impressora · Administrar → Preços → Impressões',
   whatIs:[
-   'A Impressora de balcão (R$ 320,00) é um equipamento opcional comprado uma única vez em Compras → Computadores e serviços. Ela fica instalada ao lado do Tony no balcão de atendimento e abre uma nova fonte de receita por página impressa.',
-   'Com a impressora ativa, você atende dois tipos de demanda: clientes de sessão de PC que aproveitam para imprimir trabalhos escolares, currículos e boletos (de 2 a 12 páginas) e visitantes avulsos que entram na lan house exclusivamente para imprimir (de 3 a 18 páginas) sem ocupar nenhum computador!'
+   "A Impressora de documentos é um serviço de balcão que permite atender pedidos de impressão de clientes e visitantes avulsos. Cada página produzida gera receita, mas consome papel e tinta do caixa.",
+   "No motor atual, a impressora não tem medidor de desgaste nem botão de reparo: o serviço é limitado pela procura, pelo dinheiro dos clientes, pela capacidade diária e pelo custo por página.",
   ],
   whyItMatters:[
-   'Visitantes exclusivos de impressão pagam no balcão em apenas 3 minutos de atendimento e vão embora felizes, gerando caixa rápido mesmo quando todos os seus computadores estão lotados ou quando a internet caiu.',
-   'Além disso, você tem controle total sobre o preço cobrado por página em Administrar → Preços → sub-aba Impressões.'
+   "A impressão acrescenta uma receita complementar sem ocupar uma estação de PC. O resultado depende do preço cobrado e do custo real de materiais.",
+   "A compra é única; depois você gerencia a tarifa por página no painel Preços.",
   ],
   whenAvailable:[
-   'Disponível para compra desde o Dia 1 (1998) em Compras → Computadores e serviços.'
+   "A impressora pode ser adquirida desde o início do jogo por R$ 320,00.",
   ],
   howToUse:[
-   'Abra Compras → categoria Computadores e serviços e clique em Comprar impressora · R$ 320 no cartão Impressora de balcão.',
-   'Abra Administrar → aba Preços → sub-aba Impressões para ajustar o valor cobrado por página (e consultar o preço de referência da época, total de atendimentos, páginas impressas e receita acumulada).',
-   'Acompanhe o percentual de desgaste da impressora ali mesmo na sub-aba Impressões ou em Administrar → Serviços → Equipe e limpeza.',
-   'Quando o desgaste da impressora subir ou chegar a 100%, clique no botão de reparo da impressora para chamar o técnico.'
+   "Abra Compras e adquira Impressora de documentos por R$ 320,00.",
+   "Em Administrar → Preços, escolha um preço por página. No modo histórico, o valor deve ficar entre R$ 0,50 e R$ 20,00, em passos de R$ 0,50.",
+   "Atenda os clientes que solicitarem impressões. O serviço só contabiliza dinheiro quando há uma venda real no balcão.",
+   "Confira o número de páginas e o resultado financeiro, lembrando que o custo de papel e tinta é descontado de cada pedido.",
   ],
   whatHappensNext:[
-   'A cada página impressa, a receita líquida já entra no caixa (descontando automaticamente o custo interno de papel e tinta por folha) e o equipamento acumula um pequeno desgaste mecânico.',
-   'Se o desgaste da impressora chegar a 100%, ela para de aceitar novos pedidos até que o técnico conclua os 24 minutos de manutenção no balcão.'
+   "O cliente paga pelas páginas realizadas, e o simulador registra a receita e a despesa de material separadamente.",
+   "O serviço aceita um pedido de 1 a 4 páginas, dentro do limite máximo de 35 páginas por dia; novos pedidos dependem de capacidade, demanda e orçamento.",
   ],
   costsAndLimits:[
-   'Custo de aquisição da Impressora de balcão: R$ 320,00 (compra única).',
-   'Preço inicial por página em 1998 (modo histórico): R$ 0,25/página · Faixa ajustável: de R$ 0,10 até R$ 15,00 por página.',
-   'Volume por pedido: 2 a 12 páginas para clientes de sessão; 3 a 18 páginas para clientes avulsos de balcão.',
-   'Desgaste mecânico: +0,42% base por pedido + 0,15% por página impressa (quebra ao atingir 100%).'
+   "Preço da impressora: R$ 320,00, compra única.",
+   "Tarifa de referência em 1998 no modo histórico: R$ 1,50 por página; faixa ajustável de R$ 0,50 a R$ 20,00 por página em passos de R$ 0,50.",
+   "Papel e tinta: custo-base de R$ 0,45 por página no modo histórico, corrigido pela inflação da campanha.",
+   "Capacidade: até 35 páginas por dia, em pedidos de 1 a 4 páginas por cliente.",
+   "A impressora não acumula desgaste mecânico no motor atual e não exige conserto periódico.",
   ],
   commonProblems:[
-   {
-    problem:'Comprei a impressora, mas de repente ninguém mais faz pedidos de impressão.',
-    solution:'Verifique duas coisas em Administrar → Preços → Impressões: se o desgaste da impressora chegou a 100% (precisando de reparo técnico) ou se o seu preço por página ficou muito acima do valor de referência do ano.'
-   }
+   {problem:"Comprei a impressora, mas não recebi pedidos imediatamente.",solution:"Os clientes precisam demonstrar demanda e chegar fisicamente ao balcão. Uma compra não gera renda automática."},
+   {problem:"O preço de impressão não é aceito.",solution:"No modo histórico, use valores de R$ 0,50 a R$ 20,00, em incrementos de R$ 0,50. Em partidas clássicas, o preço é em reais inteiros."},
+   {problem:"O movimento de impressão parou no dia.",solution:"Verifique se as 35 páginas diárias já foram atingidas, se o preço afasta clientes ou se ainda há tempo útil para chegadas."},
+   {problem:"Onde conserto a impressora?",solution:"Não existe mecânica de desgaste/reparo da impressora no motor atual. Ajuste preço e acompanhe vendas e materiais."},
   ],
   playerTips:[
-   'A Impressora de balcão (R$ 320,00) costuma se pagar muito rápido já no primeiro ou segundo mês de campanha, sendo um dos melhores investimentos iniciais depois de estabilizar o caixa do Dia 31.',
-   'Mantenha o preço por página próximo ao valor de referência indicado na aba Impressões para atrair o volume máximo de estudantes e moradores.'
+   "Preço alto nem sempre significa lucro maior: a procura cai quando você se afasta muito do valor de referência.",
+   "Compare receita e custo de papel e tinta para conhecer a margem real de cada impressão.",
+   "Não conte com mais de 35 páginas por dia; o limite é compartilhado entre pedidos do expediente.",
   ],
   relatedIds:['003','025','027','028']
  },
@@ -408,46 +412,48 @@ export const guidesIL:readonly GameGuide[]=[
   path:'/sobre-o-jogo/guias/027-copiadora-de-cd-e-dvd-precos-e-operacao/',
   groupCode:'K',
   groupTitle:'Funcionários e serviços de balcão',
-  title:'Copiadora de CD e DVD: gravação de mídias, preços e cuidados',
-  summary:'Instale a torre duplicadora de discos, configure o preço por mídia gravada, aumente o ticket médio no balcão e mantenha a gravadora revisada.',
+  title:"Copiadora de CD e DVD: gravação, preços e limite diário",
+  summary:"Adquira a copiadora a partir de 2001, configure tarifas separadas de CD e DVD e acompanhe os custos das mídias.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Compras → Computadores e serviços → Copiadora · Administrar → Preços → Cópias CD / DVD',
   whatIs:[
-   'A Copiadora de CD e DVD (R$ 900,00) é uma torre duplicadora de mídias instalada no balcão de atendimento, adquirida em Compras → Computadores e serviços.',
-   'Assim como a impressora, ela atende tanto clientes que vieram usar os computadores e pedem para gravar backups, fotos ou coletâneas (1 a 3 mídias) quanto clientes avulsos que entram direto na fila do balcão apenas para gravar discos (1 a 5 mídias).'
+   "A Copiadora de CDs e DVDs oferece serviços pagos no balcão, com escolha entre cópias de CD e DVD. Ela não ocupa uma posição de móvel no salão.",
+   "A mecânica real contabiliza custo da mídia, valor cobrado, unidades copiadas e capacidade diária. Não existe medidor de desgaste ou reparo de gravadora nesse módulo.",
   ],
   whyItMatters:[
-   'Embora custe mais caro para comprar (R$ 900,00), cada mídia gravada tem um valor unitário alto (começando em R$ 3,00 por disco em 1998 e subindo com o IPCA), gerando entradas expressivas no caixa em apenas 3 minutos de atendimento no balcão.',
-   'Clientes exclusivos de gravação de CD/DVD não ocupam computadores e não dependem de internet ativa.'
+   "Os serviços de mídia diversificam o caixa da lan house, inclusive com visitantes que chegam apenas para pedir cópias.",
+   "Os preços de CD e DVD são independentes, permitindo ajustar a margem de cada formato.",
   ],
   whenAvailable:[
-   'Disponível para compra desde o Dia 1 (1998) em Compras → Computadores e serviços.'
+   "A copiadora só pode ser comprada a partir de 2001, por R$ 900,00. Antes disso o jogo bloqueia a aquisição.",
   ],
   howToUse:[
-   'Quando tiver folga financeira no caixa, abra Compras → Computadores e serviços e clique em Comprar copiadora · R$ 900 no cartão Copiadora de CD e DVD.',
-   'Abra Administrar → Preços → sub-aba Cópias CD / DVD para definir o preço cobrado por unidade gravada.',
-   'Consulte na mesma tela o preço de referência para o ano atual, a quantidade de pedidos atendidos, o total de mídias gravadas e a receita gerada.',
-   'Solicite o reparo técnico sempre que o desgaste da copiadora estiver elevado ou atingir 100%.'
+   "Em 2001 ou depois, abra Compras e adquira Copiadora de CDs e DVDs por R$ 900,00.",
+   "Em Administração → Preços, defina o valor da cópia de CD e da cópia de DVD separadamente. Os valores aceitos vão de R$ 1 a R$ 80 por mídia, em reais inteiros.",
+   "Aguarde pedidos no balcão. O simulador verifica orçamento, demanda e quantidade de cópias disponíveis naquele dia.",
+   "Confira vendas e despesas com mídias antes de definir aumentos de preço.",
   ],
   whatHappensNext:[
-   'Cada pedido atendido soma o lucro da gravação (já descontado o custo da mídia virgem) diretamente ao caixa e adiciona desgaste aos gravadores ópticos da torre.',
-   'Quando o técnico é chamado para revisar a copiadora, ele trabalha por 24 minutos do jogo no balcão e devolve o equipamento com 0% de desgaste.'
+   "A venda credita o valor cobrado ao caixa e desconta o custo de cada mídia. O registro do serviço contabiliza receitas, despesas e unidades de CD/DVD.",
+   "Clientes podem pedir de uma a três cópias por atendimento, sem ultrapassar a capacidade diária de 24 cópias.",
   ],
   costsAndLimits:[
-   'Custo de aquisição da Copiadora de CD e DVD: R$ 900,00 (compra única).',
-   'Preço inicial por disco em 1998 (modo histórico): R$ 3,00/mídia · Faixa ajustável: de R$ 0,50 até R$ 80,00 por mídia.',
-   'Volume por pedido: 1 a 3 discos para clientes de sessão; 1 a 5 discos para clientes avulsos de balcão.',
-   'Desgaste mecânico: +0,85% base por pedido + 0,55% por disco gravado (para de operar aos 100% até ser reparada).'
+   "Ano de abertura: 2001. Custo de aquisição: R$ 900,00, compra única.",
+   "Tarifa inicial em 2001 no modo histórico: CD R$ 3,00, DVD R$ 6,00. Preços ajustáveis de R$ 1 a R$ 80 em números inteiros.",
+   "Custo-base da mídia em 2001: CD R$ 1,00, DVD R$ 2,00; os valores de referência e custos são atualizados conforme a inflação do jogo.",
+   "Limite: 24 cópias por dia, compartilhado entre CDs e DVDs; cada pedido solicita uma a três cópias.",
+   "Não há desgaste nem reparo de copiadora implementados no módulo atual.",
   ],
   commonProblems:[
-   {
-    problem:'O desgaste da Copiadora de CD e DVD sobe mais rápido que o da impressora.',
-    solution:'Isso é normal: gravadores ópticos sofrem maior desgaste por mídia (+0,85% por pedido + 0,55% por disco). Fique de olho no indicador na sub-aba Cópias CD / DVD e chame o técnico antes de chegar a 100%.'
-   }
+   {problem:"Não encontro a copiadora em 1998.",solution:"A opção só libera a partir de 2001."},
+   {problem:"O painel rejeita R$ 3,50 por CD.",solution:"Os preços devem ser valores inteiros entre R$ 1 e R$ 80."},
+   {problem:"Os clientes pararam de solicitar gravações.",solution:"Confira a capacidade de 24 cópias diárias, os preços e a demanda. A compra da máquina não garante fluxo contínuo."},
+   {problem:"Não encontro opção de manutenção da copiadora.",solution:"O motor atual não inclui mecânica de desgaste/reparo para esse serviço."},
   ],
   playerTips:[
-   'Combine a Impressora de balcão e a Copiadora de CD e DVD: juntas, elas transformam o balcão do Tony em uma verdadeira central de serviços rápidos que fatura alto durante todo o expediente.',
-   'Reajuste o preço por disco a cada virada de ano usando como guia o valor de referência exibido em Administrar → Preços → Cópias CD / DVD.'
+   "Compare a margem dos CDs e DVDs, pois os custos de mídia são diferentes.",
+   "Reavalie preços quando os custos das mídias mudarem ao longo dos anos.",
+   "O limite de 24 cópias diárias vale para os dois formatos juntos.",
   ],
   relatedIds:['003','025','026','028']
  },
@@ -579,45 +585,47 @@ export const guidesIL:readonly GameGuide[]=[
   path:'/sobre-o-jogo/guias/030-divulgacao-reputacao-e-opinioes-dos-clientes/',
   groupCode:'L',
   groupTitle:'Administração, preços e finanças',
-  title:'Campanhas de divulgação, reputação do salão e opiniões dos clientes',
-  summary:'Impulsione o movimento em +28% por 3 dias com divulgação no bairro, proteja sua nota de reputação e interprete os comentários dos frequentadores.',
+  title:"Divulgação no bairro, reputação e avaliações dos clientes",
+  summary:"Contrate panfletagem válida no dia atual para aumentar em 40% a chance de novos visitantes até 20h30.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Administrar → Finanças → Divulgação / Opiniões dos clientes',
   whatIs:[
-   'A atração de visitantes para a sua lan house depende diretamente da sua Reputação no bairro (uma nota que vai de 10 a 100, começando em 75) e pode ser impulsionada temporariamente contratando uma campanha de Divulgação no bairro.',
-   'Para saber exatamente o que está agradando ou incomodando o público, a sub-aba Administrar → Finanças → Opiniões dos clientes registra os comentários deixados pelos frequentadores ao saírem do salão.'
+   "A panfletagem é uma campanha de divulgação contratada pela administração que aumenta as chances de entrada de clientes enquanto o salão ainda recebe visitantes.",
+   "A campanha funciona somente no dia em que foi contratada e deixa de atrair novos visitantes quando termina o horário de admissão, às 20h30.",
   ],
   whyItMatters:[
-   'A reputação multiplica a chegada de clientes em todas as horas do dia (variando de 0,50x com reputação muito baixa até 1,25x com reputação alta) e é requisito obrigatório para atrair Clientes VIP (que exigem reputação mínima de 78 pontos).',
-   'Já a campanha de Divulgação aumenta em +28% a taxa de chegada de visitantes durante 3 dias inteiros de expediente.'
+   "A divulgação pode ajudar a trazer movimento em dias mais fracos, mas não gera clientes ou pagamentos automaticamente.",
+   "Os comentários e a reputação refletem a experiência real de atendimento: esperas, preços, qualidade do equipamento e problemas durante a sessão.",
   ],
   whenAvailable:[
-   'Disponível desde o Dia 1 (1998) nas sub-abas Divulgação e Opiniões dos clientes dentro de Administrar → Finanças.'
+   "A panfletagem pode ser contratada desde o início da campanha, desde que ainda seja antes das 20h30 e exista dinheiro em caixa.",
+   "O jogo não permite contratar outra panfletagem enquanto a campanha do mesmo dia estiver ativa.",
   ],
   howToUse:[
-   'Para lançar uma campanha promocional, abra Administrar → Finanças → sub-aba Divulgação e clique em Divulgar no bairro · 3 dias.',
-   'Verifique antes se há computadores suficientes ligados e estoque abastecido para absorver os +28% de clientes extras pelos próximos 3 dias.',
-   'Abra a sub-aba Opiniões dos clientes para ler as avaliações recentes classificadas por sentimento (positivas, neutras ou negativas) e identificar gargalos no salão.'
+   "Abra Administrar → Finanças e encontre a opção de Divulgação/Panfletagem.",
+   "Confira o custo atual: em 1998, na campanha histórica, a base é R$ 24,00; em saves clássicos, R$ 120,00.",
+   "Contrate a panfletagem antes das 20h30. A chance de novas chegadas recebe multiplicador de 1,4 enquanto a divulgação estiver ativa.",
+   "Observe o movimento até o fim do período de admissão e acompanhe a reputação e os comentários dos clientes.",
   ],
   whatHappensNext:[
-   'Enquanto a divulgação está ativa, o contador de dias restantes aparece no painel e a porta recebe 28% mais visitantes.',
-   'Ao final de cada sessão no salão, o cliente calcula sua satisfação combinando tarifa cobrada, bônus de hardware/GPU/LCD do PC, limpeza das lixeiras e decoração do ambiente, subindo ou descendo sua reputação geral.'
+   "O bônus de chegada termina no fim do dia de contratação ou quando novos clientes já não podem entrar. Não dura três dias.",
+   "Sessões, estoque, tempo e pagamentos continuam acontecendo pelas regras normais; a divulgação não cria receita artificial.",
   ],
   costsAndLimits:[
-   'Custo da campanha de Divulgação: R$ 24,00 em 1998 (ajustado pelo IPCA no modo histórico; R$ 95,00 no modo clássico) · Duração: 3 dias · Efeito: +28% na chegada de visitantes (não acumulável enquanto já estiver ativa).',
-   'Limites da Reputação: mínimo de 10 e máximo de 100 pontos.',
-   'Principais ganhos de reputação: sessões muito satisfatórias, boas, escolhas generosas nas histórias do bairro (+1 a +3) e reforma elétrica completa (+2).',
-   'Principais perdas de reputação: abandono por queda de internet acima de 15 min (-1,1), desistência na fila (-0,4), sessão ruim (-0,22), falta de estoque no varejo (-0,2) e multas de fiscalização (-3 a -5).'
+   "Custo-base em 1998 no modo histórico: R$ 24,00, atualizado pelo IPCA da campanha. Custo no modo clássico: R$ 120,00.",
+   "Efeito: multiplicador de 1,4 na chance de novas chegadas, equivalente a 40% de aumento dessa chance, não garantia de 40% mais pessoas atendidas.",
+   "Duração: somente no dia corrente, até o fechamento; novos visitantes deixam de entrar às 20h30.",
+   "Só é possível contratar a campanha antes de 20h30 e quando não há outra panfletagem ativa nesse dia.",
   ],
   commonProblems:[
-   {
-    problem:'Ativei a Divulgação no bairro, vieram muitos clientes, mas minha reputação caiu!',
-    solution:'Se você divulgar a lan house quando todos os 3 PCs já ficam lotados o dia inteiro, os visitantes extras ficarão presos na fila do balcão e desistirão por falta de vaga (-0,4 de reputação cada). Só ative a divulgação quando tiver máquinas livres sobrando!'
-   }
+   {problem:"Contratei panfletagem, mas o aumento de clientes parece pequeno.",solution:"Ela aumenta uma chance de chegada, sem garantir um número fixo de visitantes. Fila, lotação e passagem continuam limitando o atendimento."},
+   {problem:"O botão de divulgar fica indisponível à noite.",solution:"Novos clientes não entram depois das 20h30. Volte no próximo dia de expediente."},
+   {problem:"Posso contratar a mesma campanha novamente para acumular o bônus?",solution:"Não no mesmo dia. O motor impede uma segunda contratação enquanto a panfletagem atual estiver ativa."},
   ],
   playerTips:[
-   'O momento perfeito para ativar a Divulgação de 3 dias é logo após comprar computadores novos ou instalar jogos novos: você enche rapidamente as novas cadeiras e recupera o investimento em poucos minutos.',
-   'Se a aba Opiniões dos clientes mostrar queixas sobre ambiente abafado ou simples, compre itens em Compras → Decoração (como plantas, pôsteres, sofá e climatizador) para ganhar um bônus fixo de satisfação em todas as sessões.'
+   "Divulgue cedo, antes do horário limite de admissão, para aproveitar mais tempo de benefício.",
+   "Garanta capacidade e passagem para atender o movimento adicional antes de investir em panfletagem.",
+   "Acompanhe a reputação de longo prazo: divulgação aumenta procura, mas não substitui bom atendimento.",
   ],
   relatedIds:['003','031','032','033']
  }
