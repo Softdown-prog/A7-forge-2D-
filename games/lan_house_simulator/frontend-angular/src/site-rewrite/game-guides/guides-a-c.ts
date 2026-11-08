@@ -21,7 +21,7 @@ export const guidesAC:readonly GameGuide[]=[
    'Gastar todo o caixa de R$ 850,00 logo no primeiro dia comprando decoração ou equipamentos caros pode deixar você sem reserva para pagar as contas do mês ou responder a uma vistoria de licenças no Correio.'
   ],
   whenAvailable:[
-   'Disponível imediatamente ao acessar o jogo em /game/ e clicar no botão principal Abrir minha lan house → (que inicia a campanha no modo de economia histórica, percorrendo de 1998 até o fim de 2030).',
+   'Disponível imediatamente ao acessar o jogo em /jogar/ e clicar no botão principal Abrir minha lan house → (que inicia a campanha no modo de economia histórica, percorrendo de 1998 até o fim de 2030).',
    'Se você já tiver uma partida salva neste navegador, o botão Continuar partida retoma exatamente do ponto em que você parou.'
   ],
   howToUse:[
@@ -164,7 +164,7 @@ export const guidesAC:readonly GameGuide[]=[
   ],
   whenAvailable:[
    'O atendimento de sessões e a venda automática de lanches funcionam desde o Dia 1 (01/01/1998).',
-   'Os pedidos extras no balcão passam a ocorrer assim que você compra a Impressora de balcão (R$ 320,00) ou a Copiadora de CD e DVD (R$ 900,00) na loja.'
+   'A impressora de balcão pode ser comprada desde 1998 por R$ 320,00; a copiadora de CD e DVD, por R$ 900,00, só fica disponível a partir de 2001.'
   ],
   howToUse:[
    'Mantenha computadores ligados, em bom estado (abaixo de 100% de desgaste) e com caminho livre entre o balcão e as cadeiras.',
@@ -221,7 +221,7 @@ export const guidesAC:readonly GameGuide[]=[
   ],
   whenAvailable:[
    'Todas as janelas principais e os controles de câmera estão disponíveis desde o Dia 1 de 1998.',
-   'Algumas sub-abas específicas exibem um cadeado ou aviso até o ano histórico de lançamento — como a sub-aba Mercadorias dentro de Estoque, que desbloqueia no ano 2000.'
+   'Alguns produtos e equipamentos são liberados de acordo com o ano da campanha: o varejo começa com oito mercadorias em 1998 e ganha novidades até 2020.'
   ],
   howToUse:[
    'Para comprar novas máquinas, videogames, reformas ou móveis, clique em Compras na barra superior e escolha uma das 4 categorias: Computadores e serviços, Videogames e CDs, Construção ou Decoração (ou use o campo Pesquisar produtos e serviços).',
@@ -247,7 +247,7 @@ export const guidesAC:readonly GameGuide[]=[
     ['Computadores','Operação e reparos · Peças e configuração · Windows · Monitores · Receita por PC','Liga/desliga PCs, chama técnico, troca peças/kits, instala LCDs e vê lucro por máquina'],
     ['Placas de vídeo','Seletor de PC + Catálogo de GPUs','Compra e instala placas PixelForce (2005–2030) na estação escolhida'],
     ['Windows / Licenças','Windows por PC · Jogos clássicos · Jogos com GPU','Compra licenças de Windows, jogos clássicos (1998–2000) e baixa jogos GPU (2005+)'],
-    ['Estoque','Mercadorias (2000+) · Fornecedores · Entregas','Faz pedidos de reposição, escolhe marcas do ano 2000+ e acompanha entregas'],
+    ['Estoque','Mercadorias por época · Fornecedores · Entregas','Faz pedidos de reposição, acompanha itens disponíveis por ano e verifica entregas'],
     ['Serviços','Equipe e limpeza · Internet e contrato · Passagens','Contrata faxineiro/técnico, melhora a internet, regulariza jogos e checa rotas'],
     ['Videogames','Bancadas · Preço por hora · Jogos PS1 / PS2','Acompanha bancadas de PS1/PS2, define tarifa de console e compra CDs/DVDs'],
     ['Finanças','Caixa e contas · Ocupação e resultado · Primeira sexta · Divulgação · Opiniões dos clientes · Reiniciar partida','Confere contas do mês, agenda o Corujão, faz propaganda e lê avaliações']
@@ -259,8 +259,8 @@ export const guidesAC:readonly GameGuide[]=[
     solution:'A aba Administrar → Computadores cuida apenas dos PCs que já estão instalados no salão. Para comprar um PC novo, abra a janela Compras → categoria Computadores e serviços.'
    },
    {
-    problem:'A sub-aba Mercadorias dentro de Administrar → Estoque aparece com um cadeado (🔒 Mercadorias · 2000).',
-    solution:'Nos anos de 1998 e 1999 você repõe o estoque diretamente pela sub-aba Fornecedores e ajusta os valores em Preços → Produtos. O catálogo detalhado de 12 mercadorias abre automaticamente na virada para o ano 2000.'
+    problem:'Procurei um produto moderno em 1998, mas ele aparece indisponível.',
+    solution:'O catálogo libera cada produto em seu ano: oito itens desde 1998; Suco de caixinha em 2001; Bebida energética em 2005; Refrigerante zero em 2010; Biscoito integral em 2020. Consulte Estoque/Mercadorias e os preços no painel.'
    }
   ],
   playerTips:[
