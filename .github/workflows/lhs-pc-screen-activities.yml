@@ -31,7 +31,10 @@ jobs:
       - name: Install headless browser
         working-directory: games/lan_house_simulator
         run: |
-          npm install --no-save --no-audit --no-fund playwright@1.56.1
+          # ubuntu-latest is Ubuntu 26.04, which Playwright supports from 1.61 (1.56.1 fails
+          # with "does not support chromium on ubuntu26.04-x64"). The workflows pinned to
+          # ubuntu-24.04 keep 1.56.1.
+          npm install --no-save --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps chromium
       - name: Capture six monitor screens with actual game renderer
         working-directory: games/lan_house_simulator
