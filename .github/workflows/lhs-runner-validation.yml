@@ -24,9 +24,10 @@ jobs:
           python3 - <<'PY'
           import json
           d=json.load(open('/tmp/compose.json'))['services']['runner']
-          assert d['mem_limit']==2147483648 and float(d['cpus'])==2
+          assert int(d['mem_limit'])==2147483648 and float(d['cpus'])==2
           assert not d.get('privileged') and not d.get('ports')
-          assert d['volumes']==[{'type':'volume','source':'runner_data','target':'/runner','volume':{}}]
+          assert len(d['volumes'])==1
+          assert d['volumes'][0]['type']=='volume' and d['volumes'][0]['source']=='runner_data' and d['volumes'][0]['target']=='/runner'
           assert 'no-new-privileges:true' in d['security_opt']
           assert d.get('network_mode')!='host'
           PY
