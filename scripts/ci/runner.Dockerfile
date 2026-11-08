@@ -4,9 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates curl git jq rsync tar unzip xz-utils ffmpeg python3 python3-venv \
     sudo procps libicu74 libkrb5-3 libssl3t64 zlib1g liblttng-ust1t64 \
     && rm -rf /var/lib/apt/lists/*
-COPY runner.tar.gz /tmp/runner.tar.gz
+ENV RUNNER_MANUALLY_TRAP_SIG=1
 WORKDIR /runner
-RUN tar -xzf /tmp/runner.tar.gz && rm /tmp/runner.tar.gz
 COPY runner-policy.py /usr/local/lib/lhs-runner/runner-policy.py
 COPY runner-entrypoint.sh /usr/local/bin/lhs-runner-entrypoint
 COPY runner-cleanup.sh /usr/local/bin/lhs-runner-cleanup.sh

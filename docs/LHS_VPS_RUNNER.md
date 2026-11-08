@@ -16,6 +16,12 @@ host network ou SYS_ADMIN. Não há novo usuário com sudo/Docker no host.
 O volume `lhs_ci_runner_data` contém apenas dados/ferramentas do runner. Um hook
 remove checkouts após o job; ferramentas em cache são reutilizadas.
 
+O pacote oficial é verificado e extraído uma única vez no volume; nem o arquivo
+compactado nem uma segunda cópia dos binários ficam na imagem de execução.
+Recriar o container preserva o registro e o volume. O listener encaminha sinais
+de encerramento para liberar sua sessão ao parar. Limpeza de imagens nunca deve
+remover esse volume ou arquivos de autenticação.
+
 ## Disponibilidade sem copiar PAT amplo
 
 O secret `LHS_RUNNER_STATUS_TOKEN` aceita chave SSH dedicada somente de leitura
