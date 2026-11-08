@@ -19,6 +19,14 @@ jobs:
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test runner routing policy
+        run: python3 scripts/ci/runner-policy.test.py
       - name: Mostrar destino selecionado e arquitetura real
         shell: bash
         run: |
@@ -27,13 +35,22 @@ jobs:
           echo "Sistema: $RUNNER_OS / $RUNNER_ARCH"
           uname -m
           echo "Node: $(node --version || true)"
-          for executable in git curl docker rsync ffmpeg pwsh; do
+          for executable in git curl rsync ffmpeg python3; do
             if command -v "$executable" >/dev/null 2>&1; then
               echo "OK: $executable"
             else
               echo "::warning::Faltando no runner: $executable"
             fi
           done
-          if command -v docker >/dev/null 2>&1; then
-            docker info --format 'Docker daemon acessivel: {{.ServerVersion}}' || true
+          if [[ "$RUNNER_NAME" == lhs-vps-* ]]; then
+            test ! -S /var/run/docker.sock
+            test ! -e /etc/softload-panel/edge-key
+            python3 -c 'import subprocess; r=subprocess.run(["unshare","--mount","true"],capture_output=True); assert r.returncode != 0, "unexpected mount privileges"'
+            test -f /sys/fs/cgroup/memory.max && cat /sys/fs/cgroup/memory.max
           fi
+      - name: Compile and test the actual LHS engine (no deploy)
+        working-directory: games/lan_house_simulator
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          node --test tests/customer-congestion.test.mjs tests/doorway-recovery.test.mjs
