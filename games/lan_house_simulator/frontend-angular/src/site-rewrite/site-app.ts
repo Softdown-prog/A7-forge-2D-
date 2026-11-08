@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy,Component,OnDestroy,OnInit,signal} from '@angular/core';
-import {pathOf} from './site-data';
+import {isGuidePath,pathOf} from './site-data';
 import {HomeDetailsComponent} from './home-details';
 import {SiteFooterComponent} from './site-footer';
 import {EraTimelineComponent} from './era-timeline';
@@ -14,11 +14,12 @@ import {AccountComponent} from './account';
 import {EmailConfirmationComponent} from './email-confirmation';
 import {DonateComponent} from './donate';
 import {GameLauncherComponent} from './game-launcher';
+import {GameGuideComponent} from './game-guides/guide-page';
 import pageMetadata from './page-metadata.json';
 @Component({
  selector:'lhs-site',
  standalone:true,
- imports:[HomeDetailsComponent,LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,AboutGameComponent,AboutUsComponent,EraTimelineComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent],
+ imports:[HomeDetailsComponent,LocalDataComponent,AccountComponent,EmailConfirmationComponent,DonateComponent,GameLauncherComponent,HelpSearchComponent,ContactComponent,AboutGameComponent,EraTimelineComponent,AboutUsComponent,SiteHeaderComponent,SiteFooterComponent,LegalDocumentComponent,GameGuideComponent],
  changeDetection:ChangeDetectionStrategy.OnPush,
  templateUrl:'./site-app.html'
 })
@@ -38,5 +39,6 @@ export class SiteApp implements OnInit,OnDestroy{
  }
  ngOnDestroy():void{this.media.removeEventListener('change',this.mediaListener);}
  pageTitle():string{return pageMetadata[this.path].title;}
+ isGuideRoute():boolean{return isGuidePath(this.path);}
  toggleMotion():void{this.reduceMotion.update(value=>!value);}
 }

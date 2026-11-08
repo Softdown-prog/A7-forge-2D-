@@ -173,6 +173,34 @@ try{
      ['Administração','Cada PC tem uma história','Anos que abrem possibilidades',
       'Comércio no balcão','Um salão para crescer','Sua partida vai com você']);
     assert.equal(await page.locator('lhs-about-game .about-salon').count(),1);
+    assert.equal(await page.locator('lhs-about-game #manual-do-jogador').count(),1);
+    assert.equal(await page.locator('lhs-about-game .manual-guide-card').count(),38);
+    const firstGuide=page.locator('lhs-about-game .manual-guide-card').first();
+    assert.equal(await firstGuide.getAttribute('href'),'/sobre-o-jogo/guias/001-primeiros-passos-na-lan-house/');
+    if(mobile)await firstGuide.tap();else await firstGuide.click();
+    await page.waitForURL(url=>url.pathname==='/sobre-o-jogo/guias/001-primeiros-passos-na-lan-house/');
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-game-guide').count(),1);
+    assert.equal(await page.locator('main h1').count(),1);
+    assert.equal(await page.locator('lhs-game-guide .guide-article section').count(),9);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Guide overflow at '+width);
+    const guideReload=await page.reload({waitUntil:'networkidle'});
+    assert.equal(guideReload?.status(),200);
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-game-guide').count(),1);
+    assert.equal(await page.locator('main h1').count(),1);
+    const nextGuide=page.locator('lhs-game-guide .guide-page-link.next');
+    assert.equal(await nextGuide.getAttribute('href'),'/sobre-o-jogo/guias/002-expediente-horario-e-ritmo-do-dia/');
+    if(mobile)await nextGuide.tap();else await nextGuide.click();
+    await page.waitForURL(url=>url.pathname==='/sobre-o-jogo/guias/002-expediente-horario-e-ritmo-do-dia/');
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
+    assert.equal(await page.locator('lhs-game-guide').count(),1);
+    assert.equal(await page.locator('main h1').count(),1);
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'Guide 2 overflow at '+width);
+    const backLink=page.locator('lhs-game-guide .guide-back-link');
+    if(mobile)await backLink.tap();else await backLink.click();
+    await page.waitForURL(url=>url.pathname==='/sobre-o-jogo/');
+    await page.waitForFunction(()=>document.documentElement.dataset.siteFramework==='angular-rewrite');
     assert.equal(await page.locator('lhs-era-timeline').count(),1,
      'The shared Angular timeline must not be duplicated');
     const cta=page.locator('lhs-about-game .about-cta a[href="/game/"]');

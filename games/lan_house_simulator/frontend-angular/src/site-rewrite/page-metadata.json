@@ -11,6 +11,158 @@
     "title": "Sobre o jogo",
     "description": "Conheça Lan House Simulator, um simulador isométrico de gestão com computadores, clientes e tecnologia desde 1998."
   },
+  "/sobre-o-jogo/guias/001-primeiros-passos-na-lan-house/": {
+    "title": "1. Primeiros passos: abrindo sua lan house em 1998 — Manual do Jogador",
+    "description": "Entenda o caixa inicial de R$ 850, os três primeiros computadores CRT, o papel do Tony atrás do balcão e o que priorizar no primeiro mês."
+  },
+  "/sobre-o-jogo/guias/002-expediente-horario-e-ritmo-do-dia/": {
+    "title": "2. Expediente, relógio do salão e fechamento diário — Manual do Jogador",
+    "description": "Veja como funciona a jornada das 10:00 às 22:00, o horário limite de entrada, o encerramento gradual das sessões, o clima e a pausa do jogo."
+  },
+  "/sobre-o-jogo/guias/003-atendimento-no-balcao-e-fluxo-de-caixa/": {
+    "title": "3. Atendimento no balcão e como o dinheiro entra no caixa — Manual do Jogador",
+    "description": "Acompanhe o caminho do cliente desde a porta até a cadeira, o pagamento antecipado no balcão e as receitas extras de lanches e serviços."
+  },
+  "/sobre-o-jogo/guias/004-paineis-de-gestao-compras-e-atalhos/": {
+    "title": "4. Como navegar pelos painéis Administrar, Compras e Correio — Manual do Jogador",
+    "description": "Localize rapidamente todas as abas de gestão, categorias da loja, atalhos de acesso rápido e controles de visualização do salão."
+  },
+  "/sobre-o-jogo/guias/005-compra-de-computadores-e-vagas-do-salao/": {
+    "title": "5. Compra de computadores: área principal e ampliações — Manual do Jogador",
+    "description": "Saiba como expandir sua lan house de 3 para até 22 computadores entre o salão principal e os anexos à esquerda, à direita e aos fundos."
+  },
+  "/sobre-o-jogo/guias/006-kits-de-plataforma-e-geracoes-de-hardware/": {
+    "title": "6. Kits de plataforma: evoluindo os PCs de 1998 a 2024 — Manual do Jogador",
+    "description": "Conheça os 8 pacotes completos de atualização de hardware, seus preços, anos de lançamento e como preservam peças superiores já instaladas."
+  },
+  "/sobre-o-jogo/guias/007-pecas-individuais-processador-memoria-disco-e-placa-mae/": {
+    "title": "7. Peças avulsas: processador, memória RAM, armazenamento e placa-mãe — Manual do Jogador",
+    "description": "Aprenda a combinar processadores, memórias SDRAM a DDR5, discos IDE, SATA e NVMe e placas-mãe respeitando encaixes e limites de cada época."
+  },
+  "/sobre-o-jogo/guias/008-fontes-de-alimentacao-consumo-e-seguranca-eletrica/": {
+    "title": "8. Fontes de alimentação, consumo de energia e vistoria elétrica — Manual do Jogador",
+    "description": "Calcule a potência de fonte exigida por máquina, entenda o custo de luz na conta mensal e saiba agir diante da vistoria dos Bombeiros."
+  },
+  "/sobre-o-jogo/guias/009-monitores-crt-lcd-led-ips-e-arena/": {
+    "title": "9. Monitores: da era CRT aos painéis LCD, LED, IPS e Arena — Manual do Jogador",
+    "description": "Descubra como substituir os monitores de tubo pelos 5 kits de tela plana a partir de 2005 para ganhar conforto e economizar energia."
+  },
+  "/sobre-o-jogo/guias/010-operacao-desgaste-reparos-e-receita-por-pc/": {
+    "title": "10. Ligar e desligar estações, desgaste, manutenção e receita por PC — Manual do Jogador",
+    "description": "Domine o controle individual de energia das máquinas, o ritmo de desgaste, o chamado de técnicos e a leitura contábil de cada estação."
+  },
+  "/sobre-o-jogo/guias/011-licenciamento-do-windows-e-versoes-por-epoca/": {
+    "title": "11. Licenças do Windows, versões de 1998 a 2021 e fiscalização — Manual do Jogador",
+    "description": "Confira a diferença entre sistema preinstalado e licenciado, os requisitos do Windows 98 ao Windows 11 e como evitar multas de fiscalização."
+  },
+  "/sobre-o-jogo/guias/012-instalacao-do-windows-em-tempo-real/": {
+    "title": "12. Instalação do Windows em tempo real: duração e regras práticas — Manual do Jogador",
+    "description": "Saiba como funciona a instalação de 10 a 80 minutos no relógio real, por que o progresso avança mesmo com o jogo fechado e como religar o PC."
+  },
+  "/sobre-o-jogo/guias/013-missao-linux-1999-e-revistas-informatica-livre/": {
+    "title": "13. A chegada do Linux em 1999 e a coleção Informática Livre — Manual do Jogador",
+    "description": "Acompanhe a carta do fórum da cidade em março de 1999, a assinatura das 6 revistas entregues pelo carteiro e os 30 dias finais de estudo do Tony."
+  },
+  "/sobre-o-jogo/guias/014-estacoes-linux-operacao-e-dual-boot/": {
+    "title": "14. Estações Linux: Bancada 99, Estação Programador e alternância de sistema — Manual do Jogador",
+    "description": "Compare as duas máquinas Linux de 1999, atenda estudantes imunes a quedas de internet e veja como alternar o boot caso instale Windows nelas."
+  },
+  "/sobre-o-jogo/guias/015-placas-de-video-catalogo-e-compatibilidade/": {
+    "title": "15. Placas de vídeo (GPUs): gerações de 2005 a 2030 e instalação — Manual do Jogador",
+    "description": "Explore as 13 placas PixelForce de 2005 a 2030, seus consumos em watts, exigências de fonte e ganhos diretos na satisfação e no teto de preço."
+  },
+  "/sobre-o-jogo/guias/016-jogos-com-gpu-downloads-e-adicional-por-hora/": {
+    "title": "16. Jogos avançados com GPU: licenças, downloads por PC e bônus horário — Manual do Jogador",
+    "description": "Aprenda a licenciar e baixar Neon Rush Online, Circuito Competitivo e Arena do Futuro em cada estação compatível para receber adicionais por hora."
+  },
+  "/sobre-o-jogo/guias/017-regularizacao-basica-e-jogos-classicos-de-pc/": {
+    "title": "17. Regularização básica de jogos e catálogo clássico (1998–1999) — Manual do Jogador",
+    "description": "Entenda como funciona o contrato básico de jogos, evite multas de direitos autorais e impulsione a chegada de clientes com os 10 clássicos iniciais."
+  },
+  "/sobre-o-jogo/guias/018-setor-zero-e-partidas-multiplayer-em-rede/": {
+    "title": "18. Setor Zero (2000): e-mails do primo Eric e turmas em rede local — Manual do Jogador",
+    "description": "Veja como liberar o clássico de ação em rede Setor Zero no ano 2000, receber grupos semanais de amigos e habilitar o Corujão de sexta-feira."
+  },
+  "/sobre-o-jogo/guias/019-planos-de-internet-quedas-de-conexao-e-velocidade/": {
+    "title": "19. Planos de internet: Discada, Via rádio, Fibra óptica e quedas de rede — Manual do Jogador",
+    "description": "Compare internet discada, via rádio e fibra, as épocas de desbloqueio e o efeito da conexão nos serviços e downloads."
+  },
+  "/sobre-o-jogo/guias/020-playstation-1-bancadas-precos-e-catalogo-de-cds/": {
+    "title": "20. PlayStation 1 (2002): bancadas com TV de tubo, tarifas e 13 CDs — Manual do Jogador",
+    "description": "Instale até 3 bancadas de PlayStation 1 a partir de 2002, compre CDs reais do catálogo do jogo e acompanhe a coleção revelada pelas revistas Top Games."
+  },
+  "/sobre-o-jogo/guias/021-playstation-2-bancadas-e-catalogo-de-dvds/": {
+    "title": "21. PlayStation 2 (2006): bancadas de nova geração e 15 DVDs — Manual do Jogador",
+    "description": "Monte até 3 bancadas PS2 a partir de 2006 e adquira os 15 DVDs originais conforme o ano e as revistas individuais Top Games."
+  },
+  "/sobre-o-jogo/guias/022-revistas-top-games-carteiro-e-desbloqueio-de-jogos/": {
+    "title": "22. Revistas Top Games (2002–2010): entregas do carteiro e desbloqueio de jogos — Manual do Jogador",
+    "description": "Acompanhe as 28 revistas Top Games, cada uma dedicada a um jogo PS1 ou PS2, entregues pelo carteiro após a assinatura."
+  },
+  "/sobre-o-jogo/guias/023-estoque-fornecedores-pedidos-e-entregas/": {
+    "title": "23. Estoque, fornecedores, pedidos de reposição e entregas — Manual do Jogador",
+    "description": "Compare os fornecedores reais do catálogo de mercadorias, organize pedidos por lote e acompanhe entregas e estoque."
+  },
+  "/sobre-o-jogo/guias/024-mercadorias-precos-de-varejo-e-consumo-dos-clientes/": {
+    "title": "24. Mercadorias de 1998 a 2020: catálogo, preços e necessidades dos clientes — Manual do Jogador",
+    "description": "Gerencie os 12 produtos reais do jogo, com oito disponíveis desde 1998 e novidades em 2001, 2005, 2010 e 2020."
+  },
+  "/sobre-o-jogo/guias/025-limpeza-lixeiras-faxineiro-e-tecnico/": {
+    "title": "25. Equipe e limpeza: lixeiras, faxineiro e técnico de manutenção — Manual do Jogador",
+    "description": "Contrate faxineiro e técnico por dias trabalhados, acompanhe as lixeiras e saiba quando o reparo precisa de passagem livre."
+  },
+  "/sobre-o-jogo/guias/026-impressora-precos-por-pagina-e-manutencao/": {
+    "title": "26. Serviço de impressão: páginas, papel, tinta e limite diário — Manual do Jogador",
+    "description": "Compre a impressora por R$ 320, ajuste o preço da página e controle os custos de papel e tinta, sem desgaste fictício."
+  },
+  "/sobre-o-jogo/guias/027-copiadora-de-cd-e-dvd-precos-e-operacao/": {
+    "title": "27. Copiadora de CD e DVD: gravação, preços e limite diário — Manual do Jogador",
+    "description": "Adquira a copiadora a partir de 2001, configure tarifas separadas de CD e DVD e acompanhe os custos das mídias."
+  },
+  "/sobre-o-jogo/guias/028-precos-por-hora-inflacao-historica-e-teto-de-tarifa/": {
+    "title": "28. Preços por hora, pacotes de sessão e economia histórica (IPCA) — Manual do Jogador",
+    "description": "Entenda como a inflação real brasileira de 1998 a 2030 e a modernidade dos seus computadores determinam o teto máximo da tarifa por hora."
+  },
+  "/sobre-o-jogo/guias/029-caixa-contas-mensais-ocupacao-e-clareza-financeira/": {
+    "title": "29. Caixa, fechamento mensal de 30 dias e relatórios de ocupação — Manual do Jogador",
+    "description": "Domine o ciclo mensal de aluguel, internet, manutenção, luz e folha salarial, acompanhe a reserva recomendada e analise a ocupação do salão."
+  },
+  "/sobre-o-jogo/guias/030-divulgacao-reputacao-e-opinioes-dos-clientes/": {
+    "title": "30. Divulgação no bairro, reputação e avaliações dos clientes — Manual do Jogador",
+    "description": "Contrate panfletagem válida no dia atual para aumentar em 40% a chance de novos visitantes até 20h30."
+  },
+  "/sobre-o-jogo/guias/031-perfis-de-clientes-escolhas-e-paciencia-na-fila/": {
+    "title": "31. Perfis de clientes, escolha de máquinas e paciência na fila — Manual do Jogador",
+    "description": "Conheça os quatro perfis de público, como decidem entre PCs e consoles, quanto tempo esperam na fila do balcão e por que alguns desistem."
+  },
+  "/sobre-o-jogo/guias/032-clientes-vip-requisitos-e-bonus-de-receita/": {
+    "title": "32. Clientes VIP: reputação, atendimento e avaliações — Manual do Jogador",
+    "description": "Entenda quando os clientes VIP podem chegar, como a reputação altera a frequência deles e como avaliam o atendimento."
+  },
+  "/sobre-o-jogo/guias/033-ampliacoes-do-salao-paredes-portas-e-decoracao/": {
+    "title": "33. Construção e decoração: ampliando o salão, divisórias, portas e móveis — Manual do Jogador",
+    "description": "Amplie o salão e posicione pôsteres, plantas, mesinhas, divisórias e portas com os custos e limites reais do jogo."
+  },
+  "/sobre-o-jogo/guias/034-organizar-salao-e-diagnostico-de-passagens/": {
+    "title": "34. Editor Organizar salão e diagnóstico de Passagens — Manual do Jogador",
+    "description": "Reposicione móveis e máquinas sem custo, entenda o bloqueio preventivo de caminhos e consulte o mapa de acessibilidade em Passagens."
+  },
+  "/sobre-o-jogo/guias/035-correio-avisos-fiscais-e-historias-do-bairro/": {
+    "title": "35. Correio, avisos de fiscalização e histórias interativas do bairro — Manual do Jogador",
+    "description": "Acompanhe os prazos de vistoria no Correio, leia as correspondências históricas de 1998 a 2030 e tome decisões nas 12 histórias do bairro."
+  },
+  "/sobre-o-jogo/guias/036-corujao-de-sexta-feira-formatos-e-galeria-de-trofeus/": {
+    "title": "36. Corujão da primeira sexta-feira: formatos, madrugada e galeria de troféus — Manual do Jogador",
+    "description": "Agende viradas noturnas das 22:00 às 10:00 a partir de 2001, escolha entre Sessão livre, Pontos ou Eliminatórias e colecione troféus digitais."
+  },
+  "/sobre-o-jogo/guias/037-salvamento-automatico-backup-e-arquivos-json/": {
+    "title": "37. Salvamento automático, recuperação de backup e transferência por arquivo JSON — Manual do Jogador",
+    "description": "Veja como o jogo protege seu progresso no navegador, como exportar ou carregar sua campanha em arquivo JSON e como gerenciar Dados locais."
+  },
+  "/sobre-o-jogo/guias/038-minha-conta-salvamento-na-nuvem-cookies-e-donate/": {
+    "title": "38. Minha Conta, salvamento na nuvem, Loja Cookies e apoio em Donate — Manual do Jogador",
+    "description": "Use a conta opcional para guardar saves na nuvem, conheça os 9 itens puramente visuais da Loja Cookies e saiba como funciona o apoio opcional."
+  },
   "/sobre-nos/": {
     "title": "Sobre nós",
     "description": "Conheça a Softdown e o projeto independente Lan House Simulator, inspirado na história das lan houses brasileiras."

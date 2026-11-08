@@ -6,7 +6,7 @@ const output=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../
 const manifest=JSON.parse(readFileSync(resolve(output,'angular-prerender-manifest.json'),'utf8'));
 const assets=JSON.parse(readFileSync(resolve(output,'angular-site-assets.json'),'utf8'));
 assert.equal(manifest.method,'isolated-chromium-public-snapshot');
-assert.deepEqual(manifest.paths,['/','/jogar/','/sobre-o-jogo/','/sobre-nos/',
+const guideCatalog=JSON.parse(readFileSync(resolve(import.meta.dirname,'../frontend-angular/src/site-rewrite/game-guides/guide-catalog.json'),'utf8'));const guidePages=guideCatalog.map(item=>item.path);assert.deepEqual(manifest.paths,['/','/jogar/','/sobre-o-jogo/',...guidePages,'/sobre-nos/',
  '/ajuda/','/contato/','/termos/','/privacidade/']);
 assert.deepEqual(manifest.excluded,['/conta/','/conta/confirmar/','/donate/','/dados/']);
 assert.equal(manifest.notFound,true);

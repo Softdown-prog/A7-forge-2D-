@@ -72,7 +72,11 @@
    <lhs-local-data></lhs-local-data>
   }
   @default{
-   <section class="wrap intro"><h1>Página não encontrada</h1><p>Este endereço não existe no salão.</p><a class="button" href="/">Voltar ao início</a></section>
+   @if(isGuideRoute()){
+    <lhs-game-guide [path]="path"></lhs-game-guide>
+   }@else{
+    <section class="wrap intro"><h1>Página não encontrada</h1><p>Este endereço não existe no salão.</p><a class="button" href="/">Voltar ao início</a></section>
+   }
   }
  }
  @if(path==='/termos/'||path==='/privacidade/'){

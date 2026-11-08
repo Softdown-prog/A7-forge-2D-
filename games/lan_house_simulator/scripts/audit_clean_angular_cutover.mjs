@@ -9,7 +9,7 @@ import {resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const PUBLIC_ROUTES=Object.freeze([
- '/', '/jogar/', '/sobre-o-jogo/', '/sobre-nos/',
+ '/', '/jogar/', '/sobre-o-jogo/', ...JSON.parse(readFileSync(resolve(import.meta.dirname,'../frontend-angular/src/site-rewrite/game-guides/guide-catalog.json'),'utf8')).map(item=>item.path), '/sobre-nos/',
  '/ajuda/', '/contato/', '/termos/', '/privacidade/'
 ]);
 export const PRIVATE_ROUTES=Object.freeze([

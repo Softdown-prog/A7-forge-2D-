@@ -1,0 +1,177 @@
+@if(guide();as g){
+ <section class="wrap intro guide-intro">
+  <nav class="guide-breadcrumbs" aria-label="Localização no Manual do Jogador">
+   <a class="guide-back-link" href="/sobre-o-jogo/#manual-do-jogador">← Voltar ao Manual do Jogador em Sobre o jogo</a>
+   <span class="guide-chapter-pill">Guia {{g.number}} de {{totalGuides}} · Grupo {{g.groupCode}} — {{g.groupTitle}}</span>
+  </nav>
+  <p class="eyebrow">MANUAL DO JOGADOR · CAPÍTULO {{g.number}}</p>
+  <h1><span class="guide-h1-number">{{g.number}}.</span> {{g.title}}</h1>
+  <p class="lead">{{g.summary}}</p>
+  <div class="guide-meta-strip" aria-label="Resumo rápido da mecânica">
+   <div>
+    <span>Quando libera</span>
+    <strong>{{g.unlockBadge}}</strong>
+   </div>
+   <div>
+    <span>Onde encontrar no jogo</span>
+    <strong>{{g.uiPath}}</strong>
+   </div>
+  </div>
+ </section>
+
+ <div class="wrap guide-layout">
+  <aside class="guide-sidebar" aria-label="Navegação deste guia">
+   <div class="guide-sidebar-box">
+    <h2>Neste tutorial</h2>
+    <nav aria-label="Seções deste tutorial">
+     <a [href]="g.path+'#o-que-e'"><span>1.</span> O que é?</a>
+     <a [href]="g.path+'#por-que-importa'"><span>2.</span> Por que isso importa?</a>
+     <a [href]="g.path+'#quando-disponivel'"><span>3.</span> Quando fica disponível?</a>
+     <a [href]="g.path+'#como-utilizar'"><span>4.</span> Como utilizar?</a>
+     <a [href]="g.path+'#o-que-acontece'"><span>5.</span> O que acontece depois?</a>
+     <a [href]="g.path+'#custos-e-limitacoes'"><span>6.</span> Custos e limitações</a>
+     <a [href]="g.path+'#problemas-comuns'"><span>7.</span> Problemas comuns</a>
+     <a [href]="g.path+'#dicas'"><span>8.</span> Dicas para o jogador</a>
+     <a [href]="g.path+'#assuntos-relacionados'"><span>9.</span> Assuntos relacionados</a>
+    </nav>
+    <div class="guide-sidebar-actions">
+     <a class="button secondary" href="/sobre-o-jogo/#manual-do-jogador">Ver todos os {{totalGuides}} guias</a>
+     <a class="button" href="/game/">Abrir o jogo</a>
+    </div>
+   </div>
+  </aside>
+
+  <article class="guide-article" aria-label="Explicação completa da mecânica">
+   <section id="o-que-e" aria-labelledby="heading-o-que-e">
+    <h2 id="heading-o-que-e">1. O que é?</h2>
+    @for(paragraph of g.whatIs;track $index){
+     <p>{{paragraph}}</p>
+    }
+   </section>
+
+   <section id="por-que-importa" aria-labelledby="heading-por-que-importa">
+    <h2 id="heading-por-que-importa">2. Por que isso importa?</h2>
+    @for(paragraph of g.whyItMatters;track $index){
+     <p>{{paragraph}}</p>
+    }
+   </section>
+
+   <section id="quando-disponivel" aria-labelledby="heading-quando-disponivel">
+    <h2 id="heading-quando-disponivel">3. Quando fica disponível?</h2>
+    @for(paragraph of g.whenAvailable;track $index){
+     <p>{{paragraph}}</p>
+    }
+   </section>
+
+   <section id="como-utilizar" aria-labelledby="heading-como-utilizar">
+    <h2 id="heading-como-utilizar">4. Como utilizar?</h2>
+    <p class="guide-ui-callout"><strong>Caminho exato no jogo:</strong> {{g.uiPath}}</p>
+    <ol class="guide-steps">
+     @for(step of g.howToUse;track $index){
+      <li>{{step}}</li>
+     }
+    </ol>
+   </section>
+
+   <section id="o-que-acontece" aria-labelledby="heading-o-que-acontece">
+    <h2 id="heading-o-que-acontece">5. O que acontece depois?</h2>
+    @for(paragraph of g.whatHappensNext;track $index){
+     <p>{{paragraph}}</p>
+    }
+   </section>
+
+   <section id="custos-e-limitacoes" aria-labelledby="heading-custos-e-limitacoes">
+    <h2 id="heading-custos-e-limitacoes">6. Custos e limitações</h2>
+    <ul class="guide-list">
+     @for(item of g.costsAndLimits;track $index){
+      <li>{{item}}</li>
+     }
+    </ul>
+    @if(g.table;as tbl){
+     <div class="guide-table-scroll">
+      <table class="guide-table">
+       <caption>{{tbl.caption}}</caption>
+       <thead>
+        <tr>
+         @for(header of tbl.headers;track $index){
+          <th scope="col">{{header}}</th>
+         }
+        </tr>
+       </thead>
+       <tbody>
+        @for(row of tbl.rows;track $index){
+         <tr>
+          @for(cell of row;track $index){
+           <td>{{cell}}</td>
+          }
+         </tr>
+        }
+       </tbody>
+      </table>
+     </div>
+    }
+   </section>
+
+   <section id="problemas-comuns" aria-labelledby="heading-problemas-comuns">
+    <h2 id="heading-problemas-comuns">7. Problemas comuns</h2>
+    <div class="guide-problems">
+     @for(item of g.commonProblems;track $index){
+      <div class="guide-problem-card">
+       <h3>{{item.problem}}</h3>
+       <p>{{item.solution}}</p>
+      </div>
+     }
+    </div>
+   </section>
+
+   <section id="dicas" aria-labelledby="heading-dicas">
+    <h2 id="heading-dicas">8. Dicas para o jogador</h2>
+    <ul class="guide-tips">
+     @for(tip of g.playerTips;track $index){
+      <li>{{tip}}</li>
+     }
+    </ul>
+   </section>
+
+   <section id="assuntos-relacionados" aria-labelledby="heading-assuntos-relacionados">
+    <h2 id="heading-assuntos-relacionados">9. Assuntos relacionados</h2>
+    <p>Continue explorando as mecânicas conectadas a este tema:</p>
+    <div class="guide-related-grid">
+     @for(rel of related();track rel.id){
+      <a class="guide-related-card" [href]="rel.path">
+       <span class="guide-related-num">Guia {{rel.number}} · {{rel.groupTitle}}</span>
+       <strong>{{rel.title}}</strong>
+       <small>{{rel.summary}}</small>
+      </a>
+     }
+    </div>
+   </section>
+
+   <nav class="guide-pagination" aria-label="Navegação entre capítulos do Manual do Jogador">
+    @if(neighbors().previous;as prev){
+     <a class="guide-page-link prev" [href]="prev.path">
+      <span>← Guia anterior ({{prev.number}})</span>
+      <strong>{{prev.title}}</strong>
+     </a>
+    }@else{
+     <a class="guide-page-link prev" href="/sobre-o-jogo/#manual-do-jogador">
+      <span>← Início do Manual</span>
+      <strong>Voltar para Sobre o jogo</strong>
+     </a>
+    }
+    <a class="button secondary guide-index-btn" href="/sobre-o-jogo/#manual-do-jogador">Índice completo (1 a {{totalGuides}})</a>
+    @if(neighbors().next;as next){
+     <a class="guide-page-link next" [href]="next.path">
+      <span>Próximo guia ({{next.number}}) →</span>
+      <strong>{{next.title}}</strong>
+     </a>
+    }@else{
+     <a class="guide-page-link next" href="/sobre-o-jogo/#manual-do-jogador">
+      <span>Fim do Manual →</span>
+      <strong>Voltar ao índice completo</strong>
+     </a>
+    }
+   </nav>
+  </article>
+ </div>
+}

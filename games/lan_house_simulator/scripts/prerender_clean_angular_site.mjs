@@ -9,7 +9,7 @@ import {resolve,extname,sep} from 'node:path';
 import {chromium} from 'playwright';
 
 const output=resolve(import.meta.dirname,'../out/site-clean-angular');
-const pages=['/','/jogar/','/sobre-o-jogo/','/sobre-nos/','/ajuda/',
+const guideCatalog=JSON.parse(await readFile(resolve(import.meta.dirname,'../frontend-angular/src/site-rewrite/game-guides/guide-catalog.json'),'utf8'));const guidePages=guideCatalog.map(item=>item.path);const pages=['/','/jogar/','/sobre-o-jogo/',...guidePages,'/sobre-nos/','/ajuda/',
  '/contato/','/termos/','/privacidade/'];
 const excluded=['/conta/','/conta/confirmar/','/donate/','/dados/'];
 const renderPaths=[...pages,'/404/'];

@@ -5,7 +5,7 @@ const root=resolve(process.env.LHS_SITE_ROOT??resolve(import.meta.dirname,'../ou
 const assets=JSON.parse(readFileSync(resolve(root,'angular-site-assets.json'),'utf8'));
 const metadata=JSON.parse(readFileSync(resolve(import.meta.dirname,
  '../frontend-angular/src/site-rewrite/page-metadata.json'),'utf8'));
-for(const path of ['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato','conta',
+const guideCatalog=JSON.parse(readFileSync(resolve(import.meta.dirname,'../frontend-angular/src/site-rewrite/game-guides/guide-catalog.json'),'utf8'));const guidePaths=guideCatalog.map(item=>'sobre-o-jogo/guias/'+item.id+'-'+item.slug);for(const path of ['','jogar','sobre-o-jogo',...guidePaths,'sobre-nos','ajuda','contato','conta',
  'conta/confirmar','donate','termos','privacidade','dados']){
  const html=readFileSync(resolve(root,path,'index.html'),'utf8');
  assert.match(html,/<lhs-site(?: data-lhs-public-prerender="true")?><\/lhs-site>|<lhs-site data-lhs-public-prerender="true">/);
