@@ -9,9 +9,9 @@ WORKDIR /runner
 RUN tar -xzf /tmp/runner.tar.gz && rm /tmp/runner.tar.gz
 COPY runner-policy.py /usr/local/lib/lhs-runner/runner-policy.py
 COPY runner-entrypoint.sh /usr/local/bin/lhs-runner-entrypoint
-COPY runner-cleanup.sh /usr/local/bin/lhs-runner-cleanup
-COPY runner-admission.sh /usr/local/bin/lhs-runner-admission
+COPY runner-cleanup.sh /usr/local/bin/lhs-runner-cleanup.sh
+COPY runner-admission.sh /usr/local/bin/lhs-runner-admission.sh
 RUN chmod 0755 /usr/local/bin/lhs-runner-*
-ENV ACTIONS_RUNNER_HOOK_JOB_STARTED=/usr/local/bin/lhs-runner-admission \
-    ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/usr/local/bin/lhs-runner-cleanup
+ENV ACTIONS_RUNNER_HOOK_JOB_STARTED=/usr/local/bin/lhs-runner-admission.sh \
+    ACTIONS_RUNNER_HOOK_JOB_COMPLETED=/usr/local/bin/lhs-runner-cleanup.sh
 ENTRYPOINT ["/usr/local/bin/lhs-runner-entrypoint"]

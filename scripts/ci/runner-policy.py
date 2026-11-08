@@ -44,7 +44,8 @@ def probe(secret):
     if '-----BEGIN OPENSSH PRIVATE KEY-----' in secret:
         with tempfile.TemporaryDirectory(prefix='lhs-runner-probe-') as folder:
             key = Path(folder) / 'key'
-            key.write_text(secret.strip() + '\n', encoding='utf-8')
+            # gh on Windows can serialize stdin with CRLF; OpenSSH requires LF.
+            key.write_bytes(secret.replace('\r\n', '\n').strip().encode('utf-8') + b'\n')
             key.chmod(0o600)
             host_keys = Path(__file__).with_name('lhs-vps-known-hosts')
             completed = subprocess.run([
@@ -78,8 +79,21 @@ def main():
         if secret:
             try:
                 evidence = probe(secret)
-            except Exception:
-                print('::notice::Runner probe unavailable; selecting GitHub-hosted.')
+            except Exception as error:
+                kind = type(error).__name__
+                if isinstance(error, subprocess.CalledProcessError):
+                    diagnostic = (error.stderr or b'').decode(errors='replace').lower()
+                    for text, label in [('permission denied', 'ssh-authentication'),
+                                        ('host key verification failed', 'ssh-host-identity'),
+                                        ('no matching host key', 'ssh-host-algorithm'),
+                                        ('error in libcrypto', 'ssh-key-format'),
+                                        ('connection refused', 'ssh-refused'),
+                                        ('connection timed out', 'ssh-timeout')]:
+                        if text in diagnostic:
+                            kind = label
+                            break
+                # Report only a category, never token material, commands or stderr.
+                print(f'::notice::Runner probe unavailable ({kind}); selecting GitHub-hosted.')
     labels = choose(os.environ, evidence)
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write('runner_labels=' + json.dumps(labels, separators=(',', ':')) + '\n')
