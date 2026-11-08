@@ -63,6 +63,10 @@ personagens apareciam borrados.
 | `dusk` | 18:20–19:40 | transição contínua (smoothstep) |
 | `night` | 19:40–22:00 | vidro escuro refletindo as lâmpadas, tinta azulada translúcida, poças de luz mais fortes |
 
+**Monitores acendem ao anoitecer.** A sala escurece como descrito acima e, na mesma curva `night`, a tela de cada monitor ligado vai ficando mais clara e ganha um halo em volta (`monitorEmission` e `drawMonitorEmission`). A luz usa a cor da atividade real da estação (terminal, jogo, vídeo, navegador) e é mais forte numa sessão ocupada do que numa área de trabalho ociosa; monitor desligado ou em manutenção não emite. O retângulo do vidro vem do mesmo mapeamento de plano que desenha cada monitor (`monitorScreenQuad`: CRT e as cinco gerações de LCD, e nenhuma luz quando o vidro está de costas para a câmera). É pintada na ordem de profundidade, logo depois do sprite do PC e antes de quem está sentado, então o cliente continua tapando a tela. De dia não acrescenta nada; o ambiente escuro não foi alterado.
+
+![Monitores às 16:40, 17:50, 18:40 e 20:00](../../../docs/quality/lhs_monitor_night_series.png)
+
 `drawSceneLighting` é pintado **depois dos objetos ordenados por profundidade e
 antes** de marcadores, placa e HUD interno. Cada monitor ligado projeta um brilho
 aditivo (`screenGlow`) sobre a mesa, com cor da atividade real da tela

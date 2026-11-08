@@ -433,6 +433,27 @@ export function computerAppearance(s:GameState,index:number,t:number,isOnline:bo
   gpu:installedGpu(s,index),lcd:installedLcd(s,index),premiumChair,premiumKeyboard,keyboardPhase,
   activity,activityFrame};
 }
+/** Screen glass of each monitor as a quad in scene coordinates, from the same plane
+ * mapping the monitor painters use. Null when the glass faces away from the camera
+ * (rotations 1 and 2) or the geometry is degenerate. */
+export function monitorScreenQuad(cam:Projection,p:Point,lcd:LcdId|null):Point[]|null{
+ if(cam.rotation===1||cam.rotation===2)return null;
+ let x:number,y:number,w:number,z:number,h:number,x0:number,y0:number,x1:number,y1:number;
+ if(lcd){
+  const n=["lcd05","lcd08","lcd12","lcd17","lcd24"].indexOf(lcd);if(n<0)return null;
+  const width=[.52,.62,.67,.70,.74][n]!,depth=[.095,.075,.045,.035,.04][n]!;
+  const edge=[8,6,4,2.5,2.5][n]!,foot=[12,10,7,6,6][n]!;
+  x=p.x+.44-width/2;y=p.y+.12+depth+.003;w=width;z=43;h=[28,25,27,28,30][n]!;
+  x0=edge;y0=edge;x1=96-edge;y1=100-foot;
+ }else{
+  // CRT: monitor box at (.22,-.05) sized .46 x .36, glass inset 15..82 by 16..76.
+  x=p.x+.22;y=p.y-.05+.36+.005;w=.46;z=36;h=39;x0=15;y0=16;x1=82;y1=76;
+ }
+ const a=iso({x,y},cam,z+h),b=iso({x:x+w,y},cam,z+h),d=iso({x,y},cam,z);
+ const at=(u:number,v:number):Point=>({x:a.x+(b.x-a.x)*u/96,y:a.y+(b.y-a.y)*u/96+(d.y-a.y)*v/100});
+ const quad=[at(x0,y0),at(x1,y0),at(x1,y1),at(x0,y1)];
+ return quad.every(q=>Number.isFinite(q.x)&&Number.isFinite(q.y))?quad:null;
+}
 /** Colour and strength of the light a monitor throws on its desk; null when dark. */
 export function screenGlow(a:Pick<ComputerAppearance,"mode"|"activity"|"lcd">):{color:string;strength:number}|null{
  if(a.mode==="powered-off"||a.mode==="maintenance")return null;

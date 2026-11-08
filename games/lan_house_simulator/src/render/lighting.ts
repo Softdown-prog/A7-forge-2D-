@@ -159,6 +159,41 @@ export function drawScreenGlow(ctx:CanvasRenderingContext2D,camera:Projection,x:
  const at=iso({x,y},camera,height),z=camera.zoom;
  ellipseGradient(ctx,at.x,at.y,36*z,22*z,withAlpha(color,strength*.8),withAlpha(color,0));
 }
+/** How strongly a lit monitor shows against the evening: 0 by day, rising with the
+ * same `night` curve that darkens the room. `strength` is the screen's own level
+ * (busy sessions glow more than an idle desktop). Pure, so it is easy to test. */
+export function monitorEmission(night:number,strength:number):{screen:number;halo:number;spill:number}{
+ const n=Math.max(0,Math.min(1,Number.isFinite(night)?night:0)),k=Math.max(0,Number.isFinite(strength)?strength:0);
+ return {
+  // The glass itself, lifted toward its own colour; large enough to read through the dark wash.
+  screen:n<.02?0:Math.min(.3,k*1.0)*n,
+  // Soft light around the monitor and over the desk.
+  halo:k*(.55+1.5*n),
+  spill:k*(.6+1.6*n)
+ };
+}
+/** Night-time light of an active screen: a halo around the glass, then the glass
+ * itself lifted toward the activity colour. Painted in depth order (before anything
+ * seated in front of the monitor), and before the evening wash, which then tints it
+ * like the rest of the room. Source-over only. */
+export function drawMonitorEmission(ctx:CanvasRenderingContext2D,quad:readonly Point[],
+ color:string,night:number,strength:number):void{
+ const e=monitorEmission(night,strength);
+ if(e.screen<=0&&e.halo<=0)return;
+ let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+ for(const q of quad){x0=Math.min(x0,q.x);y0=Math.min(y0,q.y);x1=Math.max(x1,q.x);y1=Math.max(y1,q.y);}
+ const w=x1-x0,h=y1-y0;
+ if(!(w>0&&h>0))return;
+ const cx=(x0+x1)/2,cy=(y0+y1)/2;
+ ellipseGradient(ctx,cx,cy,w*(.95+.5*night),h*(1.15+.6*night),withAlpha(color,Math.min(.42,e.halo*.8)),withAlpha(color,0));
+ if(e.screen>0){
+  const tone=lerpHex(color,"#ffffff",.18);
+  ctx.fillStyle=withAlpha(tone,e.screen);
+  ctx.beginPath();ctx.moveTo(quad[0]!.x,quad[0]!.y);
+  for(let i=1;i<quad.length;i++)ctx.lineTo(quad[i]!.x,quad[i]!.y);
+  ctx.closePath();ctx.fill();
+ }
+}
 /** Dark vignette that frames the floating platform without touching the room. */
 export function drawVignette(ctx:CanvasRenderingContext2D,width:number,height:number,alpha:number):void{
  ctx.save();ctx.translate(width/2,height/2);ctx.scale(width/2,height/2);

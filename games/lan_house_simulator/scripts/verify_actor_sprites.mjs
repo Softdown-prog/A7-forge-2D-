@@ -60,7 +60,7 @@ try{
  const budget=await page.evaluate(async()=>{
   const {drawActorSprite}=await import('./js/render/actorSprites.js');
   const canvas=document.createElement('canvas');canvas.width=160;canvas.height=160;const ctx=canvas.getContext('2d');
-  const kinds=['regular','rabbit','mouse-mascot','clown','vampire','stitched-monster'],camera={originX:80,originY:130,zoom:.86};let oldest;
+  const kinds=['regular','rabbit','mouse-mascot','clown','vampire','stitched-monster'],camera={originX:80,originY:130,zoom:.86};let snapshot=null;
   for(const kind of kinds)for(const direction of ['north','south','east','west'])for(const pose of ['walking','sitting','console']){
    for(let phase=0;phase<32;phase++){
     const gamepad=pose==='console',rate=pose==='walking'?7.7:gamepad?8:5.2;
@@ -69,11 +69,34 @@ try{
    const deadline=performance.now()+5000;
    while(globalThis.__actorCache.pending.size&&performance.now()<deadline)await new Promise(ok=>setTimeout(ok,10));
    if(globalThis.__actorCache.pending.size)throw Error('Worker preparation did not complete');
-   oldest??=[...globalThis.__actorCache.frames.values()][0].bitmap;
+   snapshot??=[...globalThis.__actorCache.frames.values()].map(f=>f.bitmap);
+  }
+  // The six kinds alone land within a hair of the 16 MiB budget (15.99 MiB at
+  // the current art), so whether anything is evicted depends on a few cropped
+  // pixels. Regular customers share a palette per id%4: the first part of this
+  // script used id 37 (palette 1) and this loop id 0, so palettes 2 and 3 add
+  // new keys without re-touching an older frame; the budget is then exceeded and
+  // evicts old frames (the evicted-bitmap check below does not depend on which).
+  for(const id of [2,3])for(const direction of ['north','south','east','west'])for(const pose of ['walking','sitting']){
+   for(let phase=0;phase<32;phase++){
+    const rate=pose==='walking'?7.7:5.2;
+    drawActorSprite(ctx,camera,{x:0,y:0,kind:'regular',id,time:phase/32*Math.PI*2/rate,pose,direction});
+   }
+   const deadline=performance.now()+5000;
+   while(globalThis.__actorCache.pending.size&&performance.now()<deadline)await new Promise(ok=>setTimeout(ok,10));
+   if(globalThis.__actorCache.pending.size)throw Error('Worker preparation did not complete');
   }
   const cache=globalThis.__actorCache,total=[...cache.frames.values()].reduce((n,f)=>n+f.bitmap.width*f.bitmap.height*4,0);
-  if(total!==cache.bytes||total>16*1024*1024||oldest.width!==0)throw Error('Pixel budget or bitmap disposal failed');
-  return {bytes:total,frames:cache.frames.size,evictedBitmapClosed:true};
+  if(total!==cache.bytes)throw Error('Pixel budget accounting drifted: '+total+' counted vs '+cache.bytes+' tracked');
+  if(total>16*1024*1024)throw Error('Pixel budget exceeded: '+total);
+  // The live game shares this cache and keeps re-drawing its own frames, so no
+  // single frame is guaranteed to be the one evicted. Check the invariant instead:
+  // every snapshot bitmap that left the cache was closed, the ones still cached are open.
+  const alive=new Set([...cache.frames.values()].map(f=>f.bitmap)),evicted=snapshot.filter(b=>!alive.has(b));
+  if(!evicted.length)throw Error('Nothing was evicted ('+cache.frames.size+' frames, '+total+' bytes)');
+  if(evicted.some(b=>b.width!==0))throw Error('Evicted bitmap was not closed');
+  if(snapshot.some(b=>alive.has(b)&&b.width===0))throw Error('A cached bitmap was closed while still in use');
+  return {bytes:total,frames:cache.frames.size,evicted:evicted.length,evictedBitmapClosed:true};
  });console.log(JSON.stringify({budget}));
  for(const mode of ['unsupported','blocked']){
   const fallback=await browser.newPage(),errors=[];fallback.on('pageerror',e=>errors.push(String(e)));
