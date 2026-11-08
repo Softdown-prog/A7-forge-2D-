@@ -2,13 +2,12 @@
 import type { AnnexComputerSlot,FurnitureKind,PlacementSlot,WallSegment } from "../application/contracts.js";
 import type { PlacementActionsPort } from "../application/placementActionsPort.js";
 import { iso,type Projection } from "./isometric.js";
+import { scenePointFromClient,sceneUnitsPerCssPixel } from "./sceneSurface.js";
 export interface PickingSelection {placingKind:FurnitureKind|null;relocating:boolean;relocationFrom:string|null;wallMode:"build"|"remove"|"door"|null}
 export function createScenePicker(canvas:HTMLCanvasElement,placementActions:PlacementActionsPort,getCamera:()=>Projection,selection:()=>PickingSelection,coarsePointer:()=>boolean){
 function getCanvasPoint(e:MouseEvent|PointerEvent):{x:number;y:number}{
- const element=canvas!;
- const bounds=element.getBoundingClientRect();
- return {x:(e.clientX-bounds.left)/bounds.width*element.width,
-         y:(e.clientY-bounds.top)/bounds.height*element.height};
+ // Scene units are fixed; the backing store may hold more device pixels.
+ return scenePointFromClient(canvas!.getBoundingClientRect(),e.clientX,e.clientY);
 }
 function pickWall(x:number,y:number):WallSegment|null{
  const camera=getCamera(),wallMode=selection().wallMode,available=wallMode?placementActions.walls(wallMode):[];
@@ -23,7 +22,7 @@ function pickWall(x:number,y:number):WallSegment|null{
      if(d<best){best=d;nearest=segment;}
    }
  }
- return best<=Math.max(12,22*canvas!.width/canvas!.getBoundingClientRect().width)?nearest:null;
+ return best<=Math.max(12,22*sceneUnitsPerCssPixel(canvas!.getBoundingClientRect()))?nearest:null;
 }
 function pickAnnexPc(x:number,y:number):AnnexComputerSlot|null{
  const camera=getCamera();let nearest:AnnexComputerSlot|null=null,best=Infinity;
@@ -50,8 +49,7 @@ function pickFurnitureSlot(x:number,y:number):PlacementSlot|null{
  }
  // O zoom CSS do visor reduz a área tocável real. Usar um raio em
  // pixels de tela para que os encaixes sejam selecionáveis no celular.
- const rect=canvas!.getBoundingClientRect();
- const cssPixels=canvas!.width/Math.max(1,rect.width);
+ const cssPixels=sceneUnitsPerCssPixel(canvas!.getBoundingClientRect());
  const coarse=coarsePointer();
  return distance<=Math.max((coarse?48:23)*cssPixels,38*camera.zoom)?nearest:null;
 }

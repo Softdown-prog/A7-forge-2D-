@@ -2,6 +2,8 @@ import {productSpec,type ProductId} from "../sim/merchandise.js";
 import type {Point} from "../sim/types.js";
 import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
 import {VENDING_WIDTH,VENDING_DEPTH} from "../sim/layout.js";
+import {drawRasterCached,rasterCacheUsable} from "./rasterCache.js";
+import {mixHex} from "./color.js";
 
 type MachineKind="soda"|"candy";
 export const RETAIL_DISPLAY_CAPACITY={soda:9,candy:12,snacks:20} as const;
@@ -136,11 +138,6 @@ export function snackShelfPlacement(slot:number):{x:number;y:number;span:number;
   ?{x:.418,y:.075+slot*.365,span:.29,depth:.145}
   :{x:.215,y:.23+(slot-3)*.49,span:.30,depth:.135};
 }
-function mixHex(hex:string,to:number,ratio:number):string{
- const value=Number.parseInt(hex.slice(1),16);
- const channel=(shift:number)=>Math.round(((value>>shift)&255)*(1-ratio)+to*ratio).toString(16).padStart(2,"0");
- return "#"+channel(16)+channel(8)+channel(0);
-}
 function bag(c:CanvasRenderingContext2D,cam:Projection,x:number,y:number,z:number,
  span:number,depth:number,color:string,index:number,label:string,flavour:string):void{
  const h=13.5,rear=x-depth,at=(bx:number,by:number,height:number)=>iso({x:bx,y:by},cam,height);
@@ -225,22 +222,14 @@ function paintShelf(c:CanvasRenderingContext2D,cam:Projection,p:Point,quantity:n
  });c.restore();
 }
 
-const sprites=new WeakMap<CanvasRenderingContext2D,Map<string,HTMLCanvasElement>>();
 function drawCached(c:CanvasRenderingContext2D,cam:Projection,p:Point,keyParts:unknown[],paint:(target:CanvasRenderingContext2D)=>void,useCache:boolean):void{
- const transform=c.getTransform();
- if(!useCache||typeof document==="undefined"||c.globalAlpha!==1||c.globalCompositeOperation!=="source-over"||(c.filter&&c.filter!=="none")||
-  transform.a!==1||transform.b!==0||transform.c!==0||transform.d!==1||transform.e!==0||transform.f!==0){paint(c);return;}
- const anchor=iso(p,cam),ix=Math.floor(anchor.x),iy=Math.floor(anchor.y),z=cam.zoom;
- const key=JSON.stringify([z,anchor.x-ix,anchor.y-iy,cam.rotation??0,...keyParts]);
- let cache=sprites.get(c);if(!cache){cache=new Map();sprites.set(c,cache);}
- let sprite=cache.get(key);const padX=Math.ceil((cam.rotation?150:90)*z)+4,padY=Math.ceil((cam.rotation?180:116)*z)+4;
- if(!sprite){
-  sprite=document.createElement("canvas");sprite.width=Math.ceil((cam.rotation?300:184)*z)+8;sprite.height=Math.ceil((cam.rotation?300:181)*z)+8;
-  const target=sprite.getContext("2d");if(!target){paint(c);return;}
-  target.translate(padX-ix,padY-iy);paint(target);
-  cache.set(key,sprite);if(cache.size>96)cache.delete(cache.keys().next().value!);
- }else{cache.delete(key);cache.set(key,sprite);}
- c.drawImage(sprite,ix-padX,iy-padY);
+ if(!useCache||!rasterCacheUsable(c)){paint(c);return;}
+ const anchor=iso(p,cam),z=cam.zoom;
+ drawRasterCached(c,"retail",{
+  key:JSON.stringify([z,cam.rotation??0,...keyParts]),anchorX:anchor.x,anchorY:anchor.y,snap:"floor",limit:96,
+  padX:Math.ceil((cam.rotation?150:90)*z)+4,padY:Math.ceil((cam.rotation?180:116)*z)+4,
+  width:Math.ceil((cam.rotation?300:184)*z)+8,height:Math.ceil((cam.rotation?300:181)*z)+8
+ },paint);
 }
 export function drawVendingMachine(c:CanvasRenderingContext2D,cam:Projection,p:Point,kind:MachineKind,time:number,stock:number=RETAIL_DISPLAY_CAPACITY[kind],useCache=true,display?:readonly ProductId[]):void{
  const quantity=display?.length??visibleRetailStock(stock,RETAIL_DISPLAY_CAPACITY[kind]),pulse=quantity?Math.floor(time*1.2)%2:0;

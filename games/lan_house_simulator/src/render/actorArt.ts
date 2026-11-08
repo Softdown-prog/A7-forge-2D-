@@ -3,6 +3,7 @@ import { iso, type Projection } from "./isometric.js";
 import type { ActorDirection,ActorScreenView } from "./direction.js";
 import {walkPhase,walkingLeg,walkAxis} from "./walkCycle.js";
 import {workerMotion} from "./workerMotion.js";
+import {lerpHex,shadeHex,mixHex,parseHex} from "./color.js";
 
 type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
 
@@ -69,20 +70,61 @@ function ell(ctx: ActorContext,x:number,y:number,rx:number,ry:number,color:strin
   ctx.fillStyle=color;ctx.fill();
   if(outline){ctx.strokeStyle=outline;ctx.lineWidth=1.35;ctx.stroke();}
 }
-function shape(ctx:ActorContext,pts:readonly [number,number][],fill:string,stroke="#283449"):void{
+const INK="#283449",INK_DEEP="#18202f";
+const edgeColors=new Map<string,string>();
+/** Selective outline: the line takes a dark version of the fill it encloses, so
+ * colour boundaries stay readable without a uniform navy rim around everything.
+ * Non-hex fills (rgba overlays) keep the shared ink. */
+export function edgeFor(fill:string):string{
+  if(fill.charCodeAt(0)!==35)return INK;
+  let edge=edgeColors.get(fill);
+  if(!edge){edge=lerpHex(fill,INK_DEEP,.7);edgeColors.set(fill,edge);}
+  return edge;
+}
+function shape(ctx:ActorContext,pts:readonly [number,number][],fill:string,stroke?:string):void{
   ctx.beginPath();ctx.moveTo(pts[0]![0],pts[0]![1]);
   for(const p of pts.slice(1))ctx.lineTo(p[0],p[1]);
   ctx.closePath();ctx.fillStyle=fill;ctx.fill();
-  ctx.strokeStyle=stroke;ctx.lineWidth=1.8;ctx.stroke();
+  ctx.strokeStyle=stroke??edgeFor(fill);ctx.lineWidth=1.8;ctx.stroke();
 }
 function segment(ctx:ActorContext,
   x1:number,y1:number,x2:number,y2:number,width:number,fill:string):void {
-  ctx.lineWidth=width+1.8;ctx.strokeStyle="#293449";ctx.lineCap="round";
+  ctx.lineWidth=width+1.8;ctx.strokeStyle=edgeFor(fill);ctx.lineCap="round";
   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
   ctx.lineWidth=width;ctx.strokeStyle=fill;
   ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
 }
 const clamp01=(v:number):number=>Math.min(1,Math.max(0,v));
+/** Eye with sclera, iris, pupil, lid line and a fixed glint (never animated, so
+ * cached frames stay interchangeable). `w`/`h` are the iris radii; animals keep
+ * the glossy black bead their rigs always had. */
+function eye(ctx:ActorContext,x:number,y:number,w:number,h:number,kind:ActorKind,look=0):void{
+  if(kind==="rabbit"||kind==="mouse-mascot"){
+    ell(ctx,x,y,w*1.15,h*1.1,"#1f2a3c");
+    ell(ctx,x-w*.38,y-h*.42,w*.42,h*.38,"#F6E7D0");return;
+  }
+  const iris=kind==="vampire"?"#a23a52":kind==="stitched-monster"?"#c9b43c":kind==="clown"?"#3a7090":"#3d4d68";
+  ell(ctx,x,y,w*1.32,h*1.16,"#f6eee2");
+  ell(ctx,x+look,y+h*.08,w*.92,h*.94,iris);
+  ell(ctx,x+look,y+h*.12,w*.5,h*.54,"#101826");
+  ell(ctx,x+look-w*.28,y-h*.34,w*.34,h*.3,"#ffffff");
+  ctx.save();ctx.lineCap="round";ctx.lineWidth=.95;ctx.strokeStyle="rgba(28,34,50,.72)";
+  ctx.beginPath();ctx.ellipse(x,y,w*1.32,h*1.16,0,Math.PI*1.1,Math.PI*1.9);ctx.stroke();ctx.restore();
+}
+/** Soft rim of lighter hair along the crown, on the side the light comes from. */
+function hairSheen(ctx:ActorContext,hair:string,lean:number,shift:number,cy=-79.5,rx=8.4,ry=3.9):void{
+  ctx.save();ctx.translate(lean,shift);ctx.lineCap="round";
+  ctx.strokeStyle=mixHex(hair,255,.5);ctx.globalAlpha=.42;ctx.lineWidth=1.7;
+  ctx.beginPath();ctx.ellipse(-1,cy,rx,ry,0,Math.PI*1.12,Math.PI*1.62);ctx.stroke();
+  ctx.restore();
+}
+/** Warm blush on the visible cheek(s); skipped for characters with painted faces. */
+function blush(ctx:ActorContext,kind:ActorKind,spots:readonly [number,number][]):void{
+  if(kind==="rabbit"||kind==="mouse-mascot"||kind==="clown"||kind==="vampire"||kind==="stitched-monster")return;
+  ctx.save();ctx.fillStyle="rgba(226,108,100,.17)";
+  for(const [x,y] of spots){ctx.beginPath();ctx.ellipse(x,y,3.1,1.9,0,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
+}
 /** Ease-in/out contínuo: cliente não salta ao começar ou terminar de sentar. */
 export function seatTransitionWeight(progress:number):number{
  const t=clamp01(progress);
@@ -94,10 +136,14 @@ function limb(ctx:ActorContext,x1:number,y1:number,x2:number,y2:number,
  segment(ctx,x1,y1,x2,y2,width,fill);
  const length=Math.hypot(x2-x1,y2-y1);if(length<.01)return;
  const nx=-(y2-y1)/length,ny=(x2-x1)/length;
- ctx.save();ctx.lineWidth=width*.24;
+ctx.save();ctx.lineWidth=width*.24;
  ctx.strokeStyle="rgba(255,241,208,.26)";
  ctx.beginPath();ctx.moveTo(x1-nx*width*.22,y1-ny*width*.22);
- ctx.lineTo(x2-nx*width*.22,y2-ny*width*.22);ctx.stroke();ctx.restore();
+ ctx.lineTo(x2-nx*width*.22,y2-ny*width*.22);ctx.stroke();
+ // Core shadow on the side away from the light completes the cylinder.
+ ctx.strokeStyle="rgba(18,28,48,.17)";
+ ctx.beginPath();ctx.moveTo(x1+nx*width*.25,y1+ny*width*.25);
+ ctx.lineTo(x2+nx*width*.25,y2+ny*width*.25);ctx.stroke();ctx.restore();
 }
 function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean,quarter=false):void{
  ctx.save();ctx.translate(0,shift);
@@ -138,7 +184,11 @@ function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean,qu
   ctx.bezierCurveTo(20,-49,13,-52,6,-53);
  }
  ctx.closePath();ctx.fillStyle=style.shirt;ctx.fill();
- ctx.strokeStyle="#283449";ctx.lineWidth=1.8;ctx.stroke();
+ ctx.strokeStyle=edgeFor(style.shirt);ctx.lineWidth=1.8;ctx.stroke();
+ // Form light: bright upper-left chest falling to a shaded lower right, over the same silhouette.
+ const form=ctx.createLinearGradient(-18,-53,16,-22);
+ form.addColorStop(0,"rgba(255,244,214,.22)");form.addColorStop(.5,"rgba(255,244,214,0)");form.addColorStop(1,"rgba(14,22,40,.22)");
+ ctx.fillStyle=form;ctx.fill();
  // Large curved planes keep their reading when the room camera zooms out.
  // These patches stay inside the contour, avoiding a per-actor Canvas clip.
  ctx.beginPath();ctx.moveTo(profile?8:9,-51);
@@ -152,6 +202,10 @@ function torso(ctx:ActorContext,style:ActorStyle,shift:number,profile:boolean,qu
  ctx.globalAlpha=.52;ctx.fillStyle=style.highlight;ctx.fill();ctx.globalAlpha=1;
  ell(ctx,-1,-25,11,2,"rgba(23,32,43,.16)");
  ell(ctx,-3,-47,11,2,"rgba(255,241,208,.17)");
+ // Two soft folds where the fabric gathers at the belt.
+ ctx.save();ctx.strokeStyle="rgba(18,28,48,.16)";ctx.lineWidth=1.1;ctx.lineCap="round";
+ ctx.beginPath();ctx.moveTo(-7,-33);ctx.quadraticCurveTo(-5,-29,-6,-25);
+ ctx.moveTo(3,-34);ctx.quadraticCurveTo(5,-30,4,-25);ctx.stroke();ctx.restore();
  ctx.restore();
 }
 /** Discrete character artwork; all three reuse only rig anchors and movement,
@@ -382,7 +436,11 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   // Ground anchor: o corpo oscila na caminhada, a sombra permanece no piso.
   // A escala de câmera é aplicada depois; bob é em unidades locais do ator.
   ctx.save();ctx.translate(0,bob);
-  ell(ctx,0,0,15.5,5.1,"rgba(25,31,46,0.25)");
+  // Soft contact shadow: dense under the feet, feathered at the rim.
+  ctx.save();ctx.scale(15.5,5.1);
+  const shade=ctx.createRadialGradient(0,0,0,0,0,1);
+  shade.addColorStop(0,"rgba(25,31,46,0.36)");shade.addColorStop(.55,"rgba(25,31,46,0.22)");shade.addColorStop(1,"rgba(25,31,46,0)");
+  ctx.fillStyle=shade;ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);ctx.fill();ctx.restore();
   ell(ctx,0,1.2,9.4,2.5,"rgba(24,31,45,0.12)");
   ctx.restore();
   // Respiração quase imperceptível; pés e sombra permanecem ancorados.
@@ -436,6 +494,8 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     // Sola clara de baixo contraste, pequena o bastante para não parecer tênis brilhante.
     segment(ctx,shoeX-3,shoeY+1.8,shoeX+3,shoeY+1.9,1.0,
       a.kind==="rabbit"?"#B5A7AC":"#788597");
+    ctx.save();ctx.strokeStyle="rgba(205,222,240,.4)";ctx.lineWidth=.9;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(shoeX-2.2,shoeY-1.2);ctx.lineTo(shoeX+2.6,shoeY-1.4);ctx.stroke();ctx.restore();
   }
 
   // Braços de duas seções: na cadeira, as mãos se aproximam do teclado.
@@ -471,6 +531,10 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
        handing&&side===1?-43+headShift+Math.sin(a.time*6)*1.2:copying?-33+headShift+gesture:printing?-29+headShift+gesture:serving?-38+headShift+gesture:-24+headShift-seated*6+(gamepadActive?Math.sin(a.time*8+side)*.8:typing*side);
     limb(ctx,ax,ay,elbowX,elbowY,9.2,style.dark);
     limb(ctx,elbowX,elbowY,handX,handY,8.2,style.shirt);
+    // Shaded cuff just above the wrist separates sleeve from hand.
+    ctx.save();ctx.lineCap="butt";ctx.lineWidth=8.5;ctx.strokeStyle=style.dark;ctx.globalAlpha=.34;
+    ctx.beginPath();ctx.moveTo(elbowX+(handX-elbowX)*.74,elbowY+(handY-elbowY)*.74);
+    ctx.lineTo(elbowX+(handX-elbowX)*.9,elbowY+(handY-elbowY)*.9);ctx.stroke();ctx.restore();
     // Borda da manga e luz discreta: o braço continua legível de costas.
     ctx.save();ctx.globalAlpha=.46;
     ctx.strokeStyle=style.highlight;ctx.lineWidth=1.3;
@@ -487,6 +551,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   else{
     torso(ctx,style,headShift,sideways,quarter);
     segment(ctx,-11,-24+headShift,10,-24+headShift,2,style.dark);
+    if(!back&&!sideways&&!quarter&&a.kind!=="owner")ell(ctx,0,-24+headShift,1.9,1.35,style.trim);
     if(!back&&!sideways&&!quarter)shape(ctx,[[0,-51+headShift],[5,-48+headShift],[3,-37+headShift],
       [-1,-30+headShift],[-3,-38+headShift]],style.highlight,"#34616B");
     if(!back&&!sideways&&!quarter){
@@ -572,7 +637,18 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ell(ctx,-12+lean,-65+headShift,3,4.4,style.skin,"#785C59");
     if(!quarter)ell(ctx,12+lean,-65+headShift,3,4.4,style.skin,"#785C59");
   }
-  ell(ctx,lean,-67+headShift,sideways?12.0:quarter?12.4:13.0,12.3,back?style.hair:style.skin,"#6F5962");
+  {
+    const rx=sideways?12.0:quarter?12.4:13.0,cy=-67+headShift;
+    ctx.beginPath();ctx.ellipse(lean,cy,rx,12.3,0,0,Math.PI*2);
+    if(back)ctx.fillStyle=style.hair;
+    else{
+      // Light from the upper left: a lit forehead and a cooler jaw give the head volume.
+      const g=ctx.createRadialGradient(lean-4,cy-5,1.5,lean,cy,15);
+      g.addColorStop(0,shadeHex(style.skin,1.11));g.addColorStop(.55,style.skin);g.addColorStop(1,shadeHex(style.skin,.88));
+      ctx.fillStyle=g;
+    }
+    ctx.fill();ctx.strokeStyle="#6F5962";ctx.lineWidth=1.35;ctx.stroke();
+  }
   if(!back){
     ell(ctx,lean+7,-66+headShift,4.7,9,"rgba(103,55,52,0.23)");
     ell(ctx,lean-6,-69+headShift,4.2,7,"rgba(255,244,216,0.25)");
@@ -581,7 +657,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
 
   // Penteado/silhueta específica. Formas grandes, sem texturas micro-pixel.
   if(isFemaleCostume(a.kind)){
-    if(!back)femaleHairFront(ctx,style,a.kind,headShift,lean,sideways||quarter);
+    if(!back){femaleHairFront(ctx,style,a.kind,headShift,lean,sideways||quarter);hairSheen(ctx,style.hair,lean,headShift,-79.5,8.6,4.4);}
   }else if(a.kind==="rabbit"){
     shape(ctx,[[-9,-75+headShift],[-12,-98+headShift],[-6,-100+headShift],
       [-2,-78+headShift]],"#F1E7E7","#A998A9");
@@ -615,6 +691,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.save();ctx.globalAlpha=.18;
     segment(ctx,-8,-78+headShift,-2,-79+headShift,1.5,style.highlight);
     ctx.restore();
+    hairSheen(ctx,style.hair,lean,headShift);
     if(a.kind==="owner"){
       segment(ctx,-11,-73+headShift,-8,-63+headShift,2,style.hair);
       segment(ctx,-7,-80+headShift,3,-78+headShift,1.2,"#84694b");
@@ -628,8 +705,11 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.bezierCurveTo(-14,-82,12,-84,13,-73);
     ctx.bezierCurveTo(14,-66,9,-58,6,-57);ctx.quadraticCurveTo(0,-55,-7,-57);
     ctx.bezierCurveTo(-11,-61,-13,-66,-12,-72);ctx.closePath();
-    ctx.fillStyle=style.hair;ctx.fill();ctx.strokeStyle=style.dark;ctx.lineWidth=1.35;ctx.stroke();ctx.clip();
-    ell(ctx,9,-66,6,13,"rgba(17,24,36,.25)");
+    // The nape outline follows the hair colour instead of the clothing's dark blue,
+    // and the shaded side is lighter on pale hair so it never reads as a grey patch.
+    ctx.fillStyle=style.hair;ctx.fill();ctx.strokeStyle=edgeFor(style.hair);ctx.lineWidth=1.35;ctx.stroke();ctx.clip();
+    const [hr,hg,hb]=parseHex(style.hair),hairLuma=(hr*.2126+hg*.7152+hb*.0722)/255;
+    ell(ctx,9,-66,6,13,"rgba(17,24,36,"+(.25-.15*hairLuma).toFixed(3)+")");
     ell(ctx,-6,-74,3.8,7,"rgba(255,241,208,.14)");
     ctx.restore();
     if(quarter){
@@ -637,7 +717,8 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
       ell(ctx,11+lean,-64+headShift,2.8,4.6,style.skin,"#785C59");
       segment(ctx,12+lean,-65+headShift,12+lean,-62+headShift,.9,"#A66A64");
     }
-    if(isFemaleCostume(a.kind))femaleHairBack(ctx,style,a.kind,headShift,lean);
+    if(isFemaleCostume(a.kind)){femaleHairBack(ctx,style,a.kind,headShift,lean);hairSheen(ctx,style.hair,lean,headShift,-81,8.4,5.4);}
+    else if(a.kind!=="rabbit"&&a.kind!=="mouse-mascot")hairSheen(ctx,style.hair,lean,headShift,-74.5,8.2,7);
     if(a.kind==="rabbit" || a.kind==="mouse-mascot"){
       ell(ctx,0,-61+headShift,5,3,style.highlight);
     }
@@ -653,9 +734,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     }
   } else if(quarter){
     // One recessed eye and a projecting cheek/nose make the 3/4 facing legible.
-    ell(ctx,-.5+lean,-68.2+headShift,.85,1.6,"#263348");
-    ell(ctx,7.3+lean,-67.5+headShift,1.6,2.1,"#263348");
-    ell(ctx,7+lean,-68.2+headShift,.5,.6,"#F6E7D0");
+    blush(ctx,a.kind,[[9.2+lean,-61.8+headShift]]);
+    eye(ctx,-.5+lean,-68.2+headShift,.85,1.6,a.kind);
+    eye(ctx,7.3+lean,-67.5+headShift,1.6,2.1,a.kind,.35);
     segment(ctx,-2.5+lean,-72+headShift,1.5+lean,-72.3+headShift,1,style.hair);
     segment(ctx,5+lean,-71.9+headShift,10+lean,-71.4+headShift,1,style.hair);
     if(a.kind==="clown")ell(ctx,8+lean,-63.2+headShift,3.4,3.1,"#D64C5B");
@@ -668,19 +749,18 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   } else if(sideways){
     // Perfil de verdade: uma orelha, apenas um olho e nariz projetado.
     ell(ctx,7+lean,-65+headShift,4.2,6,style.skin,"#785C59");
-    ell(ctx,4+lean,-68+headShift,1.7,2.1,"#263348");
-    ell(ctx,4.4+lean,-68.8+headShift,.65,.7,"#F6E4C7");
+    blush(ctx,a.kind,[[5.5+lean,-61.8+headShift]]);
+    eye(ctx,4+lean,-68+headShift,1.7,2.1,a.kind,.55);
     segment(ctx,2+lean,-72+headShift,7+lean,-72.8+headShift,1,style.hair);
     shape(ctx,[[10+lean,-65+headShift],[15+lean,-62+headShift],
       [10+lean,-60+headShift]],style.skin,"#785C59");
     segment(ctx,4+lean,-57+headShift,9+lean,-57+headShift,1.1,"#784F51");
   } else {
   // Expressão legível; olhos não mudam entre quadros.
-  ell(ctx,-4.3+lean,-66.8+headShift,1.65,2.0,"#263348");
-  ell(ctx,5.2+lean,-66.8+headShift,1.65,2.0,"#263348");
-  // Olhos com pequeno brilho fixo e sobrancelhas sutis (sem piscar aleatório).
-  ell(ctx,-4.8+lean,-67.7+headShift,.56,.64,"#F6E7D0");
-  ell(ctx,4.7+lean,-67.7+headShift,.56,.64,"#F6E7D0");
+  blush(ctx,a.kind,[[-8.2+lean,-61.8+headShift],[8.8+lean,-61.8+headShift]]);
+  // Olhos com esclera, íris e brilho fixos, e sobrancelhas sutis (sem piscar aleatório).
+  eye(ctx,-4.3+lean,-66.8+headShift,1.65,2.0,a.kind);
+  eye(ctx,5.2+lean,-66.8+headShift,1.65,2.0,a.kind);
   ctx.save();ctx.globalAlpha=.72;
   segment(ctx,-7+lean,-71.1+headShift,-2+lean,-71.8+headShift,1,style.hair);
   segment(ctx,3+lean,-71.8+headShift,8+lean,-71.1+headShift,1,style.hair);

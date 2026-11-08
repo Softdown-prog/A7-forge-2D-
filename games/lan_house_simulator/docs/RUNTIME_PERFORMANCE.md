@@ -1,5 +1,9 @@
 # Fluidez do jogo — 14/10/2026
 
+## Resolução nativa — 08/11/2026
+
+O bitmap do salão deixa de ser fixo em 1000×610: segue largura CSS × `devicePixelRatio`, quantizado em décimos, limitado a 3× (2× em toque) e a 6 Mpx. Fundo, mobília e atores continuam cacheados na escala ativa; a passagem de luz por hora do dia são poucos gradientes por frame. O custo cresce com a área em pixels; os limites existem para proteger aparelhos com DPR 3. Ver [GRAPHICS_REFACTOR.md](GRAPHICS_REFACTOR.md).
+
 ## Clientes presos no corredor junto à lixeira — 18/10/2026
 
 O bloqueio da soleira não era o único ponto de retenção. Os lugares de espera das máquinas podiam ocupar o corredor `y=4.48`, formando uma barreira contínua de corpos entre os PCs e a saída, junto à lixeira frontal. Uma busca em grade de 0,5 tile também podia não enxergar passagens estreitas reais. Depois de um desvio, o cliente continuava seguindo todos os pontos antigos mesmo quando o corredor já havia aberto.

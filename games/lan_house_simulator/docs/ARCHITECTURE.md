@@ -21,6 +21,8 @@ games/lan_house_simulator/
 
 Unidade lógica CH: 128×64, grade de coordenadas `(x,y)`, projeção `screenX=originX + (x-y)*64*zoom`, `screenY=originY + (x+y)*32*zoom - z*zoom`. Zoom fixo para caber na janela, sem rotação de câmera. Ordenação por profundidade aproximada `x+y`; personagens desenhados em camadas frente/atrás do balcão. O mundo NÃO usa `three.js`, WebGL nem física 3D.
 
+O Canvas trabalha em unidades lógicas fixas de 1000×610 (`render/sceneSurface.ts`); o bitmap real segue a largura CSS × `devicePixelRatio`, quantizado em décimos e limitado a 3× (2× em toque). Pintores nunca veem essa escala; picking e rótulos usam as unidades lógicas. Caches de bitmap (`render/rasterCache.ts`, fundo estático e sprites dos atores) são chaveados pela escala e pela fase subpixel em pixels do dispositivo. A luz por hora do dia (`render/lighting.ts`) deriva apenas do relógio da simulação e é pintada entre os objetos e o HUD interno. Detalhes em [GRAPHICS_REFACTOR.md](GRAPHICS_REFACTOR.md).
+
 A interface é DOM/CSS sobre Canvas para acessibilidade. Nove fatias são uma textura procedural de borda/miolo aplicada por CSS border-image, com cantos não deformados.
 
 ## Simulação determinística
@@ -59,7 +61,7 @@ A progressão de tecnologia é dado de jogo, independente da arte: `internetTier
 
 ## Renderização de personagens — acabamento procedural V1
 
-O módulo `src/render/actorArt.ts` é um *renderer de estudo*, feito de paths e elipses Canvas 2D em coordenadas locais com âncora de pés. Não depende de imagens online e não é asset aprovado. `actorStyleFor(kind,id)` determina paleta e aparência por identidade, não por timestamp. Poses `idle`, `walking`, `sitting`, `standing-up` compartilham silhueta e rosto, com transições animadas. A orientação esquerda/direita vem do deslocamento dos waypoints, sem rotação de câmera. Fantasias são arquétipos originais. O `actorHitbox` acompanha a cabeça/ombros do proprietário para manter painel clicável.
+O módulo `src/render/actorArt.ts` é um *renderer de estudo*, feito de paths e elipses Canvas 2D em coordenadas locais com âncora de pés. Não depende de imagens online e não é asset aprovado. `actorStyleFor(kind,id)` determina paleta e aparência por identidade, não por timestamp. Poses `idle`, `walking`, `sitting`, `standing-up` compartilham silhueta e rosto, com transições animadas. A orientação esquerda/direita vem do deslocamento dos waypoints, sem rotação de câmera. Fantasias são arquétipos originais. O acabamento do ciclo 2 (contornos tingidos pela cor, olhos com íris, luz de forma e brilho de cabelo) não altera âncoras, poses, hitbox nem a chave dos caches; ver [GRAPHICS_REFACTOR.md](GRAPHICS_REFACTOR.md). O `actorHitbox` acompanha a cabeça/ombros do proprietário para manter painel clicável.
 
 Futuro: trocar formas por sprites A7 Forge após aprovação visual 1x mantendo a API de pose, ID, âncora e paleta, sem refazer IA ou economia. A cena continua fixa, 2:1, cutaway sem telhado/exterior.
 

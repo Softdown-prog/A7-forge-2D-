@@ -111,6 +111,10 @@ Além das pranchas, o worker grava `lhs_circulation_runtime.mp4`: gameplay cont�
 
 A aparência procedural V1 dos personagens é desenhada por `src/render/actorArt.ts` e diferencia figurinos, cabelos, cores e poses sem novas dependências. É visual provisório com intenção estética definida; PNGs capturados pelo worker-scene continuam sendo a etapa de validação antes dos sprites definitivos do A7 Forge.
 
+### Refatoração gráfica
+
+O salão é desenhado na resolução nativa do dispositivo (retina, zoom do visor e tela cheia nítidos), com piso, paredes e janelas refinados, luz que acompanha a hora do dia da simulação e brilho dos monitores. Câmera, posições, economia e saves não mudam. Veja [docs/GRAPHICS_REFACTOR.md](docs/GRAPHICS_REFACTOR.md).
+
 ## Publicação no CH-site (sob demanda)
 
 A fluidez usa apresentação intermediária de posições/poses, atualização de listas visíveis e cache do fundo estático, mantendo a simulação em quatro minutos por segundo. Método de medição, resultados e reprodução: [docs/RUNTIME_PERFORMANCE.md](docs/RUNTIME_PERFORMANCE.md).
