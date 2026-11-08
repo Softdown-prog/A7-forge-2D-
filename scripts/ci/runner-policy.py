@@ -13,6 +13,13 @@ REPOSITORY = 'Softdown-prog/A7-forge-2D-'
 LABELS = ['self-hosted', 'Linux', 'lhs-vps-isolated']
 
 
+def vps_enabled(env):
+    """GitHub-hosted runners are the default. The isolated VPS runner is used only while the repository
+    variable LHS_USE_VPS_RUNNER is exactly 'true' (Settings > Secrets and variables > Actions > Variables);
+    deleting it or setting anything else sends every job back to GitHub with no code change."""
+    return env.get('LHS_USE_VPS_RUNNER', '').strip().lower() == 'true'
+
+
 def admitted(env):
     if env.get('GITHUB_REPOSITORY', '').casefold() != REPOSITORY.casefold():
         return False
@@ -26,7 +33,7 @@ def admitted(env):
 
 def choose(env, evidence, now=None):
     hosted = [env.get('HOSTED_LABEL', 'ubuntu-24.04')]
-    if not admitted(env) or env.get('REQUIRES_DOCKER', 'false') == 'true':
+    if not vps_enabled(env) or not admitted(env) or env.get('REQUIRES_DOCKER', 'false') == 'true':
         return hosted
     now = time.time() if now is None else now
     if isinstance(evidence, dict) and isinstance(evidence.get('runners'), list):
@@ -74,7 +81,7 @@ def main():
         return 0
     evidence = None
     # Do not even probe from PRs, another repository or Docker-only workflows.
-    if admitted(os.environ) and os.environ.get('REQUIRES_DOCKER', 'false') != 'true':
+    if vps_enabled(os.environ) and admitted(os.environ) and os.environ.get('REQUIRES_DOCKER', 'false') != 'true':
         secret = os.environ.get('STATUS_TOKEN', '').strip()
         if secret:
             try:
@@ -94,6 +101,8 @@ def main():
                             break
                 # Report only a category, never token material, commands or stderr.
                 print(f'::notice::Runner probe unavailable ({kind}); selecting GitHub-hosted.')
+    if not vps_enabled(os.environ):
+        print("::notice::VPS runner is off (repository variable LHS_USE_VPS_RUNNER is not 'true'); using GitHub-hosted.")
     labels = choose(os.environ, evidence)
     with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
         output.write('runner_labels=' + json.dumps(labels, separators=(',', ':')) + '\n')

@@ -12,11 +12,28 @@ spec.loader.exec_module(policy)
 class RunnerPolicyTests(unittest.TestCase):
     def setUp(self):
         self.env = dict(GITHUB_REPOSITORY=policy.REPOSITORY, GITHUB_EVENT_NAME='push',
-                        GITHUB_REF='refs/heads/main', HOSTED_LABEL='ubuntu-latest')
+                        GITHUB_REF='refs/heads/main', HOSTED_LABEL='ubuntu-latest',
+                        LHS_USE_VPS_RUNNER='true')
         self.healthy = dict(healthy=True, checkedAt=1000)
 
     def test_main_online_uses_isolated_runner(self):
         self.assertEqual(policy.choose(self.env, self.healthy, 1030), policy.LABELS)
+
+    def test_github_hosted_is_the_default_until_the_vps_switch_is_on(self):
+        for value in (None, '', 'false', '0', 'yes', 'TRUEISH'):
+            env = {k: v for k, v in self.env.items() if k != 'LHS_USE_VPS_RUNNER'}
+            if value is not None:
+                env['LHS_USE_VPS_RUNNER'] = value
+            self.assertFalse(policy.vps_enabled(env), repr(value))
+            self.assertEqual(policy.choose(env, self.healthy, 1030), ['ubuntu-latest'], repr(value))
+        self.assertTrue(policy.vps_enabled(self.env | {'LHS_USE_VPS_RUNNER': ' True '}))
+        self.assertEqual(policy.choose(self.env | {'LHS_USE_VPS_RUNNER': ' True '}, self.healthy, 1030), policy.LABELS)
+
+    def test_the_switch_does_not_weaken_the_admission_guard(self):
+        # The guard that protects the VPS runner itself is independent of the routing switch.
+        env = {k: v for k, v in self.env.items() if k != 'LHS_USE_VPS_RUNNER'}
+        self.assertTrue(policy.admitted(env))
+        self.assertFalse(policy.admitted(env | {'GITHUB_EVENT_NAME': 'pull_request'}))
 
     def test_missing_offline_stale_future_invalid_fall_back(self):
         for evidence in (None, {}, {'healthy': False, 'checkedAt': 1000},

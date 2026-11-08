@@ -144,6 +144,32 @@ A primeira versão custava muito por dois motivos, medidos por decomposição (d
 
 O custo em 1× continua cerca de 1,6 ms acima do original (janelas dinâmicas, brilho dos monitores, capacho, gradientes) e cresce com a área em pixels. Em navegadores com canvas acelerado por GPU a diferença tende a ser bem menor, mas isso **não foi medido em aparelho físico**. Os limites de escala (3×, 2× em toque, 6 Mpx), o cache do fundo e dos móveis e o teto de 30 desenhos/s em toque seguem valendo. `tests/scene-lighting.test.mjs` impede a volta de modos de mistura e `shadowBlur` nesse caminho.
 
+### Auditoria de desempenho em celular emulado (novembro de 2026)
+
+Medição do jogo real em Chromium headless (sem GPU) com **perfil de toque, CPU 4 vezes mais lenta**, cenário de capacidade com 14 clientes (o limite de produção). É emulação: **não substitui aparelho físico**, e a máquina varia entre lotes, então só se comparam códigos medidos no mesmo lote, intercalados.
+
+**O que a medição mostrou**
+
+- Todas as mudanças em `src/` desde `c8930cf` (antes da refatoração) são desta série de PRs, então a diferença é atribuível a ela. O desenho médio por quadro subiu de 6,3 ms para 10 a 12 ms no benchmark de 7 s de `benchmark_capacity.mjs`; o salto grande foi o primeiro PR (6,3 para 10,4 ms) e os seguintes somaram pouco cada.
+- Esse benchmark exagera, porque mede os primeiros 7 s, durante o aquecimento do cache de sprites (o Worker rasteriza quadros mais detalhados, então os primeiros sprites chegam depois de uns 4 s em vez de 1 s, e nesse intervalo os atores caem no desenhista vetorial). **Em regime estável** (16 s de aquecimento) o jogo desenha os mesmos 30 quadros por segundo nos dois códigos, e a diferença é de folga de CPU: **40,6% ociosa antes, 27,9% depois dos seis PRs**.
+- Em regime estável os clientes acertam o cache de sprites em 97% das chamadas. **O único ator desenhado em vetor a cada quadro era o Tony** (1,3 a 1,45 ms por quadro no cenário emulado, cerca de 30% do desenho). O custo restante do desenho aparece como trabalho nativo de rasterização do navegador ("(program)"), porque as operações de Canvas 2D são gravadas e rasterizadas depois; por isso cronometrar métodos em JavaScript subestima o custo de gradientes e traços, e o medidor confiável é a folga de CPU ou a cadência de quadros.
+- Contagem de operações por quadro (regime estável): traços 113 para 186, preenchimentos 54 para 96, `save` 31 para 67. Os gradientes radiais por quadro eram 9 (e já caíram para 3).
+
+**O que foi feito** (só desenho; simulação, save e RNG intocados)
+
+1. **Tony em repouso vem do cache de sprites.** `actorSpriteEligible` (função pura, testada) libera o dono apenas na pose `idle`, sem fantasia cyber, sem reação e sem fone. Imprimindo, copiando e recebendo o carteiro continuam no desenhista contínuo, porque têm gestos rápidos. Para o ciclo de 32 quadros fechar exatamente, a respiração e o gesto leve de atendimento passaram a usar a mesma frequência (`OWNER_IDLE_RATE`, 1,4 rad/s; o gesto era 1,6 rad/s, com amplitude de 0,45 pixel).
+2. **Janelas em cache de raster.** O vidro só muda a cada minuto simulado; `paintWindowPanes` é rasterizado uma vez por estado de luz e zoom (família `window-panes`).
+3. **Brilho dos monitores com textura de gradiente em cache.** Cada par (cor, opacidade em passos de 1/64) é renderizado uma vez numa textura de 64 px e escalado na cena (`glowEllipse`).
+
+**Resultado** (mesmo lote, intercalado, 3 rodadas, folga de CPU em regime estável): antes da refatoração 40,6%, depois dos seis PRs 27,9%, com estas três mudanças **38,7%**. A imagem da cena inteira (quatro horários, escalas 1 e 2) difere do código anterior em no máximo 4 de 255 por canal nas janelas e nos brilhos; com o Tony em sprite, 37 a 210 pixels (menos de 0,01%) chegam a 26 a 48 de diferença na borda suavizada, dentro da tolerância do `verify_actor_sprites` (agora com o Tony: 336 casos, erro médio máximo 9,9 de 14, nenhum pixel opaco faltando).
+
+**O que não foi resolvido**
+
+- **Aquecimento do cache de sprites** continua mais lento que antes (os primeiros sprites levam uns 4 s com CPU 4 vezes mais lenta). Caminhos possíveis: pré-aquecer os quadros mais comuns em tempo ocioso ao abrir o jogo e priorizar os atores visíveis na fila do Worker (hoje limitada a 64 pedidos).
+- **Tony com a fantasia cyber** (e enquanto imprime ou copia) continua em vetor.
+- **Trabalho nativo de rasterização** ainda é maior que antes (traços e preenchimentos por quadro); o próximo ganho grande exigiria simplificar o desenho vetorial dos atores que ainda não vêm do cache ou reduzir o detalhe por zoom.
+- Nada disso foi medido em aparelho físico.
+
 ## 7. Verificação
 
 ```sh

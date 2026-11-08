@@ -31,7 +31,7 @@ jobs:
   backend:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 12
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: games/lan_house_simulator

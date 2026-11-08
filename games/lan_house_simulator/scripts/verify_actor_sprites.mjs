@@ -19,10 +19,10 @@ try{
   const surface=()=>{const c=document.createElement('canvas');c.width=160;c.height=160;return c.getContext('2d',{willReadFrequently:true});};
   const raw=surface(),cached=surface(),cases=[];
   const preview=document.createElement('canvas');preview.width=960;preview.height=640;const sheet=preview.getContext('2d');sheet.fillStyle='#222b37';sheet.fillRect(0,0,960,640);
-  const kinds=['regular','rabbit','mouse-mascot','clown','vampire','stitched-monster'];
+  const kinds=['regular','owner','rabbit','mouse-mascot','clown','vampire','stitched-monster'];
   for(let pass=0;pass<2;pass++){for(const kind of kinds)for(const direction of ['north','south','east','west'])for(const pose of ['idle','walking','sitting','console'])drawActorSprite(cached,{originX:80,originY:130,zoom:.86},{x:0,y:0,kind,id:37,time:2.1,pose:pose==='console'?'sitting':pose,gamepad:pose==='console',consoleSeat:pose==='console',direction});await new Promise(ok=>setTimeout(ok,1500));}
   let bitmapDraws=0;const blit=cached.drawImage;cached.drawImage=function(...args){bitmapDraws++;return blit.apply(this,args);};
-  for(const kind of ['regular','rabbit','mouse-mascot','clown','vampire','stitched-monster'])for(const direction of ['north','south','east','west'])for(const pose of ['idle','walking','sitting','console'])for(const zoom of [.35,.86,1]){
+  for(const kind of ['regular','owner','rabbit','mouse-mascot','clown','vampire','stitched-monster'])for(const direction of ['north','south','east','west'])for(const pose of ['idle','walking','sitting','console'])for(const zoom of [.35,.86,1]){
    const actor={x:0,y:0,kind,id:37,time:2.1,pose:pose==='console'?'sitting':pose,gamepad:pose==='console',consoleSeat:pose==='console',direction},camera={originX:80.25,originY:130.5,zoom};
    raw.clearRect(0,0,160,160);cached.clearRect(0,0,160,160);drawActor(raw,camera,actor);drawActorSprite(cached,camera,actor);
    const maskA=raw.getImageData(0,0,160,160).data,maskB=cached.getImageData(0,0,160,160).data;

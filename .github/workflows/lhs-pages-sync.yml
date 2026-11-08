@@ -27,19 +27,15 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  select-runner:
-    uses: ./.github/workflows/lhs-runner-route.yml
-    with:
-      hosted_label: ubuntu-24.04
-    secrets:
-      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
-
   sync:
     if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.approve_production == true)) }}
     environment: lhs-production
-    needs: select-runner
-    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 35
+    # Always GitHub-hosted, never the VPS runner: this job pushes to the Pages mirror with a dedicated
+    # SSH deploy key. The VPS runner has no `ssh` client (the 19:15 run of the #113 merge failed at
+    # "Obter o repositório ligado ao Pages" with "Unable to locate executable file: ssh"), its validation
+    # gate is ~2x slower, and it serves one job at a time. The key also stays off the VPS.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
     env:
       SOURCE_SHA: ${{ github.event_name == 'push' && github.sha || inputs.source_sha }}
       RELEASE_TRIGGER: ${{ github.event_name }}

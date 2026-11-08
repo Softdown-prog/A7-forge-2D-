@@ -35,4 +35,6 @@ jobs:
           HOSTED_LABEL: ${{ inputs.hosted_label }}
           REQUIRES_DOCKER: ${{ inputs.requires_docker }}
           STATUS_TOKEN: ${{ secrets.runner_status_token }}
+          # Off unless the repository variable is exactly 'true'; GitHub-hosted is the default.
+          LHS_USE_VPS_RUNNER: ${{ vars.LHS_USE_VPS_RUNNER }}
         run: python3 scripts/ci/runner-policy.py

@@ -8,6 +8,9 @@ import {lerpHex,shadeHex,mixHex,parseHex} from "./color.js";
 type ActorContext=CanvasRenderingContext2D|OffscreenCanvasRenderingContext2D;
 
 export type ActorPose = "idle" | "walking" | "sitting" | "standing-up" | "printing" | "copying" | "sweeping" | "repairing" | "delivering" | "receiving";
+/** Rate (rad/s) of the owner's idle breathing and service gesture. They share one rate so the idle
+ * animation is a single loop, which is what lets the sprite cache hold it as 32 frames. */
+export const OWNER_IDLE_RATE=1.4;
 export type ActorKind = Costume | "owner" | "cleaner" | "technician" | "postman";
 export interface ActorStyle {
   shirt: string; dark: string; highlight: string;
@@ -463,7 +466,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   const consoleSeat=!!a.consoleSeat&&(pose==="sitting"||pose==="standing-up");
   const phase=a.walkDistance===undefined?a.time*7.7+a.id*.27:walkPhase(a.walkDistance);
   const step=walking?Math.sin(phase):0;
-  const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*1.4)*.6:0;
+  const ownerBreath=a.kind==="owner"&&(pose==="idle"||pose==="printing"||pose==="copying")?Math.sin(a.time*OWNER_IDLE_RATE)*.6:0;
   const bob=walking?(1-Math.cos(phase*2))*.45:
     celebrating?(1+Math.sin(a.time*6))*.9:0;
   // O quadril acompanha o assento elevado (25px); a cabeça baixa só levemente.
@@ -560,7 +563,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const receiving=a.kind==="owner"&&pose==="receiving";
     const serving=a.kind==="owner"&&(pose==="idle"||printing||copying||receiving);
     const handing=a.kind==="postman"&&pose==="delivering";
-    const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*1.6)*.45:0;
+    const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*OWNER_IDLE_RATE)*.45:0;
     const angledWalk=profileWalk||screenRig;
     const shoulderX=side*(sideways?8:quarter?10:15);
     const axis=screenRig?walkAxis(screenView!):{x:1,y:0};

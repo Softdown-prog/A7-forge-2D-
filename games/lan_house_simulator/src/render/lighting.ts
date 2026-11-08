@@ -58,6 +58,31 @@ function ellipseGradient(ctx:CanvasRenderingContext2D,cx:number,cy:number,rx:num
  ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,1,0,Math.PI*2);ctx.fill();
  ctx.restore();
 }
+/** A screen glow is a soft coloured ellipse. The radial gradient is the costly part of drawing one, so
+ * each (colour, opacity) is rendered once into a tiny canvas and then only scaled onto the scene, which is
+ * exactly what a unit radial gradient scaled to the ellipse would paint. Opacity is quantized to 1/64. */
+const GLOW_TEXTURE=64,GLOW_LIMIT=96;
+const glowTextures=new Map<string,HTMLCanvasElement>();
+function glowTexture(color:string,alpha:number):HTMLCanvasElement|null{
+ if(typeof document==="undefined")return null;
+ const step=Math.max(1,Math.min(64,Math.round(alpha*64))),key=color+"|"+step;
+ const known=glowTextures.get(key);
+ if(known){glowTextures.delete(key);glowTextures.set(key,known);return known;}
+ const canvas=document.createElement("canvas");canvas.width=GLOW_TEXTURE;canvas.height=GLOW_TEXTURE;
+ const g=canvas.getContext("2d");if(!g)return null;
+ const half=GLOW_TEXTURE/2,gradient=g.createRadialGradient(half,half,0,half,half,half);
+ gradient.addColorStop(0,withAlpha(color,step/64));gradient.addColorStop(1,withAlpha(color,0));
+ g.fillStyle=gradient;g.fillRect(0,0,GLOW_TEXTURE,GLOW_TEXTURE);
+ glowTextures.set(key,canvas);
+ if(glowTextures.size>GLOW_LIMIT){const oldest=glowTextures.keys().next().value;if(oldest!==undefined)glowTextures.delete(oldest);}
+ return canvas;
+}
+/** Soft ellipse of one colour fading to nothing: the cached texture when a DOM exists, a live gradient otherwise. */
+function glowEllipse(ctx:CanvasRenderingContext2D,cx:number,cy:number,rx:number,ry:number,color:string,alpha:number):void{
+ const texture=glowTexture(color,alpha);
+ if(texture){ctx.drawImage(texture,cx-rx,cy-ry,rx*2,ry*2);return;}
+ ellipseGradient(ctx,cx,cy,rx,ry,withAlpha(color,alpha),withAlpha(color,0));
+}
 interface LightBox{x:number;y:number;w:number;h:number}
 interface LightLayer extends LightBox{key:string;canvas:HTMLCanvasElement}
 const layers=new WeakMap<CanvasRenderingContext2D,LightLayer>();
@@ -157,7 +182,7 @@ export function drawScreenGlow(ctx:CanvasRenderingContext2D,camera:Projection,x:
  height:number,color:string,strength:number):void{
  if(strength<=0)return;
  const at=iso({x,y},camera,height),z=camera.zoom;
- ellipseGradient(ctx,at.x,at.y,36*z,22*z,withAlpha(color,strength*.8),withAlpha(color,0));
+ glowEllipse(ctx,at.x,at.y,36*z,22*z,color,strength*.8);
 }
 /** How strongly a lit monitor shows against the evening: 0 by day, rising with the
  * same `night` curve that darkens the room. `strength` is the screen's own level
@@ -185,7 +210,7 @@ export function drawMonitorEmission(ctx:CanvasRenderingContext2D,quad:readonly P
  const w=x1-x0,h=y1-y0;
  if(!(w>0&&h>0))return;
  const cx=(x0+x1)/2,cy=(y0+y1)/2;
- ellipseGradient(ctx,cx,cy,w*(.95+.5*night),h*(1.15+.6*night),withAlpha(color,Math.min(.42,e.halo*.8)),withAlpha(color,0));
+ glowEllipse(ctx,cx,cy,w*(.95+.5*night),h*(1.15+.6*night),color,Math.min(.42,e.halo*.8));
  if(e.screen>0){
   const tone=lerpHex(color,"#ffffff",.18);
   ctx.fillStyle=withAlpha(tone,e.screen);
