@@ -47,6 +47,6 @@ jobs:
           curl -fL "$url" -o scripts/ci/runner.tar.gz
           echo "$digest  scripts/ci/runner.tar.gz" | sha256sum -c -
           docker build -f scripts/ci/runner.Dockerfile -t lhs-runner:test scripts/ci
-          docker run --rm --network none --security-opt no-new-privileges:true lhs-runner:test bash -c 'test ! -S /var/run/docker.sock; ! unshare --mount true'
-          docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=push -e GITHUB_REF=refs/heads/main lhs-runner:test /usr/local/bin/lhs-runner-admission
-          if docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=pull_request lhs-runner:test /usr/local/bin/lhs-runner-admission; then exit 1; fi
+          docker run --rm --network none --security-opt no-new-privileges:true lhs-runner:test bash -c 'test ! -S /var/run/docker.sock; test -f "$ACTIONS_RUNNER_HOOK_JOB_STARTED"; test -f "$ACTIONS_RUNNER_HOOK_JOB_COMPLETED"; [[ "$ACTIONS_RUNNER_HOOK_JOB_STARTED" == *.sh && "$ACTIONS_RUNNER_HOOK_JOB_COMPLETED" == *.sh ]]; ! unshare --mount true'
+          docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=push -e GITHUB_REF=refs/heads/main lhs-runner:test /usr/local/bin/lhs-runner-admission.sh
+          if docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=pull_request lhs-runner:test /usr/local/bin/lhs-runner-admission.sh; then exit 1; fi
