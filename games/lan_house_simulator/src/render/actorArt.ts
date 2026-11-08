@@ -809,8 +809,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   } else if(quarter){
     // One recessed eye and a projecting cheek/nose make the 3/4 facing legible.
     blush(ctx,a.kind,[[9.2+lean,-61.8+headShift]]);
-    eye(ctx,-.5+lean,-68.2+headShift,.85,1.6,a.kind);
-    eye(ctx,7.3+lean,-67.5+headShift,1.6,2.1,a.kind,.35);
+    // The far eye is foreshortened, not shrunk to a dot: it keeps its sclera and iris at a narrower width.
+    eye(ctx,.2+lean,-68.2+headShift,1.2,1.95,a.kind,.25);
+    eye(ctx,7.3+lean,-67.5+headShift,1.65,2.1,a.kind,.35);
     segment(ctx,-2.5+lean,-72+headShift,1.5+lean,-72.3+headShift,1,style.hair);
     segment(ctx,5+lean,-71.9+headShift,10+lean,-71.4+headShift,1,style.hair);
     if(a.kind==="clown")ell(ctx,8+lean,-63.2+headShift,3.4,3.1,"#D64C5B");
