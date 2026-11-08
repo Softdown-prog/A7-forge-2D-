@@ -18,6 +18,12 @@ case "$(uname -m)" in
 esac
 echo "Arquitetura detectada: $(uname -m) -> $ARCH"
 
+# Dependências usadas por Actions, Playwright, geração de vídeo e publicação.
+if command -v apt-get >/dev/null 2>&1; then
+  apt-get update -qq
+  DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+    ca-certificates curl git jq rsync tar unzip ffmpeg python3 sudo
+fi
 for command in curl python3 tar sha256sum runuser; do
   command -v "$command" >/dev/null || {
     echo "Comando obrigatório ausente: $command" >&2
@@ -60,6 +66,17 @@ printf '%s  %s\n' "$PACKAGE_SHA" "$TMPDIR/runner.tar.gz" | sha256sum -c -
 
 if ! id "$RUNNER_USER" >/dev/null 2>&1; then
   useradd --create-home --shell /bin/bash "$RUNNER_USER"
+fi
+# Jobs atuais usam Docker (backend) e sudo apt-get (Playwright/ffmpeg).
+# Escopo de sudo limitado aos comandos de pacotes necessários para esses jobs.
+if getent group docker >/dev/null 2>&1; then
+  usermod -aG docker "$RUNNER_USER"
+fi
+if command -v visudo >/dev/null 2>&1; then
+  printf '%s\\n' "$RUNNER_USER ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg" \
+    > /etc/sudoers.d/90-lhsrunner
+  chmod 0440 /etc/sudoers.d/90-lhsrunner
+  visudo -cf /etc/sudoers.d/90-lhsrunner
 fi
 install -d -m 0755 -o "$RUNNER_USER" -g "$RUNNER_USER" "$RUNNER_HOME"
 tar xzf "$TMPDIR/runner.tar.gz" -C "$RUNNER_HOME"
