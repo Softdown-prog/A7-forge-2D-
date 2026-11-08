@@ -85,39 +85,39 @@
   },
   "/sobre-o-jogo/guias/019-planos-de-internet-quedas-de-conexao-e-velocidade/": {
     "title": "19. Planos de internet: Discada, Via rádio, Fibra óptica e quedas de rede — Manual do Jogador",
-    "description": "Compare os três níveis de internet do jogo, reduza o risco e a duração de quedas de sinal e acelere os downloads de jogos com GPU."
+    "description": "Compare internet discada, via rádio e fibra, as épocas de desbloqueio e o efeito da conexão nos serviços e downloads."
   },
   "/sobre-o-jogo/guias/020-playstation-1-bancadas-precos-e-catalogo-de-cds/": {
     "title": "20. PlayStation 1 (2002): bancadas com TV de tubo, tarifas e 13 CDs — Manual do Jogador",
-    "description": "Instale até 4 bancadas de PlayStation 1 a partir de 2002, ajuste o preço por hora dos consoles e conheça os 13 CDs que atraem fãs para o salão."
+    "description": "Instale até 3 bancadas de PlayStation 1 a partir de 2002, compre CDs reais do catálogo do jogo e acompanhe a coleção revelada pelas revistas Top Games."
   },
   "/sobre-o-jogo/guias/021-playstation-2-bancadas-e-catalogo-de-dvds/": {
     "title": "21. PlayStation 2 (2006): bancadas de nova geração e 15 DVDs — Manual do Jogador",
-    "description": "Amplie a área de consoles em 2006 com até 4 bancadas de PlayStation 2, tarifa horária dedicada e 15 jogos em DVD lançados até 2010."
+    "description": "Monte até 3 bancadas PS2 a partir de 2006 e adquira os 15 DVDs originais conforme o ano e as revistas individuais Top Games."
   },
   "/sobre-o-jogo/guias/022-revistas-top-games-carteiro-e-desbloqueio-de-jogos/": {
     "title": "22. Revistas Top Games (2002–2010): entregas do carteiro e desbloqueio de jogos — Manual do Jogador",
-    "description": "Entenda como as 28 edições da revista Top Games revelam os lançamentos de PS1 e PS2, quanto custa cada exemplar e como pedir edições atrasadas."
+    "description": "Acompanhe as 28 revistas Top Games, cada uma dedicada a um jogo PS1 ou PS2, entregues pelo carteiro após a assinatura."
   },
   "/sobre-o-jogo/guias/023-estoque-fornecedores-pedidos-e-entregas/": {
     "title": "23. Estoque, fornecedores, pedidos de reposição e entregas — Manual do Jogador",
-    "description": "Compare os 4 fornecedores de bebidas, doces e salgadinhos, equilibre preço, prazo e confiabilidade e acompanhe os pedidos em trânsito."
+    "description": "Compare os fornecedores reais do catálogo de mercadorias, organize pedidos por lote e acompanhe entregas e estoque."
   },
   "/sobre-o-jogo/guias/024-mercadorias-precos-de-varejo-e-consumo-dos-clientes/": {
-    "title": "24. Mercadorias (2000+), preços de venda e necessidades dos clientes — Manual do Jogador",
-    "description": "Gerencie os 12 produtos detalhados liberados no ano 2000, ajuste os preços nas máquinas e prateleira e entenda como sede e fome geram vendas."
+    "title": "24. Mercadorias de 1998 a 2020: catálogo, preços e necessidades dos clientes — Manual do Jogador",
+    "description": "Gerencie os 12 produtos reais do jogo, com oito disponíveis desde 1998 e novidades em 2001, 2005, 2010 e 2020."
   },
   "/sobre-o-jogo/guias/025-limpeza-lixeiras-faxineiro-e-tecnico/": {
     "title": "25. Equipe e limpeza: lixeiras, faxineiro e técnico de manutenção — Manual do Jogador",
-    "description": "Saiba quando chamar serviços avulsos ou contratar faxineiro e técnico fixos, como funcionam as diárias no fim do mês e o impacto da limpeza."
+    "description": "Contrate faxineiro e técnico por dias trabalhados, acompanhe as lixeiras e saiba quando o reparo precisa de passagem livre."
   },
   "/sobre-o-jogo/guias/026-impressora-precos-por-pagina-e-manutencao/": {
-    "title": "26. Serviço de impressão: compra da impressora, preço por página e reparos — Manual do Jogador",
-    "description": "Transforme o balcão em ponto de impressão rápida, ajuste o valor por página, atenda pedidos avulsos e de sessão e cuide do desgaste do equipamento."
+    "title": "26. Serviço de impressão: páginas, papel, tinta e limite diário — Manual do Jogador",
+    "description": "Compre a impressora por R$ 320, ajuste o preço da página e controle os custos de papel e tinta, sem desgaste fictício."
   },
   "/sobre-o-jogo/guias/027-copiadora-de-cd-e-dvd-precos-e-operacao/": {
-    "title": "27. Copiadora de CD e DVD: gravação de mídias, preços e cuidados — Manual do Jogador",
-    "description": "Instale a torre duplicadora de discos, configure o preço por mídia gravada, aumente o ticket médio no balcão e mantenha a gravadora revisada."
+    "title": "27. Copiadora de CD e DVD: gravação, preços e limite diário — Manual do Jogador",
+    "description": "Adquira a copiadora a partir de 2001, configure tarifas separadas de CD e DVD e acompanhe os custos das mídias."
   },
   "/sobre-o-jogo/guias/028-precos-por-hora-inflacao-historica-e-teto-de-tarifa/": {
     "title": "28. Preços por hora, pacotes de sessão e economia histórica (IPCA) — Manual do Jogador",
@@ -128,16 +128,16 @@
     "description": "Domine o ciclo mensal de aluguel, internet, manutenção, luz e folha salarial, acompanhe a reserva recomendada e analise a ocupação do salão."
   },
   "/sobre-o-jogo/guias/030-divulgacao-reputacao-e-opinioes-dos-clientes/": {
-    "title": "30. Campanhas de divulgação, reputação do salão e opiniões dos clientes — Manual do Jogador",
-    "description": "Impulsione o movimento em +28% por 3 dias com divulgação no bairro, proteja sua nota de reputação e interprete os comentários dos frequentadores."
+    "title": "30. Divulgação no bairro, reputação e avaliações dos clientes — Manual do Jogador",
+    "description": "Contrate panfletagem válida no dia atual para aumentar em 40% a chance de novos visitantes até 20h30."
   },
   "/sobre-o-jogo/guias/031-perfis-de-clientes-escolhas-e-paciencia-na-fila/": {
     "title": "31. Perfis de clientes, escolha de máquinas e paciência na fila — Manual do Jogador",
     "description": "Conheça os quatro perfis de público, como decidem entre PCs e consoles, quanto tempo esperam na fila do balcão e por que alguns desistem."
   },
   "/sobre-o-jogo/guias/032-clientes-vip-requisitos-e-bonus-de-receita/": {
-    "title": "32. Clientes VIP: como atrair e ganhar +25% nas sessões — Manual do Jogador",
-    "description": "Veja os critérios exatos de reputação e qualidade de hardware para atrair clientes VIP e faturar 25% a mais por sessão atendida."
+    "title": "32. Clientes VIP: reputação, atendimento e avaliações — Manual do Jogador",
+    "description": "Entenda quando os clientes VIP podem chegar, como a reputação altera a frequência deles e como avaliam o atendimento."
   },
   "/sobre-o-jogo/guias/033-ampliacoes-do-salao-paredes-portas-e-decoracao/": {
     "title": "33. Construção e decoração: ampliando o salão, divisórias, portas e móveis — Manual do Jogador",
