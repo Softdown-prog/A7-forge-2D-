@@ -6,8 +6,16 @@ on:
       - 'tools/a7_audio_lab/**'
       - '.github/workflows/a7-audio-lab-smoke.yml'
 jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-latest
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
   test:
-    runs-on: ubuntu-latest
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
