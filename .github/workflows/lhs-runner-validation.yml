@@ -1,0 +1,52 @@
+name: LHS isolated runner validation
+on:
+  pull_request:
+    paths: ['scripts/ci/**', '.github/workflows/lhs-runner-*.yml']
+  push:
+    branches: [main, fix/lhs-isolated-vps-runner-20261108]
+    paths: ['scripts/ci/**', '.github/workflows/lhs-runner-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Policy, shell syntax and isolation contract
+        run: |
+          python3 scripts/ci/runner-policy.test.py
+          for file in scripts/ci/*.sh; do bash -n "$file"; done
+          docker compose -f scripts/ci/runner.compose.yaml config --format json > /tmp/compose.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/compose.json'))['services']['runner']
+          assert int(d['mem_limit'])==2147483648 and float(d['cpus'])==2
+          assert not d.get('privileged') and not d.get('ports')
+          assert len(d['volumes'])==1
+          assert d['volumes'][0]['type']=='volume' and d['volumes'][0]['source']=='runner_data' and d['volumes'][0]['target']=='/runner'
+          assert 'no-new-privileges:true' in d['security_opt']
+          assert d.get('network_mode')!='host'
+          PY
+      - name: Build official checksum-verified isolated runner (no registration)
+        run: |
+          set -euo pipefail
+          curl -fsSL https://api.github.com/repos/actions/runner/releases/latest > /tmp/release.json
+          python3 - <<'PY' > /tmp/runner-download
+          import json
+          a=next(a for a in json.load(open('/tmp/release.json'))['assets'] if a['name'].startswith('actions-runner-linux-x64-') and a['name'].endswith('.tar.gz'))
+          assert a['browser_download_url'].startswith('https://github.com/actions/runner/releases/download/')
+          digest=a['digest'].removeprefix('sha256:')
+          assert len(digest)==64 and all(c in '0123456789abcdef' for c in digest)
+          print(a['browser_download_url'],digest)
+          PY
+          read -r url digest < /tmp/runner-download
+          curl -fL "$url" -o scripts/ci/runner.tar.gz
+          echo "$digest  scripts/ci/runner.tar.gz" | sha256sum -c -
+          docker build -f scripts/ci/runner.Dockerfile -t lhs-runner:test scripts/ci
+          docker run --rm --network none --security-opt no-new-privileges:true lhs-runner:test bash -c 'test ! -S /var/run/docker.sock; ! unshare --mount true'
+          docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=push -e GITHUB_REF=refs/heads/main lhs-runner:test /usr/local/bin/lhs-runner-admission
+          if docker run --rm --network none -e GITHUB_REPOSITORY=Softdown-prog/A7-forge-2D- -e GITHUB_EVENT_NAME=pull_request lhs-runner:test /usr/local/bin/lhs-runner-admission; then exit 1; fi

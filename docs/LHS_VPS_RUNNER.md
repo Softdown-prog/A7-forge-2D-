@@ -1,80 +1,56 @@
-# LHS: VPS como runner prioritário do GitHub Actions
+# LHS — runner VPS isolado e fallback
 
-## Objetivo e estado
+## Destino dos jobs
 
-Os workflows Linux do repositório usam `.github/workflows/lhs-runner-route.yml` antes dos jobs. Esse seletor verifica o estado de um runner Linux com a label **lhs-vps** e:
+Um runner Linux `lhs-vps-isolated` recebe push na main e disparos manuais pelo
+proprietário. PRs/forks, push em branches não revisadas e outros eventos usam
+GitHub-hosted. Um hook no runner também recusa esses eventos antes dos passos.
+Os três workflows que precisam de Docker (backend, clean-angular-rewrite e
+sac-angular-diagnostic) continuam no GitHub. Windows mantém o runner original.
 
-- **Online**: escolhe `["self-hosted","Linux","lhs-vps"]` (VPS prioritária).
-- **Offline, não registrado, falha de API ou segredo ausente**: mantém o executor Ubuntu do GitHub originalmente usado pelo workflow (`ubuntu-latest` ou `ubuntu-24.04`).
-- Jobs Windows de verdade, como `a7-forge-2d-windows.yml`, continuam com `[self-hosted, Windows, X64]`.
+O container `lhs-ci-runner` tem 2 CPUs, 2 GiB RAM, 768 processos, logs 2 × 10 MiB e
+nenhuma porta publicada. Executa um job por vez. Não recebe socket Docker,
+diretórios de produção, senhas do host ou redes privadas dos projetos. É root
+somente no container de CI, para apt/Playwright funcionarem; não tem privileged,
+host network ou SYS_ADMIN. Não há novo usuário com sudo/Docker no host.
+O volume `lhs_ci_runner_data` contém apenas dados/ferramentas do runner. Um hook
+remove checkouts após o job; ferramentas em cache são reutilizadas.
 
-O fallback é decidido **antes de enviar cada job**. O GitHub Actions não oferece failover nativo automático de um job já atribuído à VPS caso ela caia depois dessa escolha. Nessa situação, reexecute o workflow quando voltar ou use temporariamente o hosted desabilitando/removendo o segredo de seleção.
+## Disponibilidade sem copiar PAT amplo
 
-O roteador preserva os testes, os artefatos, as condições de PR, o controle de concorrência, os gates de produção e a seleção de commit da publicação.
+O secret `LHS_RUNNER_STATUS_TOKEN` aceita chave SSH dedicada somente de leitura
+ou PAT Administration/read restrito a este repositório. Não copiar o token amplo
+do gh CLI. Com SSH, a conta `lhsstatus` tem forced-command e restrict: só pode ler
+um JSON, sem sudo, Docker, PTY, forwarding ou shell livre. O host recebe apenas a
+chave pública; a privada fica no secret. A host key pública está fixada no código.
 
-## 1. Registrar um runner separado na VPS
+Um timer atualiza o snapshot a cada 30s com a saúde do listener e conexão HTTPS
+ao GitHub. O roteador recusa snapshot indisponível/unhealthy, futuro ou com mais
+de 90s e retorna ao GitHub-hosted. É saúde local, não a API oficial de runners;
+a instalação também confirma online pela API e executa um workflow real.
 
-Acesse a VPS por SSH e execute:
+A seleção é anterior à fila. Uma queda posterior não migra o job já atribuído:
+é necessário reexecutar. Erro de teste não é tratado como queda da VPS.
 
-```bash
-curl -fsSL \
-  https://raw.githubusercontent.com/Softdown-prog/A7-forge-2D-/main/scripts/ci/install-lhs-vps-runner.sh \
-  -o /tmp/install-lhs-vps-runner.sh
-sudo bash /tmp/install-lhs-vps-runner.sh
-```
+## Instalação e recuperação
 
-Quando solicitar o token temporário, obtenha um **novo** em:
+Revisar uma revisão consistente de scripts/ci. Como administrador, fornecer os
+arquivos privados temporários RUNNER_TOKEN_FILE (registro novo/temporário) e
+STATUS_PUBLIC_KEY_FILE; executar install-lhs-vps-runner.sh. O instalador detecta
+x64/ARM64 e exige o SHA-256 oficial antes de construir a imagem Ubuntu 24.04.
+Não instala pacotes no host, altera runners existentes nem sobrescreve volume ou
+registro existente. Remover o arquivo de token após registro. Não salvar chaves
+no repositório. Os passos apt dos jobs afetam apenas o container de CI.
 
-`A7-forge-2D- > Settings > Actions > Runners > New self-hosted runner`.
+Docker e restart unless-stopped mantêm o runner no boot, sem reiniciar a VPS.
+Atualizações do runner ficam em seu volume. Para reversão, parar somente
+lhs-ci-runner, desativar lhs-runner-status.timer e retirar seu registro GitHub;
+a ausência do probe seleciona GitHub-hosted. Não apagar volumes de projetos.
 
-**Não cole o token no chat nem o salve no Git.** Se um token foi mostrado em captura de tela, descarte-o e gere outro (ele também expira rapidamente).
+## Validação
 
-O instalador detecta `uname -m`:
-
-- `x86_64` → pacote oficial `linux-x64`
-- `aarch64` / `arm64` → pacote oficial `linux-arm64`
-
-Ele valida o SHA-256 do arquivo oficial, cria `/opt/lhs-actions-runner` e um usuário de serviço `lhsrunner`, registra a label `lhs-vps`, adiciona suporte a Docker e `sudo apt-get` para os jobs existentes e habilita um serviço systemd persistente. Não remove ou substitui runners de outros projetos.
-
-**Dependências:** o instalador prepara Git, rsync, ffmpeg, utilitários e acesso ao Docker **caso o daemon já esteja instalado**. O workflow `lhs-backend.yml` também usa `pwsh`; instale PowerShell 7 na VPS antes de executar essa validação nela. Para Playwright, a instalação de Chromium/dependências já existe nos workflows e precisa de `sudo apt-get`.
-
-A VPS deve ter saída HTTPS para o GitHub. Nenhuma porta de entrada exclusiva para o runner é necessária.
-
-## 2. Ativar seleção automática com fallback
-
-O GitHub exige permissão administrativa de **leitura** para consultar a lista de runners do repositório. O `GITHUB_TOKEN` comum do workflow não possui essa permissão.
-
-Crie um **fine-grained personal access token** limitado ao repositório `Softdown-prog/A7-forge-2D-`, com `Repository permissions > Administration: Read-only`. Não use o token temporário de registro para isso.
-
-Salve esse token em:
-
-`Settings > Secrets and variables > Actions > New repository secret`
-
-Nome exato:
-
-```text
-LHS_RUNNER_STATUS_TOKEN
-```
-
-Sem esse segredo, a rota retorna para o GitHub-hosted por padrão; isso evita deixar CI em fila antes da VPS ficar pronta. A execução do seletor em GitHub-hosted é breve; **a compilação e os testes continuam na VPS** quando ela está online.
-
-## 3. Diagnóstico e verificação
-
-Em `Actions > LHS | diagnostico do runner > Run workflow`, execute o diagnóstico manual.
-
-O log de `select-runner` deve indicar `VPS online`. O job `check` informa `RUNNER_NAME`, `RUNNER_ARCH`, `uname -m`, Docker, ffmpeg, rsync, PowerShell e outras capacidades.
-
-Verifique em `Settings > Actions > Runners` que a VPS aparece como **Online** com a label **lhs-vps**. Confira também se o serviço sobrevive ao reboot:
-
-```bash
-sudo systemctl list-units --type=service 'actions.runner*'
-```
-
-A VPS recebe inicialmente **um único runner**. Com isso não se iniciam vários builds Chromium/Docker em paralelo sem necessidade numa VPS que hospeda outras aplicações.
-
-## Observações de operação
-
-- Em um único runner, jobs simultâneos aguardam fila. O seletor considera um runner **online** elegível mesmo quando marcado como `busy`, priorizando a VPS.
-- Para fallback quando a VPS está offline antes do envio do job, basta manter o segredo de consulta funcional.
-- Falhas de compilação não são tratadas como queda da VPS: testes reprovados devem continuar reprovados.
-- Permissões de Docker e instalação de pacotes dão privilégios elevados ao usuário `lhsrunner`. Esse ambiente executa código de PRs admitidos pelos workflows atuais. Mantenha esse runner dedicado ao projeto e não armazene segredos diretamente em seu diretório de trabalho.
+O diagnóstico manual informa nome/arquitetura, confirma ausência do socket e de
+credenciais do host, verifica política, compila o LHS e executa regressões.
+O workflow de validação roda em GitHub-hosted e testa o build da imagem,
+limites, admissão e recusa de PR. Código/CI não comprovam instalação: confirmar
+online na API GitHub e nome do runner no job realmente executado.

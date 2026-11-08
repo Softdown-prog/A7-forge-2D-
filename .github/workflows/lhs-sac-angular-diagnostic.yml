@@ -17,6 +17,7 @@ jobs:
     uses: ./.github/workflows/lhs-runner-route.yml
     with:
       hosted_label: ubuntu-24.04
+      requires_docker: true
     secrets:
       runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
 
