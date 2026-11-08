@@ -248,6 +248,15 @@ try{
       await writeFile(resolve(output,"lhs_full_scene_lifecycle.png"),
         Buffer.from(lifecycle,"base64"));
     }
+    // The simulation only advances while no panel is open; opening the shop or the layout
+    // editor freezes it. Which minute that happens at therefore depends on how long the page
+    // took to render, and between 10:35 and 10:37 the fixture's arriving customer stands on the
+    // relocation destination ("Espere o cliente sair da posição escolhida."). Let the clock
+    // reach 10:45 first: with this fixture every minute from 10:38 to 12:05 is free.
+    await page.waitForFunction(()=>{
+      const m=/(\d{2}):(\d{2})\s*$/.exec(document.querySelector("#calendar-hud")?.textContent??"");
+      return !!m&&Number(m[1])*60+Number(m[2])>=10*60+45;
+    });
     await page.locator("#open-shop").click();
     await page.locator('[data-shop-category="decoration"]').click();await page.locator('[data-buy="plant"]').click();
     await page.locator("#placement-toolbar").waitFor({state:"visible"});

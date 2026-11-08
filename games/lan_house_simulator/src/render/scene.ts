@@ -961,11 +961,14 @@ export class SceneRenderer {
     const ctx=this.ctx,x=28,y=28,label=w>8?"SALÃO AMPLIADO":"PRIMEIRAS CONEXÕES";
     ctx.save();
     // Terminal plate: soft drop shadow, rounded corners, brushed gradient and a bevel.
-    ctx.shadowColor="rgba(0,0,0,.35)";ctx.shadowBlur=12;ctx.shadowOffsetY=4;
+    // Soft drop shadow from stacked translucent plates: shadowBlur is avoided on purpose,
+    // this plate is repainted every frame and blur is costly on low-end Android.
+    for(const [grow,drop,alpha] of [[5,6,.07],[3,5,.09],[1,3,.14]] as const){
+      ctx.fillStyle="rgba(0,0,0,"+alpha+")";ctx.beginPath();ctx.roundRect(x-grow,y+drop-grow,210+grow*2,50+grow*2,6+grow);ctx.fill();
+    }
     const plate=ctx.createLinearGradient(x,y,x,y+50);
     plate.addColorStop(0,"rgba(34,60,54,0.94)");plate.addColorStop(1,"rgba(22,40,37,0.94)");
     ctx.fillStyle=plate;ctx.beginPath();ctx.roundRect(x,y,210,50,6);ctx.fill();
-    ctx.shadowColor="transparent";ctx.shadowBlur=0;ctx.shadowOffsetY=0;
     ctx.strokeStyle="#5e7b52";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x+.5,y+.5,209,49,6);ctx.stroke();
     ctx.strokeStyle="rgba(255,255,255,.08)";ctx.beginPath();ctx.moveTo(x+6,y+1.5);ctx.lineTo(x+204,y+1.5);ctx.stroke();
     ctx.fillStyle=theme.mint;ctx.fillRect(x+13,y+14,9,9);
@@ -980,9 +983,10 @@ export class SceneRenderer {
   }
   private hudInside(ctx:CanvasRenderingContext2D,s:GameState):void {
     ctx.save();
-    ctx.shadowColor="rgba(0,0,0,.3)";ctx.shadowBlur=10;ctx.shadowOffsetY=3;
+    for(const [grow,drop,alpha] of [[4,4,.07],[2,3,.1]] as const){
+      ctx.fillStyle="rgba(0,0,0,"+alpha+")";ctx.beginPath();ctx.roundRect(18-grow,558+drop-grow,310+grow*2,29+grow*2,5+grow);ctx.fill();
+    }
     ctx.fillStyle="rgba(25,46,42,.9)";ctx.beginPath();ctx.roundRect(18,558,310,29,5);ctx.fill();
-    ctx.shadowColor="transparent";ctx.shadowBlur=0;ctx.shadowOffsetY=0;
     ctx.strokeStyle="rgba(94,123,82,.8)";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(18.5,558.5,309,28,5);ctx.stroke();
     ctx.fillStyle=theme.mint;ctx.fillRect(29,571,5,5);
     ctx.fillStyle="rgba(185,215,163,.35)";ctx.fillRect(28,570,7,7);ctx.fillStyle=theme.mint;ctx.fillRect(29,571,5,5);
