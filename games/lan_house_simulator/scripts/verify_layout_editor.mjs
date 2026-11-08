@@ -50,12 +50,12 @@ try{
   const tap=await page.evaluate(async()=>{
    const [{cameraForGame,iso}]=await Promise.all([import("./js/render/isometric.js")]);
    const s=JSON.parse(localStorage.getItem("lhs-save-v1")),p=iso({x:3.05,y:3.35},cameraForGame(s));
-   const c=document.querySelector("#game"),v=document.querySelector("#scene-viewport"),scale=c.getBoundingClientRect().width/c.width;
+   const c=document.querySelector("#game"),v=document.querySelector("#scene-viewport"),scale=c.getBoundingClientRect().width/1000;
    v.scrollLeft=Math.max(0,p.x*scale-v.clientWidth/2);v.scrollTop=Math.max(0,p.y*scale-v.clientHeight/2);
    const r=c.getBoundingClientRect();return {nativeX:p.x,nativeY:p.y};
   });
   await page.evaluate(()=>new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok))));
-  const tapNow=await page.evaluate(({x,y})=>{const c=document.querySelector("#game"),r=c.getBoundingClientRect();return {x:r.left+x*r.width/c.width,y:r.top+y*r.height/c.height};},{x:tap.nativeX,y:tap.nativeY});
+  const tapNow=await page.evaluate(({x,y})=>{const c=document.querySelector("#game"),r=c.getBoundingClientRect();return {x:r.left+x*r.width/1000,y:r.top+y*r.height/610};},{x:tap.nativeX,y:tap.nativeY});
   if(width<700)await page.touchscreen.tap(tapNow.x,tapNow.y);else await page.mouse.click(tapNow.x,tapNow.y);
   await press(page.locator("#layout-rotate"));await press(page.locator("#layout-confirm"));
   console.log("checking",width,await page.locator("#layout-message").textContent());
@@ -67,9 +67,9 @@ try{
   await page.screenshot({path:resolve(output,"layout_"+width+".png")});
   await press(page.locator("#layout-close"));await press(page.locator("#open-shop"));await press(page.locator('[data-shop-category="building"]'));await press(page.locator('[data-buy="wall"]'));
   const beforeWall=await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")));
-  await page.evaluate(async()=>{const {cameraForGame,iso}=await import("./js/render/isometric.js"),s=JSON.parse(localStorage.getItem("lhs-save-v1")),p=iso({x:5.5,y:4},cameraForGame(s)),c=document.querySelector("#game"),v=document.querySelector("#scene-viewport"),scale=c.getBoundingClientRect().width/c.width;v.scrollLeft=Math.max(0,p.x*scale-v.clientWidth/2);v.scrollTop=Math.max(0,p.y*scale-v.clientHeight/2);});
+  await page.evaluate(async()=>{const {cameraForGame,iso}=await import("./js/render/isometric.js"),s=JSON.parse(localStorage.getItem("lhs-save-v1")),p=iso({x:5.5,y:4},cameraForGame(s)),c=document.querySelector("#game"),v=document.querySelector("#scene-viewport"),scale=c.getBoundingClientRect().width/1000;v.scrollLeft=Math.max(0,p.x*scale-v.clientWidth/2);v.scrollTop=Math.max(0,p.y*scale-v.clientHeight/2);});
   await page.evaluate(()=>new Promise(ok=>requestAnimationFrame(()=>requestAnimationFrame(ok))));
-  const edge=await page.evaluate(async()=>{const {cameraForGame,iso}=await import("./js/render/isometric.js"),p=iso({x:5.5,y:4},cameraForGame(JSON.parse(localStorage.getItem("lhs-save-v1")))),c=document.querySelector("#game"),r=c.getBoundingClientRect();return {x:r.left+p.x*r.width/c.width,y:r.top+p.y*r.height/c.height};});
+  const edge=await page.evaluate(async()=>{const {cameraForGame,iso}=await import("./js/render/isometric.js"),p=iso({x:5.5,y:4},cameraForGame(JSON.parse(localStorage.getItem("lhs-save-v1")))),c=document.querySelector("#game"),r=c.getBoundingClientRect();return {x:r.left+p.x*r.width/1000,y:r.top+p.y*r.height/610};});
   if(width<700)await page.touchscreen.tap(edge.x,edge.y);else await page.mouse.click(edge.x,edge.y);
   assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem("lhs-save-v1")).interiorWalls?.length??0),beforeWall.interiorWalls?.length??0,"Primeiro toque apenas seleciona");
   await press(page.locator("#turn-wall"));await press(page.locator("#confirm-wall"));
