@@ -1,4 +1,4 @@
-import {drawActor,type ActorRender} from "./actorArt.js";
+import {drawActor,OWNER_IDLE_RATE,type ActorRender} from "./actorArt.js";
 import {walkPhase,WALK_CYCLE_DISTANCE} from "./walkCycle.js";
 import {iso,type Projection} from "./isometric.js";
 import {contextScale} from "./sceneSurface.js";
@@ -49,16 +49,22 @@ export function actorRequiresLiveGamepadRig(a:Pick<ActorRender,"modernGamepad"|"
  * Rasterization runs outside the animation/input thread. A pending frame uses
  * the original art immediately; it never blocks or pauses an actor to warm up.
  * Work, seat transitions and premium effects keep their continuous renderer. */
+/** Which actors may be served from rasterized frames. Work, seat transitions and premium effects keep
+ * their continuous renderer. The owner is cacheable only while idle (breathing and a light gesture,
+ * one loop); printing, copying, receiving and the cyber costume stay live. */
+export function actorSpriteEligible(a:ActorRender,zoom:number):boolean{
+ const pose=a.pose??"idle";
+ if(actorRequiresLiveGamepadRig(a)||zoom>1||a.kind==="cleaner"||a.kind==="technician"||a.kind==="postman"||a.premiumHeadset||a.reaction)return false;
+ if(a.kind==="owner")return pose==="idle"&&!a.premiumCyber;
+ if(pose!=="idle"&&pose!=="walking"&&pose!=="sitting")return false;
+ return !(pose==="sitting"&&(a.transition??1)<1);
+}
 export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a:ActorRender):void{
  const pose=a.pose??"idle";
- if(actorRequiresLiveGamepadRig(a)||camera.zoom>1||a.kind==="owner"||a.kind==="cleaner"||a.kind==="technician"||a.kind==="postman"||a.premiumHeadset||a.reaction||
-    (pose!=="idle"&&pose!=="walking"&&pose!=="sitting")||
-    (pose==="sitting"&&(a.transition??1)<1)){
-  drawActor(ctx,camera,a);return;
- }
+ if(!actorSpriteEligible(a,camera.zoom)){drawActor(ctx,camera,a);return;}
  // Share palettes, not customer identities or interpolated world coordinates.
  const id=a.kind==="regular"?(Math.abs(Math.trunc(a.id))||0)%4:0;
- const rate=pose==="walking"?7.7:pose==="sitting"?(a.gamepad?8:5.2):0;
+ const rate=pose==="walking"?7.7:pose==="sitting"?(a.gamepad?8:5.2):a.kind==="owner"?OWNER_IDLE_RATE:0;
  const offset=pose==="walking"?a.id*.27:pose==="sitting"&&!a.gamepad?a.id*.37:0;
  const angle=pose==="walking"&&a.walkDistance!==undefined?walkPhase(a.walkDistance):a.time*rate+offset;
  const phase=rate?((Math.round(angle/TAU*FRAMES)%FRAMES)+FRAMES)%FRAMES:0;
