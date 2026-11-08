@@ -267,7 +267,8 @@ try{
           ?iso({x:slot.x+0.33,y:0.01},cameraForRoom(8),137)
           :iso({x:slot.x+0.25,y:slot.y+0.20},cameraForRoom(8),9);
         const canvas=document.querySelector("#game"),bounds=canvas.getBoundingClientRect();
-        return {x:bounds.left+pos.x*bounds.width/canvas.width,y:bounds.top+pos.y*bounds.height/canvas.height};
+        // Scene units are fixed at 1000x610; the bitmap follows the display (devicePixelRatio).
+        return {x:bounds.left+pos.x*bounds.width/1000,y:bounds.top+pos.y*bounds.height/610};
       },slotId);
       await page.mouse.move(point.x,point.y);
       await page.mouse.click(point.x,point.y);
@@ -290,7 +291,7 @@ try{
       const slot=FURNITURE_SLOTS.find(p=>p.id==="floor-3");
       const at=iso({x:slot.x+0.25,y:slot.y+0.20},cameraForRoom(8),9);
       const canvas=document.querySelector("#game"),bounds=canvas.getBoundingClientRect();
-      return {x:bounds.left+at.x*bounds.width/canvas.width,y:bounds.top+at.y*bounds.height/canvas.height};
+      return {x:bounds.left+at.x*bounds.width/1000,y:bounds.top+at.y*bounds.height/610};
     });
     await page.mouse.move(destination.x,destination.y);
     await clickFurnitureSlot("floor-3");

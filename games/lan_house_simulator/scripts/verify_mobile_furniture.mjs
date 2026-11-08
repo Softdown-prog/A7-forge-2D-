@@ -47,8 +47,9 @@ try{
  async function tapCanvas(p){
   await page.evaluate(({x,y})=>{
    const canvas=document.querySelector("#game"),view=document.querySelector("#scene-viewport");
-   view.scrollLeft=x/canvas.width*canvas.offsetWidth-view.clientWidth/2;
-   view.scrollTop=y/canvas.height*canvas.offsetHeight-view.clientHeight/2;
+   // x/y are scene units (1000x610), independent of the backing-store resolution.
+   view.scrollLeft=x/1000*canvas.offsetWidth-view.clientWidth/2;
+   view.scrollTop=y/610*canvas.offsetHeight-view.clientHeight/2;
    view.scrollIntoView({block:"center",behavior:"instant"});
   },p);
   const rect=await page.locator("#game").boundingBox();
