@@ -4,9 +4,17 @@ on:
 permissions:
   contents: read
 jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-latest
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
   staged-hardware:
     name: audit-staged-2005-2012
-    runs-on: ubuntu-latest
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
