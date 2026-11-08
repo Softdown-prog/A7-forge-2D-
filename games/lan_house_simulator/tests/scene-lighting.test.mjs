@@ -47,3 +47,17 @@ test("colour helpers are pure and clamp their inputs",()=>{
  assert.notEqual(cellNoise(3,4),cellNoise(4,3));
  for(let i=0;i<50;i++){const n=cellNoise(i,i*7,2);assert.ok(n>=0&&n<1);}
 });
+
+test("per-frame painters keep the draw batch intact: no blend modes or blur in the lighting pass or the HUD plates",()=>{
+ // Comments may name the banned calls to explain why they are banned; only code counts.
+ const read=file=>readFileSync(new URL("../src/render/"+file,import.meta.url),"utf8").replace(/\/\*[\s\S]*?\*\//g,"").replace(/\/\/.*$/gm,"");
+ const lighting=read("lighting.ts");
+ // The first version used lighter / multiply / soft-light over the whole frame and cost
+ // several milliseconds per frame without GPU compositing (about +7 ms at 2x).
+ assert.doesNotMatch(lighting,/globalCompositeOperation\s*=\s*["'](?:lighter|multiply|soft-light|screen|overlay)/,"lighting uses source-over only");
+ assert.doesNotMatch(lighting,/shadowBlur/,"lighting never blurs");
+ const scene=read("scene.ts");
+ const sign=scene.slice(scene.indexOf("private sign("));
+ assert.doesNotMatch(sign.slice(0,sign.indexOf("private hudInside(")+900),/shadowBlur/,"the sign and HUD plate are repainted every frame and must not blur");
+ assert.match(lighting,/LIGHT_STEPS/,"the localized light is cached per quantized hour");
+});

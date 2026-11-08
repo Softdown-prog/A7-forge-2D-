@@ -59,9 +59,9 @@ personagens apareciam borrados.
 | Fase | Horário | Efeito |
 | --- | --- | --- |
 | `day` | 10:00–16:30 | vidro azul-céu, feixes suaves sob as janelas |
-| `golden` | 16:30–18:20 | vidro âmbar, lavagem quente *soft-light* |
+| `golden` | 16:30–18:20 | vidro âmbar, lavagem quente translúcida |
 | `dusk` | 18:20–19:40 | transição contínua (smoothstep) |
-| `night` | 19:40–22:00 | vidro escuro refletindo as lâmpadas, tinta azulada *multiply*, poças de luz mais fortes |
+| `night` | 19:40–22:00 | vidro escuro refletindo as lâmpadas, tinta azulada translúcida, poças de luz mais fortes |
 
 `drawSceneLighting` é pintado **depois dos objetos ordenados por profundidade e
 antes** de marcadores, placa e HUD interno. Cada monitor ligado projeta um brilho
@@ -95,11 +95,20 @@ Verificação: `tests/actor-art-polish.test.mjs` (contornos, 13 tipos × 10 pose
 
 ## 6. Desempenho
 
-O custo por frame cresce com a área em pixels do bitmap. Os limites (3×/2×,
-6 Mpx) e a quantização em décimos mantêm os caches reutilizáveis durante o
-redimensionamento do visor. Fundo, mobília e atores continuam cacheados; a
-passagem de luz são poucos gradientes por frame; o brilho de monitor é um
-gradiente por estação. O limite de 30 desenhos/s em toque permanece.
+Medido em Chromium headless **sem aceleração por GPU** (pior caso: toda a composição é por software), cena de teste com dono, um cliente sentado e um andando às 17:30 simuladas, ms por quadro de `SceneRenderer.draw`:
+
+| Versão | 1× | 1,1× (tela 1440 px, DPR 1) | 2× (retina) |
+| --- | ---: | ---: | ---: |
+| Antes do refator (só existe em 1×; em outras escalas o código antigo não usava cache) | 2,2 | n/a | n/a |
+| Primeira versão desta refatoração | 6,2 | 6,0 | 15 |
+| Atual | 3,8 | 4,9 | 9,5 |
+
+A primeira versão custava muito por dois motivos, medidos por decomposição (desligando cada peça):
+
+- **Modos de mistura sobre o quadro inteiro** (`lighter`, `multiply`, `soft-light`) a cada frame: cerca de 2,3 ms em 1× e 7 ms em 2×. Trocar de modo de mistura força o navegador a esvaziar o lote de desenho. A luz localizada (feixes e poças) agora é renderizada numa camada em cache, por hora quantizada em 24 passos, e composta com mistura normal; as lavagens de cor são `source-over`. Limitar a lavagem ao retângulo do salão foi tentado e descartado: tingia o fundo dentro do retângulo e deixava uma caixa visível à noite, sem ganho mensurável.
+- **`shadowBlur` na placa e no contador** repintados todo quadro, contra uma convenção já registrada no projeto (aquário RGB: "sem shadowBlur, custo baixo no Android"). Trocado por sombras em camadas translúcidas.
+
+O custo em 1× continua cerca de 1,6 ms acima do original (janelas dinâmicas, brilho dos monitores, capacho, gradientes) e cresce com a área em pixels. Em navegadores com canvas acelerado por GPU a diferença tende a ser bem menor, mas isso **não foi medido em aparelho físico**. Os limites de escala (3×, 2× em toque, 6 Mpx), o cache do fundo e dos móveis e o teto de 30 desenhos/s em toque seguem valendo. `tests/scene-lighting.test.mjs` impede a volta de modos de mistura e `shadowBlur` nesse caminho.
 
 ## 7. Verificação
 
@@ -126,3 +135,5 @@ de assets aprovados.
   personagens em qualquer escala.
 - A luz não reage a clima, eventos ou cosméticos; isso é decisão de contrato,
   não limitação técnica.
+- Os scripts de captura e verificação (`capture_scene.mjs`, `verify_mobile_furniture.mjs`) convertem
+  coordenadas pelas unidades lógicas 1000×610, não por `canvas.width`.
