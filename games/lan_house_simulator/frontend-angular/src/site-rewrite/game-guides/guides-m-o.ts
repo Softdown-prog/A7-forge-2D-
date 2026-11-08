@@ -66,50 +66,49 @@ export const guidesMO:readonly GameGuide[]=[
   path:'/sobre-o-jogo/guias/032-clientes-vip-requisitos-e-bonus-de-receita/',
   groupCode:'M',
   groupTitle:'Clientes, VIPs e dinâmica do salão',
-  title:'Clientes VIP: como atrair e ganhar +25% nas sessões',
-  summary:'Veja os critérios exatos de reputação e qualidade de hardware para atrair clientes VIP e faturar 25% a mais por sessão atendida.',
-  unlockBadge:'Quando reputação ≥ 78 e houver PC de nível 2+',
+  title:"Clientes VIP: reputação, atendimento e avaliações",
+  summary:"Entenda quando os clientes VIP podem chegar, como a reputação altera a frequência deles e como avaliam o atendimento.",
+  unlockBadge:"VIPs elegíveis a partir de 55 pontos de reputação",
   uiPath:'Administrar → Computadores → Receita por PC (coluna VIP)',
   whatIs:[
-   'Os Clientes VIP são frequentadores especiais de alto poder aquisitivo que passam a visitar sua lan house quando o estabelecimento atinge um padrão elevado de reputação e qualidade de computadores.',
-   'Todo cliente VIP atendido paga um bônus de +25% sobre o valor total da sessão no balcão (multiplicador de 1,25x, arredondado para cima) e traz uma carteira com 35% mais dinheiro para contratar pacotes longos e consumir lanches.'
+   "Clientes VIP são um tipo de visitante especial do salão. Eles usam o mesmo fluxo de atendimento e são identificados no registro de sessões quando recebem atendimento.",
+   "A aparição depende da reputação e de uma seleção determinística por visitante e dia do jogo. Não exige uma compra de equipamento específico ou uma tarifa exclusiva.",
   ],
   whyItMatters:[
-   'Atrair clientes VIP aumenta diretamente o faturamento por hora de cada máquina sem que você precise subir o preço para os clientes comuns do bairro.',
-   'Além disso, a tabela Administrar → Computadores → Receita por PC possui uma coluna exclusiva chamada VIP para você acompanhar quantas sessões especiais cada computador já recebeu.'
+   "VIPs ajudam a perceber a qualidade do atendimento: esperas demoradas, preço elevado sem hardware compatível e interrupções de internet afetam a avaliação que deixam.",
+   "A administração pode registrar atendimentos VIP por computador, permitindo observar esse público separadamente sem inventar receitas extras.",
   ],
   whenAvailable:[
-   'Os clientes VIP começam a aparecer automaticamente assim que você cumpre duas condições simultâneas no salão: Reputação igual ou superior a 78 pontos E pelo menos 1 computador ligado com Hardware Nível 2+ (ou bônus de satisfação da máquina de pelo menos +8 pontos percentuais).'
+   "Com reputação inferior a 55, novos visitantes não são marcados como VIP. A partir de 55, eles podem aparecer conforme o cálculo de chegada do jogo.",
+   "Na faixa de reputação entre 55 e 69, o critério de chegada usa 7%; de 70 a 84 usa 12%; a partir de 85 usa 19%. A seleção é determinística e esses percentuais não são garantia de chegada em cada visita.",
   ],
   howToUse:[
-   'Eleve a reputação da sua lan house para 78 pontos ou mais mantendo o salão limpo, sem quedas longas de internet e com preços bem avaliados.',
-   'Atualize pelo menos 1 computador para o Nível 2 ou 3 (por exemplo, com o Kit Bairro 2000 ou Turbo 2003, ou adicionando peças, GPU ou estação Programador Linux que somem +8 pontos percentuais de bônus).',
-   'Mantenha suas melhores máquinas ligadas e em bom estado de conservação.',
-   'Acompanhe a chegada dos VIPs no salão e confira o contador na coluna VIP dentro de Administrar → Computadores → Receita por PC.'
+   "Mantenha a reputação acima de 55 oferecendo bom atendimento, preços compatíveis, internet estável e máquinas em condições de uso.",
+   "Para receber VIPs mais frequentemente, tente alcançar 70 ou 85 de reputação. Não é necessário adquirir um PC de nível 2 apenas para liberar esse tipo de cliente.",
+   "Atenda o visitante normalmente pelo balcão e deixe que ele escolha um equipamento disponível conforme as decisões de cliente do jogo.",
+   "Consulte os indicadores de atendimento e receita por PC para identificar as sessões marcadas como VIP.",
   ],
   whatHappensNext:[
-   'Com os requisitos ativos, cerca de 1 em cada 5 visitantes elegíveis (20%) entra como Cliente VIP.',
-   'Ao ser atendido no balcão, o VIP escolhe sempre o computador livre com o maior bônus de satisfação do salão, contrata sessões mais longas e paga +25% sobre o valor do pacote.'
+   "O cliente VIP paga a tarifa normal da sessão efetivamente contratada, com eventuais adicionais de jogo GPU aplicados pelas mesmas regras de preço de outras sessões.",
+   "A opinião do VIP pode contribuir positivamente ou negativamente para a reputação conforme o hardware, a espera, a conexão e a tarifa cobrada.",
   ],
   costsAndLimits:[
-   'Requisito 1: Reputação do salão igual ou superior a 78 pontos.',
-   'Requisito 2: Pelo menos 1 PC ligado e pronto para sessão com Nível de hardware 2 ou 3, ou bônus de satisfação da máquina de pelo menos +8 pontos percentuais.',
-   'Bônus financeiro: +25% no pagamento da sessão e +35% de saldo inicial na carteira do visitante.',
-   'Exigência do VIP na avaliação: se um VIP acabar caindo em uma máquina muito básica (bônus abaixo de +8 p.p.), ele aplica uma leve penalidade na nota de satisfação da sessão; se sentar em uma máquina de ponta (bônus de +14 p.p. ou mais), concede um bônus extra de avaliação.'
+   "Limiar de elegibilidade de novos VIPs: reputação 55, não 78.",
+   "Critério de chegada: 7% com reputação de 55 a 69, 12% de 70 a 84, e 19% de 85 a 100; calculado deterministicamente por visitante e dia.",
+   "Não há multiplicador universal de 25% no preço da sessão VIP nem bônus automático de 35% na carteira do cliente; o motor cobra a sessão contratada.",
+   "O perfil VIP pode aguardar até 19 minutos na fila, exceto quando o visitante também tem perfil de sessão rápida, cujo limite é de 8 minutos.",
+   "A avaliação especial de VIP considera qualidade do equipamento, preço, minutos de espera e tempo de falta de internet.",
   ],
   commonProblems:[
-   {
-    problem:'Minha reputação está em 85, mas ainda tenho 0 atendimentos na coluna VIP.',
-    solution:'Se todos os seus computadores ainda estiverem no Nível 1 inicial de 1998 (sem upgrade de processador/kit e sem bônus de +8 p.p.), os VIPs não são habilitados. Faça o upgrade de pelo menos um PC para o Kit Bairro 2000 (ou instale uma Estação Programador 99) que os VIPs começarão a entrar!'
-   },
-   {
-    problem:'Eu recebia clientes VIP todos os dias, mas eles sumiram depois de uma multa ou queda de internet.',
-    solution:'Verifique se a sua reputação caiu para 77 ou menos. Assim que ela voltar para 78+, o fluxo de VIPs retorna imediatamente.'
-   }
+   {problem:"Minha reputação chegou a 55, mas ainda não encontrei um cliente VIP.",solution:"A elegibilidade não significa que o próximo visitante será VIP. O cálculo seleciona apenas parte dos visitantes; continue atendendo e acompanhe os registros."},
+   {problem:"Minha reputação está alta, mas um VIP avaliou mal a sessão.",solution:"Verifique espera longa, queda de internet ou tarifa muito elevada em relação ao equipamento oferecido."},
+   {problem:"O valor cobrado do VIP não veio com 25% a mais.",solution:"Está correto: o motor não aplica um bônus fixo de cobrança a VIPs. Eles pagam a sessão normalmente, com as regras de preço cabíveis."},
+   {problem:"A frequência de VIPs diminuiu depois de uma série de problemas.",solution:"Se a reputação caiu de faixa, a proporção de visitantes elegíveis é menor. Priorize bom atendimento para recuperar a reputação."},
   ],
   playerTips:[
-   'Como você começa a campanha em 1998 com reputação 75, faltam apenas 3 pontos de reputação para atingir a marca de 78! Capriche na limpeza e adicione um item de decoração barato para cruzar os 78 pontos rapidamente.',
-   'Se todos os seus PCs tiverem alto padrão de hardware, qualquer cadeira livre receberá o cliente VIP com nota máxima, evitando que ele caia numa máquina simples quando o salão estiver cheio.'
+   "Não aumente o preço pensando que todo VIP paga mais: a cobrança continua seguindo a tarifa normal e os limites da época.",
+   "Investir em boas máquinas e reduzir filas ajuda a manter a reputação, mesmo sem ser uma condição para o VIP aparecer.",
+   "Acompanhe as avaliações após as sessões em vez de depender somente do contador de VIPs.",
   ],
   relatedIds:['006','010','030','031']
  },
