@@ -120,56 +120,92 @@ export const guidesMO:readonly GameGuide[]=[
   groupCode:'N',
   groupTitle:'Construção, layout e passagens',
   title:'Construção e decoração: ampliando o salão, divisórias, portas e móveis',
-  summary:'Compare as expansões da sala principal e dos anexos, decore o ambiente para elevar o conforto e crie salas internas com divisórias e portas.',
+  summary:"Amplie o salão e posicione pôsteres, plantas, mesinhas, divisórias e portas com os custos e limites reais do jogo.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Compras → Construção / Decoração',
   whatIs:[
-   'Na janela Compras, as categorias Construção e Decoração permitem transformar o pequeno imóvel inicial de 8×6 metros em um grande complexo personalizado.',
-   'Você pode ampliar o terreno em quatro frentes (área principal mais anexos à esquerda, à direita e aos fundos), erguer paredes divisórias com portas internas para separar ambientes e instalar 6 tipos de móveis e itens de conforto.'
+   "Você pode ampliar a área principal, abrir anexos à esquerda, à direita ou nos fundos e construir paredes e portas internas para organizar o movimento.",
+   "A loja também oferece três objetos de decoração e mobília comuns: Pôster, Planta e Mesinha. Outros móveis que aparecem no catálogo de cosméticos opcionais não são itens normais de construção.",
   ],
   whyItMatters:[
-   'As expansões abrem espaço físico e novas vagas de computador (até 22 PCs no total), enquanto os itens de Decoração somam um bônus permanente de satisfação ambiental (até +9 pontos percentuais) que melhora o humor de todos os clientes em todas as sessões.',
-   'Já as divisórias e portas permitem criar salas reservadas para os anexos, consoles ou laboratório Linux com a identidade visual que você preferir.'
+   "Mais espaço abre novas vagas para PCs e permite organizar melhor consoles, clientes e serviços.",
+   "A geometria do jogo verifica se os objetos obstruem corredores ou posições ocupadas antes de autorizar a construção. Uma parede que bloqueia o atendimento não deve ser instalada.",
   ],
   whenAvailable:[
-   'Todas as opções de Construção e Decoração estão disponíveis desde o Dia 1 (1998) na janela Compras.'
+   "As funções de construção e os três móveis normais da loja podem ser usados desde o início da campanha.",
+   "Anexos têm até cinco níveis de expansão por direção; cada etapa acrescenta espaço e uma vaga de PC de ampliação, comprada separadamente.",
   ],
   howToUse:[
-   'Para expandir a sala principal (liberando +2 vagas de PC por etapa, até 7 PCs): abra Compras → Construção e compre Ampliar área principal (R$ 650,00 no Nível 1; R$ 1.100,00 no Nível 2).',
-   'Para abrir anexos sem aumentar o aluguel mensal (liberando +1 vaga de PC de ampliação por etapa, até 5 por direção): compre Ampliar à esquerda, Ampliar à direita ou Ampliar os fundos (de R$ 500,00 no Nível 1 até R$ 1.900,00 no Nível 5 de cada lado).',
-   'Para erguer paredes ou instalar portas internas: em Compras → Construção, compre um pacote de divisórias (Divisória creme, Divisória verde ou Divisória tijolo, que dão +4 segmentos por compra) ou uma Porta interna (+1 porta por compra) e clique nas linhas da grade do salão.',
-   'Para melhorar o conforto do ambiente: abra Compras → Decoração, compre os itens desejados e clique no piso do salão para posicioná-los.'
+   "Abra Compras → Construção para expandir o espaço, construir uma divisória ou transformar um segmento existente em porta interna.",
+   "Na área principal, escolha Ampliar área principal para liberar mais duas vagas de computador por etapa; o preço sobe conforme as ampliações anteriores.",
+   "Para os anexos, selecione Ampliar à esquerda, à direita ou os fundos. A primeira etapa custa R$ 500,00 e cada etapa posterior custa R$ 350,00 a mais na mesma direção.",
+   "Para instalar uma divisória, selecione um segmento permitido e não ocupado. Uma porta interna só pode substituir uma divisória existente.",
+   "Abra Compras → Decoração para adquirir Pôster (parede), Planta (chão) ou Mesinha (chão), escolhendo uma posição que não bloqueie a passagem.",
+   "Se alguma construção for recusada, use Organizar salão e o diagnóstico de Passagens para entender a restrição.",
   ],
   whatHappensNext:[
-   'Móveis de decoração posicionados no salão somam imediatamente seu bônus de conforto ambiental (limitado ao teto de +9,0 p.p. / +0,09 no total).',
-   'Se você erguer uma parede divisória fechando um cômodo, é obrigatório colocar uma Porta interna naquela parede para que clientes, faxineiro e técnico consigam atravessar!'
+   "O novo espaço aparece no salão, e você poderá instalar PCs nas vagas de anexo recém-abertas mediante compra separada.",
+   "Divisórias e portas alteram os caminhos dos clientes e funcionários. O motor impede certas construções para preservar rotas já necessárias ao atendimento.",
   ],
   costsAndLimits:[
-   'Pacotes de divisórias (+4 segmentos por compra): Divisória creme (R$ 90) · Divisória verde (R$ 100) · Divisória tijolo (R$ 125).',
-   'Porta interna (+1 unidade por compra): R$ 85,00 (só pode ser instalada sobre uma parede divisória já construída; ao demolir uma parede com porta, ambos os créditos voltam para o seu estoque de construção!).',
-   'Teto máximo do bônus de conforto de decoração: +9,0 pontos percentuais.'
+   "Área principal: a primeira expansão custa R$ 650,00; a segunda custa R$ 1.100,00, liberando o total de sete vagas principais.",
+   "Anexos esquerdo, direito e dos fundos: primeira etapa R$ 500,00, com acréscimo de R$ 350,00 a cada nível, até cinco níveis em cada direção.",
+   "Parede interna: R$ 30,00 por segmento individual, máximo total de 220 segmentos. Não há pacote obrigatório de quatro paredes.",
+   "Porta interna: R$ 80,00; precisa substituir uma divisória existente para abrir a passagem.",
+   "Pôster: R$ 45,00; Planta: R$ 85,00; Mesinha: R$ 140,00. A capacidade depende das posições físicas livres, não de um número fixo universal.",
+   "A remoção de paredes ou portas não é descrita pelo motor como operação de reembolso automático.",
   ],
   table:{
-   caption:'Catálogo de Itens de Decoração e Conforto Ambiental (Compras → Decoração)',
-   headers:['Item de decoração','Preço unitário','Limite máximo no salão','Bônus de satisfação por unidade'],
-   rows:[
-    ['Pôster retrô','R$ 75','Até 6 unidades','+0,6 p.p. cada'],
-    ['Planta','R$ 95','Até 8 unidades','+0,8 p.p. cada'],
-    ['Luminária neon','R$ 160','Até 6 unidades','+1,1 p.p. cada'],
-    ['Estante de revistas','R$ 210','Até 4 unidades','+1,2 p.p. cada'],
-    ['Sofá de espera','R$ 290','Até 4 unidades','+1,6 p.p. cada'],
-    ['Climatizador','R$ 540','Até 3 unidades','+2,5 p.p. cada']
-   ]
+    "caption": "Materiais e móveis realmente disponíveis em Compras",
+    "headers": [
+      "Item",
+      "Preço-base",
+      "Onde fica",
+      "Regra principal"
+    ],
+    "rows": [
+      [
+        "Pôster",
+        "R$ 45,00",
+        "Parede",
+        "Precisa de posição livre na parede"
+      ],
+      [
+        "Planta",
+        "R$ 85,00",
+        "Piso",
+        "Ocupa um ponto livre sem bloquear caminhos"
+      ],
+      [
+        "Mesinha",
+        "R$ 140,00",
+        "Piso",
+        "Ocupa um ponto livre sem bloquear caminhos"
+      ],
+      [
+        "Divisória",
+        "R$ 30,00",
+        "Entre células do salão",
+        "Verifica limite, ocupação e passagem"
+      ],
+      [
+        "Porta interna",
+        "R$ 80,00",
+        "No lugar de uma divisória",
+        "Exige divisória existente no segmento"
+      ]
+    ]
   },
   commonProblems:[
-   {
-    problem:'Construí uma sala com divisórias para os PCs do anexo e o jogo bloqueou o último segmento de parede.',
-    solution:'O motor de rotas nunca permite fechar um cômodo sem saída se houver computadores, consoles, máquinas de venda ou lixeiras lá dentro. Construa a parede deixando um vão ou instale uma Porta interna (R$ 85) em um dos segmentos já erguidos antes de fechar o último trecho!'
-   }
+   {problem:"O jogo não deixa colocar uma parede ou móvel.",solution:"A posição pode estar ocupada ou a instalação bloquearia uma rota necessária. Escolha outro lugar ou reorganize o salão."},
+   {problem:"Comprei ampliação do anexo, mas nenhum PC apareceu.",solution:"Ampliar apenas abre espaço e uma vaga; você ainda precisa comprar o computador separadamente."},
+   {problem:"Não consigo instalar uma porta interna.",solution:"Antes, construa uma divisória no segmento escolhido. A porta substitui essa parede."},
+   {problem:"Não encontro luminária, sofá e outros itens mencionados em tutoriais antigos.",solution:"O catálogo normal de decoração do motor contém Pôster, Planta e Mesinha. Consulte a Loja Cookies separadamente para cosméticos."},
   ],
   playerTips:[
-   'Três Climatizadores (3 × 2,5 = +7,5 p.p.) somados a um Sofá de espera (+1,6 p.p.) já atingem o teto máximo de +9,0 pontos percentuais de conforto ambiental no salão!',
-   'Se quiser remover uma parede divisória para mudar o layout, use o botão Remover divisórias no topo da janela Compras: o segmento é removido gratuitamente e volta como crédito disponível para você usar em outro lugar.'
+   "Compre espaço conforme a demanda dos computadores e preserve corredores livres para clientes e funcionários.",
+   "Se o objetivo é criar uma sala, instale portas para manter circulação entre as divisórias.",
+   "Móveis comuns e cosméticos da conta são categorias diferentes; não planeje o orçamento de construção contando com objetos inexistentes.",
   ],
   relatedIds:['005','030','034','038']
  },
