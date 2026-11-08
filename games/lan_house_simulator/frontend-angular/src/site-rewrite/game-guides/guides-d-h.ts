@@ -404,7 +404,7 @@ export const guidesDH:readonly GameGuide[]=[
   groupCode:'G',
   groupTitle:'Internet e conectividade',
   title:'Planos de internet: Discada, Via rádio, Fibra óptica e quedas de rede',
-  summary:'Compare os três níveis de internet do jogo, reduza o risco e a duração de quedas de sinal e acelere os downloads de jogos com GPU.',
+  summary:"Compare internet discada, via rádio e fibra, as épocas de desbloqueio e o efeito da conexão nos serviços e downloads.",
   unlockBadge:'Discada em 1998 · Via rádio e Fibra óptica para upgrade',
   uiPath:'Administrar → Serviços → Internet e contrato',
   whatIs:[
@@ -416,7 +416,8 @@ export const guidesDH:readonly GameGuide[]=[
    'Mais grave ainda: clientes que já estão sentados em sessões comuns de Windows suportam no máximo 15 minutos do jogo sem internet. No 16º minuto offline, eles abandonam a sessão irritados e derrubam sua reputação em 1,1 ponto cada um!'
   ],
   whenAvailable:[
-   'Você começa no Dia 1 com o Nível 1 (Discada) e pode contratar o upgrade para o Nível 2 (Via rádio) e, em seguida, para o Nível 3 (Fibra óptica) diretamente na aba Serviços → Internet e contrato.'
+   "O jogo começa com internet discada, disponível em 1998. Via rádio aparece a partir de 2002, e fibra óptica a partir de 2007.",
+   "Para contratar uma tecnologia mais nova, consulte o painel de serviços e verifique o preço e os pré-requisitos apresentados no ano atual.",
   ],
   howToUse:[
    'Abra Administrar → aba Serviços → sub-aba Internet e contrato.',
@@ -429,10 +430,10 @@ export const guidesDH:readonly GameGuide[]=[
    'Na aba Jogos com GPU, sua banda compartilhada também sobe imediatamente de 1 para 2 (Via rádio) ou 3 (Fibra óptica) downloads simultâneos.'
   ],
   costsAndLimits:[
-   'Custo de instalação (taxa única no ato do upgrade, corrigida pelo IPCA no modo histórico): Nível 1 → Nível 2 (Via rádio) custa R$ 260,00 em base 1998; Nível 2 → Nível 3 (Fibra óptica) custa R$ 370,00 em base 1998.',
-   'Mensalidade de internet (cobrada a cada 30 dias, corrigida pelo IPCA): Nível 1 custa R$ 110/mês · Nível 2 custa R$ 195/mês · Nível 3 custa R$ 280/mês (valores em base 1998).',
-   'Quedas de sinal por nível: Discada tem maior chance de queda e fica de 20 a 39 minutos fora do ar (sempre causa abandono de clientes comuns após 15 min); Via rádio reduz a chance e fica de 16 a 30 minutos fora do ar; Fibra óptica tem raríssimas quedas e fica de 12 a 21 minutos fora do ar.',
-   'Quem NÃO sofre com quedas de internet: bancadas de PlayStation 1 e PlayStation 2, estações em modo Linux, turmas jogando Setor Zero em rede local (LAN) e atendimentos avulsos de impressão ou cópia de disco.'
+   "As três tecnologias do motor são Discada (1998), Via rádio (2002) e Fibra óptica (2007).",
+   "Os upgrades possuem custo de contratação, e a conexão gera despesas de manutenção na economia da partida; confira os valores atuais no painel do jogo.",
+   "Quedas de conexão prejudicam usuários dependentes da internet. Jogos de rede local, máquinas Linux em atividades locais e consoles podem continuar atendendo conforme seus requisitos próprios.",
+   "Os downloads de jogos GPU usam a velocidade e a quantidade de transferências simultâneas permitidas pelo plano: uma transferência por rodada na discada, duas via rádio e três na fibra.",
   ],
   table:{
    caption:'Comparativo técnico dos 3 Planos de Internet',
@@ -467,68 +468,151 @@ export const guidesDH:readonly GameGuide[]=[
   groupCode:'H',
   groupTitle:'Consoles: PlayStation 1 e PlayStation 2',
   title:'PlayStation 1 (2002): bancadas com TV de tubo, tarifas e 13 CDs',
-  summary:'Instale até 4 bancadas de PlayStation 1 a partir de 2002, ajuste o preço por hora dos consoles e conheça os 13 CDs que atraem fãs para o salão.',
+  summary:"Instale até 3 bancadas de PlayStation 1 a partir de 2002, compre CDs reais do catálogo do jogo e acompanhe a coleção revelada pelas revistas Top Games.",
   unlockBadge:'A partir de 2002 (jogos de 2002 a 2005)',
   uiPath:'Compras → Videogames e CDs · Administrar → Videogames',
   whatIs:[
-   'No dia 1º de janeiro de 2002 (Dia 1441 da campanha), o PlayStation 1 chega à sua lan house! Você pode comprar até 4 bancadas completas de PS1 (com TV de tubo de 20 polegadas, console cinza e dois controles) e colecionar 13 CDs de jogos lançados entre 2002 e 2005.',
-   'As bancadas de videogame funcionam como estações independentes dos computadores: têm sua própria tarifa por hora, nunca quebram por desgaste, não exigem licença de Windows e funcionam mesmo com a internet fora do ar.'
+   "O PlayStation 1 aparece no simulador a partir de 2002. Cada bancada inclui TV de tubo, console, uma cadeira e controle. O limite implementado é de três bancadas PS1, independentemente da quantidade de PCs.",
+   "Há 13 CDs originais no catálogo: sete estreiam em 2002 e dois em cada ano de 2003, 2004 e 2005. Os títulos são fictícios e os preços de lançamento são definidos pelo jogo.",
   ],
   whyItMatters:[
-   'Com pelo menos 1 bancada de PS1 e 1 CD comprado, cerca de 28% dos visitantes que chegam à lan house passam a vir especificamente atrás do console, escolhendo um jogo favorito do catálogo.',
-   'Se o seu salão estiver com todos os PCs em manutenção ou sem internet, as bancadas de PlayStation 1 continuam mantendo a porta aberta e o caixa girando.'
+   "O console oferece uma alternativa de atendimento aos clientes que preferem videogames. Para receber visitantes, a bancada precisa ter um CD comprado e colocado nela.",
+   "Você pode instalar uma segunda cadeira e controle em uma bancada, desde que exista espaço para essa cadeira e ninguém esteja usando o equipamento.",
   ],
   whenAvailable:[
-   'Liberado em 01/01/2002. Na campanha histórica padrão (com desbloqueio por revistas ativo), os jogos de cada trimestre de 2002 a 2005 são revelados conforme você recebe as edições correspondentes da revista Top Games no Correio.'
+   "A compra de bancadas PS1 começa em 2002. Os CDs são liberados pelo ano indicado no catálogo; em campanhas novas com revistas, Tony também precisa receber a edição correspondente de Top Games.",
+   "Cada título tem sua própria revista. Receber uma edição revela somente o jogo apresentado nela; revistas de um mesmo ano chegam em meses diferentes.",
   ],
   howToUse:[
-   'A partir de 2002, abra Compras → categoria Videogames e CDs e clique em Bancada PlayStation 1 · R$ 680.',
-   'Posicione a bancada em um local livre do salão garantindo passagem desobstruída entre o balcão e a cadeira do console.',
-   'Para adquirir os jogos (CDs), aguarde a chegada da revista Top Games correspondente no Correio e compre os títulos em Compras → Videogames e CDs ou em Administrar → Videogames → sub-aba Jogos PS1 / PS2.',
-   'Para ajustar a tarifa cobrada nas sessões de PS1 (entre R$ 1,00/h e R$ 30,00/h), abra Administrar → Videogames → sub-aba Preço por hora.'
+   "Abra Compras e procure Bancada de PlayStation 1 na categoria de videogames. A bancada custa R$ 560,00 e deve ocupar uma posição livre, sem bloquear passagem.",
+   "Inscreva-se para receber Top Games quando a assinatura estiver disponível; aguarde o carteiro entregar a edição que apresenta o CD desejado.",
+   "Com pelo menos uma bancada instalada, compre o CD já lançado e conhecido por Tony. Uma cópia física pode equipar apenas uma bancada ao mesmo tempo.",
+   "Na administração de videogames, coloque ou troque o CD quando a bancada estiver livre. Ajuste a tarifa por hora respeitando o teto permitido naquele ano e, se quiser, instale a segunda cadeira.",
   ],
   whatHappensNext:[
-   'Assim que você tem ao menos 1 bancada instalada e 1 jogo de PS1 comprado, os fãs de console entram na fila do balcão, pagam a tarifa de PS1 para o Tony e sentam diante da TV de tubo.',
-   'Clientes que pedem exatamente um CD que você já comprou saem com avaliação mais alta (+4 p.p.); se o CD favorito deles ainda não estiver na sua coleção, eles jogam outro disco disponível, mas com leve redução de entusiasmo.'
+   "Clientes podem contratar sessões nas bancadas disponíveis. A receita aparece nos indicadores de videogames e o equipamento acumula desgaste com o uso.",
+   "Os controles podem precisar de reparo: a bancada não é indestrutível. Aguarde os clientes saírem antes de mudar o CD, instalar a segunda cadeira ou executar manutenção.",
   ],
   costsAndLimits:[
-   'Preço de cada Bancada PlayStation 1: R$ 680,00 · Limite máximo no salão: 4 bancadas.',
-   'Faixa de preço por hora do PS1: de R$ 1,00/h a R$ 30,00/h (tarifa inicial padrão de R$ 2,00/h no modo histórico).',
-   'Consumo de energia: cada bancada de PS1 consome uma fração leve de energia enquanto instalada e um pequeno adicional enquanto está em sessão.',
-   'Bônus de atração e satisfação da coleção: cada CD comprado aumenta o bônus da coleção de PS1 (até +9 pontos percentuais com o catálogo completo).'
+   "Bancada PS1: R$ 560,00; máximo de 3 bancadas PS1 no salão.",
+   "Tarifa inicial do PS1: R$ 2,50 por hora; ajustes entre R$ 0,50 e o teto anual de preço, em passos de R$ 0,25.",
+   "Cada CD tem um preço-base próprio; o valor cobrado aumenta com o índice de preços da simulação após seu lançamento. Confira a tabela.",
+   "Segunda cadeira e controle: custo-base de R$ 120,00 na época do lançamento, reajustado conforme o ano; a instalação requer espaço livre.",
+   "Reparo dos controles: R$ 45,00, disponível após algum desgaste; bancadas com 100% de desgaste não atendem até serem revisadas.",
   ],
   table:{
-   caption:'Catálogo completo dos 13 CDs de PlayStation 1 (2002–2005)',
-   headers:['Título do CD de PS1','Ano e Trimestre','Preço','Gênero','Revista Top Games que revela'],
-   rows:[
-    ['Copa de Bairro 99','2002 · 1º Trim.','R$ 85','Esporte','Edição #1 (Jan/2002)'],
-    ['Duelo de Ferro','2002 · 1º Trim.','R$ 95','Luta','Edição #1 (Jan/2002)'],
-    ['Turbo Oval','2002 · 1º Trim.','R$ 90','Corrida','Edição #1 (Jan/2002)'],
-    ['Noite no Distrito 7','2002 · 2º Trim.','R$ 110','Aventura','Edição #2 (Abr/2002)'],
-    ['Manobra Radical','2002 · 3º Trim.','R$ 100','Esporte','Edição #3 (Jul/2002)'],
-    ['Crônicas de Éter','2002 · 4º Trim.','R$ 125','RPG','Edição #4 (Out/2002)'],
-    ['Vingança em Dupla','2003 · 1º Trim.','R$ 105','Ação','Edição #5 (Jan/2003)'],
-    ['Rali da Serra','2003 · 2º Trim.','R$ 115','Corrida','Edição #6 (Abr/2003)'],
-    ['Guardião da Cripta','2003 · 4º Trim.','R$ 120','Aventura','Edição #7 (Out/2003)'],
-    ['Estádio Lotado 2004','2004 · 1º Trim.','R$ 130','Esporte','Edição #8 (Jan/2004)'],
-    ['Lâmina Astral','2004 · 3º Trim.','R$ 135','RPG','Edição #9 (Jul/2004)'],
-    ['Fuga na Marginal','2005 · 1º Trim.','R$ 140','Corrida','Edição #10 (Jan/2005)'],
-    ['Torneio Supremo','2005 · 3º Trim.','R$ 145','Luta','Edição #11 (Jul/2005)']
-   ]
+    "caption": "Catálogo do jogo: 13 títulos de PS1, valores-base de lançamento",
+    "headers": [
+      "Jogo",
+      "Ano de liberação",
+      "Preço-base",
+      "Gênero",
+      "Revista necessária na campanha nova"
+    ],
+    "rows": [
+      [
+        "Turbo Circuito",
+        "2002",
+        "R$ 44,00",
+        "Corrida",
+        "Top Games #1 — jan/2002"
+      ],
+      [
+        "Gol de Rua",
+        "2002",
+        "R$ 39,00",
+        "Futebol",
+        "Top Games #2 — fev/2002"
+      ],
+      [
+        "Ilha dos Cristais",
+        "2002",
+        "R$ 49,00",
+        "Aventura",
+        "Top Games #3 — mar/2002"
+      ],
+      [
+        "Luta Neon",
+        "2002",
+        "R$ 54,00",
+        "Luta",
+        "Top Games #4 — abr/2002"
+      ],
+      [
+        "Cosmo Blocos",
+        "2002",
+        "R$ 29,00",
+        "Quebra-cabeça",
+        "Top Games #5 — mai/2002"
+      ],
+      [
+        "Rally do Deserto",
+        "2002",
+        "R$ 42,00",
+        "Corrida",
+        "Top Games #6 — jun/2002"
+      ],
+      [
+        "Sombras do Castelo",
+        "2002",
+        "R$ 46,00",
+        "Ação",
+        "Top Games #7 — jul/2002"
+      ],
+      [
+        "Defensores do Espaço",
+        "2003",
+        "R$ 52,00",
+        "Tiro",
+        "Top Games #8 — jan/2003"
+      ],
+      [
+        "Selva Perdida",
+        "2003",
+        "R$ 48,00",
+        "Aventura",
+        "Top Games #9 — fev/2003"
+      ],
+      [
+        "Dragões de Aço",
+        "2004",
+        "R$ 59,00",
+        "RPG",
+        "Top Games #10 — jan/2004"
+      ],
+      [
+        "Ritmo da Cidade",
+        "2004",
+        "R$ 35,00",
+        "Música",
+        "Top Games #11 — fev/2004"
+      ],
+      [
+        "Agentes da Noite",
+        "2005",
+        "R$ 61,00",
+        "Furtividade",
+        "Top Games #12 — jan/2005"
+      ],
+      [
+        "Oceano Profundo",
+        "2005",
+        "R$ 53,00",
+        "Exploração",
+        "Top Games #13 — fev/2005"
+      ]
+    ]
   },
   commonProblems:[
-   {
-    problem:'Comprei a Bancada PlayStation 1, mas nenhum cliente senta para jogar nela.',
-    solution:'A bancada sozinha vem sem discos! Você precisa comprar pelo menos 1 CD de PS1 (como Copa de Bairro 99 por R$ 85,00) após receber a revista Top Games #1 em janeiro de 2002.'
-   },
-   {
-    problem:'Entrei em 2003, mas os jogos de 2003 ainda aparecem bloqueados pedindo a revista Top Games.',
-    solution:'Na campanha histórica, os jogos de console só podem ser comprados depois que o carteiro entrega a edição da revista Top Games daquele trimestre (ou se você comprar a edição atrasada em Administrar → Videogames → Jogos PS1 / PS2).'
-   }
+   {problem:"Comprei a bancada, mas não chegam jogadores.",solution:"É preciso comprar pelo menos um CD disponível e colocá-lo na bancada. Verifique também se o caminho até a cadeira está livre."},
+   {problem:"O jogo desejado continua bloqueado.",solution:"Confira o ano de lançamento e, nas campanhas com revistas, se Tony recebeu exatamente a edição de Top Games daquele título."},
+   {problem:"Não consigo instalar uma quarta bancada PS1.",solution:"O limite do motor do jogo é de três bancadas PS1. Você pode adicionar uma segunda cadeira às já instaladas quando houver espaço."},
+   {problem:"Não consigo trocar o CD ou reparar os controles.",solution:"Espere os clientes que estão indo para a bancada ou jogando terminarem a sessão."},
   ],
   playerTips:[
-   'Logo em janeiro de 2002, reserve R$ 14,00 no caixa para pagar o carteiro pela Top Games #1 e compre pelo menos Copa de Bairro 99 (R$ 85) junto com sua primeira bancada.',
-   'Consulte a sub-aba Administrar → Videogames → Bancadas para ver quantas sessões, minutos em uso e receita cada bancada de PS1 já rendeu.'
+   "Comece com uma bancada e um título já revelado pela Top Games, em vez de comprar vários CDs que ainda não podem ser usados.",
+   "Use a tabela abaixo para planejar a coleção sem depender de nomes ou datas de documentação antiga.",
+   "Acompanhe o desgaste dos controles e faça a revisão antes de a bancada ficar indisponível.",
   ],
   relatedIds:['019','021','022','034']
  },
@@ -540,66 +624,167 @@ export const guidesDH:readonly GameGuide[]=[
   groupCode:'H',
   groupTitle:'Consoles: PlayStation 1 e PlayStation 2',
   title:'PlayStation 2 (2006): bancadas de nova geração e 15 DVDs',
-  summary:'Amplie a área de consoles em 2006 com até 4 bancadas de PlayStation 2, tarifa horária dedicada e 15 jogos em DVD lançados até 2010.',
+  summary:"Monte até 3 bancadas PS2 a partir de 2006 e adquira os 15 DVDs originais conforme o ano e as revistas individuais Top Games.",
   unlockBadge:'A partir de 2006 (jogos de 2006 a 2010)',
   uiPath:'Compras → Videogames e CDs · Administrar → Videogames',
   whatIs:[
-   'Em 01/01/2006 (Dia 2881), chega ao catálogo a geração 128 bits com a Bancada PlayStation 2 (R$ 1.240,00 cada, limite de até 4 bancadas no salão), equipada com console slim preto, leitor de DVD, dois controles e televisão de tela plana.',
-   'Importante: as bancadas de PlayStation 2 NÃO substituem nem ocupam o limite das bancadas de PlayStation 1! Você pode manter até 4 bancadas de PS1 e mais 4 bancadas de PS2 operando lado a lado (8 estações de videogame no total).'
+   "O PlayStation 2 torna-se comprável na campanha histórica a partir de 2006. A bancada completa custa R$ 980,00 no ano inicial e seu preço acompanha o índice de preços nos anos seguintes.",
+   "O catálogo real contém 15 jogos originais: sete estão previstos para 2006 e dois por ano de 2007 até 2010. O jogo permite no máximo três bancadas PS2, separadamente das três PS1.",
   ],
   whyItMatters:[
-   'O PlayStation 2 permite cobrar uma tarifa horária própria mais alta que a do PS1 (de R$ 1,00/h até R$ 35,00/h) e traz um catálogo de 15 grandes sucessos em DVD lançados entre 2006 e 2010.',
-   'Quando você tem PS1 e PS2 ativos ao mesmo tempo, até 34% dos visitantes do salão procuram os consoles, dividindo a preferência entre os clássicos de PS1 e os novos DVDs de PS2.'
+   "O PS2 permite atender jogadores em videogames de outra geração, mantendo as bancadas PS1 que você já possui.",
+   "Cada console precisa de um DVD comprado e instalado na bancada para oferecer sessões. Também é possível comprar uma segunda cadeira e controle por bancada.",
   ],
   whenAvailable:[
-   'Liberado em 01/01/2006 em Compras → Videogames e CDs e Administrar → Videogames.',
-   'Os 15 jogos em DVD são revelados progressivamente entre 2006 e 2010 pelas edições #12 a #28 da revista Top Games.'
+   "Bancadas PS2: a partir de 2006, somente no modo de campanha histórica em que essa geração está disponível.",
+   "DVDs: respeitam o ano de lançamento do catálogo; em campanhas com revistas, cada jogo também exige a edição específica de Top Games recebida por Tony.",
   ],
   howToUse:[
-   'A partir de 2006, abra Compras → Videogames e CDs e clique em Bancada PlayStation 2 · R$ 1.240.',
-   'Posicione a bancada no salão (ou em uma das ampliações laterais/fundos) deixando o caminho livre até o balcão.',
-   'Receba as edições da revista Top Games a partir de 2006 (R$ 14,00 por revista entregue pelo carteiro) para destravar os DVDs na aba Administrar → Videogames → Jogos PS1 / PS2.',
-   'Ajuste o preço por hora exclusivo do PlayStation 2 em Administrar → Videogames → sub-aba Preço por hora.'
+   "Abra Compras, escolha uma Bancada PlayStation 2 e selecione uma posição válida. A compra é recusada se o caminho ou o espaço necessário estiverem bloqueados.",
+   "Assine Top Games e receba a edição referente ao DVD desejado; confirme que o jogo já chegou ao ano de lançamento.",
+   "Compre o DVD na seção de videogames e instale-o numa bancada livre. Cada cópia física só pode ficar em uma bancada por vez.",
+   "Ajuste o preço das sessões PS2 na administração. Para adicionar uma segunda cadeira, verifique se a área ao redor está desocupada e acessível.",
+   "Se houver desgaste elevado, use o reparo do PS2. Você também pode desligar uma bancada quando não quiser oferecê-la.",
   ],
   whatHappensNext:[
-   'Com pelo menos 1 bancada de PS2 e 1 DVD comprado, os clientes fãs da nova geração entram na fila do balcão, pagam a tarifa de PS2 e jogam suas sessões sem depender de internet e sem gerar desgaste mecânico.',
-   'Assim como no PS1, cada DVD adicionado à coleção eleva a satisfação das sessões de PS2 (até +11 pontos percentuais com a coleção completa) e melhora a avaliação quando o cliente encontra exatamente o título que pediu.'
+   "Os clientes passam a usar as bancadas PS2 com jogos instalados. A receita é contabilizada separadamente, e o desgaste aumenta com as sessões.",
+   "O limite de três PS2 não ocupa nem libera vagas PS1: são dois conjuntos independentes de equipamentos.",
   ],
   costsAndLimits:[
-   'Preço de cada Bancada PlayStation 2: R$ 1.240,00 · Limite máximo no salão: 4 bancadas (além das 4 de PS1).',
-   'Faixa de preço por hora do PS2: de R$ 1,00/h a R$ 35,00/h (tarifa inicial padrão de R$ 3,50/h no modo histórico em 2006).',
-   'Catálogo de mídia: 15 jogos em DVD (entre R$ 145,00 e R$ 195,00 cada).'
+   "Bancada PS2: R$ 980,00 em 2006, reajustada pelo índice de preços; limite de 3 bancadas PS2, além das 3 PS1.",
+   "Tarifa padrão inicial: calculada a partir de R$ 4,00/h em 2006, limitada pelo teto anual; tarifa ajustável entre R$ 0,50 e esse teto, em passos de R$ 0,25.",
+   "Cada DVD custa seu preço-base listado na tabela, com atualização pelo índice de preços depois do ano de lançamento.",
+   "É possível comprar até 3 cópias de cada DVD, para equipar bancadas diferentes.",
+   "Segunda cadeira e controle: custo-base de R$ 160,00 em 2006. Reparo: custo-base de R$ 65,00 em 2006; ambos são reajustados posteriormente.",
+   "Desgaste de PS2 aumenta a cada sessão. O equipamento também pode ser desligado na administração.",
   ],
   table:{
-   caption:'Catálogo completo dos 15 DVDs de PlayStation 2 (2006–2010)',
-   headers:['Título do DVD de PS2','Ano e Trimestre','Preço','Gênero','Revista Top Games que revela'],
-   rows:[
-    ['Clássico de Domingo 2006','2006 · 1º Trim.','R$ 145','Esporte','Edição #12 (Jan/2006)'],
-    ['Avenida Turbo','2006 · 1º Trim.','R$ 155','Corrida','Edição #12 (Jan/2006)'],
-    ['Punhos da Madrugada','2006 · 1º Trim.','R$ 150','Luta','Edição #12 (Jan/2006)'],
-    ['Bairro Sob Pressão','2006 · 2º Trim.','R$ 165','Ação','Edição #13 (Abr/2006)'],
-    ['Colossos da Neblina','2006 · 3º Trim.','R$ 175','Aventura','Edição #14 (Jul/2006)'],
-    ['Acordes de Garagem','2006 · 4º Trim.','R$ 160','Musical','Edição #15 (Out/2006)'],
-    ['Fúria do Olimpo','2007 · 1º Trim.','R$ 170','Ação','Edição #16 (Jan/2007)'],
-    ['Reis do Drift','2007 · 2º Trim.','R$ 160','Corrida','Edição #17 (Abr/2007)'],
-    ['Agente Silencioso','2007 · 4º Trim.','R$ 165','Aventura','Edição #18 (Out/2007)'],
-    ['Lendas do Gramado 2008','2008 · 1º Trim.','R$ 175','Esporte','Edição #19 (Jan/2008)'],
-    ['Horizonte de Cinzas','2008 · 2º Trim.','R$ 180','RPG','Edição #20 (Abr/2008)'],
-    ['Esquadrão Delta','2008 · 4º Trim.','R$ 170','Ação','Edição #21 (Out/2008)'],
-    ['Circuito Noturno GT','2009 · 1º Trim.','R$ 185','Corrida','Edição #22 (Jan/2009)'],
-    ['Sombras de Kibo','2009 · 3º Trim.','R$ 190','Aventura','Edição #24 (Jul/2009)'],
-    ['Arena Final 2010','2010 · 1º Trim.','R$ 195','Luta','Edição #26 (Jan/2010)']
-   ]
+    "caption": "Catálogo do jogo: 15 títulos de PS2, valores-base de lançamento",
+    "headers": [
+      "Jogo",
+      "Ano de liberação",
+      "Preço-base",
+      "Gênero",
+      "Revista necessária na campanha nova"
+    ],
+    "rows": [
+      [
+        "Cidade em Fuga",
+        "2006",
+        "R$ 72,00",
+        "Corrida urbana",
+        "Top Games #14 — jan/2006"
+      ],
+      [
+        "Arena dos Guardiões",
+        "2006",
+        "R$ 79,00",
+        "Ação",
+        "Top Games #15 — fev/2006"
+      ],
+      [
+        "Futsal de Bairro",
+        "2006",
+        "R$ 64,00",
+        "Esporte",
+        "Top Games #16 — mar/2006"
+      ],
+      [
+        "Cosmos 2006",
+        "2006",
+        "R$ 84,00",
+        "Ficção científica",
+        "Top Games #17 — abr/2006"
+      ],
+      [
+        "Batida de Rua",
+        "2006",
+        "R$ 69,00",
+        "Ritmo",
+        "Top Games #18 — mai/2006"
+      ],
+      [
+        "Pistas da Montanha",
+        "2006",
+        "R$ 76,00",
+        "Corrida",
+        "Top Games #19 — jun/2006"
+      ],
+      [
+        "Templo da Aurora",
+        "2006",
+        "R$ 83,00",
+        "Aventura",
+        "Top Games #20 — jul/2006"
+      ],
+      [
+        "Robôs da Fronteira",
+        "2007",
+        "R$ 87,00",
+        "Estratégia",
+        "Top Games #21 — jan/2007"
+      ],
+      [
+        "Mistério do Farol",
+        "2007",
+        "R$ 82,00",
+        "Investigação",
+        "Top Games #22 — fev/2007"
+      ],
+      [
+        "Lendas do Vulcão",
+        "2008",
+        "R$ 99,00",
+        "RPG",
+        "Top Games #23 — jan/2008"
+      ],
+      [
+        "Vôlei na Praia",
+        "2008",
+        "R$ 74,00",
+        "Esporte",
+        "Top Games #24 — fev/2008"
+      ],
+      [
+        "Corrida no Gelo",
+        "2009",
+        "R$ 91,00",
+        "Corrida",
+        "Top Games #25 — jan/2009"
+      ],
+      [
+        "Cidade dos Inventores",
+        "2009",
+        "R$ 85,00",
+        "Quebra-cabeça",
+        "Top Games #26 — fev/2009"
+      ],
+      [
+        "Guardiões do Oceano",
+        "2010",
+        "R$ 97,00",
+        "Aventura",
+        "Top Games #27 — jan/2010"
+      ],
+      [
+        "Batidas do Futuro",
+        "2010",
+        "R$ 89,00",
+        "Ritmo",
+        "Top Games #28 — fev/2010"
+      ]
+    ]
   },
   commonProblems:[
-   {
-    problem:'O botão de comprar um DVD de PS2 diz que preciso primeiro instalar uma bancada de PlayStation 2.',
-    solution:'O jogo exige que você tenha pelo menos 1 Bancada PlayStation 2 instalada no salão antes de comprar qualquer DVD de PS2 (assim como exige 1 bancada de PS1 para comprar CDs de PS1).'
-   }
+   {problem:"A quarta bancada PS2 não pode ser comprada.",solution:"O simulador limita PS2 a três bancadas, independentemente do número de consoles PS1."},
+   {problem:"O DVD ainda aparece bloqueado.",solution:"Verifique o ano de lançamento do jogo e a entrega de sua revista individual Top Games."},
+   {problem:"Comprei um DVD, mas não consigo colocá-lo na bancada.",solution:"Espere a sessão terminar e confira se existe uma cópia livre; uma cópia não pode equipar duas bancadas ao mesmo tempo."},
+   {problem:"O PS2 não atende ninguém.",solution:"Confira se está ligado, se tem DVD instalado, se não chegou ao limite de desgaste e se a passagem está acessível."},
   ],
   playerTips:[
-   'Em janeiro de 2006, a Edição #12 da Top Games libera três grandes sucessos de estreia de uma só vez (Clássico de Domingo 2006, Avenida Turbo e Punhos da Madrugada): compre a bancada e pelo menos um desses DVDs logo no início do ano.',
-   'Não venda nem remova suas bancadas de PlayStation 1 quando o PS2 chegar: os dois consoles têm filas de fãs complementares e geram receita estável até 2030.'
+   "Use a coleção PS1 que já comprou enquanto começa a montar a geração PS2.",
+   "Planeje o investimento usando os preços-base, lembrando que as compras futuras acompanham a inflação do jogo.",
+   "Comece por um jogo da edição Top Games que já chegou pelo correio e faça manutenção antes do equipamento atingir 100% de desgaste.",
   ],
   relatedIds:['020','022','028','033']
  }
