@@ -1,7 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import {daylightAt,windowGlass,lampPositions,WINDOW_POSITIONS} from "../dist/js/render/lighting.js";
+import {daylightAt,windowGlass,lampPositions,WINDOW_POSITIONS,monitorEmission} from "../dist/js/render/lighting.js";
+import {monitorScreenQuad} from "../dist/js/render/retroComputer.js";
+import {iso} from "../dist/js/render/isometric.js";
 import {mixHex,lerpHex,withAlpha,shadeHex,cellNoise,parseHex} from "../dist/js/render/color.js";
 import {createGame} from "../dist/js/sim/engine.js";
 import {roomBounds} from "../dist/js/sim/room.js";
@@ -60,4 +62,49 @@ test("per-frame painters keep the draw batch intact: no blend modes or blur in t
  const sign=scene.slice(scene.indexOf("private sign("));
  assert.doesNotMatch(sign.slice(0,sign.indexOf("private hudInside(")+900),/shadowBlur/,"the sign and HUD plate are repainted every frame and must not blur");
  assert.match(lighting,/LIGHT_STEPS/,"the localized light is cached per quantized hour");
+});
+
+test("monitor emission is zero by day and grows smoothly with the evening",()=>{
+ for(const strength of [.15,.3]){
+  assert.equal(monitorEmission(0,strength).screen,0,"nothing to add in daylight");
+  let previous=monitorEmission(0,strength);
+  for(let n=.05;n<=1.0001;n+=.05){
+   const e=monitorEmission(n,strength);
+   assert.ok(e.screen>=previous.screen-1e-9&&e.halo>=previous.halo-1e-9&&e.spill>=previous.spill-1e-9,"never dims as night deepens: "+n.toFixed(2));
+   previous=e;
+  }
+  assert.ok(previous.screen<=.3+1e-9,"the glass lift stays capped so the content remains readable");
+ }
+ assert.ok(monitorEmission(1,.3).screen>monitorEmission(1,.15).screen,"a busy session shines more than an idle desktop");
+ assert.ok(monitorEmission(1,.15).halo>monitorEmission(0,.15).halo,"the halo also grows at night");
+ for(const bad of [NaN,Infinity,-1,undefined]){
+  const e=monitorEmission(bad,.2);
+  for(const v of Object.values(e))assert.ok(Number.isFinite(v)&&v>=0,"inputs are sanitized: "+bad);
+ }
+ assert.deepEqual(monitorEmission(1,0),{screen:0,halo:0,spill:0},"an unlit screen emits nothing");
+});
+test("screen quads follow each monitor's glass for the CRT and all five LCD generations",()=>{
+ const cam={originX:500,originY:200,zoom:.86},p={x:3,y:1.1};
+ for(const lcd of [null,"lcd05","lcd08","lcd12","lcd17","lcd24"]){
+  const quad=monitorScreenQuad(cam,p,lcd);
+  assert.equal(quad?.length,4,String(lcd));
+  for(const q of quad)assert.ok(Number.isFinite(q.x)&&Number.isFinite(q.y));
+  const area=Math.abs(quad.reduce((sum,q,i)=>{const n=quad[(i+1)%4];return sum+q.x*n.y-n.x*q.y;},0))/2;
+  assert.ok(area>150&&area<2500,String(lcd)+" glass has a plausible on-screen size ("+area.toFixed(0)+" px²)");
+  const base=iso(p,cam,0);
+  for(const q of quad)assert.ok(Math.abs(q.x-base.x)<80&&q.y<base.y&&base.y-q.y<110,String(lcd)+" stays over its own desk");
+  // Drawn as a quad, never mirrored or twisted.
+  assert.ok(quad[0].x<quad[1].x&&quad[3].x<quad[2].x&&quad[0].y<quad[3].y&&quad[1].y<quad[2].y,String(lcd)+" keeps its orientation");
+ }
+ // The CRT quad is exactly the glass rectangle (15..82 by 16..76) of the monitor plane.
+ const a=iso({x:3.22,y:1.1-.05+.36+.005},cam,75),b=iso({x:3.22+.46,y:1.1-.05+.36+.005},cam,75),d=iso({x:3.22,y:1.1-.05+.36+.005},cam,36);
+ const crt=monitorScreenQuad(cam,p,null);
+ assert.ok(Math.abs(crt[0].x-(a.x+(b.x-a.x)*15/96))<1e-9&&Math.abs(crt[0].y-(a.y+(b.y-a.y)*15/96+(d.y-a.y)*16/100))<1e-9);
+ assert.ok(Math.abs(crt[2].x-(a.x+(b.x-a.x)*82/96))<1e-9&&Math.abs(crt[2].y-(a.y+(b.y-a.y)*82/96+(d.y-a.y)*76/100))<1e-9);
+});
+test("a monitor turned away from the camera has no visible glass to light",()=>{
+ const p={x:3,y:1.1};
+ for(const rotation of [1,2])assert.equal(monitorScreenQuad({originX:500,originY:200,zoom:.86,rotation,pivot:{x:3.55,y:1.45}},p,null),null,"rotation "+rotation);
+ for(const rotation of [0,3])assert.equal(monitorScreenQuad({originX:500,originY:200,zoom:.86,rotation,pivot:{x:3.55,y:1.45}},p,"lcd12")?.length,4,"rotation "+rotation);
+ assert.equal(monitorScreenQuad({originX:500,originY:200,zoom:.86},p,"lcd-desconhecido"),null,"unknown model");
 });

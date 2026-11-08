@@ -46,8 +46,8 @@ import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type N
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
 import {SCENE_WIDTH,SCENE_HEIGHT,contextScale} from "./sceneSurface.js";
-import {daylightAt,drawSceneLighting,drawScreenGlow,drawVignette,drawLampHalo,lampPositions,windowGlass,WINDOW_POSITIONS,type Daylight} from "./lighting.js";
-import {computerAppearance,screenGlow} from "./retroComputer.js";
+import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,drawVignette,drawLampHalo,lampPositions,windowGlass,WINDOW_POSITIONS,type Daylight} from "./lighting.js";
+import {computerAppearance,screenGlow,monitorScreenQuad} from "./retroComputer.js";
 import {shadeHex,withAlpha,cellNoise} from "./color.js";
 
 export class SceneRenderer {
@@ -835,10 +835,13 @@ export class SceneRenderer {
     drawRetroComputer(this.ctx,cam,p,i,t,isOnline,s);
     // Screen light spills over the desk, keyboard and bezel; stronger after dusk.
     // Additive and painted after the cached sprite, so the raster stays reusable.
-    const glow=screenGlow(computerAppearance(s,i,t,isOnline));
+    const appearance=computerAppearance(s,i,t,isOnline),glow=screenGlow(appearance);
     if(glow&&this.ctx.globalAlpha===1){
-      const light=daylightAt(s.totalMinutes);
-      drawScreenGlow(this.ctx,cam,p.x+.45,p.y+.47,38,glow.color,glow.strength*(.6+1.1*light.night));
+      const light=daylightAt(s.totalMinutes),emission=monitorEmission(light.night,glow.strength);
+      drawScreenGlow(this.ctx,cam,p.x+.45,p.y+.47,38,glow.color,emission.spill);
+      // As the evening comes in the glass itself brightens against the darker room.
+      const quad=monitorScreenQuad(cam,p,appearance.lcd);
+      if(quad)drawMonitorEmission(this.ctx,quad,glow.color,light.night,glow.strength);
     }
   }
   private owner(camera:Projection,t:number,s?:GameState):void {
