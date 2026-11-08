@@ -28,7 +28,9 @@ function paintPayments(context:CanvasRenderingContext2D,camera:Projection,paymen
     const alpha=Math.min(1,(1.35-effect.age)/0.4);
     context.save();context.globalAlpha=alpha;
     context.textAlign="center";context.lineWidth=3.2;
-    context.font="bold 20px system-ui,sans-serif";
+    // Quick pop-in, then the value floats up and fades.
+    const pop=1+Math.max(0,.25-effect.age)*1.2;
+    context.font="bold "+Math.round(20*pop)+"px system-ui,sans-serif";
     const label="+R$ "+effect.amount;
     const height=effect.age*43;
     context.strokeStyle="#103622";context.fillStyle="#70F0A6";
@@ -69,7 +71,10 @@ function paintSpeech(context:CanvasRenderingContext2D,camera:Projection,speechPo
   context.fillStyle=b.kind==="praise"?"#e3f9e9":"#fff2df";
   context.strokeStyle=b.kind==="praise"?"#227348":"#9c5238";
   context.lineWidth=2;
+  // Bubble with a small tail toward the speaker; same box, same lifetime.
   context.beginPath();context.roundRect(x,y,width,27,8);context.fill();context.stroke();
+  context.beginPath();context.moveTo(p.x-6,y+26);context.lineTo(p.x,y+33);context.lineTo(p.x+6,y+26);context.closePath();context.fill();
+  context.beginPath();context.moveTo(p.x-6,y+26.5);context.lineTo(p.x,y+33);context.lineTo(p.x+6,y+26.5);context.stroke();
   context.fillStyle="#26302c";context.textAlign="center";
   context.fillText(b.text,p.x,y+18,width-12);
   context.restore();

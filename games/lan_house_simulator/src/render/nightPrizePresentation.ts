@@ -1,4 +1,5 @@
 export { NightPrizePresentation,nightPrizePresentation,prizeAmountText } from "../application/nightPresentation.js";
+import {SCENE_WIDTH,SCENE_HEIGHT} from "./sceneSurface.js";
 import { nightPrizePresentation,prizeAmountText } from "../application/nightPresentation.js";
 /** Comprovante visual da premiação já paga pelo motor exatamente às 7h.
  * É leitura de GameState, não um novo sistema financeiro ou uma transferência.
@@ -23,10 +24,10 @@ export function drawNightPrizePresentation(
  ctx.globalAlpha=Math.max(.25,1-prize.ageMinutes/12);
  ctx.font="bold "+Math.max(10,Math.round(12*z))+"px system-ui,sans-serif";
  ctx.textAlign="center";ctx.textBaseline="middle";
- const width=Math.min(ctx.canvas.width-8,Math.max(126,ctx.measureText(label).width+22*z));
+ const width=Math.min(SCENE_WIDTH-8,Math.max(126,ctx.measureText(label).width+22*z));
  const height=25*z;
- const x=Math.max(width/2+4,Math.min(ctx.canvas.width-width/2-4,at.x));
- const y=Math.max(height/2+4,Math.min(ctx.canvas.height-height/2-4,at.y));
+ const x=Math.max(width/2+4,Math.min(SCENE_WIDTH-width/2-4,at.x));
+ const y=Math.max(height/2+4,Math.min(SCENE_HEIGHT-height/2-4,at.y));
  ctx.fillStyle="rgba(55,41,16,.95)";
  ctx.fillRect(x-width/2,y-height/2,width,height);
  ctx.strokeStyle="#f7d681";ctx.lineWidth=2*z;

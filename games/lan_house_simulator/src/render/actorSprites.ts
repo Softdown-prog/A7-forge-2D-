@@ -1,12 +1,14 @@
 import {drawActor,type ActorRender} from "./actorArt.js";
 import {walkPhase,WALK_CYCLE_DISTANCE} from "./walkCycle.js";
 import {iso,type Projection} from "./isometric.js";
+import {contextScale} from "./sceneSurface.js";
 
 const FRAMES=32,TAU=Math.PI*2;
 export const ACTOR_SPRITE_WIDTH=72,ACTOR_SPRITE_HEIGHT=120;
 export const ACTOR_SPRITE_LEFT=36,ACTOR_SPRITE_TOP=110;
 const PIXEL_BUDGET=16*1024*1024;
-interface SpriteFrame{bitmap:ImageBitmap;left:number;top:number;bytes:number}
+/** `scale` is the device pixels per art unit the frame was rasterized at. */
+interface SpriteFrame{bitmap:ImageBitmap;left:number;top:number;bytes:number;scale:number}
 interface SpriteCache{frames:Map<string,SpriteFrame>;pending:Set<string>;worker:Worker|null;bytes:number}
 // Frames can be shared by the menu preview and the live room.
 let sharedCache:SpriteCache|undefined;
@@ -20,13 +22,14 @@ function createCache():SpriteCache{
   url.search=new URL(import.meta.url).search;
   const worker=new Worker(url,{type:"module"});
   cache.worker=worker;
-  worker.onmessage=(event:MessageEvent<{key:string;bitmap:ImageBitmap;left:number;top:number}>)=>{
-   const {key,bitmap,left,top}=event.data;cache.pending.delete(key);
+  worker.onmessage=(event:MessageEvent<{key:string;bitmap:ImageBitmap;left:number;top:number;scale?:number}>)=>{
+   const {key,bitmap,left,top}=event.data,scale=event.data.scale??1;cache.pending.delete(key);
    const previous=cache.frames.get(key);
    if(previous){cache.bytes-=previous.bytes;previous.bitmap.close();cache.frames.delete(key);}
    const bytes=bitmap.width*bitmap.height*4;
-   cache.frames.set(key,{bitmap,left,top,bytes});cache.bytes+=bytes;
-   while(cache.bytes>PIXEL_BUDGET){
+   cache.frames.set(key,{bitmap,left,top,bytes,scale});cache.bytes+=bytes;
+   // HiDPI frames carry scale² more pixels; the budget grows with them, capped at 4×.
+   while(cache.bytes>PIXEL_BUDGET*Math.min(4,Math.max(1,scale*scale))){
     const oldest=cache.frames.keys().next().value!,frame=cache.frames.get(oldest)!;
     cache.bytes-=frame.bytes;frame.bitmap.close();cache.frames.delete(oldest);
    }
@@ -60,17 +63,21 @@ export function drawActorSprite(ctx:CanvasRenderingContext2D,camera:Projection,a
  const angle=pose==="walking"&&a.walkDistance!==undefined?walkPhase(a.walkDistance):a.time*rate+offset;
  const phase=rate?((Math.round(angle/TAU*FRAMES)%FRAMES)+FRAMES)%FRAMES:0;
  const time=rate?(phase/FRAMES*TAU-(pose==="walking"?id*.27:pose==="sitting"&&!a.gamepad?id*.37:0))/rate:0;
- const key=[a.kind,id,pose,a.direction??"south",a.screenView??"legacy",a.facing??1,!!a.gamepad,!!a.consoleSeat,phase].join("|");
+ // A HiDPI backing store rasterizes the frame at its device scale, so the
+ // bitmap is never magnified; a transformed context it cannot match stays vector.
+ const scale=contextScale(ctx);
+ if(scale===null){drawActor(ctx,camera,a);return;}
+ const key=[a.kind,id,pose,a.direction??"south",a.screenView??"legacy",a.facing??1,!!a.gamepad,!!a.consoleSeat,phase,scale===1?"":scale].join("|");
  const cache=sharedCache??=createCache();
  const sprite=cache.frames.get(key);
  if(!sprite){
   if(cache.worker&&!cache.pending.has(key)&&cache.pending.size<64){
-   cache.pending.add(key);cache.worker.postMessage({key,actor:{...a,x:0,y:0,id,time,walkDistance:a.walkDistance===undefined?undefined:phase/FRAMES*WALK_CYCLE_DISTANCE}});
+   cache.pending.add(key);cache.worker.postMessage({key,scale,actor:{...a,x:0,y:0,id,time,walkDistance:a.walkDistance===undefined?undefined:phase/FRAMES*WALK_CYCLE_DISTANCE}});
   }
   drawActor(ctx,camera,a);return;
  }
  cache.frames.delete(key);cache.frames.set(key,sprite);
- const p=iso(a,camera),z=camera.zoom;
+ const p=iso(a,camera),z=camera.zoom/sprite.scale;
  // Cropping removes transparent margins only; the anchor and 1x art are retained.
  ctx.drawImage(sprite.bitmap,p.x-sprite.left*z,p.y-sprite.top*z,sprite.bitmap.width*z,sprite.bitmap.height*z);
 }

@@ -13,6 +13,9 @@ function setup(){
   fillText:(...args)=>draws.push(["fillText",...args]),
   beginPath:()=>draws.push(["beginPath"]),
   roundRect:(...args)=>draws.push(["roundRect",...args]),
+  moveTo:(...args)=>draws.push(["moveTo",...args]),
+  lineTo:(...args)=>draws.push(["lineTo",...args]),
+  closePath:()=>draws.push(["closePath"]),
   fill:()=>draws.push(["fill"]),stroke:()=>draws.push(["stroke"]),
   measureText:text=>{draws.push(["measureText",text]);return {width:50};}
  };

@@ -1,6 +1,7 @@
 /** Insígnias de confronto sobre PCs ocupados de verdade.
  * Dados derivados do bracket e dos clientes: nunca são persistidos no save.
  */
+import {SCENE_WIDTH,SCENE_HEIGHT} from "./sceneSurface.js";
 import type {GameState} from "../sim/types.js";
 import {knockoutCurrentMatch} from "../sim/nightKnockout.js";
 import {pcPosition} from "../sim/engine.js";
@@ -78,11 +79,11 @@ export function drawNightMatchMarkers(
  for(const marker of markers){
   const pc=pcPosition(marker.pcIndex,s);
   const anchor=iso({x:pc.x+.35,y:pc.y+.34},camera,113);
-  const maxWidth=Math.max(65,ctx.canvas.width-10);
+  const maxWidth=Math.max(65,SCENE_WIDTH-10);
   const width=Math.min(maxWidth,Math.max(62,ctx.measureText(marker.label).width+16*z));
   const height=Math.max(19,23*z);
-  const x=Math.max(width/2+4,Math.min(ctx.canvas.width-width/2-4,anchor.x));
-  const y=Math.max(height/2+4,Math.min(ctx.canvas.height-height/2-4,anchor.y));
+  const x=Math.max(width/2+4,Math.min(SCENE_WIDTH-width/2-4,anchor.x));
+  const y=Math.max(height/2+4,Math.min(SCENE_HEIGHT-height/2-4,anchor.y));
   const palette=marker.kind==="duel"
    ?["rgba(17,51,69,.95)","#7fdef5","#f4ffff"]
    :marker.kind==="champion"

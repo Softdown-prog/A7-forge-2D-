@@ -1,5 +1,6 @@
 import type {Point} from "../sim/types.js";
 import {iso,polygon,raisedCuboid,type Projection} from "./isometric.js";
+import {drawRasterCached,rasterCacheUsable} from "./rasterCache.js";
 
 const faces={front:[0,3],back:[1,2],right:[0,1],left:[2,3]};
 function visible(cam:Projection,face:keyof typeof faces):boolean{return faces[face].includes(cam.rotation??0);}
@@ -81,17 +82,12 @@ function paintCounter(c:CanvasRenderingContext2D,cam:Projection,p:Point):void{
  line(c,[iso({x:x+.63,y:y+.43},cam,57),iso({x:x+.68,y:y+.49},cam,55)],"#677767",1.7*z);
  c.restore();
 }
-const sprites=new WeakMap<CanvasRenderingContext2D,Map<string,HTMLCanvasElement>>();
 /** Static artwork is rasterized once per zoom/orientation, including relocated counters. */
 export function drawCounter(c:CanvasRenderingContext2D,cam:Projection,p:Point,useCache=true):void{
- if(!useCache||typeof document==="undefined"){paintCounter(c,cam,p);return;}
- const z=cam.zoom,anchor=iso(p,cam),ix=Math.round(anchor.x),iy=Math.round(anchor.y),key=[z,cam.rotation??0,(anchor.x-ix).toFixed(5),(anchor.y-iy).toFixed(5)].join(":"),padX=Math.ceil(210*z)+4,padY=Math.ceil(190*z)+4;
- let cache=sprites.get(c);if(!cache){cache=new Map();sprites.set(c,cache);}let sprite=cache.get(key);
- if(!sprite){
-  sprite=document.createElement("canvas");sprite.width=Math.ceil(420*z)+8;sprite.height=Math.ceil(350*z)+8;
-  const target=sprite.getContext("2d");if(!target){paintCounter(c,cam,p);return;}
-  target.translate(padX-ix,padY-iy);paintCounter(target,cam,p);cache.set(key,sprite);
-  if(cache.size>24)cache.delete(cache.keys().next().value!);
- }
- c.drawImage(sprite,ix-padX,iy-padY);
+ if(!useCache||!rasterCacheUsable(c)){paintCounter(c,cam,p);return;}
+ const z=cam.zoom,anchor=iso(p,cam);
+ drawRasterCached(c,"counter",{
+  key:[z,cam.rotation??0].join(":"),anchorX:anchor.x,anchorY:anchor.y,snap:"round",limit:24,
+  padX:Math.ceil(210*z)+4,padY:Math.ceil(190*z)+4,width:Math.ceil(420*z)+8,height:Math.ceil(350*z)+8
+ },target=>paintCounter(target,cam,p));
 }

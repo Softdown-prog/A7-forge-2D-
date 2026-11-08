@@ -21,6 +21,7 @@ Fontes de sistema evitam downloads externos. Botões usam formas, cores, estados
 - `assets/ui/icons.svg`: 41 símbolos SVG com traço consistente, sem bibliotecas de ícones, emojis variáveis por sistema ou imagens remotas.
 - `src/ui/presentation.ts`: aplicação de ícones, HUD, manutenção, estoque, indicador real de ocupação e navegação das janelas.
 - `src/render/theme.ts`: cores do salão. Câmera, footprint, posições, âncoras, mobília e identidade dos atores são preservados.
+- `src/render/lighting.ts`, `sceneSurface.ts`, `rasterCache.ts`, `color.ts`: luz por hora do dia, resolução nativa do dispositivo e caches compartilhados; veja [GRAPHICS_REFACTOR.md](GRAPHICS_REFACTOR.md).
 - `style.css`: superfícies, grade responsiva, monitor CRT, botões, cartas, estados ativos, ferramentas e comportamento com movimento reduzido.
 
 O monitor da tela inicial é construído em CSS. Sua tela usa o `SceneRenderer` do jogo com um estado de apresentação independente. Animar essa prévia nunca chama `stepGame` para a partida do jogador.

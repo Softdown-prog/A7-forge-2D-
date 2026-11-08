@@ -28,7 +28,7 @@ export function iso(position: Point, camera: Projection, height = 0): Point {
   return { x: camera.originX + (position.x - position.y) * 64 * camera.zoom,
     y: camera.originY + (position.x + position.y) * 32 * camera.zoom - height * camera.zoom };
 }
-export function polygon(ctx: CanvasRenderingContext2D, vertices: Point[], fill: string, stroke?: string): void {
+export function polygon(ctx: CanvasRenderingContext2D, vertices: Point[], fill: string|CanvasGradient, stroke?: string): void {
   if (vertices.length === 0) return;
   ctx.beginPath(); ctx.moveTo(vertices[0]!.x, vertices[0]!.y);
   for (let i = 1; i < vertices.length; i++) ctx.lineTo(vertices[i]!.x, vertices[i]!.y);

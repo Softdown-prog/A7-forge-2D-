@@ -1,4 +1,5 @@
 import {iso} from "../render/isometric.js";
+import {scenePointFromClient,sceneUnitsPerCssPixel} from "../render/sceneSurface.js";
 import type {LayoutEditorPort,LayoutEditorObject} from "../application/layoutEditorPort.js";
 export function createLayoutEditor(canvas:HTMLCanvasElement,port:LayoutEditorPort,onOpen:()=>void,onChange:()=>void){
  const panel=document.querySelector<HTMLElement>("#layout-editor"),select=document.querySelector<HTMLSelectElement>("#layout-object"),message=document.querySelector<HTMLElement>("#layout-message"),confirm=document.querySelector<HTMLButtonElement>("#layout-confirm");
@@ -41,15 +42,14 @@ export function createLayoutEditor(canvas:HTMLCanvasElement,port:LayoutEditorPor
  // rolagem. Tratar pointerup como toque intencional, sem interceptar arrastos.
  const onCanvasTap=(clientX:number,clientY:number)=>{
   if(!active||removalPending)return;
-  const rect=canvas.getBoundingClientRect(),x=(clientX-rect.left)/rect.width*canvas.width,
-   y=(clientY-rect.top)/rect.height*canvas.height,cam=port.camera();
+  const rect=canvas.getBoundingClientRect(),{x,y}=scenePointFromClient(rect,clientX,clientY),cam=port.camera();
   const touch=window.matchMedia("(pointer:coarse)").matches;
-  const pixelRatio=canvas.width/Math.max(1,rect.width);
+  const pixelRatio=sceneUnitsPerCssPixel(rect);
   if(!draft){let best:string|null=null,score=Infinity;
    if(!partitionsOnly)for(const o of port.objects()){const p=iso({x:o.x+o.w/2,y:o.y+o.d/2},cam,o.surface==="wall"?135:o.kind==="pc"?50:o.kind==="counter"?45:o.kind==="soda"||o.kind==="candy"||o.kind==="shelf"?50:20),d=Math.hypot(x-p.x,y-p.y);if(d<score){best=o.id;score=d;}}
    for(const wall of port.partitions())for(const height of [0,38,76]){
     const [a,b]=port.endpoints(wall),pa=iso(a,cam,height),pb=iso(b,cam,height),dx=pb.x-pa.x,dy=pb.y-pa.y,t=Math.max(0,Math.min(1,((x-pa.x)*dx+(y-pa.y)*dy)/Math.max(1,dx*dx+dy*dy))),distance=Math.hypot(x-pa.x-t*dx,y-pa.y-t*dy);
-    if(distance<score&&distance<22*canvas.width/rect.width){best=wall.id;score=distance;}
+    if(distance<score&&distance<22*pixelRatio){best=wall.id;score=distance;}
    }
    if(best&&score<(touch?54:32)*pixelRatio)choose(best);return;
   }

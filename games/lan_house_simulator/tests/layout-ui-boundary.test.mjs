@@ -61,10 +61,11 @@ test("toques intencionais selecionam, enquanto arrasto e scroll não executam co
  const eventListeners={};const elementListeners={};
  const viewport={scrollLeft:0,scrollTop:0};
  const canvas={
-  width:1000,height:650,parentElement:null,
+  // Same aspect as the real stage: 1000×610 scene units shown at 1 CSS px per unit.
+  width:1000,height:610,parentElement:null,
   closest:selector=>selector==="#scene-viewport"?viewport:null,
   addEventListener:(name,fn)=>{eventListeners[name]=fn;},
-  getBoundingClientRect:()=>({left:0,top:0,width:1000,height:650})
+  getBoundingClientRect:()=>({left:0,top:0,width:1000,height:610})
  };
  globalThis.window={matchMedia:()=>({matches:true})};
  globalThis.document={
