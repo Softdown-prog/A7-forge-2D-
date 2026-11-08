@@ -73,7 +73,7 @@ if getent group docker >/dev/null 2>&1; then
   usermod -aG docker "$RUNNER_USER"
 fi
 if command -v visudo >/dev/null 2>&1; then
-  printf '%s\\n' "$RUNNER_USER ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg" \
+  printf '%s\n' "$RUNNER_USER ALL=(ALL) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg" \
     > /etc/sudoers.d/90-lhsrunner
   chmod 0440 /etc/sudoers.d/90-lhsrunner
   visudo -cf /etc/sudoers.d/90-lhsrunner
