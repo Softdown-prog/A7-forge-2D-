@@ -9,35 +9,36 @@ export const guidesIL:readonly GameGuide[]=[
   groupCode:'I',
   groupTitle:'Revistas Top Games e desbloqueios',
   title:'Revistas Top Games (2002–2010): entregas do carteiro e desbloqueio de jogos',
-  summary:'Entenda como as 28 edições da revista Top Games revelam os lançamentos de PS1 e PS2, quanto custa cada exemplar e como pedir edições atrasadas.',
+  summary:"Acompanhe as 28 revistas Top Games, cada uma dedicada a um jogo PS1 ou PS2, entregues pelo carteiro após a assinatura.",
   unlockBadge:'De 2002 a 2010 (28 edições)',
   uiPath:'Correio · Administrar → Videogames → Jogos PS1 / PS2',
   whatIs:[
-   'Entre os anos de 2002 e 2010, a imprensa especializada de videogames chega ao seu salão através da revista Top Games. São 28 edições históricas (Edições #1 a #11 focadas no PlayStation 1 entre 2002 e 2005, e Edições #12 a #28 dedicadas ao PlayStation 2 entre 2006 e 2010).',
-   'Na campanha padrão do jogo, receber a edição correspondente da Top Games é o que revela e libera para compra os CDs de PS1 e os DVDs de PS2 daquele trimestre (além de trazer edições especiais de retrospectiva e guias de dicas nos trimestres sem lançamento de disco).'
+   "Top Games é uma coleção de 28 revistas físicas do jogo: 13 sobre CDs de PlayStation 1 e 15 sobre DVDs de PlayStation 2. Cada edição apresenta um único título, não um pacote trimestral de vários jogos.",
+   "Na campanha histórica nova, receber a revista correspondente é condição para comprar aquele título. A revista revela o jogo; o CD ou DVD ainda precisa ser adquirido separadamente.",
   ],
   whyItMatters:[
-   'Diferente da coleção de Linux de 1999 (que exige clicar para assinar), a entrega da Top Games começa automaticamente em janeiro de 2002: sempre que chega a data de lançamento de uma nova edição e você tem R$ 14,00 no caixa, o carteiro entra pela porta e entrega o exemplar para o Tony no balcão.',
-   'Se você estiver sem dinheiro ou com a passagem do balcão bloqueada no dia da entrega, a revista fica pendente e os jogos daquela edição permanecem trancados até você recebê-la ou comprá-la avulsamente.'
+   "O carteiro cria uma progressão de descoberta: você acompanha o correio, recebe a edição, conhece o jogo e decide quando investir em uma cópia física.",
+   "Os lançamentos respeitam o ano de cada catálogo. Mesmo que você tenha dinheiro, não pode antecipar a compra de um disco de ano futuro.",
   ],
   whenAvailable:[
-   'A Edição #1 é lançada no Dia 1441 (01/01/2002) e a Edição #28 encerra a coleção no 4º trimestre de 2010.',
-   'Saves antigos criados antes da implementação das revistas continuam funcionando no modo legado por data, mas todas as novas campanhas utilizam o desbloqueio pelas revistas Top Games.'
+   "A assinatura pode ser iniciada a partir de 2002. A primeira edição do catálogo tem publicação prevista para a metade de janeiro de 2002, e a sequência cobre até os títulos de 2010.",
+   "Uma edição é publicada na metade de cada mês planejado pelo calendário: em anos com vários jogos, saem várias revistas ao longo dos meses daquele ano.",
   ],
   howToUse:[
-   'A partir de 2002, mantenha pelo menos R$ 14,00 de reserva no caixa no início de cada trimestre (dias 1, 91, 181 e 271 do ano) e o caminho livre entre a porta e o balcão.',
-   'Quando o carteiro entrar no salão e concluir os 5 minutos de entrega no balcão, os R$ 14,00 são debitados e a revista aparece no Correio com sua capa ilustrada em SVG, manchete e lista de jogos revelados.',
-   'Se alguma edição ficou para trás porque faltou caixa no dia, abra Administrar → Videogames → sub-aba Jogos PS1 / PS2 (ou a carta no Correio) e clique no botão para adquirir a edição atrasada por R$ 14,00.',
-   'Com a revista recebida, clique no botão de compra dos CDs ou DVDs recém-revelados na própria aba Jogos PS1 / PS2 ou em Compras → Videogames e CDs.'
+   "Abra o painel de assinatura Top Games na área de compras de videogames, a partir de 2002, e ative a assinatura.",
+   "Quando uma edição estiver publicada e chegar sua vez de entrega, o carteiro leva o exemplar até Tony no balcão. A cobrança acontece na entrega efetiva, não a cada minuto.",
+   "Leia ou acompanhe a informação recebida no Correio para conhecer o nome do jogo liberado. Depois, instale uma bancada da plataforma e compre uma cópia física do título.",
+   "Se você se inscrever tardiamente, as edições pendentes seguem em ordem e não chegam todas de uma vez: o jogo respeita um intervalo mínimo de 30 dias entre entregas.",
   ],
   whatHappensNext:[
-   'Cada exemplar recebido fica arquivado permanentemente no Correio para você reler as matérias e admirar a arte de capa de cada época.',
-   'Mesmo as 5 edições especiais que não trazem disco novo (#23, #25, #27 e #28 entre 2009 e 2010) completam a cronologia histórica da geração 128 bits no seu salão.'
+   "Cada revista recebida entra no histórico da coleção e permite comprar o jogo específico, desde que seu ano de lançamento e a bancada da plataforma estejam disponíveis.",
+   "Se não houver dinheiro suficiente no momento devido, a entrega não cobra nem libera a novidade antecipadamente; continue a campanha até haver saldo.",
   ],
   costsAndLimits:[
-   'Preço único por edição da Top Games: R$ 14,00 (28 edições × R$ 14,00 = R$ 392,00 ao longo de 9 anos).',
-   'Tempo de entrega física do carteiro no balcão: 5 minutos do jogo.',
-   'Não há multa se faltar R$ 14,00 no dia do lançamento: a revista aguarda até haver saldo (ou pode ser comprada na aba de Videogames).'
+   "Preço-base por exemplar: R$ 12,00, calculado a partir de 2002 e reajustado pelo índice de preços do ano de entrega.",
+   "Coleção total: 28 edições e 28 jogos, sendo uma revista individual para cada jogo. Não existe uma única edição que desbloqueie três jogos.",
+   "Após a assinatura, a próxima entrega ocorre no máximo entre a publicação da edição, a data da assinatura e o intervalo de 30 dias após a última entrega.",
+   "Saves antigos sem a regra de revistas continuam com a lógica de desbloqueio anterior; a campanha histórica nova aplica o conhecimento por edição.",
   ],
   table:{
    caption:'Resumo das fases da revista Top Games (2002–2010)',
@@ -52,14 +53,15 @@ export const guidesIL:readonly GameGuide[]=[
    ]
   },
   commonProblems:[
-   {
-    problem:'O jogo de PS1 ou PS2 que eu quero comprar diz que exige uma edição específica da Top Games.',
-    solution:'Verifique no topo da aba Administrar → Videogames → Jogos PS1 / PS2 se há edições da revista aguardando pagamento de R$ 14,00 ou se o carteiro está caminhando até o balcão neste exato momento.'
-   }
+   {problem:"Assinei, mas a revista não chegou no mesmo dia.",solution:"A publicação pode estar agendada para outro dia. Além disso, entregas posteriores precisam respeitar o intervalo mínimo de 30 dias."},
+   {problem:"Recebi Top Games e ainda não consigo comprar um DVD.",solution:"Verifique se a edição era sobre esse título, se você já chegou ao ano dele e se possui bancada da plataforma correspondente."},
+   {problem:"Fiquei anos sem assinar. Posso receber todas as revistas atrasadas de uma vez?",solution:"Não. O jogo retoma a fila de edições e limita a recuperação a uma entrega por intervalo mínimo de 30 dias."},
+   {problem:"Não tenho dinheiro para pagar o carteiro.",solution:"A edição não é entregue nem desbloqueada enquanto faltar saldo. Reforce o caixa e mantenha a assinatura."},
   ],
   playerTips:[
-   'A Edição #1 (janeiro de 2002) e a Edição #12 (janeiro de 2006) são as mais valiosas da coleção, pois cada uma destrava 3 jogos de estreia de uma só vez pelo custo de uma única revista (R$ 14,00)!',
-   'Como o carteiro só entrega uma revista por visita (levando 5 minutos no balcão), manter R$ 14,00 sempre disponíveis evita acumular fila de entregas.'
+   "Não confunda lançamento do console com desbloqueio de todos os jogos: as revistas liberam os títulos progressivamente.",
+   "Reserve saldo para cada entrega. O preço do exemplar acompanha o índice de preços da campanha.",
+   "Confira os guias de PS1 e PS2 para ver o nome verdadeiro de cada jogo e a ordem das revistas.",
   ],
   relatedIds:['013','020','021','035']
  },
@@ -71,34 +73,37 @@ export const guidesIL:readonly GameGuide[]=[
   groupCode:'J',
   groupTitle:'Loja, mercadorias e estoque',
   title:'Estoque, fornecedores, pedidos de reposição e entregas',
-  summary:'Compare os 4 fornecedores de bebidas, doces e salgadinhos, equilibre preço, prazo e confiabilidade e acompanhe os pedidos em trânsito.',
+  summary:"Compare os fornecedores reais do catálogo de mercadorias, organize pedidos por lote e acompanhe entregas e estoque.",
   unlockBadge:'Disponível desde 1998 (Dia 1)',
   uiPath:'Administrar → Estoque → Fornecedores / Entregas',
   whatIs:[
-   'Para que as máquinas de refrigerante, doces e a prateleira de salgadinhos nunca fiquem vazias, você abastece a lan house comprando lotes de reposição em Administrar → Estoque → sub-aba Fornecedores.',
-   'O simulador conta com 4 fornecedores distintos no bairro e na região, cada um com seu próprio multiplicador de preço, prazo de entrega (de entrega imediata até 2 dias) e índice de confiabilidade.'
+   "Os produtos de varejo podem ser comprados por lotes de fornecedores com condições diferentes. Há quatro opções no motor: Básico, Econômico, Selecionado e Parceiro.",
+   "Cada produto tem quantidade por lote, custo-base e ano de liberação próprios. Alguns pedidos chegam imediatamente; os do fornecedor Econômico levam um dia do jogo.",
   ],
   whyItMatters:[
    'Se uma categoria de lanche zerar no estoque e um cliente com sede ou fome for até a máquina após a sessão, você perde a venda extra e o cliente sai frustrado, reduzindo sua reputação em 0,2 ponto.',
    'Por outro lado, saber escolher entre o fornecedor econômico (que leva 2 dias mas cobra 16% mais barato) e o expresso (que entrega na mesma hora pagando 22% a mais) permite economizar sem nunca deixar faltar produto.'
   ],
   whenAvailable:[
-   'As sub-abas Fornecedores e Entregas dentro de Administrar → Estoque estão disponíveis desde o Dia 1 (1998).'
+   "Há mercadorias compráveis já em 1998. Cada produto adicional fica disponível no ano indicado no catálogo, até 2020.",
+   "Os quatro perfis de fornecedor podem ser consultados na área de estoque/mercadorias; o fornecedor Parceiro exige contratação antes do primeiro pedido.",
   ],
   howToUse:[
-   'Abra Administrar → aba Estoque → sub-aba Fornecedores (ou clique no botão rápido Estoque abaixo do cabeçalho).',
-   'Escolha um dos 4 fornecedores disponíveis: Distribuidora Rápida, Atacado Econômico, Expresso Já ou Casa Central.',
-   'Nos anos de 1998 e 1999, clique para encomendar lotes das 3 categorias gerais (Bebidas: lote de 14 unidades; Doces: lote de 18 unidades; Salgadinhos: lote de 14 unidades). A partir do ano 2000, você também pode encomendar lotes individuais de cada uma das 12 mercadorias na sub-aba Mercadorias.',
-   'Abra a sub-aba Entregas para acompanhar os pedidos que estão em trânsito e ver em qual dia eles chegarão.'
+   "Abra Administrar e acesse Estoque ou Mercadorias. Escolha um produto que já esteja liberado para o ano atual.",
+   "Compare os fornecedores: Básico entrega imediatamente; Econômico concede desconto, mas exige ao menos três lotes e demora um dia; Selecionado entrega imediatamente com qualidade maior; Parceiro exige adesão e oferece desconto.",
+   "Defina a quantidade de lotes e confirme o valor do pedido. O caixa é debitado na contratação; o estoque aumenta na hora ou no vencimento do prazo de entrega.",
+   "Acompanhe o estoque para não deixar faltar bebida, doces ou salgadinhos durante o expediente.",
   ],
   whatHappensNext:[
-   'Se você escolheu o fornecedor Expresso Já (prazo de 0 dias), as unidades entram no estoque no mesmo instante da compra.',
-   'Nos fornecedores com prazo de 1 ou 2 dias, o pedido fica listado em Entregas e é somado ao estoque automaticamente na abertura do dia previsto (às 10:00). Caso ocorra um raro atraso logístico (conforme a confiabilidade do fornecedor), o pedido sofre +1 dia de prorrogação e registra um aviso no diário.'
+   "As entregas pendentes são concluídas quando o relógio do jogo alcança o prazo do pedido. O custo médio da mercadoria é atualizado para acompanhar a margem real.",
+   "Clientes compram apenas produtos disponíveis no ano, em estoque e por um preço que aceitem pagar.",
   ],
   costsAndLimits:[
-   'Lotes padrão por pedido: Bebidas (+14 unidades, custo base R$ 11 em 1998) · Doces (+18 unidades, custo base R$ 9 em 1998) · Salgadinhos (+14 unidades, custo base R$ 10 em 1998), corrigidos pelo IPCA nos anos seguintes.',
-   'Alerta visual de estoque baixo: aparece sempre que uma categoria tem 4 unidades ou menos restantes.',
-   'Penalidade quando um cliente faminto/sedento encontra estoque zerado: -0,2 ponto de reputação e perda da venda.'
+   "Básico: preço-base normal, mínimo de um lote e recebimento imediato.",
+   "Econômico: desconto de 10%, mínimo de três lotes e prazo de um dia do jogo; qualidade um pouco inferior.",
+   "Selecionado: 20% mais caro, maior qualidade e recebimento imediato.",
+   "Parceiro: 20% de desconto com adesão única de R$ 180,00 e recebimento imediato.",
+   "Cada pedido aceita de um a 50 lotes conforme o mínimo do fornecedor. Os tamanhos dos lotes variam por produto; confira o guia de Mercadorias.",
   ],
   table:{
    caption:'Comparativo dos 4 Fornecedores de Estoque',
@@ -129,64 +134,158 @@ export const guidesIL:readonly GameGuide[]=[
   path:'/sobre-o-jogo/guias/024-mercadorias-precos-de-varejo-e-consumo-dos-clientes/',
   groupCode:'J',
   groupTitle:'Loja, mercadorias e estoque',
-  title:'Mercadorias (2000+), preços de venda e necessidades dos clientes',
-  summary:'Gerencie os 12 produtos detalhados liberados no ano 2000, ajuste os preços nas máquinas e prateleira e entenda como sede e fome geram vendas.',
-  unlockBadge:'Preços desde 1998 · Catálogo de 12 mercadorias em 2000',
+  title:"Mercadorias de 1998 a 2020: catálogo, preços e necessidades dos clientes",
+  summary:"Gerencie os 12 produtos reais do jogo, com oito disponíveis desde 1998 e novidades em 2001, 2005, 2010 e 2020.",
+  unlockBadge:"Primeiros 8 produtos em 1998; novidades até 2020",
   uiPath:'Administrar → Estoque → Mercadorias · Administrar → Preços → Produtos',
   whatIs:[
-   'Durante as sessões nos computadores e videogames, os clientes sentem sede e fome (que crescem a cada minuto de uso). Ao encerrar a sessão, qualquer visitante com sede ou fome igual ou acima de 55 pontos caminha até as máquinas de venda (refrigerante e doces, na parede do fundo) ou até a prateleira de salgadinhos (na parede esquerda).',
-   'Nos anos de 1998 e 1999, o varejo opera pelas 3 categorias gerais (Bebidas, Doces e Salgadinhos). Na virada para o ano 2000 (Dia 721), desbloqueia a sub-aba Administrar → Estoque → Mercadorias, expandindo o comércio para 12 produtos específicos (4 bebidas, 4 doces e 4 salgadinhos).'
+   "Os clientes sentem sede e fome ao longo do expediente. Quando procuram as máquinas de venda ou a prateleira, escolhem mercadorias disponíveis e com estoque, considerando o preço e a qualidade.",
+   "O catálogo verdadeiro contém 12 itens. Oito aparecem desde 1998; os demais ficam disponíveis em 2001 (Suco de caixinha), 2005 (Bebida energética), 2010 (Refrigerante zero) e 2020 (Biscoito integral).",
   ],
   whyItMatters:[
-   'O comércio de lanches e bebidas é uma excelente fonte de receita complementar que não ocupa o tempo do Tony no balcão (os próprios clientes retiram nas máquinas e prateleira).',
-   'A partir do ano 2000, você pode escolher quais dos 12 produtos quer deixar Ativo para venda ou Pausado, ajustando o preço unitário de cada item para maximizar seu lucro sem espantar os compradores.'
+   "A venda de bebidas e lanches complementa o faturamento das sessões e depende de preço, estoque e comportamento real dos clientes.",
+   "Cada fornecedor altera o custo e a qualidade do produto. A margem mostrada pelo jogo depende do preço cobrado e do custo médio de compra.",
   ],
   whenAvailable:[
-   'O ajuste de preços das 3 categorias gerais em Administrar → Preços → Produtos funciona desde o Dia 1 (1998).',
-   'O catálogo detalhado de 12 itens em Administrar → Estoque → Mercadorias abre automaticamente em 01/01/2000.'
+   "Refrigerante da casa, Balas sortidas, Salgadinho crocante, Água mineral, Chiclete de frutas, Paçoca de amendoim, Biscoito recheado e Chocolate ao leite estão disponíveis desde 1998.",
+   "Outros quatro itens surgem progressivamente em 2001, 2005, 2010 e 2020. O catálogo não é desbloqueado inteiro de uma só vez em 2000.",
   ],
   howToUse:[
-   'Em 1998 e 1999, abra Administrar → Preços → sub-aba Produtos para ajustar os preços de venda de Bebidas, Doces e Salgadinhos.',
-   'A partir de 2000, abra Administrar → Estoque → sub-aba Mercadorias para ver os 12 itens detalhados com o estoque atual, custo de compra por lote, preço sugerido e margem.',
-   'Use os botões de preço de cada mercadoria para subir ou baixar o valor cobrado do cliente, ou clique em Ativo / Pausado para habilitar ou suspender a venda de um item específico.',
-   'Selecione o fornecedor ali mesmo no painel e clique para pedir lotes de reposição dos itens que mais saem.'
+   "Abra a área de Estoque/Mercadorias em Administrar e escolha um produto já liberado para seu ano.",
+   "Compare o custo unitário, o estoque, o preço de venda e os fornecedores. Um lote Básico usa a quantidade e o custo-base próprios daquele item.",
+   "Defina um preço compatível com o valor de referência e o dinheiro dos clientes. No modo histórico, o editor aceita preços entre R$ 0,25 e R$ 100,00, em centavos.",
+   "Peça os lotes necessários; se optar pelo fornecedor Econômico, aguarde um dia de jogo pela entrega antes de contar com o estoque.",
+   "Observe as vendas e reponha os produtos que saem mais, respeitando a evolução histórica de cada item.",
   ],
   whatHappensNext:[
-   'Quando o cliente vai comprar, ele avalia os itens ativos e com estoque na categoria que mata a necessidade dele (sede ou fome), preferindo produtos cujo preço esteja próximo ou abaixo do valor de referência corrigido pelo IPCA.',
-   'Toda compra concluída soma o dinheiro ao caixa e gera lixo nas lixeiras do salão (+5 pontos de lixo para bebida e +3 pontos para doce ou salgadinho).'
+   "A compra do cliente retira uma unidade do estoque e acrescenta o preço de venda ao caixa. O jogo registra unidades vendidas, receita e custo das vendas.",
+   "Se o produto estiver esgotado, for futuro, custar mais do que o cliente possui ou superar sua disposição de pagamento, ele não será selecionado.",
   ],
   costsAndLimits:[
-   'Gatilho de compra após a sessão: sede igual ou acima de 55 pontos (procura bebida) ou fome igual ou acima de 55 pontos (procura doce ou salgadinho).',
-   'Recusa por preço abusivo: se você cobrar muito acima do preço de referência da época (acima de ~1,65x a 1,85x do valor justo), os clientes passam a achar caro e desistem da compra (-0,15 de reputação).',
-   'Impacto na limpeza: mais vendas de lanches enchem as duas lixeiras mais rápido, exigindo atenção à limpeza do salão.'
+   "A seleção do cliente considera o preço de referência do ano, o perfil econômico ou de conforto e a qualidade do fornecedor; não existe um limite único de preço alto que sirva para todas as pessoas.",
+   "Valores da tabela são bases de 1998 para preços/custos e não uma promessa de preço fixo ao longo dos anos; a economia histórica aplica atualização pelo índice de preços.",
+   "Cada item tem quantidade e custo por lote próprios. Por exemplo, Refrigerante da casa: 10 unidades por R$ 7,00 de custo-base, sugestão R$ 1,50 por unidade.",
+   "Regras gerais de compra: produto liberado, estoque positivo, saldo suficiente do comprador e preço aceitável.",
   ],
   table:{
-   caption:'Catálogo completo das 12 Mercadorias liberadas no ano 2000 (valores base 1998 × IPCA)',
-   headers:['Produto','Categoria','Lote de reposição','Custo base do lote','Preço unitário base sugerido'],
-   rows:[
-    ['Refrigerante lata','Bebidas','12 unidades','R$ 4,80','R$ 0,80'],
-    ['Guaraná 600 ml','Bebidas','10 unidades','R$ 5,50','R$ 1,00'],
-    ['Suco em lata','Bebidas','12 unidades','R$ 5,40','R$ 0,90'],
-    ['Água mineral','Bebidas','16 unidades','R$ 3,60','R$ 0,50'],
-    ['Barra de chocolate','Doces','15 unidades','R$ 5,20','R$ 0,70'],
-    ['Bala de goma','Doces','20 unidades','R$ 3,80','R$ 0,40'],
-    ['Paçoca embalada','Doces','24 unidades','R$ 3,40','R$ 0,30'],
-    ['Biscoito recheado','Doces','14 unidades','R$ 5,60','R$ 0,80'],
-    ['Salgadinho de milho','Salgadinhos','12 unidades','R$ 5,40','R$ 0,90'],
-    ['Batata frita pacote','Salgadinhos','10 unidades','R$ 6,20','R$ 1,20'],
-    ['Amendoim crocante','Salgadinhos','16 unidades','R$ 4,80','R$ 0,60'],
-    ['Torrada temperada','Salgadinhos','14 unidades','R$ 5,00','R$ 0,70']
-   ]
+    "caption": "Catálogo real de mercadorias: disponibilidade, pacote e valores-base do motor",
+    "headers": [
+      "Produto",
+      "Categoria",
+      "Disponível desde",
+      "Lote",
+      "Custo-base do lote",
+      "Preço-base unitário"
+    ],
+    "rows": [
+      [
+        "Refrigerante da casa",
+        "Bebidas",
+        "1998",
+        "10 un.",
+        "R$ 7,00",
+        "R$ 1,50"
+      ],
+      [
+        "Balas sortidas",
+        "Doces",
+        "1998",
+        "14 un.",
+        "R$ 7,00",
+        "R$ 1,00"
+      ],
+      [
+        "Salgadinho crocante",
+        "Salgadinhos",
+        "1998",
+        "12 un.",
+        "R$ 12,00",
+        "R$ 2,00"
+      ],
+      [
+        "Água mineral",
+        "Bebidas",
+        "1998",
+        "12 un.",
+        "R$ 5,40",
+        "R$ 1,00"
+      ],
+      [
+        "Chiclete de frutas",
+        "Doces",
+        "1998",
+        "24 un.",
+        "R$ 4,80",
+        "R$ 0,50"
+      ],
+      [
+        "Paçoca de amendoim",
+        "Doces",
+        "1998",
+        "24 un.",
+        "R$ 7,20",
+        "R$ 0,75"
+      ],
+      [
+        "Biscoito recheado",
+        "Salgadinhos",
+        "1998",
+        "12 un.",
+        "R$ 10,80",
+        "R$ 1,75"
+      ],
+      [
+        "Chocolate ao leite",
+        "Doces",
+        "1998",
+        "12 un.",
+        "R$ 9,60",
+        "R$ 1,50"
+      ],
+      [
+        "Suco de caixinha",
+        "Bebidas",
+        "2001",
+        "12 un.",
+        "R$ 9,60",
+        "R$ 1,50"
+      ],
+      [
+        "Bebida energética",
+        "Bebidas",
+        "2005",
+        "12 un.",
+        "R$ 21,60",
+        "R$ 3,00"
+      ],
+      [
+        "Refrigerante zero",
+        "Bebidas",
+        "2010",
+        "12 un.",
+        "R$ 10,20",
+        "R$ 1,75"
+      ],
+      [
+        "Biscoito integral",
+        "Salgadinhos",
+        "2020",
+        "12 un.",
+        "R$ 15,60",
+        "R$ 2,25"
+      ]
+    ]
   },
   commonProblems:[
-   {
-    problem:'Tenho bastante estoque, mas os clientes olham para a máquina de venda e vão embora reclamando.',
-    solution:'Ou o preço do produto ficou alto demais para o ano atual (reduza alguns centavos em Preços → Produtos ou Estoque → Mercadorias), ou você marcou todos os itens daquela categoria como Pausado.'
-   }
+   {problem:"Um produto aparece indisponível mesmo com dinheiro em caixa.",solution:"Verifique se sua campanha chegou ao ano de lançamento daquele item. Os desbloqueios são individuais."},
+   {problem:"O estoque chegou, mas os clientes não compram.",solution:"Confira se existe demanda por sede ou fome, se o preço cabe na carteira dos visitantes e se o item não está esgotado."},
+   {problem:"O fornecedor Econômico não deixa comprar apenas um lote.",solution:"Essa opção exige pelo menos três lotes e leva um dia de jogo para entregar. Use o fornecedor Básico para uma reposição pequena e imediata."},
+   {problem:"O produto aparece com margem negativa.",solution:"Compare preço de venda e custo médio real. Escolher um fornecedor mais caro ou vender abaixo do custo reduz a margem."},
   ],
   playerTips:[
-   'Itens de maior valor unitário — como Batata frita pacote, Guaraná 600 ml e Barra de chocolate — entregam maior lucro em reais por venda quando os clientes estão com carteira folgada.',
-   'À medida que a inflação (IPCA) avança nos anos 2000, 2010 e 2020, lembre-se de reajustar periodicamente os preços dos produtos para acompanhar o aumento do custo dos lotes nos fornecedores!'
+   "Comece pelo estoque dos itens liberados em 1998 e amplie o sortimento apenas quando surgirem novidades no calendário.",
+   "O fornecedor Selecionado melhora a qualidade, mas eleva o custo; compare se os clientes realmente aceitam um preço maior.",
+   "Use os valores do catálogo para planejar, e confira o custo atualizado no painel antes de confirmar cada pedido.",
   ],
   relatedIds:['003','023','025','028']
  },
