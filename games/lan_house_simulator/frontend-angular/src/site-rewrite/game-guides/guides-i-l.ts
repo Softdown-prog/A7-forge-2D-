@@ -41,16 +41,79 @@ export const guidesIL:readonly GameGuide[]=[
    "Saves antigos sem a regra de revistas continuam com a lógica de desbloqueio anterior; a campanha histórica nova aplica o conhecimento por edição.",
   ],
   table:{
-   caption:'Resumo das fases da revista Top Games (2002–2010)',
-   headers:['Edições','Período','Plataforma em destaque','O que desbloqueia'],
-   rows:[
-    ['Edições #1 a #4','Ano 2002 (1º ao 4º Trim.)','PlayStation 1','Os 6 primeiros CDs de PS1 (Copa de Bairro 99 a Crônicas de Éter)'],
-    ['Edições #5 a #7','Ano 2003 (1º, 2º e 4º Trim.)','PlayStation 1','Vingança em Dupla, Rali da Serra e Guardião da Cripta'],
-    ['Edições #8 a #11','Anos 2004 e 2005','PlayStation 1','Os 4 últimos CDs de PS1 (Estádio Lotado 2004 a Torneio Supremo)'],
-    ['Edições #12 a #15','Ano 2006 (1º ao 4º Trim.)','PlayStation 2','Os 6 primeiros DVDs de PS2 (Clássico de Domingo 2006 a Acordes de Garagem)'],
-    ['Edições #16 a #21','Anos 2007 e 2008','PlayStation 2','6 DVDs intermediários (Fúria do Olimpo a Esquadrão Delta)'],
-    ['Edições #22 a #28','Anos 2009 e 2010','PlayStation 2','Circuito Noturno GT (#22), Sombras de Kibo (#24), Arena Final 2010 (#26) e especiais']
-   ]
+    "caption": "Calendário de revistas por ano: uma edição para cada título PS1/PS2",
+    "headers": [
+      "Ano",
+      "Plataforma",
+      "Quantidade de edições",
+      "Numeração da lista",
+      "Como obter o desbloqueio"
+    ],
+    "rows": [
+      [
+        "2002",
+        "PS1",
+        "7",
+        "#1–#7",
+        "Uma revista por jogo, de janeiro a julho"
+      ],
+      [
+        "2003",
+        "PS1",
+        "2",
+        "#8–#9",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2004",
+        "PS1",
+        "2",
+        "#10–#11",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2005",
+        "PS1",
+        "2",
+        "#12–#13",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2006",
+        "PS2",
+        "7",
+        "#14–#20",
+        "Uma revista por jogo, de janeiro a julho"
+      ],
+      [
+        "2007",
+        "PS2",
+        "2",
+        "#21–#22",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2008",
+        "PS2",
+        "2",
+        "#23–#24",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2009",
+        "PS2",
+        "2",
+        "#25–#26",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ],
+      [
+        "2010",
+        "PS2",
+        "2",
+        "#27–#28",
+        "Uma revista por jogo, em janeiro e fevereiro"
+      ]
+    ]
   },
   commonProblems:[
    {problem:"Assinei, mas a revista não chegou no mesmo dia.",solution:"A publicação pode estar agendada para outro dia. Além disso, entregas posteriores precisam respeitar o intervalo mínimo de 30 dias."},
@@ -106,14 +169,44 @@ export const guidesIL:readonly GameGuide[]=[
    "Cada pedido aceita de um a 50 lotes conforme o mínimo do fornecedor. Os tamanhos dos lotes variam por produto; confira o guia de Mercadorias.",
   ],
   table:{
-   caption:'Comparativo dos 4 Fornecedores de Estoque',
-   headers:['Fornecedor','Multiplicador de preço','Prazo de entrega','Confiabilidade (pontualidade)','Quando vale a pena usar'],
-   rows:[
-    ['Atacado Econômico','0,84x (16% de desconto)','2 dias','80% (20% de chance de atrasar +1 dia)','Ideal para compras planejadas quando ainda há estoque para 2–3 dias'],
-    ['Distribuidora Rápida','1,00x (preço base)','1 dia','92% (8% de chance de atraso)','Melhor equilíbrio para reposições do dia a dia'],
-    ['Casa Central','1,08x (+8% no preço)','1 dia','98% (quase nunca atrasa)','Ótimo quando o estoque está baixo e você quer entrega garantida amanhã'],
-    ['Expresso Já','1,22x (+22% no preço)','0 dias (imediato!)','99% (entrega instantânea)','Salva-vidas de emergência quando o estoque zerou no meio do expediente']
-   ]
+    "caption": "Fornecedores reais de mercadorias e condições dos pedidos",
+    "headers": [
+      "Fornecedor",
+      "Preço por lote",
+      "Mínimo",
+      "Prazo",
+      "Qualidade / requisito"
+    ],
+    "rows": [
+      [
+        "Básico",
+        "100% do custo-base",
+        "1 lote",
+        "Imediato",
+        "Qualidade normal; sem contrato"
+      ],
+      [
+        "Econômico",
+        "90% do custo-base",
+        "3 lotes",
+        "1 dia do jogo",
+        "Qualidade 92% da referência"
+      ],
+      [
+        "Selecionado",
+        "120% do custo-base",
+        "1 lote",
+        "Imediato",
+        "Qualidade 120% da referência"
+      ],
+      [
+        "Parceiro",
+        "80% do custo-base",
+        "1 lote",
+        "Imediato",
+        "Qualidade normal; exige adesão de R$ 180,00"
+      ]
+    ]
   },
   commonProblems:[
    {
@@ -330,12 +423,30 @@ export const guidesIL:readonly GameGuide[]=[
    "O faxineiro contratado é acionado automaticamente quando as lixeiras atingem o patamar de atenção; o técnico contratado atende PCs com 100% de desgaste, um de cada vez.",
   ],
   table:{
-   caption:'Comparativo entre Serviço Avulso e Equipe Contratada (valores base 1998 × IPCA)',
-   headers:['Profissional','Visita Avulsa (paga na hora)','Equipe Contratada (paga no fim do mês)','Gatilho automático da equipe fixa'],
-   rows:[
-    ['Faxineiro','R$ 2,94 a R$ 11,50 por chamada','R$ 4,50 por dia em que trabalhar','Entra sozinho quando alguma lixeira atinge ≥ 55%'],
-    ['Técnico','R$ 4,16 a R$ 20,00 por reparo','R$ 7,50 por dia em que trabalhar','Entra sozinho quando um PC livre atinge 100% de desgaste']
-   ]
+    "caption": "Serviços de limpeza e manutenção: regras reais da campanha",
+    "headers": [
+      "Profissional",
+      "Trabalho avulso",
+      "Contratado (base 1998)",
+      "Acionamento automático",
+      "Duração do trabalho"
+    ],
+    "rows": [
+      [
+        "Faxineiro",
+        "Preço variável conforme sujeira",
+        "R$ 7,00 por dia efetivamente trabalhado",
+        "Lixeiras com 75% ou mais / lixo transbordando",
+        "9 minutos por lixeira acessível, após chegar"
+      ],
+      [
+        "Técnico de PCs",
+        "Preço variável conforme desgaste",
+        "R$ 11,00 por dia efetivamente trabalhado",
+        "PC com 100% de desgaste, quando possível",
+        "24 minutos por PC, após chegar"
+      ]
+    ]
   },
   commonProblems:[
    {
