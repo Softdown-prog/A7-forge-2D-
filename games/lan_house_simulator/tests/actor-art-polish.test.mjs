@@ -73,3 +73,29 @@ test("palette, identity and the clickable owner area are unchanged by the visual
  const hit=actorHitbox({originX:0,originY:0,zoom:1},0,0);
  assert.deepEqual([hit.width,hit.height],[50,89]);
 });
+
+const callsFor=(kind,id,extra={})=>{const {ctx,log}=recorder();drawActor(ctx,{originX:100,originY:140,zoom:1},{x:0,y:0,kind,id,time:1,pose:"idle",direction:"south",...extra});return JSON.stringify(log);};
+test("the four regular customers differ in hair and chest detail, and repeat every four ids",()=>{
+ for(const direction of ["south","east","north","west"]){
+  const looks=[0,1,2,3].map(id=>callsFor("regular",id,{direction}));
+  assert.equal(new Set(looks).size,4,"four distinct drawings for "+direction);
+  assert.equal(callsFor("regular",4,{direction}),looks[0],"id 4 is id 0 again");
+  assert.equal(callsFor("regular",7,{direction}),looks[3],"id 7 is id 3 again");
+ }
+});
+test("only regular customers get per-id extras; costumes keep one look per kind",()=>{
+ for(const kind of ["clown","rabbit","vampire","owner","postman","cleaner"])
+  assert.equal(callsFor(kind,1),callsFor(kind,2),kind+" is the same for any id");
+});
+test("the back of a person's head shows ears and hair strands, animal heads keep their plain back",()=>{
+ const backEars=kind=>{const {ctx,log}=recorder();drawActor(ctx,{originX:100,originY:140,zoom:1},{x:0,y:0,kind,id:0,time:1,pose:"idle",direction:"north"});
+  return log.filter(e=>e[0]==="ellipse"&&e[3]===2.3&&e[4]===3.8).length;};
+ assert.equal(backEars("regular"),2,"two ears seen from behind");
+ for(const kind of ["rabbit","mouse-mascot","clown","female-bob"])assert.equal(backEars(kind),0,kind+" keeps its plain back");
+});
+test("profile faces keep the mouth inside the chin and draw an open-path nose",()=>{
+ const {ctx,log}=recorder();
+ drawActor(ctx,{originX:100,originY:140,zoom:1},{x:0,y:0,kind:"regular",id:0,time:1,pose:"idle",direction:"east"});
+ assert.ok(log.some(e=>e[0]==="bezierCurveTo"),"curved nose and mouth");
+ assert.ok(!log.some(e=>e[0]==="lineTo"&&e[1]===15&&e[2]===-62),"the old beak triangle is gone");
+});

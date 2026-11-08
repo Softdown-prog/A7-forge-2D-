@@ -383,6 +383,58 @@ function femaleHairBack(ctx:ActorContext,style:ActorStyle,kind:FemaleCostume,
 
 /** Profile walk: both legs advance along the facing axis, not away from the camera.
  * The raised trailing foot and the darker far leg give the stride depth. */
+/** Nose bump that grows out of the face contour (open path: only the outer edge is inked). */
+function noseBump(ctx:ActorContext,x:number,y:number,len:number,skin:string):void{
+  ctx.save();ctx.beginPath();ctx.moveTo(x,y-3.2);
+  ctx.bezierCurveTo(x+len*.45,y-2.6,x+len,y-1.2,x+len*.94,y+.35);
+  ctx.bezierCurveTo(x+len*.84,y+1.5,x+len*.4,y+1.8,x,y+1.9);
+  ctx.fillStyle=skin;ctx.fill();
+  ctx.strokeStyle="#8A645F";ctx.lineWidth=1;ctx.lineCap="round";ctx.stroke();
+  ell(ctx,x+len*.62,y+.55,.55,.45,"rgba(96,52,52,.55)");
+  ell(ctx,x+len*.3,y-1.7,.9,1.1,"rgba(255,244,216,.3)");
+  ctx.restore();
+}
+/** Hair and chest details that tell the four regular customers apart (same palettes). */
+function casualHairExtras(ctx:ActorContext,hair:string,variant:number,lean:number,shift:number,back:boolean,front:boolean):void{
+  const edge=edgeFor(hair);
+  if(variant===1){
+    for(const [x,w,h] of [[-7,3.4,7.5],[-.5,3.8,9],[6,3.2,6.8]] as const)
+      shape(ctx,[[x-w+lean,-79+shift],[x+lean+w*.15,-79-h+shift],[x+w+lean,-79+shift]],hair,edge);
+  }else if(variant===2){
+    if(front)shape(ctx,[[-12+lean,-72+shift],[-6+lean,-75.5+shift],[3+lean,-77+shift],[2+lean,-73.5+shift],[-4+lean,-71.2+shift],[-12+lean,-67+shift]],hair,edge);
+    ctx.save();ctx.globalAlpha=.5;ctx.strokeStyle=shadeHex(hair,.7);ctx.lineWidth=.9;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(-2+lean,-84+shift);ctx.quadraticCurveTo(-4+lean,-79+shift,-6+lean,-75+shift);ctx.stroke();ctx.restore();
+  }else if(variant===3){
+    for(const x of [-9,-4.5,0,4.5,9])ell(ctx,x+lean,-83.4+shift+Math.abs(x)*.12,3.5,3.1,hair,edge);
+    if(!back)ell(ctx,lean-3,-85.5+shift,4,1.2,"rgba(255,241,208,.16)");
+  }
+}
+function casualChestExtras(ctx:ActorContext,style:ActorStyle,variant:number,shift:number,back:boolean,sideways:boolean,quarter:boolean):void{
+  const reach=sideways?9:quarter?11:14;
+  if(variant===1&&!back&&!sideways){
+    // Chest pocket with a pen clip.
+    const x=quarter?-9:-12;
+    shape(ctx,[[x,-44+shift],[x+8,-44.4+shift],[x+7.6,-37.2+shift],[x+.4,-36.8+shift]],style.dark,edgeFor(style.dark));
+    segment(ctx,x+.8,-43+shift,x+7,-43.3+shift,.8,style.highlight);
+    segment(ctx,x+5.6,-46+shift,x+5.8,-41+shift,1.1,style.trim);
+  }else if(variant===2){
+    // Two stripes across the chest; they stop short of the contour so no clip is needed.
+    ctx.save();ctx.globalAlpha=.8;
+    segment(ctx,-reach,-43+shift,reach,-42.4+shift,2.2,style.trim);
+    segment(ctx,-reach,-38.4+shift,reach,-37.8+shift,1.4,style.trim);
+    ctx.restore();
+  }else if(variant===3&&!back&&!sideways){
+    // Hoodie drawstrings with small tips.
+    for(const x of quarter?[-1,4]:[-4.5,3.2]){
+      segment(ctx,x,-48+shift,x+(x<0?-.4:.4),-38.5+shift,1.1,style.highlight);
+      ell(ctx,x+(x<0?-.4:.4),-37.6+shift,1.1,1.5,style.trim);
+    }
+  }else if(variant===3&&back){
+    // Hood seam across the shoulders.
+    ctx.save();ctx.globalAlpha=.6;ctx.strokeStyle=style.dark;ctx.lineWidth=1.3;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(-10,-50+shift);ctx.quadraticCurveTo(0,-43+shift,10,-50+shift);ctx.stroke();ctx.restore();
+  }
+}
 export function profileWalkingStep(step:number,side:-1|1):
   {hipX:number;kneeX:number;kneeY:number;toeX:number;ankleY:number}{
  const hipX=side*2.4,advance=step*side*9;
@@ -425,6 +477,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
   const back=screenView?(screenView==="back"||screenView.startsWith("back-")):direction==="north";
   const sideways=screenView?screenView.startsWith("profile-"):direction==="east"||direction==="west";
   const quarter=!!screenView&&!sideways&&screenView!=="front"&&screenView!=="back";
+  // Regular customers share four palettes by id%4; hair and shirt detail follow the same
+  // index, so a sprite frame keyed by palette is still valid for every id that maps to it.
+  const variant=a.kind==="regular"?(Math.abs(Math.trunc(a.id))||0)%4:0;
   const flip=screenView?(screenView.endsWith("-left")?-1:1):
     direction==="west"?-1:direction==="east"?1:(a.facing??1);
   ctx.save();
@@ -541,8 +596,13 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     ctx.beginPath();ctx.moveTo(elbowX,elbowY+1);
     ctx.lineTo(elbowX+(handX-elbowX)*.32,elbowY+(handY-elbowY)*.32);ctx.stroke();
     ctx.restore();
+    // Thumb tucked toward the body, then the palm and two soft finger creases.
+    ell(ctx,handX-side*3.4,handY-.7,1.7,2.7,style.skin,"#785C59");
     ell(ctx,handX,handY,4.7,4.6,style.skin,"#785C59");
     ell(ctx,handX-1.1,handY-1,2.3,2.5,"rgba(255,241,208,.22)");
+    ctx.save();ctx.strokeStyle="rgba(120,76,72,.45)";ctx.lineWidth=.75;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(handX-side*.2,handY+1.2);ctx.lineTo(handX-side*.2,handY+3.7);
+    ctx.moveTo(handX+side*1.7,handY+1);ctx.lineTo(handX+side*1.7,handY+3.3);ctx.stroke();ctx.restore();
     if(serving){segment(ctx,elbowX+(handX-elbowX)*.65,elbowY+(handY-elbowY)*.65,handX-side*3,handY-.3,2.3,style.trim);}
   };
   arm(-nearSide);if(!sideways&&!quarter)arm(nearSide);
@@ -559,6 +619,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
         [3,-53+headShift],[-5,-53+headShift]],style.trim);
       ell(ctx,0,-33+headShift,1.5,1.5,"#EFD9AC");
     }
+    if(variant)casualChestExtras(ctx,style,variant,headShift,back,sideways,quarter);
   }
 
   if(a.kind==="postman"){
@@ -692,6 +753,7 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     segment(ctx,-8,-78+headShift,-2,-79+headShift,1.5,style.highlight);
     ctx.restore();
     hairSheen(ctx,style.hair,lean,headShift);
+    if(variant)casualHairExtras(ctx,style.hair,variant,lean,headShift,false,!sideways&&!quarter);
     if(a.kind==="owner"){
       segment(ctx,-11,-73+headShift,-8,-63+headShift,2,style.hair);
       segment(ctx,-7,-80+headShift,3,-78+headShift,1.2,"#84694b");
@@ -711,7 +773,19 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     const [hr,hg,hb]=parseHex(style.hair),hairLuma=(hr*.2126+hg*.7152+hb*.0722)/255;
     ell(ctx,9,-66,6,13,"rgba(17,24,36,"+(.25-.15*hairLuma).toFixed(3)+")");
     ell(ctx,-6,-74,3.8,7,"rgba(255,241,208,.14)");
+    if(a.kind!=="rabbit"&&a.kind!=="mouse-mascot"&&!isFemaleCostume(a.kind)){
+      // Crown whorl and a few strands: the back of the head reads as hair, not a dark block.
+      ctx.save();ctx.strokeStyle=shadeHex(style.hair,hairLuma>.5?.78:.62);ctx.globalAlpha=.55;ctx.lineWidth=.95;ctx.lineCap="round";
+      ctx.beginPath();ctx.arc(1,-77,2.3,Math.PI*.15,Math.PI*1.75);
+      ctx.moveTo(-9,-69);ctx.quadraticCurveTo(-6,-74,-4,-79);
+      ctx.moveTo(8,-70);ctx.quadraticCurveTo(6,-75,3,-80);
+      ctx.moveTo(-1,-60);ctx.quadraticCurveTo(-2,-65,-4,-69);ctx.stroke();ctx.restore();
+    }
     ctx.restore();
+    if(!quarter&&a.kind!=="rabbit"&&a.kind!=="mouse-mascot"&&a.kind!=="clown"&&!isFemaleCostume(a.kind)){
+      // Ears peek out at both sides of the head.
+      for(const sx of [-1,1])ell(ctx,sx*12.2+lean,-64.8+headShift,2.3,3.8,style.skin,"#785C59");
+    }
     if(quarter){
       // A visible side ear/cheek distinguishes the diagonal rear from straight back.
       ell(ctx,11+lean,-64+headShift,2.8,4.6,style.skin,"#785C59");
@@ -741,20 +815,27 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
     segment(ctx,5+lean,-71.9+headShift,10+lean,-71.4+headShift,1,style.hair);
     if(a.kind==="clown")ell(ctx,8+lean,-63.2+headShift,3.4,3.1,"#D64C5B");
     else if(a.kind==="mouse-mascot")ell(ctx,8+lean,-63.2+headShift,2.8,2.5,"#B47B83");
-    else shape(ctx,[[10+lean,-65+headShift],[14+lean,-63+headShift],
-      [10+lean,-61+headShift]],style.skin,"#A66A64");
-    segment(ctx,3+lean,-58+headShift,9+lean,-58.4+headShift,1.1,"#784F51");
+    else noseBump(ctx,10.2+lean,-64.3+headShift,3.8,style.skin);
+    ctx.beginPath();ctx.moveTo(3.4+lean,-58.2+headShift);ctx.quadraticCurveTo(6+lean,-57+headShift,8+lean,-58.3+headShift);
+    ctx.lineWidth=1.1;ctx.lineCap="round";ctx.strokeStyle="#784F51";ctx.stroke();
     if(a.kind==="stitched-monster")segment(ctx,-9,-68+headShift,-5,-65+headShift,.9,"#6B8071");
     if(a.kind==="vampire")shape(ctx,[[6,-59+headShift],[8,-55+headShift],[9,-59+headShift]],"#FFF1E8","#AC7077");
   } else if(sideways){
-    // Perfil de verdade: uma orelha, apenas um olho e nariz projetado.
-    ell(ctx,7+lean,-65+headShift,4.2,6,style.skin,"#785C59");
-    blush(ctx,a.kind,[[5.5+lean,-61.8+headShift]]);
-    eye(ctx,4+lean,-68+headShift,1.7,2.1,a.kind,.55);
-    segment(ctx,2+lean,-72+headShift,7+lean,-72.8+headShift,1,style.hair);
-    shape(ctx,[[10+lean,-65+headShift],[15+lean,-62+headShift],
-      [10+lean,-60+headShift]],style.skin,"#785C59");
-    segment(ctx,4+lean,-57+headShift,9+lean,-57+headShift,1.1,"#784F51");
+    // Perfil de verdade: orelha atrás do olho, um olho, nariz que nasce do contorno e boca dentro do queixo.
+    ell(ctx,-6.4+lean,-65.2+headShift,2.5,4.4,style.skin,"#785C59");
+    ctx.save();ctx.strokeStyle="rgba(120,76,72,.5)";ctx.lineWidth=.7;ctx.lineCap="round";
+    ctx.beginPath();ctx.arc(-6.2+lean,-65.2+headShift,1.1,Math.PI*.6,Math.PI*1.65);ctx.stroke();ctx.restore();
+    blush(ctx,a.kind,[[5.6+lean,-61.8+headShift]]);
+    eye(ctx,5.4+lean,-67.6+headShift,1.7,2.1,a.kind,.55);
+    ctx.save();ctx.globalAlpha=.72;segment(ctx,3.2+lean,-71.6+headShift,8.6+lean,-72.4+headShift,1,style.hair);ctx.restore();
+    if(a.kind==="clown")ell(ctx,13+lean,-63+headShift,3.3,3.2,"#D64C5B","#A8394A");
+    else if(a.kind==="mouse-mascot"||a.kind==="rabbit")ell(ctx,12.6+lean,-63.4+headShift,1.9,1.7,a.kind==="rabbit"?"#D68C98":"#B47B83","#7E5560");
+    else noseBump(ctx,11+lean,-64.6+headShift,4.4,style.skin);
+    ctx.beginPath();ctx.moveTo(5+lean,-58.6+headShift);ctx.quadraticCurveTo(6.8+lean,-57.5+headShift,8.3+lean,-58.7+headShift);
+    ctx.lineWidth=1.05;ctx.lineCap="round";ctx.strokeStyle=a.kind==="vampire"?"#9A546A":"#784F51";ctx.stroke();
+    ell(ctx,5.4+lean,-55.9+headShift,3.2,1.2,"rgba(98,55,57,.13)");
+    if(a.kind==="stitched-monster")for(const x of [-1,1.4,3.8])segment(ctx,x+lean,-70.5+headShift,x+1.4+lean,-68.4+headShift,.9,"#6B8071");
+    if(a.kind==="vampire")shape(ctx,[[6.4+lean,-58.3+headShift],[7.2+lean,-55.6+headShift],[8+lean,-58.4+headShift]],"#FFF1E8","#AC7077");
   } else {
   // Expressão legível; olhos não mudam entre quadros.
   blush(ctx,a.kind,[[-8.2+lean,-61.8+headShift],[8.8+lean,-61.8+headShift]]);

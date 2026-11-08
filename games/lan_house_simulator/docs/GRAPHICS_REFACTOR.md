@@ -97,6 +97,18 @@ Cada coluna é uma vista de tela (frente parado, frente-esquerda andando, costas
 
 Verificação: `tests/actor-art-polish.test.mjs` (contornos, 13 tipos × 10 poses × 9 vistas sem erro e com coordenadas finitas, determinismo das chamadas, sem imagens ou aleatoriedade, olhos de pessoas vs. animais, paleta/identidade/hitbox inalterados) e `scripts/verify_actor_sprites.mjs`: erro médio máximo contra o artista vetorial caiu de 11,1 para 9,9 (limite 14) e nenhum pixel opaco faltou.
 
+### Ciclo 3: rostos de perfil, nuca e clientes distintos
+
+![Personagens do ciclo 3, antes e depois (zoom 3×, quatro vistas)](../../../docs/quality/lhs_characters_cycle3_before_after.png)
+
+À esquerda o ciclo 2, à direita o ciclo 3: cada personagem em frente, perfil andando, costas andando e perfil parado.
+
+- **Perfil de verdade:** o nariz deixou de ser um triângulo solto e passou a ser uma curva que nasce do contorno do rosto (traço aberto, narina e brilho no dorso). A boca fica dentro do queixo em vez de sobressair como uma barra escura. A orelha foi para trás do olho, com a concha desenhada. O palhaço ganha o nariz vermelho de perfil, rato e coelho um focinho rosado, o vampiro uma presa e o monstro pontos de costura na testa.
+- **Nuca com cabelo:** de costas, a cabeça traz redemoinho na coroa e fios em volta, com tom ajustado ao cabelo (mais suave em cabelo claro), e as duas orelhas aparecem nas laterais. Cabelos longos, coelho, rato e palhaço mantêm a nuca anterior.
+- **Quatro clientes distintos:** os clientes regulares dividem quatro paletas por `id % 4`. Cada paleta agora tem seu próprio cabelo e detalhe de roupa: 0 franja base, 1 cabelo espetado e bolso com caneta, 2 franja lateral e listras no peito, 3 cabelo cacheado e cordões de capuz (com costura de capuz nas costas). A variação usa o mesmo índice das paletas, portanto os quadros do cache de sprites continuam válidos para todo `id` que cai na mesma paleta, e as demais fantasias não variam por `id`.
+- **Mãos:** polegar recolhido e dois vincos de dedos sobre a palma, em todas as poses.
+- **Sem custo novo:** nada depende do relógio de parede nem de aleatoriedade; âncoras, poses, hitbox e paletas ficam iguais. Os testes novos cobrem a repetição a cada quatro `id`, a ausência de variação nas outras fantasias, as orelhas de costas e o nariz curvo. `verify_actor_sprites`: erro médio máximo de 9,9 contra o artista vetorial (limite 14) e nenhum pixel opaco faltando.
+
 ## 6. Desempenho
 
 Medido em Chromium headless **sem aceleração por GPU** (pior caso: toda a composição é por software), cena de teste com dono, um cliente sentado e um andando às 17:30 simuladas, ms por quadro de `SceneRenderer.draw`:
