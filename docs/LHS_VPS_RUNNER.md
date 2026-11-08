@@ -1,5 +1,22 @@
 # LHS — runner VPS isolado e fallback
 
+## Interruptor: GitHub-hosted é o padrão
+
+Desde 8/11/2026 (noite) **todos os jobs usam o runner do GitHub por padrão**. A VPS só
+recebe jobs enquanto a **variável do repositório** `LHS_USE_VPS_RUNNER` valer
+exatamente `true` (Settings → Secrets and variables → Actions → **Variables**). Apagar a
+variável, ou pôr qualquer outro valor, devolve tudo ao GitHub sem commit. O interruptor
+mexe só no roteamento (`scripts/ci/runner-policy.py`); a trava de admissão do próprio
+runner da VPS (`--guard`) continua igual.
+
+Por que o padrão é o GitHub: no merge do #113, o primeiro push na `main` roteado para a
+VPS, os jobs rodaram um de cada vez num runner de 2 CPUs e 2 GiB (a publicação levou
+28 min contra ~11 no GitHub e falhou por falta de `ssh`; o worker pool esperou 55 min na
+fila e estourou o limite de 15 min). No GitHub os mesmos jobs rodam em paralelo. Antes de
+ligar a variável de novo: instalar `openssh-client` na imagem do runner, subir o número de
+instâncias, e conferir o tempo dos jobs lentos. O job de publicação do Pages
+(`lhs-pages-sync.yml`) fica sempre no GitHub, porque usa a chave SSH de deploy do espelho.
+
 ## Destino dos jobs
 
 Um runner Linux `lhs-vps-isolated` recebe push na main e disparos manuais pelo
