@@ -1,0 +1,61 @@
+name: LHS | selecionar runner VPS com fallback
+
+on:
+  workflow_call:
+    inputs:
+      hosted_label:
+        description: Runner Ubuntu de reserva (preserva a imagem original de cada workflow).
+        required: false
+        type: string
+        default: ubuntu-24.04
+    secrets:
+      runner_status_token:
+        description: PAT fine-grained somente Administration/read neste repositório.
+        required: false
+    outputs:
+      runner_labels:
+        description: Array JSON de labels para runs-on.
+        value: ${{ jobs.select.outputs.runner_labels }}
+
+permissions:
+  contents: read
+
+jobs:
+  select:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    outputs:
+      runner_labels: ${{ steps.route.outputs.runner_labels }}
+    steps:
+      - name: Consultar disponibilidade da VPS
+        id: route
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          HOSTED_LABEL: ${{ inputs.hosted_label }}
+          STATUS_TOKEN: ${{ secrets.runner_status_token }}
+        run: |
+          set -euo pipefail
+          # Sem credencial ou com falha de API, nunca bloquear o CI.
+          HOSTED="$(jq -nc --arg runner "$HOSTED_LABEL" '[$runner]')"
+          printf 'runner_labels=%s\n' "$HOSTED" >> "$GITHUB_OUTPUT"
+          if [[ -z "$STATUS_TOKEN" ]]; then
+            echo "::notice::Sem LHS_RUNNER_STATUS_TOKEN; usando GitHub-hosted até a ativação do roteamento."
+            exit 0
+          fi
+          if ! DATA="$(curl -fsSL --connect-timeout 3 --max-time 10 --retry 1 \
+              -H 'Accept: application/vnd.github+json' \
+              -H "Authorization: Bearer $STATUS_TOKEN" \
+              "https://api.github.com/repos/$REPO/actions/runners?per_page=100")"; then
+            echo "::warning::Não foi possível consultar os runners; usando GitHub-hosted."
+            exit 0
+          fi
+          if jq -e '[.runners[]? | select(.status == "online" and
+                 ([.labels[]?.name] | index("Linux")) != null and
+                 ([.labels[]?.name] | index("lhs-vps")) != null)] | length > 0' \
+                 >/dev/null <<< "$DATA"; then
+            echo 'runner_labels=["self-hosted","Linux","lhs-vps"]' >> "$GITHUB_OUTPUT"
+            echo "::notice::VPS online: selecionando runner lhs-vps."
+          else
+            echo "::notice::VPS offline ou não registrada: usando GitHub-hosted."
+          fi
