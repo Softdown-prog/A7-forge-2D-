@@ -25,6 +25,46 @@
   </div>
  </div>
 </section>
+<section id="manual-do-jogador" class="manual-section" aria-labelledby="manual-heading">
+ <div class="wrap">
+  <div class="manual-header">
+   <p class="eyebrow"><span class="pixel" aria-hidden="true"></span>ENCICLOPÉDIA OFICIAL · {{totalGuides}} GUIAS COMPLETOS</p>
+   <h2 id="manual-heading">Manual do Jogador — Todas as mecânicas explicadas</h2>
+   <p class="lead">Cada item numerado abaixo abre uma página exclusiva com o passo a passo completo da mecânica no jogo: o que é, quando desbloqueia, onde clicar nos painéis, custos, limites, problemas comuns e dicas práticas de gestão.</p>
+  </div>
+  <nav class="manual-group-nav" aria-label="Atalhos por tema do Manual do Jogador">
+   @for(group of guideGroups;track group.code){
+    <a [href]="'/sobre-o-jogo/#grupo-'+group.code"><span>{{group.code}}.</span> {{group.title}}</a>
+   }
+  </nav>
+  <div class="manual-groups">
+   @for(group of guideGroups;track group.code){
+    <section class="manual-group" [id]="'grupo-'+group.code" [attr.aria-labelledby]="'heading-grupo-'+group.code">
+     <div class="manual-group-head">
+      <span class="manual-group-badge">Grupo {{group.code}}</span>
+      <h3 [id]="'heading-grupo-'+group.code">{{group.title}}</h3>
+      <p>{{group.description}}</p>
+     </div>
+     <ol class="manual-guide-list" [attr.start]="group.guides[0]?.number??1">
+      @for(item of group.guides;track item.id){
+       <li class="manual-guide-item" [value]="item.number">
+        <a class="manual-guide-card" [href]="item.path">
+         <span class="manual-guide-num" aria-hidden="true">{{item.number}}</span>
+         <div class="manual-guide-body">
+          <strong>{{item.number}}. {{item.title}}</strong>
+          <p>{{item.summary}}</p>
+          <small>{{item.unlockBadge}} · {{item.uiPath}}</small>
+         </div>
+         <span class="manual-guide-cta" aria-hidden="true">Ler guia →</span>
+        </a>
+       </li>
+      }
+     </ol>
+    </section>
+   }
+  </div>
+ </div>
+</section>
 <section class="wrap about-cta">
  <p class="eyebrow">O BAIRRO ESTÁ ESPERANDO</p>
  <h2>Vamos ligar o primeiro PC?</h2>

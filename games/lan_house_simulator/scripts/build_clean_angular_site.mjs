@@ -15,7 +15,7 @@ assert.ok(accountApi.protocol==='https:'&&!accountApi.username&&!accountApi.pass
 const accountApiOrigin=accountApi.origin;
 const npm=process.platform==='win32'?'npm.cmd':'npm';
 function run(program,args,env=process.env){
- execFileSync(program,args,{cwd:root,stdio:'inherit',env});
+ if(program===npm&&process.env.npm_execpath)execFileSync(process.execPath,[process.env.npm_execpath,...args],{cwd:root,stdio:'inherit',env});else execFileSync(program,args,{cwd:root,stdio:'inherit',env,shell:process.platform==='win32'&&program===npm});
 }
 if(!existsSync(resolve(angular,'node_modules/@angular/cli/package.json')))
  run(npm,['ci','--prefix','frontend-angular','--no-audit','--no-fund']);
@@ -64,7 +64,7 @@ for(const file of ['account-config.json','online-config.json'])
  cpSync(resolve(root,file),resolve(output,file));
 cpSync(resolve(angular,'src/site-rewrite/public/checkout-config.json'),resolve(output,'checkout-config.json'));
 const pageMetadata=JSON.parse(readFileSync(resolve(angular,'src/site-rewrite/page-metadata.json'),'utf8'));
-const paths=['','jogar','sobre-o-jogo','sobre-nos','ajuda','contato',
+const guideCatalog=JSON.parse(readFileSync(resolve(angular,'src/site-rewrite/game-guides/guide-catalog.json'),'utf8'));const guidePaths=guideCatalog.map(item=>'sobre-o-jogo/guias/'+item.id+'-'+item.slug);const paths=['','jogar','sobre-o-jogo',...guidePaths,'sobre-nos','ajuda','contato',
  'conta','conta/confirmar','donate','termos','privacidade','dados'];
 assert.equal(Object.keys(pageMetadata).length,paths.length+1,'Metadata coverage must match Angular routes including 404');
 const escapeMeta=value=>value.replace(/&/g,'&amp;').replace(/"/g,'&quot;')
