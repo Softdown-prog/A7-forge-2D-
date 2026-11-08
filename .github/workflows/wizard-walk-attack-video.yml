@@ -7,8 +7,16 @@ on:
       - 'tools/visitor_forge_2d/examples/pixel_character_wizard_mini_01.json'
       - '.github/workflows/wizard-walk-attack-video.yml'
 jobs:
+  select-runner:
+    uses: ./.github/workflows/lhs-runner-route.yml
+    with:
+      hosted_label: ubuntu-latest
+    secrets:
+      runner_status_token: ${{ secrets.LHS_RUNNER_STATUS_TOKEN }}
+
   render:
-    runs-on: ubuntu-latest
+    needs: select-runner
+    runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
