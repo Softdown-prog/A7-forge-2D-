@@ -1,5 +1,7 @@
 import importlib.util
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location('policy', Path(__file__).with_name('runner-policy.py'))
@@ -45,6 +47,17 @@ class RunnerPolicyTests(unittest.TestCase):
         self.assertEqual(policy.choose(self.env, evidence), policy.LABELS)
         evidence['runners'][0]['labels'][-1]['name'] = 'lhs-vps'
         self.assertEqual(policy.choose(self.env, evidence), ['ubuntu-latest'])
+
+    def test_ssh_key_transferred_from_windows_is_normalized_to_lf(self):
+        key = '-----BEGIN OPENSSH PRIVATE KEY-----\r\nexample\r\n-----END OPENSSH PRIVATE KEY-----\r\n'
+        def ssh(args, **options):
+            material = Path(args[args.index('-i') + 1]).read_bytes()
+            self.assertNotIn(b'\r', material)
+            self.assertTrue(material.endswith(b'\n'))
+            self.assertIn('StrictHostKeyChecking=yes', args)
+            return SimpleNamespace(stdout=b'{"healthy":true,"checkedAt":1000}')
+        with patch.object(policy.subprocess, 'run', side_effect=ssh):
+            self.assertTrue(policy.probe(key)['healthy'])
 
 
 if __name__ == '__main__':

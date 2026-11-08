@@ -44,7 +44,8 @@ def probe(secret):
     if '-----BEGIN OPENSSH PRIVATE KEY-----' in secret:
         with tempfile.TemporaryDirectory(prefix='lhs-runner-probe-') as folder:
             key = Path(folder) / 'key'
-            key.write_text(secret.strip() + '\n', encoding='utf-8')
+            # gh on Windows can serialize stdin with CRLF; OpenSSH requires LF.
+            key.write_bytes(secret.replace('\r\n', '\n').strip().encode('utf-8') + b'\n')
             key.chmod(0o600)
             host_keys = Path(__file__).with_name('lhs-vps-known-hosts')
             completed = subprocess.run([
