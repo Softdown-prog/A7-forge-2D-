@@ -99,3 +99,17 @@ test("profile faces keep the mouth inside the chin and draw an open-path nose",(
  assert.ok(log.some(e=>e[0]==="bezierCurveTo"),"curved nose and mouth");
  assert.ok(!log.some(e=>e[0]==="lineTo"&&e[1]===15&&e[2]===-62),"the old beak triangle is gone");
 });
+
+test("in three-quarter views both eyes keep a visible iris (the far eye is narrower, never a black dot)",()=>{
+ for(const screenView of ["front-left","front-right"])for(const kind of ["regular","owner","clown","vampire"]){
+  const {ctx,log}=recorder();
+  drawActor(ctx,{originX:100,originY:140,zoom:1},{x:0,y:0,kind,id:0,time:1,pose:"walking",direction:"south",screenView});
+  const iris=kind==="vampire"?"#a23a52":kind==="clown"?"#3a7090":"#3d4d68";
+  const radii=[];
+  // ell() issues the ellipse first and then sets its fill colour.
+  log.forEach((e,i)=>{if(e[0]==="set"&&e[1]==="fillStyle"&&e[2]===iris&&log[i-1]?.[0]==="ellipse")radii.push(log[i-1][3]);});
+  assert.equal(radii.length,2,kind+" "+screenView+": two irises");
+  assert.ok(Math.min(...radii)>=1,kind+" "+screenView+": far iris is at least 1 unit wide, got "+radii);
+  assert.ok(Math.min(...radii)/Math.max(...radii)>.55,kind+" "+screenView+": the two eyes stay comparable");
+ }
+});
