@@ -408,55 +408,71 @@ export const guidesDH:readonly GameGuide[]=[
   unlockBadge:'Discada em 1998 · Via rádio e Fibra óptica para upgrade',
   uiPath:'Administrar → Serviços → Internet e contrato',
   whatIs:[
-   'A conexão de internet da lan house possui 3 níveis de evolução em Administrar → Serviços → Internet e contrato: Nível 1 (Discada, ativa desde o início), Nível 2 (Via rádio) e Nível 3 (Fibra óptica).',
-   'O nível da sua internet governa três mecânicas vitais do salão: a frequência com que o sinal cai durante o expediente, a duração de cada queda de conexão e a velocidade (e quantidade de máquinas simultâneas) nos downloads de jogos com GPU.'
+   "O simulador oferece três gerações de internet: Discada, Via rádio e Fibra óptica. O salão começa com Discada em 1998, enquanto as tecnologias seguintes têm anos próprios de disponibilidade.",
+   "A conexão influencia o atendimento de atividades que dependem da rede e o tempo dos downloads de jogos avançados com GPU.",
   ],
   whyItMatters:[
-   'Enquanto a internet está fora do ar (Offline), a chegada de novos clientes comuns na porta despenca para apenas 12% do normal.',
-   'Mais grave ainda: clientes que já estão sentados em sessões comuns de Windows suportam no máximo 15 minutos do jogo sem internet. No 16º minuto offline, eles abandonam a sessão irritados e derrubam sua reputação em 1,1 ponto cada um!'
+   "Conexão melhor ajuda a reduzir gargalos dos downloads e a manter o atendimento quando os clientes exigem serviços online.",
+   "Ter internet moderna não remove a necessidade de licenças, máquinas compatíveis e espaço livre para os visitantes.",
   ],
   whenAvailable:[
-   "O jogo começa com internet discada, disponível em 1998. Via rádio aparece a partir de 2002, e fibra óptica a partir de 2007.",
-   "Para contratar uma tecnologia mais nova, consulte o painel de serviços e verifique o preço e os pré-requisitos apresentados no ano atual.",
+   "Discada: desde 1998, já instalada quando a campanha começa.",
+   "Via rádio: desbloqueada em 2002. Fibra óptica: desbloqueada em 2007.",
   ],
   howToUse:[
-   'Abra Administrar → aba Serviços → sub-aba Internet e contrato.',
-   'Verifique o estado atual da rede (Online ou Offline) e o plano contratado.',
-   'Clique no botão de melhoria de internet para passar do Nível 1 (Discada) para o Nível 2 (Via rádio), e posteriormente do Nível 2 para o Nível 3 (Fibra óptica).',
-   'Observe o aumento correspondente na conta fixa mensal de internet em Administrar → Finanças → Caixa e contas.'
+   "Abra Administrar → Serviços e encontre o painel Internet e contrato.",
+   "Confira o plano atual e as opções que o ano da campanha já permite contratar.",
+   "Antes de confirmar um upgrade, veja o preço calculado pela própria interface e avalie o impacto no caixa e nas despesas recorrentes.",
+   "Se você pretende instalar jogos com GPU em vários PCs, a conexão mais recente também permite mais transferências simultâneas.",
   ],
   whatHappensNext:[
-   'A melhoria do plano entra em vigor na mesma hora: se a rede estava instável, a probabilidade de novas quedas diminui drasticamente e, quando uma oscilação ocorrer na Fibra óptica, ela poderá durar menos de 15 minutos, evitando que os clientes abandonem os PCs!',
-   'Na aba Jogos com GPU, sua banda compartilhada também sobe imediatamente de 1 para 2 (Via rádio) ou 3 (Fibra óptica) downloads simultâneos.'
+   "A mudança de plano altera a capacidade de baixar jogos e as condições de serviço simuladas pelo motor.",
+   "Com internet discada, o sistema pode transferir um jogo GPU em um PC de cada vez; via rádio permite duas transferências simultâneas; fibra, três, respeitando as condições de cada estação.",
   ],
   costsAndLimits:[
-   "As três tecnologias do motor são Discada (1998), Via rádio (2002) e Fibra óptica (2007).",
-   "Os upgrades possuem custo de contratação, e a conexão gera despesas de manutenção na economia da partida; confira os valores atuais no painel do jogo.",
-   "Quedas de conexão prejudicam usuários dependentes da internet. Jogos de rede local, máquinas Linux em atividades locais e consoles podem continuar atendendo conforme seus requisitos próprios.",
-   "Os downloads de jogos GPU usam a velocidade e a quantidade de transferências simultâneas permitidas pelo plano: uma transferência por rodada na discada, duas via rádio e três na fibra.",
+   "As épocas canônicas são Discada (1998), Via rádio (2002) e Fibra óptica (2007).",
+   "A velocidade de transferência para jogos GPU depende do nível: 1, 2 ou 3 PCs podem avançar por minuto do jogo.",
+   "Os valores dos contratos e mensalidades variam segundo as regras econômicas e a época. Consulte o custo exibido no painel antes de contratar.",
+   "Uma queda de rede pausa downloads que dependem de internet. Consoles e algumas atividades locais podem continuar funcionando sem ela.",
   ],
   table:{
-   caption:'Comparativo técnico dos 3 Planos de Internet',
-   headers:['Plano de internet','Taxa de instalação (base 1998)','Mensalidade (base 1998)','Duração de quedas','Downloads GPU simultâneos'],
-   rows:[
-    ['Nível 1 · Discada','Incluída no Dia 1','R$ 110 / mês','20 a 39 min do jogo','1 PC por vez (velocidade 1x)'],
-    ['Nível 2 · Via rádio','R$ 260,00 × IPCA','R$ 195 / mês × IPCA','16 a 30 min do jogo','Até 2 PCs por vez (velocidade 2x)'],
-    ['Nível 3 · Fibra óptica','R$ 370,00 × IPCA','R$ 280 / mês × IPCA','12 a 21 min do jogo','Até 3 PCs por vez (velocidade 3x)']
-   ]
+    "caption": "Tecnologias de internet disponíveis no simulador",
+    "headers": [
+      "Plano",
+      "Ano de liberação",
+      "Downloads GPU simultâneos",
+      "Conselho ao jogador"
+    ],
+    "rows": [
+      [
+        "Discada",
+        "1998",
+        "1 PC",
+        "Plano inicial; aceite transferências mais lentas"
+      ],
+      [
+        "Via rádio",
+        "2002",
+        "2 PCs",
+        "Melhora a capacidade de instalação de jogos"
+      ],
+      [
+        "Fibra óptica",
+        "2007",
+        "3 PCs",
+        "Mais capacidade para várias estações compatíveis"
+      ]
+    ]
   },
   commonProblems:[
-   {
-    problem:'Perdi vários pontos de reputação de repente em poucos segundos.',
-    solution:'Isso acontece quando a internet cai com o salão cheio de clientes em PCs Windows comuns e a queda ultrapassa 15 minutos: todos levantam juntos (-1,1 de reputação cada). Evoluir para Via rádio e Fibra óptica é a melhor defesa.'
-   },
-   {
-    problem:'Não existe botão para chamar um técnico de internet quando a rede fica Offline?',
-    solution:'As oscilações de sinal vêm da operadora externa do bairro e voltam sozinhas após o tempo da falha (de 12 a 39 minutos do jogo conforme seu plano). Não é preciso pagar reparo avulso.'
-   }
+   {problem:"O plano de internet mais moderno ainda não aparece.",solution:"Via rádio libera em 2002 e fibra em 2007; confira o ano atual da campanha."},
+   {problem:"O download de um jogo GPU parou.",solution:"Verifique queda de conexão, estação desligada, PC ocupado, manutenção e compatibilidade de Windows/GPU."},
+   {problem:"A internet caiu e os clientes começaram a reclamar.",solution:"Tente reduzir a duração dos períodos sem conexão melhorando o contrato quando disponível; consoles e atividades locais podem ser alternativas de atendimento."},
   ],
   playerTips:[
-   'Faça o upgrade para Via rádio e Fibra óptica assim que a receita mensal permitir: como a taxa de instalação acompanha o IPCA ao longo das décadas, contratar nos primeiros anos sai bem mais barato nominalmente.',
-   'Diversificar seu salão com 1 ou 2 estações Linux (1999+) e bancadas de PlayStation 1 (2002+) garante clientes satisfeitos faturando normalmente mesmo quando a internet cair.'
+   "Antes de instalar jogos GPU em várias máquinas, considere que o limite de downloads simultâneos depende da conexão.",
+   "Reserve dinheiro para upgrade de internet sem comprometer aluguel, luz e outras despesas do mês.",
+   "Uma conexão melhor ajuda, mas não elimina a necessidade de atualizar Windows, componentes e licenças dos jogos.",
   ],
   relatedIds:['003','014','016','020']
  },
