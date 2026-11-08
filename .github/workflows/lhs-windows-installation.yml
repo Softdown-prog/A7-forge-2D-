@@ -44,7 +44,7 @@ jobs:
   windows-os-install:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 20
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: games/lan_house_simulator

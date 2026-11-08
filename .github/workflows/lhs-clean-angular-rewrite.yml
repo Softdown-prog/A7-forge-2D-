@@ -24,7 +24,7 @@ jobs:
   rewrite:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 40
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -62,7 +62,7 @@ jobs:
   frontend-container:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 20
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: games/lan_house_simulator

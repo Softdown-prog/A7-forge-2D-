@@ -21,7 +21,7 @@ jobs:
   animated-pc-screens:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 15
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

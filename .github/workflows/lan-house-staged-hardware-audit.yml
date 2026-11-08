@@ -15,7 +15,7 @@ jobs:
     name: audit-staged-2005-2012
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 20
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

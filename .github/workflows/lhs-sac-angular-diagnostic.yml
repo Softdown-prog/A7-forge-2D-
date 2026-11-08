@@ -25,7 +25,7 @@ jobs:
     name: SAC pre/build/post/Guardian on LHS site-rewrite
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 30
+    timeout-minutes: 180
     steps:
       - name: Checkout LHS
         uses: actions/checkout@v4

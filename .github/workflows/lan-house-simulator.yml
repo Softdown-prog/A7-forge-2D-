@@ -25,10 +25,10 @@ jobs:
     name: worker-${{ matrix.worker }}
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    # worker-simulation runs about 14m50s to 15m10s on hosted runners (its tariff audit alone takes ~7 min)
-    # and worker-scene 11 to 12.5 min, and runner speed varies a lot (the same job took 7m38s on another
-    # runner). 15 min cut jobs whose steps had all passed; 25 keeps a real hang bounded without flaking.
-    timeout-minutes: 25
+    # 3 hours. worker-simulation runs about 14m50s to 15m10s on hosted runners (its tariff audit alone takes
+    # ~7 min), worker-scene 11 to 12.5 min, and on the self-hosted VPS runner the same jobs are slower and wait
+    # in a single queue; 15 minutes cut jobs whose steps had all passed. A longer limit does not skip or weaken any check.
+    timeout-minutes: 180
     strategy:
       fail-fast: false
       max-parallel: 3

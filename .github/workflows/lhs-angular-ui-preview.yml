@@ -71,7 +71,7 @@ jobs:
   angular-preview:
     needs: select-runner
     runs-on: ${{ fromJSON(needs.select-runner.outputs.runner_labels) }}
-    timeout-minutes: 15
+    timeout-minutes: 180
     defaults:
       run:
         working-directory: games/lan_house_simulator
