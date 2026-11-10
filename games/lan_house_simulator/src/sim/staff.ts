@@ -31,11 +31,14 @@ export function accrueEmployeeDay(s:GameState):void{
  }
 }
 export function hireEmployee(s:GameState,role:EmployeeRole):Result{
+ // Um cargo desconhecido gravaria uma chave inválida e inutilizaria o salvamento.
+ if(!ROLES.includes(role))return {ok:false,message:"Cargo inexistente."};
  if(employeeHired(s,role))return {ok:false,message:"Esse profissional já está contratado."};
  s.employees={...(s.employees??{}),[role]:true};
  return {ok:true,message:(role==="cleaner"?"Faxineiro":"Técnico")+" contratado por mês. R$ "+employeeDailyWage(s,role).toFixed(2)+"/dia efetivamente trabalhado; sem taxa por dia ocioso. Cobrança no fechamento mensal."};
 }
 export function dismissEmployee(s:GameState,role:EmployeeRole):Result{
+ if(!ROLES.includes(role))return {ok:false,message:"Cargo inexistente."};
  if(!employeeHired(s,role))return {ok:false,message:"Esse profissional não está contratado."};
  s.employees={...(s.employees??{}),[role]:false};
  return {ok:true,message:(role==="cleaner"?"Faxineiro":"Técnico")+" dispensado. As diárias já trabalhadas serão cobradas no fechamento do mês."};

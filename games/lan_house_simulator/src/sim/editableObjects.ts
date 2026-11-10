@@ -49,6 +49,18 @@ export function moveLayoutObject(s:GameState,id:string,destination:Point,rotatio
  }else candidate={...s,objectPlacements:[...(s.objectPlacements??[]).filter(p=>p.id!==id),{id,x:destination.x,y:destination.y,rotation}]};
  const issue=layoutPlacementIssue(s,target);if(issue)return {ok:false,message:issue};
  if(id==="counter")for(const [i,c] of counterQueueCustomers(candidate).entries())if(!navigableRoute(candidate,c,counterQueueSlot(i,candidate)))return {ok:false,message:"A fila atual não cabe aqui. Escolha outra posição ou aguarde o atendimento."};
+ // O destino é validado no salão antigo; a cadeira ou o ponto de atendimento
+ // do objeto movido pode cair dentro de OUTRO equipamento já reposicionado.
+ // Conferir todos no salão novo, pela mesma regra que valida o salvamento:
+ // uma mudança aceita aqui nunca pode produzir uma partida que não grava.
+ if(!id.startsWith("decor:")){
+  const moved=editableObjects(candidate);
+  for(const p of candidate.objectPlacements??[]){
+   const placed=moved.find(o=>o.id===p.id);
+   const conflict=placed?layoutPlacementIssue(candidate,placed):"Posição inválida.";
+   if(conflict)return {ok:false,message:p.id===id?conflict:"Mantenha os assentos e pontos de atendimento livres."};
+  }
+ }
  for(const goal of layoutGoals(candidate))if(!navigableRoute(candidate,entrance(candidate),goal))return {ok:false,message:"Deixe uma passagem para todos os PCs, balcão e máquinas."};
  for(const c of candidate.customers){const end=c.stage==="shopping"?purchaseApproach(c.desiredItem??"soda",candidate):c.route?.at(-1)??c.target;if(!navigableRoute(candidate,c,end))return {ok:false,message:"Esta mudança prende um cliente; deixe uma passagem."};}
  if(!activeRetailQueuesReachable(candidate))
