@@ -8,7 +8,6 @@ export const appearance:CharacterAppearance={
     // Cross-body satchel behind the torso, actual side volume.
     shape(ctx,[[11,-43+headShift],[23,-41+headShift],[25,-15],[12,-15]],"#805A40","#41352F");
     shape(ctx,[[12,-30+headShift],[25,-29+headShift],[25,-25+headShift],[11,-26+headShift]],"#BC9363");
-  }
  },
  drawOutfit(detail){
  const {ctx,headShift,back,pose}=detail;

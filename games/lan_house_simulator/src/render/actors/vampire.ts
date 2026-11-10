@@ -6,7 +6,6 @@ export const appearance:CharacterAppearance={
  const {ctx,headShift}=detail;
     shape(ctx,[[-14,-56+headShift],[13,-56+headShift],[24,-6],[-24,-5]],"#433451","#2C2840");
     shape(ctx,[[-12,-51+headShift],[11,-50+headShift],[17,-18],[-16,-15]],"#7E4A68","#4F3556");
-  }
  },
  drawOutfit(detail){
  const {ctx,headShift}=detail;
