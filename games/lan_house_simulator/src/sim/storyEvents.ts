@@ -1,234 +1,19 @@
-/**
- * Cadeias autorais de acontecimentos do LHS: decisão -> efeito real -> retorno -> conclusão.
- * Cada história é única por partida. Nenhuma chamada ao RNG da simulação.
- */
+/** Story orchestration and effects; story catalogue lives in one module per event. */
 import type {GameState,Result,Item} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {DAY_MINUTES} from "./types.js";
 import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {hasPlayableGpuGame} from "./gpuGames.js";
+import {CHAIN_IDS,LEGACY_CHAIN_IDS,type StoryId,type StoryChainId,type LegacyChainId,type StoryNoticeId,type StoryOutcome,type StoryImpact,type StoryRecord} from "./stories/types.js";
+import {STORIES} from "./stories/catalog.js";
+import {LEGACY_STORIES} from "./stories/legacy.js";
+import {FOLLOWUP_LABELS,FOLLOWUP_KEYS,PERSISTENT_ESCALATIONS} from "./stories/followups.js";
 
-export const STORY_IDS=[
- "roof-leak","neighbor-noise","damaged-keyboard","malware-incident",
- "missing-stock","unexpected-power-bill","late-supplier","lost-document",
- "local-network","neighborhood-paper","privacy-exposure","community-drive",
- "school-uniform-policy","gpu-games-2005"
-] as const;
-export type StoryId=typeof STORY_IDS[number];
-export const LEGACY_CHAIN_IDS=["supplier-offer","school-booking","gaming-tournament","equipment-fault"] as const;
-export const CHAIN_IDS=[...STORY_IDS,...LEGACY_CHAIN_IDS] as const;
-export type StoryChainId=typeof CHAIN_IDS[number];
-export type LegacyChainId=typeof LEGACY_CHAIN_IDS[number];
-export type StoryNoticeId=StoryId|`${StoryChainId}:followup`|`${StoryChainId}:report`;
-export type StoryOutcome="good"|"mixed"|"bad";
-export interface StoryImpact {
- reputation?:number;
- wear?:number;
- stock?:Partial<Record<Item,number>>;
- offlineMinutes?:number;
- visitors?:number;
- visitorDays?:number;
- energyBill?:number;
-}
-export interface StoryChoice {
- id:string; label:string; cost:number; description:string;
- outcome:StoryOutcome; impact?:StoryImpact;
-}
-export interface StoryDefinition {
- title:string; body:string; category:"problem"|"opportunity";
- choices:[StoryChoice,StoryChoice,StoryChoice];
- developments:Record<StoryOutcome,string>;
-}
-export interface StoryRecord {
- id:StoryChainId;
- choice:string;
- choiceLabel?:string;
- outcome:StoryOutcome;
- stage:"pending"|"awaiting"|"ending"|"done";
- dueDay:number;
- followupChoice?:string;
- followupLabel?:string;
- finalOutcome?:StoryOutcome;
-}
-export interface StoryVisitorEffect {
- id:string; factor:number; untilDay:number;
-}
-const choice=(id:string,label:string,cost:number,description:string,outcome:StoryOutcome,impact?:StoryImpact):StoryChoice=>
- ({id,label,cost,description,outcome,impact});
-const story=(title:string,body:string,category:StoryDefinition["category"],
- choices:StoryDefinition["choices"],good:string,mixed:string,bad:string):StoryDefinition=>
- ({title,body,category,choices,developments:{good,mixed,bad}});
+// Preserve the public API and the serialized IDs consumed by existing game saves.
+export {STORY_IDS,LEGACY_CHAIN_IDS,CHAIN_IDS} from "./stories/types.js";
+export type {StoryId,StoryChainId,LegacyChainId,StoryNoticeId,StoryOutcome,StoryImpact,StoryChoice,StoryDefinition,StoryRecord,StoryVisitorEffect} from "./stories/types.js";
+export {STORIES} from "./stories/catalog.js";
 
-/** Gastos são preços fictícios de design; no modelo histórico partem de ~1/10 em 1998. */
-export const STORIES:Record<StoryId,StoryDefinition>={
- "roof-leak":story("Goteira perto dos computadores",
-  "Depois de uma chuva, surgiram manchas e pingos perto das estações. O teto precisa de atenção antes de afetar os equipamentos.","problem",[
-  choice("roof-professional","Contratar reparo do telhado",260,"Elimina a infiltração", "good",{reputation:1}),
-  choice("roof-temporary","Instalar proteção provisória",85,"Contém a água, mas exige acompanhamento","mixed",{wear:2}),
-  choice("roof-ignore","Deixar para depois",0,"A água pode atingir as máquinas","bad",{wear:12,reputation:-2})
- ],"O reparo resistiu à chuva seguinte. Os clientes perceberam o cuidado com o salão.",
- "A lona segurou parte da água, porém outra chuva revelou uma pequena abertura.",
- "A infiltração alcançou a área dos PCs; um computador começou a apresentar falhas."),
- "neighbor-noise":story("Reclamação de barulho dos vizinhos",
-  "Moradores reclamam das comemorações e gritos dos clientes nas partidas. A relação com a vizinhança ficou delicada.","problem",[
-  choice("noise-insulate","Instalar isolamento acústico",220,"Obra reduz o barulho e protege a convivência","good",{reputation:2,visitors:1.03,visitorDays:8}),
-  choice("noise-rules","Estabelecer regras e avisos",45,"Clientes recebem orientação, mas exigem acompanhamento","mixed",{reputation:1}),
-  choice("noise-ignore","Ignorar a reclamação",0,"Moradores podem registrar nova queixa","bad",{reputation:-3,visitors:.92,visitorDays:8})
- ],"Os vizinhos notaram o salão mais silencioso e agradeceram a mudança.",
- "Alguns jogadores respeitaram os avisos, mas houve novas discussões em horários movimentados.",
- "Uma segunda reclamação foi protocolada. Os vizinhos desaconselham o estabelecimento e a procura caiu."),
- "damaged-keyboard":story("Teclado quebrado depois de uma partida",
-  "Um cliente irritado bateu no teclado de uma estação e várias teclas pararam de responder.","problem",[
-  choice("keyboard-replace","Substituir o teclado",75,"Estação volta a funcionar sem improvisos","good",{reputation:1}),
-  choice("keyboard-repair","Consertar o teclado",25,"Reparo rápido com risco de novo defeito","mixed",{wear:4}),
-  choice("keyboard-charge","Cobrar o cliente e adiar a troca",0,"Pode gerar discussão e indisponibilidade","bad",{wear:14,reputation:-2})
- ],"Um teclado novo resolveu as reclamações na estação.",
- "O reparo funcionou inicialmente, mas algumas teclas voltaram a falhar.",
- "A discussão com o cliente piorou; outros visitantes começaram a reclamar do equipamento."),
- "malware-incident":story("Software malicioso em uma estação",
-  "Um computador começou a apresentar janelas e travamentos após um arquivo suspeito ser executado.","problem",[
-  choice("virus-specialist","Chamar técnico especializado",150,"Isola a estação, verifica o sistema e remove a ameaça","good",{reputation:1}),
-  choice("virus-restore","Restaurar a estação",55,"Sistema retorna, mas ainda precisa de revisão","mixed",{wear:4}),
-  choice("virus-ignore","Continuar usando o computador",0,"Travamentos podem se espalhar pela rotina","bad",{wear:20,offlineMinutes:30,reputation:-2})
- ],"O técnico confirmou a limpeza e os clientes voltaram a usar a estação.",
- "A restauração resolveu a maioria dos sintomas, mas surgiram novos avisos.",
- "Os travamentos voltaram durante o atendimento e os clientes perderam tempo de sessão."),
- "missing-stock":story("Diferença no estoque de mercadorias",
-  "A contagem de refrigerantes, doces e salgadinhos não bate com as entradas. Pode ser erro de controle ou perda.","problem",[
-  choice("stock-control","Implantar conferência e controle",95,"Reorganiza registros e inventário","good",{reputation:1}),
-  choice("stock-count","Fazer contagem manual",20,"Descobre parte da diferença","mixed",{stock:{soda:-2}}),
-  choice("stock-ignore","Aceitar a diferença sem investigar",0,"Produtos continuam desaparecendo","bad",{stock:{soda:-5,snacks:-3},reputation:-1})
- ],"O novo controle encontrou a origem dos erros, evitando novas perdas.",
- "A contagem melhorou as anotações, mas as entregas seguintes ainda tiveram diferenças.",
- "Novas unidades desapareceram; faltou produto para vender no horário de maior movimento."),
- "unexpected-power-bill":story("Conta de luz acima do esperado",
-  "A cobrança de energia veio muito acima do padrão. Pode haver leitura incorreta ou desperdício no salão.","problem",[
-  choice("bill-electrician","Solicitar auditoria de consumo",135,"Profissional revisa medição e uso elétrico","good",{reputation:1}),
-  choice("bill-contest","Contestar a fatura",35,"A concessionária fará reavaliação","mixed",{}),
-  choice("bill-ignore","Pagar sem conferir a causa",90,"A origem do custo permanece desconhecida","bad",{reputation:-1})
- ],"A revisão encontrou desperdícios e reduziu a exposição a novas cobranças.",
- "A contestação teve resposta parcial; será preciso apresentar informações adicionais.",
- "A fatura seguinte trouxe outra diferença, comprometendo o orçamento do estabelecimento."),
- "late-supplier":story("Entrega atrasada do fornecedor",
-  "O distribuidor não entregou as bebidas e os salgadinhos combinados. O balcão pode ficar desabastecido.","problem",[
-  choice("supplier-backup","Comprar lote de emergência",140,"Mercadorias repostas de imediato","good",{stock:{soda:10,snacks:8}}),
-  choice("supplier-negotiate","Cobrar prazo e compensação",15,"Entrega pode chegar incompleta","mixed",{stock:{soda:3}}),
-  choice("supplier-wait","Esperar sem tomar providências",0,"Prateleiras podem ficar vazias","bad",{stock:{soda:-5,snacks:-4},reputation:-2})
- ],"O fornecedor alternativo cumpriu o combinado e o balcão passou pelo movimento sem falta.",
- "O fornecedor entregou apenas uma parte do pedido e prometeu completar a remessa.",
- "O atraso continuou e alguns clientes saíram sem encontrar os produtos que queriam."),
- "lost-document":story("Cliente perdeu um trabalho importante",
-  "Uma máquina travou durante uma atividade e o cliente diz ter perdido horas de trabalho.","problem",[
-  choice("document-refund","Devolver o valor e oferecer ajuda",45,"Acolhe a reclamação e revisa a máquina","good",{reputation:2}),
-  choice("document-extra","Oferecer sessão gratuita",20,"Compensa parte do transtorno","mixed",{reputation:1}),
-  choice("document-refuse","Recusar qualquer compensação",0,"Conflito pode se tornar público","bad",{reputation:-4,visitors:.94,visitorDays:7})
- ],"O cliente aceitou a ajuda e voltou depois para agradecer.",
- "O cliente aceitou o crédito, mas ainda está preocupado com o conteúdo perdido.",
- "O cliente contou o caso a conhecidos, gerando críticas ao atendimento da lan house."),
- "local-network":story("Rede local dos PCs instável",
-  "Computadores deixaram de se comunicar direito; jogos e serviços em rede começaram a falhar.","problem",[
-  choice("lan-technician","Contratar técnico de redes",145,"Reorganiza cabos e testa conectividade","good",{reputation:1}),
-  choice("lan-restart","Reconfigurar a rede",50,"Melhora temporariamente a conectividade","mixed",{offlineMinutes:8}),
-  choice("lan-ignore","Ignorar as falhas de rede",0,"Mais sessões podem ser interrompidas","bad",{offlineMinutes:55,reputation:-3,visitors:.93,visitorDays:6})
- ],"Os computadores voltaram a se comunicar de forma estável.",
- "Uma parte das máquinas funciona, mas as partidas em rede ainda sofrem quedas.",
- "A falha atingiu mais sessões, causando abandono e reclamações de clientes."),
- "neighborhood-paper":story("O jornal do bairro quer uma entrevista",
-  "Um jornalista ouviu falar da lan house e oferece uma matéria sobre o negócio.","opportunity",[
-  choice("paper-invest","Preparar evento para a reportagem",110,"Boa apresentação aumenta a visibilidade","good",{reputation:2,visitors:1.13,visitorDays:12}),
-  choice("paper-talk","Conceder entrevista simples",0,"Divulgação espontânea e discreta","mixed",{reputation:1,visitors:1.05,visitorDays:6}),
-  choice("paper-refuse","Recusar a entrevista",0,"O jornal buscará outras pautas","bad",{})
- ],"A matéria destacou a organização do salão e trouxe novos curiosos.",
- "A reportagem citou a lan house, mas a repercussão foi moderada.",
- "O jornal publicou outras histórias e uma oportunidade de divulgação se perdeu."),
- "privacy-exposure":story("Dados pessoais ficaram no computador",
-  "Uma pessoa encontrou arquivos pessoais do cliente anterior. A configuração das estações precisa de revisão.","problem",[
-  choice("privacy-specialist","Contratar revisão profissional",185,"Limpa perfis e configura proteção das estações","good",{reputation:2}),
-  choice("privacy-clean","Fazer limpeza assistida dos perfis",65,"Reduz o problema, mas requer acompanhamento","mixed",{reputation:1}),
-  choice("privacy-ignore","Minimizar a reclamação",0,"Clientes podem deixar de confiar no estabelecimento","bad",{reputation:-5,visitors:.87,visitorDays:12})
- ],"O cliente foi informado das medidas tomadas e a confiança começou a voltar.",
- "A limpeza removeu arquivos antigos, mas outra estação apresentou configuração parecida.",
- "Outro cliente encontrou arquivos esquecidos e a notícia afetou a reputação do salão."),
- "school-uniform-policy":story("2004: alunos de uniforme durante as aulas",
-  "A escola do bairro procurou Tony: estudantes estão frequentando a lan house de uniforme durante o horário de aula. A direção pede colaboração para orientar os jovens. É um acordo local, não uma proibição nacional. Como sua lan house vai lidar com a situação?","problem",[
-  choice("uniform-post-rule","Estabelecer regra e avisar famílias",65,
-   "Explica os horários, orienta os estudantes e registra um acordo com a escola","good",
-   {reputation:2,visitors:.98,visitorDays:6}),
-  choice("uniform-talk","Conversar com os alunos",0,
-   "Orientação sem cartazes nem procedimento fixo; pode precisar de reforço","mixed",{reputation:1}),
-  choice("uniform-ignore","Não interferir na frequência",0,
-   "A escola pode apresentar uma nova reclamação e famílias podem evitar o local","bad",
-   {reputation:-3,visitors:.93,visitorDays:10})
- ],"A escola agradeceu a colaboração. Os alunos receberam orientações sobre os horários de aula.",
- "Alguns estudantes passaram a respeitar os horários, mas a direção ainda recebeu relatos de faltas.",
- "A escola voltou a procurar Tony: responsáveis reclamaram que estudantes seguem faltando às aulas."),
- "gpu-games-2005":story("2005: jogos avançados pedem placa de vídeo",
-  "Alguns lançamentos já exigem placa de vídeo dedicada e um Windows compatível e licenciado. Tony percebeu que pode atrair um novo público, mas anunciar esses jogos não os instala: para licenciar um título avançado, a lan house precisa ter ao menos um computador com GPU e Windows adequados. Como se preparar?", "opportunity",[
-  choice("gpu-plan", "Preparar divulgação para a nova geração", 90,
-   "Divulgação só atrai público se houver jogo licenciado e PC compatível; não compra equipamentos","good",
-   {reputation:1,visitors:1.06,visitorDays:8}),
-  choice("gpu-survey", "Pesquisar interesse dos clientes", 20,
-   "Pesquisa a procura, sem inventar clientes nem comprar licenças ou GPUs","mixed",
-   {reputation:1,visitors:1.02,visitorDays:5}),
-  choice("gpu-defer", "Adiar a entrada nos jogos avançados", 0,
-   "Mantém o catálogo atual, sem cobrança nem punição por esperar","bad",{})
- ],"O plano de divulgação encontrou jogadores interessados. Para atendê-los, ainda será preciso instalar GPU e Windows compatíveis e comprar as licenças.",
- "A pesquisa mostrou curiosidade por jogos novos, mas os clientes querem saber quando haverá PCs preparados.",
- "Tony preferiu manter os jogos disponíveis. O novo segmento seguirá como uma possibilidade futura, sem obrigação de compra."),
- "community-drive":story("Associação pede computadores para uma ação social",
-  "Uma associação do bairro quer utilizar algumas horas de computador para ajudar moradores.","opportunity",[
-  choice("community-donate","Ceder horas gratuitas",65,"Apoio comunitário fortalece os laços do bairro","good",{reputation:3,visitors:1.07,visitorDays:10}),
-  choice("community-discount","Oferecer desconto para o grupo",25,"Ajuda parcial, mantendo parte do atendimento","mixed",{reputation:1}),
-  choice("community-decline","Não participar desta vez",0,"A ação procura outro local","bad",{})
- ],"A associação enviou um agradecimento e moradores passaram a recomendar a lan house.",
- "A atividade aconteceu em escala menor; alguns participantes pediram novos horários.",
- "A iniciativa foi realizada em outro lugar. Parte do bairro sentiu falta da participação da lan house.")
-};
-/** As quatro propostas antigas também recebem desdobramentos sem alterar seu efeito inicial. */
-const LEGACY_STORIES:Record<LegacyChainId,Pick<StoryDefinition,"title"|"category"|"developments">>={
- "supplier-offer":{title:"Proposta do distribuidor",category:"opportunity",
-  developments:{good:"O lote chegou, e o fornecedor pergunta se pode contar com novos pedidos.",
-   mixed:"O distribuidor ofereceu o lote a outro comerciante. Surgiu uma nova chance de negociação.",
-   bad:"A negociação terminou sem acordo e o lote foi revendido."}},
- "school-booking":{title:"Reserva da escola do bairro",category:"opportunity",
-  developments:{good:"Os alunos compareceram e os professores elogiaram a organização do local.",
-   mixed:"A escola encontrou outra sala e pergunta sobre uma futura parceria.",
-   bad:"A escola escolheu outro estabelecimento para a atividade."}},
- "gaming-tournament":{title:"Campeonato no bairro",category:"opportunity",
-  developments:{good:"O torneio atraiu o bairro e os competidores sugerem outra edição.",
-   mixed:"O encontro menor reuniu amigos, mas parte do público pediu um evento organizado.",
-   bad:"O campeonato aconteceu em outro local, mas o grupo cogita uma nova chance."}},
- "equipment-fault":{title:"Manutenção preventiva",category:"problem",
-  developments:{good:"A revisão completa conteve o aquecimento; o técnico recomenda acompanhamento.",
-   mixed:"A limpeza reduziu o aquecimento, mas algumas peças ainda esquentam em sessões longas.",
-   bad:"O adiamento agravou o desgaste, e clientes reclamaram das interrupções."}}
-};
-/** Seis ações contextuais por história: consolidar, observar, completar, manter, recuperar, ignorar. */
-const FOLLOWUP_LABELS:Record<StoryId,readonly string[]>={
- "roof-leak":["Inspecionar o telhado inteiro","Manter a manutenção","Substituir a lona por reparo","Manter proteção provisória","Reparar a área molhada","Deixar a infiltração avançar"],
- "neighbor-noise":["Conversar com vizinhos","Manter isolamento","Reforçar regras de silêncio","Manter só os avisos","Pedir desculpas e corrigir","Ignorar a segunda reclamação"],
- "damaged-keyboard":["Revisar periféricos","Manter teclado novo","Substituir teclas falhando","Manter reparo provisório","Trocar teclado e testar PC","Manter teclado danificado"],
- "malware-incident":["Revisar outras estações","Manter proteção atual","Verificar sistema restaurado","Usar sem revisão","Isolar PC e chamar suporte","Ignorar novos travamentos"],
- "missing-stock":["Treinar recebimento","Manter conferência","Criar registro de entradas","Seguir contagem manual","Auditar mercadorias","Ignorar nova divergência"],
- "unexpected-power-bill":["Monitorar consumo","Manter auditoria","Concluir contestação","Aceitar resposta parcial","Revisar cobrança e instalação","Seguir pagando sem verificar"],
- "late-supplier":["Firmar fornecedor alternativo","Manter fornecimento reserva","Contratar outro distribuidor","Esperar restante da entrega","Comprar estoque emergencial","Aceitar prateleiras vazias"],
- "lost-document":["Criar rotina de proteção","Manter atendimento","Acompanhar cliente afetado","Não acompanhar reclamação","Revisar PC e compensar","Desconsiderar novas críticas"],
- "local-network":["Testar cabos e portas","Manter rede revisada","Refazer conexões instáveis","Manter ajustes provisórios","Reorganizar a rede com técnico","Continuar com quedas"],
- "neighborhood-paper":["Manter contato com jornal","Deixar matéria repercutir","Divulgar matéria no bairro","Manter divulgação discreta","Retomar contato com redação","Não participar da publicação"],
- "privacy-exposure":["Auditar todos os perfis","Manter limpeza de dados","Revisar demais máquinas","Limpar só após reclamação","Contratar limpeza completa","Ignorar outra exposição de dados"],
- "community-drive":["Organizar nova ação","Manter parceria","Reservar horários adicionais","Limitar colaboração","Procurar a associação","Não participar da iniciativa"],
- "school-uniform-policy":["Reunir escola e responsáveis","Manter avisos de horários","Formalizar orientação por escrito","Continuar conversas informais","Adotar regra com apoio da escola","Ignorar nova reclamação"],
- "gpu-games-2005":["Divulgar requisitos de hardware","Manter plano de comunicação","Testar interesse por títulos novos","Acompanhar as preferências","Retomar conversa com jogadores","Continuar com o catálogo atual"]
-};
-const FOLLOWUP_KEYS=["consolidate","observe","complete","maintain","recover","persist"];
-const PERSISTENT_ESCALATIONS:Partial<Record<StoryChainId,StoryImpact>>={
- "roof-leak":{wear:18},"damaged-keyboard":{wear:16},"malware-incident":{wear:15,offlineMinutes:45},
- "missing-stock":{stock:{soda:-5,snacks:-3}},"late-supplier":{stock:{soda:-5,snacks:-5}},
- "local-network":{offlineMinutes:70},"unexpected-power-bill":{energyBill:90},
- "equipment-fault":{wear:18},"privacy-exposure":{visitors:.76,visitorDays:22},
- "neighbor-noise":{visitors:.74,visitorDays:18},"lost-document":{visitors:.80,visitorDays:18},
- "school-uniform-policy":{visitors:.78,visitorDays:16}
-};
 const chainDefinition=(id:StoryChainId)=>isStoryId(id)?STORIES[id]:LEGACY_STORIES[id];
 export const isChainId=(id:string):id is StoryChainId=>(CHAIN_IDS as readonly string[]).includes(id);
 export function registerLegacyStory(s:GameState,id:string,choiceId:string,choiceLabel?:string):void{
@@ -427,3 +212,4 @@ export function processStoryFollowups(s:GameState):void{
 export function storySeen(s:GameState,id:StoryId):boolean{
  return (s.storySeenIds??[]).includes(id)||(s.storyRecords??[]).some(r=>r.id===id);
 }
+
