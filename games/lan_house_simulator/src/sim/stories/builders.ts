@@ -1,4 +1,4 @@
-import type {StoryImpact,StoryChoice,StoryDefinition} from "./types.js";
+import type {StoryImpact,StoryChoice,StoryDefinition,StoryOutcome} from "./types.js";
 
 export const choice=(id:string,label:string,cost:number,description:string,outcome:StoryOutcome,impact?:StoryImpact):StoryChoice=>
  ({id,label,cost,description,outcome,impact});
