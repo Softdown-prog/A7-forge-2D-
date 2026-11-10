@@ -33,7 +33,7 @@ export const clamp01=(v:number):number=>Math.min(1,Math.max(0,v));
 /** Eye with sclera, iris, pupil, lid line and a fixed glint (never animated, so
  * cached frames stay interchangeable). `w`/`h` are the iris radii; animals keep
  * the glossy black bead their rigs always had. */
-function eye(ctx:ActorContext,x:number,y:number,w:number,h:number,kind:ActorKind,look=0):void{
+export function eye(ctx:ActorContext,x:number,y:number,w:number,h:number,kind:ActorKind,look=0):void{
   if(kind==="rabbit"||kind==="mouse-mascot"){
     ell(ctx,x,y,w*1.15,h*1.1,"#1f2a3c");
     ell(ctx,x-w*.38,y-h*.42,w*.42,h*.38,"#F6E7D0");return;

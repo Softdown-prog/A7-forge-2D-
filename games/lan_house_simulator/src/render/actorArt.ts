@@ -5,7 +5,7 @@ import {walkPhase,walkingLeg,walkAxis} from "./walkCycle.js";
 import {workerMotion} from "./workerMotion.js";
 import {shadeHex,parseHex} from "./color.js";
 import {actorAppearanceFor,resolvedActorStyle} from "./actors/registry.js";
-import {ell,shape,segment,clamp01,hairSheen,blush,limb,torso,noseBump,casualHairExtras,casualChestExtras,seatTransitionWeight,profileWalkingStep} from "./actors/rigPrimitives.js";
+import {ell,eye,shape,segment,edgeFor,clamp01,hairSheen,blush,limb,torso,noseBump,casualHairExtras,casualChestExtras,seatTransitionWeight,profileWalkingStep} from "./actors/rigPrimitives.js";
 import {isFemaleCostume} from "./actors/femaleRig.js";
 export {edgeFor,seatTransitionWeight,profileWalkingStep} from "./actors/rigPrimitives.js";
 export {FEMALE_COSTUMES} from "./actors/femaleRig.js";
