@@ -31,7 +31,6 @@ import { validStationPower } from "./stationPower.js";
 import { CHAIN_IDS, STORY_IDS } from "./storyEvents.js";
 import type { GameState, Item } from "./types.js";
 import { DAY_MINUTES } from "./types.js";
-import {pcCount} from "./simulationState.js";
 
 export function isValidSave(value: unknown): value is GameState {
   if (!value || typeof value !== "object") return false;
