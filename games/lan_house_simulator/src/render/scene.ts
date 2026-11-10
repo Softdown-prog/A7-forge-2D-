@@ -1,32 +1,23 @@
-import type {MotionCustomer,MotionWorker} from "./motion.js";
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
 import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} from "../sim/editableObjects.js";
-import {computerSeat} from "../sim/route.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, cuboid, iso, polygon, type Projection,objectCamera } from "./isometric.js";
-import { drawRetroComputer, drawSeatedKeyboardOverlay } from "./retroComputer.js";
-import {cosmeticAvailable,headsetOnSession} from "../sim/premiumCosmetics.js";
+import { drawRetroComputer } from "./retroComputer.js";
+import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {drawVipAquarium} from "./aquariumArt.js";
 import {drawPixelClock} from "./pixelClockArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import { actorHitbox, actorStyleFor, type ActorPose } from "./actorArt.js";
-import {drawActorSprite as drawActor} from "./actorSprites.js";
-import { movementDirection,screenViewForMotion } from "./direction.js";
 import {furnitureSlots,occupiedFurnitureSlots,availablePlacementSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
 import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../sim/layout.js";
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers} from "../sim/stations.js";
 import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/services.js";
-import {workPhaseLabel} from "../sim/staffPresentation.js";
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
-import {workerMotion} from "./workerMotion.js";
-import {drawWorkContact} from "./workEffects.js";
-import {technicianContactPoint} from "../sim/staffWorksites.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
 import {drawRoomFloor} from "./scene/floor.js";
@@ -36,12 +27,16 @@ import {drawInteriorWall,drawInteriorDoor} from "./scene/partitions.js";
 import {drawGpuInstallMarkers} from "./scene/gpuInstallOverlay.js";
 import {drawServiceAccessOverlay} from "./scene/serviceOverlay.js";
 import {drawTrashBin} from "./scene/trashBin.js";
+import {drawScenePostman} from "./scene/characters/postman.js";
+import {drawSceneWorker} from "./scene/characters/worker.js";
+import {drawSceneOwner} from "./scene/characters/owner.js";
+import {drawSceneCustomer} from "./scene/characters/customer.js";
 import {SCENE_THEME as theme} from "./theme.js";
 import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
 import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
-import {drawPs2Station,drawPs2Controller,ps2ActorGrip} from "./ps2Art.js";
-import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
+import {drawPs2Station} from "./ps2Art.js";
+import {drawPs1Station} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
 import {drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
 import {drawCounter} from "./counterArt.js";
@@ -415,143 +410,12 @@ export class SceneRenderer {
   }
   /** Visiting postman: same actor rig, procedural uniform, visible delivery animation. */
   private postman(camera:Projection,job:PostmanDelivery,t:number):void{
-    const motion=(job as PostmanDelivery&{renderMotion?:{moving:boolean;distance:number;view:import("./direction.js").ActorScreenView}}).renderMotion;
-    const moving=motion?.moving??job.moving;
-    drawActor(this.ctx,camera,{
-      x:job.x,y:job.y,kind:"postman",id:-31,time:t,
-      pose:job.phase==="handing"?"delivering":moving?"walking":"idle",
-      direction:job.phase==="handing"?"north":job.facing??"north",
-      screenView:job.phase==="handing"?undefined:motion?.view,
-      walkDistance:job.phase==="handing"?undefined:motion?.distance
-    });
-    const pos=iso(job,camera),ctx=this.ctx,z=camera.zoom;
-    const caption=job.phase==="handing"?"ENTREGANDO REVISTA":
-      job.phase==="arriving"?"CARTEIRO · CHEGANDO":"CARTEIRO · SAINDO";
-    ctx.save();ctx.font="700 "+Math.max(9,10*z)+"px system-ui";
-    const w=ctx.measureText(caption).width+10;
-    ctx.fillStyle="rgba(24,42,70,.93)";
-    ctx.fillRect(pos.x-w/2,pos.y-143*z,w,19*z);
-    ctx.fillStyle="#FFE495";ctx.textAlign="center";ctx.textBaseline="middle";
-    ctx.fillText(caption,pos.x,pos.y-133.5*z);
-    ctx.restore();
+    drawScenePostman(this.ctx,camera,job,t);
   }
   /** Trabalhadores agora usam EXATAMENTE a geometria, câmera e caminhada dos clientes. */
   private worker(camera:Projection,job:RepairJob|CleaningJob,time:number,
     kind:"technician"|"cleaner",progress:number,s:GameState):void{
-    const ctx=this.ctx,z=camera.zoom,working=job.phase==="working";
-    // Vincula visualmente o funcionário ao equipamento. As linhas e os círculos
-    // são puramente gráficos: sem caminho fantasma ou mudança de posição.
-    if(working){
-      const target=kind==="cleaner"
-       ?binSpots(s)[(job as CleaningJob).binIndex??0]
-       :technicianContactPoint(pcPosition((job as RepairJob).pc,s));
-      if(target){
-        const floor=iso(target,camera,3),worker=iso({x:job.x,y:job.y},camera,2);
-        ctx.save();
-        ctx.strokeStyle=kind==="cleaner"?"rgba(154,219,171,.85)":"rgba(235,194,111,.82)";
-        ctx.lineWidth=Math.max(1.3,1.8*z);
-        ctx.setLineDash([5*z,4*z]);
-        ctx.beginPath();ctx.moveTo(worker.x,worker.y);ctx.lineTo(floor.x,floor.y);ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle=kind==="cleaner"?"rgba(103,181,132,.13)":"rgba(239,190,99,.11)";
-        ctx.beginPath();ctx.ellipse(floor.x,floor.y,16*z,9*z,0,0,Math.PI*2);
-        ctx.fill();ctx.stroke();
-        ctx.restore();
-      }
-    }
-    const locomotion=(job as MotionWorker).renderMotion;
-    const moving=locomotion?.moving??!!job.moving;
-    drawActor(ctx,camera,{
-      x:job.x,y:job.y,kind,id:kind==="cleaner"?-17:-19,
-      time,pose:working?(kind==="cleaner"?"sweeping":"repairing"):moving?"walking":"idle",
-      direction:job.facing??"north",
-      // Workers now share the customers' ground-driven stride and isometric facing.
-      // Work actions stay independent; an idle worker never walks in place.
-      walkDistance:!working?locomotion?.distance:undefined,
-      screenView:!working&&moving?locomotion?.view:undefined
-    });
-    const p=iso({x:job.x,y:job.y},camera);
-    if(working){
-      // Movimento de trabalho compartilhado com as mãos do personagem.
-      // Mantém âncora, escala e espelhamento idênticos ao actorArt.
-      const motion=workerMotion(kind==="cleaner"?"sweeping":"repairing",time);
-      ctx.save();ctx.translate(p.x,p.y);
-      ctx.scale(z*(job.facing==="west"?-1:1),z);
-      ctx.lineCap="round";ctx.lineJoin="round";
-      if(kind==="cleaner"){
-        const tip=motion.toolTip,grip=motion.nearHand;
-        // Sombras curtas da vassoura no chão; cabeça em contato com os pés.
-        ctx.strokeStyle="rgba(51,50,40,.2)";ctx.lineWidth=4;
-        ctx.beginPath();ctx.moveTo(tip.x-13,tip.y+2);ctx.lineTo(tip.x+13,tip.y+2);ctx.stroke();
-        // Cabo e anéis, alinhados aos dedos da mão superior e inferior.
-        ctx.strokeStyle="#34444A";ctx.lineWidth=4;
-        ctx.beginPath();ctx.moveTo(grip.x-1,grip.y-5);ctx.lineTo(tip.x,tip.y-2);ctx.stroke();
-        ctx.strokeStyle="#A87E51";ctx.lineWidth=2.8;
-        ctx.beginPath();ctx.moveTo(grip.x-1,grip.y-5);ctx.lineTo(tip.x,tip.y-2);ctx.stroke();
-        ctx.fillStyle="#C0AC76";ctx.strokeStyle="#46544D";ctx.lineWidth=1.2;
-        ctx.beginPath();ctx.moveTo(tip.x-12,tip.y-4);ctx.lineTo(tip.x+12,tip.y-4);
-        ctx.lineTo(tip.x+15,tip.y+1);ctx.lineTo(tip.x-15,tip.y+1);
-        ctx.closePath();ctx.fill();ctx.stroke();
-        // Cerdas se curvam discretamente a cada passada.
-        for(let b=-11;b<=11;b+=3){
-          ctx.strokeStyle=b%2===0?"#9C8D66":"#DAC394";ctx.lineWidth=1.3;
-          ctx.beginPath();ctx.moveTo(tip.x+b,tip.y);ctx.lineTo(tip.x+b+motion.pulse*2,tip.y+5);ctx.stroke();
-        }
-        if(Math.abs(motion.pulse)>.65){
-          ctx.strokeStyle="rgba(187,177,139,.48)";ctx.lineWidth=1.5;
-          for(let j=0;j<2;j++){
-            ctx.beginPath();ctx.moveTo(tip.x-20-j*4,tip.y+3+j*2);
-            ctx.lineTo(tip.x-25-j*4,tip.y+4+j*2);ctx.stroke();
-          }
-        }
-      }else{
-        const tip=motion.toolTip,grip=motion.nearHand;
-        // Maleta aberta no chão: a mão esquerda sustenta enquanto a direita
-        // gira a ferramenta. Evita desenhar um segundo PC sobre a estação.
-        ctx.fillStyle="#394F53";ctx.strokeStyle="#263843";ctx.lineWidth=1.6;
-        ctx.fillRect(15,-14,24,13);ctx.strokeRect(15,-14,24,13);
-        ctx.fillStyle="#E0C27A";ctx.fillRect(17,-12,20,4);
-        ctx.fillStyle="#879CA0";ctx.fillRect(18,-7,6,3);ctx.fillRect(27,-7,7,3);
-        // Chave de fenda acompanha a oscilação do punho até a maleta.
-        ctx.strokeStyle="#A9BDCB";ctx.lineWidth=2;
-        ctx.beginPath();ctx.moveTo(grip.x,grip.y+4);ctx.lineTo(tip.x,tip.y);ctx.stroke();
-        ctx.strokeStyle="#D7AF60";ctx.lineWidth=4;
-        ctx.beginPath();ctx.moveTo(grip.x,grip.y+3);ctx.lineTo(grip.x+2,grip.y+10);ctx.stroke();
-        ctx.fillStyle=motion.pulse>.2?"#F3CE7F":"#9CABAB";
-        ctx.fillRect(34,-16,3,3);
-        if(motion.pulse>.74){
-          ctx.strokeStyle="#F3D17A";ctx.lineWidth=1.2;
-          ctx.beginPath();ctx.moveTo(tip.x+2,tip.y-3);ctx.lineTo(tip.x+5,tip.y-6);ctx.stroke();
-        }
-      }
-      ctx.restore();
-      // O gesto da ferramenta responde no objeto trabalhado, além da pose do ator.
-      // Calculado da posição real da máquina/lixeira; o render não afeta o save.
-      const contact=kind==="cleaner"
-        ?binSpots(s)[(job as CleaningJob).binIndex??0]
-        :technicianContactPoint(pcPosition((job as RepairJob).pc,s));
-      if(contact)drawWorkContact(ctx,camera,kind,contact,time);
-      ctx.save();ctx.fillStyle="#142934";
-      ctx.fillRect(p.x-22*z,p.y-107*z,44*z,7*z);
-      ctx.fillStyle=kind==="technician"?"#E5BD59":"#8CC6B8";
-      ctx.fillRect(p.x-21*z,p.y-106*z,42*z*Math.max(0,Math.min(1,progress)),5*z);
-      ctx.restore();
-    }
-    // Etiqueta curta segue o personagem e reaproveita exatamente a fase do job.
-    // Não altera a câmera, o deslocamento, a colisão ou o estado persistido.
-    ctx.save();
-    const caption=workPhaseLabel(kind,job).toUpperCase();
-    const font=Math.max(9,10.5*z),pad=5;
-    ctx.font="700 "+font+"px system-ui";
-    const width=ctx.measureText(caption).width+pad*2;
-    // Os dois profissionais chegam pela mesma porta; evitar etiquetas sobrepostas.
-    const badgeY=p.y-(kind==="technician"?152:132)*z-font, badgeX=p.x-width/2;
-    ctx.fillStyle="rgba(24,43,47,.92)";
-    ctx.fillRect(badgeX,badgeY,width,font+8);
-    ctx.fillStyle=working?(kind==="technician"?"#efcd82":"#b1e6da"):"#f6f0d9";
-    ctx.textAlign="center";ctx.textBaseline="top";
-    ctx.fillText(caption,p.x,badgeY+4);
-    ctx.restore();
+    drawSceneWorker(this.ctx,camera,job,time,kind,progress,s);
   }
   private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
     const cam=objectCamera(camera,p,1.1,.7,(p as PlacedPoint).rotation);
@@ -568,94 +432,11 @@ export class SceneRenderer {
     }
   }
   private owner(camera:Projection,t:number,s?:GameState):void {
-    const position=counterPoint(s,{x:1.45,y:1.05}),r=placedObject(s,"counter",{x:.9,y:1.42}).rotation??0;
-    // Mesmo rosto e uniforme em todos os quadros; o balcão oclui parcialmente o corpo.
-    const printAt=s?.printer?.lastPrintedMinute??-1,copyAt=s?.discCopier?.lastCopiedMinute??-1;
-    // Prioridade ao serviço pago mais recente; ambos os equipamentos animam independente.
-    const pose=s&&copyingAnimationActive(s)&&copyAt>=printAt?"copying":
-      s&&printingAnimationActive(s)?"printing":
-      s?.postmanDelivery?.phase==="handing"?"receiving":"idle";
-    drawActor(this.ctx,camera,{...position,kind:"owner",id:0,time:t,pose,
-      direction:(["south","west","north","east"] as const)[r],
-      premiumCyber:!!s&&cosmeticAvailable("tony-cyber",yearFromMinutes(s.totalMinutes))});
-    this.heroHitbox=actorHitbox(camera,position.x,position.y);
+    this.heroHitbox=drawSceneOwner(this.ctx,camera,t,s);
   }
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState,
     reaction?:NightMatchReaction):void {
-    let x=c.x,y=c.y;
-    const motion=(c as MotionCustomer).renderMotion;
-    const moving=c.stage==="arriving" || c.stage==="to_pc" ||
-      c.stage==="shopping" || c.stage==="leaving";
-    let pose:ActorPose=moving&&(motion?motion.moving:Math.hypot(c.target.x-c.x,c.target.y-c.y)>.0001)?"walking":"idle";
-    let transition=1;
-    if(seated && customerConsole(c)){
-      const seat=customerConsoleSeat(s,c);
-      if(seat){x=seat.x;y=seat.y;pose=c.stage==="standing"?"standing-up":"sitting";
-       transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
-        c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;}
-    }else if(seated && c.pcIndex!==null){
-      const p=pcPosition(c.pcIndex,s);
-      const seat=computerSeat(p);x=seat.x;y=seat.y;
-      pose=c.stage==="standing"?"standing-up":"sitting";
-      transition=c.stage==="sitting"?Math.min(1,(c.poseMinutes??0)/3):
-        c.stage==="standing"?Math.min(1,(c.poseMinutes??0)/3):1;
-    }
-    const direction=seated&&customerConsole(c)?"north":
-      seated&&c.pcIndex!==null?(["north","east","south","west"] as const)[pcPosition(c.pcIndex,s).rotation??0]:
-      // SceneMotion resolves the direction of the *visible* interpolated step.
-      // The next waypoint can already be around a corner: do not turn early.
-      moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
-    const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
-    const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
-    // Seat-specific PS2 grip must mirror with the actor, not with the TV.
-    const grip=seated&&ps2Point?ps2ActorGrip({x,y},ps2Point,consoleView):undefined;
-    const drawPad=()=>drawPs2Controller(this.ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
-       ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
-    // A controller in front of a back-facing torso must be occluded by the body.
-    const padBehind=consoleView?.startsWith("back");
-    if(seated&&ps2Point&&c.stage==="using"&&padBehind)drawPad();
-    drawActor(this.ctx,camera,{
-      x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
-      pose,direction,transition,walkDistance:motion?.distance,
-      reaction:reaction?.kind,
-      // Face the current interpolated world step in SCREEN space (2:1 isometric).
-      screenView:seated?consoleView:motion?.view??screenViewForMotion(
-        pose==="walking"?c.target.x-c.x:0,
-        pose==="walking"?c.target.y-c.y:0,direction),
-      gamepad:seated&&customerConsole(c)!==null&&c.stage==="using",
-      modernGamepad:c.ps2StationIndex!==undefined,gamepadGrip:grip,
-      consoleSeat:seated&&customerConsole(c)!==null,
-      premiumHeadset:seated&&c.pcIndex!==null&&!customerConsole(c)&&
-       cosmeticAvailable("headset-rgb-neon",yearFromMinutes(s.totalMinutes))&&
-       headsetOnSession(c.id,c.pcIndex)
-    });
-    if(seated&&ps2Point&&c.stage==="using"&&!padBehind)drawPad();
-    if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
-      drawPs1Controller(this.ctx,camera,{x,y},t,c.ps1SeatIndex??0);
-    if(seated && c.pcIndex!==null){
-      const style=actorStyleFor(c.costume,c.id);
-      const weight=reaction?0:c.stage==="using"?1:
-        c.stage==="sitting"?transition:
-        c.stage==="standing"?1-transition:0;
-      drawSeatedKeyboardOverlay(this.ctx,objectCamera(camera,pcPosition(c.pcIndex,s),1.1,.7,pcPosition(c.pcIndex,s).rotation),pcPosition(c.pcIndex,s),t,
-        style.skin,style.shirt,weight);
-    }
-    if(c.vip){
-      const marker=iso({x,y},camera,100);
-      this.ctx.save();this.ctx.font="bold "+Math.max(10,12*camera.zoom)+"px system-ui,sans-serif";
-      this.ctx.textAlign="center";this.ctx.lineWidth=2*camera.zoom;this.ctx.strokeStyle="#273448";
-      this.ctx.strokeText("★ VIP",marker.x,marker.y);this.ctx.fillStyle="#f5ca64";this.ctx.fillText("★ VIP",marker.x,marker.y);this.ctx.restore();
-    }
-    if(c.stage==="waiting"){
-      const p=iso({x,y},camera,95);
-      this.ctx.save();
-      this.ctx.font="900 "+Math.max(20,23*camera.zoom)+"px system-ui,sans-serif";
-      this.ctx.textAlign="center";this.ctx.textBaseline="middle";
-      this.ctx.lineJoin="round";this.ctx.lineWidth=4*camera.zoom;
-      this.ctx.strokeStyle="#222535";this.ctx.strokeText("?",p.x,p.y);
-      this.ctx.fillStyle="#FF4848";this.ctx.fillText("?",p.x,p.y);
-      this.ctx.restore();
-    }
+    drawSceneCustomer(this.ctx,camera,c,t,seated,s,reaction);
   }
   private doorMarker(camera:Projection,s:GameState):void {
     // Somente limiar de entrada dentro do salão; não há rua, fachada externa ou chuva.
