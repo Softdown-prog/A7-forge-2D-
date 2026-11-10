@@ -1,4 +1,3 @@
-import type {Point} from "../../sim/types.js";
 import {line,rounded} from "./primitives.js";
 
 export const SODA_COLORS=["#bf6560","#79a69e","#d5b366"] as const;
