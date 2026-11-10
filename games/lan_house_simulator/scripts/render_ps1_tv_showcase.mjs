@@ -60,7 +60,7 @@ try{
    ctx.font=font;ctx.fillStyle=color;ctx.textAlign="left";ctx.fillText(str,x,y);
   };
   function frame(at){
-   const i=Math.min(scenes.length-1,Math.floor(at/itemSeconds));
+   const i=Math.max(0,Math.min(scenes.length-1,Math.floor(at/itemSeconds)));
    const item=scenes[i],local=at-i*itemSeconds;
    game.ps1Discs={[item.id]:1};game.ps1Stations[0].discId=item.id;
    renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1040,620);
@@ -105,7 +105,8 @@ try{
    const start=performance.now();
    let lastPaint=-Infinity;
    function loop(now){
-    const at=Math.min(total,(now-start)/1000);
+    // RAF timestamps can predate performance.now() by a fraction of a frame.
+    const at=Math.max(0,Math.min(total,(now-start)/1000));
     // Still record 20 real seconds; throttle expensive Canvas paint to ~10 FPS.
     if(at-lastPaint>=.1||at>=total){
      try{frame(at);}
