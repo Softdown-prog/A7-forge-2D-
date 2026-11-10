@@ -1,5 +1,6 @@
 import type {GameState,Point,Result} from "./types.js";
 import {availablePlacementSlots,furnitureSlots,shopPrice} from "./shop.js";
+import {validateObjectPlacements} from "./editableObjects.js";
 import {annualHourlyCeiling,isHistorical,yearFromMinutes,priceIndex} from "./historicalEconomy.js";
 import {consolePoint,consoleSeat,consoleApproach} from "./consoleLayout.js";
 import {roomBounds} from "./room.js";
@@ -102,8 +103,13 @@ const coin=(v:number):number=>Math.round(v*100)/100;
 /** Bancadas usam os pontos largos do salão, não as casas miúdas da decoração. */
 export function ps1PlacementSlots(s:GameState){
  const free=new Set(availablePlacementSlots(s,"table").map(p=>p.id));
- return furnitureSlots(s).filter(p=>p.surface==="floor"&&
+ const slots=furnitureSlots(s).filter(p=>p.surface==="floor"&&
   p.id.startsWith("floor-")&&!p.id.startsWith("floor-grid-")&&free.has(p.id));
+ // O encaixe é medido como uma mesinha, mas a bancada com TV e cadeira é bem
+ // maior: com equipamentos reposicionados pelo editor ela podia cobrir um PC
+ // ou fechar um corredor, e a partida deixava de gravar.
+ if(!s.objectPlacements?.length)return slots;
+ return slots.filter(p=>validateObjectPlacements({...s,ps1Stations:[...(s.ps1Stations??[]),{slotId:p.id,wear:0}]}));
 }
 /** Nome amigável para a escolha da bancada. Mantém o ID original do
  * encaixe no <select> (saves e pathfinding permanecem iguais).
@@ -169,6 +175,8 @@ export function buyPs1SecondSeat(s:GameState,index:number):Result{
  const bounds=roomBounds(s),p=ps1StationPoint(s,index);
  if(!p||p.x-.35<=bounds.minX+.22||p.x+1.36>=bounds.maxX-.22)
   return {ok:false,message:"Esta bancada não tem corredor lateral para a segunda cadeira."};
+ if(s.objectPlacements?.length&&!validateObjectPlacements({...s,ps1Stations:s.ps1Stations!.map((v,i)=>i===index?{...v,secondSeat:true}:v)}))
+  return {ok:false,message:"A segunda cadeira ficaria sem corredor livre. Reorganize os equipamentos próximos."};
  const cost=ps1SecondSeatPrice(s);
  if(s.cash<cost)return {ok:false,message:"Caixa insuficiente para cadeira e segundo controle."};
  s.cash=coin(s.cash-cost);s.expenses=coin(s.expenses+cost);st.secondSeat=true;

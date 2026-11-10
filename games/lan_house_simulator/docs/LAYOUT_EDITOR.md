@@ -46,3 +46,12 @@ node scripts/verify_rendering.mjs out/layout-render
 A revisão em Chromium usa desktop 1440 e celulares emulados 414/360, toque real no piso, giro, confirmação, pausa, recarga de save compra de segmento com confirmação, cancelamento de remoção, retirada de decoração/pôster inicial/divisória/porta e persistência após recarga. Confere ausência de overflow horizontal da página e erros de JavaScript. Inclui 60 comparações de sprites em três zooms e quatro orientações; o teste varejista cobre mais 147 casos. O teste do motor mantém pagamentos e compras reais após reorganizar o salão.
 
 Emulação não substitui testes em telefone físico. A retirada não revende materiais e não desmonta equipamentos de atendimento.
+
+## Invariante de salvamento
+
+Nenhuma ação aceita pelo editor ou pela loja pode deixar a partida num estado que o próprio jogo recusa gravar, exportar ou importar. `tests/layout-save-integrity.test.mjs` guarda os casos que já quebraram essa regra:
+
+- **Mover um equipamento** confere todos os objetos reposicionados no salão novo, não só o que foi movido: a cadeira do PC movido não pode cair dentro de outro equipamento.
+- **Ampliar o salão** nunca remove um encaixe de decoração já ocupado. O encaixe reservado novo da ala é que deixa de ser oferecido enquanto houver um móvel ali. Partidas gravadas com decorações "sumidas" voltam a exportar ao serem carregadas.
+- **Bancada e segunda cadeira de PlayStation 1** são validadas com a geometria real (TV, bancada e cadeira), e não com a de uma mesinha, quando há equipamentos reposicionados.
+- **Contratos de funcionários** só aceitam os cargos existentes.

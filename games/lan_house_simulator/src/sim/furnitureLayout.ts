@@ -42,16 +42,26 @@ export function furnitureSlots(s:GameState):PlacementSlot[]{
    result.push({id:"floor-south-"+i+"-a",x:Math.max(bounds.minX+1.1,1.05),y:6+2*(i-1)+0.9,surface:"floor"});
    result.push({id:"floor-south-"+i+"-b",x:Math.max(bounds.minX+2.9,3.05),y:6+2*(i-1)+0.9,surface:"floor"});
  }
+ // Um encaixe da grade que já sustenta um móvel nunca desaparece: uma ampliação
+ // posterior cria encaixes reservados vizinhos (ou os desloca) e, sem esta
+ // exceção, a decoração instalada sumia do salão e a partida deixava de ser
+ // aceita na importação. O encaixe reservado novo é que cede o lugar.
+ const occupied=occupiedFurnitureSlots(s);
  const floorReserved=result.filter(p=>p.surface==="floor");
  // Half-tile floor positions provide physical capacity instead of one item per type.
  for(let iy=Math.ceil((bounds.minY-.15)/.75);.25+iy*.75<bounds.maxY-.65;iy++)for(let ix=Math.ceil((bounds.minX-.15)/.75);.25+ix*.75<bounds.maxX-.65;ix++){
   const x=.25+ix*.75,y=.25+iy*.75;
-  if(floorReserved.some(p=>Math.hypot(p.x-x,p.y-y)<.65))continue;
-  result.push({id:"floor-grid-"+x+":"+y,x,y,surface:"floor"});
+  const id="floor-grid-"+x+":"+y;
+  if(floorReserved.some(p=>Math.hypot(p.x-x,p.y-y)<.65)&&!occupied.has(id))continue;
+  result.push({id,x,y,surface:"floor"});
  }
- for(let i=Math.ceil((bounds.minX-.15)/.85);.15+i*.85<bounds.maxX-.8;i++){const x=Number((.15+i*.85).toFixed(2));if(!result.some(p=>p.surface==="wall"&&Math.abs(p.x-x)<.65))result.push({id:"wall-grid-"+x,x,y:bounds.minY+.01,surface:"wall"});}
+ for(let i=Math.ceil((bounds.minX-.15)/.85);.15+i*.85<bounds.maxX-.8;i++){const x=Number((.15+i*.85).toFixed(2));if(occupied.has("wall-grid-"+x)||!result.some(p=>p.surface==="wall"&&Math.abs(p.x-x)<.65))result.push({id:"wall-grid-"+x,x,y:bounds.minY+.01,surface:"wall"});}
  for(let i=Math.ceil((bounds.minY-.15)/.85);.15+i*.85<bounds.maxY-.8;i++){const y=Number((.15+i*.85).toFixed(2));result.push({id:"wall-side-"+y,x:bounds.minX+.012,y,surface:"wall",axis:"y"});}
- return result;
+ const kept=result.filter(p=>occupied.has(p.id)&&(p.id.startsWith("floor-grid-")||p.id.startsWith("wall-grid-")));
+ if(!kept.length)return result;
+ const wing=/^(floor|wall)-(west|east|north|south)-/;
+ return result.filter(p=>!wing.test(p.id)||occupied.has(p.id)||!kept.some(k=>k.surface===p.surface&&
+  (p.surface==="floor"?Math.hypot(k.x-p.x,k.y-p.y)<.65:Math.abs(k.x-p.x)<.65)));
 }
 
 
