@@ -53,5 +53,5 @@ Nenhuma ação aceita pelo editor ou pela loja pode deixar a partida num estado 
 
 - **Mover um equipamento** confere todos os objetos reposicionados no salão novo, não só o que foi movido: a cadeira do PC movido não pode cair dentro de outro equipamento.
 - **Ampliar o salão** nunca remove um encaixe de decoração já ocupado. O encaixe reservado novo da ala é que deixa de ser oferecido enquanto houver um móvel ali. Partidas gravadas com decorações "sumidas" voltam a exportar ao serem carregadas.
-- **Bancada e segunda cadeira de PlayStation 1** são validadas com a geometria real (TV, bancada e cadeira), e não com a de uma mesinha, quando há equipamentos reposicionados.
+- **Bancada e segunda cadeira de PlayStation 1** são validadas com a geometria real (TV, bancada e cadeira), e não com a de uma mesinha: o salão resultante precisa manter o corredor de cada PlayStation 2 já instalado, não cobrir equipamentos reposicionados e deixar toda cadeira alcançável pela porta.
 - **Contratos de funcionários** só aceitam os cargos existentes.
