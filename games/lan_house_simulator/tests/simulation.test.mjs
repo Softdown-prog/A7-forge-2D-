@@ -413,7 +413,7 @@ test("expositor e proprietário permanecem desenhados no renderizador procedural
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"../src/render/scene.ts");
  const source=readFileSync(root,"utf8");
  assert.match(source,/drawSnackShelf/);
- const retail=readFileSync(resolve(dirname(root),"retailArt.ts"),"utf8");
+ const retail=readFileSync(resolve(dirname(root),"retail/snackShelf.ts"),"utf8");
  assert.match(retail,/SALGADINHOS/);
  assert.match(retail,/for\(let row=0;row<4;row\+\+\)/);
  assert.match(source,/drawActor\(this.ctx,camera,\{\.\.\.position,kind:"owner"/);
