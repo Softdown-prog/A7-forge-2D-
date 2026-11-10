@@ -97,7 +97,11 @@ test('VIP, promotion, staffing and printing tutorials reject unsupported bonuses
  assert.match(guide(30),/40%/);
  assert.match(guide(30),/somente no dia/);
  assert.doesNotMatch(guide(30),/\+28%|3 dias/);
- assert.match(sim('staff'),/cleaner:210,technician:330/);
+ assert.match(sim('staff'),/cleaner:cleanerWage,technician:technicianWage/);
+ assert.match(sim('staff'),/monthlyWage1998 as cleanerWage/);
+ assert.match(sim('staff'),/monthlyWage1998 as technicianWage/);
+ assert.match(sim('characters/cleaner'),/monthlyWage1998=210/);
+ assert.match(sim('characters/technician'),/monthlyWage1998=330/);
  assert.match(guide(25),/R\$ 7,00 por dia/);
  assert.match(guide(25),/R\$ 11,00 por dia/);
  assert.match(sim('printService'),/PRINT_PAGES_PER_DAY=35/);
