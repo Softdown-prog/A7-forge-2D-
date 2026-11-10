@@ -8,6 +8,7 @@ import {expandDirection} from "../dist/js/sim/room.js";
 import {parseImportedSave,serializeSave} from "../dist/js/sim/saveTransfer.js";
 import {availablePlacementSlots,placeFurniture,relocateFurniture,validFurniturePlacements} from "../dist/js/sim/shop.js";
 import {buyPs1SecondSeat,buyPs1Station,ps1PlacementSlots} from "../dist/js/sim/ps1.js";
+import {buyPs2SecondSeat,buyPs2Station} from "../dist/js/sim/ps2.js";
 import {dismissEmployee,hireEmployee} from "../dist/js/sim/staff.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 
@@ -102,6 +103,33 @@ test("bancada de PlayStation não é instalada sobre um PC reposicionado",()=>{
   assertSaveable(copy,"bancada em "+slot.id);
   const seat=buyPs1SecondSeat(copy,0);
   if(seat.ok)assertSaveable(copy,"segunda cadeira em "+slot.id);
+ }
+});
+
+test("bancada de PlayStation 1 não pode fechar o corredor de um PlayStation 2 já instalado",()=>{
+ const s=createGame(7,"historical");delete s.topGamesUnlockMode;
+ s.totalMinutes=11*360*DAY_MINUTES;s.cash=1000000;
+ ok(buyPs2Station(s,"floor-1"));
+ ok(buyPs2SecondSeat(s,0));
+ ok(buyPs1Station(s,"floor-4"));
+ ok(buyPs1Station(s,"floor-2"));
+ assertSaveable(s,"com PS2 e duas bancadas de PS1");
+ // O terceiro PS1 em floor-3 isolaria a cadeira do PS2 e a partida deixaria de gravar.
+ assert.equal(ps1PlacementSlots(s).some(p=>p.id==="floor-3"),false,"encaixe fechado não é oferecido");
+ const cash=s.cash,refused=buyPs1Station(s,"floor-3");
+ assert.equal(refused.ok,false);
+ assert.equal(s.cash,cash,"compra recusada não cobra");
+ assert.equal(s.ps1Stations.length,2);
+ assertSaveable(s,"depois da compra recusada");
+ // O mesmo vale para a segunda cadeira de um PS1 vizinho.
+ for(const slot of ps1PlacementSlots(s)){
+  const copy=structuredClone(s);
+  ok(buyPs1Station(copy,slot.id));
+  assertSaveable(copy,"bancada em "+slot.id);
+ }
+ for(let index=0;index<s.ps1Stations.length;index++){
+  const copy=structuredClone(s);
+  if(buyPs1SecondSeat(copy,index).ok)assertSaveable(copy,"segunda cadeira da bancada "+(index+1));
  }
 });
 
