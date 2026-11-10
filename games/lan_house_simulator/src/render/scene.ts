@@ -1,7 +1,7 @@
 import type {MotionCustomer,MotionWorker} from "./motion.js";
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
 import type {ProductId} from "../sim/merchandise.js";
-import {editableObjects,objectCorners,layoutPlacementIssue,builtPosters,type EditableObject} from "../sim/editableObjects.js";
+import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} from "../sim/editableObjects.js";
 import {computerSeat} from "../sim/route.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
@@ -21,22 +21,29 @@ import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../s
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
 import {annexComputerSlots,availableAnnexComputers} from "../sim/stations.js";
-import {BIN_SPOTS,binSpots,binStatus,type RepairJob,type CleaningJob} from "../sim/services.js";
+import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/services.js";
 import {workPhaseLabel} from "../sim/staffPresentation.js";
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import {workerMotion} from "./workerMotion.js";
 import {drawWorkContact} from "./workEffects.js";
 import {technicianContactPoint} from "../sim/staffWorksites.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
+import {drawRoomWindows} from "./scene/windows.js";
+import {drawRoomFloor} from "./scene/floor.js";
+import {drawRoomWalls} from "./scene/walls.js";
+import {drawRoomDecor} from "./scene/decor.js";
+import {drawInteriorWall,drawInteriorDoor} from "./scene/partitions.js";
+import {drawGpuInstallMarkers} from "./scene/gpuInstallOverlay.js";
+import {drawServiceAccessOverlay} from "./scene/serviceOverlay.js";
+import {drawTrashBin} from "./scene/trashBin.js";
 import {SCENE_THEME as theme} from "./theme.js";
-import {gpuGameInstallPausedReason} from "../sim/gpuGames.js";
 import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
 import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
 import {drawPs2Station,drawPs2Controller,ps2ActorGrip} from "./ps2Art.js";
 import {drawPs1Station,drawPs1Controller} from "./ps1Art.js";
 import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
-import {premiumCheckerPatch,drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
+import {drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
@@ -46,42 +53,9 @@ import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type N
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
 import {SCENE_WIDTH,SCENE_HEIGHT,contextScale} from "./sceneSurface.js";
-import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,drawVignette,drawLampHalo,lampPositions,windowGlass,WINDOW_POSITIONS,type Daylight} from "./lighting.js";
-import {drawRasterCached,rasterCacheUsable} from "./rasterCache.js";
+import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,drawVignette,type Daylight} from "./lighting.js";
 import {computerAppearance,screenGlow,monitorScreenQuad} from "./retroComputer.js";
-import {shadeHex,withAlpha,cellNoise} from "./color.js";
 
-/** Window glass, reflections and frame for every window on the north wall (pure function of its arguments). */
-function paintWindowPanes(ctx:CanvasRenderingContext2D,camera:Projection,north:number,w:number,glass:ReturnType<typeof windowGlass>):void{
-  ctx.save();
-  for(const position of WINDOW_POSITIONS){
-    if(position+1.2>w)continue;
-    const a=iso({x:position,y:north},camera,127),b=iso({x:position+1.2,y:north},camera,127),
-      c=iso({x:position+1.2,y:north},camera,73),d=iso({x:position,y:north},camera,73);
-    const g=ctx.createLinearGradient(0,a.y,0,d.y);
-    g.addColorStop(0,glass.top);g.addColorStop(1,glass.bottom);
-    polygon(ctx,[a,b,c,d],g);
-    // Interior reflection of the lamps grows as the street darkens.
-    polygon(ctx,[iso({x:position+0.62,y:north},camera,127),iso({x:position+0.62,y:north},camera,73),c,b],
-      "rgba(255,246,222,"+(glass.sheen*.45).toFixed(3)+")");
-    polygon(ctx,[iso({x:position+.08,y:north},camera,124),iso({x:position+.42,y:north},camera,124),
-      iso({x:position+.26,y:north},camera,78),iso({x:position+.08,y:north},camera,78)],
-      "rgba(255,255,255,"+(glass.sheen*.5).toFixed(3)+")");
-    // Montante e travessa dividem a janela, sem renderizar qualquer exterior.
-    const mullionTop=iso({x:position+0.6,y:north},camera,127);
-    const mullionBottom=iso({x:position+0.6,y:north},camera,73);
-    ctx.strokeStyle="#C5B49B";ctx.lineWidth=2.3*camera.zoom;
-    ctx.beginPath();ctx.moveTo(mullionTop.x,mullionTop.y);
-    ctx.lineTo(mullionBottom.x,mullionBottom.y);ctx.stroke();
-    const middleLeft=iso({x:position,y:north},camera,100);
-    const middleRight=iso({x:position+1.2,y:north},camera,100);
-    ctx.beginPath();ctx.moveTo(middleLeft.x,middleLeft.y);
-    ctx.lineTo(middleRight.x,middleRight.y);ctx.stroke();
-    ctx.strokeStyle="#F9E2BE";ctx.lineWidth=1;
-    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();ctx.stroke();
-  }
-  ctx.restore();
-}
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
   private background:HTMLCanvasElement|null=null;
@@ -215,58 +189,12 @@ export class SceneRenderer {
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */
   private drawGpuInstallMarkers(s:GameState,camera:Projection,elapsedSeconds:number):void{
-    if(!s.gpuGameInstallJobs?.length)return;
-    const ctx=this.ctx;ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";
-    for(const job of s.gpuGameInstallJobs){
-      const pc=pcPosition(job.pc,s),at=iso({x:pc.x+.40,y:pc.y+.28},camera,92);
-      const w=Math.max(27,42*camera.zoom),h=Math.max(4,5*camera.zoom);
-      const x=at.x-w/2,y=at.y-15*camera.zoom,pct=job.elapsedMinutes/job.durationMinutes;
-      const paused=!!gpuGameInstallPausedReason(s,job.pc);
-      ctx.fillStyle="rgba(15,27,35,.92)";
-      ctx.fillRect(x-3,y-18*camera.zoom,w+6,18*camera.zoom+h+6);
-      ctx.fillStyle=paused?"#f6b96e":"#dbf7ea";
-      ctx.font="bold "+Math.max(9,10*camera.zoom)+"px system-ui,sans-serif";
-      ctx.fillText(paused?"PAUSA":Math.floor(pct*100)+"%",at.x,y-8*camera.zoom);
-      ctx.fillStyle="#4c5a60";ctx.fillRect(x,y,w,h);
-      ctx.fillStyle=paused?"#dd9754":"#69d5a4";ctx.fillRect(x,y,w*pct,h);
-      if(!paused&&pct>0){
-        ctx.save();ctx.beginPath();ctx.rect(x,y,w*pct,h);ctx.clip();
-        const shine=x+(elapsedSeconds*15%(w+12))-12;
-        ctx.fillStyle="rgba(244,255,252,.5)";ctx.fillRect(shine,y,5,h);
-        ctx.restore();
-      }
-    }
-    ctx.restore();
+    drawGpuInstallMarkers(this.ctx,s,camera,elapsedSeconds);
   }
   /** Modo de inspeção acionado na aba Serviços, sem recalcular caminhos por frame.
    * Destaca o destino inacessível, não afirma identificar a parede culpada. */
   drawServiceAccessOverlay(s:GameState,issues:readonly ServiceAccessIssue[],time:number):void{
-    const ctx=this.ctx,cam=cameraForGame(s),z=cam.zoom;
-    ctx.save();
-    ctx.textAlign="center";ctx.textBaseline="middle";
-    for(const [i,issue] of issues.entries()){
-      const ground=iso(issue.point,cam,3);
-      const at=iso(issue.point,cam,85);
-      const pulse=1+Math.sin(time*3+i*1.7)*.09;
-      ctx.lineWidth=Math.max(2,2.6*z);
-      ctx.strokeStyle="#ffe4a6";
-      ctx.fillStyle="rgba(184,60,47,.24)";
-      ctx.beginPath();ctx.ellipse(ground.x,ground.y,23*z*pulse,12*z*pulse,0,0,Math.PI*2);
-      ctx.fill();ctx.stroke();
-      const label=issue.label.toUpperCase()+" · SEM PASSAGEM";
-      const font=Math.max(10,Math.min(13,12*z));
-      ctx.font="700 "+font+"px system-ui,sans-serif";
-      const width=ctx.measureText(label).width+14;
-      const x=Math.max(width/2+4,Math.min(1000-width/2-4,at.x));
-      const y=Math.max(15,Math.min(590,at.y-(i%2)*14));
-      ctx.fillStyle="rgba(89,30,28,.96)";
-      ctx.fillRect(x-width/2,y-14,width,28);
-      ctx.strokeStyle="#ffc58a";ctx.lineWidth=1.5;
-      ctx.strokeRect(x-width/2,y-14,width,28);
-      ctx.fillStyle="#fff0d9";
-      ctx.fillText(label,x,y);
-    }
-    ctx.restore();
+    drawServiceAccessOverlay(this.ctx,s,issues,time);
   }
   /** One local bitmap for the unchanged room: shadow, floor, outside walls and
    * fixed decoration. Animated objects keep their original depth-sorted paint. */
@@ -308,42 +236,10 @@ export class SceneRenderer {
   }
   /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
   private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
-    const [a,b]=wallEndpoints(wall),height=78;
-    const footA=iso(a,camera),footB=iso(b,camera),topA=iso(a,camera,height),topB=iso(b,camera,height);
-    const ctx=this.ctx;ctx.save();
-    let fill:string|CanvasGradient=preview?(allowed?"rgba(91,183,147,0.68)":"rgba(204,78,69,0.72)"):"rgba(211,195,177,0.91)";
-    if(!preview){
-      // Lit from above: brighter cap, shaded foot, like the outer walls.
-      const g=ctx.createLinearGradient(0,topA.y,0,footA.y);
-      g.addColorStop(0,"rgba(226,212,192,0.94)");g.addColorStop(.7,"rgba(207,191,172,0.92)");g.addColorStop(1,"rgba(168,152,139,0.93)");
-      fill=g;
-    }
-    polygon(ctx,[topA,topB,footB,footA],fill,
-      preview?(allowed?"#bdf5d4":"#ffd0ba"):"#735f61");
-    if(!preview){
-      // Baseboard strip grounds the partition on the tiles.
-      const baseA=iso(a,camera,7),baseB=iso(b,camera,7);
-      ctx.fillStyle="rgba(120,100,96,.55)";ctx.beginPath();ctx.moveTo(footA.x,footA.y);ctx.lineTo(footB.x,footB.y);ctx.lineTo(baseB.x,baseB.y);ctx.lineTo(baseA.x,baseA.y);ctx.closePath();ctx.fill();
-    }
-    const capA=iso({x:a.x+0.03,y:a.y+0.03},camera,height+2),
-      capB=iso({x:b.x+0.03,y:b.y+0.03},camera,height+2);
-    ctx.strokeStyle=preview?"#f3f3d8":"#faf0dc";ctx.lineWidth=Math.max(1,4*camera.zoom);
-    ctx.beginPath();ctx.moveTo(capA.x,capA.y);ctx.lineTo(capB.x,capB.y);ctx.stroke();
-    ctx.restore();
+    drawInteriorWall(this.ctx,camera,wall,preview,allowed);
   }
   private drawInteriorDoor(camera:Projection,door:WallSegment,preview=false):void{
-    const [a,b]=wallEndpoints(door),ctx=this.ctx;
-    const left=iso(a,camera),right=iso(b,camera),
-      leftTop=iso(a,camera,78),rightTop=iso(b,camera,78);
-    ctx.save();
-    ctx.strokeStyle=preview?"#8ee6b3":"#704c48";
-    ctx.lineWidth=Math.max(3,8*camera.zoom);
-    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(leftTop.x,leftTop.y);
-    ctx.lineTo(rightTop.x,rightTop.y);ctx.lineTo(right.x,right.y);ctx.stroke();
-    ctx.strokeStyle=preview?"#ddffe3":"#d4ad77";
-    ctx.lineWidth=Math.max(1.5,3*camera.zoom);
-    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(right.x,right.y);ctx.stroke();
-    ctx.restore();
+    drawInteriorDoor(this.ctx,camera,door,preview);
   }
   /** Ícones e fantasma dos novos PCs, usando o mesmo centro de clique da UI. */
   drawAnnexPcCandidates(s:GameState,hovered:string|null):void{
@@ -490,174 +386,20 @@ export class SceneRenderer {
     }
   }
   private floor(camera:Projection,bounds:RoomBounds,premium=false):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY,z=camera.zoom;
-    // O cenário é uma plataforma suspensa: sem exterior, sem base ligada a um terreno.
-    const rearRight=iso({x:w,y:north},camera);
-    const frontRight=iso({x:w,y:south},camera);
-    const frontLeft=iso({x:minX,y:south},camera);
-    const bottom=24*z;
-    ctx.save();
-    ctx.shadowColor="rgba(7,12,23,0.65)";
-    ctx.shadowBlur=25*z;
-    ctx.shadowOffsetY=18*z;
-    polygon(ctx,[frontLeft,frontRight,
-      {x:frontRight.x,y:frontRight.y+bottom},
-      {x:frontLeft.x,y:frontLeft.y+bottom}],"#514854","#343245");
-    ctx.restore();
-    // Slab faces: a vertical gradient reads as thickness instead of two flat fills.
-    const frontFace=ctx.createLinearGradient(0,frontLeft.y,0,frontLeft.y+bottom);
-    frontFace.addColorStop(0,shadeHex(theme.baseFront,1.12));frontFace.addColorStop(1,shadeHex(theme.baseFront,.78));
-    polygon(ctx,[frontLeft,frontRight,
-      {x:frontRight.x,y:frontRight.y+bottom},
-      {x:frontLeft.x,y:frontLeft.y+bottom}],frontFace,theme.ink);
-    const sideFace=ctx.createLinearGradient(0,rearRight.y,0,frontRight.y+bottom);
-    sideFace.addColorStop(0,shadeHex(theme.baseSide,1.08));sideFace.addColorStop(1,shadeHex(theme.baseSide,.8));
-    polygon(ctx,[rearRight,frontRight,
-      {x:frontRight.x,y:frontRight.y+bottom},
-      {x:rearRight.x,y:rearRight.y+bottom}],sideFace,theme.ink);
-    for(let y=north;y<south;y++) for(let x=minX;x<w;x++) {
-      const ps=[iso({x,y},camera),iso({x:x+1,y},camera),iso({x:x+1,y:y+1},camera),iso({x,y:y+1},camera)];
-      if(premium)premiumCheckerPatch(ctx,camera,x,y);
-      else {
-        // Each tile keeps its checker tone with a deterministic ±3% variation:
-        // ceramic reads as individual pieces instead of a printed grid.
-        const base=(x+y)%2===0?theme.floorLight:theme.floorDark;
-        const tone=shadeHex(base,.97+cellNoise(x,y,3)*.06);
-        polygon(ctx,ps,tone,withAlpha(theme.floorLine,.75));
-        // Light catches the top-left edge of every tile; the opposite edge recedes.
-        ctx.strokeStyle="rgba(255,255,255,.22)";ctx.lineWidth=Math.max(.6,.9*z);
-        ctx.beginPath();ctx.moveTo(ps[3]!.x,ps[3]!.y);ctx.lineTo(ps[0]!.x,ps[0]!.y);ctx.lineTo(ps[1]!.x,ps[1]!.y);ctx.stroke();
-        if(cellNoise(x,y,11)>.86){
-          // Occasional worn spot, well inside the tile.
-          const c=iso({x:x+.3+cellNoise(x,y,5)*.4,y:y+.3+cellNoise(x,y,7)*.4},camera);
-          ctx.fillStyle="rgba(90,78,66,.07)";ctx.beginPath();ctx.ellipse(c.x,c.y,9*z,4*z,0,0,Math.PI*2);ctx.fill();
-        }
-      }
-      if(y===4 && x>0 && x<w-1) {
-        const c=iso({x:x+0.5,y:y+0.5},camera);
-        ctx.fillStyle="rgba(100,83,77,0.10)";
-        ctx.fillRect(c.x-4,c.y-2,8,4);
-      }
-    }
-    // Ambient occlusion where the floor meets the back and side walls.
-    ctx.save();
-    const nl=iso({x:minX,y:north},camera),nr=iso({x:w,y:north},camera),nf=iso({x:w,y:north+.75},camera);
-    const northAo=ctx.createLinearGradient(nr.x,nr.y,nf.x,nf.y);
-    northAo.addColorStop(0,"rgba(34,40,38,.30)");northAo.addColorStop(1,"rgba(34,40,38,0)");
-    polygon(ctx,[nl,nr,nf,iso({x:minX,y:north+.75},camera)],northAo);
-    const wl=iso({x:minX,y:north},camera),ws=iso({x:minX,y:south},camera),wi=iso({x:minX+.6,y:south},camera);
-    const westAo=ctx.createLinearGradient(ws.x,ws.y,wi.x,wi.y);
-    westAo.addColorStop(0,"rgba(34,40,38,.26)");westAo.addColorStop(1,"rgba(34,40,38,0)");
-    polygon(ctx,[wl,ws,wi,iso({x:minX+.6,y:north},camera)],westAo);
-    // Depth cue: the back of the room sits under the lamps, the front edge recedes.
-    const depth=ctx.createLinearGradient(0,nl.y,0,frontLeft.y);
-    depth.addColorStop(0,"rgba(255,244,214,.09)");depth.addColorStop(.55,"rgba(255,244,214,0)");depth.addColorStop(1,"rgba(18,26,34,.13)");
-    polygon(ctx,[nl,nr,frontRight,frontLeft],depth);
-    ctx.restore();
-    // Tapete de circulação feito no mesmo plano da grade; sem geometria 3D.
-    const rug=[
-      iso({x:0.7,y:4.15},camera),iso({x:Math.min(w-0.5,5.1),y:4.15},camera),
-      iso({x:Math.min(w-0.5,5.1),y:4.83},camera),iso({x:0.7,y:4.83},camera)
-    ];
-    polygon(ctx,rug,"rgba(66,105,106,0.19)","rgba(73,106,105,0.30)");
-    // Woven border inside the runner, stitched to the same plane.
-    polygon(ctx,[
-      iso({x:0.8,y:4.23},camera),iso({x:Math.min(w-0.6,5.0),y:4.23},camera),
-      iso({x:Math.min(w-0.6,5.0),y:4.75},camera),iso({x:0.8,y:4.75},camera)
-    ],"rgba(0,0,0,0)","rgba(214,205,170,0.22)");
+    drawRoomFloor(this.ctx,camera,bounds,premium);
   }
   private walls(camera:Projection,bounds:RoomBounds):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY,z=camera.zoom;
-    const backTop=iso({x:minX,y:north},camera,155),backFoot=iso({x:minX,y:north},camera);
-    // Ceiling lamps light the upper wall; paint falls off toward the baseboard.
-    const back=ctx.createLinearGradient(0,backTop.y,0,backFoot.y);
-    back.addColorStop(0,shadeHex(theme.wallBack,1.05));back.addColorStop(.6,theme.wallBack);back.addColorStop(1,shadeHex(theme.wallBack,.86));
-    polygon(ctx,[backTop,iso({x:w,y:north},camera,155),
-      iso({x:w,y:north},camera),backFoot],back,"#7f876e");
-    const sideTop=iso({x:minX,y:south},camera,155),sideFoot=iso({x:minX,y:south},camera);
-    const side=ctx.createLinearGradient(0,sideTop.y-80*z,0,sideFoot.y);
-    side.addColorStop(0,shadeHex(theme.wallSide,1.04));side.addColorStop(.65,theme.wallSide);side.addColorStop(1,shadeHex(theme.wallSide,.84));
-    polygon(ctx,[backTop,sideTop,sideFoot,backFoot],side,"#748168");
-    // Inner corner shadow where the two walls meet.
-    const corner=ctx.createLinearGradient(backFoot.x,0,backFoot.x+70*z,0);
-    corner.addColorStop(0,"rgba(60,66,56,.22)");corner.addColorStop(1,"rgba(60,66,56,0)");
-    polygon(ctx,[backTop,iso({x:minX+1.1,y:north},camera,155),iso({x:minX+1.1,y:north},camera),backFoot],corner);
-    const cornerSide=ctx.createLinearGradient(backFoot.x,0,backFoot.x-70*z,0);
-    cornerSide.addColorStop(0,"rgba(60,66,56,.18)");cornerSide.addColorStop(1,"rgba(60,66,56,0)");
-    polygon(ctx,[backTop,iso({x:minX,y:north+1.1},camera,155),iso({x:minX,y:north+1.1},camera),backFoot],cornerSide);
-    // Crown line: a thin bright edge marks the top of both walls.
-    ctx.strokeStyle="rgba(255,250,236,.55)";ctx.lineWidth=Math.max(1,1.4*z);
-    ctx.beginPath();ctx.moveTo(sideTop.x,sideTop.y);ctx.lineTo(backTop.x,backTop.y);ctx.lineTo(iso({x:w,y:north},camera,155).x,iso({x:w,y:north},camera,155).y);ctx.stroke();
-    for(const position of WINDOW_POSITIONS){
-      if(position+1.2>w)continue;
-      const a=iso({x:position,y:north},camera,127),b=iso({x:position+1.2,y:north},camera,127),
-        c=iso({x:position+1.2,y:north},camera,73),d=iso({x:position,y:north},camera,73);
-      // Frame recess and shadow under the lintel; glass is painted per frame.
-      polygon(ctx,[iso({x:position-.05,y:north},camera,131),iso({x:position+1.25,y:north},camera,131),
-        iso({x:position+1.25,y:north},camera,70),iso({x:position-.05,y:north},camera,70)],"#cfc3a6","#8f8673");
-      polygon(ctx,[a,b,c,d],"#2f4858","#F9E2BE");
-      // Peitoril projetado em 2:1, distinto do caixilho.
-      polygon(ctx,[iso({x:position-0.06,y:north+0.03},camera,72),
-        iso({x:position+1.26,y:north+0.03},camera,72),
-        iso({x:position+1.26,y:north+0.11},camera,70),
-        iso({x:position-0.06,y:north+0.11},camera,70)],"#DDD0B3","#867D79");
-      polygon(ctx,[iso({x:position-0.06,y:north+0.11},camera,70),
-        iso({x:position+1.26,y:north+0.11},camera,70),
-        iso({x:position+1.26,y:north+0.11},camera,66),
-        iso({x:position-0.06,y:north+0.11},camera,66)],"#b9ab8f","#867D79");
-    }
+    drawRoomWalls(this.ctx,camera,bounds);
   }
   /** Glass tint per simulated hour: sky by day, amber at sunset, dark at night.
    * Mullions and the diagonal sheen are repainted on top each frame. */
   /** The glass only changes with the simulated minute, so it is rasterized once per light state and zoom
    * instead of being repainted (gradients, reflections, mullions) on every frame. */
   private windowPanes(camera:Projection,bounds:RoomBounds,light:Daylight):void{
-    const glass=windowGlass(light),north=bounds.minY,w=bounds.maxX,z=camera.zoom;
-    if(!rasterCacheUsable(this.ctx)){paintWindowPanes(this.ctx,camera,north,w,glass);return;}
-    const anchor=iso({x:WINDOW_POSITIONS[0]!,y:north},camera,0);
-    drawRasterCached(this.ctx,"window-panes",{
-      key:[z,w,north,glass.top,glass.bottom,glass.sheen.toFixed(3)].join(":"),anchorX:anchor.x,anchorY:anchor.y,snap:"round",limit:6,
-      padX:Math.ceil(10*z)+4,padY:Math.ceil(135*z)+4,width:Math.ceil(250*z)+12,height:Math.ceil(190*z)+8
-    },target=>paintWindowPanes(target,camera,north,w,glass));
+    drawRoomWindows(this.ctx,camera,bounds,light);
   }
   private decor(camera:Projection,bounds:RoomBounds,s:GameState):void {
-    const ctx=this.ctx,minX=bounds.minX,w=bounds.maxX,south=bounds.maxY,north=bounds.minY;
-    // Light cones below each lamp belong to the static wall paint.
-    for(const x of lampPositions(bounds))drawLampHalo(ctx,camera,x,north);
-    // Frisos ao pé das paredes; ajudam a perceber o interior sem adicionar telhado.
-    polygon(ctx,[
-      iso({x:minX,y:north+0.02},camera,9),iso({x:w,y:north+0.02},camera,9),
-      iso({x:w,y:north+0.02},camera,2),iso({x:minX,y:north+0.02},camera,2)
-    ],"#967D78");
-    polygon(ctx,[
-      iso({x:minX,y:north+0.02},camera,10.5),iso({x:w,y:north+0.02},camera,10.5),
-      iso({x:w,y:north+0.02},camera,9),iso({x:minX,y:north+0.02},camera,9)
-    ],"#b8a29c");
-    polygon(ctx,[
-      iso({x:minX+0.02,y:north},camera,9),iso({x:minX+0.02,y:south},camera,9),
-      iso({x:minX+0.02,y:south},camera,2),iso({x:minX+0.02,y:north},camera,2)
-    ],"#817A84");
-    polygon(ctx,[
-      iso({x:minX+0.02,y:north},camera,10.5),iso({x:minX+0.02,y:south},camera,10.5),
-      iso({x:minX+0.02,y:south},camera,9),iso({x:minX+0.02,y:north},camera,9)
-    ],"#a39ca6");
-    // Pôsteres premium usam as molduras e pontos existentes; nunca bloqueiam paredes.
-    const premium=cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes));
-    for(const p of builtPosters(s)){
-      const placement={x:p.x,y:p.y,axis:p.axis!,span:p.span!,top:p.id.endsWith(":0")||p.id.endsWith(":1")?128:133,height:p.id.endsWith(":0")||p.id.endsWith(":1")?49:59};
-      const index=Number(p.id.slice("built-poster:".length));
-      if(premium&&index>=0&&index<3)drawPremiumWallPoster(ctx,camera,placement,index as PremiumPosterIndex);
-      else drawWallPoster(ctx,camera,placement,p.posterKind!);
-    }
-    // Luminárias na parte superior da parede: iluminação contida e sem brilho glossy.
-    for(const x of lampPositions(bounds)){
-      const p=iso({x,y:north},camera,146),z=camera.zoom;
-      ctx.fillStyle="rgba(40,36,34,.25)";ctx.fillRect(p.x-18*z,p.y+5*z,36*z,2.5*z);
-      ctx.fillStyle="#7B6261";ctx.fillRect(p.x-17*z,p.y-4*z,34*z,9*z);
-      ctx.fillStyle="#5c4847";ctx.fillRect(p.x-17*z,p.y-4*z,34*z,2*z);
-      ctx.fillStyle="#F6E1B2";ctx.fillRect(p.x-14*z,p.y-1*z,28*z,3*z);
-      ctx.fillStyle="rgba(255,255,255,.65)";ctx.fillRect(p.x-12*z,p.y-.4*z,24*z,1.2*z);
-    }
+    drawRoomDecor(this.ctx,camera,bounds,s);
   }
   private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
     drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
@@ -669,38 +411,7 @@ export class SceneRenderer {
     drawVendingMachine(this.ctx,objectCamera(camera,{x,y},.66,.59,rotation),{x,y},kind,t,stock,true,display);
   }
   private trashBin(camera:Projection,p:Point,fill:number):void{
-    const ctx=this.ctx,loc=iso(p,camera),z=camera.zoom;
-    const status=binStatus(fill);
-    ctx.save();ctx.translate(loc.x,loc.y);ctx.lineJoin="round";
-    // Sombra no chão, corpo estável (mesma âncora da projeção usada nos móveis).
-    ctx.fillStyle="rgba(19,30,36,.32)";
-    ctx.beginPath();ctx.ellipse(0,3*z,12*z,5*z,0,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle="#426F68";ctx.strokeStyle="#1A3D3F";ctx.lineWidth=1.8*z;
-    ctx.beginPath();ctx.moveTo(-10*z,-21*z);ctx.lineTo(10*z,-21*z);
-    ctx.lineTo(8*z,0);ctx.lineTo(-8*z,0);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle="#90BBAA";ctx.beginPath();ctx.ellipse(0,-21*z,10*z,3.5*z,0,0,Math.PI*2);ctx.fill();
-    if(status==="empty"){
-      // Boca aberta, fundo escuro visível: lixeira efetivamente vazia.
-      ctx.fillStyle="#1B3437";ctx.beginPath();ctx.ellipse(0,-21*z,7.5*z,2.2*z,0,0,Math.PI*2);ctx.fill();
-    }else{
-      // Nível cresce dentro do recipiente, com indicador frontal legível.
-      const amount=Math.min(1,Math.max(0,fill/100));
-      ctx.fillStyle="#A58E69";
-      ctx.beginPath();ctx.ellipse(0,-20*z,7.4*z,2.4*z,0,0,Math.PI*2);ctx.fill();
-      ctx.fillStyle=status==="full"?"#D28C4B":"#B0C28B";
-      ctx.fillRect(-7*z,-15*z,14*z*amount,4*z);
-      if(status==="full"){
-        // Lixeira cheia: sacos visíveis acima da tampa, marca clara de lotação.
-        ctx.fillStyle="#645F52";
-        ctx.beginPath();ctx.ellipse(-4*z,-26*z,5*z,5*z,-.24,0,Math.PI*2);ctx.fill();
-        ctx.fillStyle="#97866C";
-        ctx.beginPath();ctx.ellipse(4*z,-27*z,5*z,5.5*z,.28,0,Math.PI*2);ctx.fill();
-        ctx.strokeStyle="#CBB77D";ctx.lineWidth=1.1*z;
-        ctx.beginPath();ctx.moveTo(0,-31*z);ctx.lineTo(2*z,-33*z);ctx.stroke();
-        ctx.fillStyle="#E6B45A";ctx.fillRect(-9*z,-23*z,18*z,3*z);
-      }
-    }
-    ctx.restore();
+    drawTrashBin(this.ctx,camera,p,fill);
   }
   /** Visiting postman: same actor rig, procedural uniform, visible delivery animation. */
   private postman(camera:Projection,job:PostmanDelivery,t:number):void{
