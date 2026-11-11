@@ -44,6 +44,8 @@ test("public scene placement previews delegate without changing canvas commands"
 
 test("shared furniture and room signage paint independently from SceneRenderer",()=>{
  const state=createGame(),camera=cameraForGame(state);
+ state.furniture={poster:1,plant:1,table:1};
+ state.furniturePlacements=[];
  for(const paint of [
   ctx=>drawPurchasedFurniture(ctx,camera,"plant",1,2),
   ctx=>drawPurchasedFurniture(ctx,camera,"table",2,2,1),
