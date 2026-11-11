@@ -45,7 +45,9 @@ jobs:
             npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
             npm run build
           done
-          npx playwright install --with-deps chromium
+          # GitHub-hosted Ubuntu 24.04 ships Chromium system libraries; apt downloads are unreliable here.
+          npx playwright install chromium
+          node --input-type=module -e 'import {chromium} from "playwright";const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Profile current production code
         working-directory: baseline/games/lan_house_simulator
         run: |
