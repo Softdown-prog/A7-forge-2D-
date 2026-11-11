@@ -7,7 +7,6 @@ import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
-import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {drawVipAquarium} from "./aquariumArt.js";
 import {drawPixelClock} from "./pixelClockArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
@@ -20,6 +19,9 @@ import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/service
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
+import {drawEntryMarker} from "./scene/entryMarker.js";
+import {drawRoomSign} from "./scene/roomSign.js";
+import {drawRoomStatus} from "./scene/roomStatus.js";
 import {drawPurchasedFurniture,drawExtraPosters,drawExtraFurniture} from "./scene/furnitureArt.js";
 import {drawPlacementCandidates,drawRelocationCandidates} from "./scene/furnitureOverlay.js";
 import {drawRoomFloor} from "./scene/floor.js";
@@ -112,7 +114,7 @@ export class SceneRenderer {
         if(s.discCopier)drawCounterDiscCopier(this.ctx,objectCamera(camera,counter,1.75,.72,counter.rotation),
           counter,copyingAnimationActive(s),elapsedSeconds);
       }},
-      {depth:roomW+6,paint:()=>this.doorMarker(camera,s)}
+      {depth:roomW+6,paint:()=>drawEntryMarker(ctx,camera,s)}
     ];
     // Aquário VIP preso à parede norte, sem ocupar espaço de circulação.
     if(cosmeticAvailable("aquarium-rgb",yearFromMinutes(s.totalMinutes))){
@@ -175,13 +177,13 @@ export class SceneRenderer {
     // Lamps, daylight and the evening tint sit over the room, under every label.
     drawSceneLighting(ctx,camera,s,elapsedSeconds,w,h);
     this.drawGpuInstallMarkers(s,camera,elapsedSeconds);
-    this.sign(camera,roomW);
+    drawRoomSign(ctx,camera,roomW);
     // Indicadores dos jogadores reais por cima do cenário e atrás do HUD geral.
     drawNightMatchMarkers(ctx,s,camera);
     drawNightMatchReactions(ctx,s,camera,elapsedSeconds,matchReactions);
     drawNightPrizePresentation(ctx,s,camera,elapsedSeconds);
     drawNightReopening(ctx,s,elapsedSeconds);
-    this.hudInside(ctx,s);
+    drawRoomStatus(ctx,s);
   }
   /** Marcador flutuante, acima do PC real, usando o estado salvo da simulação. */
   private drawGpuInstallMarkers(s:GameState,camera:Projection,elapsedSeconds:number):void{
@@ -337,67 +339,5 @@ export class SceneRenderer {
   private customer(camera:Projection,c:Customer,t:number,seated:boolean,s:GameState,
     reaction?:NightMatchReaction):void {
     drawSceneCustomer(this.ctx,camera,c,t,seated,s,reaction);
-  }
-  private doorMarker(camera:Projection,s:GameState):void {
-    // Somente limiar de entrada dentro do salão; não há rua, fachada externa ou chuva.
-    const x=7.5,y=6,ctx=this.ctx,z=camera.zoom;
-    // Doormat just inside the threshold: ribbed fibre, worn centre, no exterior.
-    polygon(ctx,[
-      iso({x:x-0.62,y:y-0.78},camera,.4),iso({x:x+0.62,y:y-0.78},camera,.4),
-      iso({x:x+0.62,y:y-0.28},camera,.4),iso({x:x-0.62,y:y-0.28},camera,.4)
-    ],"#6f5a48","#4e3f33");
-    ctx.save();ctx.strokeStyle="rgba(214,190,150,.35)";ctx.lineWidth=Math.max(.7,1*z);
-    for(let i=1;i<7;i++){const a=iso({x:x-0.62,y:y-0.78+i*.07},camera,.5),b=iso({x:x+0.62,y:y-0.78+i*.07},camera,.5);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
-    ctx.restore();
-    polygon(ctx,[
-      iso({x:x-0.45,y:y-0.24},camera),iso({x:x+0.45,y:y-0.24},camera),
-      iso({x:x+0.45,y},camera),iso({x:x-0.45,y},camera)
-    ],"#D8B98D","#856F62");
-    const left=iso({x:x-0.45,y},camera),right=iso({x:x+0.45,y},camera);
-    ctx.beginPath();ctx.moveTo(left.x,left.y);ctx.lineTo(right.x,right.y);
-    ctx.strokeStyle="#FFF0BC";ctx.lineWidth=4*camera.zoom;ctx.stroke();
-    const mid=iso({x,y:y-0.45},camera);
-    polygon(ctx,[{x:mid.x-10,y:mid.y+5},{x:mid.x+10,y:mid.y+5},
-      {x:mid.x,y:mid.y-6}],"#F1D49B");
-    // Placa premium montada sobre a entrada: nenhuma colisão ou espaço extra.
-    if(cosmeticAvailable("neon-open-sign",yearFromMinutes(s.totalMinutes)))
-      drawNeonOpenSign(ctx,camera,{x,y:y-.37},s.totalMinutes*.1,neonOpenLit(s.totalMinutes));
-  }
-  private sign(camera:Projection,w:number):void {
-    // Plaqueta de marca na área vazia do fundo: não cobre quadros nem clientes.
-    const ctx=this.ctx,x=28,y=28,label=w>8?"SALÃO AMPLIADO":"PRIMEIRAS CONEXÕES";
-    ctx.save();
-    // Terminal plate: soft drop shadow, rounded corners, brushed gradient and a bevel.
-    // Soft drop shadow from stacked translucent plates: shadowBlur is avoided on purpose,
-    // this plate is repainted every frame and blur is costly on low-end Android.
-    for(const [grow,drop,alpha] of [[5,6,.07],[3,5,.09],[1,3,.14]] as const){
-      ctx.fillStyle="rgba(0,0,0,"+alpha+")";ctx.beginPath();ctx.roundRect(x-grow,y+drop-grow,210+grow*2,50+grow*2,6+grow);ctx.fill();
-    }
-    const plate=ctx.createLinearGradient(x,y,x,y+50);
-    plate.addColorStop(0,"rgba(34,60,54,0.94)");plate.addColorStop(1,"rgba(22,40,37,0.94)");
-    ctx.fillStyle=plate;ctx.beginPath();ctx.roundRect(x,y,210,50,6);ctx.fill();
-    ctx.strokeStyle="#5e7b52";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(x+.5,y+.5,209,49,6);ctx.stroke();
-    ctx.strokeStyle="rgba(255,255,255,.08)";ctx.beginPath();ctx.moveTo(x+6,y+1.5);ctx.lineTo(x+204,y+1.5);ctx.stroke();
-    ctx.fillStyle=theme.mint;ctx.fillRect(x+13,y+14,9,9);
-    ctx.fillStyle=theme.amber;ctx.fillRect(x+20,y+22,4,4);
-    ctx.fillStyle="rgba(185,215,163,.35)";ctx.fillRect(x+13,y+42,184,1);
-    ctx.font="bold 17px Trebuchet MS, sans-serif";ctx.fillStyle=theme.paper;
-    ctx.fillText("LAN HOUSE",x+35,y+24);
-    ctx.font="bold 9px Courier New, monospace";ctx.fillStyle=theme.mint;
-    ctx.fillText(label,x+35,y+39);
-    ctx.restore();
-    void camera;
-  }
-  private hudInside(ctx:CanvasRenderingContext2D,s:GameState):void {
-    ctx.save();
-    for(const [grow,drop,alpha] of [[4,4,.07],[2,3,.1]] as const){
-      ctx.fillStyle="rgba(0,0,0,"+alpha+")";ctx.beginPath();ctx.roundRect(18-grow,558+drop-grow,310+grow*2,29+grow*2,5+grow);ctx.fill();
-    }
-    ctx.fillStyle="rgba(25,46,42,.9)";ctx.beginPath();ctx.roundRect(18,558,310,29,5);ctx.fill();
-    ctx.strokeStyle="rgba(94,123,82,.8)";ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(18.5,558.5,309,28,5);ctx.stroke();
-    ctx.fillStyle=theme.mint;ctx.fillRect(29,571,5,5);
-    ctx.fillStyle="rgba(185,215,163,.35)";ctx.fillRect(28,570,7,7);ctx.fillStyle=theme.mint;ctx.fillRect(29,571,5,5);
-    ctx.fillStyle=theme.paper;ctx.font="bold 10px Courier New, monospace";
-    ctx.fillText(pcCount(s)+" ESTAÇÕES  /  "+s.customers.length+" CLIENTES",44,576);ctx.restore();
   }
 }
