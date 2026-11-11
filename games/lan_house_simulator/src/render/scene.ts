@@ -4,14 +4,14 @@ import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} 
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import {roomBounds,type RoomBounds} from "../sim/room.js";
-import { cameraForGame, cuboid, iso, polygon, type Projection,objectCamera } from "./isometric.js";
+import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {drawNeonOpenSign,neonOpenLit} from "./neonOpenArt.js";
 import {drawVipAquarium} from "./aquariumArt.js";
 import {drawPixelClock} from "./pixelClockArt.js";
 import {yearFromMinutes} from "../sim/historicalEconomy.js";
-import {furnitureSlots,occupiedFurnitureSlots,availablePlacementSlots,furnitureLocations,type FurnitureKind,type PlacementSlot} from "../sim/shop.js";
+import type {FurnitureKind} from "../sim/shop.js";
 import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../sim/layout.js";
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
 import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
@@ -20,6 +20,8 @@ import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/service
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
+import {drawPurchasedFurniture,drawExtraPosters,drawExtraFurniture} from "./scene/furnitureArt.js";
+import {drawPlacementCandidates,drawRelocationCandidates} from "./scene/furnitureOverlay.js";
 import {drawRoomFloor} from "./scene/floor.js";
 import {drawRoomWalls} from "./scene/walls.js";
 import {drawRoomDecor} from "./scene/decor.js";
@@ -37,8 +39,7 @@ import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
 import {drawPs2Station} from "./ps2Art.js";
 import {drawPs1Station} from "./ps1Art.js";
-import {drawWallPoster,purchasedPosterKind,type PosterKind} from "./posterArt.js";
-import {drawPremiumWallPoster,type PremiumPosterIndex} from "./premiumRoomArt.js";
+import {drawWallPoster} from "./posterArt.js";
 import {drawCounter} from "./counterArt.js";
 import {drawCounterPrinter} from "./printerArt.js";
 import {printingAnimationActive} from "../sim/printService.js";
@@ -78,7 +79,7 @@ export class SceneRenderer {
       else if(draft.kind==="soda"||draft.kind==="candy")this.machine(cam,draft.x,draft.y,draft.kind,time,s.inventory[draft.kind],draft.rotation,merchandiseDisplay(s,draft.kind));
       else if(draft.kind==="bin")this.trashBin(cam,draft,0);
       else if(draft.id.startsWith("built-poster:"))drawWallPoster(ctx,cam,{x:draft.x,y:draft.y,axis:draft.rotation===3?"y":"x",span:draft.span!,top:133,height:59},draft.posterKind!);
-      else this.renderPurchasedFurniture(cam,draft.kind as FurnitureKind,draft.x,draft.y,draft.rotation,"city",draft.axis);
+      else drawPurchasedFurniture(this.ctx,cam,draft.kind as FurnitureKind,draft.x,draft.y,draft.rotation,"city",draft.axis);
       }
       ctx.globalAlpha=1;
       const corners=objectCorners(draft).map(p=>iso(p,cam,3));
@@ -95,7 +96,7 @@ export class SceneRenderer {
     type Entry={depth:number;paint:()=>void};
     const entries:Entry[]=[
       {depth:placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).x+placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}).y+.55,paint:()=>this.shelf(camera,bounds.minX,s.inventory.snacks,placedObject(s,"shelf",{x:bounds.minX+.23,y:2.92}),merchandiseDisplay(s,"snacks"))},
-      {depth:6,paint:()=>this.extraFurniture(camera,s)},
+      {depth:6,paint:()=>drawExtraFurniture(this.ctx,camera,s)},
       ...vendingMachines(s).map(m=>({
         depth:m.x+m.y+0.25,
         paint:()=>this.machine(camera,m.x,m.y,m.kind,elapsedSeconds,s.inventory[m.kind],m.rotation,merchandiseDisplay(s,m.kind))
@@ -227,7 +228,7 @@ export class SceneRenderer {
     ctx.fillStyle=sheen;ctx.fillRect(0,0,w,h);
     drawVignette(ctx,w,h,.42);
     this.floor(camera,bounds,cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)));
-    this.walls(camera,bounds);this.decor(camera,bounds,s);this.extraPosters(camera,s);
+    this.walls(camera,bounds);this.decor(camera,bounds,s);drawExtraPosters(this.ctx,camera,s);
   }
   /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
   private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
@@ -273,112 +274,11 @@ export class SceneRenderer {
     if(demolish&&!exists)return;
     this.drawInteriorWall(cameraForGame(s),wall,true,demolish?exists:canBuildWall(s,wall));
   }
-  /** The ghost shares the exact geometry with purchased furniture. */
-  drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null,rotation:0|1|2|3=0):void{
-    const camera=cameraForGame(s);
-    const occupied=occupiedFurnitureSlots(s),available=new Set(availablePlacementSlots(s,kind).map(p=>p.id));
-    const surface=kind==="poster"?"wall":"floor";
-    const ctx=this.ctx;
-    ctx.save();
-    for(const slot of furnitureSlots(s)){
-      if(slot.surface!==surface)continue;
-      const at=this.slotAnchor(camera,slot),blocked=occupied.has(slot.id)||!available.has(slot.id);
-      const hover=slot.id===hoveredId;
-      ctx.beginPath();ctx.ellipse(at.x,at.y,16*camera.zoom,9*camera.zoom,0,0,Math.PI*2);
-      ctx.fillStyle=blocked?"rgba(185,62,57,0.78)":hover?"rgba(113,233,165,0.92)":"rgba(81,182,137,0.73)";
-      ctx.fill();ctx.strokeStyle=blocked?"#ffd2bd":"#edffe9";ctx.lineWidth=hover?3:1.5;ctx.stroke();
-      if(hover&&!blocked){ctx.save();ctx.globalAlpha=0.73;this.renderPurchasedFurniture(camera,kind,slot.x,slot.y,rotation,"city",slot.axis);ctx.restore();}
-    }
-    ctx.restore();
+  drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null,rotation:0|1|2|3=0):void {
+    drawPlacementCandidates(this.ctx,s,kind,hoveredId,rotation);
   }
-  /** Modo de reorganização: proprietário escolhe primeiro um móvel e depois um encaixe livre. */
-  drawRelocationCandidates(s:GameState,fromSlot:string|null,hoveredId:string|null):void{
-    const camera=cameraForGame(s),ctx=this.ctx;
-    const items=furnitureLocations(s),moving=items.find(p=>p.slotId===fromSlot);
-    const occupied=occupiedFurnitureSlots(s);
-    ctx.save();
-    for(const slot of furnitureSlots(s)){
-      if(moving && ((moving.kind==="poster")!==(slot.surface==="wall")))continue;
-      const owned=items.some(p=>p.slotId===slot.id);
-      if(!moving&&!owned)continue;
-      const at=this.slotAnchor(camera,slot);
-      const selected=slot.id===fromSlot,hovered=slot.id===hoveredId;
-      ctx.beginPath();
-      ctx.ellipse(at.x,at.y,18*camera.zoom,10*camera.zoom,0,0,Math.PI*2);
-      ctx.fillStyle=selected?"rgba(94,197,255,0.93)":owned
-        ?(moving?"rgba(183,68,64,0.78)":"rgba(245,194,98,0.88)")
-        :hovered?"rgba(111,231,172,0.96)":"rgba(91,188,144,0.75)";
-      ctx.fill();
-      ctx.strokeStyle=selected?"#dbf7ff":owned&&moving?"#ffe0c4":"#fff4d9";
-      ctx.lineWidth=hovered||selected?3:1.5;ctx.stroke();
-      if(moving && hovered&&!occupied.has(slot.id)){
-        ctx.save();ctx.globalAlpha=0.76;
-        this.renderPurchasedFurniture(camera,moving.kind,slot.x,slot.y,moving.rotation??0);
-        ctx.restore();
-      }
-    }
-    ctx.restore();
-  }
-  private slotAnchor(camera:Projection,slot:PlacementSlot):Point{
-    return slot.surface==="wall"
-      ?iso({x:slot.x+(slot.axis==="y"?0:.33),y:slot.y+(slot.axis==="y"?.33:0)},camera,137)
-      :iso({x:slot.x+0.25,y:slot.y+0.20},camera,9);
-  }
-  private renderPurchasedFurniture(camera:Projection,kind:FurnitureKind,x:number,y:number,rotation:0|1|2|3=0,posterKind:PosterKind="city",axis:"x"|"y"="x",premiumIndex?:PremiumPosterIndex):void{
-    if(kind==="poster"){
-      const placement={x,y,axis,span:.65,top:156,height:39};
-      if(premiumIndex!==undefined)drawPremiumWallPoster(this.ctx,camera,placement,premiumIndex);
-      else drawWallPoster(this.ctx,camera,placement,posterKind);
-    }else if(kind==="plant"){
-      cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
-      const center=iso({x:x+0.16,y:y+0.16},camera,42);
-      this.ctx.fillStyle="#578d68";this.ctx.beginPath();
-      this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
-    }else if(kind==="table"){
-      cuboid(this.ctx,camera,x,y,rotation%2===0?0.55:0.4,rotation%2===0?0.4:0.55,23,["#c49a76","#8d6754","#a07b60"]);
-    }
-    if(kind!=="poster"){
-      const width=kind==="table"?(rotation%2===0?0.55:0.4):0.32;
-      const depth=kind==="table"?(rotation%2===0?0.4:0.55):0.32;
-      const direction=[[0,1],[1,0],[0,-1],[-1,0]][rotation]!;
-      const marker=iso({x:x+width/2+direction[0]!*width*.43,
-                        y:y+depth/2+direction[1]!*depth*.43},camera,kind==="plant"?20:19);
-      this.ctx.fillStyle="#f5cd91";this.ctx.beginPath();
-      this.ctx.ellipse(marker.x,marker.y,3.5*camera.zoom,2.5*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
-    }
-  }
-  private extraPosters(camera:Projection,s:GameState):void{
-    const premium=cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes));
-    const positioned=(s.furniturePlacements??[]).filter(p=>p.kind==="poster");
-    for(let i=0;i<Math.min(2,Math.max(0,(s.furniture?.poster??0)-positioned.length));i++){
-      const x=2.1+i*2.25;
-      const y=roomBounds(s).minY+0.01;
-      this.renderPurchasedFurniture(camera,"poster",x,y,0,purchasedPosterKind(i),"x",premium?(i%3 as PremiumPosterIndex):undefined);
-    }
-    for(const [index,placed] of positioned.entries()){
-      const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="wall");
-      if(slot)this.renderPurchasedFurniture(camera,"poster",slot.x,slot.y,0,purchasedPosterKind(index),slot.axis,premium?(index%3 as PremiumPosterIndex):undefined);
-    }
-  }
-    /* Saved placement coordinates are always resolved from vetted slots. */
-  private extraFurniture(camera:Projection,s:GameState):void{
-    const positioned=s.furniturePlacements??[];
-    const legacyPlants=Math.max(0,(s.furniture?.plant??0)-positioned.filter(p=>p.kind==="plant").length);
-    for(let i=0;i<Math.min(2,legacyPlants);i++){
-      const x=i===0?0.6:roomWidth(s)-0.8,y=i===0?5.3:3.6;
-      cuboid(this.ctx,camera,x,y,0.32,0.32,22,["#a87553","#805344","#915f4c"]);
-      const center=iso({x:x+0.16,y:y+0.16},camera,42);
-      this.ctx.fillStyle="#578d68";this.ctx.beginPath();
-      this.ctx.ellipse(center.x,center.y,13*camera.zoom,15*camera.zoom,0,0,Math.PI*2);this.ctx.fill();
-    }
-    if((s.furniture?.table??0)>positioned.filter(p=>p.kind==="table").length){
-      cuboid(this.ctx,camera,0.75,4.12,0.55,0.4,23,["#c49a76","#8d6754","#a07b60"]);
-    }
-    for(const placed of positioned){
-      if(placed.kind==="poster")continue;
-      const slot=furnitureSlots(s).find(v=>v.id===placed.slotId&&v.surface==="floor");
-      if(slot)this.renderPurchasedFurniture(camera,placed.kind,slot.x,slot.y,placed.rotation??0);
-    }
+  drawRelocationCandidates(s:GameState,fromSlot:string|null,hoveredId:string|null):void {
+    drawRelocationCandidates(this.ctx,s,fromSlot,hoveredId);
   }
   private floor(camera:Projection,bounds:RoomBounds,premium=false):void {
     drawRoomFloor(this.ctx,camera,bounds,premium);
