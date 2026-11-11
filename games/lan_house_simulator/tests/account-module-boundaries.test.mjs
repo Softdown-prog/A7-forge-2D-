@@ -10,7 +10,8 @@ function node(tag){
   tag,children:[],dataset:{},handlers:{},textContent:"",disabled:false,
   setAttribute(){},
   append(...children){this.children.push(...children);},
-  addEventListener(name,handler){this.handlers[name]=handler;},
+  addEventListener(name,handler){(this.handlers[name]??=[]).push(handler);},
+  dispatch(name){for(const handler of this.handlers[name]??[])handler();},
   get lastChild(){return this.children.at(-1);}
  };
 }
@@ -41,7 +42,7 @@ test("cosmetic store card cannot enable redemption without server price, balance
  assert.equal(button({...deps,hasSession:true,loading:true}).disabled,true);
  const enabled=button({...deps,hasSession:true});
  assert.equal(enabled.disabled,false);
- enabled.handlers.click();
+ enabled.dispatch("click");
  assert.equal(redeemed,1);
 }));
 
@@ -57,7 +58,7 @@ test("equipping a purchased cosmetic changes only that item's local toggle state
  const label=card.children.at(-1).children.at(-1);
  const check=label.children[0];
  check.checked=false;
- check.handlers.change();
+ check.dispatch("change");
  assert.deepEqual(calls,[[item.id,false]]);
  assert.equal(unequipped.has(item.id),true);
 }));
