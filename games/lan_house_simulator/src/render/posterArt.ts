@@ -1,5 +1,6 @@
 import type {Projection} from "./isometric.js";
 import {iso} from "./isometric.js";
+import {line} from "./posters/primitives.js";
 import type {PosterKind,PosterDesign} from "./posters/types.js";
 export type {PosterKind} from "./posters/types.js";
 import {coasterPoster} from "./posters/coaster.js";
@@ -25,36 +26,7 @@ const posterDefinitions:Record<PosterKind,PosterDesign>={
 export function drawPosterPlate(c:CanvasRenderingContext2D,kind:PosterKind):void{
  const poster=posterDefinitions[kind];
  const [base,accent,paper]=poster.palette;
-import type {Projection} from "./isometric.js";
-import {iso} from "./isometric.js";
-
-export type PosterKind="coaster"|"tactical"|"golf"|"artillery"|"city"|"terminal"|"arcade";
-export const POSTER_KINDS:readonly PosterKind[]=["coaster","tactical","golf","artillery","city","terminal","arcade"];
-export const POSTER_WIDTH=96,POSTER_HEIGHT=112;
-const palettes:Record<PosterKind,[string,string,string]>={
- coaster:["#204c49","#efb75f","#fff0c9"],tactical:["#203344","#db954b","#fff0d1"],
- golf:["#42879a","#f3d77b","#fff7db"],artillery:["#4a4269","#eca47a","#f6edd1"],
- city:["#215852","#e6b778","#fff0c7"],terminal:["#244c40","#bdd48d","#fff0c9"],
- arcade:["#433e68","#df967b","#fff0c7"]
-};
-const titles:Record<PosterKind,readonly string[]>={
- coaster:["ROLLERCOASTER","TYCOON"],tactical:["COUNTER","STRIKE"],golf:["PANGYA"],
- artillery:["GUNBOUND"],city:["CITY","HORIZON"],terminal:["LAN HOUSE"],arcade:["JOGOS"]
-};
-const captions:Record<PosterKind,string>={coaster:"UM PARQUE DE IDEIAS",tactical:"ENTRE PARA A PARTIDA",
- golf:"VENTO A FAVOR",artillery:"MIRE NAS ESTRELAS",city:"CONSTRUA SEU FUTURO",terminal:"PRIMEIRAS CONEXÕES",arcade:"MAIS UMA FASE"};
-function poly(c:CanvasRenderingContext2D,points:readonly number[][],color:string):void{
- c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x!,y!):c.moveTo(x!,y!));c.closePath();c.fillStyle=color;c.fill();
-}
-function disk(c:CanvasRenderingContext2D,x:number,y:number,r:number,color:string):void{
- c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();
-}
-function line(c:CanvasRenderingContext2D,points:readonly number[][],color:string,width=2):void{
- c.beginPath();points.forEach(([x,y],i)=>i?c.lineTo(x!,y!):c.moveTo(x!,y!));c.strokeStyle=color;c.lineWidth=width;c.stroke();
-}
-/** Original vector illustrations and lettering, painted by the game itself. */
-export function drawPosterPlate(c:CanvasRenderingContext2D,kind:PosterKind):void{
- const [base,accent,paper]=palettes[kind];c.save();c.lineJoin="round";c.lineCap="round";
+ c.save();c.lineJoin="round";c.lineCap="round";
  c.fillStyle="#715c4e";c.fillRect(0,0,96,112);
  c.fillStyle="#ddc9a4";c.fillRect(0,0,94,110);
  c.fillStyle=paper;c.fillRect(2,2,90,106);
