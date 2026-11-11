@@ -3,20 +3,10 @@ import { createAccountClient,type AccountClient,type AccountProfile } from "./ac
 import {renderCosmeticCard} from "./account/cosmeticCard.js";
 import {ensureAccountDialog} from "./account/dialog.js";
 import {createCloudSaveController} from "./account/cloudSaves.js";
+import {renderHistory} from "./account/history.js";
+import {renderDonate} from "./account/donate.js";
+import type {CloudConfig,Account,StoreConfig,Tab} from "./account/types.js";
 
-interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
-interface WalletEntry {id:string;type:string;delta:number;itemId:string|null;at:string|null;mode?:string}
-interface Account {
- uid:string;cookiesBalance:number;cookiesSpentTotal:number;
- entitlements:string[];transactions:WalletEntry[];historyLimit?:number
-}
-interface ServerItem {name?:string;cookies:number;unlockYear?:number}
-interface StoreConfig {
- paymentsEnabled:boolean;paymentsMode?:"sandbox"|"production";
- packages?:Record<string,{cookies:number;priceCents:number}>;
- items?:Record<string,ServerItem>
-}
-type Tab="summary"|"catalog"|"inventory"|"history"|"cloud";
 const cookiesText=(amount:number)=>amount.toLocaleString("pt-BR")+" Cookies";
 function line(text:string,cls=""):HTMLElement{
  const node=document.createElement("p");node.className=cls;node.textContent=text;return node;
@@ -123,39 +113,8 @@ export function mountCloudControls(
   if(!client?.hasSession())inventory.append(line("Entre na sua conta para consultar os itens adquiridos.","account-empty"));
   else if(!acquired.length)inventory.append(line("Nenhum cosmético adquirido ainda.","account-empty"));
   else for(const item of acquired)inventory.append(createCosmeticCard(item,true));
-  history.replaceChildren();
-  if(!client?.hasSession())history.append(line("Entre na sua conta para ver seu histórico.","account-empty"));
-  else if(!account?.transactions?.length)history.append(line("Nenhuma movimentação registrada.","account-empty"));
-  else{
-   for(const move of account.transactions){
-    const article=document.createElement("article");article.className="account-ledger-row";
-    const name=document.createElement("strong");name.textContent=move.type==="item"?
-      "Resgate: "+cosmeticName(move.itemId??""):move.delta>0?"Crédito de Cookies":"Ajuste de saldo";
-    const meta=document.createElement("small");
-    const date=move.at?new Date(move.at):null;
-    meta.textContent=(date&&!Number.isNaN(date.getTime())?date.toLocaleString("pt-BR"):"Data indisponível")+
-      (move.mode==="sandbox"?" · teste":"");
-    const amount=document.createElement("b");amount.textContent=(move.delta>0?"+":"")+move.delta+" Cookies";
-    amount.dataset.sign=move.delta<0?"debit":"credit";
-    const info=document.createElement("div");info.append(name,meta);
-    article.append(info,amount);history.append(article);
-   }
-   if(account.transactions.length>=(account.historyLimit??40))
-    history.append(line("Exibindo somente as movimentações recentes. O total de gastos considera todo o histórico.","account-subtext"));
-  }
-  renderDonate();
- }
- function renderDonate(){
-  donate.replaceChildren();
-  const title=document.createElement("strong");title.textContent="Apoiar o desenvolvimento";
-  donate.append(title,line("R$ 5 = 50 Cookies · R$ 10 = 100 Cookies. Pagamento único.","account-subtext"));
-  if(!store?.paymentsEnabled||!store?.packages){
-   donate.append(line("Compra de Cookies ainda não disponível neste ambiente.","account-subtext"));return;
-  }
-  const link=document.createElement("a");link.href="/donate/";link.target="_top";
-  link.className="slice";link.textContent="Adquirir Cookies no Donate";
-  donate.append(link,line("Sua conta acompanha a navegação nesta aba. Depois do pagamento, volte e atualize o saldo.","account-subtext"));
- }
+  renderHistory(history,account,!!client?.hasSession(),cosmeticName);
+  renderDonate(donate,store);
  for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
   btn.addEventListener("click",()=>switchTab(btn.dataset.accountTab as Tab));
  find("#account-close").addEventListener("click",()=>dialog.close());
