@@ -1,10 +1,10 @@
 import {merchandiseDisplay} from "./merchandiseDisplay.js";
 import type {ProductId} from "../sim/merchandise.js";
-import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} from "../sim/editableObjects.js";
+import type {EditableObject} from "../sim/editableObjects.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import {roomBounds,type RoomBounds} from "../sim/room.js";
-import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
+import {cameraForGame,type Projection,objectCamera} from "./isometric.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {drawVipAquarium} from "./aquariumArt.js";
 import {drawPixelClock} from "./pixelClockArt.js";
@@ -18,14 +18,15 @@ import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
 import {RoomBackgroundCache} from "./scene/background.js";
+import {drawLayoutOverlay} from "./scene/layoutOverlay.js";
 import {drawComputerDesk} from "./scene/stations/computer.js";
-import {drawCounterSurface,drawSceneCounter} from "./scene/stations/counter.js";
+import {drawSceneCounter} from "./scene/stations/counter.js";
 import {drawAnnexPcCandidates} from "./scene/annexPcOverlay.js";
 import {drawDoorCandidates,drawWallPreview} from "./scene/wallOverlay.js";
 import {drawEntryMarker} from "./scene/entryMarker.js";
 import {drawRoomSign} from "./scene/roomSign.js";
 import {drawRoomStatus} from "./scene/roomStatus.js";
-import {drawPurchasedFurniture,drawExtraFurniture} from "./scene/furnitureArt.js";
+import {drawExtraFurniture} from "./scene/furnitureArt.js";
 import {drawPlacementCandidates,drawRelocationCandidates} from "./scene/furnitureOverlay.js";
 import {drawInteriorWall,drawInteriorDoor} from "./scene/partitions.js";
 import {drawGpuInstallMarkers} from "./scene/gpuInstallOverlay.js";
@@ -40,7 +41,6 @@ import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
 import {drawPs2Station} from "./ps2Art.js";
 import {drawPs1Station} from "./ps1Art.js";
-import {drawWallPoster} from "./posterArt.js";
 import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
@@ -56,30 +56,7 @@ export class SceneRenderer {
     return x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height;
   }
   drawLayoutOverlay(s:GameState,selected:string|null,draft:EditableObject|null,time:number):void{
-    const cam=cameraForGame(s),ctx=this.ctx;
-    ctx.save();
-    for(const o of editableObjects(s)){
-      const corners=o.surface==="wall"?[iso({x:o.x,y:o.y},cam,115),iso({x:o.x+(o.axis==="y"?0:o.w),y:o.y+(o.axis==="y"?o.w:0)},cam,115)]:objectCorners(o).map(p=>iso(p,cam,2));
-      ctx.beginPath();corners.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));if(corners.length>2)ctx.closePath();
-      ctx.strokeStyle=o.id===selected?"#92d8ed":"rgba(239,190,91,.7)";ctx.lineWidth=o.id===selected?3:1.2;ctx.stroke();
-    }
-    if(draft){
-      const original=editableObjects(s).find(o=>o.id===draft.id),changed=!original||original.x!==draft.x||original.y!==draft.y||original.rotation!==draft.rotation;
-      ctx.globalAlpha=.65;
-      if(changed){
-      if(draft.kind==="pc")drawComputerDesk(ctx,cam,draft,draft.index!,time,online(s),s);
-      else if(draft.kind==="counter")drawCounterSurface(ctx,cam,draft);
-      else if(draft.kind==="shelf")this.shelf(cam,0,s.inventory.snacks,draft,merchandiseDisplay(s,"snacks"));
-      else if(draft.kind==="soda"||draft.kind==="candy")this.machine(cam,draft.x,draft.y,draft.kind,time,s.inventory[draft.kind],draft.rotation,merchandiseDisplay(s,draft.kind));
-      else if(draft.kind==="bin")this.trashBin(cam,draft,0);
-      else if(draft.id.startsWith("built-poster:"))drawWallPoster(ctx,cam,{x:draft.x,y:draft.y,axis:draft.rotation===3?"y":"x",span:draft.span!,top:133,height:59},draft.posterKind!);
-      else drawPurchasedFurniture(this.ctx,cam,draft.kind as FurnitureKind,draft.x,draft.y,draft.rotation,"city",draft.axis);
-      }
-      ctx.globalAlpha=1;
-      const corners=objectCorners(draft).map(p=>iso(p,cam,3));
-      polygon(ctx,corners,layoutPlacementIssue(s,draft)?"rgba(215,92,69,.15)":"rgba(121,223,152,.15)",layoutPlacementIssue(s,draft)?"#efad87":"#b9efa1");
-    }
-    ctx.restore();
+    drawLayoutOverlay(this.ctx,s,selected,draft,time);
   }
   draw(s: GameState, elapsedSeconds: number): void {
     const ctx = this.ctx, w=SCENE_WIDTH, h=SCENE_HEIGHT, roomW=roomWidth(s), camera=cameraForGame(s),bounds=roomBounds(s);
