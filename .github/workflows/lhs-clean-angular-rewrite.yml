@@ -40,7 +40,9 @@ jobs:
         run: |
           npm ci --prefix backend --no-audit --no-fund
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium
+          # Runtime libraries are preinstalled on GitHub's ubuntu-24.04 runner.
+          npx playwright install chromium
+          node --input-type=module -e 'import {chromium} from "playwright";const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Validate complete migration, engine, accounts and payment contracts
         working-directory: games/lan_house_simulator
         run: npm run validate:site:clean
@@ -72,7 +74,9 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      - run: |
+          npx playwright install chromium
+          node --input-type=module -e 'import {chromium} from "playwright";const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Build default Angular frontend image
         run: docker build -t lhs-frontend:test .
       - name: Validate immutable frontend container with Chromium

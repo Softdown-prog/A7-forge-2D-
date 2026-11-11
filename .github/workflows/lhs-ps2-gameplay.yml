@@ -45,7 +45,9 @@ jobs:
         run: node --test tests/top-games-*.test.mjs tests/linux-forum-1999.test.mjs
       - run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          npx playwright install --with-deps chromium
+          # GitHub-hosted Ubuntu 24.04 ships Chromium system libraries; apt downloads are unreliable here.
+          npx playwright install chromium
+          node --input-type=module -e 'import {chromium} from "playwright";const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Real PS2 app, mobile controls, save reload and procedural games
         run: node scripts/verify_ps2_gameplay.mjs out/ps2-integrated
       - name: Seven-day demand and economics in 2006, 2010, 2020 and 2030
