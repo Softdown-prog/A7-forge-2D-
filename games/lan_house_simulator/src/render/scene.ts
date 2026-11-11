@@ -3,7 +3,7 @@ import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} from "../sim/editableObjects.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
-import {roomBounds} from "../sim/room.js";
+import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
