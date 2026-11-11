@@ -5,7 +5,6 @@ import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
 import {roomBounds,type RoomBounds} from "../sim/room.js";
 import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
-import { drawRetroComputer } from "./retroComputer.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
 import {drawVipAquarium} from "./aquariumArt.js";
 import {drawPixelClock} from "./pixelClockArt.js";
@@ -19,6 +18,8 @@ import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
 import {RoomBackgroundCache} from "./scene/background.js";
+import {drawComputerDesk} from "./scene/stations/computer.js";
+import {drawCounterSurface,drawSceneCounter} from "./scene/stations/counter.js";
 import {drawAnnexPcCandidates} from "./scene/annexPcOverlay.js";
 import {drawDoorCandidates,drawWallPreview} from "./scene/wallOverlay.js";
 import {drawEntryMarker} from "./scene/entryMarker.js";
@@ -40,17 +41,11 @@ import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
 import {drawPs2Station} from "./ps2Art.js";
 import {drawPs1Station} from "./ps1Art.js";
 import {drawWallPoster} from "./posterArt.js";
-import {drawCounter} from "./counterArt.js";
-import {drawCounterPrinter} from "./printerArt.js";
-import {printingAnimationActive} from "../sim/printService.js";
-import {copyingAnimationActive} from "../sim/discCopy.js";
-import {drawCounterDiscCopier} from "./discCopierArt.js";
 import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
 import {SCENE_WIDTH,SCENE_HEIGHT} from "./sceneSurface.js";
-import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,type Daylight} from "./lighting.js";
-import {computerAppearance,screenGlow,monitorScreenQuad} from "./retroComputer.js";
+import {daylightAt,drawSceneLighting,type Daylight} from "./lighting.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
@@ -72,8 +67,8 @@ export class SceneRenderer {
       const original=editableObjects(s).find(o=>o.id===draft.id),changed=!original||original.x!==draft.x||original.y!==draft.y||original.rotation!==draft.rotation;
       ctx.globalAlpha=.65;
       if(changed){
-      if(draft.kind==="pc")this.desk(cam,draft,draft.index!,time,online(s),s);
-      else if(draft.kind==="counter")this.counter(cam,draft);
+      if(draft.kind==="pc")drawComputerDesk(ctx,cam,draft,draft.index!,time,online(s),s);
+      else if(draft.kind==="counter")drawCounterSurface(ctx,cam,draft);
       else if(draft.kind==="shelf")this.shelf(cam,0,s.inventory.snacks,draft,merchandiseDisplay(s,"snacks"));
       else if(draft.kind==="soda"||draft.kind==="candy")this.machine(cam,draft.x,draft.y,draft.kind,time,s.inventory[draft.kind],draft.rotation,merchandiseDisplay(s,draft.kind));
       else if(draft.kind==="bin")this.trashBin(cam,draft,0);
@@ -103,13 +98,7 @@ export class SceneRenderer {
       {depth:counterPoint(s,{x:1.45,y:1.05}).x+counterPoint(s,{x:1.45,y:1.05}).y-.5,paint:()=>this.owner(camera,elapsedSeconds,s)},
       {depth:placedObject(s,"counter",{x:.9,y:1.42}).x+placedObject(s,"counter",{x:.9,y:1.42}).y+.8,paint:()=>{
         const counter=placedObject(s,"counter",{x:.9,y:1.42});
-        this.counter(camera,counter);
-        // Impressora decorativa paga: sobre o tampo, sem novo footprint ou colisão.
-        if(s.printer)drawCounterPrinter(this.ctx,objectCamera(camera,counter,1.75,.72,counter.rotation),
-          counter,printingAnimationActive(s),elapsedSeconds);
-        // A copiadora tem footprint só visual, no outro extremo do tampo.
-        if(s.discCopier)drawCounterDiscCopier(this.ctx,objectCamera(camera,counter,1.75,.72,counter.rotation),
-          counter,copyingAnimationActive(s),elapsedSeconds);
+        drawSceneCounter(ctx,camera,counter,s,elapsedSeconds);
       }},
       {depth:roomW+6,paint:()=>drawEntryMarker(ctx,camera,s)}
     ];
@@ -128,7 +117,7 @@ export class SceneRenderer {
     }
     for (let i=0;i<pcCount(s);i++){
       const p=pcPosition(i,s);
-      entries.push({depth:p.x+p.y,paint:()=>this.desk(camera,p,i,elapsedSeconds,online(s),s)});
+      entries.push({depth:p.x+p.y,paint:()=>drawComputerDesk(ctx,camera,p,i,elapsedSeconds,online(s),s)});
     }
     for(let i=0;i<(s.ps1Stations?.length??0);i++){
       const point=ps1StationPoint(s,i);
@@ -214,9 +203,6 @@ export class SceneRenderer {
   private windowPanes(camera:Projection,bounds:RoomBounds,light:Daylight):void{
     drawRoomWindows(this.ctx,camera,bounds,light);
   }
-  private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
-    drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
-  }
   private shelf(camera:Projection,minX=0,stock=20,p:PlacedPoint={x:minX+.23,y:2.92},display?:readonly ProductId[]):void {
     drawSnackShelf(this.ctx,objectCamera(camera,p,.46,1.22,p.rotation),minX,stock,true,p,display);
   }
@@ -234,20 +220,6 @@ export class SceneRenderer {
   private worker(camera:Projection,job:RepairJob|CleaningJob,time:number,
     kind:"technician"|"cleaner",progress:number,s:GameState):void{
     drawSceneWorker(this.ctx,camera,job,time,kind,progress,s);
-  }
-  private desk(camera:Projection,p:Point,i:number,t:number,isOnline:boolean,s:GameState):void {
-    const cam=objectCamera(camera,p,1.1,.7,(p as PlacedPoint).rotation);
-    drawRetroComputer(this.ctx,cam,p,i,t,isOnline,s);
-    // Screen light spills over the desk, keyboard and bezel; stronger after dusk.
-    // Additive and painted after the cached sprite, so the raster stays reusable.
-    const appearance=computerAppearance(s,i,t,isOnline),glow=screenGlow(appearance);
-    if(glow&&this.ctx.globalAlpha===1){
-      const light=daylightAt(s.totalMinutes),emission=monitorEmission(light.night,glow.strength);
-      drawScreenGlow(this.ctx,cam,p.x+.45,p.y+.47,38,glow.color,emission.spill);
-      // As the evening comes in the glass itself brightens against the darker room.
-      const quad=monitorScreenQuad(cam,p,appearance.lcd);
-      if(quad)drawMonitorEmission(this.ctx,quad,glow.color,light.night,glow.strength);
-    }
   }
   private owner(camera:Projection,t:number,s?:GameState):void {
     this.heroHitbox=drawSceneOwner(this.ctx,camera,t,s);
