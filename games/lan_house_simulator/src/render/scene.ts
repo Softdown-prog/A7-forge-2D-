@@ -13,12 +13,13 @@ import {yearFromMinutes} from "../sim/historicalEconomy.js";
 import type {FurnitureKind} from "../sim/shop.js";
 import { vendingMachines,placedObject,counterPoint,type PlacedPoint } from "../sim/layout.js";
 import {drawVendingMachine,drawSnackShelf} from "./retailArt.js";
-import {wallEndpoints,canBuildWall,type WallSegment} from "../sim/walls.js";
-import {annexComputerSlots,availableAnnexComputers} from "../sim/stations.js";
+import type {WallSegment} from "../sim/walls.js";
 import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/services.js";
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
+import {drawAnnexPcCandidates} from "./scene/annexPcOverlay.js";
+import {drawDoorCandidates,drawWallPreview} from "./scene/wallOverlay.js";
 import {drawEntryMarker} from "./scene/entryMarker.js";
 import {drawRoomSign} from "./scene/roomSign.js";
 import {drawRoomStatus} from "./scene/roomStatus.js";
@@ -160,9 +161,9 @@ export class SceneRenderer {
        paint:()=>this.postman(camera,postal,elapsedSeconds)});
     }
     for(const wall of s.interiorWalls??[])
-      entries.push({depth:wall.x+wall.y+0.5,paint:()=>this.drawInteriorWall(camera,wall)});
+      entries.push({depth:wall.x+wall.y+0.5,paint:()=>drawInteriorWall(ctx,camera,wall)});
     for(const door of s.interiorDoors??[])
-      entries.push({depth:door.x+door.y+0.5,paint:()=>this.drawInteriorDoor(camera,door)});
+      entries.push({depth:door.x+door.y+0.5,paint:()=>drawInteriorDoor(ctx,camera,door)});
     const matchReactions=nightMatchReactions(s);
     for (const c of s.customers) {
       const seated=c.stage==="sitting" || c.stage==="using" || c.stage==="standing";
@@ -232,49 +233,15 @@ export class SceneRenderer {
     this.floor(camera,bounds,cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)));
     this.walls(camera,bounds);this.decor(camera,bounds,s);drawExtraPosters(this.ctx,camera,s);
   }
-  /** Paredes isométricas procedurais, respeitando a ordem de profundidade dos objetos. */
-  private drawInteriorWall(camera:Projection,wall:WallSegment,preview=false,allowed=true):void{
-    drawInteriorWall(this.ctx,camera,wall,preview,allowed);
-  }
-  private drawInteriorDoor(camera:Projection,door:WallSegment,preview=false):void{
-    drawInteriorDoor(this.ctx,camera,door,preview);
-  }
-  /** Ícones e fantasma dos novos PCs, usando o mesmo centro de clique da UI. */
+  /** Positions and renders annex PC previews without mutating the purchase state. */
   drawAnnexPcCandidates(s:GameState,hovered:string|null):void{
-    const cam=cameraForGame(s),available=new Set(availableAnnexComputers(s).map(x=>x.id));
-    this.ctx.save();
-    for(const slot of annexComputerSlots(s)){
-      const p=iso({x:slot.position.x+0.35,y:slot.position.y+0.55},cam,4);
-      const free=available.has(slot.id),selected=hovered===slot.id;
-      this.ctx.beginPath();this.ctx.ellipse(p.x,p.y,19*cam.zoom,11*cam.zoom,0,0,Math.PI*2);
-      this.ctx.fillStyle=!free?"rgba(183,75,70,.78)":selected?"rgba(114,233,162,.98)":"rgba(73,160,130,.80)";
-      this.ctx.fill();
-      this.ctx.strokeStyle="#f6efdc";this.ctx.lineWidth=selected?3:1.3;this.ctx.stroke();
-      if(selected&&free){this.ctx.globalAlpha=.66;
-        drawRetroComputer(this.ctx,cam,slot.position,pcCount(s),1,true,s);
-        this.ctx.globalAlpha=1;
-      }
-    }
-    this.ctx.restore();
+    drawAnnexPcCandidates(this.ctx,s,hovered);
   }
   drawDoorCandidates(s:GameState,hovered:WallSegment|null):void{
-    const cam=cameraForGame(s);
-    this.ctx.save();
-    for(const wall of s.interiorWalls??[]){
-      const [a,b]=wallEndpoints(wall),point=iso({x:(a.x+b.x)/2,y:(a.y+b.y)/2},cam,40);
-      this.ctx.fillStyle="#d2bc76";this.ctx.beginPath();
-      this.ctx.arc(point.x,point.y,Math.max(2,6*cam.zoom),0,Math.PI*2);this.ctx.fill();
-    }
-    if(hovered)this.drawInteriorDoor(cam,hovered,true);
-    this.ctx.restore();
+    drawDoorCandidates(this.ctx,s,hovered);
   }
   drawWallPreview(s:GameState,wall:WallSegment|null,demolish:boolean):void{
-    if(!wall)return;
-    const exists=(s.interiorWalls??[]).some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y);
-    const isDoor=(s.interiorDoors??[]).some(w=>w.axis===wall.axis&&w.x===wall.x&&w.y===wall.y);
-    if(demolish&&isDoor){this.drawInteriorDoor(cameraForGame(s),wall,true);return;}
-    if(demolish&&!exists)return;
-    this.drawInteriorWall(cameraForGame(s),wall,true,demolish?exists:canBuildWall(s,wall));
+    drawWallPreview(this.ctx,s,wall,demolish);
   }
   drawPlacementCandidates(s:GameState,kind:FurnitureKind,hoveredId:string|null,rotation:0|1|2|3=0):void {
     drawPlacementCandidates(this.ctx,s,kind,hoveredId,rotation);
