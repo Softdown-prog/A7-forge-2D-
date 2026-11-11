@@ -11,7 +11,7 @@ import {limb,ell,segment} from "./rigPrimitives.js";
     const receiving=a.kind==="owner"&&pose==="receiving";
     const serving=a.kind==="owner"&&(pose==="idle"||printing||copying||receiving);
     const handing=a.kind==="postman"&&pose==="delivering";
-    const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*OWNER_IDLE_RATE)*.45:0;
+    const gesture=copying?Math.sin(a.time*7.5+side)*1.8:printing?Math.sin(a.time*10+side)*2.7:serving?Math.sin(a.time*ownerIdleRate)*.45:0;
     const angledWalk=profileWalk||screenRig;
     const shoulderX=side*(sideways?8:quarter?10:15);
     const axis=screenRig?walkAxis(screenView!):{x:1,y:0};
