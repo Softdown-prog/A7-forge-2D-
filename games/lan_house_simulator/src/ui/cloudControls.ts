@@ -1,6 +1,6 @@
 import type { AccountCosmetic,AccountGamePort,CookieCosmeticId } from "../application/accountGamePort.js";
 import { createAccountClient,type AccountClient,type AccountProfile } from "./accountClient.js";
-import { vipProductThumbnail } from "./vipProductArt.js";
+import {renderCosmeticCard} from "./account/cosmeticCard.js";
 import {ensureAccountDialog} from "./account/dialog.js";
 
 interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
@@ -17,11 +17,6 @@ interface StoreConfig {
 }
 type Tab="summary"|"catalog"|"inventory"|"history"|"cloud";
 const cookiesText=(amount:number)=>amount.toLocaleString("pt-BR")+" Cookies";
-const brl=(cents:number)=>(cents/100).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
-const priceToBrl=(cookies:number)=>brl(cookies*10);
-function button(text:string,className="slice"):HTMLButtonElement{
- const el=document.createElement("button");el.type="button";el.className=className;el.textContent=text;return el;
-}
 function line(text:string,cls=""):HTMLElement{
  const node=document.createElement("p");node.className=cls;node.textContent=text;return node;
 }
@@ -90,64 +85,25 @@ export function mountCloudControls(
   if(!client||!isConfigured())throw Error("Entre na conta primeiro.");
   return client.api(path,body);
  }
- function createCosmeticCard(item:AccountCosmetic,isOwned:boolean){
-  const el=document.createElement("article");el.className="account-item";
-  const icon=document.createElement("div");
-  icon.className="account-item-art";
-  icon.dataset.cosmetic=item.id;
-  icon.setAttribute("aria-hidden","true");
-  const premiumArt=vipProductThumbnail(item.id);
-  if(premiumArt){
-   const img=document.createElement("img");img.src=premiumArt;
-   img.alt="";img.loading="lazy";icon.append(img);
-  }else{
-   icon.textContent=({"headset-rgb-neon":"🎧","chair-gamer-neon":"💺","keyboard-rainbow-rgb":"⌨",
-    "neon-open-sign":"✦","arcade-checker-floor":"▦","exclusive-arcade-posters":"▣"} as Record<string,string>)[item.id]??"✧";
-  }
-  const info=document.createElement("div");info.className="account-item-info";
-  const name=document.createElement("strong");name.textContent=item.name;
-  const detail=line(`${item.cookies} Cookies · ${priceToBrl(item.cookies)} · desde ${item.unlockYear}`,"account-item-price");
-  const desc=line(item.description,"account-item-description");
-  info.append(name,detail,desc);
-  const control=document.createElement("div");control.className="account-item-control";
-  const usable=port.year()>=item.unlockYear;
-  if(isOwned){
-   const label=document.createElement("label");label.className="account-toggle";
-   const check=document.createElement("input");check.type="checkbox";
-   check.checked=!unequipped.has(item.id);
-   check.dataset.premiumCosmetic=item.id;
-   check.addEventListener("change",()=>{
-    if(!port.toggleCosmetic(item.id,check.checked)){
-     check.checked=false;return;
-    }
-    if(check.checked)unequipped.delete(item.id);else unequipped.add(item.id);
-    status(check.checked?"Item equipado.":"Item desequipado.");
+  function createCosmeticCard(item:AccountCosmetic,isOwned:boolean):HTMLElement{
+   return renderCosmeticCard(item,isOwned,{
+    year:port.year(),unequipped,loading,hasSession:!!client?.hasSession(),
+    balance:account?.cookiesBalance??null,
+    serverPrice:store?.items?.[item.id]?.cookies,configured:isConfigured(),
+    onToggle:(id,enabled)=>port.toggleCosmetic(id,enabled),onStatus:status,
+    onRedeem:redeem
    });
-   label.append(check,document.createTextNode(check.checked?" Equipado":" Desequipado"));
-   check.addEventListener("change",()=>{label.lastChild!.textContent=check.checked?" Equipado":" Desequipado";});
-   control.append(line(usable?"Adquirido":"Aguardando ano de uso","account-owned-label"),label);
-  }else{
-   const buy=button("Resgatar · "+item.cookies+" Cookies");
-   const server=store?.items?.[item.id];
-   const enabled=!!(!loading&&client?.hasSession()&&account&&server?.cookies===item.cookies&&
-    account.cookiesBalance>=item.cookies&&isConfigured());
-   buy.disabled=!enabled;
-   buy.title=!client?.hasSession()?"Entre na conta para resgatar":
-    !server?"Catálogo do servidor ainda não está habilitado":
-    server.cookies!==item.cookies?"Preço não confirmado pelo servidor":
-    account&&account.cookiesBalance<item.cookies?"Cookies insuficientes":"";
-   buy.addEventListener("click",()=>void action(async()=>{
+  }
+  function redeem(item:AccountCosmetic):void{
+   void action(async()=>{
     if(!client?.hasSession()||!account||store?.items?.[item.id]?.cookies!==item.cookies)
      throw Error("Este item não está liberado no servidor.");
     if(!window.confirm(`Resgatar ${item.name} por ${item.cookies} Cookies? O desconto é permanente.`))return;
     await api("/v1/items/"+encodeURIComponent(item.id)+"/purchase",{});
     await refresh();switchTab("inventory");
     status("Item resgatado e registrado na sua conta.","success");
-   }));
-   control.append(buy);
+   });
   }
-  el.append(icon,info,control);return el;
- }
  function render(){
   balance.textContent=account?cookiesText(account.cookiesBalance):"—";
   spent.textContent=account?cookiesText(account.cookiesSpentTotal):"—";
