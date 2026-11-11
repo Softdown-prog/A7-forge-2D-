@@ -337,7 +337,8 @@ test('Angular account shell owns a unique dialog while TypeScript owns all accou
  const component=file(root+'src/account-shell.ts');
  const template=file(root+'src/templates/account-shell.html');
  const preview=file(root+'src/index.html');
- const fallback=file('src/ui/cloudControls.ts');
+ const fallback=file('src/ui/account/dialog.ts');
+ const controller=file('src/ui/cloudControls.ts');
  const published=file('index.html');
  for(const id of ['player-account','account-heading','account-balance','account-spent',
   'account-owned','account-login-box','account-signin','account-logout',
@@ -354,6 +355,7 @@ test('Angular account shell owns a unique dialog while TypeScript owns all accou
  assert.match(fallback,/angularDialog\?\?document\.createElement\("dialog"\)/);
  assert.match(fallback,/if\(!angularDialog\)/);
  assert.match(fallback,/document\.body\.append\(dialog\)/);
+ assert.match(controller,/ensureAccountDialog\(\)/,"account controller retains the Angular-aware dialog mount");
  assert.match(component,/ChangeDetectionStrategy\.OnPush/);
  assert.doesNotMatch(component,/Firebase|fetch\(|api\(|localStorage|sessionStorage|GameState|purchase|port\./);
  assert.doesNotMatch(template,/\(click\)=|\[innerHTML\]=/);
