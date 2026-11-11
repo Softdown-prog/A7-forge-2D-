@@ -116,7 +116,9 @@ jobs:
       - name: Install Playwright for real Angular browser QA
         run: |
           npm install --prefix .angular-browser-tools --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
-          ./.angular-browser-tools/node_modules/.bin/playwright install --with-deps chromium
+          ./.angular-browser-tools/node_modules/.bin/playwright install chromium
+          # Launch using this isolated Playwright package, not an unrelated global install.
+          node --input-type=module -e 'import {createRequire} from "node:module";const require=createRequire(import.meta.url);const {chromium}=require("./.angular-browser-tools/node_modules/playwright");const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Validate Angular catalogue interactions in Chromium desktop and mobile
         run: node frontend-angular/scripts/verify_catalog_preview.mjs
       - name: Build the original game in isolated test workspace
