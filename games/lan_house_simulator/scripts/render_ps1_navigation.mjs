@@ -37,8 +37,8 @@ try{
  page.on("pageerror",error=>errors.push(String(error)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async data=>{
-  const [{createGame},{SceneRenderer},{drawPs1Station,drawPs1Controller},{drawActor}]=await Promise.all([
-   import("./js/sim/engine.js"),import("./js/render/scene.js"),
+  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor}]=await Promise.all([
+   import("./js/sim/engine.js"),import("./js/render/scene/background.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js")
   ]);
   const body=document.body;
@@ -54,7 +54,7 @@ try{
   const point=data.point,seat=data.seat,zoom=1.8,focus={x:point.x+.65,y:point.y+.95};
   const cam={zoom,originX:500-(focus.x-focus.y)*64*zoom,
     originY:355-(focus.x+focus.y)*32*zoom};
-  const renderer=new SceneRenderer(ctx);
+  const background=new RoomBackgroundCache();
   const phases=[
    {stage:"to_pc",duration:3.1},
    {stage:"sitting",duration:1.3},
@@ -66,7 +66,7 @@ try{
    throw Error("O motor não produziu todas as etapas do ciclo real");
   const interpolate=(a,b,k)=>a+(b-a)*k;
   function paint(f,t){
-   renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
+   background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    const playing=f.stage==="using",seated=["sitting","using","standing"].includes(f.stage);
    drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
    const pose=f.stage==="sitting"||f.stage==="using"?"sitting":
