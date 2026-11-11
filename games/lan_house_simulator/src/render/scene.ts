@@ -3,7 +3,7 @@ import type {ProductId} from "../sim/merchandise.js";
 import {editableObjects,objectCorners,layoutPlacementIssue,type EditableObject} from "../sim/editableObjects.js";
 import type { Customer, GameState, Point } from "../sim/types.js";
 import { pcCount, pcPosition, roomWidth, online } from "../sim/engine.js";
-import {roomBounds,type RoomBounds} from "../sim/room.js";
+import {roomBounds} from "../sim/room.js";
 import { cameraForGame, iso, polygon, type Projection,objectCamera } from "./isometric.js";
 import { drawRetroComputer } from "./retroComputer.js";
 import {cosmeticAvailable} from "../sim/premiumCosmetics.js";
@@ -18,16 +18,14 @@ import {BIN_SPOTS,binSpots,type RepairJob,type CleaningJob} from "../sim/service
 import type {ServiceAccessIssue} from "../sim/serviceAccess.js";
 import type {PostmanDelivery} from "../sim/postmanDelivery.js";
 import {drawRoomWindows} from "./scene/windows.js";
+import {RoomBackgroundCache} from "./scene/background.js";
 import {drawAnnexPcCandidates} from "./scene/annexPcOverlay.js";
 import {drawDoorCandidates,drawWallPreview} from "./scene/wallOverlay.js";
 import {drawEntryMarker} from "./scene/entryMarker.js";
 import {drawRoomSign} from "./scene/roomSign.js";
 import {drawRoomStatus} from "./scene/roomStatus.js";
-import {drawPurchasedFurniture,drawExtraPosters,drawExtraFurniture} from "./scene/furnitureArt.js";
+import {drawPurchasedFurniture,drawExtraFurniture} from "./scene/furnitureArt.js";
 import {drawPlacementCandidates,drawRelocationCandidates} from "./scene/furnitureOverlay.js";
-import {drawRoomFloor} from "./scene/floor.js";
-import {drawRoomWalls} from "./scene/walls.js";
-import {drawRoomDecor} from "./scene/decor.js";
 import {drawInteriorWall,drawInteriorDoor} from "./scene/partitions.js";
 import {drawGpuInstallMarkers} from "./scene/gpuInstallOverlay.js";
 import {drawServiceAccessOverlay} from "./scene/serviceOverlay.js";
@@ -36,7 +34,6 @@ import {drawScenePostman} from "./scene/characters/postman.js";
 import {drawSceneWorker} from "./scene/characters/worker.js";
 import {drawSceneOwner} from "./scene/characters/owner.js";
 import {drawSceneCustomer} from "./scene/characters/customer.js";
-import {SCENE_THEME as theme} from "./theme.js";
 import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
 import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
@@ -51,14 +48,13 @@ import {drawCounterDiscCopier} from "./discCopierArt.js";
 import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
-import {SCENE_WIDTH,SCENE_HEIGHT,contextScale} from "./sceneSurface.js";
-import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,drawVignette,type Daylight} from "./lighting.js";
+import {SCENE_WIDTH,SCENE_HEIGHT} from "./sceneSurface.js";
+import {daylightAt,drawSceneLighting,drawScreenGlow,drawMonitorEmission,monitorEmission,type Daylight} from "./lighting.js";
 import {computerAppearance,screenGlow,monitorScreenQuad} from "./retroComputer.js";
 
 export class SceneRenderer {
   private heroHitbox = { x: 0, y: 0, width: 0, height: 0 };
-  private background:HTMLCanvasElement|null=null;
-  private backgroundKey="";
+  private readonly background=new RoomBackgroundCache();
   constructor(private ctx: CanvasRenderingContext2D) {}
   hitOwner(x: number, y: number): boolean {
     const r = this.heroHitbox;
@@ -93,7 +89,7 @@ export class SceneRenderer {
   draw(s: GameState, elapsedSeconds: number): void {
     const ctx = this.ctx, w=SCENE_WIDTH, h=SCENE_HEIGHT, roomW=roomWidth(s), camera=cameraForGame(s),bounds=roomBounds(s);
     const light=daylightAt(s.totalMinutes);
-    this.drawBackground(s,camera,bounds,w,h);
+    this.background.draw(ctx,s,camera,bounds,w,h);
     // Glass follows the simulated hour; frames and sills stay in the cached background.
     this.windowPanes(camera,bounds,light);
     type Entry={depth:number;paint:()=>void};
@@ -195,44 +191,6 @@ export class SceneRenderer {
   drawServiceAccessOverlay(s:GameState,issues:readonly ServiceAccessIssue[],time:number):void{
     drawServiceAccessOverlay(this.ctx,s,issues,time);
   }
-  /** One local bitmap for the unchanged room: shadow, floor, outside walls and
-   * fixed decoration. Animated objects keep their original depth-sorted paint. */
-  private drawBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
-    const live=this.ctx,scale=contextScale(live)??1;
-    const key=JSON.stringify([w,h,scale,camera,bounds,s.furniture?.poster??0,
-      s.furniturePlacements?.filter(p=>p.kind==="poster")??[],s.objectPlacements?.filter(p=>p.id.startsWith("built-poster:"))??[],s.removedBuiltPosters??[],
-      cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)),
-      cosmeticAvailable("exclusive-arcade-posters",yearFromMinutes(s.totalMinutes))]);
-    if(typeof document!=="undefined"){
-      if(!this.background)this.background=document.createElement("canvas");
-      const buffer=this.background.getContext("2d");
-      if(buffer){
-        if(key!==this.backgroundKey){
-          // The bitmap matches the live backing store, so the blit is pixel-exact.
-          const width=Math.round(w*scale),height=Math.round(h*scale);
-          if(this.background.width!==width||this.background.height!==height){this.background.width=width;this.background.height=height;}
-          buffer.setTransform(scale,0,0,scale,0,0);
-          this.ctx=buffer;
-          try{this.paintBackground(s,camera,bounds,w,h);this.backgroundKey=key;}
-          finally{this.ctx=live;}
-        }
-        live.drawImage(this.background,0,0,this.background.width/scale,this.background.height/scale);return;
-      }
-    }
-    this.paintBackground(s,camera,bounds,w,h);
-  }
-  private paintBackground(s:GameState,camera:Projection,bounds:RoomBounds,w:number,h:number):void{
-    const ctx=this.ctx,sky=ctx.createLinearGradient(0,0,0,h);
-    sky.addColorStop(0,theme.backgroundTop);sky.addColorStop(1,theme.backgroundBottom);
-    ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
-    // Faint diagonal sheen keeps the empty backdrop from reading as a flat fill.
-    const sheen=ctx.createLinearGradient(0,0,w,h);
-    sheen.addColorStop(0,"rgba(255,255,255,.035)");sheen.addColorStop(.5,"rgba(255,255,255,0)");sheen.addColorStop(1,"rgba(0,0,0,.08)");
-    ctx.fillStyle=sheen;ctx.fillRect(0,0,w,h);
-    drawVignette(ctx,w,h,.42);
-    this.floor(camera,bounds,cosmeticAvailable("arcade-checker-floor",yearFromMinutes(s.totalMinutes)));
-    this.walls(camera,bounds);this.decor(camera,bounds,s);drawExtraPosters(this.ctx,camera,s);
-  }
   /** Positions and renders annex PC previews without mutating the purchase state. */
   drawAnnexPcCandidates(s:GameState,hovered:string|null):void{
     drawAnnexPcCandidates(this.ctx,s,hovered);
@@ -249,21 +207,12 @@ export class SceneRenderer {
   drawRelocationCandidates(s:GameState,fromSlot:string|null,hoveredId:string|null):void {
     drawRelocationCandidates(this.ctx,s,fromSlot,hoveredId);
   }
-  private floor(camera:Projection,bounds:RoomBounds,premium=false):void {
-    drawRoomFloor(this.ctx,camera,bounds,premium);
-  }
-  private walls(camera:Projection,bounds:RoomBounds):void {
-    drawRoomWalls(this.ctx,camera,bounds);
-  }
   /** Glass tint per simulated hour: sky by day, amber at sunset, dark at night.
    * Mullions and the diagonal sheen are repainted on top each frame. */
   /** The glass only changes with the simulated minute, so it is rasterized once per light state and zoom
    * instead of being repainted (gradients, reflections, mullions) on every frame. */
   private windowPanes(camera:Projection,bounds:RoomBounds,light:Daylight):void{
     drawRoomWindows(this.ctx,camera,bounds,light);
-  }
-  private decor(camera:Projection,bounds:RoomBounds,s:GameState):void {
-    drawRoomDecor(this.ctx,camera,bounds,s);
   }
   private counter(camera:Projection,p:PlacedPoint={x:.9,y:1.42}):void {
     drawCounter(this.ctx,objectCamera(camera,p,1.75,.72,p.rotation),p);
