@@ -30,10 +30,10 @@ try{
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
   const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1Seat,ps1StationPoint,PS1_CD_CATALOG},
-   {SceneRenderer},{drawPs1Station,drawPs1Controller},{drawActor},{drawPs1MiniGame,ps1MiniGameFrame}]
+   {RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor},{drawPs1MiniGame,ps1MiniGameFrame}]
     =await Promise.all([
      import("./js/sim/engine.js"),import("./js/sim/types.js"),import("./js/sim/ps1.js"),
-     import("./js/render/scene.js"),import("./js/render/ps1Art.js"),
+     import("./js/render/scene/background.js"),import("./js/render/ps1Art.js"),
      import("./js/render/actorArt.js"),import("./js/render/ps1MiniGames.js")
     ]);
   document.body.replaceChildren();
@@ -53,17 +53,17 @@ try{
   const zoom=2.65,focus={x:point.x+.65,y:point.y+.86};
   const cam={zoom,originX:284-(focus.x-focus.y)*64*zoom,
    originY:340-(focus.x+focus.y)*32*zoom};
-  const renderer=new SceneRenderer(ctx);
+  const background=new RoomBackgroundCache();
   const scenes=PS1_CD_CATALOG.map(disc=>({id:disc.id,title:disc.title,genre:disc.genre}));
   const itemSeconds=4,total=itemSeconds*scenes.length;
   const text=(str,x,y,font,color)=>{
    ctx.font=font;ctx.fillStyle=color;ctx.textAlign="left";ctx.fillText(str,x,y);
   };
   function frame(at){
-   const i=Math.min(scenes.length-1,Math.floor(at/itemSeconds));
+   const i=Math.max(0,Math.min(scenes.length-1,Math.floor(at/itemSeconds)));
    const item=scenes[i],local=at-i*itemSeconds;
    game.ps1Discs={[item.id]:1};game.ps1Stations[0].discId=item.id;
-   renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1040,620);
+   background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1040,620);
    drawPs1Station(ctx,cam,point,0,true,local,item.id);
    drawActor(ctx,cam,{x:seat.x,y:seat.y,kind:"regular",id:5,time:local,
      pose:"sitting",direction:"north",transition:1,gamepad:true,consoleSeat:true});
@@ -105,7 +105,8 @@ try{
    const start=performance.now();
    let lastPaint=-Infinity;
    function loop(now){
-    const at=Math.min(total,(now-start)/1000);
+    // RAF timestamps can predate performance.now() by a fraction of a frame.
+    const at=Math.max(0,Math.min(total,(now-start)/1000));
     // Still record 20 real seconds; throttle expensive Canvas paint to ~10 FPS.
     if(at-lastPaint>=.1||at>=total){
      try{frame(at);}

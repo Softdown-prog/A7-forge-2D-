@@ -28,7 +28,8 @@ export interface PostmanDelivery {
  facing?:ActorDirection;
  moving?:boolean;
 }
-export const POSTMAN_HANDOFF_MINUTES=5;
+import {handoffMinutes} from "./characters/postman.js";
+export const POSTMAN_HANDOFF_MINUTES=handoffMinutes;
 export const postmanDoor=(s:GameState)=>entrance(s);
 export const postmanCounter=(s:GameState):Point=>{
  const queue=counterQueue(s);

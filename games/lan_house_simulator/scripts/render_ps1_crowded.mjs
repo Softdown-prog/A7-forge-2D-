@@ -33,9 +33,10 @@ try{
  page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async data=>{
-  const [{createGame},{SceneRenderer},{drawPs1Station,drawPs1Controller},{drawActor}]=await Promise.all([
-   import("./js/sim/engine.js"),import("./js/render/scene.js"),
-   import("./js/render/ps1Art.js"),import("./js/render/actorArt.js")
+  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor},{drawInteriorWall}]=await Promise.all([
+   import("./js/sim/engine.js"),import("./js/render/scene/background.js"),
+   import("./js/render/ps1Art.js"),import("./js/render/actorArt.js"),
+    import("./js/render/scene/partitions.js")
   ]);
   document.body.replaceChildren();
   document.body.style.cssText="background:#17232b;margin:0;overflow:hidden";
@@ -49,7 +50,7 @@ try{
   const zoom=1.25;
   const cam={zoom,originX:500-(midway.x-midway.y)*64*zoom,
    originY:352-(midway.x+midway.y)*32*zoom};
-  const renderer=new SceneRenderer(ctx);
+  const background=new RoomBackgroundCache();
   const lerp=(a,b,k)=>a+(b-a)*k;
   function paint(fraction){
    const index=Math.min(data.history.length-1,Math.max(0,fraction*(data.history.length-1)));
@@ -57,7 +58,7 @@ try{
    const b=data.history[Math.min(data.history.length-1,Math.ceil(index))];
    const k=index-Math.floor(index);
    const t=fraction*14;
-   renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
+   background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    // Igual ao jogo: divisórias e bancadas entram na ordem de profundidade.
    const staticObjects=data.stations.map((station,i)=>({
     depth:station.point.x+station.point.y+.3,
@@ -67,7 +68,7 @@ try{
    }));
    for(const wall of data.walls??[]){
     staticObjects.push({depth:wall.x+wall.y+.5,
-      paint:()=>renderer.drawInteriorWall(cam,wall)});
+      paint:()=>drawInteriorWall(ctx,cam,wall)});
    }
    for(const item of staticObjects.sort((x,y)=>x.depth-y.depth))item.paint();
    for(const id of data.ids){

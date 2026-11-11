@@ -4,7 +4,9 @@ import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 export type EmployeeRole="cleaner"|"technician";
 const ROLES:readonly EmployeeRole[]=["cleaner","technician"];
 /** Valores fictícios de balanceamento de 1998, não salários históricos. */
-export const EMPLOYEE_MONTHLY_WAGE_1998={cleaner:210,technician:330} as const;
+import {monthlyWage1998 as cleanerWage} from "./characters/cleaner.js";
+import {monthlyWage1998 as technicianWage} from "./characters/technician.js";
+export const EMPLOYEE_MONTHLY_WAGE_1998={cleaner:cleanerWage,technician:technicianWage} as const;
 const cents=(n:number)=>Math.round(n*100)/100;
 const dayNumber=(s:Pick<GameState,"totalMinutes">)=>Math.floor(s.totalMinutes/DAY_MINUTES)+1;
 export function employeeHired(s:Partial<GameState>,role:EmployeeRole):boolean{return s.employees?.[role]===true;}

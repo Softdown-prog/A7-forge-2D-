@@ -27,9 +27,9 @@ try{
  page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
-  const [{drawPs2Station,drawPs2Controller},{PS2_GAME_CATALOG},{drawActor},{SceneRenderer},{createGame}]=await Promise.all([
+  const [{drawPs2Station,drawPs2Controller},{PS2_GAME_CATALOG},{drawActor},{RoomBackgroundCache},{createGame}]=await Promise.all([
    import("./js/render/ps2Art.js"),import("./js/sim/ps2.js"),import("./js/render/actorArt.js"),
-   import("./js/render/scene.js"),import("./js/sim/engine.js")
+   import("./js/render/scene/background.js"),import("./js/sim/engine.js")
   ]);
   document.body.replaceChildren();
   document.body.style.cssText="background:#152530;margin:0";
@@ -41,9 +41,9 @@ try{
   const position={x:3.3,y:2.6},seat={x:3.75,y:3.37},zoom=1.7;
   const focus={x:position.x+.6,y:position.y+.7};
   const cam={zoom,originX:500-(focus.x-focus.y)*64*zoom,originY:355-(focus.x+focus.y)*32*zoom};
-  const renderer=new SceneRenderer(ctx);
+  const background=new RoomBackgroundCache();
   window.__ps2Paint=(id,time)=>{
-   renderer.drawBackground(s,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,600);
+   background.draw(ctx,s,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,600);
    drawPs2Station(ctx,cam,position,0,true,time,id,false);
    drawActor(ctx,cam,{x:seat.x,y:seat.y,kind:"regular",id:52,time,
     pose:"sitting",direction:"north",transition:1,gamepad:true,consoleSeat:true});
