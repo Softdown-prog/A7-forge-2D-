@@ -65,6 +65,8 @@ test("scene renderer retains orchestration but not inlined furniture or branding
  const scene=readFileSync(new URL("../src/render/scene.ts",import.meta.url),"utf8");
  for(const oldName of ["private renderPurchasedFurniture(","private doorMarker(","private sign(","private hudInside(","private slotAnchor("])
   assert.equal(scene.includes(oldName),false,oldName+" should be owned by its own module");
- for(const call of ["drawPurchasedFurniture(","drawExtraPosters(","drawRoomStatus(","drawAnnexPcCandidates(","drawWallPreview("])
+ for(const call of ["drawPurchasedFurniture(","drawRoomStatus(","drawAnnexPcCandidates(","drawWallPreview("])
   assert.ok(scene.includes(call),call+" remains wired");
+ const background=readFileSync(new URL("../src/render/scene/background.ts",import.meta.url),"utf8");
+ assert.match(background,/drawExtraPosters\\(/,"extra posters are now part of the cached background paint");
 });

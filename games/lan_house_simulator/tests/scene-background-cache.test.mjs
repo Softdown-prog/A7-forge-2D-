@@ -16,7 +16,11 @@ function recordingContext(){
     return (...args)=>{calls.push([key,...args]);return gradient();};
    return (...args)=>{calls.push([key,...args]);};
   },
-  set(target,key,value){target[key]=value;calls.push(["set",key,value]);return true;}
+  set(target,key,value){
+   target[key]=value;
+   const recorded=value&&typeof value==="object"&&typeof value.addColorStop==="function"?"<gradient>":value;
+   calls.push(["set",key,recorded]);return true;
+  }
  });
  return {ctx,calls};
 }
