@@ -68,5 +68,5 @@ test("scene renderer retains orchestration but not inlined furniture or branding
  for(const call of ["drawPurchasedFurniture(","drawRoomStatus(","drawAnnexPcCandidates(","drawWallPreview("])
   assert.ok(scene.includes(call),call+" remains wired");
  const background=readFileSync(new URL("../src/render/scene/background.ts",import.meta.url),"utf8");
- assert.match(background,/drawExtraPosters\\(/,"extra posters are now part of the cached background paint");
+ assert.ok(background.includes("drawExtraPosters("),"extra posters are now part of cached background paint");
 });
