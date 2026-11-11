@@ -418,7 +418,11 @@ test("expositor e proprietário permanecem desenhados no renderizador procedural
  assert.match(retail,/for\(let row=0;row<4;row\+\+\)/);
  const owner=readFileSync(resolve(dirname(root),"scene/characters/owner.ts"),"utf8");
  assert.match(owner,/drawActor\(ctx,camera,\{\.\.\.position,kind:"owner"/);
- assert.match(source,/drawCounter\(this.ctx,objectCamera/);
+ const counterModule=readFileSync(resolve(dirname(root),"scene/stations/counter.ts"),"utf8");
+ assert.match(source,/drawSceneCounter\(ctx,camera,counter/);
+ assert.match(counterModule,/drawCounter\(ctx,objectCamera/);
+ assert.match(counterModule,/drawCounterPrinter\(/);
+ assert.match(counterModule,/drawCounterDiscCopier\(/);
 });
 
 test("preços de venda individuais alteram receita e respeitam saves antigos",async()=>{
