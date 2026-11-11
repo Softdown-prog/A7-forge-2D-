@@ -101,7 +101,7 @@ test("cloud restoration is never automatic, including backup reads",async()=>{
    exportSaveText:()=>JSON.stringify({day:7})
   },{
    hasSession:()=>true,cloudState:{textContent:""},
-   api:async path=>{assert.match(path,/^\\/v1\\/saves\\/main/);return {save:{day:7},revision:"r7"};}
+   api:async path=>{assert.ok(path.startsWith("/v1/saves/main"));return {save:{day:7},revision:"r7"};}
   });
   await cloud.read(false,false);
   assert.equal(prepared,0);
@@ -120,8 +120,8 @@ test("account component owns one Angular-aware fallback and keeps public entrypo
  const root=new URL("../src/ui/",import.meta.url);
  const dialog=readFileSync(new URL("account/dialog.ts",root),"utf8");
  const controller=readFileSync(new URL("cloudControls.ts",root),"utf8");
- assert.match(dialog,/angularDialog\\?\\?document\\.createElement\\("dialog"\\)/);
- assert.match(controller,/const dialog=ensureAccountDialog\\(\\)/);
- assert.equal((controller.match(/export function mountCloudControls\\(/g)??[]).length,1);
- assert.doesNotMatch(controller,/dialog\\.innerHTML/);
+ assert.ok(dialog.includes('angularDialog??document.createElement("dialog")'));
+ assert.ok(controller.includes("const dialog=ensureAccountDialog()"));
+ assert.equal(controller.split("export function mountCloudControls(").length-1,1);
+ assert.ok(!controller.includes("dialog.innerHTML"));
 });
