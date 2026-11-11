@@ -33,10 +33,10 @@ try{
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
   const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach,buyPs1Disc},
-    {drawPs1Station,drawPs1Controller},{drawActor},{SceneRenderer}]=await Promise.all([
+    {drawPs1Station,drawPs1Controller},{drawActor},{RoomBackgroundCache}]=await Promise.all([
    import("./js/sim/engine.js"),import("./js/sim/types.js"),import("./js/sim/ps1.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js"),
-   import("./js/render/scene.js")
+   import("./js/render/scene/background.js")
   ]);
   document.body.replaceChildren();
   document.body.style.cssText="margin:0;background:#17232b;overflow:hidden";
@@ -60,7 +60,7 @@ try{
   const cam={zoom,
    originX:500-(focus.x-focus.y)*64*zoom,
    originY:355-(focus.x+focus.y)*32*zoom};
-  const renderer=new SceneRenderer(ctx);
+  const background=new RoomBackgroundCache();
   const from={x:side.x+1.2,y:side.y+.45};
   const lerp=(a,b,t)=>({x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
   const clamp=v=>Math.max(0,Math.min(1,v));
@@ -79,8 +79,8 @@ try{
    else if(t<11){at=lerp(seat,side,clamp(t-10));pose="walking";direction="east";}
    else {at=lerp(side,from,clamp((t-11)/2));pose="walking";direction="east";}
    // Fundo original do salão, sem PCs, caixa, menus nem personagens extras.
-   // drawBackground é método interno do SceneRenderer, sem alteração no runtime.
-   renderer.drawBackground(game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
+   // A mesma camada estática é desenhada pelo cache compartilhado do runtime.
+   background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
    // Desenhar a pessoa por cima da cadeira permite inspecionar mãos, sentar e levantar.
    drawActor(ctx,cam,{x:at.x,y:at.y,kind:"regular",id:5,time:t,
