@@ -2,6 +2,7 @@ import type { AccountCosmetic,AccountGamePort,CookieCosmeticId } from "../applic
 import { createAccountClient,type AccountClient,type AccountProfile } from "./accountClient.js";
 import {renderCosmeticCard} from "./account/cosmeticCard.js";
 import {ensureAccountDialog} from "./account/dialog.js";
+import {createCloudSaveController} from "./account/cloudSaves.js";
 
 interface CloudConfig {enabled:boolean;apiUrl:string;firebaseApiKey:string}
 interface WalletEntry {id:string;type:string;delta:number;itemId:string|null;at:string|null;mode?:string}
@@ -33,10 +34,11 @@ export function mountCloudControls(
  const catalog=find("#account-catalog"),inventory=find("#account-inventory"),history=find("#account-transactions");
  const donate=find("#account-donate"),cloudState=find("#account-cloud-state");
  let config:CloudConfig|null=null,store:StoreConfig|null=null,client:AccountClient|null=null;
- let account:Account|null=null,revision:string|null|undefined;
+ let account:Account|null=null;
  let loading=false,openOfflineReason="A conexão de conta ainda não está disponível nesta versão.";
  const unequipped=new Set<CookieCosmeticId>();
  const controls=Array.from(dialog.querySelectorAll<HTMLButtonElement>("button"));
+ const cloudSaves=createCloudSaveController(port,{api:(path,body)=>api(path,body),hasSession:()=>!!client?.hasSession(),cloudState});
  const cosmeticName=(id:string)=>COOKIE_COSMETICS.find(i=>i.id===id)?.name??"Item "+id;
  const isConfigured=()=>!!(config?.enabled&&config.apiUrl.startsWith("https://")&&config.firebaseApiKey);
  const status=(message:string,kind:"info"|"error"|"success"="info")=>{
@@ -61,7 +63,7 @@ export function mountCloudControls(
   finally{setBusy(false);render();}
  }
  function clearAccount(){
-  client?.signOut();account=null;revision=undefined;
+  client?.signOut();account=null;cloudSaves.reset();
   port.verifyCosmetics([]);unequipped.clear();
  }
  function synchronizeAccount(next:Account){
@@ -79,7 +81,7 @@ export function mountCloudControls(
  };
  async function connected(profile:AccountProfile){
   if(!profile.emailVerified){account=null;port.verifyCosmetics([]);throw Error("Confirme seu email para acessar os Cookies. Use Minha conta no site para reenviar a confirmação.");}
-  revision=undefined;unequipped.clear();await refresh();authBox.open=false;
+  cloudSaves.reset();unequipped.clear();await refresh();authBox.open=false;
  }
  async function api(path:string,body?:object):Promise<unknown>{
   if(!client||!isConfigured())throw Error("Entre na conta primeiro.");
@@ -154,18 +156,6 @@ export function mountCloudControls(
   link.className="slice";link.textContent="Adquirir Cookies no Donate";
   donate.append(link,line("Sua conta acompanha a navegação nesta aba. Depois do pagamento, volte e atualize o saldo.","account-subtext"));
  }
- async function cloudRead(backup=false,restoreGame=false){
-  if(!client?.hasSession())throw Error("Entre na conta primeiro.");
-  const result=await api("/v1/saves/main"+(backup?"?backup=true":"")) as {save?:object;revision:string|null};
-  revision=result.revision;
-  if(!result.save){cloudState.textContent="Não há save nesta posição da nuvem.";return;}
-  if(restoreGame){
-   const restore=port.prepareRestore(JSON.stringify(result.save));
-   if(window.confirm(backup?"Restaurar o backup neste navegador?":"Restaurar a partida da nuvem neste navegador?"))
-    restore();
-  }
-  cloudState.textContent=restoreGame?"Consulta concluída.":"Save encontrado na nuvem; revisão consultada. Restauração não foi automática.";
- }
  for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
   btn.addEventListener("click",()=>switchTab(btn.dataset.accountTab as Tab));
  find("#account-close").addEventListener("click",()=>dialog.close());
@@ -188,17 +178,11 @@ export function mountCloudControls(
   clearAccount();password.value="";authBox.open=true;
   status("Conta desconectada. Seu progresso local permanece salvo.");
  }));
- find("#account-cloud-check").addEventListener("click",()=>void action(()=>cloudRead(false,false)));
- find("#account-cloud-load").addEventListener("click",()=>void action(()=>cloudRead(false,true)));
- find("#account-cloud-backup").addEventListener("click",()=>void action(()=>cloudRead(true,true)));
- find("#account-cloud-save").addEventListener("click",()=>void action(async()=>{
-  if(revision===undefined)throw Error("Consulte a nuvem antes de salvar.");
-  const result=await api("/v1/saves/main",{expectedRevision:revision,
-   save:JSON.parse(port.exportSaveText())}) as {revision:string};
-  revision=result.revision;
-  cloudState.textContent="Save confirmado na nuvem. O save local permanece preservado.";
- }));
- switchTab("summary");
+ find("#account-cloud-check").addEventListener("click",()=>void action(()=>cloudSaves.read(false,false)));
+ find("#account-cloud-load").addEventListener("click",()=>void action(()=>cloudSaves.read(false,true)));
+ find("#account-cloud-backup").addEventListener("click",()=>void action(()=>cloudSaves.read(true,true)));
+ find("#account-cloud-save").addEventListener("click",()=>void action(()=>cloudSaves.save()));
+  switchTab("summary");
  status("Sua conta é opcional. A partida gratuita funciona normalmente.");
  render();
  void (async()=>{
