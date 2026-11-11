@@ -58,9 +58,9 @@ test("per-frame painters keep the draw batch intact: no blend modes or blur in t
  // several milliseconds per frame without GPU compositing (about +7 ms at 2x).
  assert.doesNotMatch(lighting,/globalCompositeOperation\s*=\s*["'](?:lighter|multiply|soft-light|screen|overlay)/,"lighting uses source-over only");
  assert.doesNotMatch(lighting,/shadowBlur/,"lighting never blurs");
- const scene=read("scene.ts");
- const sign=scene.slice(scene.indexOf("private sign("));
- assert.doesNotMatch(sign.slice(0,sign.indexOf("private hudInside(")+900),/shadowBlur/,"the sign and HUD plate are repainted every frame and must not blur");
+ const sign=read("scene/roomSign.ts"),hud=read("scene/roomStatus.ts");
+ assert.doesNotMatch(sign,/shadowBlur/,"the room sign is painted without blur");
+ assert.doesNotMatch(hud,/shadowBlur/,"the room status HUD is painted without blur");
  assert.match(lighting,/LIGHT_STEPS/,"the localized light is cached per quantized hour");
 });
 
