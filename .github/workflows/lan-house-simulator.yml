@@ -236,31 +236,52 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: node scripts/record_staff_diagnostics.mjs out/validation
-      - name: Record continuous Chromium gameplay and encode MP4
+      # Keep these as separate mandatory steps. A hung video recording or encoding
+      # must be reported by name, not leave the entire worker apparently frozen.
+      - name: Ensure FFmpeg for gameplay artifacts
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: |
-          # GitHub-hosted runners usually already have ffmpeg. Avoid apt/DNS
-          # network failures unless this particular runner really lacks it.
           if ! command -v ffmpeg >/dev/null 2>&1; then
             sudo apt-get -o Acquire::Retries=5 update -qq
             sudo apt-get -o Acquire::Retries=5 install -y ffmpeg
           fi
-          ffmpeg -hide_banner -version | head -n 1
-          node scripts/record_gameplay.mjs out/live-video
-          ffmpeg -hide_banner -loglevel error -y -i out/live-video/lan_house_gameplay_live.webm \
+          ffmpeg -hide_banner -version | sed -n '1p'
+      - name: Record continuous real Chromium gameplay
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          timeout --signal=TERM --kill-after=30s 12m node scripts/record_gameplay.mjs out/live-video
+          test -s out/live-video/lan_house_gameplay_live.webm
+      - name: Encode real gameplay as MP4
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          timeout --signal=TERM --kill-after=30s 12m ffmpeg -nostdin -hide_banner -loglevel error -y -i out/live-video/lan_house_gameplay_live.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
             -movflags +faststart out/live-video/lan_house_gameplay_live.mp4
           test -s out/live-video/lan_house_gameplay_live.mp4
-          ffmpeg -hide_banner -loglevel error -y -i out/validation/worker_actions.webm \
+      - name: Encode worker actions as MP4
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          timeout --signal=TERM --kill-after=30s 12m ffmpeg -nostdin -hide_banner -loglevel error -y -i out/validation/worker_actions.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/live-video/worker_actions.mp4
           test -s out/live-video/worker_actions.mp4
-          ffmpeg -hide_banner -loglevel error -y -ss 0.7 -i out/validation/staff_full_cycle.webm \
+      - name: Encode staff cycle as MP4
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          timeout --signal=TERM --kill-after=30s 12m ffmpeg -nostdin -hide_banner -loglevel error -y -ss 0.7 -i out/validation/staff_full_cycle.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/live-video/staff_full_cycle.mp4
           test -s out/live-video/staff_full_cycle.mp4
-          ffmpeg -hide_banner -loglevel error -y -ss 0.7 -i out/validation/service_blockages.webm \
+      - name: Encode service blockage diagnostics as MP4
+        if: matrix.worker == 'scene'
+        working-directory: games/lan_house_simulator
+        run: |
+          timeout --signal=TERM --kill-after=30s 12m ffmpeg -nostdin -hide_banner -loglevel error -y -ss 0.7 -i out/validation/service_blockages.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 23 \
             -movflags +faststart out/live-video/service_blockages.mp4
           test -s out/live-video/service_blockages.mp4
