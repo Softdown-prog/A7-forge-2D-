@@ -115,6 +115,7 @@ export function mountCloudControls(
   else for(const item of acquired)inventory.append(createCosmeticCard(item,true));
   renderHistory(history,account,!!client?.hasSession(),cosmeticName);
   renderDonate(donate,store);
+ }
  for(const btn of Array.from(dialog.querySelectorAll<HTMLButtonElement>("[data-account-tab]")))
   btn.addEventListener("click",()=>switchTab(btn.dataset.accountTab as Tab));
  find("#account-close").addEventListener("click",()=>dialog.close());

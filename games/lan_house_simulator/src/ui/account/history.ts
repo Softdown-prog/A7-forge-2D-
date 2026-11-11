@@ -23,4 +23,5 @@ export function renderHistory(history:HTMLElement,account:Account|null,hasSessio
    }
    if(account.transactions.length>=(account.historyLimit??40))
     history.append(line("Exibindo somente as movimentações recentes. O total de gastos considera todo o histórico.","account-subtext"));
+ }
 }
