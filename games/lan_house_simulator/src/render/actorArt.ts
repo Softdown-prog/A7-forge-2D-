@@ -115,12 +115,9 @@ export function drawActor(ctx:ActorContext,camera:Projection,a:ActorRender):void
  appearance.drawBack?.(detail);
 
   // Passos com movimentos opostos nas pernas. Ao sentar, a coxa dobra para a frente.
-  const legY=-24+headShift;
-  const footY=-4;
   const screenRig=!!screenView&&seated===0&&(pose==="walking"||pose==="idle");
   const profileWalk=!screenView&&sideways&&walking&&seated===0;
   const nearSide=quarter&&!back?-1:1;
-  const legOrder=screenRig&&quarter&&!back?[1,-1] as const:[-1,1] as const;
  const rig={style,pose,walking,work,phase,step,bob,seated,celebrating,disappointed,gamepadActive,consoleSeat,
    headShift,typing,screenView,back,sideways,quarter,profileWalk,screenRig,nearSide,ownerIdleRate:OWNER_IDLE_RATE};
    drawActorLegs(ctx,a,rig);
