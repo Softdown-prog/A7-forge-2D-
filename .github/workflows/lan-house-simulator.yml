@@ -240,8 +240,13 @@ jobs:
         if: matrix.worker == 'scene'
         working-directory: games/lan_house_simulator
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y ffmpeg
+          # GitHub-hosted runners usually already have ffmpeg. Avoid apt/DNS
+          # network failures unless this particular runner really lacks it.
+          if ! command -v ffmpeg >/dev/null 2>&1; then
+            sudo apt-get -o Acquire::Retries=5 update -qq
+            sudo apt-get -o Acquire::Retries=5 install -y ffmpeg
+          fi
+          ffmpeg -hide_banner -version | head -n 1
           node scripts/record_gameplay.mjs out/live-video
           ffmpeg -hide_banner -loglevel error -y -i out/live-video/lan_house_gameplay_live.webm \
             -an -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 24 \
