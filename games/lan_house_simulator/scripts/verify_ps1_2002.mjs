@@ -95,10 +95,20 @@ try{
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
   await playPage.goto("http://127.0.0.1:4173",{waitUntil:"domcontentloaded"});
-   await playPage.locator("#start-screen").waitFor({state:"visible",timeout:30000});
+  await playPage.locator("#start-screen").waitFor({state:"visible",timeout:30000});
   await dismissPrivacy(playPage,mobile);
-  if(mobile)await playPage.locator("#menu-continue").tap();
-  else await playPage.locator("#menu-continue").click();
+  // The menu can transition asynchronously after restoring an active session.
+  // Click only when it remains visible; otherwise verify the actual game
+  // appeared. Never force-click hidden controls or bypass gameplay assertions.
+  const resume=playPage.locator("#menu-continue"), game=playPage.locator("#game-app");
+  if(await resume.isVisible()){
+   if(mobile)await resume.tap();else await resume.click();
+  }else{
+   assert.equal(await game.isVisible(),true,
+    "PS1 playback: continue control hidden without visible gameplay");
+  }
+  await game.waitFor({state:"visible",timeout:30000});
+  await playPage.locator("#game").waitFor({state:"visible",timeout:30000});
   await playPage.screenshot({path:resolve(out,"ps1_two_players_"+width+".png")});
   if(!mobile)await playPage.waitForTimeout(3500);
   assert.deepEqual(errors,[],"browser PS1 UI has no runtime errors");
