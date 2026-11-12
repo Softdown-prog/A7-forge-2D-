@@ -164,7 +164,23 @@ try{
    throw error;
   }
   if(ready==="menu"){
-   if(mobile)await resume.tap();else await resume.click();
+   // React can replace the initial menu between the readiness probe and click.
+   // If the real game opened meanwhile, do not wait for a now-missing button.
+   if(!(await game.isVisible())){
+    try{
+     if(mobile)await resume.tap({timeout:7000});else await resume.click({timeout:7000});
+    }catch(clickError){
+     // Only accept a lost menu click when genuine resumed gameplay appears.
+     // Otherwise keep this required PS1 test red with a useful cause.
+     try{
+      await game.waitFor({state:"visible",timeout:15000});
+      console.log("PS1 playback menu was replaced by visible gameplay",{width});
+     }catch{
+      console.error("PS1 resume button disappeared without restoring the game",{width,ready,error:String(clickError)});
+      throw clickError;
+     }
+    }
+   }
   }else{
    assert.equal(ready,"game","PS1 playback must present an interactive game or resume button");
   }
