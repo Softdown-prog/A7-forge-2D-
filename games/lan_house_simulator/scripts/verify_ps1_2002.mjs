@@ -94,7 +94,8 @@ try{
   },{key:GAME_SAVE_KEY,state:active});
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
-  await playPage.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  await playPage.goto("http://127.0.0.1:4173",{waitUntil:"domcontentloaded"});
+   await playPage.locator("#start-screen").waitFor({state:"visible",timeout:30000});
   await dismissPrivacy(playPage,mobile);
   if(mobile)await playPage.locator("#menu-continue").tap();
   else await playPage.locator("#menu-continue").click();
