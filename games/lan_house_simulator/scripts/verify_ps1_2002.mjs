@@ -17,41 +17,36 @@ async function dismissPrivacy(page,mobile){
   await banner.waitFor({state:"hidden"});
  }
 }
-// Real browser pixels are the authority. Under video recording Chromium can
-// sporadically reject Page.captureScreenshot even while Canvas runs correctly.
-// Fail closed if both viewport capture and raw live-canvas readback fail.
+// Capture genuine live Canvas pixels directly. Full-page screenshot waits for
+// fonts to load, which can hang under offline Chromium and video recording.
+// Keep strict visibility/pixel assertions: never replace a failed game with a mock.
 async function captureRealPs1Frame(page,filename,width){
- try{
-  await page.screenshot({path:filename,timeout:15000,animations:"disabled"});
-  return "browser-page";
- }catch(error){
-  if(!/captureScreenshot|timed out|Timeout/i.test(String(error)))throw error;
-  console.warn("PS1 Chromium page capture unavailable; checking genuine Canvas pixels",String(error).slice(0,240));
-  const result=await page.locator("#game").evaluate(canvas=>{
-   if(!(canvas instanceof HTMLCanvasElement)||canvas.width<64||canvas.height<64)
-    throw Error("PS1 fallback requires the actual visible game Canvas");
-   const bounds=canvas.getBoundingClientRect(),style=getComputedStyle(canvas);
-   if(bounds.width<64||bounds.height<64||style.display==="none"||style.visibility==="hidden")
-    throw Error("PS1 game Canvas is not visible");
-   const ctx=canvas.getContext("2d",{willReadFrequently:true});
-   if(!ctx)throw Error("PS1 game Canvas 2D rendering context missing");
-   const colors=new Set(),samples=20;
-   for(let y=1;y<samples;y++)for(let x=1;x<samples;x++){
-    const px=Math.min(canvas.width-1,Math.floor(canvas.width*x/samples));
-    const py=Math.min(canvas.height-1,Math.floor(canvas.height*y/samples));
-    const c=ctx.getImageData(px,py,1,1).data;
-    if(c[3]>0)colors.add(`${c[0]},${c[1]},${c[2]},${c[3]}`);
-   }
-   return {width:canvas.width,height:canvas.height,colors:colors.size,uri:canvas.toDataURL("image/png")};
-  },{timeout:15000});
-  assert.ok(result.colors>3,"PS1 browser Canvas is blank or static: "+JSON.stringify({width,colors:result.colors}));
-  assert.ok(result.uri.startsWith("data:image/png;base64,"),"PS1 browser Canvas PNG readback unavailable");
-  const png=Buffer.from(result.uri.slice("data:image/png;base64,".length),"base64");
-  assert.ok(png.length>1024&&png.length<12*1024*1024,"PS1 browser PNG size out of bounds");
-  assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a","PS1 canvas capture is not a real PNG");
-  await writeFile(filename,png);
-  return "browser-canvas-pixels";
- }
+ const canvas=page.locator("#game");
+ await canvas.waitFor({state:"visible",timeout:30000});
+ const result=await canvas.evaluate(element=>{
+  if(!(element instanceof HTMLCanvasElement)||element.width<64||element.height<64)
+   throw Error("PS1 requires the running game Canvas");
+  const bounds=element.getBoundingClientRect(),style=getComputedStyle(element);
+  if(bounds.width<64||bounds.height<64||style.display==="none"||style.visibility==="hidden")
+   throw Error("PS1 game Canvas is not visible");
+  const ctx=element.getContext("2d",{willReadFrequently:true});
+  if(!ctx)throw Error("PS1 missing Canvas 2D context");
+  const colors=new Set(),samples=20;
+  for(let y=1;y<samples;y++)for(let x=1;x<samples;x++){
+   const px=Math.min(element.width-1,Math.floor(element.width*x/samples));
+   const py=Math.min(element.height-1,Math.floor(element.height*y/samples));
+   const rgba=ctx.getImageData(px,py,1,1).data;
+   if(rgba[3]>0)colors.add([rgba[0],rgba[1],rgba[2],rgba[3]].join(","));
+  }
+  return {colors:colors.size,uri:element.toDataURL("image/png")};
+ },undefined,{timeout:20000});
+ assert.ok(result.colors>3,"PS1 browser Canvas blank/static: "+JSON.stringify({width,colors:result.colors}));
+ assert.ok(result.uri.startsWith("data:image/png;base64,"),"PS1 real Canvas PNG unavailable");
+ const png=Buffer.from(result.uri.slice("data:image/png;base64,".length),"base64");
+ assert.ok(png.length>1024&&png.length<12*1024*1024,"PS1 real PNG size out of bounds");
+ assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a","PS1 capture is not real PNG");
+ await writeFile(filename,png);
+ return "browser-canvas-pixels";
 }
 
 const out=resolve(process.argv[2]??"out/ps1");
@@ -78,6 +73,7 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const click=async selector=>mobile?await page.locator(selector).tap():await page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  await page.locator('html[data-game-ready="true"]').waitFor({state:"attached",timeout:30000});
   await dismissPrivacy(page,mobile);
   await click("#menu-continue");await click("#open-shop");
   await page.locator('[data-shop-category="consoles"]').click();
@@ -107,6 +103,8 @@ try{
   assert.match(await page.locator("#ps1-stations").innerText(),/Modo dupla instalado/);
   assert.match(await page.locator("#ps1-stations").innerText(),/vagas: 0\/2/);
   await page.locator("#section-consoles").screenshot({path:resolve(out,"ps1_admin_"+width+".png")});
+  // Release the first animated game before opening video playback in 2 GiB Docker.
+  await ctx.close();
   // Outra partida salva com cliente usando o controle no salão; exercício
   // do render real e da posição do personagem sobre a cadeira.
   const active=createGame(1100+width,"historical");delete active.topGamesUnlockMode;active.totalMinutes=4*360*DAY_MINUTES;
@@ -132,6 +130,7 @@ try{
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
   await playPage.goto("http://127.0.0.1:4173",{waitUntil:"domcontentloaded"});
+  await playPage.locator('html[data-game-ready="true"]').waitFor({state:"attached",timeout:30000});
   await dismissPrivacy(playPage,mobile);
   const resume=playPage.locator("#menu-continue"), game=playPage.locator("#game-app");
   // Rehydration can briefly hide BOTH the menu button and the game container.
@@ -146,7 +145,7 @@ try{
      const rect=element.getBoundingClientRect(),style=getComputedStyle(element);
      return rect.width>0&&rect.height>0&&style.display!=="none"&&style.visibility!=="hidden";
     };
-    if(visible("#game-app"))return "game";
+    if(visible("#game"))return "game";
     if(visible("#menu-continue"))return "menu";
     return false;
    },null,{timeout:30000});
@@ -166,7 +165,7 @@ try{
   if(ready==="menu"){
    // React can replace the initial menu between the readiness probe and click.
    // If the real game opened meanwhile, do not wait for a now-missing button.
-   if(!(await game.isVisible())){
+   if(!(await playPage.locator("#game").isVisible())){
     try{
      if(mobile)await resume.tap({timeout:7000});else await resume.click({timeout:7000});
     }catch(clickError){
@@ -193,7 +192,6 @@ try{
   const recording=playPage.video();
   await playback.close();
   if(recording)await rename(await recording.path(),resolve(out,"ps1_two_players_real_gameplay.webm"));
-  await ctx.close();
  }
  await writeFile(resolve(out,"ps1_smoke.json"),JSON.stringify({reports,passed:true},null,2));
  console.log(JSON.stringify({reports,passed:true}));
