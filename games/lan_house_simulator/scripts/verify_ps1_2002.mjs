@@ -95,17 +95,41 @@ try{
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
   await playPage.goto("http://127.0.0.1:4173",{waitUntil:"domcontentloaded"});
-  await playPage.locator("#start-screen").waitFor({state:"visible",timeout:30000});
   await dismissPrivacy(playPage,mobile);
-  // The menu can transition asynchronously after restoring an active session.
-  // Click only when it remains visible; otherwise verify the actual game
-  // appeared. Never force-click hidden controls or bypass gameplay assertions.
   const resume=playPage.locator("#menu-continue"), game=playPage.locator("#game-app");
-  if(await resume.isVisible()){
+  // Rehydration can briefly hide BOTH the menu button and the game container.
+  // Wait for a visible, usable state instead of sampling the DOM too early.
+  // No force clicks, fabricated success or waived gameplay assertion.
+  let ready;
+  try{
+   const state=await playPage.waitForFunction(()=>{
+    const visible=selector=>{
+     const element=document.querySelector(selector);
+     if(!element||element.closest("[hidden]"))return false;
+     const rect=element.getBoundingClientRect(),style=getComputedStyle(element);
+     return rect.width>0&&rect.height>0&&style.display!=="none"&&style.visibility!=="hidden";
+    };
+    if(visible("#game-app"))return "game";
+    if(visible("#menu-continue"))return "menu";
+    return false;
+   },null,{timeout:30000});
+   ready=await state.jsonValue();
+  }catch(error){
+   const diagnostics=await playPage.evaluate(()=>Object.fromEntries(
+    ["#start-screen","#menu-continue","#game-app","#privacy-banner"].map(selector=>{
+     const e=document.querySelector(selector);
+     return [selector,e?{hidden:e.hidden,display:getComputedStyle(e).display,
+      visibility:getComputedStyle(e).visibility,width:e.getBoundingClientRect().width,
+      height:e.getBoundingClientRect().height}:null];
+    })));
+   console.error("PS1 playback UI did not become usable",JSON.stringify({width,diagnostics,errors}));
+   await playPage.screenshot({path:resolve(out,"ps1_playback_unready_"+width+".png")});
+   throw error;
+  }
+  if(ready==="menu"){
    if(mobile)await resume.tap();else await resume.click();
   }else{
-   assert.equal(await game.isVisible(),true,
-    "PS1 playback: continue control hidden without visible gameplay");
+   assert.equal(ready,"game","PS1 playback must present an interactive game or resume button");
   }
   await game.waitFor({state:"visible",timeout:30000});
   await playPage.locator("#game").waitFor({state:"visible",timeout:30000});
