@@ -40,7 +40,7 @@ jobs:
         if: matrix.worker != 'forge-art'
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: '24'
       - name: Install TypeScript
         if: matrix.worker != 'forge-art'
         working-directory: games/lan_house_simulator
