@@ -17,6 +17,43 @@ async function dismissPrivacy(page,mobile){
   await banner.waitFor({state:"hidden"});
  }
 }
+// Real browser pixels are the authority. Under video recording Chromium can
+// sporadically reject Page.captureScreenshot even while Canvas runs correctly.
+// Fail closed if both viewport capture and raw live-canvas readback fail.
+async function captureRealPs1Frame(page,filename,width){
+ try{
+  await page.screenshot({path:filename,timeout:15000,animations:"disabled"});
+  return "browser-page";
+ }catch(error){
+  if(!/captureScreenshot|timed out|Timeout/i.test(String(error)))throw error;
+  console.warn("PS1 Chromium page capture unavailable; checking genuine Canvas pixels",String(error).slice(0,240));
+  const result=await page.locator("#game").evaluate(canvas=>{
+   if(!(canvas instanceof HTMLCanvasElement)||canvas.width<64||canvas.height<64)
+    throw Error("PS1 fallback requires the actual visible game Canvas");
+   const bounds=canvas.getBoundingClientRect(),style=getComputedStyle(canvas);
+   if(bounds.width<64||bounds.height<64||style.display==="none"||style.visibility==="hidden")
+    throw Error("PS1 game Canvas is not visible");
+   const ctx=canvas.getContext("2d",{willReadFrequently:true});
+   if(!ctx)throw Error("PS1 game Canvas 2D rendering context missing");
+   const colors=new Set(),samples=20;
+   for(let y=1;y<samples;y++)for(let x=1;x<samples;x++){
+    const px=Math.min(canvas.width-1,Math.floor(canvas.width*x/samples));
+    const py=Math.min(canvas.height-1,Math.floor(canvas.height*y/samples));
+    const c=ctx.getImageData(px,py,1,1).data;
+    if(c[3]>0)colors.add(`${c[0]},${c[1]},${c[2]},${c[3]}`);
+   }
+   return {width:canvas.width,height:canvas.height,colors:colors.size,uri:canvas.toDataURL("image/png")};
+  },{timeout:15000});
+  assert.ok(result.colors>3,"PS1 browser Canvas is blank or static: "+JSON.stringify({width,colors:result.colors}));
+  assert.ok(result.uri.startsWith("data:image/png;base64,"),"PS1 browser Canvas PNG readback unavailable");
+  const png=Buffer.from(result.uri.slice("data:image/png;base64,".length),"base64");
+  assert.ok(png.length>1024&&png.length<12*1024*1024,"PS1 browser PNG size out of bounds");
+  assert.equal(png.subarray(0,8).toString("hex"),"89504e470d0a1a0a","PS1 canvas capture is not a real PNG");
+  await writeFile(filename,png);
+  return "browser-canvas-pixels";
+ }
+}
+
 const out=resolve(process.argv[2]??"out/ps1");
 await mkdir(out,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,"serve.mjs")],{stdio:["ignore","pipe","inherit"]});
@@ -133,10 +170,10 @@ try{
   }
   await game.waitFor({state:"visible",timeout:30000});
   await playPage.locator("#game").waitFor({state:"visible",timeout:30000});
-  await playPage.screenshot({path:resolve(out,"ps1_two_players_"+width+".png")});
+  const captureMode=await captureRealPs1Frame(playPage,resolve(out,"ps1_two_players_"+width+".png"),width);
   if(!mobile)await playPage.waitForTimeout(3500);
   assert.deepEqual(errors,[],"browser PS1 UI has no runtime errors");
-  reports.push({width,consoleBought:true,secondSeatBought:true,ps1Price:2.75,overflow,twoActorsSeated:true});
+  reports.push({width,consoleBought:true,secondSeatBought:true,ps1Price:2.75,overflow,twoActorsSeated:true,captureMode});
   const recording=playPage.video();
   await playback.close();
   if(recording)await rename(await recording.path(),resolve(out,"ps1_two_players_real_gameplay.webm"));
