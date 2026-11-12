@@ -47,11 +47,12 @@ export function bootstrapGame(document:Document=globalThis.document,win:Window=w
  const loop=createRuntimeLoop({document,window:win,canvas:elements.canvas,state,framePort:application.frame,scene,editor,inspection,renderUI});
  decorateControls();installWindowNavigation();session.showMenu();loop.start();
  const windowsClock=win.setInterval(()=>{if(application.finishRealWindows())renderUI();},1000);
- // React mounts navigation before bootstrap. Reveal those controls only after
- // two real frames: the first draws the CRT menu preview and attaches listeners.
- // Avoid races in mobile touch and account/continue flows.
- win.requestAnimationFrame(()=>win.requestAnimationFrame(()=>{
-  document.documentElement.dataset.gameReady="true";
- }));
+ // React mounts navigation before bootstrap. All imperative menu handlers,
+ // session restoration and the runtime loop have now been installed.
+ // Menu readiness must not depend on two animation frames: Chromium can
+ // throttle/defer RAF under CI video recording, hiding the Continue button
+ // indefinitely even though the app initialized successfully.
+ // Actual Canvas rendering remains verified by browser gameplay tests.
+ document.documentElement.dataset.gameReady="true";
  return {stop:()=>{win.clearInterval(windowsClock);loop.stop();}};
 }
