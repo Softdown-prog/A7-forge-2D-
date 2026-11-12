@@ -23,7 +23,13 @@ async function dismissPrivacy(page,mobile){
 async function captureRealPs1Frame(page,filename,width){
  const canvas=page.locator("#game");
  await canvas.waitFor({state:"visible",timeout:30000});
- const result=await canvas.evaluate(element=>{
+ // Browser visibility is not proof of an actual rendered frame.
+ // Poll the real Canvas 2D pixels while the game's animation loop runs;
+ // fail closed when no painted frame appears (never draw synthetic pixels).
+ const painted=await page.waitForFunction(()=>{
+  const element=document.querySelector("#game");
+  if(!(element instanceof HTMLCanvasElement)||element.width<64||element.height<64)
+   return false;
   if(!(element instanceof HTMLCanvasElement)||element.width<64||element.height<64)
    throw Error("PS1 requires the running game Canvas");
   const bounds=element.getBoundingClientRect(),style=getComputedStyle(element);
@@ -38,9 +44,11 @@ async function captureRealPs1Frame(page,filename,width){
    const rgba=ctx.getImageData(px,py,1,1).data;
    if(rgba[3]>0)colors.add([rgba[0],rgba[1],rgba[2],rgba[3]].join(","));
   }
+  if(colors.size<=3)return false;
   return {colors:colors.size,uri:element.toDataURL("image/png")};
- },undefined,{timeout:20000});
- assert.ok(result.colors>3,"PS1 browser Canvas blank/static: "+JSON.stringify({width,colors:result.colors}));
+ },null,{polling:250,timeout:45000});
+ const result=await painted.jsonValue();
+ assert.ok(result.colors>3,"PS1 Canvas must display genuine colors: "+JSON.stringify({width,colors:result.colors}));
  assert.ok(result.uri.startsWith("data:image/png;base64,"),"PS1 real Canvas PNG unavailable");
  const png=Buffer.from(result.uri.slice("data:image/png;base64,".length),"base64");
  assert.ok(png.length>1024&&png.length<12*1024*1024,"PS1 real PNG size out of bounds");
