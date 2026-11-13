@@ -29,7 +29,7 @@ export function assertCompositionAdaptersExclude(pattern){
  * live getState callback. Keep architecture tests valid after modularization.
  */
 export function assertGroupedPortWiring(group,factory){
- const names={consolePorts:'createConsolePorts',financeReportsPorts:'createFinanceReportsPorts'};
+ const names={consolePorts:'createConsolePorts',financeReportsPorts:'createFinanceReportsPorts',pricingPorts:'createPricingPorts'};
  assert.ok(Object.hasOwn(names,group),'Unknown application port group: '+group);
  const path='application/portGroups/'+group+'.ts';
  const root=ts.createSourceFile('application/gamePorts.ts',sourceModule('application/gamePorts.ts'),ts.ScriptTarget.Latest,true);

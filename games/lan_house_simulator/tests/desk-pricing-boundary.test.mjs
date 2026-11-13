@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -101,7 +101,7 @@ test("porta sem DOM e apresentação sem dependência de simulação",()=>{
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(sourceModule("application/gamePorts.ts").includes("createDeskPricingPort(getState)"));
+ assertGroupedPortWiring("pricingPorts","createDeskPricingPort");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("isActive:page=>managementPanels.active(\"prices\",page)"));
  assert.ok(ui.includes('options.isActive("discs")'));
  assert.ok(ui.includes('options.isActive("printing")'));

@@ -14,8 +14,8 @@ import { createCommerceNetworkPort } from "./commerceNetworkPort.js";
 import type { ActionResult } from "./contracts.js";
 import { createConsolePorts } from "./portGroups/consolePorts.js";
 import { createFinanceReportsPorts } from "./portGroups/financeReportsPorts.js";
+import { createPricingPorts } from "./portGroups/pricingPorts.js";
 import { customerFeedbackSnapshot } from "./customerFeedbackSnapshot.js";
-import { createDeskPricingPort } from "./deskPricingPort.js";
 import { createEventLogPort } from "./eventLogPort.js";
 import { createFridayMeetupPort } from "./fridayMeetupPort.js";
 import { createGameLicensingPort } from "./gameLicensingPort.js";
@@ -23,7 +23,6 @@ import { createGpuCatalogPort } from "./gpuCatalogPort.js";
 import { createGpuDownloadMetersPort } from "./gpuDownloadMetersPort.js";
 import { createGpuGamesCatalogPort } from "./gpuGamesCatalogPort.js";
 import { createHardwarePanelPort } from "./hardwarePanelPort.js";
-import { createHourlyPriceStatusPort } from "./hourlyPriceStatusPort.js";
 import { createLayoutEditorPort,type LayoutEditorCamera } from "./layoutEditorPort.js";
 import { createLcdMonitorsPort } from "./lcdMonitorsPort.js";
 import { createMerchandisePort } from "./merchandisePort.js";
@@ -35,10 +34,6 @@ import { createNoticeWindowStatusPort } from "./noticeWindowStatusPort.js";
 import { createPcOperationsPort } from "./pcOperationsPort.js";
 import { createPlacementActionsPort } from "./placementActionsPort.js";
 import { computerOperationsSnapshot,liveStatusSnapshot } from "./presentationModels.js";
-import { createPricingInsightsPort } from "./pricingInsightsPort.js";
-import { createPricingPort } from "./pricingPort.js";
-import { createPromotionStatusPort } from "./promotionStatusPort.js";
-import { createRetailPriceStatusPort } from "./retailPriceStatusPort.js";
 import { createServiceActionsPort } from "./serviceActionsPort.js";
 import { createShopActionsPort } from "./shopActionsPort.js";
 import { createShopCatalogOffersPort } from "./shopCatalogOffersPort.js";
@@ -64,12 +59,12 @@ export function createGamePorts(getState:()=>GameState,cameraForState:(state:Gam
  const {stationLedgerPort,monthlyFinancePort,financialBalancePort,financialAdminOverviewPort}=createFinanceReportsPorts(getState);
  const stationRevisionPort=createStationRevisionPort(getState);
  const adminPanelRevisionsPort=createAdminPanelRevisionsPort(getState);
- const promotionStatusPort=createPromotionStatusPort(getState);
+ const {promotionStatusPort,pricingInsightsPort,hourlyPriceStatusPort,retailPriceStatusPort,deskPricingPort,pricingPort}=createPricingPorts(getState);
  const staffStatusPort=createStaffStatusPort(getState);
- const pricingInsightsPort=createPricingInsightsPort(getState);
- const hourlyPriceStatusPort=createHourlyPriceStatusPort(getState);
- const retailPriceStatusPort=createRetailPriceStatusPort(getState);
- const deskPricingPort=createDeskPricingPort(getState);
+
+
+
+
  const commerceNetworkPort=createCommerceNetworkPort(getState);
  const pcOperationsPort=createPcOperationsPort(getState);
  const lcdMonitorsPort=createLcdMonitorsPort(getState);
@@ -84,7 +79,7 @@ export function createGamePorts(getState:()=>GameState,cameraForState:(state:Gam
  const eventLogPort=createEventLogPort(getState);
  const noticeActions=createNoticeActionsPort(getState);
  const merchandisePort=createMerchandisePort(getState);
- const pricingPort=createPricingPort(getState);
+
  const serviceActions=createServiceActionsPort(getState);
  const gameLicensing=createGameLicensingPort(getState);
  const stationActions=createStationActionsPort(getState);

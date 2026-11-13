@@ -72,7 +72,8 @@ test('entry point only imports and invokes composition; application has no brows
  // Port groups are part of application composition, not a reason to reduce coverage.
  const groups=[
   {path:'application/portGroups/consolePorts.ts',name:'createConsolePorts'},
-  {path:'application/portGroups/financeReportsPorts.ts',name:'createFinanceReportsPorts'}
+  {path:'application/portGroups/financeReportsPorts.ts',name:'createFinanceReportsPorts'},
+  {path:'application/portGroups/pricingPorts.ts',name:'createPricingPorts'}
  ];
  const root=graph.get('application/gamePorts.ts');
  let factories=0;
