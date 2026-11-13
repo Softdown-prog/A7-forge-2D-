@@ -1,30 +1,15 @@
 import type {Projection} from "./isometric.js";
 import {iso} from "./isometric.js";
 import {line} from "./posters/primitives.js";
-import type {PosterKind,PosterDesign} from "./posters/types.js";
+import type {PosterKind} from "./posters/types.js";
 export type {PosterKind} from "./posters/types.js";
-import {coasterPoster} from "./posters/coaster.js";
-import {tacticalPoster} from "./posters/tactical.js";
-import {golfPoster} from "./posters/golf.js";
-import {artilleryPoster} from "./posters/artillery.js";
-import {cityPoster} from "./posters/city.js";
-import {terminalPoster} from "./posters/terminal.js";
-import {arcadePoster} from "./posters/arcade.js";
+import {posterFor} from "./posters/registry.js";
+export {POSTER_KINDS} from "./posters/registry.js";
 
-export const POSTER_KINDS:readonly PosterKind[]=["coaster","tactical","golf","artillery","city","terminal","arcade"];
 export const POSTER_WIDTH=96,POSTER_HEIGHT=112;
-const posterDefinitions:Record<PosterKind,PosterDesign>={
- coaster:coasterPoster,
- tactical:tacticalPoster,
- golf:golfPoster,
- artillery:artilleryPoster,
- city:cityPoster,
- terminal:terminalPoster,
- arcade:arcadePoster
-};
 /** Original vector illustrations and lettering, painted by the game itself. */
 export function drawPosterPlate(c:CanvasRenderingContext2D,kind:PosterKind):void{
- const poster=posterDefinitions[kind];
+ const poster=posterFor(kind);
  const [base,accent,paper]=poster.palette;
  c.save();c.lineJoin="round";c.lineCap="round";
  c.fillStyle="#715c4e";c.fillRect(0,0,96,112);

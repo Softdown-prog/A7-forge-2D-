@@ -1,11 +1,11 @@
-/** Story orchestration and effects; story catalogue lives in one module per event. */
-import type {GameState,Result,Item} from "./types.js";
+/** Story scheduling and decisions; economic consequences live in stories/economics. */
+import type {GameState,Result} from "./types.js";
 import type {GameNotice} from "./notices.js";
 import {DAY_MINUTES} from "./types.js";
-import {isHistorical,priceIndex,yearFromMinutes} from "./historicalEconomy.js";
 import {hasPlayableGpuGame} from "./gpuGames.js";
 import {CHAIN_IDS,LEGACY_CHAIN_IDS,type StoryId,type StoryChainId,type LegacyChainId,type StoryNoticeId,type StoryOutcome,type StoryImpact,type StoryRecord} from "./stories/types.js";
 import {STORIES} from "./stories/catalog.js";
+import {applyStoryImpact,storyCost} from "./stories/economics.js";
 import {LEGACY_STORIES} from "./stories/legacy.js";
 import {FOLLOWUP_LABELS,FOLLOWUP_KEYS,PERSISTENT_ESCALATIONS} from "./stories/followups.js";
 
@@ -13,6 +13,7 @@ import {FOLLOWUP_LABELS,FOLLOWUP_KEYS,PERSISTENT_ESCALATIONS} from "./stories/fo
 export {STORY_IDS,LEGACY_CHAIN_IDS,CHAIN_IDS} from "./stories/types.js";
 export type {StoryId,StoryChainId,LegacyChainId,StoryNoticeId,StoryOutcome,StoryImpact,StoryChoice,StoryDefinition,StoryRecord,StoryVisitorEffect} from "./stories/types.js";
 export {STORIES} from "./stories/catalog.js";
+export {storyVisitorMultiplier} from "./stories/economics.js";
 
 const chainDefinition=(id:StoryChainId)=>isStoryId(id)?STORIES[id]:LEGACY_STORIES[id];
 export const isChainId=(id:string):id is StoryChainId=>(CHAIN_IDS as readonly string[]).includes(id);
@@ -35,7 +36,6 @@ export function isStoryId(id:string):id is StoryId{return Object.prototype.hasOw
 export function isStoryNoticeId(id:string):id is StoryNoticeId{
  return isStoryId(id)||((id.endsWith(":followup")||id.endsWith(":report"))&&isChainId(id.replace(/:(followup|report)$/,"")));
 }
-const actualCost=(s:GameState,base:number)=>isHistorical(s)?Math.round(base/10*priceIndex(yearFromMinutes(s.totalMinutes))*100)/100:base;
 const money=(cost:number)=>"R$ "+cost.toFixed(2).replace(".",",");
 function recordFor(s:GameState,id:StoryChainId):StoryRecord|undefined{
  return s.storyRecords?.find(record=>record.id===id);
@@ -48,37 +48,9 @@ function purchase(s:GameState,cost:number):boolean{
  s.expenses=Math.round((s.expenses+cost)*100)/100;
  return true;
 }
-function applyImpact(s:GameState,id:string,impact:StoryImpact|undefined):void{
- if(!impact)return;
- if(impact.reputation)s.reputation=Math.max(10,Math.min(100,s.reputation+impact.reputation));
- if(impact.wear){
-  const count=Math.max(3,Math.min(3+s.expansionLevel*2,s.installedPcs??3+s.expansionLevel*2))+(s.annexPcs?.length??0);
-  s.pcWear=Array.from({length:count},(_,i)=>Math.max(0,Math.min(100,(s.pcWear?.[i]??0)+impact.wear!)));
- }
- if(impact.stock)for(const item of ["soda","candy","snacks"] as Item[]){
-  const change=impact.stock[item]??0;
-  s.inventory[item]=Math.max(0,s.inventory[item]+change);
- }
- if(impact.offlineMinutes)s.offlineUntil=Math.max(s.offlineUntil,s.totalMinutes+impact.offlineMinutes);
- if(impact.energyBill)s.energyAccrued=(s.energyAccrued??0)+actualCost(s,impact.energyBill);
- if(impact.visitors&&impact.visitorDays){
-  // Efeito econômico concreto, expirável e serializável; não altera RNG.
-  const effects=s.storyVisitorEffects??(s.storyVisitorEffects=[]);
-  const untilDay=DAY(s)+impact.visitorDays;
-  const existing=effects.findIndex(effect=>effect.id===id);
-  if(existing>=0)effects.splice(existing,1);
-  effects.push({id,factor:impact.visitors,untilDay});
-  if(effects.length>32)effects.splice(0,effects.length-32);
- }
-}
-export function storyVisitorMultiplier(s:GameState):number {
- const day=DAY(s);
- const active=(s.storyVisitorEffects??[]).filter(e=>e.untilDay>=day);
- return Math.max(.55,Math.min(1.4,active.reduce((factor,e)=>factor*e.factor,1)));
-}
 export function storyOptions(s:GameState,id:string):Array<{id:string;label:string;cost:number;description:string}>{
- if(isStoryId(id))return STORIES[id].choices.map(o=>({...o,cost:actualCost(s,o.cost),
-  label:o.cost?o.label+" · "+money(actualCost(s,o.cost)):o.label}));
+ if(isStoryId(id))return STORIES[id].choices.map(o=>({...o,cost:storyCost(s,o.cost),
+  label:o.cost?o.label+" · "+money(storyCost(s,o.cost)):o.label}));
  if(!id.endsWith(":followup"))return [];
  const storyId=id.slice(0,-":followup".length);
  if(!isChainId(storyId))return [];
@@ -86,8 +58,8 @@ export function storyOptions(s:GameState,id:string):Array<{id:string;label:strin
  if(!r||r.stage!=="awaiting")return [];
  if(r.outcome==="bad"&&chainDefinition(storyId).category==="opportunity")return [
   {id:"story-reconnect",
-   label:storyId==="gpu-games-2005"?"Retomar pesquisa de jogos · "+money(actualCost(s,40)):"Retomar contato · "+money(actualCost(s,40)),
-   cost:actualCost(s,40),
+   label:storyId==="gpu-games-2005"?"Retomar pesquisa de jogos · "+money(storyCost(s,40)):"Retomar contato · "+money(storyCost(s,40)),
+   cost:storyCost(s,40),
    description:storyId==="gpu-games-2005"?"Consulta o interesse pelos novos jogos sem comprar GPU ou licença":"Tenta recuperar a oportunidade de divulgação ou parceria"},
   {id:"story-let-go",label:"Encerrar o assunto",cost:0,description:"Sem punição por recusar uma parceria opcional"}
  ];
@@ -103,8 +75,8 @@ export function storyOptions(s:GameState,id:string):Array<{id:string;label:strin
  return outcomes[r.outcome].map(([choiceId,label,baseCost,description])=>
   ({id:"story-"+choiceId,
    label:(isStoryId(storyId)?FOLLOWUP_LABELS[storyId][FOLLOWUP_KEYS.indexOf(choiceId)]??label:label)+
-     (baseCost?" · "+money(actualCost(s,baseCost)):""),
-   cost:actualCost(s,baseCost),
+     (baseCost?" · "+money(storyCost(s,baseCost)):""),
+   cost:storyCost(s,baseCost),
    description:storyId==="gpu-games-2005"&&choiceId==="maintain"
     ?"Continuar pesquisa sem prejuízo, mesmo sem jogo avançado licenciado":description}));
 }
@@ -115,13 +87,13 @@ export function chooseStory(s:GameState,noticeId:string,choiceId:string):Result{
   if(recordFor(s,noticeId))return {ok:false,message:"Esta história já começou."};
   const c=STORIES[noticeId].choices.find(x=>x.id===choiceId);
   if(!c)return {ok:false,message:"Opção desconhecida."};
-  const cost=actualCost(s,c.cost);
+  const cost=storyCost(s,c.cost);
   if(!purchase(s,cost))return {ok:false,message:"Caixa insuficiente: "+money(cost)+"."};
   // Divulgação de títulos GPU só aumenta a procura se existir uma licença
   // avançada utilizável em algum PC. A pesquisa/preparação pode ocorrer antes.
   const ready=noticeId!=="gpu-games-2005"||hasPlayableGpuGame(s);
   const startImpact=!ready&&c.impact?{...c.impact,visitors:undefined,visitorDays:undefined}:c.impact;
-  applyImpact(s,noticeId+":start",startImpact);
+  applyStoryImpact(s,noticeId+":start",startImpact);
   (s.storyRecords??=[]).push({id:noticeId,choice:c.id,choiceLabel:c.label,outcome:c.outcome,
    stage:"pending",dueDay:DAY(s)+2+((s.rng>>>5)%4)});
   if(!(s.storySeenIds??=[]).includes(noticeId))s.storySeenIds.push(noticeId);
@@ -160,7 +132,7 @@ export function chooseStory(s:GameState,noticeId:string,choiceId:string):Result{
    ending="A iniciativa foi registrada, mas a procura por jogos avançados só aumenta quando houver licença e PC compatível.";
   }
  }
- applyImpact(s,base+":followup",impact);
+ applyStoryImpact(s,base+":followup",impact);
  record.stage="ending";record.followupChoice=choiceId;record.followupLabel=option.label;record.finalOutcome=kind==="persist"?"bad":kind==="maintain"?"mixed":kind==="let-go"?"mixed":"good";
  record.dueDay=DAY(s)+2+((s.rng>>>9)%3);
  n.resolved=choiceId;n.read=true;

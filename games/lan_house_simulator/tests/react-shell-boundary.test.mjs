@@ -19,6 +19,17 @@ test("React owns the menu and topbar without replacing the Canvas simulation",()
  assert.match(js,/createRoot/);
  assert.doesNotMatch(js,/createGame|requestAnimationFrame|setInterval/);
 });
+test("React menu is ready after its event controllers initialize, without a RAF gate",()=>{
+ const source=file("src/bootstrap/bootstrapGame.ts");
+ const css=file("style.css");
+ assert.match(css,/html:not\(\[data-game-ready="true"\]\) #react-menu-actions/);
+ assert.match(source,/installRuntimeControls\(/);
+ assert.match(source,/installWindowNavigation\(\);session\.showMenu\(\);loop\.start\(\);/);
+ assert.match(source,/document\.documentElement\.dataset\.gameReady="true"/);
+ assert.ok(source.indexOf('document.documentElement.dataset.gameReady="true"')>
+  source.indexOf('installWindowNavigation();session.showMenu();loop.start();'));
+ assert.doesNotMatch(source,/requestAnimationFrame\(\(\)=>win\.requestAnimationFrame/);
+});
 test("React bundle ships locally and the original TypeScript bootstrap stays external",()=>{
  assert.ok(existsSync(new URL("../dist/js/react-entry.js",import.meta.url)));
  const js=file("dist/js/react-entry.js");
