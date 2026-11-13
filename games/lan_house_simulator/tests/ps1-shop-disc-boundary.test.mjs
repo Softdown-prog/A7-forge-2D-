@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude,assertSourceCall} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -138,7 +138,7 @@ test("UI não conhece sim; a compra ainda é delegada e o main usa a porta",()=>
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPs1ShopDiscPort\(getState\)/);
+ assertGroupedPortWiring("consolePorts","createPs1ShopDiscPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/discs:ps1ShopDiscPort/);
  assert.match(catalog,/renderPs1ShopDiscCatalog\(options\.host,options\.discs,options\.currentCategory\(\)==="consoles",options\.doc\)/);
  assertSourceCall("ui/runtimeControls.ts","installShopControls",["shopCatalog","ports.shopActions"]);

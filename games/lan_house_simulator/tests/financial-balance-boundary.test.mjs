@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -109,7 +109,7 @@ test("application sem DOM e UI sem motor: main mantém filtros de abas",()=>{
   "balance-income","balance-outgoing","balance-available","balance-reconciliation",
   "bill-watch-title","bill-watch-status","bill-watch"])
   assert.ok(ui.includes('"'+id+'"'));
- assert.ok(sourceModule("application/gamePorts.ts").includes("createFinancialBalancePort(getState)"));
+ assertGroupedPortWiring("financeReportsPorts","createFinancialBalancePort");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceSummary({"));
  assert.ok(sections.includes("renderFinancialBalance(options.balance.balance(),options.setText,options.doc)"));
  assert.ok(sections.includes("renderFinancialBillWatch(options.balance.billWatch(),options.doc)"));

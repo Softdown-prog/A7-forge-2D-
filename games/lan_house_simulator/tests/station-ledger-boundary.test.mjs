@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -62,7 +62,7 @@ test("fronteira mantém simulação fora do DOM e formato de tabela legado",()=>
  assert.match(ui,/\.scope="row"/);
  assert.match(ui,/toLocaleString\("pt-BR"/);
  assert.match(ui,/syncPanelChildren\(host,next\)/);
- assert.match(sourceModule("application/gamePorts.ts"),/createStationLedgerPort\(getState\)/);
+ assertGroupedPortWiring("financeReportsPorts","createStationLedgerPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/renderLedger:host=>renderStationLedgerRows\(host,stationLedgerPort\)/);
  assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminComputerSections\(\{/);
  assertCompositionAdaptersExclude(/\bstationAccountingSummary\(/);

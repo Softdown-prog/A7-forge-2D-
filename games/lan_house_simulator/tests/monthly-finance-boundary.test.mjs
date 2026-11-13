@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -88,7 +88,7 @@ test("fronteira separa cálculos de negócio e DOM sem recriar elementos",()=>{
   "last-bill-rent","last-bill-internet","last-bill-energy","last-bill-maintenance",
   "last-bill-wages","last-bill-total","monthly-statement","capacity-advice"])
   assert.ok(ui.includes('"'+id+'"'));
- assert.match(sourceModule("application/gamePorts.ts"),/createMonthlyFinancePort\(getState\)/);
+ assertGroupedPortWiring("financeReportsPorts","createMonthlyFinancePort");
  assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
  assert.match(sections,/renderMonthlyFinancePanel\(options.monthly.snapshot\(\),options.setText,options.doc\)/);
  assertCompositionAdaptersExclude(/computerOccupancyPercent\(/);

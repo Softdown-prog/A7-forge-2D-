@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -121,7 +121,7 @@ test("UI sem motor, main sem regras PS1, compra no controlador existente",()=>{
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|buyPs1Station|stepGame|shopPrice/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPs1ShopOfferPort\(getState\)/);
+ assertGroupedPortWiring("consolePorts","createPs1ShopOfferPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/ps1Offer:\(\)=>ps1ShopOfferPort\.snapshot\(\)/);
  assert.match(catalog,/renderPs1ShopOfferButton\(button,options\.ps1Offer\(\)\)/);
  assertCompositionAdaptersExclude(/\bPS1_UNLOCK_YEAR\b|\bPS1_MAX_STATIONS\b|\bps1PlacementSlots\b/);

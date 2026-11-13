@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -103,7 +103,7 @@ test("UI não conhece simulação; main injeta porta tipada e controles PS1 exis
  const sections=readFileSync(new URL("ui/adminServicesConsoles.ts",src),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPs1AdminPort\(getState\)/);
+ assertGroupedPortWiring("consolePorts","createPs1AdminPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminServicesConsoles\(\{/);
  assert.match(sections,/renderPs1AdminPanel\(options.ps1/);
  assertCompositionAdaptersExclude(/\bps1PlayableDisc\(/);

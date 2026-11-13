@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -159,6 +159,6 @@ test("componentes migrados não importam motor e main compõe os dois adaptadore
  assert.match(sourceModule("ui/runtimeControls.ts"),/installGameLicensingControls\(/);
  assert.match(sourceModule("ui/runtimeControls.ts"),/installPs1Controls\(/);
  assert.match(sourceModule("application/gamePorts.ts"),/createGameLicensingPort\(getState\)/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPs1ActionsPort\(getState\)/);
+ assertGroupedPortWiring("consolePorts","createPs1ActionsPort");
  assertCompositionAdaptersExclude(/\b(licenseEraGame|licenseGpuGame|buyPs1Disc|setPs1StationDisc|buyPs1SecondSeat|repairPs1Controls)\s*\(/);
 });

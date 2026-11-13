@@ -24,3 +24,22 @@ export function assertCompositionAdaptersExclude(pattern){
   else assert.doesNotMatch(text,pattern,path);
  }
 }
+
+/** Assert the group is imported by gamePorts and its owned port is bound to the
+ * live getState callback. Keep architecture tests valid after modularization.
+ */
+export function assertGroupedPortWiring(group,factory){
+ const names={consolePorts:'createConsolePorts',financeReportsPorts:'createFinanceReportsPorts'};
+ assert.ok(Object.hasOwn(names,group),'Unknown application port group: '+group);
+ const path='application/portGroups/'+group+'.ts';
+ const root=ts.createSourceFile('application/gamePorts.ts',sourceModule('application/gamePorts.ts'),ts.ScriptTarget.Latest,true);
+ assert.ok(root.statements.some(node=>ts.isImportDeclaration(node)
+  && node.moduleSpecifier.text==='./portGroups/'+group+'.js'
+  && node.importClause?.namedBindings && ts.isNamedImports(node.importClause.namedBindings)
+  && node.importClause.namedBindings.elements.some(entry=>entry.name.text===names[group])),
+  'gamePorts must explicitly import '+names[group]+' from '+path);
+ assertSourceCall('application/gamePorts.ts',names[group],['getState']);
+ assertSourceCall(path,factory,['getState']);
+ assert.doesNotMatch(sourceModule('application/gamePorts.ts'),new RegExp('\\b'+factory+'\\s*\\('),
+  'gamePorts must delegate '+factory+' to '+group);
+}
