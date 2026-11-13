@@ -15,14 +15,16 @@ test("guard catches cross-family imports, sibling artists and cross-story depend
   ["render/posters/arcade.ts",'import {draw} from "../retail/vending.js";'],
   ["render/actors/clown.ts",'const other=await import("./vampire.js");'],
   ["render/posters/golf.ts",'export {art} from "./city.js";'],
-  ["sim/stories/definitions/roof-leak.ts",'import "./neighbor-noise.js";']
+  ["sim/stories/definitions/roof-leak.ts",'import "./neighbor-noise.js";'],
+  ["render/scene/stations/ps1.ts",'import {x} from "./ps2.js";']
  ]);
  const violations=featureBoundaryViolations(files);
- assert.equal(violations.length,4,violations.join("\n"));
+ assert.equal(violations.length,5,violations.join("\n"));
  assert.ok(violations.some(v=>v.includes("independent render families")));
  assert.ok(violations.some(v=>v.includes("actor appearance")));
  assert.ok(violations.some(v=>v.includes("poster artwork")));
  assert.ok(violations.some(v=>v.includes("story definition")));
+ assert.ok(violations.some(v=>v.includes("console generations")));
 });
 
 test("side-effect, dynamic, re-export, single and double quote imports are scanned",()=>{
@@ -43,7 +45,8 @@ test("common root adapters and shared helpers remain valid dependencies",()=>{
   ["render/posters/registry.ts",'import {art} from "./arcade.js";'],
   ["render/actors/female-bob.ts",'import {f} from "./femaleRig.js";'],
   ["render/scene.ts",'import {p} from "./posters/arcade.js"; import {r} from "./retail/vending.js";'],
-  ["sim/stories/definitions/roof-leak.ts",'import {choice} from "../builders.js";']
+  ["sim/stories/definitions/roof-leak.ts",'import {choice} from "../builders.js";'],
+  ["render/scene/stations/registry.ts",'import {a} from "./ps1.js"; import {b} from "./ps2.js";']
  ]);
  assert.deepEqual(featureBoundaryViolations(files),[]);
 });
