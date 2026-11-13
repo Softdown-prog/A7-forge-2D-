@@ -62,9 +62,6 @@ export function createGamePorts(getState:()=>GameState,cameraForState:(state:Gam
  const {promotionStatusPort,pricingInsightsPort,hourlyPriceStatusPort,retailPriceStatusPort,deskPricingPort,pricingPort}=createPricingPorts(getState);
  const staffStatusPort=createStaffStatusPort(getState);
 
-
-
-
  const commerceNetworkPort=createCommerceNetworkPort(getState);
  const pcOperationsPort=createPcOperationsPort(getState);
  const lcdMonitorsPort=createLcdMonitorsPort(getState);

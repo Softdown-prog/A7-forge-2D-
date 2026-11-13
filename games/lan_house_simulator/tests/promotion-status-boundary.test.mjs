@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -87,7 +87,7 @@ test("fronteiras UI/aplicação e composição no main",()=>{
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b/);
  assert.doesNotMatch(ui,/replaceChildren|innerHTML|addEventListener/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPromotionStatusPort\(getState\)/);
+ assertGroupedPortWiring("pricingPorts","createPromotionStatusPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminFinanceActivity\(\{/);
  assert.match(sections,/renderPromotionStatus\(options.promotion.snapshot\(\),options.setText,options.doc\)/);
  assert.match(ui,/promotion-description/);
