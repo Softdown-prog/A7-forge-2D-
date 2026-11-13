@@ -26,3 +26,7 @@ Quando uma nova peça não couber na família existente: criar arquivo de respon
 ## Estações de console
 
 O `SceneRenderer` também deixou de conhecer os detalhes individuais de PS1 e PS2. Cada geração prepara suas entradas ordenáveis por profundidade em `scene/stations/ps1.ts` e `scene/stations/ps2.ts`; `scene/stations/registry.ts` registra as duas com detecção de IDs duplicados. A cena consome apenas `collectConsoleEntries`. O teste `scene-console-registry.test.mjs` verifica os dois produtores, ordem e ligação, sem mudar jogabilidade ou posição das bancadas. O portão de arquitetura também impede que PS1 importe PS2 (ou o contrário) dentro desta pasta.
+
+## Portas agrupadas da aplicação
+
+O `gamePorts.ts` preserva a API pública e a ordem das chaves, mas não instancia mais diretamente seis portas de PS1/PS2 nem quatro relatórios financeiros. Estas responsabilidades ficam em `src/application/portGroups/consolePorts.ts` e `financeReportsPorts.ts`. Ambos recebem apenas o mesmo `getState` vivo; nenhum guarda a partida nem introduz DOM/Canvas. O teste `tests/game-port-groups.test.mjs` compara as interfaces observáveis e confirma que a substituição da partida atualiza as portas sem recriar o grupo. A mudança não altera contabilidade, preços, save ou jogabilidade.

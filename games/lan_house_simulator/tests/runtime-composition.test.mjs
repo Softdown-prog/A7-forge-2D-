@@ -69,7 +69,31 @@ test('entry point only imports and invokes composition; application has no brows
  assert.equal(main.imports[0].target,'bootstrap/bootstrapGame.ts');assertSourceCall('main.ts','bootstrapGame',[]);
  assert.ok(main.ast.statements.every(node=>ts.isImportDeclaration(node)||ts.isExpressionStatement(node)&&ts.isCallExpression(node.expression)&&node.expression.expression.getText(main.ast)==='bootstrapGame'));
  for(const [file,module] of graph)if(file.startsWith('application/'))for(const edge of module.imports)assert.ok(!/^(ui|render|audio|bootstrap)\//.test(edge.target??''),file+' -> '+edge.target);
- const composition=graph.get('application/gamePorts.ts');let factories=0;
- function visit(node){if(ts.isCallExpression(node)&&/^create\w+Port$/.test(node.expression.getText(composition.ast))){assert.equal(node.arguments[0].getText(composition.ast),'getState');factories++;}ts.forEachChild(node,visit);}visit(composition.ast);
- assert.ok(factories>=40,'every retained panel uses the same live campaign getter');
+ // Port groups are part of application composition, not a reason to reduce coverage.
+ const groups=[
+  {path:'application/portGroups/consolePorts.ts',name:'createConsolePorts'},
+  {path:'application/portGroups/financeReportsPorts.ts',name:'createFinanceReportsPorts'}
+ ];
+ const root=graph.get('application/gamePorts.ts');
+ let factories=0;
+ for(const {path,name} of groups){
+  const group=graph.get(path);
+  assert.ok(group,path+' must exist');
+  assert.ok(root.imports.some(edge=>edge.target===path),'gamePorts must import '+path);
+  assert.ok(root.text.includes(name+'(getState)'),'gamePorts must pass live getter to '+name);
+ }
+ for(const path of ['application/gamePorts.ts',...groups.map(group=>group.path)]){
+  const module=graph.get(path);
+  let ownFactories=0;
+  function visit(node){
+   if(ts.isCallExpression(node)&&/^create\w+Port$/.test(node.expression.getText(module.ast))){
+    assert.equal(node.arguments[0]?.getText(module.ast),'getState',path+' must pass live getState');
+    factories++;ownFactories++;
+   }
+   ts.forEachChild(node,visit);
+  }
+  visit(module.ast);
+  assert.ok(ownFactories>0,path+' must instantiate real ports');
+ }
+ assert.ok(factories>=40,'every retained panel must use the same live campaign getter');
 });

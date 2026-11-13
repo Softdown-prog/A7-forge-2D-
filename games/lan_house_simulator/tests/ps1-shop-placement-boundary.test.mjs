@@ -1,4 +1,4 @@
-import {sourceModule} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -104,7 +104,7 @@ test("limite de camadas: UI sem motor e compra delegada ao shopControls",()=>{
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|buyPs1Station|stepGame/);
- assert.match(sourceModule("application/gamePorts.ts"),/createPs1ShopPlacementPort\(getState\)/);
+ assertGroupedPortWiring("consolePorts","createPs1ShopPlacementPort");
  assert.match(sourceModule("ui/gamePanels.ts"),/ps1Slots:\(\)=>ps1ShopPlacementPort\.snapshot\(\)/);
  assert.match(catalog,/renderPs1ShopPlacement\(card,\{art,category,title,description,button\}/);
  assert.match(controls,/querySelector<HTMLSelectElement>\("#ps1-placement"\)/);

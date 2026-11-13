@@ -1,4 +1,4 @@
-import {sourceModule} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -79,7 +79,7 @@ test("UI não depende de simulação nem registra eventos; main mantém painéis
  assert.doesNotMatch(app,/\b(document|window|HTMLElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(sourceModule("application/gamePorts.ts").includes("createFinancialAdminOverviewPort(getState)"));
+ assertGroupedPortWiring("financeReportsPorts","createFinancialAdminOverviewPort");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceSummary({"));
  assert.ok(sections.includes("renderFinancialAdminTotals(options.overview,options.setText)"));
  assert.ok(sourceModule("ui/gamePanels.ts").includes("renderAdminFinanceActivity({"));
