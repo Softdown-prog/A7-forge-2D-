@@ -20,6 +20,7 @@ import {drawRoomWindows} from "./scene/windows.js";
 import {RoomBackgroundCache} from "./scene/background.js";
 import {drawLayoutOverlay} from "./scene/layoutOverlay.js";
 import {drawComputerDesk} from "./scene/stations/computer.js";
+import {collectConsoleEntries} from "./scene/stations/registry.js";
 import {drawSceneCounter} from "./scene/stations/counter.js";
 import {drawAnnexPcCandidates} from "./scene/annexPcOverlay.js";
 import {drawDoorCandidates,drawWallPreview} from "./scene/wallOverlay.js";
@@ -36,11 +37,7 @@ import {drawScenePostman} from "./scene/characters/postman.js";
 import {drawSceneWorker} from "./scene/characters/worker.js";
 import {drawSceneOwner} from "./scene/characters/owner.js";
 import {drawSceneCustomer} from "./scene/characters/customer.js";
-import {ps1StationPoint,ps1PlayableDisc} from "../sim/ps1.js";
-import {ps2StationPoint,ps2PlayableGame} from "../sim/ps2.js";
 import {customerConsole,customerConsoleSeat} from "../sim/consoleLayout.js";
-import {drawPs2Station} from "./ps2Art.js";
-import {drawPs1Station} from "./ps1Art.js";
 import {drawNightMatchMarkers,drawNightMatchReactions,nightMatchReactions,type NightMatchReaction} from "./nightMatchMarkers.js";
 import {drawNightPrizePresentation} from "./nightPrizePresentation.js";
 import {drawNightReopening} from "./nightReopening.js";
@@ -96,21 +93,7 @@ export class SceneRenderer {
       const p=pcPosition(i,s);
       entries.push({depth:p.x+p.y,paint:()=>drawComputerDesk(ctx,camera,p,i,elapsedSeconds,online(s),s)});
     }
-    for(let i=0;i<(s.ps1Stations?.length??0);i++){
-      const point=ps1StationPoint(s,i);
-      if(point){
-       const inUse=s.customers.some(c=>c.ps1StationIndex===i&&c.stage==="using");
-       entries.push({depth:point.x+point.y+.3,paint:()=>drawPs1Station(ctx,camera,point,
-        s.ps1Stations![i]!.wear,inUse,elapsedSeconds,ps1PlayableDisc(s,i),
-        s.ps1Stations![i]!.secondSeat===true)});
-      }
-    }
-    for(let i=0;i<(s.ps2Stations?.length??0);i++){
-      const point=ps2StationPoint(s,i);if(!point)continue;
-      const st=s.ps2Stations![i]!,active=s.customers.some(c=>c.ps2StationIndex===i&&c.stage==="using");
-      entries.push({depth:point.x+point.y+.3,paint:()=>drawPs2Station(ctx,camera,point,
-       st.wear,active,elapsedSeconds,ps2PlayableGame(s,i),!!st.secondSeat,!!st.poweredOff)});
-    }
+    entries.push(...collectConsoleEntries(ctx,camera,s,elapsedSeconds));
     for(let i=0;i<BIN_SPOTS.length;i++){
       const p=binSpots(s)[i]!;
       entries.push({depth:p.x+p.y+.1,paint:()=>this.trashBin(camera,p,s.binFill?.[i]??0)});

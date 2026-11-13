@@ -22,3 +22,7 @@ O Angular já define um orçamento de tamanho por configuração. Não são impo
 ## Como estender
 
 Quando uma nova peça não couber na família existente: criar arquivo de responsabilidade única, registrar no agregador, acrescentar teste de contrato e validar em Node/Chromium. Se duas famílias precisarem da mesma função, extraí-la para um módulo compartilhado neutro em vez de criar importação lateral. Atualizar este ADR quando uma fronteira intencionalmente mudar.
+
+## Estações de console
+
+O `SceneRenderer` também deixou de conhecer os detalhes individuais de PS1 e PS2. Cada geração prepara suas entradas ordenáveis por profundidade em `scene/stations/ps1.ts` e `scene/stations/ps2.ts`; `scene/stations/registry.ts` registra as duas com detecção de IDs duplicados. A cena consome apenas `collectConsoleEntries`. O teste `scene-console-registry.test.mjs` verifica os dois produtores, ordem e ligação, sem mudar jogabilidade ou posição das bancadas. O portão de arquitetura também impede que PS1 importe PS2 (ou o contrário) dentro desta pasta.

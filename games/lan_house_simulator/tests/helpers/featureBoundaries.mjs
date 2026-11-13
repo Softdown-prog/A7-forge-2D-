@@ -57,6 +57,9 @@ export function featureBoundaryViolations(sources){
      isTopLevel(from,"actors")&&!sharedActorFiles.has(file)&&
      isTopLevel(target,"actors")&&!sharedActorFiles.has(targetFile)&&from!==target){
     failures.push(from+" -> "+target+": actor appearance cannot depend on another appearance");
+   }else if(/^render\/scene\/stations\/(?:ps1|ps2)\.ts$/.test(from)&&
+     /^render\/scene\/stations\/(?:ps1|ps2)\.ts$/.test(target)&&from!==target){
+    failures.push(from+" -> "+target+": console generations cannot import one another");
    }else if(from.startsWith("sim/stories/definitions/")&&target.startsWith("sim/stories/definitions/")&&from!==target){
     failures.push(from+" -> "+target+": story definition cannot import a sibling definition");
    }
