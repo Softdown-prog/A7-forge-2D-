@@ -42,7 +42,10 @@ test('CI must reject malformed browser scripts before installing browsers',()=>{
  for(const script of ['cutover_document.mjs','build_cutover_candidate.mjs',
    'verify_catalog_preview.mjs','verify_integrated_game.mjs',
    'integrated-qa/privacy.mjs','integrated-qa/consoleReleaseGates.mjs',
-   'integrated-qa/topGamesMagazineGates.mjs'])
+   'integrated-qa/topGamesMagazineGates.mjs',
+   'integrated-qa/mobileLayoutEditor.mjs',
+   'integrated-qa/accountDonation.mjs',
+   'integrated-qa/stockManagement.mjs'])
   assert.ok(workflow.includes('node --check frontend-angular/scripts/'+script),
    'Missing syntax check: '+script);
  assert.ok(workflow.indexOf('Syntax check cutover') <

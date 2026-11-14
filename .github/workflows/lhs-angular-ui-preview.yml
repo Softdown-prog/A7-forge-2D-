@@ -92,6 +92,9 @@ jobs:
           node --check frontend-angular/scripts/integrated-qa/privacy.mjs
           node --check frontend-angular/scripts/integrated-qa/consoleReleaseGates.mjs
           node --check frontend-angular/scripts/integrated-qa/topGamesMagazineGates.mjs
+          node --check frontend-angular/scripts/integrated-qa/mobileLayoutEditor.mjs
+          node --check frontend-angular/scripts/integrated-qa/accountDonation.mjs
+          node --check frontend-angular/scripts/integrated-qa/stockManagement.mjs
           node --check scripts/build_angular_site_candidate.mjs
           node --check frontend-angular/scripts/verify_full_site.mjs
           node --check website/build.mjs

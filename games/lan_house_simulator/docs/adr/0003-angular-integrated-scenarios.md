@@ -23,3 +23,13 @@ Extrair os demais cenários somente após essa etapa passar no CI, evitando dupl
 A prévia `lhs-angular-ui-preview.yml` também executa `node --check` nos três novos módulos antes da instalação de Chromium e inclui o teste de fronteira de cenários na verificação prévia de UI. Isso mantém o portão de sintaxe equivalente ao anterior.
 
 O auditor `frontend-angular/scripts/audit_migration.mjs` agora reúne a evidência do orquestrador com os módulos `integrated-qa/*.mjs` somente se eles estiverem **importados e aguardados** (`await`) no fluxo principal. Isso corrige a leitura pré-modularização sem confundir arquivos isolados com testes executados. O teste do auditor verifica também a exclusão de módulos desconectados.
+
+## Segunda etapa — layout mobile, conta/doações e estoque
+
+| Bloco antes em `verify_integrated_game.mjs` | Arquivo novo | Relatório mantido |
+| --- | --- | --- |
+| Editor Canvas por toque | `frontend-angular/scripts/integrated-qa/mobileLayoutEditor.mjs` | `layoutEditorResults` |
+| Conta e doação com rotas de serviços simuladas | `frontend-angular/scripts/integrated-qa/accountDonation.mjs` | `accountDonationResults` |
+| Catálogo, preço, pedidos e persistência | `frontend-angular/scripts/integrated-qa/stockManagement.mjs` | `stockManagementResults` |
+
+Cada bloco foi transportado integralmente, com as mesmas asserções, estado real do jogo, navegações Chromium, capturas, intercepções de rede e recarregamentos. A ordem de execução e os sete grupos de `results.json` não mudaram. `audit_migration.mjs` agrega a evidência somente de módulos efetivamente importados e aguardados (`await`). Os testes de fronteira, os testes negativos do auditor e a checagem de sintaxe do workflow acompanharam os novos caminhos. Os contadores de asserções, navegações e contextos antes/depois foram comparados.

@@ -2,12 +2,18 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {verifyPrivacyChoices} from '../frontend-angular/scripts/integrated-qa/privacy.mjs';
+import {verifyMobileLayoutEditor} from '../frontend-angular/scripts/integrated-qa/mobileLayoutEditor.mjs';
+import {verifyAccountDonation} from '../frontend-angular/scripts/integrated-qa/accountDonation.mjs';
+import {verifyStockManagement} from '../frontend-angular/scripts/integrated-qa/stockManagement.mjs';
 import {verifyConsoleReleaseGates} from '../frontend-angular/scripts/integrated-qa/consoleReleaseGates.mjs';
 import {verifyTopGamesMagazineGates} from '../frontend-angular/scripts/integrated-qa/topGamesMagazineGates.mjs';
 
 const script=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
 const cases=[
  ['privacy.mjs','verifyPrivacyChoices',verifyPrivacyChoices,'privacyChoices','expiresAfter30Days:true'],
+ ['mobileLayoutEditor.mjs','verifyMobileLayoutEditor',verifyMobileLayoutEditor,'layoutEditorResults','Mobile moved and rotated PC survives real reload'],
+ ['accountDonation.mjs','verifyAccountDonation',verifyAccountDonation,'accountDonationResults','No donation order or Mercado Pago charge'],
+ ['stockManagement.mjs','verifyStockManagement',verifyStockManagement,'stockManagementResults','Reload does not bill pending merchandise deliveries twice'],
  ['consoleReleaseGates.mjs','verifyConsoleReleaseGates',verifyConsoleReleaseGates,'blocked','ps2Available:scenario.ps2Count'],
  ['topGamesMagazineGates.mjs','verifyTopGamesMagazineGates',verifyTopGamesMagazineGates,'magazineShop','buttonDisabled:!received']
 ];
@@ -40,4 +46,14 @@ test('independent scenarios never bypass the active Chromium environment',()=>{
   assert.match(body,/await context\.close\(\)/,'must close the scenario context');
   assert.ok(body.includes('const '+returnName+'=[];'));
  }
+});
+
+test('extracted mobile, account and stock scenarios retain their critical safeguards',()=>{
+ const read=name=>readFileSync(new URL('../frontend-angular/scripts/integrated-qa/'+name,import.meta.url),'utf8');
+ for(const token of ['page.touchscreen.tap','worldTouch','#layout-confirm','restored.objectPlacements'])
+  assert.ok(read('mobileLayoutEditor.mjs').includes(token),'mobile editor: '+token);
+ for(const token of ['identitytoolkit.googleapis.com','securetoken.googleapis.com','context.route(fakeApi','orderCalls,0','cloudUploads,0'])
+  assert.ok(read('accountDonation.mjs').includes(token),'payment isolation: '+token);
+ for(const token of ['merchandise-price-form','supplierTask','restored.merchandise.orders.length','Reload does not bill pending merchandise deliveries twice'])
+  assert.ok(read('stockManagement.mjs').includes(token),'stock state: '+token);
 });
