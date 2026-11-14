@@ -57,3 +57,17 @@ test('extracted mobile, account and stock scenarios retain their critical safegu
  for(const token of ['merchandise-price-form','supplierTask','restored.merchandise.orders.length','Reload does not bill pending merchandise deliveries twice'])
   assert.ok(read('stockManagement.mjs').includes(token),'stock state: '+token);
 });
+
+test('console release QA injects its actual PS2 catalogue instead of reading an undefined global',()=>{
+ const imported=script.match(/import \{PS2_GAME_CATALOG\} from ['"]\.\.\/\.\.\/dist\/js\/sim\/ps2\.js['"]/);
+ assert.ok(imported,'orchestrator must import the compiled catalogue');
+ const source=readFileSync(new URL('../frontend-angular/scripts/integrated-qa/consoleReleaseGates.mjs',import.meta.url),'utf8');
+ assert.match(source,/const expectedPs2=PS2_GAME_CATALOG\.filter\(/,'year gating must use original PS2 catalogue');
+ const signature=source.match(/export async function verifyConsoleReleaseGates\(\{([^}]*)\}\)/)?.[1];
+ const call=script.match(/const blocked=await verifyConsoleReleaseGates\(\{([^}]*)\}\)/)?.[1];
+ assert.ok(signature&&call,'both dependency contract ends must exist');
+ for(const dependency of signature.split(',').map(x=>x.trim())){
+  assert.ok(call.split(',').map(x=>x.trim()).includes(dependency),'console release missing injected dependency: '+dependency);
+ }
+ assert.ok(signature.split(',').includes('PS2_GAME_CATALOG'),'compiled PS2 catalogue must be injected');
+});

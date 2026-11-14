@@ -33,3 +33,7 @@ O auditor `frontend-angular/scripts/audit_migration.mjs` agora reúne a evidênc
 | Catálogo, preço, pedidos e persistência | `frontend-angular/scripts/integrated-qa/stockManagement.mjs` | `stockManagementResults` |
 
 Cada bloco foi transportado integralmente, com as mesmas asserções, estado real do jogo, navegações Chromium, capturas, intercepções de rede e recarregamentos. A ordem de execução e os sete grupos de `results.json` não mudaram. `audit_migration.mjs` agrega a evidência somente de módulos efetivamente importados e aguardados (`await`). Os testes de fronteira, os testes negativos do auditor e a checagem de sintaxe do workflow acompanharam os novos caminhos. Os contadores de asserções, navegações e contextos antes/depois foram comparados.
+
+## Correção verificada em integração real
+
+A abertura do PR #124 executou o workflow Chromium e detectou `ReferenceError: PS2_GAME_CATALOG is not defined` em `consoleReleaseGates.mjs`: o bloco havia sido movido integralmente, mas a dependência do catálogo PS2 permaneceu no orquestrador. O módulo agora recebe explicitamente `PS2_GAME_CATALOG` pela chamada do orquestrador. `angular-integrated-scenario-boundary.test.mjs` verifica tanto a importação quanto a passagem desse contrato para impedir que o erro reapareça sem ser detectado antes de chegar ao navegador.

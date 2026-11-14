@@ -549,7 +549,7 @@ try{
 
  const stockManagementResults=await verifyStockManagement({browser,origin,output,createGame,DAY_MINUTES,GAME_SAVE_KEY});
 
- const blocked=await verifyConsoleReleaseGates({browser,origin,output,createGame,TOP_GAMES_ISSUES,DAY_MINUTES,GAME_SAVE_KEY});
+ const blocked=await verifyConsoleReleaseGates({browser,origin,output,createGame,TOP_GAMES_ISSUES,PS2_GAME_CATALOG,DAY_MINUTES,GAME_SAVE_KEY});
 
  const magazineShop=await verifyTopGamesMagazineGates({browser,origin,createGame,isValidSave,buyPs1Station,TOP_GAMES_ISSUES,DAY_MINUTES,GAME_SAVE_KEY});
 

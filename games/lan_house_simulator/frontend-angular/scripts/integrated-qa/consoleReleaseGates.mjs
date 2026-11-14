@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import {resolve} from 'node:path';
 
-export async function verifyConsoleReleaseGates({browser,origin,output,createGame,TOP_GAMES_ISSUES,DAY_MINUTES,GAME_SAVE_KEY}){
+export async function verifyConsoleReleaseGates({browser,origin,output,createGame,TOP_GAMES_ISSUES,PS2_GAME_CATALOG,DAY_MINUTES,GAME_SAVE_KEY}){
  // Real engine eligibility tests: no fabricated Angular DTOs or purchase events.
  const blocked=[];
  for(const scenario of [
