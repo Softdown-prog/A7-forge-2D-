@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -113,7 +113,7 @@ test("application sem DOM, UI sem motor e main mantém guarda de revisão",()=>{
  assert.doesNotMatch(app,/\b(document|window|HTMLElement|HTMLButtonElement)\b/);
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(sourceModule("application/gamePorts.ts").includes("createRetailPriceStatusPort(getState)"));
+ assertGroupedPortWiring("pricingPorts","createRetailPriceStatusPort");
  assert.ok(section.includes("renderRetailPriceControls(options.retailControls,options.retail.snapshot(),"));
  assert.match(sourceModule("ui/gamePanels.ts"),/renderAdminPricingSections\(\{/);
  assert.ok(sourceModule("ui/gamePanels.ts").includes("panelChanged(\"retail\",adminPanelRevisionsPort.retail(),!liveOnly)"));

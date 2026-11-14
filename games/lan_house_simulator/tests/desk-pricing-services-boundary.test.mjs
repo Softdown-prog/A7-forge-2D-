@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -136,7 +136,7 @@ test("o main mantém lógica de seleção e não executa mutações de precifica
  const ui=readFileSync(new URL("ui/deskPricingPanel.ts",root),"utf8");
  assert.doesNotMatch(ui,/from\s*["']\.\.\/sim\//);
  assert.doesNotMatch(ui,/\bGameState\b|addEventListener/);
- assert.ok(sourceModule("application/gamePorts.ts").includes("createDeskPricingPort(getState)"));
+ assertGroupedPortWiring("pricingPorts","createDeskPricingPort");
  assert.ok(sourceModule("ui/gamePanels.ts").includes("renderDeskServicePanels(deskPricingPort,{"));
  assert.ok(sourceModule("ui/gamePanels.ts").includes("isActive:page=>managementPanels.active(\"prices\",page)"));
  assert.ok(sourceModule("ui/gamePanels.ts").includes("sync:syncPanelChildren"));

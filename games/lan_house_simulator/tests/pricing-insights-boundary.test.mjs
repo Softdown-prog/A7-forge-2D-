@@ -1,4 +1,4 @@
-import {sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
+import {assertGroupedPortWiring,sourceModule,assertCompositionAdaptersExclude} from "./helpers/composition.mjs";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
@@ -83,7 +83,7 @@ test("separação das camadas conserva a aba e o cálculo de demanda no motor",(
  assert.doesNotMatch(ui,/\bGameState\b|replaceChildren|innerHTML|addEventListener/);
  assert.ok(sourceModule("ui/gamePanels.ts").includes("active:page=>managementPanels.active(\"prices\",page)"));
  assert.ok(section.includes('options.active("insights")'));
- assert.ok(sourceModule("application/gamePorts.ts").includes("createPricingInsightsPort(getState)"));
+ assertGroupedPortWiring("pricingPorts","createPricingInsightsPort");
  assert.ok(section.includes("renderHourlyPricingInsights(options.insights.hourly(),options.setText)"));
  assert.ok(section.includes("renderEnergyYearOutlook(options.insights.energy(),options.setText)"));
  assertCompositionAdaptersExclude(/\bhourlyPriceInsight\(/);

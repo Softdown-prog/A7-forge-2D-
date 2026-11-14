@@ -30,3 +30,7 @@ O `SceneRenderer` também deixou de conhecer os detalhes individuais de PS1 e PS
 ## Portas agrupadas da aplicação
 
 O `gamePorts.ts` preserva a API pública e a ordem das chaves, mas não instancia mais diretamente seis portas de PS1/PS2 nem quatro relatórios financeiros. Estas responsabilidades ficam em `src/application/portGroups/consolePorts.ts` e `financeReportsPorts.ts`. Ambos recebem apenas o mesmo `getState` vivo; nenhum guarda a partida nem introduz DOM/Canvas. O teste `tests/game-port-groups.test.mjs` compara as interfaces observáveis e confirma que a substituição da partida atualiza as portas sem recriar o grupo. A mudança não altera contabilidade, preços, save ou jogabilidade.
+
+## Composição de preços e promoções
+
+O terceiro grupo `src/application/portGroups/pricingPorts.ts` compõe seis portas independentes: campanha promocional, insights, preço por hora, preços de varejo, balcão e comandos de reajuste. `gamePorts.ts` somente importa e conecta o grupo, mantendo a ordem e os tipos públicos. Cada porta recebe o mesmo `getState` ativo; nenhuma armazena o estado ou chama o motor ao ser construída. Os contratos de `tests/pricing-port-groups.test.mjs` e os testes de fronteira garantem troca de partida, DTOs, comando de preço, ausência de DOM e composição correta. Não altera valores, preços ou regras econômicas.
