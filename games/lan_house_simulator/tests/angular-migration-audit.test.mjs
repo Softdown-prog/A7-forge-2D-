@@ -1,7 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readCurrentSources,auditMigration} from "../frontend-angular/scripts/audit_migration.mjs";
+import {readCurrentSources,auditMigration,integratedQaEvidence} from "../frontend-angular/scripts/audit_migration.mjs";
 const sources=readCurrentSources();
+
+test("audit only counts Angular scenario modules that remain imported and awaited",()=>{
+ const main=sources.integratedQa.slice(0,sources.integratedQa.indexOf('/** Real Chromium cutover regression: privacy.')),
+  connected=integratedQaEvidence(main);
+ for(const marker of ["No locked PS2 purchase","31*24*60*60*1000","buttonDisabled:!received"])
+  assert.ok(connected.includes(marker),"Missing connected module evidence: "+marker);
+ const disconnected=main.replace("await verifyConsoleReleaseGates(","verifyConsoleReleaseGates(")
+  .replace("await verifyPrivacyChoices(","verifyPrivacyChoices(");
+ const evidence=integratedQaEvidence(disconnected);
+ assert.ok(!evidence.includes("No locked PS2 purchase"),"unawaited scenario is not browser QA evidence");
+ assert.ok(!evidence.includes("31*24*60*60*1000"),"unawaited privacy scenario is not browser QA evidence");
+ assert.ok(evidence.includes("buttonDisabled:!received"),"connected magazine scenario is still counted");
+});
 
 test("React and Angular keep seven stable roots and production is not prematurely switched",()=>{
  const report=auditMigration(sources);

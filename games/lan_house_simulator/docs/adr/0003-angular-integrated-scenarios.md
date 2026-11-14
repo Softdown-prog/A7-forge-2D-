@@ -21,3 +21,5 @@ O teste `tests/angular-integrated-scenario-boundary.test.mjs` verifica importaç
 Extrair os demais cenários somente após essa etapa passar no CI, evitando duplicar rotas ou refazer testes já cobertos. Não abrir PR, não fazer merge e não executar deploy sem autorização.
 
 A prévia `lhs-angular-ui-preview.yml` também executa `node --check` nos três novos módulos antes da instalação de Chromium e inclui o teste de fronteira de cenários na verificação prévia de UI. Isso mantém o portão de sintaxe equivalente ao anterior.
+
+O auditor `frontend-angular/scripts/audit_migration.mjs` agora reúne a evidência do orquestrador com os módulos `integrated-qa/*.mjs` somente se eles estiverem **importados e aguardados** (`await`) no fluxo principal. Isso corrige a leitura pré-modularização sem confundir arquivos isolados com testes executados. O teste do auditor verifica também a exclusão de módulos desconectados.
