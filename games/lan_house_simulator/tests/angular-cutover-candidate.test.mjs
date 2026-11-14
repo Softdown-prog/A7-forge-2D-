@@ -40,11 +40,15 @@ test('cutover fails closed on missing anchors or duplicate ids',()=>{
 test('CI must reject malformed browser scripts before installing browsers',()=>{
  const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
  for(const script of ['cutover_document.mjs','build_cutover_candidate.mjs',
-   'verify_catalog_preview.mjs','verify_integrated_game.mjs'])
+   'verify_catalog_preview.mjs','verify_integrated_game.mjs',
+   'integrated-qa/privacy.mjs','integrated-qa/consoleReleaseGates.mjs',
+   'integrated-qa/topGamesMagazineGates.mjs'])
   assert.ok(workflow.includes('node --check frontend-angular/scripts/'+script),
    'Missing syntax check: '+script);
  assert.ok(workflow.indexOf('Syntax check cutover') <
   workflow.indexOf('Install Playwright for real Angular browser QA'));
+ assert.match(workflow,/tests\/angular-integrated-scenario-boundary\.test\.mjs/,
+  'The real cutover preview must enforce the modular scenario contract');
 });
 test('shop-overview integrated check matches the real TypeScript cash read model',()=>{
  const native=readFileSync(new URL('../src/application/shopOverviewPort.ts',import.meta.url),'utf8');

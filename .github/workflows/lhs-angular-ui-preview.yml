@@ -89,13 +89,16 @@ jobs:
           node --check frontend-angular/scripts/verify_catalog_preview.mjs
           node --check frontend-angular/scripts/verify_static_candidate.mjs
           node --check frontend-angular/scripts/verify_integrated_game.mjs
+          node --check frontend-angular/scripts/integrated-qa/privacy.mjs
+          node --check frontend-angular/scripts/integrated-qa/consoleReleaseGates.mjs
+          node --check frontend-angular/scripts/integrated-qa/topGamesMagazineGates.mjs
           node --check scripts/build_angular_site_candidate.mjs
           node --check frontend-angular/scripts/verify_full_site.mjs
           node --check website/build.mjs
           node --check website/check.mjs
           node --check scripts/verify_live_site_preview.mjs
       - name: Verify Angular UI boundaries
-        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-reactivity.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs
+        run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-reactivity.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs tests/angular-integrated-scenario-boundary.test.mjs
       - name: Audit React to Angular hosts and browser QA gaps (advisory)
         run: |
           node --test tests/angular-migration-audit.test.mjs
