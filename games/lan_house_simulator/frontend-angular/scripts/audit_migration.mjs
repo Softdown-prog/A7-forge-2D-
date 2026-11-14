@@ -144,11 +144,24 @@ export function auditMigration(sources){
   ]
  };
 }
+/** Only include scenario evidence that is statically imported AND invoked by
+ * the integrated Chromium runner. A detached test file is not test coverage.
+ */
+export function integratedQaEvidence(entry=read("frontend-angular/scripts/verify_integrated_game.mjs")){
+ const portions=[entry];
+ const imports=[...entry.matchAll(/^import\s+\{([^}]+)\}\s+from\s+['"]\.\/integrated-qa\/([\w-]+\.mjs)['"];?$/gm)];
+ for(const match of imports){
+  const bindings=match[1].split(",").map(item=>item.trim().split(/\s+as\s+/).at(-1));
+  if(!bindings.every(name=>new RegExp("\\bawait\\s+"+name+"\\s*\\(").test(entry)))continue;
+  portions.push(read("frontend-angular/scripts/integrated-qa/"+match[2]));
+ }
+ return portions.join("\n");
+}
 export function readCurrentSources(){
  return {published:read("index.html"),reactEntry:read("src/react/entry.jsx"),
   reactBuild:read("scripts/build.mjs"),angularEntry:read("frontend-angular/src/main.ts"),
   angularPreview:read("frontend-angular/src/index.html"),
-  integratedQa:read("frontend-angular/scripts/verify_integrated_game.mjs"),
+  integratedQa:integratedQaEvidence(),
   previewQa:read("frontend-angular/scripts/verify_catalog_preview.mjs"),
   angularWorkflow:fs.readFileSync(path.resolve(game,"../../.github/workflows/lhs-angular-ui-preview.yml"),"utf8")};
 }

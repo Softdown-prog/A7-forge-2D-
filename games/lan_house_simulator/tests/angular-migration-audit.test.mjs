@@ -1,7 +1,34 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readCurrentSources,auditMigration} from "../frontend-angular/scripts/audit_migration.mjs";
+import {readCurrentSources,auditMigration,integratedQaEvidence} from "../frontend-angular/scripts/audit_migration.mjs";
 const sources=readCurrentSources();
+
+test("audit only counts Angular scenario modules that remain imported and awaited",()=>{
+ const main=sources.integratedQa.slice(0,sources.integratedQa.indexOf('/** Real Chromium cutover regression: privacy.')),
+  connected=integratedQaEvidence(main);
+ for(const marker of ["No locked PS2 purchase","31*24*60*60*1000","buttonDisabled:!received"])
+  assert.ok(connected.includes(marker),"Missing connected module evidence: "+marker);
+ const disconnected=main.replace("await verifyConsoleReleaseGates(","verifyConsoleReleaseGates(")
+  .replace("await verifyPrivacyChoices(","verifyPrivacyChoices(");
+ const evidence=integratedQaEvidence(disconnected);
+ assert.ok(!evidence.includes("No locked PS2 purchase"),"unawaited scenario is not browser QA evidence");
+ assert.ok(!evidence.includes("31*24*60*60*1000"),"unawaited privacy scenario is not browser QA evidence");
+ assert.ok(evidence.includes("buttonDisabled:!received"),"connected magazine scenario is still counted");
+});
+
+test("connected mobile, account and stock scenarios contribute real browser audit evidence",()=>{
+ const source=integratedQaEvidence();
+ for(const token of ['page.touchscreen.tap','No donation order or Mercado Pago charge','restored.merchandise.orders.length'])
+  assert.ok(source.includes(token),'Connected scenario missing: '+token);
+ const main=source.slice(0,source.indexOf('/** Real Chromium cutover regression: privacy.'));
+ const detached=main.replace('await verifyMobileLayoutEditor(','verifyMobileLayoutEditor(')
+  .replace('await verifyAccountDonation(','verifyAccountDonation(')
+  .replace('await verifyStockManagement(','verifyStockManagement(');
+ const evidence=integratedQaEvidence(detached);
+ for(const token of ['page.touchscreen.tap','No donation order or Mercado Pago charge','restored.merchandise.orders.length'])
+  assert.ok(!evidence.includes(token),'Detached scenario must not count: '+token);
+ assert.ok(evidence.includes('expiresAfter30Days:true'),'Existing privacy evidence retained');
+});
 
 test("React and Angular keep seven stable roots and production is not prematurely switched",()=>{
  const report=auditMigration(sources);
