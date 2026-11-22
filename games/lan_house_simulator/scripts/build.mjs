@@ -5,15 +5,14 @@ const root=resolve(import.meta.dirname,"..");
 rmSync(resolve(root,"dist"),{recursive:true,force:true});
 mkdirSync(resolve(root,"dist"),{recursive:true});
 execFileSync(process.execPath,[resolve(root,"node_modules/typescript/bin/tsc"),"-p",resolve(root,"tsconfig.json")],{cwd:root,stdio:"inherit"});
-// The complete website is Angular-first. Keep React only for standalone
-// compatibility builds (npm run build) and old-browser regression fixtures.
-// Do not spend CPU bundling a React entry that the Angular cutover removes.
+// The production site is Angular-first. Legacy regression HTML still uses
+// the original filename, but its bundle is now vanilla DOM with no React.
 const gameUi=process.env.LHS_GAME_UI??"react";
 if(gameUi!=="react"&&gameUi!=="angular")throw Error("LHS_GAME_UI inválido: "+gameUi);
 if(gameUi==="react"){
-const {build:buildReact}=await import("esbuild");
-await buildReact({
- entryPoints:[resolve(root,"src/react/entry.jsx")],
+const {build:buildCompat}=await import("esbuild");
+await buildCompat({
+ entryPoints:[resolve(root,"src/compat/entry.mjs")],
  outfile:resolve(root,"dist/js/react-entry.js"),
  bundle:true,minify:true,format:"esm",target:"es2022",
  external:["./main.js"],

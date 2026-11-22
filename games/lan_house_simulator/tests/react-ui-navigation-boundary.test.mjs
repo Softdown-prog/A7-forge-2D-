@@ -4,9 +4,9 @@ import {readFileSync} from "node:fs";
 const file=name=>readFileSync(new URL("../"+name,import.meta.url),"utf8");
 
 test("React presents shop categories; TypeScript remains the controller",()=>{
- const html=file("index.html"),entry=file("src/react/entry.jsx"),ui=file("src/react/managementUi.jsx"),adapter=file("src/ui/shopPanels.ts");
+ const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry,adapter=file("src/ui/shopPanels.ts");
  assert.match(html,/id="react-shop-categories"/);
- assert.match(entry,/\["react-shop-categories",<ShopCategories\/>\]/);
+ assert.match(entry,/mount\("react-shop-categories"/);
  for(const id of ["equipment","consoles","building","decoration"]){
   assert.match(ui,new RegExp('id:"'+id+'"'));
  }
@@ -19,7 +19,7 @@ test("React presents shop categories; TypeScript remains the controller",()=>{
 });
 
 test("React shortcuts delegate to live admin and shop controls",()=>{
- const html=file("index.html"),entry=file("src/react/entry.jsx"),ui=file("src/react/managementUi.jsx");
+ const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry;
  for(const id of ["react-quick-deck","react-admin-shortcuts"]){
   assert.match(html,new RegExp('id="'+id+'"'));
   assert.match(entry,new RegExp('"'+id+'"'));
@@ -45,11 +45,11 @@ test("Visual-only enhancements keep Canvas and game bootstrap untouched",()=>{
 });
 
 test("React catalogue search is presentation-only and reacts after DOM repaint",()=>{
- const html=file("index.html"),entry=file("src/react/entry.jsx"),ui=file("src/react/managementUi.jsx");
+ const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry;
  const renderer=file("src/ui/shopCatalogRenderer.ts");
  assert.match(html,/id="react-shop-search"/);
- assert.match(entry,/<ShopSearch\/>/);
- assert.match(ui,/export function ShopSearch/);
+ assert.match(entry,/mount\("react-shop-search"/);
+ assert.match(ui,/function filterCatalog/);
  assert.match(ui,/:scope > article\.shop-card/);
  assert.match(ui,/card\.hidden=!matches/);
  assert.match(renderer,/lhs:shop-catalog-updated/);
