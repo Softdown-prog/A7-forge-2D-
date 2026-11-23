@@ -67,6 +67,6 @@ test('Integrated Chromium QA checks real PC health, mobile selection and persist
  ])assert.ok(qa.includes(marker),marker);
  assert.match(qa,/for\(const width of \[1280,414,360\]\)/);
  assert.match(qa,/isMobile:mobile,hasTouch:mobile/);
- assert.match(workflow,/branches: \["main", "feat\/lhs-angular-ui-foundation"\]/);
+ assert.match(workflow,/branches: \["main", "feat\/lhs-angular-ui-foundation"(?:, "[^"]+")*\]/);
  assert.match(workflow,/verify_integrated_game\.mjs/);
 });
