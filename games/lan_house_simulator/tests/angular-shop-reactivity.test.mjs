@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {normalizeCatalogSearch,catalogSearchMatch} from '../src/react/catalogSearch.mjs';
+import {normalizeCatalogSearch,catalogSearchMatch} from '../src/compat/catalogSearch.mjs';
 
 const src=(path)=>readFileSync(new URL('../frontend-angular/src/'+path,import.meta.url),'utf8');
 const angularSearch=src('catalog-search.ts');
 
 test('normalized shop index handles accents and preserves native phrase matching',()=>{
- // Exercise the deployed legacy matcher and assert Angular's independent
+ // Exercise the standalone DOM compatibility matcher and assert Angular's independent
  // TypeScript helper follows the same accent-insensitive phrase contract.
  assert.equal(normalizeCatalogSearch('CÓPIAS de CD'),'copias de cd');
  assert.ok(catalogSearchMatch('cópias',['CÓPIAS de CD','Console PS2']));
