@@ -26,7 +26,7 @@ on:
       - "games/lan_house_simulator/src/application/pcOperationsPort.ts"
       - ".github/workflows/lhs-angular-ui-preview.yml"
   push:
-    branches: ["main", "feat/lhs-angular-ui-foundation"]
+    branches: ["main", "feat/lhs-angular-ui-foundation", "refactor/lanhouse-character-modules-20261110"]
     paths:
       - "games/lan_house_simulator/frontend-angular/**"
       - "games/lan_house_simulator/tests/angular-ui-foundation.test.mjs"
