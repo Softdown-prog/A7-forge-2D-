@@ -1,5 +1,5 @@
 /** Assemble an isolated production-like static Angular candidate.
- * The published HTML and standard React build remain unchanged.
+ * The standalone compatibility HTML and canonical Angular site stay isolated.
  */
 import {cp,mkdir,readFile,rm,stat,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';

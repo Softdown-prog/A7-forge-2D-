@@ -6,7 +6,7 @@ import {siteConfig} from "./config.mjs";
 import {pages,icon,eras,faq} from "./content.mjs";
 const root=resolve(import.meta.dirname,"..");
 // The published /game/ iframe uses Angular by default. The standalone
-// npm run build path retains React only for compatibility and regression QA.
+// npm run build path retains a DOM-only compatibility fixture for regression QA.
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
 const angularSite=process.env.LHS_SITE_UI!=="compat";
 const output=resolve(root,angularCandidate?"out/site-angular":"out/site-legacy");

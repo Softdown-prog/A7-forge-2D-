@@ -40,6 +40,10 @@ test('React-era DOM selectors and output URL cannot regress',()=>{
  assert.ok(cutover.includes('src="./js/compat-entry.js"'));
  assert.ok(source('scripts/build.mjs').includes('dist/js/compat-entry.js'));
  assert.equal(existsSync(new URL('../src/react/entry.jsx',import.meta.url)),false);
+ const worker=readFileSync(new URL('../../../.github/workflows/lan-house-simulator.yml',import.meta.url),'utf8');
+ assert.ok(worker.includes('test -s dist/js/compat-entry.js'));
+ assert.ok(worker.includes('test ! -e out/site/game/js/compat-entry.js'));
+ assert.doesNotMatch(worker,/dist\\/js\\/react-entry\\.js/);
 });
 test('standalone DOM bundle cannot be accidentally relabeled as React',()=>{
  const build=source('scripts/build.mjs');

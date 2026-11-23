@@ -1,5 +1,5 @@
 /** Shop category selection is kept in the existing DOM adapter.
- * React only paints the buttons; purchase and stock rules stay in game ports.
+ * The standalone DOM shell and Angular only paint the buttons; purchase and stock rules stay in game ports.
  */
 export function shopCategory(id:string):string{
  if(id==='ps1')return 'consoles';
@@ -10,7 +10,7 @@ export function shopCategory(id:string):string{
 export function installShopPanels(shop:HTMLElement,onChange:()=>void){
  let current='equipment';
  const element=shop.querySelector<HTMLElement>('#ui-shop-categories');
- if(!element)throw new Error('React shop navigation is missing');
+ if(!element)throw new Error('Shop navigation host is missing');
  const nav:HTMLElement=element;
  // The Angular template already owns its guidance disclosure. Moving those
  // nodes out of an Angular view would break its DOM ownership.
@@ -22,7 +22,7 @@ export function installShopPanels(shop:HTMLElement,onChange:()=>void){
  }
  function select(id:string){
   current=id;
-  // Keep the rendered React tabs in sync even for programmatic selections.
+  // Keep the rendered UI tabs in sync even for programmatic selections.
   nav.dispatchEvent(new CustomEvent<string>('lhs:shop-category-selected',{detail:id}));
  }
  nav.addEventListener('click',event=>{

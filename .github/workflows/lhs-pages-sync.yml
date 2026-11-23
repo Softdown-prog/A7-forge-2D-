@@ -82,7 +82,7 @@ jobs:
           # sincronizado ao Cloudflare (CSP, Angular e Canvas reais).
           LHS_CHECK_DEFAULT_SITE=1 node frontend-angular/scripts/verify_full_site.mjs
           node scripts/verify_account_navigation.mjs
-          # Os testes abaixo abrem dist/index.html (fallback React).
+          # Os testes abaixo abrem dist/index.html (fallback DOM de compatibilidade).
           # O site Angular compilado e validado permanece intacto em out/site/.
           npm run build
           node scripts/verify_cookie_notice.mjs
