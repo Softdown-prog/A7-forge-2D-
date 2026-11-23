@@ -8,7 +8,7 @@ const root=resolve(import.meta.dirname,"..");
 // The published /game/ iframe uses Angular by default. The standalone
 // npm run build path retains React only for compatibility and regression QA.
 const angularCandidate=process.env.LHS_SITE_ANGULAR_CANDIDATE==="1";
-const angularSite=process.env.LHS_SITE_UI!=="react";
+const angularSite=process.env.LHS_SITE_UI!=="compat";
 const output=resolve(root,angularCandidate?"out/site-angular":"out/site-legacy");
 export function validateConfig(c){
  if(!["preview","public"].includes(c.mode))throw Error("Modo do site inválido");
@@ -24,7 +24,7 @@ export function buildSite(){
  // Always ship the currently compiled game, never a stale build from another task.
  execFileSync(process.execPath,[resolve(root,"scripts/build.mjs")],{
   cwd:root,stdio:"inherit",
-  env:{...process.env,LHS_GAME_UI:angularSite?"angular":"react"}
+  env:{...process.env,LHS_GAME_UI:angularSite?"angular":"compat"}
  });
  if(angularSite){
   // Rebuild Angular from its own lockfile; a stale preview must never be deployed.

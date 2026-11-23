@@ -20,7 +20,7 @@ for(const path of [...manifest.paths,'/404/']){
  assert.match(html,/<meta name="robots" content="noindex,nofollow">/);
  assert.ok(html.includes('src="/assets/site/'+assets.main+'"'));
  assert.ok(html.includes('href="/assets/site/'+assets.styles+'"'));
- assert.doesNotMatch(html,/react-entry\.js|website\/site\.mjs/i);
+ assert.doesNotMatch(html,/compat-entry\.js|website\/site\.mjs/i);
 }
 for(const path of manifest.excluded){
  const html=readFileSync(resolve(output,'.'+path,'index.html'),'utf8');

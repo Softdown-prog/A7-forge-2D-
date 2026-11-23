@@ -29,7 +29,7 @@ const compiled=resolve(angular,'dist/site-rewrite/browser');
 let index=readFileSync(resolve(compiled,'index.html'),'utf8');
 const siteAssetsManifest=resolveAngularSiteAssets(index,compiled);
 index=rewriteAngularSiteIndex(index,siteAssetsManifest);
-assert.doesNotMatch(index,/website\/site\.mjs|react-entry\.js/);
+assert.doesNotMatch(index,/website\/site\.mjs|compat-entry\.js/);
 rmSync(output,{recursive:true,force:true});
 mkdirSync(resolve(output,'assets'),{recursive:true});
 cpSync(compiled,resolve(output,'assets/site'),{recursive:true});
@@ -58,7 +58,7 @@ writeFileSync(resolve(output,'game/__angular/compatibility.css'),compatibilitySt
 gameIndex=gameIndex.replace(/<style>[\s\S]*?<\/style>/g,'<link rel="stylesheet" href="./__angular/compatibility.css">');
 writeFileSync(gameIndexPath,gameIndex);
 rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
-assert.ok(!existsSync(resolve(output,'game/js/react-entry.js')));
+assert.ok(!existsSync(resolve(output,'game/js/compat-entry.js')));
 versionAngularGame(output);
 for(const file of ['account-config.json','online-config.json'])
  cpSync(resolve(root,file),resolve(output,file));
@@ -123,5 +123,5 @@ const modules=readdirSync(resolve(output,'assets/site')).filter(file=>
  ['.js','.mjs'].includes(extname(file)));
 for(const name of modules)assert.doesNotMatch(
  readFileSync(resolve(output,'assets/site',name),'utf8'),
- /react-entry\.js|website\/site\.mjs|alpine\.js|bootstrap\.min\.js/i);
+ /compat-entry\.js|website\/site\.mjs|alpine\.js|bootstrap\.min\.js/i);
 console.log('Isolated Angular site built, NOT deployed:',output);

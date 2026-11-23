@@ -176,30 +176,30 @@ try{
   // not just the hidden native command catalog.
   await press(page.locator('[data-shop-category="equipment"]'));
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='true');
+   document.querySelector('#ui-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='true');
   const visibleCards=page.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card');
   await page.waitForFunction(()=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length>0);
   const originalCount=await visibleCards.count();
   assert.ok(originalCount>0,'Equipment catalog has real projected cards');
-  await page.locator('#react-shop-query').fill('zzz-qa-nenhum-item-999');
+  await page.locator('#ui-shop-query').fill('zzz-qa-nenhum-item-999');
   await page.waitForFunction(()=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===0);
   assert.equal(await visibleCards.count(),0,'Filtering removes unmatched Angular cards');
-  assert.match(await page.locator('#react-shop-search').innerText(),/Nenhum cartão/);
+  assert.match(await page.locator('#ui-shop-search').innerText(),/Nenhum cartão/);
   await press(page.getByRole('button',{name:'Limpar busca'}));
   await page.waitForFunction(expected=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===expected,originalCount);
   assert.equal(await visibleCards.count(),originalCount,'Clearing search restores all Angular cards');
   // Switching category must reset a live query via the native shop selection event.
-  await page.locator('#react-shop-query').fill('zzz-qa-redefinir-categoria-999');
+  await page.locator('#ui-shop-query').fill('zzz-qa-redefinir-categoria-999');
   await press(page.locator('[data-shop-category="consoles"]'));
   await page.waitForFunction(()=>
-   (document.querySelector('#react-shop-query')?.value??'NOT_READY')==='');
-  assert.equal(await page.locator('#react-shop-query').inputValue(),'');
+   (document.querySelector('#ui-shop-query')?.value??'NOT_READY')==='');
+  assert.equal(await page.locator('#ui-shop-query').inputValue(),'');
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
+   document.querySelector('#ui-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#ui-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor({state:'visible'});
   // Production-style browser QA: all thirteen procedural covers must have visible,

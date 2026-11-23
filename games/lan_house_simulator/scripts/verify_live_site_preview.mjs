@@ -100,8 +100,8 @@ try{
   // This branch defaults to Angular, while React remains an explicit regression fallback.
   await frame.locator("#open-shop").click();
   await frame.locator("#shop").waitFor({state:"visible",timeout:10000});
-  await frame.locator("#react-shop-query").fill("impressora");
-  await frame.locator(".react-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
+  await frame.locator("#ui-shop-query").fill("impressora");
+  await frame.locator(".ui-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
    .waitFor({state:"visible",timeout:10000});
   const angular=await frame.locator("html").evaluate(el=>el.dataset.uiFramework==="angular");
   if(angular){
@@ -124,15 +124,15 @@ try{
     "A busca por impressora deve mostrar a opção correspondente");
   }
   await frame.locator('[data-shop-category="consoles"]').click();
-  await frame.locator(".react-shop-search-count").filter({hasText:/opções nesta categoria/})
+  await frame.locator(".ui-shop-search-count").filter({hasText:/opções nesta categoria/})
    .waitFor({state:"visible",timeout:10000});
-  assert.equal(await frame.locator("#react-shop-query").inputValue(),"",
+  assert.equal(await frame.locator("#ui-shop-query").inputValue(),"",
    "Trocar de categoria deve limpar a pesquisa");
   await frame.locator("#close-shop").click();
   await frame.locator("#shop").waitFor({state:"hidden",timeout:10000});
 
   const spriteReady=await frame.locator("#game").evaluate(async()=>{
-   const entryScript=document.querySelector('script[type="module"][src*="react-entry.js"]')??
+   const entryScript=document.querySelector('script[type="module"][src*="compat-entry.js"]')??
     document.querySelector('script[type="module"][src*="__angular/main.js"]');
    if(!entryScript)throw Error("Não foi encontrado o bootstrap da interface");
    const entry=new URL(entryScript.src);

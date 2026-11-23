@@ -76,5 +76,5 @@ test('first-day and save-transfer guide retains navigable anchors and privacy wa
  assert.match(html,/class="wrap faq" id="duvidas"/);
  assert.match(css,/\.help-guide article\{scroll-margin-top:/);
  assert.match(css,/#duvidas\{scroll-margin-top:/);
- assert.doesNotMatch(html,/<script|\[innerHTML\]|onclick=|website\/|react-entry/i);
+ assert.doesNotMatch(html,/<script|\[innerHTML\]|onclick=|website\/|compat-entry/i);
 });

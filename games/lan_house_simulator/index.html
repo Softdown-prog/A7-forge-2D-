@@ -9,7 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="./assets/ui/brand.svg"/>
   <link rel="stylesheet" href="./style.css"/>
   <script type="module" src="./js/privacyConsent.js"></script>
-  <script type="module" src="./js/react-entry.js"></script>
+  <script type="module" src="./js/compat-entry.js"></script>
 </head>
 <body>
   <section id="start-screen" class="start-screen" aria-label="Menu principal">
@@ -18,8 +18,8 @@
       <span class="menu-eyebrow"><span class="tiny-pixel"></span> SEU SONHO COMEÇA EM 1998</span>
       <h2>LAN HOUSE<span>SIMULATOR<span class="title-cursor" aria-hidden="true">_</span></span></h2>
       <p>Três computadores. Um pequeno salão.<br/>E um bairro inteiro para conquistar.</p>
-      <div class="menu-actions" id="react-menu-actions" aria-label="Ações de início"></div>
-      <div id="react-menu-tour" class="react-menu-tour" aria-label="Recursos do simulador"></div>
+      <div class="menu-actions" id="ui-menu-actions" aria-label="Ações de início"></div>
+      <div id="ui-menu-tour" class="ui-menu-tour" aria-label="Recursos do simulador"></div>
       <div class="save-actions" aria-label="Transferir progresso">
         <button type="button" id="save-export" data-icon="save">Salvar em arquivo</button>
         <button type="button" id="save-import" data-icon="upload">Carregar arquivo</button>
@@ -42,7 +42,7 @@
   <div class="app" id="game-app" hidden>
     <header class="topbar">
       <div class="brand"><img class="logo" src="./assets/ui/brand.svg" alt="" width="44" height="44"/><div><h1>LAN HOUSE<span>SIMULATOR</span></h1><p>Seu bairro. Seu negócio. Sua história.</p></div></div>
-      <div class="topbar-actions" id="react-topbar-actions" aria-label="Ações da partida"></div>
+      <div class="topbar-actions" id="ui-topbar-actions" aria-label="Ações da partida"></div>
     </header>
     <div class="hud-line">
       <details class="time-weather-panel" id="time-weather-panel">
@@ -74,7 +74,7 @@
       <span class="hud-autosave" data-icon="save"><span id="autosave-state" role="status" aria-live="polite">Salvamento automático</span></span>
     </div>
     <div id="status" class="status" aria-live="polite">Abrindo o salão...</div>
-    <nav id="react-quick-deck" class="react-quick-deck" aria-label="Acesso rápido ao negócio"></nav>
+    <nav id="ui-quick-deck" class="ui-quick-deck" aria-label="Acesso rápido ao negócio"></nav>
     <main class="layout">
       <section class="stage" aria-label="Salão isométrico da lan house">
         <div class="stage-titlebar"><div><span class="stage-pixel" aria-hidden="true"></span><strong>SEU SALÃO</strong><span class="stage-subtitle">Onde tudo acontece.</span></div><span class="stage-live"><i></i> AO VIVO</span></div>
@@ -99,8 +99,8 @@
       <button id="organize-furniture" class="slice organize-furniture" type="button">Organizar salão</button>
       <p class="shop-organize-help">Mova ou gire os objetos do salão. Selecione plantas, mesas, pôsteres, divisórias ou portas para remover e liberar espaço.</p>
       <button id="demolish-walls" class="slice organize-furniture" type="button">Remover divisórias (0)</button>
-      <nav id="react-shop-categories" class="shop-categories react-shop-categories" aria-label="Categorias da loja"></nav>
-      <div id="react-shop-search" aria-label="Busca no catálogo"></div>
+      <nav id="ui-shop-categories" class="shop-categories ui-shop-categories" aria-label="Categorias da loja"></nav>
+      <div id="ui-shop-search" aria-label="Busca no catálogo"></div>
       <div id="shop-catalog" class="shop-grid"></div>
     </section>
     <section id="notices" class="admin notice-inbox" aria-label="Caixa de mensagens" role="dialog" aria-modal="true" aria-labelledby="notices-title" tabindex="-1" hidden>
@@ -136,7 +136,7 @@
         <span id="bill-watch-status">Calculando a provisão atual.</span>
         <small>O valor pode aumentar com energia e salários. As contas são cobradas na virada de cada ciclo de 30 dias, não diariamente.</small>
       </aside>
-      <div id="react-admin-shortcuts" aria-label="Atalhos de administração"></div>
+      <div id="ui-admin-shortcuts" aria-label="Atalhos de administração"></div>
       <div id="angular-admin-area-navigation" class="angular-admin-navigation-root"></div>
       <nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
         <button type="button" class="admin-tab active" data-admin-tab="prices" role="tab" aria-controls="section-prices" aria-selected="true">Preços</button>

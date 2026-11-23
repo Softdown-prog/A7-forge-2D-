@@ -11,7 +11,7 @@ const guideCatalog=JSON.parse(readFileSync(resolve(import.meta.dirname,'../front
  assert.match(html,/<lhs-site(?: data-lhs-public-prerender="true")?><\/lhs-site>|<lhs-site data-lhs-public-prerender="true">/);
  assert.ok(html.includes('src="/assets/site/'+assets.main+'"'));
  assert.ok(html.includes('href="/assets/site/'+assets.styles+'"'));
- assert.doesNotMatch(html,/\/assets\/site\.mjs|react-entry|data-angular-site-/i);
+ assert.doesNotMatch(html,/\/assets\/site\.mjs|compat-entry|data-angular-site-/i);
  const pathname=path?'/'+path+'/':'/';
  assert.equal(html.includes('<title>'+metadata[pathname].title+' · Lan House Simulator</title>'),true,
   'Wrong static title for '+pathname);
@@ -27,7 +27,7 @@ assert.match(notFound,/<meta name="robots" content="noindex,nofollow">/);
 assert.match(readFileSync(resolve(root,'conta/confirmar/index.html'),'utf8'),
  /<meta name="referrer" content="no-referrer">/);
 assert.ok(existsSync(resolve(root,'game/__angular/main.js')));
-assert.ok(!existsSync(resolve(root,'game/js/react-entry.js')));
+assert.ok(!existsSync(resolve(root,'game/js/compat-entry.js')));
 for(const name of ['brand.svg','icons.svg','sala.webp',
  'pc-crt.svg','pc-lcd.svg','pc-led.svg','pc-arena.svg'])
  assert.ok(existsSync(resolve(root,'assets',name)),'Missing Angular site asset: '+name);

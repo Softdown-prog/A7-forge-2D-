@@ -24,10 +24,10 @@ const [index,manifest]=await Promise.all([
 ]);
 assert.equal(manifest.deployApproved,false,'QA candidate is never an approved deploy');
 assert.equal(manifest.reactBootstrap,false,'React must be absent in candidate');
-assert.ok(!index.includes('src="./js/react-entry.js"'),'No React script in compiled candidate');
+assert.ok(!index.includes('src="./js/compat-entry.js"'),'No React script in compiled candidate');
 for(const file of ['__angular/main.js','__angular/styles.css','js/main.js'])
  assert.ok((await stat(resolve(root,file))).isFile(),'Missing compiled asset: '+file);
-await assert.rejects(stat(resolve(root,'js/react-entry.js')),{code:'ENOENT'});
+await assert.rejects(stat(resolve(root,'js/compat-entry.js')),{code:'ENOENT'});
 await mkdir(output,{recursive:true});
 const server=createServer(async(req,res)=>{
  try{
@@ -56,7 +56,7 @@ try{
   await page.waitForFunction(()=>
    document.documentElement.dataset.uiFramework==='angular' &&
    document.documentElement.dataset.gameReady==='true',null,{timeout:20000});
-  assert.equal(await page.locator('#react-menu-actions #menu-new').count(),1,
+  assert.equal(await page.locator('#ui-menu-actions #menu-new').count(),1,
    'Angular menu must mount before original Canvas game');
   assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
    'Original save action ID must exist exactly once');
@@ -68,7 +68,7 @@ try{
    'Angular owns the live calendar');
   assert.equal(await page.locator('#angular-notice-inbox #notices').count(),1,
    'Angular owns the real inbox dialog');
-  assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0,
+  assert.equal(await page.locator('script[src*="compat-entry.js"]').count(),0,
    'No React bootstrap survives the candidate');
   assert.equal(await page.locator('#game').count(),1,
    'Original Canvas must not be removed by cutover');

@@ -7,13 +7,13 @@ mkdirSync(resolve(root,"dist"),{recursive:true});
 execFileSync(process.execPath,[resolve(root,"node_modules/typescript/bin/tsc"),"-p",resolve(root,"tsconfig.json")],{cwd:root,stdio:"inherit"});
 // The production site is Angular-first. Legacy regression HTML still uses
 // the original filename, but its bundle is now vanilla DOM with no React.
-const gameUi=process.env.LHS_GAME_UI??"react";
-if(gameUi!=="react"&&gameUi!=="angular")throw Error("LHS_GAME_UI inválido: "+gameUi);
-if(gameUi==="react"){
+const gameUi=process.env.LHS_GAME_UI??"compat";
+if(gameUi!=="compat"&&gameUi!=="angular")throw Error("LHS_GAME_UI inválido: "+gameUi);
+if(gameUi==="compat"){
 const {build:buildCompat}=await import("esbuild");
 await buildCompat({
  entryPoints:[resolve(root,"src/compat/entry.mjs")],
- outfile:resolve(root,"dist/js/react-entry.js"),
+ outfile:resolve(root,"dist/js/compat-entry.js"),
  bundle:true,minify:true,format:"esm",target:"es2022",
  external:["./main.js"],
  define:{"process.env.NODE_ENV":JSON.stringify("production")},

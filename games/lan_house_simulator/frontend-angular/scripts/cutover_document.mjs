@@ -19,10 +19,10 @@ export const ANGULAR_CUTOVER_HOSTS=Object.freeze([
  'angular-licenses-workspace','angular-consoles-workspace'
 ]);
 export function createAngularCutoverDocument(original){
- const react='<script type="module" src="./js/react-entry.js"></script>';
+ const compatScript='<script type="module" src="./js/compat-entry.js"></script>';
  const nativeShop='<div id="shop-catalog" class="shop-grid"></div>';
  const nativeStock='<div id="merchandise-catalog"></div>';
- for(const anchor of [react,nativeShop,nativeStock])
+ for(const anchor of [compatScript,nativeShop,nativeStock])
   assert.equal(original.split(anchor).length,2,'One original anchor required: '+anchor);
  let html=bounded(original,
   '<div class="save-actions" aria-label="Transferir progresso">',
@@ -33,7 +33,7 @@ export function createAngularCutoverDocument(original){
   '</section>','<div id="angular-notice-inbox"></div>');
  html=bounded(html,'<details class="time-weather-panel" id="time-weather-panel">',
   '</details>','<div id="angular-time-weather"></div>');
- const overview='<p id="shop-cash"></p>',after='<nav id="react-shop-categories"';
+ const overview='<p id="shop-cash"></p>',after='<nav id="ui-shop-categories"';
  const from=html.indexOf(overview),to=html.indexOf(after,from+overview.length);
  assert.ok(from>=0&&to>from,'Shop organization must be replaceable');
  html=html.slice(0,from)+'<div id="angular-shop-overview"></div>\n      '+
@@ -55,7 +55,7 @@ export function createAngularCutoverDocument(original){
  }
  html=exactlyOne(html,nativeShop,
   '<div id="angular-shop-catalog"></div>'+nativeShop);
- html=exactlyOne(html,react,
+ html=exactlyOne(html,compatScript,
   '<script type="module" src="./__angular/main.js"></script>');
  html=exactlyOne(html,'</head>',
   '<link rel="stylesheet" href="./__angular/styles.css"/>'+
@@ -64,7 +64,7 @@ export function createAngularCutoverDocument(original){
   // Angular delegates actions through native button.click() on the kept DOM.
   '<style>#shop-catalog{display:none!important}'+
   '#angular-shop-catalog{display:block;min-width:0}</style></head>');
- assert.ok(!html.includes(react),'React bootstrap cannot be present');
+ assert.ok(!html.includes(compatScript),'React bootstrap cannot be present');
  for(const id of ANGULAR_CUTOVER_HOSTS)
   assert.equal(html.split('id="'+id+'"').length,2,'One Angular host required: '+id);
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);

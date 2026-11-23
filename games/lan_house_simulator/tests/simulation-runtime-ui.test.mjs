@@ -12,13 +12,13 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const html=readFileSync(resolve(root,"index.html"),"utf8");
   // The standalone DOM compatibility shell owns button markup;
   // the stable shell and real browser flows are still tested.
-  for(const id of ["start-screen","option-sound","react-menu-actions","react-topbar-actions"])
+  for(const id of ["start-screen","option-sound","ui-menu-actions","ui-topbar-actions"])
    assert.ok(html.includes('id="'+id+'"'),id);
   const shell=readFileSync(resolve(root,"src/compat/entry.mjs"),"utf8");
   for(const id of ["menu-new","menu-continue","menu-options","open-menu"])
    assert.ok(shell.includes('id="'+id+'"'),"Legacy shell button: "+id);
-  assert.match(shell,/mount\("react-menu-actions"/,"Native DOM controls are mounted synchronously");
-  assert.ok(shell.indexOf('mount("react-menu-actions"')<shell.indexOf('import("./main.js")'),
+  assert.match(shell,/mount\("ui-menu-actions"/,"Native DOM controls are mounted synchronously");
+  assert.ok(shell.indexOf('mount("ui-menu-actions"')<shell.indexOf('import("./main.js")'),
     "Native DOM shell must mount before loading the TypeScript event controllers");
  assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
  assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);

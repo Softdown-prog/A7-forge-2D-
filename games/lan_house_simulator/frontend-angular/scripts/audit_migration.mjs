@@ -41,7 +41,7 @@ export const checks=[
   scope:"integrated-browser",need:["#layout-editor","#layout-rotate",
    "#layout-confirm","#layout-remove"]},
  {id:"shop-search",name:"Real game search, category switch and empty results",
-  scope:"integrated-browser",need:["#react-shop-query","Nenhum cartão"]},
+  scope:"integrated-browser",need:["#ui-shop-query","Nenhum cartão"]},
  {id:"keyboard-focus",name:"Keyboard focus, Escape and accessible admin dialogs",
   scope:"integrated-browser",need:["page.keyboard","Escape","focus"]},
  {id:"admin-task-navigation",name:"Angular prices, Windows licensing and PS1/PS2 task navigation",
@@ -74,13 +74,13 @@ export const checks=[
 export function auditMigration(sources){
  const {published,reactEntry,reactBuild,angularEntry,angularPreview,integratedQa,
   previewQa,angularWorkflow}=sources;
- const publishedEntry=/src=["']\.\/js\/react-entry\.js["']/.test(published);
+ const publishedEntry=/src=["']\.\/js\/compat-entry\.js["']/.test(published);
  const angularInPublished=/src=["'][^"']*(?:__angular|angular-ui|frontend-angular)[^"']*\.js["']/.test(published);
  const reactBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
  const compatBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/compat\/entry\.mjs["']\)\]/.test(reactBuild);
  // Legacy host IDs are still contractually stable, but plain DOM now mounts them.
- const reactHosts=list(reactEntry,/mount\("(react-[^"]+)"\s*,/g);
- const mandatoryIslands=list(angularEntry,/\['(react-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
+ const reactHosts=list(reactEntry,/mount\("(ui-[^"]+)"\s*,/g);
+ const mandatoryIslands=list(angularEntry,/\['(ui-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
  // Include hosts mounted individually with getElementById as well as tuple-based
  // islands. Otherwise the audit would undercount new optional UI after each
  // completed feature and could suggest an unsafe React cutover.
@@ -121,7 +121,7 @@ export function auditMigration(sources){
  if(!angularWorkflowPresent)blockers.push({id:"angular-workflow",priority:"critical",
   description:"Dedicated Angular browser QA steps not both present"});
  return {
-  schemaVersion:1,kind:"angular-react-cutover-audit",
+  schemaVersion:1,kind:"angular-ui-cutover-audit",
   status:blockers.length?"not-ready":"manual-review-required",
   decision:"no-merge-no-deploy",
   production:{legacyScript:publishedEntry,reactScript:reactBuildActive,

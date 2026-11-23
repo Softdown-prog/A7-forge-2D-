@@ -95,7 +95,7 @@ try{
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteNavigation==='angular' &&
      document.documentElement.dataset.siteFooter==='angular');
-    assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0);
+    assert.equal(await page.locator('script[src*="compat-entry.js"]').count(),0);
    }else{
     await page.waitForFunction(()=>
      document.documentElement.classList.contains('js-enabled')||document.documentElement.dataset.siteFramework==='angular-rewrite');
@@ -305,7 +305,7 @@ try{
     await page.waitForFunction(()=>
      document.documentElement.dataset.siteNavigation==='angular');
    }
-   assert.equal(await page.locator('script[src*="react-entry.js"]').count(),0,
+   assert.equal(await page.locator('script[src*="compat-entry.js"]').count(),0,
     'React must never bootstrap institutional site navigation');
   }
   const frame=page.locator('#game-frame');
@@ -336,7 +336,7 @@ try{
   }else assert.equal(await frame.isVisible(),true,'Site must reveal the loaded game');
   assert.equal(await game.locator('#angular-save-transfer #save-export').count(),1);
   assert.equal(await game.locator('#angular-notice-inbox #notices').count(),1);
-  assert.equal(await game.locator('script[src*="react-entry.js"]').count(),0);
+  assert.equal(await game.locator('script[src*="compat-entry.js"]').count(),0);
   if(await game.locator('#privacy-banner').isVisible()){
    await game.locator('#privacy-reject').click();
    await game.locator('#privacy-banner').waitFor({state:'hidden'});

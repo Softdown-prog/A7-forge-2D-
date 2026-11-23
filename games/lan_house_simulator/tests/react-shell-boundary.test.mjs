@@ -4,15 +4,15 @@ import {readFileSync,existsSync} from "node:fs";
 const file=name=>readFileSync(new URL("../"+name,import.meta.url),"utf8");
 test("React owns the menu and topbar without replacing the Canvas simulation",()=>{
  const source=file("index.html"),js=file("src/compat/entry.mjs");
- assert.match(source,/id="react-menu-actions"/);
- assert.match(source,/id="react-topbar-actions"/);
- assert.match(source,/id="react-menu-tour"/);
+ assert.match(source,/id="ui-menu-actions"/);
+ assert.match(source,/id="ui-topbar-actions"/);
+ assert.match(source,/id="ui-menu-tour"/);
  assert.doesNotMatch(source,/<script type="module" src="\.\/js\/main\.js"/);
- assert.match(source,/src="\.\/js\/react-entry\.js"/);
+ assert.match(source,/src="\.\/js\/compat-entry\.js"/);
  for(const id of ["menu-new","menu-continue","menu-account","menu-options",
     "open-admin","open-shop","open-notices","open-menu","open-account","notices-count"])
   assert.match(js,new RegExp('id="'+id+'"'),"DOM controllers still have their own stable ID: "+id);
- assert.match(js,/mount\("react-menu-actions"/);
+ assert.match(js,/mount\("ui-menu-actions"/);
  assert.match(js,/import\("\.\/main\.js"\)/);
  assert.match(source,/id="game"/);
  assert.match(file("src/bootstrap/bootstrapGame.ts"),/dataset\.gameReady="true"/);
@@ -22,7 +22,7 @@ test("React owns the menu and topbar without replacing the Canvas simulation",()
 test("React menu is ready after its event controllers initialize, without a RAF gate",()=>{
  const source=file("src/bootstrap/bootstrapGame.ts");
  const css=file("style.css");
- assert.match(css,/html:not\(\[data-game-ready="true"\]\) #react-menu-actions/);
+ assert.match(css,/html:not\(\[data-game-ready="true"\]\) #ui-menu-actions/);
  assert.match(source,/installRuntimeControls\(/);
  assert.match(source,/installWindowNavigation\(\);session\.showMenu\(\);loop\.start\(\);/);
  assert.match(source,/document\.documentElement\.dataset\.gameReady="true"/);
@@ -31,10 +31,10 @@ test("React menu is ready after its event controllers initialize, without a RAF 
  assert.doesNotMatch(source,/requestAnimationFrame\(\(\)=>win\.requestAnimationFrame/);
 });
 test("React bundle ships locally and the original TypeScript bootstrap stays external",()=>{
- assert.ok(existsSync(new URL("../dist/js/react-entry.js",import.meta.url)));
- const js=file("dist/js/react-entry.js");
+ assert.ok(existsSync(new URL("../dist/js/compat-entry.js",import.meta.url)));
+ const js=file("dist/js/compat-entry.js");
  assert.match(js,/main\.js/);
  assert.ok(js.length>1000);
  assert.doesNotMatch(js,/https:\/\/(unpkg|esm\.sh|cdn\.jsdelivr)/);
- assert.match(file("dist/index.html"),/react-entry\.js/);
+ assert.match(file("dist/index.html"),/compat-entry\.js/);
 });

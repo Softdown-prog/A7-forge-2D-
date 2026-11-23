@@ -26,7 +26,7 @@ test('one standalone Angular owner per About route; no legacy bundle or duplicat
  assert.equal((page.match(/<lhs-era-timeline><\/lhs-era-timeline>/g)||[]).length,1);
  assert.equal((gameHtml.match(/<h1\b/g)||[]).length,1);
  assert.equal((usHtml.match(/<h1\b/g)||[]).length,1);
- const forbidden=/<script\b|<iframe\b|\[innerHTML\]|fetch\(|onclick=|website\/|react-entry|<lhs-era-timeline/i;
+ const forbidden=/<script\b|<iframe\b|\[innerHTML\]|fetch\(|onclick=|website\/|compat-entry|<lhs-era-timeline/i;
  assert.doesNotMatch(game+gameHtml+us+usHtml,forbidden);
 });
 

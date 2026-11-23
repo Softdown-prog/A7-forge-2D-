@@ -21,7 +21,7 @@ test('Angular 22 uses a separate TypeScript 6 toolchain; TypeScript 7 game stays
   assert.equal(ui.devDependencies.typescript,'6.0.2');
   assert.equal(game.devDependencies.typescript,'7.0.2');
   assert.equal(game.dependencies?.react,undefined); // Production Angular no longer installs React.
-  assert.equal(game.dependencies?.['react-dom'],undefined);
+  assert.equal(game.dependencies?.['ui-dom'],undefined);
   assert.ok(existsSync(new URL('../'+root+'angular.json',import.meta.url)));
 });
 
@@ -35,8 +35,8 @@ test('Angular owns existing menu/header/shop islands without reimplementing the 
   assert.doesNotMatch(components,/from ['"][^'"]*(?:\/sim\/|\/application\/|\/render\/|\/bootstrap\/)/);
   assert.doesNotMatch(components,/requestAnimationFrame|createGame|localStorage|purchase\(/);
   for(const id of [
-    'react-menu-actions','react-menu-tour','react-topbar-actions',
-    'react-quick-deck','react-shop-categories','react-shop-search','react-admin-shortcuts'
+    'ui-menu-actions','ui-menu-tour','ui-topbar-actions',
+    'ui-quick-deck','ui-shop-categories','ui-shop-search','ui-admin-shortcuts'
   ])assert.ok(entry.includes(id),id);
   for(const id of ['menu-new','menu-continue','menu-account','menu-options'])
     assert.ok(file(root+'src/templates/menu-actions.html').includes('id="'+id+'"'),id);
@@ -95,12 +95,12 @@ test('Angular shop search has exactly one standalone file and a single bootstrap
   assert.match(component,/selector:'lhs-shop-search',standalone:true/);
   assert.match(component,/ChangeDetectionStrategy\.OnPush/);
   assert.match(component,/templateUrl:'\.\/templates\/shop-search.html'/);
-  assert.match(template,/id="react-shop-query"/);
+  assert.match(template,/id="ui-shop-query"/);
   assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
 });
 
 test('Angular cutover preserves the historical standalone DOM entry contract',()=>{
-  assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
+  assert.match(file('index.html'),/src="\.\/js\/compat-entry\.js"/);
   assert.match(file('scripts/build.mjs'),/src\/compat\/entry\.mjs/);
   assert.match(file('src/bootstrap/bootstrapGame.ts'),/dataset\.gameReady="true"/);
 });

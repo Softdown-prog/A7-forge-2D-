@@ -89,7 +89,7 @@ export function auditCleanAngularCutover({repoRoot,siteRoot}){
  results.push(check('no-legacy-entry-in-angular-html',
   pagePaths.every(path=>{
    const html=siteIndex(siteRoot,path);
-   return html.length>0&&!/react-entry\.js|website\/site\.mjs|\/assets\/site\.mjs/i.test(html);
+   return html.length>0&&!/compat-entry\.js|website\/site\.mjs|\/assets\/site\.mjs/i.test(html);
   })&&
   angularBuilder.includes("src/site-rewrite/public/assets")&&
   !angularBuilder.includes("run(process.execPath,[resolve(root,'website/build.mjs')"),

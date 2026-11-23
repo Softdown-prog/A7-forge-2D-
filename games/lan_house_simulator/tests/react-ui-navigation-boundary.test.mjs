@@ -5,8 +5,8 @@ const file=name=>readFileSync(new URL("../"+name,import.meta.url),"utf8");
 
 test("React presents shop categories; TypeScript remains the controller",()=>{
  const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry,adapter=file("src/ui/shopPanels.ts");
- assert.match(html,/id="react-shop-categories"/);
- assert.match(entry,/mount\("react-shop-categories"/);
+ assert.match(html,/id="ui-shop-categories"/);
+ assert.match(entry,/mount\("ui-shop-categories"/);
  for(const id of ["equipment","consoles","building","decoration"]){
   assert.match(ui,new RegExp('id:"'+id+'"'));
  }
@@ -20,7 +20,7 @@ test("React presents shop categories; TypeScript remains the controller",()=>{
 
 test("React shortcuts delegate to live admin and shop controls",()=>{
  const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry;
- for(const id of ["react-quick-deck","react-admin-shortcuts"]){
+ for(const id of ["ui-quick-deck","ui-admin-shortcuts"]){
   assert.match(html,new RegExp('id="'+id+'"'));
   assert.match(entry,new RegExp('"'+id+'"'));
  }
@@ -38,17 +38,17 @@ test("React shortcuts delegate to live admin and shop controls",()=>{
 test("Visual-only enhancements keep Canvas and game bootstrap untouched",()=>{
  const index=file("index.html");
  assert.match(index,/id="game"[^>]*width="1000" height="610"/);
- assert.match(index,/src="\.\/js\/react-entry\.js"/);
+ assert.match(index,/src="\.\/js\/compat-entry\.js"/);
  assert.ok(!index.includes('src="./js/main.js"'));
- assert.match(file("style.css"),/react-admin-shortcuts-grid/);
+ assert.match(file("style.css"),/ui-admin-shortcuts-grid/);
  assert.match(file("website/site.css"),/Website visual refresh: presentation only/);
 });
 
 test("React catalogue search is presentation-only and reacts after DOM repaint",()=>{
  const html=file("index.html"),entry=file("src/compat/entry.mjs"),ui=entry;
  const renderer=file("src/ui/shopCatalogRenderer.ts");
- assert.match(html,/id="react-shop-search"/);
- assert.match(entry,/mount\("react-shop-search"/);
+ assert.match(html,/id="ui-shop-search"/);
+ assert.match(entry,/mount\("ui-shop-search"/);
  assert.match(ui,/function filterCatalog/);
  assert.match(ui,/:scope > article\.shop-card/);
  assert.match(ui,/card\.hidden=!matches/);

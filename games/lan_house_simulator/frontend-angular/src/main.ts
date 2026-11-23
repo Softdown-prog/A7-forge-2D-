@@ -25,13 +25,13 @@ import {MerchandiseCatalogComponent} from './merchandise-catalog';
 async function mountUi():Promise<void> {
   const app=await createApplication();
   const islands=[
-    ['react-menu-actions',MenuActionsComponent],
-    ['react-menu-tour',MenuTourComponent],
-    ['react-topbar-actions',HeaderActionsComponent],
-    ['react-quick-deck',QuickDeckComponent],
-    ['react-shop-categories',ShopCategoriesComponent],
-    ['react-shop-search',ShopSearchComponent],
-    ['react-admin-shortcuts',AdminShortcutsComponent],
+    ['ui-menu-actions',MenuActionsComponent],
+    ['ui-menu-tour',MenuTourComponent],
+    ['ui-topbar-actions',HeaderActionsComponent],
+    ['ui-quick-deck',QuickDeckComponent],
+    ['ui-shop-categories',ShopCategoriesComponent],
+    ['ui-shop-search',ShopSearchComponent],
+    ['ui-admin-shortcuts',AdminShortcutsComponent],
     ['angular-computer-workspace',ComputerWorkspaceComponent],
     ['angular-service-workspace',ServiceWorkspaceComponent],
     ['angular-admin-area-navigation',AdminAreaNavigationComponent]

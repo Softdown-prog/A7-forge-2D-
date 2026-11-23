@@ -9,7 +9,7 @@ export function shopCategory(id:string):string{
 }
 export function installShopPanels(shop:HTMLElement,onChange:()=>void){
  let current='equipment';
- const element=shop.querySelector<HTMLElement>('#react-shop-categories');
+ const element=shop.querySelector<HTMLElement>('#ui-shop-categories');
  if(!element)throw new Error('React shop navigation is missing');
  const nav:HTMLElement=element;
  // The Angular template already owns its guidance disclosure. Moving those

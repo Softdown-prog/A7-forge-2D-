@@ -67,7 +67,7 @@ test('all 15 thematic groups A through O are covered and every guide has full ed
   }
  });
  // Ensure no developer jargon or forbidden patterns leak into tutorial texts
- assert.doesNotMatch(moduleSources,/<script\b|<iframe\b|\[innerHTML\]|fetch\(|onclick=|website\/|react-entry|stationId|historicalEconomy|topGamesMagazines|customerLifecycle|simulationState|>=\s*\d|<=\s*\d|\.[A-ZÀ-Ú]/);
+ assert.doesNotMatch(moduleSources,/<script\b|<iframe\b|\[innerHTML\]|fetch\(|onclick=|website\/|compat-entry|stationId|historicalEconomy|topGamesMagazines|customerLifecycle|simulationState|>=\s*\d|<=\s*\d|\.[A-ZÀ-Ú]/);
 });
 
 test('AboutGameComponent preserves original /sobre-o-jogo/ content and exposes the numbered manual index',()=>{

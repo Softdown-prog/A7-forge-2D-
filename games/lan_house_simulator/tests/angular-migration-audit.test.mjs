@@ -61,10 +61,10 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
 });
 test("the audit detects missing hosts and disabled browser checks",()=>{
  const missing=auditMigration({...sources,
-  angularEntry:sources.angularEntry.replace("['react-menu-tour',MenuTourComponent]",""),
+  angularEntry:sources.angularEntry.replace("['ui-menu-tour',MenuTourComponent]",""),
   angularWorkflow:"no QA",
   integratedQa:""});
- assert.deepEqual(missing.hosts.reactHostsMissingAngular,["react-menu-tour"]);
+ assert.deepEqual(missing.hosts.reactHostsMissingAngular,["ui-menu-tour"]);
  assert.equal(missing.browserQa.workflowPresent,false);
  assert.ok(missing.blockers.some(b=>b.id==="angular-workflow"));
  assert.equal(missing.browserQa.checks.find(c=>c.id==="console-purchases").status,

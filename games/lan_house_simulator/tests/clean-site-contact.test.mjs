@@ -21,7 +21,7 @@ test('Contato is rendered by one standalone Angular component with no duplicate 
  assert.equal((html.match(/class="contact-card"/g)||[]).length,2);
  assert.match(styles,/\.contact-grid\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(styles,/@media\(max-width:800px\)\{\.contact-grid\{grid-template-columns:1fr\}\}/);
- assert.doesNotMatch(component+html,/<form\b|<script\b|<iframe\b|\[innerHTML\]|fetch\(|window\.open|onclick=|website\/|react-entry/i);
+ assert.doesNotMatch(component+html,/<form\b|<script\b|<iframe\b|\[innerHTML\]|fetch\(|window\.open|onclick=|website\/|compat-entry/i);
 });
 
 test('Contato keeps configured private support email and functional help/privacy routes',()=>{

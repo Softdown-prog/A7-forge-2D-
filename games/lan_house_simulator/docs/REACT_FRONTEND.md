@@ -5,20 +5,20 @@
 O **site canônico e o jogo incorporado** são compilados com Angular. O motor da
 simulação permanece TypeScript e Canvas 2D, independente de qualquer framework.
 
-As bibliotecas `react` e `react-dom` foram removidas das dependências em
+As bibliotecas `react` e `ui-dom` foram removidas das dependências em
 `ac1f53c`. O build isolado de compatibilidade (`npm run build`) usa
 `src/compat/entry.mjs` e `src/compat/catalogSearch.mjs`, que não têm JSX e não
 importam React. Os antigos arquivos `src/react/entry.jsx`,
 `src/react/managementUi.jsx` e `src/react/catalogSearch.mjs` foram retirados.
 
-## Por que ainda aparecem nomes `react-*`?
+## Por que os nomes `ui-*` e `compat-entry.js` são importantes?
 
-O HTML estático `index.html` e a folha `style.css` conservam IDs/classes
-históricos `react-*`, assim como o caminho `./js/react-entry.js`. Esses nomes
-**não significam que React esteja instalado ou executando**; são contratos
-legados exigidos pelo cutover Angular, pelos controladores DOM e pelos testes
-de regressão. Renomeá-los requer uma migração coordenada do HTML, CSS, scripts
-do Angular, verificadores de site e fixtures de navegador.
+O HTML estático `index.html`, os templates Angular e a folha `style.css`
+utilizam IDs/classes neutros `ui-*`. O ponto de entrada legado foi renomeado
+para `./js/compat-entry.js`. Nenhum desses elementos instala ou executa React;
+eles preservam os contratos de DOM entre Angular e os controladores TypeScript.
+A antiga nomenclatura foi eliminada em uma alteração coordenada de HTML,
+CSS, scripts Angular, verificadores do site e testes de navegador.
 
 `LHS_GAME_UI=angular` compila somente o motor para o artefato Angular, sem
 gerar o bundle de compatibilidade. O fluxo publicado de site canônico usa
@@ -41,5 +41,6 @@ uma etapa separada. Nenhum deploy ou merge é autorizado por este documento.
 
 ## Próxima limpeza
 
-Retirar os identificadores e o arquivo de compatibilidade só após atualizar
-**todos** os consumidores e obter CI e testes visuais verdes, sem regressões.
+A próxima etapa pode avaliar remover o *shell* de compatibilidade por completo,
+mas isso exige aposentar o caminho de testes standalone e comprovar o fluxo Angular
+em CI e no navegador. O nome neutro não implica aprovação de deploy.

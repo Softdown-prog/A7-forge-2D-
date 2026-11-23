@@ -18,7 +18,7 @@ await rm(output,{recursive:true,force:true});
 await mkdir(output,{recursive:true});
 await cp(gameRoot,output,{recursive:true});
 await cp(angularRoot,resolve(output,'__angular'),{recursive:true});
-await rm(resolve(output,'js/react-entry.js'),{force:true});
+await rm(resolve(output,'js/compat-entry.js'),{force:true});
 await writeFile(resolve(output,'index.html'),html);
 const report={
  kind:'lhs-angular-cutover-candidate',deployApproved:false,

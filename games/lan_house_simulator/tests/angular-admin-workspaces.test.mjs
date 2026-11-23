@@ -69,7 +69,7 @@ test('Angular primary admin tabs follow the original controller, keyboard and mo
  assert.doesNotMatch(angular,/from ['"][^'"]*\/(?:sim|render|application)\//);
 });
 test('React entry remains operational until complete release',()=>{
- assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
+ assert.match(file('index.html'),/src="\.\/js\/compat-entry\.js"/);
  assert.match(file('frontend-angular/angular.json'),/workspace\.css/);
 });
 
