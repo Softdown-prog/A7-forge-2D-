@@ -49,8 +49,8 @@ export async function verifyConsoleReleaseGates({browser,origin,output,createGam
   await press(page.locator('#open-shop'));
   await press(page.locator('[data-shop-category="consoles"]'));
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
+   document.querySelector('#ui-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#ui-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor();
   // Browser contract: future PS1 games must stay out of the actual store.

@@ -13,7 +13,8 @@ const core=[
  'frontend-angular/src/templates/shop-categories.html',
  'frontend-angular/src/templates/admin-shortcuts.html',
  'frontend-angular/src/templates/quick-deck.html',
- 'frontend-angular/scripts/cutover_document.mjs'
+ 'frontend-angular/scripts/cutover_document.mjs',
+ 'frontend-angular/scripts/integrated-qa/consoleReleaseGates.mjs'
 ];
 const uiIds=[
  'ui-menu-actions','ui-menu-tour','ui-topbar-actions','ui-quick-deck',
