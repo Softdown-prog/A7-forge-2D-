@@ -34,7 +34,7 @@ test('React-era DOM selectors and output URL cannot regress',()=>{
   const data=source(name);
   assert.doesNotMatch(data,/react-(?:menu|topbar|quick|shop|admin|chapter|tab|entry|lime|accent)/,
    name+' contains a retired framework-specific token');
-  assert.doesNotMatch(data,/react-entry\\.js/,name+' references a retired bundle');
+  assert.ok(!data.includes('react-entry.js'),name+' references a retired bundle');
  }
  const native=source('index.html'),cutover=source('frontend-angular/scripts/cutover_document.mjs');
  assert.ok(native.includes('src="./js/compat-entry.js"'));
@@ -44,7 +44,7 @@ test('React-era DOM selectors and output URL cannot regress',()=>{
  const worker=readFileSync(new URL('../../../.github/workflows/lan-house-simulator.yml',import.meta.url),'utf8');
  assert.ok(worker.includes('test -s dist/js/compat-entry.js'));
  assert.ok(worker.includes('test ! -e out/site/game/js/compat-entry.js'));
- assert.doesNotMatch(worker,/dist\\/js\\/react-entry\\.js/);
+ assert.ok(!worker.includes('dist/js/react-entry.js'),'Old workflow fixture must be absent');
 });
 test('standalone DOM bundle cannot be accidentally relabeled as React',()=>{
  const build=source('scripts/build.mjs');
