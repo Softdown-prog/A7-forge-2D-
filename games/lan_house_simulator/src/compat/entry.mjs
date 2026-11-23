@@ -2,7 +2,7 @@
  * Historical react-* anchor IDs / react-entry.js URL remain until legacy
  * regression consumers are retired. No React dependency, JSX or game state.
  */
-import {catalogSearchMatch} from "../react/catalogSearch.mjs";
+import {catalogSearchMatch} from "./catalogSearch.mjs";
 function mount(id,html){
  const host=document.getElementById(id);
  if(!host)throw new Error("Legacy UI root ausente: "+id);

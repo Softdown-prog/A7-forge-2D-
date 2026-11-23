@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {readFileSync} from "node:fs";
+import {readFileSync,existsSync} from "node:fs";
 const file=path=>readFileSync(new URL("../"+path,import.meta.url),"utf8");
 test("React and ReactDOM are absent from the installed dependency graph",()=>{
  const pkg=JSON.parse(file("package.json")),lock=JSON.parse(file("package-lock.json"));
@@ -15,4 +15,8 @@ test("React and ReactDOM are absent from the installed dependency graph",()=>{
  const entry=file("src/compat/entry.mjs");
  assert.match(build,/src\/compat\/entry\.mjs/);
  assert.doesNotMatch(entry,/from ["']react|from ["']react-dom|createRoot|flushSync/);
+ for(const obsolete of ["src/react/entry.jsx","src/react/managementUi.jsx","src/react/catalogSearch.mjs"])
+  assert.equal(existsSync(new URL("../"+obsolete,import.meta.url)),false,obsolete+" must stay removed");
+ assert.match(entry,/from "\.\/catalogSearch\.mjs"/);
+ assert.doesNotMatch(file("frontend-angular/scripts/audit_migration.mjs"),/read\("src\/react\/entry\.jsx"\)/);
 });

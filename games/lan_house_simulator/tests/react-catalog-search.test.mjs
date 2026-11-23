@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {normalizeCatalogSearch,catalogSearchMatch} from "../src/react/catalogSearch.mjs";
+import {normalizeCatalogSearch,catalogSearchMatch} from "../src/compat/catalogSearch.mjs";
 
 test("search normalizes Brazilian accents, case and whitespace",()=>{
  assert.equal(normalizeCatalogSearch("  VÍDEO  GAMES  "),"video games");

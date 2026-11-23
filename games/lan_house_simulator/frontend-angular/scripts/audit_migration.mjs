@@ -77,7 +77,9 @@ export function auditMigration(sources){
  const publishedEntry=/src=["']\.\/js\/react-entry\.js["']/.test(published);
  const angularInPublished=/src=["'][^"']*(?:__angular|angular-ui|frontend-angular)[^"']*\.js["']/.test(published);
  const reactBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
- const reactHosts=list(reactEntry,/\["(react-[^"]+)",\s*</g);
+ const compatBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/compat\/entry\.mjs["']\)\]/.test(reactBuild);
+ // Legacy host IDs are still contractually stable, but plain DOM now mounts them.
+ const reactHosts=list(reactEntry,/mount\("(react-[^"]+)"\s*,/g);
  const mandatoryIslands=list(angularEntry,/\['(react-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
  // Include hosts mounted individually with getElementById as well as tuple-based
  // islands. Otherwise the audit would undercount new optional UI after each
@@ -101,8 +103,8 @@ export function auditMigration(sources){
  });
  const blockers=[];
  if(publishedEntry||reactBuildActive)blockers.push({
-  id:"react-production-entry",priority:"critical",
-  description:"Published HTML and build pipeline still boot React; preserve until full validated cutover"});
+  id:"legacy-compat-entry",priority:"high",
+  description:"Standalone source HTML still uses the historical compatibility URL. The canonical site must continue using Angular; preserve contract parity until reviewed"});
  if(missingInAngular.length||missingReactHostsInPreview.length||missingMandatoryInGame.length)
   blockers.push({id:"mandatory-host-parity",priority:"critical",
    description:"One or more required React hosts have no Angular equivalent/preview/game host"});
@@ -122,7 +124,8 @@ export function auditMigration(sources){
   schemaVersion:1,kind:"angular-react-cutover-audit",
   status:blockers.length?"not-ready":"manual-review-required",
   decision:"no-merge-no-deploy",
-  production:{reactScript:publishedEntry,reactBundleBuilt:reactBuildActive,
+  production:{legacyScript:publishedEntry,reactScript:reactBuildActive,
+   reactBundleBuilt:reactBuildActive,compatBundleBuilt:compatBuildActive,
    angularScript:angularInPublished},
   hosts:{reactOwned:reactHosts,angularReactParity:mandatoryIslands,
    reactHostsMissingAngular:missingInAngular,
@@ -140,7 +143,7 @@ export function auditMigration(sources){
    "Confirm stock management in an actual mobile device; review save/cloud flows separately",
    "Review account/donation navigation with live services only in a separately approved environment",
    "Confirm Angular template/host parity for remaining native interface panels",
-   "Keep React bootstrap in production until complete parity and explicit approval"
+   "Keep the standalone DOM compatibility shell until Angular parity and explicit approval"
   ]
  };
 }
@@ -158,7 +161,7 @@ export function integratedQaEvidence(entry=read("frontend-angular/scripts/verify
  return portions.join("\n");
 }
 export function readCurrentSources(){
- return {published:read("index.html"),reactEntry:read("src/react/entry.jsx"),
+ return {published:read("index.html"),reactEntry:read("src/compat/entry.mjs"),
   reactBuild:read("scripts/build.mjs"),angularEntry:read("frontend-angular/src/main.ts"),
   angularPreview:read("frontend-angular/src/index.html"),
   integratedQa:integratedQaEvidence(),

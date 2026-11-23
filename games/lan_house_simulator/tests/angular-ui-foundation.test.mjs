@@ -99,7 +99,7 @@ test('Angular shop search has exactly one standalone file and a single bootstrap
   assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
 });
 
-test('Angular preview cannot accidentally replace the current React runtime',()=>{
+test('Angular cutover preserves the historical standalone DOM entry contract',()=>{
   assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
   assert.match(file('scripts/build.mjs'),/src\/compat\/entry\.mjs/);
   assert.match(file('src/bootstrap/bootstrapGame.ts'),/dataset\.gameReady="true"/);

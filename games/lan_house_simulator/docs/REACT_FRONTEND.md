@@ -1,22 +1,45 @@
-# React no Lan House Simulator — migração progressiva
+# Histórico do frontend React — migração concluída para Angular
 
-## Princípio
+## Estado atual (22 de novembro de 2026)
 
-A interface evolui para React sem reescrever o motor e sem transformar Canvas em componentes React. Primeiro foram migrados **menu principal, guia interativo da abertura e barra superior**. A simulação segue inteiramente em `src/sim/`, e o Canvas continua no mesmo elemento `#game`. As janelas administrativas existentes permanecem DOM/TypeScript até uma próxima etapa.
+O **site canônico e o jogo incorporado** são compilados com Angular. O motor da
+simulação permanece TypeScript e Canvas 2D, independente de qualquer framework.
 
-O build é local e estático: React e ReactDOM estão empacotados em `dist/js/react-entry.js` por esbuild. Esse módulo monta as raízes com `flushSync` antes de carregar `main.js`; esse comportamento é essencial para a compatibilidade com `locateGameElements` e `installMenuControls` e evita uma corrida de DOM. Não montar React depois de `bootstrapGame`, pois destruiria listeners ligados aos botões anteriores.
+As bibliotecas `react` e `react-dom` foram removidas das dependências em
+`ac1f53c`. O build isolado de compatibilidade (`npm run build`) usa
+`src/compat/entry.mjs` e `src/compat/catalogSearch.mjs`, que não têm JSX e não
+importam React. Os antigos arquivos `src/react/entry.jsx`,
+`src/react/managementUi.jsx` e `src/react/catalogSearch.mjs` foram retirados.
 
-## Visual e comportamento
+## Por que ainda aparecem nomes `react-*`?
 
-- Menu principal com CTA em destaque e contraste mais claro.
-- Nova seção React com três abas sobre gestão, expansão e histórias; transições leves e suporte a `prefers-reduced-motion`.
-- Barra superior com botões de navegação React, ainda ligados aos adaptadores do jogo.
-- CSS continua local, na identidade verde/creme. Não há Google Fonts, CDN nem modificação nas imagens do motor.
+O HTML estático `index.html` e a folha `style.css` conservam IDs/classes
+históricos `react-*`, assim como o caminho `./js/react-entry.js`. Esses nomes
+**não significam que React esteja instalado ou executando**; são contratos
+legados exigidos pelo cutover Angular, pelos controladores DOM e pelos testes
+de regressão. Renomeá-los requer uma migração coordenada do HTML, CSS, scripts
+do Angular, verificadores de site e fixtures de navegador.
 
-## Migrações futuras (fora do escopo desta PR)
+`LHS_GAME_UI=angular` compila somente o motor para o artefato Angular, sem
+gerar o bundle de compatibilidade. O fluxo publicado de site canônico usa
+`npm run build:site`; o caminho de site legado continua restrito a testes
+e não deve ser confundido com a rota oficial de produção.
 
-HUD de calendário/caixa e painéis de loja, correio e administração, **um por vez**, por portas de aplicação e snapshots com `useSyncExternalStore`. Para cada migração, remover o renderizador DOM anterior para não criar duas fontes de verdade. Medir FPS/mobile e consumo de memória antes de ampliar React.
+## Garantias de segurança
 
-## Segurança
+O shell de compatibilidade monta os botões **antes** de importar
+`./main.js`; os IDs de comandos permanecem estáveis para
+`locateGameElements` e os adaptadores TypeScript. O arquivo de busca do
+catálogo apenas filtra a apresentação e não manipula economia nem saves.
+O motor, pagamentos, conta, preferências, consentimento, renderização Canvas
+e importação/exportação de progresso não foram migrados para o shell.
 
-Manter IDs, foco, painel de consentimento, salvamento/importação, conta/cookies, animações Canvas e funcionamento de cada botão. O builder `website/build.mjs` versiona `react-entry.js` e seus imports como já faz com `main.js`.
+A auditoria `frontend-angular/scripts/audit_migration.mjs` continua bloqueando
+qualquer afirmação de prontidão baseada exclusivamente em texto de testes:
+a validação com Chromium, dispositivos Android físicos e serviços reais é
+uma etapa separada. Nenhum deploy ou merge é autorizado por este documento.
+
+## Próxima limpeza
+
+Retirar os identificadores e o arquivo de compatibilidade só após atualizar
+**todos** os consumidores e obter CI e testes visuais verdes, sem regressões.

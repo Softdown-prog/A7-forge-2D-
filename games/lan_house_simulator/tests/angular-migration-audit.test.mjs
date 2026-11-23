@@ -30,10 +30,12 @@ test("connected mobile, account and stock scenarios contribute real browser audi
  assert.ok(evidence.includes('expiresAfter30Days:true'),'Existing privacy evidence retained');
 });
 
-test("React and Angular keep seven stable roots and production is not prematurely switched",()=>{
+test("Angular and standalone DOM compatibility keep seven stable roots without React",()=>{
  const report=auditMigration(sources);
- assert.equal(report.production.reactScript,true);
- assert.equal(report.production.reactBundleBuilt,true);
+ assert.equal(report.production.legacyScript,true);
+ assert.equal(report.production.reactScript,false);
+ assert.equal(report.production.reactBundleBuilt,false);
+ assert.equal(report.production.compatBundleBuilt,true);
  assert.equal(report.production.angularScript,false);
  assert.equal(report.hosts.reactOwned.length,7);
  assert.deepEqual(report.hosts.reactHostsMissingAngular,[]);
@@ -54,7 +56,7 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
  assert.equal(report.browserQa.workflowPresent,true);
- assert.ok(report.blockers.some(b=>b.id==="react-production-entry"));
+ assert.ok(report.blockers.some(b=>b.id==="legacy-compat-entry"));
  assert.ok(report.blockers.some(b=>b.id==="optional-angular-hosts"));
 });
 test("the audit detects missing hosts and disabled browser checks",()=>{
