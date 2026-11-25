@@ -10,13 +10,16 @@ test("menu inicial impede autoplay e oferece partida, continuar e opções",asyn
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
  const html=readFileSync(resolve(root,"index.html"),"utf8");
-  // React owns button markup; the stable shell and real browser flows are still tested.
-  for(const id of ["start-screen","option-sound","react-menu-actions","react-topbar-actions"])
-   assert.ok(html.includes('id="'+id+'"'),id);
-  const react=readFileSync(resolve(root,"src/react/entry.jsx"),"utf8");
-  for(const id of ["menu-new","menu-continue","menu-options","open-menu"])
-   assert.ok(react.includes('id="'+id+'"'),"React button: "+id);
-  assert.match(react,/flushSync\(/,"React controls are mounted before event handlers");
+ for(const id of ["start-screen","lhs-menu-actions","lhs-topbar-actions"])
+  assert.ok(html.includes('id="'+id+'"'),id);
+ for(const [template,ids] of [
+  ["menu-actions",["menu-new","menu-continue","menu-options"]],
+  ["menu-preferences",["option-sound"]],
+  ["header-actions",["open-menu"]],
+ ]){
+  const markup=readFileSync(resolve(root,"frontend-angular/src/templates/"+template+".html"),"utf8");
+  for(const id of ids)assert.ok(markup.includes('id="'+id+'"'),id);
+ }
  assert.match(sourceModule("ui/runtimeLoop.ts"),/frameSimulation\.run\(\{/);
  assertSourceCall("application/gameFramePort.ts","stepGame",["getState()","minutes"]);
  const frame=readFileSync(resolve(root,"src/application/frameActivity.ts"),"utf8");
@@ -131,7 +134,7 @@ test("modo de organizar fica disponível no catálogo sem afetar a compra",async
  const {resolve,dirname}=await import("node:path");
  const {fileURLToPath}=await import("node:url");
  const root=resolve(dirname(fileURLToPath(import.meta.url)),"..");
- const html=readFileSync(resolve(root,"index.html"),"utf8");
+ const html=readFileSync(resolve(root,"frontend-angular/src/templates/shop-overview.html"),"utf8");
  assert.match(html,/id="organize-furniture"/);
  assert.match(sourceModule("ui/placementController.ts"),/placementActions\.move\(state\.placement\.relocationFrom,slot.id\)/);
  assert.match(readFileSync(resolve(root,"src/application/placementActionsPort.ts"),"utf8"),/relocateFurniture\(getState\(\),from,to\)/);

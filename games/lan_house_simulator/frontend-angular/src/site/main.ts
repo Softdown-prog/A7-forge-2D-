@@ -1,4 +1,4 @@
-/** Institutional website Angular entry. This bundle never imports the game or React. */
+/** Institutional website Angular entry. This bundle does not import the game. */
 import {createComponent} from '@angular/core';
 import {createApplication} from '@angular/platform-browser';
 import {SiteHeaderComponent} from './site-header';

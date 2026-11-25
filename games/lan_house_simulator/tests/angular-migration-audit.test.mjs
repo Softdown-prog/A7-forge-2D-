@@ -30,19 +30,14 @@ test("connected mobile, account and stock scenarios contribute real browser audi
  assert.ok(evidence.includes('expiresAfter30Days:true'),'Existing privacy evidence retained');
 });
 
-test("React and Angular keep seven stable roots and production is not prematurely switched",()=>{
+test("all registered Angular hosts are present in the game document",()=>{
  const report=auditMigration(sources);
- assert.equal(report.production.reactScript,true);
- assert.equal(report.production.reactBundleBuilt,true);
- assert.equal(report.production.angularScript,false);
- assert.equal(report.hosts.reactOwned.length,7);
- assert.deepEqual(report.hosts.reactHostsMissingAngular,[]);
- assert.deepEqual(report.hosts.reactHostsMissingPreview,[]);
- assert.deepEqual(report.hosts.mandatoryAngularHostsMissingGame,[]);
- assert.equal(report.status,"not-ready");
+ assert.equal(report.game.angularScript,true);
+ assert.ok(report.hosts.registered.length>=20);
+ assert.deepEqual(report.hosts.missingInGame,[]);
+ assert.deepEqual(report.hosts.missingInPreview,[]);
+ assert.equal(report.status,"manual-review-required");
  assert.equal(report.decision,"no-merge-no-deploy");
- assert.ok(report.hosts.optionalAngularHostsMissingGame.includes("angular-notice-inbox"));
- assert.ok(report.hosts.optionalAngularHostsMissingGame.includes("angular-time-weather"));
 });
 test("current browser scripts evidence real PS1/PS2, saves, admin, and three widths, not all flows",()=>{
  const report=auditMigration(sources);
@@ -54,15 +49,14 @@ test("current browser scripts evidence real PS1/PS2, saves, admin, and three wid
   assert.equal(byId[id].status,"script-evidence-found",id);
  }
  assert.equal(report.browserQa.workflowPresent,true);
- assert.ok(report.blockers.some(b=>b.id==="react-production-entry"));
- assert.ok(report.blockers.some(b=>b.id==="optional-angular-hosts"));
+ assert.deepEqual(report.blockers,[]);
 });
 test("the audit detects missing hosts and disabled browser checks",()=>{
  const missing=auditMigration({...sources,
-  angularEntry:sources.angularEntry.replace("['react-menu-tour',MenuTourComponent]",""),
+  published:sources.published.replace('id="lhs-menu-tour"',""),
   angularWorkflow:"no QA",
   integratedQa:""});
- assert.deepEqual(missing.hosts.reactHostsMissingAngular,["react-menu-tour"]);
+ assert.deepEqual(missing.hosts.missingInGame,["lhs-menu-tour"]);
  assert.equal(missing.browserQa.workflowPresent,false);
  assert.ok(missing.blockers.some(b=>b.id==="angular-workflow"));
  assert.equal(missing.browserQa.checks.find(c=>c.id==="console-purchases").status,
@@ -72,7 +66,7 @@ test("the audit detects missing hosts and disabled browser checks",()=>{
 test("report is stable, read-only and cannot claim merge readiness from a static marker check",()=>{
  const report=auditMigration(sources);
  assert.deepEqual(report,auditMigration(sources));
- assert.ok(report.blockers.length>=2);
+ assert.equal(report.status,"manual-review-required");
  assert.equal(report.decision,"no-merge-no-deploy");
  assert.match(report.browserQa.caveat,/NOT proof/);
  assert.ok(report.nextSteps.length>=3);
@@ -85,7 +79,7 @@ test("privacy coverage audits actual banner controls and expiry without claiming
  assert.match(sources.integratedQa,/privacyChoices/);
  assert.match(sources.integratedQa,/31\*24\*60\*60\*1000/);
  assert.match(sources.integratedQa,/localStorage\.getItem\(key\)/);
- assert.equal(report.status,"not-ready","Privacy checks alone must never authorize the cutover");
+ assert.equal(report.decision,"no-merge-no-deploy");
 });
 
 test("mobile layout editor checks real Canvas touch, rotation, removal and reload",()=>{
@@ -97,8 +91,7 @@ test("mobile layout editor checks real Canvas touch, rotation, removal and reloa
   "#layout-confirm","#layout-removal-cancel","#layout-removal-confirm",
   "restored.objectPlacements"
  ])assert.ok(sources.integratedQa.includes(token),token);
- assert.equal(report.status,"not-ready",
-  "Mobile QA script coverage alone cannot authorize React removal");
+ assert.equal(report.decision,"no-merge-no-deploy");
 });
 
 test("account and Donate browser evidence is mocked and cannot charge a player",()=>{
@@ -161,13 +154,12 @@ test("cutover audit includes standalone optional Angular hosts, not only tuple i
   "angular-prices-workspace","angular-licenses-workspace",
   "angular-consoles-workspace"
  ]){
-  assert.ok(report.hosts.optionalAngularHosts.includes(id),"Missing Angular host inventory: "+id);
-  assert.ok(report.hosts.optionalAngularHostsMissingGame.includes(id),
-   "React production must not accidentally contain preview-only host "+id);
+  assert.ok(report.hosts.registered.includes(id),"Missing Angular host inventory: "+id);
+  assert.ok(!report.hosts.missingInGame.includes(id),id);
  }
  for(const id of ["angular-computer-workspace","angular-service-workspace"]){
-  assert.ok(report.hosts.optionalAngularHosts.includes(id));
-  assert.ok(!report.hosts.optionalAngularHostsMissingGame.includes(id),
+  assert.ok(report.hosts.registered.includes(id));
+  assert.ok(!report.hosts.missingInGame.includes(id),
    "Already mounted game hosts must not become invented blockers: "+id);
  }
  assert.equal(report.decision,"no-merge-no-deploy");

@@ -68,8 +68,8 @@ test('Angular primary admin tabs follow the original controller, keyboard and mo
  assert.match(file('frontend-angular/src/workspace.css'),/html\[data-ui-framework="angular"\]/);
  assert.doesNotMatch(angular,/from ['"][^'"]*\/(?:sim|render|application)\//);
 });
-test('React entry remains operational until complete release',()=>{
- assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
+test('The standalone game loads the Angular workspaces',()=>{
+ assert.match(file('index.html'),/src="\.\/__angular\/main\.js"/);
  assert.match(file('frontend-angular/angular.json'),/workspace\.css/);
 });
 
@@ -101,7 +101,7 @@ test('Angular stock workspace mirrors native 2000 unlock and forwards task comma
  assert.match(entry,/stockWorkspaceHost/);
  assert.match(preview,/id="angular-stock-workspace"/);
  assert.match(css,/#angular-stock-workspace \+ \.management-pages/);
- assert.doesNotMatch(file('index.html'),/id="angular-stock-workspace"/);
+ assert.match(file('index.html'),/id="angular-stock-workspace"/);
  assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
  assert.doesNotMatch(ui,/orderMerchandise|setMerchandisePrice|localStorage|fetch\(/);
 });
@@ -130,7 +130,7 @@ test('Angular finance task navigation delegates to native manager with safe rest
  assert.match(entry,/FinanceWorkspaceComponent/);
  assert.match(entry,/financeWorkspaceHost/);
  assert.match(preview,/id="angular-finance-workspace"/);
- assert.doesNotMatch(original,/id="angular-finance-workspace"/);
+ assert.match(original,/id="angular-finance-workspace"/);
  assert.match(css,/#angular-finance-workspace \+ \.management-pages/);
  assert.doesNotMatch(ui,/from ['"][^'"]*\/(?:sim|render|application)\//);
  assert.doesNotMatch(ui,/resetGame|localStorage|fetch\(|createGame/);
@@ -156,7 +156,7 @@ test('Prices, licenses and consoles navigate existing native panels without engi
   assert.match(main,new RegExp("'angular-"+area+"-workspace'"));
   assert.match(management,new RegExp("area==='"+area+"'\\?root\\.querySelector\\('#angular-"+area+"-workspace'\\)"));
   assert.ok(preview.includes('id="angular-'+area+'-workspace"'));
-  assert.ok(!published.includes('id="angular-'+area+'-workspace"'));
+  assert.ok(published.includes('id="angular-'+area+'-workspace"'));
   assert.ok(css.includes('#angular-'+area+'-workspace + .management-pages'));
   for(const page of pages){
    assert.match(management,new RegExp("id:'"+page+"'"));

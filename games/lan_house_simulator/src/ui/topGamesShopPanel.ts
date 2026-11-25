@@ -1,5 +1,5 @@
 /** DOM adapter only. Real subscription commands use the existing shop listener.
- * No React/Angular import and no game-state mutations here.
+ * Renders a view model without framework imports or game-state mutations.
  */
 import type {TopGamesShopSnapshot} from "../application/topGamesShopPort.js";
 

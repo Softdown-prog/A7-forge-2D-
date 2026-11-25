@@ -1,4 +1,4 @@
-/** Standalone Angular Help/FAQ; no React, network calls or game imports. */
+/** Standalone Angular Help/FAQ; no network calls or game imports. */
 import {ChangeDetectionStrategy,Component,ElementRef,computed,inject,signal} from '@angular/core';
 
 type HelpItem=Readonly<{question:string;answer:string}>;

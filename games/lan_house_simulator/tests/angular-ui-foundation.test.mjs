@@ -20,14 +20,9 @@ test('Angular 22 uses a separate TypeScript 6 toolchain; TypeScript 7 game stays
   assert.match(ui.dependencies['@angular/core'],/^~22\./);
   assert.equal(ui.devDependencies.typescript,'6.0.2');
   assert.equal(game.devDependencies.typescript,'7.0.2');
-  const gameLock=JSON.parse(file('package-lock.json'));
-  const fixtureLock=JSON.parse(file('legacy-react/package-lock.json'));
-  for(const dependency of ['react','react-dom','scheduler']){
-    assert.ok(!Object.keys(gameLock.packages).some(path=>path.endsWith('/'+dependency)));
-  }
-  for(const dependency of ['react','react-dom']){
-    assert.equal(game.dependencies?.[dependency],undefined);
-    assert.equal(fixtureLock.packages['node_modules/'+dependency].version,'19.2.4');
+  for(const path of ['package-lock.json',root+'package-lock.json']){
+    const lock=JSON.parse(file(path));
+    assert.ok(!Object.keys(lock.packages).some(name=>/\/(react|react-dom|scheduler)$/.test(name)),path);
   }
   assert.ok(existsSync(new URL('../'+root+'angular.json',import.meta.url)));
 });
@@ -42,8 +37,8 @@ test('Angular owns existing menu/header/shop islands without reimplementing the 
   assert.doesNotMatch(components,/from ['"][^'"]*(?:\/sim\/|\/application\/|\/render\/|\/bootstrap\/)/);
   assert.doesNotMatch(components,/requestAnimationFrame|createGame|localStorage|purchase\(/);
   for(const id of [
-    'react-menu-actions','react-menu-tour','react-topbar-actions',
-    'react-quick-deck','react-shop-categories','react-shop-search','react-admin-shortcuts'
+    'lhs-menu-actions','lhs-menu-tour','lhs-topbar-actions',
+    'lhs-quick-deck','lhs-shop-categories','lhs-shop-search','lhs-admin-shortcuts'
   ])assert.ok(entry.includes(id),id);
   for(const id of ['menu-new','menu-continue','menu-account','menu-options'])
     assert.ok(file(root+'src/templates/menu-actions.html').includes('id="'+id+'"'),id);
@@ -102,15 +97,8 @@ test('Angular shop search has exactly one standalone file and a single bootstrap
   assert.match(component,/selector:'lhs-shop-search',standalone:true/);
   assert.match(component,/ChangeDetectionStrategy\.OnPush/);
   assert.match(component,/templateUrl:'\.\/templates\/shop-search.html'/);
-  assert.match(template,/id="react-shop-query"/);
+  assert.match(template,/id="lhs-shop-query"/);
   assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
-});
-
-test('Angular preview cannot accidentally replace the current React runtime',()=>{
-  assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
-  assert.match(file('scripts/build.mjs'),/build_legacy_react\.mjs/);
-  assert.match(file('scripts/build_legacy_react.mjs'),/src\/react\/entry\.jsx/);
-  assert.match(file('src/bootstrap/bootstrapGame.ts'),/dataset\.gameReady="true"/);
 });
 
 test('Angular menu settings and save transfer preserve native TypeScript contracts',()=>{
@@ -118,16 +106,16 @@ test('Angular menu settings and save transfer preserve native TypeScript contrac
   const components=file(root+'src/menu-save-controls.ts');
   const preferences=file(root+'src/templates/menu-preferences.html');
   const transfer=file(root+'src/templates/save-transfer.html');
-  const legacy=file('index.html');
+  const gameHtml=file('index.html');
   const menuPort=file('src/ui/gameMenuControls.ts');
   const savePort=file('src/ui/saveFileControls.ts');
   for(const id of ['menu-settings','option-sound']){
     assert.match(preferences,new RegExp('id="'+id+'"'));
-    assert.match(legacy,new RegExp('id="'+id+'"'));
+    assert.doesNotMatch(gameHtml,new RegExp('id="'+id+'"'));
   }
   for(const id of ['save-export','save-import','save-import-file','save-message']){
     assert.match(transfer,new RegExp('id="'+id+'"'));
-    assert.match(legacy,new RegExp('id="'+id+'"'));
+    assert.doesNotMatch(gameHtml,new RegExp('id="'+id+'"'));
   }
   assert.match(entry,/angular-save-transfer/);
   assert.match(entry,/angular-menu-preferences/);
@@ -143,8 +131,7 @@ test('Angular menu settings and save transfer preserve native TypeScript contrac
   assert.match(transfer,/aria-live="polite"/);
   assert.doesNotMatch(components,/localStorage|new Blob|FileReader|importText|exportSnapshot|setSound/);
   assert.doesNotMatch(components,/from ['"][^'"]*\/(?:sim|render|application|bootstrap)\//);
-  // Old game index must not mount Angular's duplicate control IDs yet.
-  assert.doesNotMatch(legacy,/id="angular-(?:save-transfer|menu-preferences)"/);
+  assert.match(gameHtml,/id="angular-(?:save-transfer|menu-preferences)"/);
 });
 
 test('Angular HUD uses read-only time/weather snapshots and preserves native DOM hooks',()=>{
@@ -152,17 +139,17 @@ test('Angular HUD uses read-only time/weather snapshots and preserves native DOM
  const hud=file(root+'src/templates/time-weather.html');
  const adapter=file('src/ui/timeWeatherPanel.ts');
  const preview=file(root+'src/index.html');
- const legacy=file('index.html');
+ const gameHtml=file('index.html');
  for(const id of ['time-weather-panel','calendar-hud','weather-hud','time-weather-date',
   'time-weather-day','time-weather-hour','time-weather-condition','time-weather-effect','time-weather-outlook']){
   assert.ok(hud.includes('id="'+id+'"'),id);
-  assert.ok(legacy.includes('id="'+id+'"'),id+' legacy');
+  assert.ok(!gameHtml.includes('id="'+id+'"'),id+' legacy');
  }
  assert.match(component,/lhs:time-weather-updated/);
  assert.match(adapter,/publishedSnapshots/);
  assert.match(adapter,/lhs:time-weather-updated/);
  assert.match(preview,/id="angular-time-weather"/);
- assert.doesNotMatch(legacy,/id="angular-time-weather"/);
+ assert.match(gameHtml,/id="angular-time-weather"/);
  assert.doesNotMatch(component,/innerHTML|localStorage|requestAnimationFrame/);
 });
 test('Angular mail preserves native notice actions and TypeScript port ownership',()=>{
@@ -170,10 +157,10 @@ test('Angular mail preserves native notice actions and TypeScript port ownership
  const inbox=file(root+'src/templates/notice-inbox.html');
  const presenter=file('src/ui/noticeWindowRefresh.ts');
  const controller=file('src/ui/noticeControls.ts');
- const legacy=file('index.html');
+ const gameHtml=file('index.html');
  for(const id of ['notices','notices-title','close-notices','notices-list']){
   assert.ok(inbox.includes('id="'+id+'"'));
-  assert.ok(legacy.includes('id="'+id+'"'));
+  assert.ok(!gameHtml.includes('id="'+id+'"'));
  }
  for(const attr of ['data-notice-read','data-notice-action','data-decision','data-choice'])
   assert.ok(inbox.includes(attr),attr);
@@ -188,7 +175,7 @@ test('Angular mail preserves native notice actions and TypeScript port ownership
  assert.match(file(root+'src/main.ts'),/NoticeInboxComponent/);
  assert.doesNotMatch(component,/localStorage|port\.choose|markRead\(|GameState|requestAnimationFrame/);
  assert.doesNotMatch(inbox,/\(click\)=/);
- assert.doesNotMatch(legacy,/id="angular-notice-inbox"/);
+ assert.match(gameHtml,/id="angular-notice-inbox"/);
 });
 
 
@@ -200,10 +187,10 @@ test('Shop header Angular projection preserves cash, organize and demolition com
  const adapter=file('src/ui/shopOverviewPanel.ts');
  const shopPanels=file('src/ui/shopPanels.ts');
  const snapshot=file('src/application/shopOverviewPort.ts');
- const legacy=file('index.html');
+ const gameHtml=file('index.html');
  for(const id of ['shop-cash','organize-furniture','demolish-walls']){
   assert.match(template,new RegExp('id="'+id+'"'));
-  assert.match(legacy,new RegExp('id="'+id+'"'));
+  assert.doesNotMatch(gameHtml,new RegExp('id="'+id+'"'));
  }
  for(const field of ['organizeText','demolishText','demolishDisabled','cashText']){
   assert.ok(component.includes(field),field);
@@ -219,7 +206,7 @@ test('Shop header Angular projection preserves cash, organize and demolition com
  assert.match(template,/view\(\)\.demolishDisabled/);
  assert.match(entry,/ShopOverviewComponent/);
  assert.match(preview,/id="angular-shop-overview"/);
- assert.doesNotMatch(legacy,/id="angular-shop-overview"/);
+ assert.match(gameHtml,/id="angular-shop-overview"/);
  assert.doesNotMatch(component,/requestAnimationFrame|localStorage|createGame|purchase\(/);
  assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|render|application|bootstrap)\//);
  assert.doesNotMatch(template,/\(click\)=/);
@@ -274,7 +261,7 @@ test('Angular catalog displays only read-only regular shop offers and preserves 
  const component=file(root+'src/shop-catalog.ts');
  const template=file(root+'src/templates/shop-catalog.html');
  const preview=file(root+'src/index.html');
- const legacy=file('index.html');
+ const gameHtml=file('index.html');
  for(const field of ['disabled','buttonText','buttonTitle','placementHint','ownedText','artworkSrc']){
   assert.ok(presenter.includes(field),field);
   assert.ok(component.includes(field),field);
@@ -293,7 +280,7 @@ test('Angular catalog displays only read-only regular shop offers and preserves 
  assert.match(template,/\(click\)="purchase\(card\.id\)"/);
  assert.match(template,/consolesPending/);
  assert.match(preview,/id="angular-shop-catalog"/);
- assert.doesNotMatch(legacy,/id="angular-shop-catalog"/);
+ assert.match(gameHtml,/id="angular-shop-catalog"/);
  assert.doesNotMatch(component,/from ['"][^'"]*\/(?:sim|application|render|bootstrap)\//);
  assert.doesNotMatch(component,/port\.purchase|new Game|localStorage|fetch\(/);
  assert.match(file(root+'src/main.ts'),/ShopCatalogComponent/);
@@ -312,7 +299,7 @@ test('Angular PS1 PS2 console shop preserves purchase handlers and readonly proj
  assert.match(component,/lhs:shop-consoles-updated/);
  assert.match(component,/buyPs1Disc/);
  assert.match(component,/buyPs2Game/);
- assert.match(component,/selectPs1/);
+ assert.match(component,/movePs1Location/);
  assert.match(component,/selectPs2/);
  assert.match(template,/angular-ps1-placement/);
  assert.match(template,/angular-ps2-placement/);
@@ -360,7 +347,7 @@ test('Angular account shell owns a unique dialog while TypeScript owns all accou
  assert.match(entry,/AccountShellComponent/);
  assert.match(entry,/angular-player-account/);
  assert.match(preview,/id="angular-player-account"/);
- assert.doesNotMatch(published,/id="angular-player-account"/);
+ assert.match(published,/id="angular-player-account"/);
  assert.match(fallback,/angularDialog\?\?document\.createElement\("dialog"\)/);
  assert.match(fallback,/if\(!angularDialog\)/);
  assert.match(fallback,/document\.body\.append\(dialog\)/);
@@ -384,7 +371,7 @@ test('Angular merchandise stock form has one DOM owner and native transaction au
  assert.match(entry,/angular-merchandise-catalog/);
  assert.match(entry,/js\/main\.js/);
  assert.match(preview,/id="angular-merchandise-catalog"/);
- assert.doesNotMatch(production,/id="angular-merchandise-catalog"/);
+ assert.match(production,/id="angular-merchandise-catalog"/);
  for(const id of ['merchandise-category','merchandise-product',
   'merchandise-detail','merchandise-margin','merchandise-sales',
   'merchandise-price-form','merchandise-price','merchandise-supplier',

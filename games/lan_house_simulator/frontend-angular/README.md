@@ -6,17 +6,15 @@ A raiz deste diretório é a **única origem canônica do front-end Angular** do
 - `src/` (incluindo `main.ts` e `workspace.css`): **UI Angular do jogo**. O motor 2D TypeScript/Canvas fica no `../src/` do projeto e não é outro site institucional.
 - `src/site/`: **ponte temporária** da migração antiga (Angular montado no HTML de `website/`). Não desenvolver funcionalidades novas aqui.
 
-**Status:** reescrita em branch isolada; não publicar nem fazer merge. Até o cutover, o site existente em `../website/` continua atendendo produção para não interromper autenticação, saves, pagamentos e documentos em vigor. Remover o legado só depois dos testes e homologação de todas as funcionalidades.
+Use `npm run build` na raiz do jogo para compilar o HUD Angular e o motor
+TypeScript/Canvas em `dist/`. `npm run build:site` empacota a mesma build em
+`out/site/game/` e gera o site institucional Angular. Para a validação de entrega,
+consulte [a documentação canônica](../docs/ANGULAR_CANONICAL_DELIVERY.md).
 
-Para construir o site novo a partir da raiz `games/lan_house_simulator`: `npm run build:site:clean` e `npm run check:site:clean`. O resultado é `out/site-clean-angular/` e não deve ser publicado enquanto existirem lacunas funcionais.
+## Registro da migração da interface
 
-Para detalhes de engenharia e os bloqueios de liberação, consulte `../docs/ANGULAR_REWRITE_ISOLATED.md`.
-
----
-
-# LHS Angular 22 — migração da interface
-
-Primeira etapa isolada da migração de React para Angular do Lan House Simulator. NÃO substitui ainda a interface publicada. A main, o jogo Canvas 2D, src/sim, src/application, src/render, src/bootstrap e os contratos de save continuam intactos.
+As seções a seguir registram as etapas e as validações da migração. Os comandos
+acima descrevem o build atual.
 
 ## Por que um workspace separado?
 
@@ -376,25 +374,8 @@ conta e Donate e o jogo Angular em `/game/`. Aplica a checagem de URLs,
 imports, recursos, CSP e revisão de cache do mesmo validador do site.
 O identificador do iframe também inclui os assets Angular para impedir
 que mudanças apenas na UI sejam ocultadas por cache antigo.
-Os scripts padrão `npm run build` e `npm run build:site` continuam usando React.
-O CI apenas armazena o candidato como artefato; não publica nem mescla a main.
-
-## Troca do build padrão do site (somente nesta branch)
-
-O comando `npm run build:site` agora constrói `out/site/` com Angular no jogo,
-sem `react-entry.js`. Um `npm run build` isolado ainda gera o jogo legado
-React para validações anteriores; isso **não** altera as regras de negócio.
-O instalador do site garante as dependências Angular do lockfile e recompila
-AOT, evitando arquivos dist obsoletos. Para a regressão temporária do site
-React, execute `LHS_SITE_UI=react npm run build:site` (ambiente Unix) ou
-`$env:LHS_SITE_UI='react'; npm run build:site` (PowerShell). A build Angular
-isolada em `out/site-angular/` continua disponível via
-`npm run build:site:angular:candidate`.
-
-A branch não aciona a publicação: o workflow de espelhamento Pages só é
-disparado por alterações na `main`. Não efetuar merge antes de revisar o
-conjunto de jobs que ainda verificam o antigo React, o teste mobile físico
-e a compatibilidade de conta e Donate em homologação.
+O candidato existe para validação. A publicação usa o artefato canônico de
+`npm run build:site` gerado na `main`.
 
 ## Busca reativa sem varrer o catálogo a cada tecla
 

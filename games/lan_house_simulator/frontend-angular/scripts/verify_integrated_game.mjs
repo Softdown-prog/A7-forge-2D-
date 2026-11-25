@@ -1,12 +1,9 @@
-/** Browser-only cutover rehearsal: original Canvas game, actual shop ports and save.
- * Production HTML remains unchanged. Angular takes over only the HTTP test response.
- */
+/** Browser QA against the same Angular and Canvas artifact as npm run build. */
 import {createRequire} from 'node:module';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import assert from 'node:assert/strict';
-import {createAngularCutoverDocument} from './cutover_document.mjs';
 import {verifyPrivacyChoices} from './integrated-qa/privacy.mjs';
 import {verifyMobileLayoutEditor} from './integrated-qa/mobileLayoutEditor.mjs';
 import {verifyAccountDonation} from './integrated-qa/accountDonation.mjs';
@@ -21,21 +18,15 @@ import {PS2_GAME_CATALOG} from '../../dist/js/sim/ps2.js';
 const tools=createRequire(resolve(import.meta.dirname,'../../.angular-browser-tools/package.json'));
 const {chromium}=tools('playwright');
 const gameRoot=resolve(import.meta.dirname,'../../dist');
-const angularRoot=resolve(import.meta.dirname,'../dist/game-ui/browser');
 const output=resolve(import.meta.dirname,'../../out/angular-integrated-browser');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8',
  '.css':'text/css; charset=utf-8','.svg':'image/svg+xml','.json':'application/json',
  '.png':'image/png','.webp':'image/webp','.wav':'audio/wav','.ogg':'audio/ogg'};
-const original=await readFile(resolve(gameRoot,'index.html'),'utf8');
-const index=createAngularCutoverDocument(original);
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url??'/','http://localhost').pathname);
-  if(path==='/'){res.writeHead(200,{'content-type':mime['.html'],'cache-control':'no-store'});res.end(index);return;}
-  const angular=path.startsWith('/__angular/');
-  const root=angular?angularRoot:gameRoot;
-  const target=resolve(root,'.'+(angular?path.slice('/__angular'.length):path));
-  if(!target.startsWith(root+sep)){res.writeHead(403).end();return;}
+  const target=resolve(gameRoot,'.'+(path==='/'?'/index.html':path));
+  if(!target.startsWith(gameRoot+sep)){res.writeHead(403).end();return;}
   res.writeHead(200,{'content-type':mime[extname(target)]??'application/octet-stream'});
   res.end(await readFile(target));
  }catch{res.writeHead(404).end('Not found');}
@@ -176,30 +167,30 @@ try{
   // not just the hidden native command catalog.
   await press(page.locator('[data-shop-category="equipment"]'));
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='true');
+   document.querySelector('#lhs-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='true');
   const visibleCards=page.locator('#angular-shop-catalog .angular-catalog-grid > article.shop-card');
   await page.waitForFunction(()=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length>0);
   const originalCount=await visibleCards.count();
   assert.ok(originalCount>0,'Equipment catalog has real projected cards');
-  await page.locator('#react-shop-query').fill('zzz-qa-nenhum-item-999');
+  await page.locator('#lhs-shop-query').fill('zzz-qa-nenhum-item-999');
   await page.waitForFunction(()=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===0);
   assert.equal(await visibleCards.count(),0,'Filtering removes unmatched Angular cards');
-  assert.match(await page.locator('#react-shop-search').innerText(),/Nenhum cartão/);
+  assert.match(await page.locator('#lhs-shop-search').innerText(),/Nenhum cartão/);
   await press(page.getByRole('button',{name:'Limpar busca'}));
   await page.waitForFunction(expected=>document.querySelectorAll(
    '#angular-shop-catalog .angular-catalog-grid > article.shop-card').length===expected,originalCount);
   assert.equal(await visibleCards.count(),originalCount,'Clearing search restores all Angular cards');
   // Switching category must reset a live query via the native shop selection event.
-  await page.locator('#react-shop-query').fill('zzz-qa-redefinir-categoria-999');
+  await page.locator('#lhs-shop-query').fill('zzz-qa-redefinir-categoria-999');
   await press(page.locator('[data-shop-category="consoles"]'));
   await page.waitForFunction(()=>
-   (document.querySelector('#react-shop-query')?.value??'NOT_READY')==='');
-  assert.equal(await page.locator('#react-shop-query').inputValue(),'');
+   (document.querySelector('#lhs-shop-query')?.value??'NOT_READY')==='');
+  assert.equal(await page.locator('#lhs-shop-query').inputValue(),'');
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
+   document.querySelector('#lhs-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#lhs-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor({state:'visible'});
   // Production-style browser QA: all thirteen procedural covers must have visible,
@@ -244,14 +235,17 @@ try{
   assert.equal(new Set(ps2CoverSources).size,7,'Each 2006 PS2 game needs unique artwork');
   const ps1=shop.locator(':scope > article.shop-card').first();
   const ps2=shop.locator(':scope > article.shop-card').nth(1);
-  const slots=await page.locator('#angular-ps1-placement option').evaluateAll(
-   nodes=>nodes.map(node=>node.value));
-  assert.ok(slots.length>0,'Real PS1 positions returned');
-  const ps1Position=slots.at(-1);
-  await page.locator('#angular-ps1-placement').selectOption(ps1Position);
-  assert.equal(await page.locator('#ps1-placement').inputValue(),ps1Position);
-  assert.equal(await ps1.locator('button').isEnabled(),true);
-  await press(ps1.locator('button'));
+  const nativePs1=page.locator('#shop-catalog #ps1-placement');
+  const ps1Start=await nativePs1.inputValue();
+  const picker=shop.locator('#angular-ps1-placement');
+  await press(picker.getByRole('button',{name:'Escolher o próximo local para a bancada'}));
+  const ps1Position=await nativePs1.inputValue();
+  assert.notEqual(ps1Position,ps1Start,'PS1 arrow changes the purchase position');
+  const selectedLabel=await nativePs1.locator('option:checked').textContent();
+  await picker.locator('output').filter({hasText:selectedLabel}).waitFor();
+  const buyPs1=ps1.locator('button[data-buy="ps1"]');
+  assert.equal(await buyPs1.isEnabled(),true);
+  await press(buyPs1);
   let save=await persisted();
   assert.equal(save.ps1Stations?.length,1,'Real PS1 purchased');
   assert.equal(save.ps1Stations[0]?.slotId,ps1Position,'PS1 installed in chosen position');

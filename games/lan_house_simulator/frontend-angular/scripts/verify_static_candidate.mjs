@@ -23,7 +23,7 @@ const [index,manifest]=await Promise.all([
  readFile(resolve(root,'angular-candidate-report.json'),'utf8').then(JSON.parse)
 ]);
 assert.equal(manifest.deployApproved,false,'QA candidate is never an approved deploy');
-assert.equal(manifest.reactBootstrap,false,'React must be absent in candidate');
+assert.equal(manifest.framework,'angular','Candidate must be the standalone Angular build');
 assert.ok(!index.includes('src="./js/react-entry.js"'),'No React script in compiled candidate');
 for(const file of ['__angular/main.js','__angular/styles.css','js/main.js'])
  assert.ok((await stat(resolve(root,file))).isFile(),'Missing compiled asset: '+file);
@@ -56,7 +56,7 @@ try{
   await page.waitForFunction(()=>
    document.documentElement.dataset.uiFramework==='angular' &&
    document.documentElement.dataset.gameReady==='true',null,{timeout:20000});
-  assert.equal(await page.locator('#react-menu-actions #menu-new').count(),1,
+  assert.equal(await page.locator('#lhs-menu-actions #menu-new').count(),1,
    'Angular menu must mount before original Canvas game');
   assert.equal(await page.locator('#angular-save-transfer #save-export').count(),1,
    'Original save action ID must exist exactly once');

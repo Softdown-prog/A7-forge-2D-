@@ -48,7 +48,7 @@ export function regularShopCardView(
   placementHint:offer.placementHint,ownedText:offer.ownedText
  };
 }
-/** Existing model publishers can stay dormant while the React UI is live. */
+/** Publishes the catalog view model when the Angular UI is mounted. */
 export function publishAngularShopCatalog(
  doc:Document,view:AngularShopCatalogView
 ):void{

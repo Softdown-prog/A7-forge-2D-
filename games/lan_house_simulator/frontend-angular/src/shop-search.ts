@@ -46,7 +46,7 @@ export class ShopSearchComponent implements OnInit {
   };
   ngOnInit():void {
     this.host=document.getElementById('shop-catalog');
-    this.nav=document.getElementById('react-shop-categories');
+    this.nav=document.getElementById('lhs-shop-categories');
     // Subscribe only while this Angular view exists; native ports remain authoritative.
     if(this.host)fromEvent<Event>(this.host,'lhs:shop-catalog-updated')
       .pipe(takeUntilDestroyed(this.destroyRef)).subscribe(this.updated);

@@ -17,7 +17,7 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 import {nightPrizePresentation,prizeAmountText} from "../dist/js/render/nightPrizePresentation.js";
 import {nightReopeningPresentation} from "../dist/js/render/nightReopening.js";
 import {GAME_SAVE_KEY,DAY_MINUTES} from "../dist/js/sim/types.js";
-import {selectAdminArea} from "./management_navigation.mjs";
+import {selectAdminArea,selectTask} from "./management_navigation.mjs";
 import {dismissPrivacyNotice} from "./privacyNoticeTest.mjs";
 const root=resolve(import.meta.dirname,"../dist"),out=resolve(process.argv[2]??"out/friday-panel");
 await mkdir(out,{recursive:true});
@@ -58,7 +58,7 @@ try{
  await page.locator("#menu-continue").click();
  await page.locator("#open-admin").click();
  await selectAdminArea(page,"finance");
- await page.locator('#section-finance [data-panel-choice="events"]').click();
+ await selectTask(page,'finance','events');
  const btn=page.locator("#first-meetup-two");
  await btn.waitFor({state:"visible"});
  if(!await btn.isEnabled())throw Error("O estudo da sexta deveria estar disponível.");
@@ -303,7 +303,7 @@ try{
  await page.locator("#menu-continue").click();
  await page.locator("#open-admin").click();
  await selectAdminArea(page,"finance");
- await page.locator('#section-finance [data-panel-choice="events"]').click();
+ await selectTask(page,'finance','events');
  const gallery=page.locator("#first-meetup-trophies");
  await gallery.waitFor({state:"visible"});
  if(await gallery.locator(".night-trophy-item").count()!==1)
@@ -386,7 +386,7 @@ try{
  await page.locator("#menu-continue").click();
  await page.locator("#open-admin").click();
  await selectAdminArea(page,"finance");
- await page.locator('#section-finance [data-panel-choice="events"]').click();
+ await selectTask(page,'finance','events');
  const mobileGallery=page.locator("#first-meetup-trophies");
  await mobileGallery.waitFor({state:"visible"});
  const viewAll=page.locator("#first-meetup-trophies-more");

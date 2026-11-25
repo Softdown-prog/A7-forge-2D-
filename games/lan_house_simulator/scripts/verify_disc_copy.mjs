@@ -21,13 +21,13 @@ try{
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
    await dismissPrivacyNotice(page,width<700);
   const click=async selector=>{const node=page.locator(selector);if(width<700)await node.tap();else await node.click();};
-  await click('#menu-continue');await click('#open-shop');const buy=page.locator('[data-buy="disc-copier"]');
-  assert.equal(await buy.isDisabled(),year<2001);assert.equal(await page.locator('.shop-art[data-item="disc-copier"] img').count(),1);
+  await click('#menu-continue');await click('#open-shop');const buy=page.locator('#angular-shop-catalog [data-buy="disc-copier"]');
+  assert.equal(await buy.isDisabled(),year<2001);assert.equal(await page.locator('#angular-shop-catalog .shop-art[data-item="disc-copier"] img').count(),1);
   if(year===2000){assert.match(await buy.textContent(),/2001/);await click('#close-shop');await click('#open-admin');assert.equal(await page.locator('#disc-copy-panel').isHidden(),true);}
   else{
-   await click('[data-buy="disc-copier"]');assert.equal(await buy.isDisabled(),true);
+   await click('#angular-shop-catalog [data-buy="disc-copier"]');await buy.and(page.locator(':disabled')).waitFor();
    const bought=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.ok(bought.discCopier);assert.equal(bought.expenses,900);assert.equal(bought.discCopier.prices.cd,3);assert.equal(bought.discCopier.prices.dvd,6);
-   await page.locator('.shop-art[data-item="disc-copier"] img').screenshot({path:resolve(output,'copier_'+width+'.png')});
+   await page.locator('#angular-shop-catalog .shop-art[data-item="disc-copier"] img').screenshot({path:resolve(output,'copier_'+width+'.png')});
    await click('#close-shop');await click('#open-admin');await selectAdminArea(page,'prices');await selectTask(page,'prices','discs');assert.equal(await page.locator('#disc-copy-panel').isVisible(),true);
    await click('[data-disc-kind="cd"][data-delta="1"]');await click('[data-disc-kind="dvd"][data-delta="-1"]');
    const changed=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);assert.deepEqual(changed.discCopier.prices,{cd:4,dvd:5});

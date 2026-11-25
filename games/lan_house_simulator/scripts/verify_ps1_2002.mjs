@@ -85,17 +85,17 @@ try{
   await dismissPrivacy(page,mobile);
   await click("#menu-continue");await click("#open-shop");
   await page.locator('[data-shop-category="consoles"]').click();
-  const buy=page.locator('[data-buy="ps1"]');
+  const buy=page.locator('#angular-shop-catalog [data-buy="ps1"]');
   assert.equal(await buy.isEnabled(),true,"PS1 purchasable in 2002");
-  assert.ok(await page.locator("#ps1-placement option").count()>0,"bench placement slots");
-  await click('[data-buy="ps1"]');
+  assert.ok((await page.locator("#angular-ps1-placement output").innerText()).length>0,"bench placement slots");
+  await click('#angular-shop-catalog [data-buy="ps1"]');
   // A primeira compra abre Administração → Videogames automaticamente.
   // A loja fechada não recalcula o texto de saldo; reabrimos pelo atalho.
   assert.match(await page.locator("#ps1-overview").innerText(),/Bancadas instaladas: 1\/3/);
   await selectTask(page,"consoles","discs");await click("#ps1-open-shop");
   assert.match(await page.locator("#shop-cash").innerText(),/Caixa R\$ 5440/);
-  await click('[data-buy-ps1-disc="turbo-circuito"]');
-  assert.match(await page.locator(".ps1-cd-shop-card").filter({hasText:"Turbo Circuito"}).innerText(),/Cópias no acervo: 1/);
+  await click('#angular-shop-catalog [data-buy-ps1-disc="turbo-circuito"]');
+  await page.locator(".angular-ps1-discs .shop-card").filter({hasText:"Turbo Circuito"}).getByText(/Cópias no acervo: 1/).waitFor();
   await page.screenshot({path:resolve(out,"ps1_shop_"+width+".png")});
   await click("#close-shop");
   await click("#open-admin");await selectAdminArea(page,'consoles');
@@ -171,7 +171,7 @@ try{
    throw error;
   }
   if(ready==="menu"){
-   // React can replace the initial menu between the readiness probe and click.
+   // Angular can replace the initial menu between the readiness probe and click.
    // If the real game opened meanwhile, do not wait for a now-missing button.
    if(!(await playPage.locator("#game").isVisible())){
     try{

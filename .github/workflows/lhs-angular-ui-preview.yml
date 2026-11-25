@@ -84,7 +84,7 @@ jobs:
           cache-dependency-path: games/lan_house_simulator/frontend-angular/package-lock.json
       - name: Syntax check cutover and browser QA scripts
         run: |
-          node --check frontend-angular/scripts/cutover_document.mjs
+          node --check frontend-angular/scripts/game_document.mjs
           node --check frontend-angular/scripts/build_cutover_candidate.mjs
           node --check frontend-angular/scripts/verify_catalog_preview.mjs
           node --check frontend-angular/scripts/verify_static_candidate.mjs
@@ -102,7 +102,7 @@ jobs:
           node --check scripts/verify_live_site_preview.mjs
       - name: Verify Angular UI boundaries
         run: node --test tests/angular-ui-foundation.test.mjs tests/angular-admin-reactivity.test.mjs tests/angular-admin-workspaces.test.mjs tests/angular-cutover-candidate.test.mjs tests/angular-integrated-scenario-boundary.test.mjs
-      - name: Audit React to Angular hosts and browser QA gaps (advisory)
+      - name: Audit Angular game hosts and browser QA gaps (advisory)
         run: |
           node --test tests/angular-migration-audit.test.mjs
           node frontend-angular/scripts/audit_migration.mjs --output out/angular-migration-audit/report.json
@@ -127,7 +127,7 @@ jobs:
           node --input-type=module -e 'import {createRequire} from "node:module";const require=createRequire(import.meta.url);const {chromium}=require("./.angular-browser-tools/node_modules/playwright");const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});await browser.close();'
       - name: Validate Angular catalogue interactions in Chromium desktop and mobile
         run: node frontend-angular/scripts/verify_catalog_preview.mjs
-      - name: Build the original game in isolated test workspace
+      - name: Build the Angular game in the test workspace
         run: |
           npm ci --no-audit --no-fund
           npm run build

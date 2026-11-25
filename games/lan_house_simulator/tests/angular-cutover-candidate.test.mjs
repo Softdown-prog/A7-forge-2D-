@@ -1,45 +1,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createAngularCutoverDocument,ANGULAR_CUTOVER_HOSTS} from
- '../frontend-angular/scripts/cutover_document.mjs';
+import {assertAngularGameDocument,ANGULAR_GAME_HOSTS} from
+ '../frontend-angular/scripts/game_document.mjs';
 const game=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 
-test('Angular candidate replaces React with all thirteen unique hosts',()=>{
- const candidate=createAngularCutoverDocument(game);
- assert.equal(ANGULAR_CUTOVER_HOSTS.length,13);
- assert.ok(game.includes('./js/react-entry.js'));
- assert.ok(!candidate.includes('./js/react-entry.js'));
- assert.ok(candidate.includes('#shop-catalog{display:none!important}'),
-  'Legacy purchase port remains in DOM but cannot be focused or displayed');
- assert.match(candidate,/src="\.\/__angular\/main\.js"/);
- assert.match(candidate,/href="\.\/__angular\/styles\.css"/);
- for(const id of ANGULAR_CUTOVER_HOSTS)
-  assert.equal(candidate.split('id="'+id+'"').length,2,id);
- for(const id of ['game','react-menu-actions','react-menu-tour',
-  'react-topbar-actions','react-quick-deck','react-shop-categories',
-  'react-shop-search','react-admin-shortcuts','angular-computer-workspace',
+test('The Angular game document owns each host exactly once',()=>{
+ assertAngularGameDocument(game);
+ assert.equal(ANGULAR_GAME_HOSTS.length,13);
+ const css=readFileSync(new URL('../style.css',import.meta.url),'utf8');
+ assert.match(css,/#shop-catalog \{ display: none !important; \}/);
+ for(const id of ['game','lhs-menu-actions','lhs-menu-tour',
+  'lhs-topbar-actions','lhs-quick-deck','lhs-shop-categories',
+  'lhs-shop-search','lhs-admin-shortcuts','angular-computer-workspace',
   'angular-service-workspace','angular-admin-area-navigation'])
-  assert.equal(candidate.split('id="'+id+'"').length,2,id);
+  assert.equal(game.split('id="'+id+'"').length,2,id);
  for(const id of ['shop-cash','organize-furniture','demolish-walls',
   'save-export','save-import-file','option-sound','notices','calendar-hud'])
-  assert.ok(!candidate.includes('id="'+id+'"'),id+' should be owned by Angular runtime');
- assert.equal(createAngularCutoverDocument(game),candidate);
+  assert.ok(!game.includes('id="'+id+'"'),id+' belongs to Angular runtime');
 });
-test('cutover fails closed on missing anchors or duplicate ids',()=>{
- assert.throws(()=>createAngularCutoverDocument(game.replace(
-  '<script type="module" src="./js/react-entry.js"></script>','')),
-  /One original anchor required/);
- assert.throws(()=>createAngularCutoverDocument(game.replace(
-  '<h3>Investimento e finanças</h3>','<h3>Outra seção</h3>')),
-  /Expected exactly one HTML anchor/);
- assert.throws(()=>createAngularCutoverDocument(game.replace(
-  '<div id="merchandise-catalog"></div>','')),
-  /One original anchor required/);
+test('The game build rejects missing hosts and duplicate IDs',()=>{
+ assert.throws(()=>assertAngularGameDocument(game.replace(
+  '<script type="module" src="./__angular/main.js"></script>','')),
+  /Unexpected game boot scripts/);
+ assert.throws(()=>assertAngularGameDocument(game.replace('id="angular-shop-catalog"','')),
+  /Missing Angular game host/);
+ assert.throws(()=>assertAngularGameDocument(game.replace(
+  'id="angular-shop-catalog"','id="game"')), /No duplicate static DOM IDs/);
 });
 test('CI must reject malformed browser scripts before installing browsers',()=>{
  const workflow=readFileSync(new URL('../../../.github/workflows/lhs-angular-ui-preview.yml',import.meta.url),'utf8');
- for(const script of ['cutover_document.mjs','build_cutover_candidate.mjs',
+ for(const script of ['game_document.mjs','build_cutover_candidate.mjs',
    'verify_catalog_preview.mjs','verify_integrated_game.mjs',
    'integrated-qa/privacy.mjs','integrated-qa/consoleReleaseGates.mjs',
    'integrated-qa/topGamesMagazineGates.mjs',
@@ -61,19 +52,18 @@ test('shop-overview integrated check matches the real TypeScript cash read model
  assert.match(qa,/label\.startsWith\('Caixa R\$ '\)/);
  assert.match(qa,/label\.includes\(' · PCs '\)/);
 });
-test('complete site defaults to Angular in migration branch and allows explicit React regression',()=>{
+test('both site builds use the same standalone Angular game',()=>{
  const build=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
  const check=readFileSync(new URL('../website/check.mjs',import.meta.url),'utf8');
  const wrapper=readFileSync(new URL('../scripts/build_angular_site_candidate.mjs',import.meta.url),'utf8');
  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
  assert.ok(build.includes('process.env.LHS_SITE_ANGULAR_CANDIDATE'));
- assert.ok(build.includes('process.env.LHS_SITE_UI!=="react"'));
- assert.match(build,/frontend-angular\/scripts\/build_cutover_candidate\.mjs/);
+ assert.match(build,/scripts\/build\.mjs/);
  assert.match(check,/React não pode inicializar no site Angular/);
  assert.ok(build.includes('angularCandidate?"out/site-angular":"out/site-legacy"'));
  assert.ok(check.includes('angularCandidate?"../out/site-angular":"../out/site-legacy"'));
  assert.match(build,/game\/__angular/);
- assert.match(build,/build_cutover_candidate\.mjs/);
+ assert.match(build,/cpSync\(resolve\(root,"dist"\),resolve\(output,"game"\)/);
  assert.match(build,/__angular\/styles\.css/);
  assert.match(wrapper,/LHS_SITE_ANGULAR_CANDIDATE:'1'/);
  assert.equal(pkg.scripts['build:site:angular:candidate'],
@@ -91,12 +81,11 @@ test('the complete Angular site is exercised through the real CSP-protected ifra
  for(const token of ['#launch-game','#game-frame','/jogar/','dataset.uiFramework',
   'Content-Security-Policy','react-entry.js','[1280,414,360]'])
   assert.ok(browser.includes(token),'Browser must verify '+token);
- assert.ok(builder.includes('game/angular-candidate-report.json'),
-  'Do not ship internal CI report in a candidate site');
+ assert.doesNotMatch(builder,/angular-candidate-report\.json/);
 });
 test('published site preview checks the Angular cards and versioned Canvas renderer',()=>{
  const script=readFileSync(new URL('../scripts/verify_live_site_preview.mjs',import.meta.url),'utf8');
- assert.match(script,/el\.dataset\.uiFramework==="angular"/);
+ assert.match(script,/getAttribute\("data-ui-framework"\),"angular"/);
  assert.match(script,/angular-shop-catalog/);
  assert.match(script,/__angular\/main\.js/);
  assert.match(script,/js\/render\/actorSprites\.js/);
@@ -113,7 +102,7 @@ test('the standard site build and CSP browser smoke are mandatory on the migrati
 });
 test('real-game Chromium tests use exactly the same cutover document',()=>{
  const browser=readFileSync(new URL('../frontend-angular/scripts/verify_integrated_game.mjs',import.meta.url),'utf8');
- assert.match(browser,/createAngularCutoverDocument\(original\)/);
+ assert.match(browser,/gameRoot=resolve\(import\.meta\.dirname,'\.\.\/\.\.\/dist'\)/);
  assert.doesNotMatch(browser,/const additionalAdminCutoverShell/);
 });
 
@@ -147,23 +136,11 @@ test('CI browser checks boot the actual static candidate on desktop and mobile',
  ])assert.ok(smoke.includes(token),'Missing candidate browser check '+token);
 });
 
-test('production Angular site does not compile throwaway React JS',()=>{
+test('the TypeScript engine stays separate from the Angular UI build',()=>{
  const standalone=readFileSync(new URL('../scripts/build.mjs',import.meta.url),'utf8');
- const site=readFileSync(new URL('../website/build.mjs',import.meta.url),'utf8');
- const checker=readFileSync(new URL('../website/check.mjs',import.meta.url),'utf8');
- // The native Canvas is compiled in both modes; only React is optional.
  assert.match(standalone,/typescript\/bin\/tsc/);
- assert.match(standalone,/const gameUi=process\.env\.LHS_GAME_UI\?\?"react"/);
- assert.match(standalone,/if\(gameUi==="react"\)/);
- assert.match(standalone,/if\(gameUi==="react"\)\{\s*const \{buildLegacyReact\}=await import\("\.\/build_legacy_react\.mjs"\)/);
- assert.match(site,/LHS_GAME_UI:angularSite\?"angular":"react"/);
- assert.match(site,/process\.env\.LHS_SITE_UI!=="react"/);
- // The candidate never needs the React artifact; the standalone /dist
- // build can still generate it and the explicit React site remains available.
- assert.match(checker,/!existsSync\(resolve\(root,"game\/js\/react-entry\.js"\)\)/);
- assert.ok(checker.includes('else assert.match(gameHtml,/src='),
-  'The explicit legacy React site still has its own check');
- assert.ok(checker.includes('react-entry.js'));
+ assert.match(standalone,/dist\/__angular/);
+ assert.doesNotMatch(standalone,/LHS_GAME_UI|build_legacy_react/);
 });
 
 test('Cloudflare publication blocks on real Angular browser behavior',()=>{

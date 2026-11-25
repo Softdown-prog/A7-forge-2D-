@@ -96,44 +96,28 @@ try{
    const data=c.getContext("2d").getImageData(0,0,c.width,c.height).data;
    return data.some((value,i)=>i%4===3&&value>0);
   });
-  // Verify native TypeScript shopping through whichever UI the build selected.
-  // This branch defaults to Angular, while React remains an explicit regression fallback.
+  // Verify shopping in the Angular catalog with the real TypeScript engine.
   await frame.locator("#open-shop").click();
   await frame.locator("#shop").waitFor({state:"visible",timeout:10000});
-  await frame.locator("#react-shop-query").fill("impressora");
-  await frame.locator(".react-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
+  await frame.locator("#lhs-shop-query").fill("impressora");
+  await frame.locator(".lhs-shop-search-count").filter({hasText:/de [0-9]+ cartões encontrados/})
    .waitFor({state:"visible",timeout:10000});
-  const angular=await frame.locator("html").evaluate(el=>el.dataset.uiFramework==="angular");
-  if(angular){
-   const cards=frame.locator("#angular-shop-catalog .angular-catalog-grid > article.shop-card");
-   await cards.first().waitFor({state:"visible",timeout:10000});
-   assert.ok((await cards.allTextContents()).some(text=>/impressora/i.test(text)),
-    "A busca Angular deve exibir a impressora");
-   assert.equal(await frame.locator("#shop-catalog > article.shop-card:visible").count(),0,
-    "O catálogo nativo deve ficar oculto sob Angular");
-  }else{
-   const searchResult=await frame.locator("#shop-catalog").evaluate(host=>{
-    const cards=Array.from(host.querySelectorAll(":scope > article.shop-card"));
-    return {total:cards.length,visible:cards.filter(card=>!card.hidden).length,
-     titles:cards.filter(card=>!card.hidden).map(card=>card.querySelector("h3")?.textContent??"")};
-   });
-   assert.ok(searchResult.total>1,"O catálogo precisa conter múltiplos produtos pesquisáveis");
-   assert.ok(searchResult.visible>=1&&searchResult.visible<searchResult.total,
-    "A busca deve filtrar cartões sem alterar a lista de produtos");
-   assert.ok(searchResult.titles.some(value=>/impressora/i.test(value)),
-    "A busca por impressora deve mostrar a opção correspondente");
-  }
+  assert.equal(await frame.locator("html").getAttribute("data-ui-framework"),"angular");
+  const cards=frame.locator("#angular-shop-catalog .angular-catalog-grid > article.shop-card");
+  await cards.first().waitFor({state:"visible",timeout:10000});
+  assert.ok((await cards.allTextContents()).some(text=>/impressora/i.test(text)),
+   "A busca Angular deve exibir a impressora");
+  assert.equal(await frame.locator("#shop-catalog > article.shop-card:visible").count(),0);
   await frame.locator('[data-shop-category="consoles"]').click();
-  await frame.locator(".react-shop-search-count").filter({hasText:/opções nesta categoria/})
+  await frame.locator(".lhs-shop-search-count").filter({hasText:/opções nesta categoria/})
    .waitFor({state:"visible",timeout:10000});
-  assert.equal(await frame.locator("#react-shop-query").inputValue(),"",
+  assert.equal(await frame.locator("#lhs-shop-query").inputValue(),"",
    "Trocar de categoria deve limpar a pesquisa");
   await frame.locator("#close-shop").click();
   await frame.locator("#shop").waitFor({state:"hidden",timeout:10000});
 
   const spriteReady=await frame.locator("#game").evaluate(async()=>{
-   const entryScript=document.querySelector('script[type="module"][src*="react-entry.js"]')??
-    document.querySelector('script[type="module"][src*="__angular/main.js"]');
+   const entryScript=document.querySelector('script[type="module"][src*="__angular/main.js"]');
    if(!entryScript)throw Error("Não foi encontrado o bootstrap da interface");
    const entry=new URL(entryScript.src);
    const url=new URL("./js/render/actorSprites.js",document.baseURI);

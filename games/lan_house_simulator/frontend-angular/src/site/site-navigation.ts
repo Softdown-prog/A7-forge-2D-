@@ -1,5 +1,5 @@
 /** Fresh Angular-only navigation for the institutional website.
- * Retains the same CSS classes and links; no game, React or payment logic.
+ * Retains the same CSS classes and links; no game or payment logic.
  */
 import {ChangeDetectionStrategy,Component,ElementRef,OnDestroy,OnInit,inject,signal} from '@angular/core';
 

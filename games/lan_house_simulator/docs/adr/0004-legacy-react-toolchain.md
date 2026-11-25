@@ -1,5 +1,7 @@
 # ADR 0004 — Dependências da fixture React
 
+**Substituído pelo [ADR 0005](0005-angular-standalone-game.md).**
+
 O site Angular é o caminho publicado. A build isolada do jogo e os testes
 legados ainda exercitam o bootstrap React com o mesmo motor Canvas.
 

@@ -17,11 +17,7 @@ const npm=process.platform==='win32'?'npm.cmd':'npm';
 function run(program,args,env=process.env){
  if(program===npm&&process.env.npm_execpath)execFileSync(process.execPath,[process.env.npm_execpath,...args],{cwd:root,stdio:'inherit',env});else execFileSync(program,args,{cwd:root,stdio:'inherit',env,shell:process.platform==='win32'&&program===npm});
 }
-if(!existsSync(resolve(angular,'node_modules/@angular/cli/package.json')))
- run(npm,['ci','--prefix','frontend-angular','--no-audit','--no-fund']);
-run(process.execPath,[resolve(root,'scripts/build.mjs')],{...process.env,LHS_GAME_UI:'angular'});
-run(npm,['run','build','--prefix','frontend-angular']);
-run(process.execPath,[resolve(angular,'scripts/build_cutover_candidate.mjs')]);
+run(process.execPath,[resolve(root,'scripts/build.mjs')]);
 // A repeated build must not copy obsolete hashed bundles into the release.
 rmSync(resolve(angular,'dist/site-rewrite'),{recursive:true,force:true});
 run(npm,['run','build:site-rewrite','--prefix','frontend-angular']);
@@ -47,17 +43,7 @@ for(const name of siteAssets){
  mkdirSync(dirname(destination),{recursive:true});
  cpSync(source,destination);
 }
-cpSync(resolve(root,'out/angular-cutover-candidate'),resolve(output,'game'),{recursive:true});
-// Preserve the game transformation while serving its compatibility CSS externally.
-// No unsafe-inline exception is needed for the institutional or embedded document.
-const gameIndexPath=resolve(output,'game/index.html');
-let gameIndex=readFileSync(gameIndexPath,'utf8');
-const compatibilityStyles=[...gameIndex.matchAll(/<style>([\s\S]*?)<\/style>/g)];
-assert.equal(compatibilityStyles.length,1,'Expected the reviewed Angular game compatibility style');
-writeFileSync(resolve(output,'game/__angular/compatibility.css'),compatibilityStyles.map(match=>match[1]).join('\n'));
-gameIndex=gameIndex.replace(/<style>[\s\S]*?<\/style>/g,'<link rel="stylesheet" href="./__angular/compatibility.css">');
-writeFileSync(gameIndexPath,gameIndex);
-rmSync(resolve(output,'game/angular-candidate-report.json'),{force:true});
+cpSync(resolve(root,'dist'),resolve(output,'game'),{recursive:true});
 assert.ok(!existsSync(resolve(output,'game/js/react-entry.js')));
 versionAngularGame(output);
 for(const file of ['account-config.json','online-config.json'])

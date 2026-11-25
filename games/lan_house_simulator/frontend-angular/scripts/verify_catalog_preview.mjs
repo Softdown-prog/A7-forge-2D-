@@ -139,9 +139,10 @@ try{
   });
   const consoleShop=page.locator('.angular-console-shop');
   await consoleShop.waitFor();
-  assert.equal(await page.locator('#angular-ps1-placement option').count(),3);
+  assert.equal(await page.locator('#angular-ps1-placement output').textContent(),'Norte');
   assert.equal(await page.locator('#angular-ps2-placement option').count(),2);
-  await page.locator('#angular-ps1-placement').selectOption('west');
+  await consoleShop.getByRole('button',{name:'Escolher o local anterior para a bancada'}).click();
+  await page.locator('#angular-ps1-placement output').filter({hasText:'Oeste'}).waitFor();
   assert.equal(await page.locator('#ps1-placement').inputValue(),'west');
   await page.locator('#angular-ps2-placement').selectOption('bench-b');
   assert.equal(await page.locator('#ps2-placement').inputValue(),'bench-b');

@@ -53,6 +53,7 @@ export class ShopCatalogComponent implements OnInit,OnDestroy {
   catalogSearchMatch(this.query(),[card.label,card.category,card.description])));
  readonly consoles=signal<ConsoleView|null>(null);
  readonly ps1Slot=signal('');
+ readonly ps1Location=computed(()=>this.consoles()?.ps1.slots.find(slot=>slot.id===this.ps1Slot())?.label??'');
  readonly ps2Slot=signal('');
  private readonly receiveFilter=(event:Event):void=>{
   const query=(event as CustomEvent<{query:string}>).detail?.query;
@@ -93,24 +94,18 @@ export class ShopCatalogComponent implements OnInit,OnDestroy {
  }
  buyPs1Disc(id:string):void{this.forward('buyPs1Disc',id);}
  buyPs2Game(id:string):void{this.forward('buyPs2Game',id);}
- selectPs1(id:string):void{
-  const select=document.querySelector<HTMLSelectElement>('#shop-catalog #ps1-placement');
-  const buttons=Array.from(document.querySelectorAll<HTMLButtonElement>(
-   '#shop-catalog .ps1-location-selector button'));
-  if(!select||buttons.length!==2)return;
-  const slots=Array.from(select.options).map(o=>o.value);
-  const current=slots.indexOf(select.value),target=slots.indexOf(id);
-  if(current<0||target<0||!slots.length)return;
-  for(let i=0;i<(target-current+slots.length)%slots.length;i++)buttons[1]?.click();
-  this.ps1Slot.set(select.value);
+ movePs1Location(direction:-1|1):void{
+  const catalog=document.getElementById('shop-catalog');
+  const selection=catalog?.querySelector<HTMLSelectElement>('#ps1-placement');
+  const arrows=catalog?.querySelectorAll<HTMLButtonElement>('.ps1-location-selector button');
+  if(!selection||!arrows)return;
+  arrows[direction===-1?0:1]?.click();
+  this.ps1Slot.set(selection.value);
  }
  selectPs2(id:string):void{
   const select=document.querySelector<HTMLSelectElement>('#shop-catalog #ps2-placement');
   if(!select||!Array.from(select.options).some(o=>o.value===id))return;
   select.value=id;this.ps2Slot.set(id);
- }
- onPs1Change(event:Event):void{
-  if(event.target instanceof HTMLSelectElement)this.selectPs1(event.target.value);
  }
  onPs2Change(event:Event):void{
   if(event.target instanceof HTMLSelectElement)this.selectPs2(event.target.value);

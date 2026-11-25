@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * Static, read-only cutover audit for the LHS React -> Angular UI migration.
- * This inventory is NOT a claim of browser test coverage or merge readiness.
- * It intentionally distinguishes host parity from integrated browser checks.
+ * Static inventory of the Angular game hosts and browser scenarios.
+ * String markers do not establish a passing browser run.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -41,7 +40,7 @@ export const checks=[
   scope:"integrated-browser",need:["#layout-editor","#layout-rotate",
    "#layout-confirm","#layout-remove"]},
  {id:"shop-search",name:"Real game search, category switch and empty results",
-  scope:"integrated-browser",need:["#react-shop-query","Nenhum cartão"]},
+  scope:"integrated-browser",need:["#lhs-shop-query","Nenhum cartão"]},
  {id:"keyboard-focus",name:"Keyboard focus, Escape and accessible admin dialogs",
   scope:"integrated-browser",need:["page.keyboard","Escape","focus"]},
  {id:"admin-task-navigation",name:"Angular prices, Windows licensing and PS1/PS2 task navigation",
@@ -72,28 +71,18 @@ export const checks=[
    "Caixa insuficiente"]}
 ];
 export function auditMigration(sources){
- const {published,reactEntry,reactBuild,angularEntry,angularPreview,integratedQa,
-  previewQa,angularWorkflow}=sources;
- const publishedEntry=/src=["']\.\/js\/react-entry\.js["']/.test(published);
- const angularInPublished=/src=["'][^"']*(?:__angular|angular-ui|frontend-angular)[^"']*\.js["']/.test(published);
- const reactBuildActive=reactBuild.includes('./build_legacy_react.mjs') &&
-  /entryPoints:\s*\[resolve\(root,\s*["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
- const reactHosts=list(reactEntry,/\["(react-[^"]+)",\s*</g);
- const mandatoryIslands=list(angularEntry,/\['(react-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
- // Include hosts mounted individually with getElementById as well as tuple-based
- // islands. Otherwise the audit would undercount new optional UI after each
- // completed feature and could suggest an unsafe React cutover.
- const allAngularIslands=uniq([
-  ...list(angularEntry,/\['((?:react|angular)-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g),
-  ...list(angularEntry,/getElementById\('(angular-[^']+)'\)/g)
- ]);
+ const {published,angularEntry,angularPreview,integratedQa,previewQa,angularWorkflow}=sources;
+ const angularScript=/src=["']\.\/__angular\/main\.js["']/.test(published);
  const previewIds=new Set(list(angularPreview,/\bid=["']([^"']+)["']/g));
  const gameIds=new Set(list(published,/\bid=["']([^"']+)["']/g));
- const missingInAngular=reactHosts.filter(id=>!mandatoryIslands.includes(id));
- const missingReactHostsInPreview=reactHosts.filter(id=>!previewIds.has(id));
- const missingMandatoryInGame=mandatoryIslands.filter(id=>!gameIds.has(id));
- const futureIslands=allAngularIslands.filter(id=>id.startsWith("angular-"));
- const optionalMissingInGame=futureIslands.filter(id=>!gameIds.has(id));
+ const shellHosts=list(angularEntry,/\['(lhs-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
+ const hosts=uniq([
+  ...shellHosts,
+  ...list(angularEntry,/\['(angular-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g),
+  ...list(angularEntry,/getElementById\('(angular-[^']+)'\)/g)
+ ]);
+ const missingInGame=hosts.filter(id=>!gameIds.has(id));
+ const missingInPreview=shellHosts.filter(id=>!previewIds.has(id));
  const checkResults=checks.map(({id,name,scope,need})=>{
   const testedSource=scope==="preview-only"?previewQa:integratedQa;
   const absent=need.filter(term=>!testedSource.includes(term));
@@ -101,15 +90,11 @@ export function auditMigration(sources){
    missingMarkers:absent};
  });
  const blockers=[];
- if(publishedEntry||reactBuildActive)blockers.push({
-  id:"react-production-entry",priority:"critical",
-  description:"Published HTML and build pipeline still boot React; preserve until full validated cutover"});
- if(missingInAngular.length||missingReactHostsInPreview.length||missingMandatoryInGame.length)
-  blockers.push({id:"mandatory-host-parity",priority:"critical",
-   description:"One or more required React hosts have no Angular equivalent/preview/game host"});
- if(optionalMissingInGame.length)
-  blockers.push({id:"optional-angular-hosts",priority:"high",
-   description:"Some Angular preview islands are not hosted in production HTML; require coordinated cutover"});
+ if(!angularScript)blockers.push({id:"angular-game-entry",priority:"critical",
+  description:"The standalone document must bootstrap Angular"});
+ if(missingInGame.length||missingInPreview.length)
+  blockers.push({id:"angular-hosts",priority:"critical",
+   description:"One or more Angular hosts are missing"});
  const missingIntegrated=checkResults.filter(x=>x.scope==="integrated-browser"&&
   x.status==="not-evidenced-in-script");
  if(missingIntegrated.length)blockers.push({
@@ -120,17 +105,11 @@ export function auditMigration(sources){
  if(!angularWorkflowPresent)blockers.push({id:"angular-workflow",priority:"critical",
   description:"Dedicated Angular browser QA steps not both present"});
  return {
-  schemaVersion:1,kind:"angular-react-cutover-audit",
+  schemaVersion:2,kind:"angular-game-audit",
   status:blockers.length?"not-ready":"manual-review-required",
   decision:"no-merge-no-deploy",
-  production:{reactScript:publishedEntry,reactBundleBuilt:reactBuildActive,
-   angularScript:angularInPublished},
-  hosts:{reactOwned:reactHosts,angularReactParity:mandatoryIslands,
-   reactHostsMissingAngular:missingInAngular,
-   reactHostsMissingPreview:missingReactHostsInPreview,
-   mandatoryAngularHostsMissingGame:missingMandatoryInGame,
-   optionalAngularHosts:futureIslands,
-   optionalAngularHostsMissingGame:optionalMissingInGame},
+  game:{angularScript},
+  hosts:{registered:hosts,missingInGame,missingInPreview},
   browserQa:{workflowPresent:angularWorkflowPresent,
    checks:checkResults,
    evidenced:checkResults.filter(x=>x.status==="script-evidence-found").length,
@@ -140,8 +119,7 @@ export function auditMigration(sources){
   nextSteps:[
    "Confirm stock management in an actual mobile device; review save/cloud flows separately",
    "Review account/donation navigation with live services only in a separately approved environment",
-   "Confirm Angular template/host parity for remaining native interface panels",
-   "Keep React bootstrap in production until complete parity and explicit approval"
+   "Run integrated browser QA for the commit being reviewed"
   ]
  };
 }
@@ -159,9 +137,7 @@ export function integratedQaEvidence(entry=read("frontend-angular/scripts/verify
  return portions.join("\n");
 }
 export function readCurrentSources(){
- return {published:read("index.html"),reactEntry:read("src/react/entry.jsx"),
-  reactBuild:[read("scripts/build.mjs"),read("scripts/build_legacy_react.mjs")].join("\n"),
-  angularEntry:read("frontend-angular/src/main.ts"),
+ return {published:read("index.html"),angularEntry:read("frontend-angular/src/main.ts"),
   angularPreview:read("frontend-angular/src/index.html"),
   integratedQa:integratedQaEvidence(),
   previewQa:read("frontend-angular/scripts/verify_catalog_preview.mjs"),
@@ -177,9 +153,7 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   fs.mkdirSync(path.dirname(target),{recursive:true});
   fs.writeFileSync(target,JSON.stringify(report,null,2)+"\n");
  }
- console.log(JSON.stringify({kind:report.kind,status:report.status,reactRoots:report.hosts.reactOwned.length,
-  missingParity:report.hosts.reactHostsMissingAngular.length,
-  optionalHostsNotInGame:report.hosts.optionalAngularHostsMissingGame.length,
-  browserEvidence:report.browserQa.evidenced,
+ console.log(JSON.stringify({kind:report.kind,status:report.status,hosts:report.hosts.registered.length,
+  missingInGame:report.hosts.missingInGame,browserEvidence:report.browserQa.evidenced,
   browserGaps:report.browserQa.missing,blockers:report.blockers.map(x=>x.id)}));
 }

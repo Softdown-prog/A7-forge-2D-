@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {normalizeCatalogSearch,catalogSearchMatch} from '../src/react/catalogSearch.mjs';
+import {normalizeCatalogSearch,catalogSearchMatch} from '../frontend-angular/src/catalog-search.ts';
 
 const src=(path)=>readFileSync(new URL('../frontend-angular/src/'+path,import.meta.url),'utf8');
 const angularSearch=src('catalog-search.ts');

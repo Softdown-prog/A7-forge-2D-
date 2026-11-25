@@ -49,8 +49,8 @@ export async function verifyConsoleReleaseGates({browser,origin,output,createGam
   await press(page.locator('#open-shop'));
   await press(page.locator('[data-shop-category="consoles"]'));
   await page.waitForFunction(()=>
-   document.querySelector('#react-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
-   document.querySelector('#react-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
+   document.querySelector('#lhs-shop-categories [data-shop-category="consoles"]')?.getAttribute('aria-pressed')==='true'&&
+   document.querySelector('#lhs-shop-categories [data-shop-category="equipment"]')?.getAttribute('aria-pressed')==='false');
   const shop=page.locator('.angular-console-shop');
   await shop.waitFor();
   // Browser contract: future PS1 games must stay out of the actual store.
@@ -92,13 +92,13 @@ export async function verifyConsoleReleaseGates({browser,origin,output,createGam
    assert.match(await ps2Teaser.innerText(),
     new RegExp('2 jogos PS2 desbloqueados em '+scenario.ps2Next));
   }else assert.equal(await ps2Teaser.count(),0,'No annual PS2 teaser outside the release years');
-  const ps1=shop.locator(':scope > article.shop-card').first().locator('button');
-  const ps2=shop.locator(':scope > article.shop-card').nth(1).locator('button');
+  const ps1=shop.locator('button[data-buy="ps1"]');
+  const ps2=shop.locator('button[data-buy="ps2"]');
   assert.equal(await ps2.isDisabled(),true,scenario.reason+' must block PS2');
   assert.equal(await ps1.isDisabled(),scenario.cash===0,'PS1 cash gate');
   // Native disabled buttons cannot trigger purchases, even programmatically.
   await page.evaluate(()=>{
-   const buttons=Array.from(document.querySelectorAll('.angular-console-shop > article.shop-card button'));
+   const buttons=Array.from(document.querySelectorAll('.angular-console-shop > article.shop-card button[data-buy]'));
    for(const button of buttons)if(button.disabled)button.click();
   });
   const current=await page.evaluate(key=>JSON.parse(localStorage.getItem(key)),GAME_SAVE_KEY);

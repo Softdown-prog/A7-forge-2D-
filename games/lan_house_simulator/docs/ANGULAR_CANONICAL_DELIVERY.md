@@ -6,11 +6,12 @@ atualização da `main`.
 
 | Comando/arquivo | Resultado |
 | --- | --- |
+| `npm run build` | Jogo independente Angular AOT e motor Canvas em `dist/`. O servidor local, os testes e os empacotadores de site usam esta build. |
 | `npm run build:site` | Angular AOT + HUD/Canvas, cache do grafo do jogo e prerender público; saída `out/site`. |
 | `npm run check:site` | Confere propriedade Angular, metadados, hashes, prerender, páginas privadas e gate financeiro fechado no mesmo `out/site`. |
 | `Dockerfile` | Frontend estático Angular, usuário `node`, porta 8080, CSP/cache/404 e `/health`; sem API, dependências de build ou browser na imagem final. |
 | `backend/Dockerfile` | API Node 22 com os mesmos módulos de validação de saves e dependências de produção; contexto continua na raiz do LHS. |
-| `build:site:legacy` / `check:site:legacy` | Fixture de regressão e rollback em `out/site-legacy`; nunca substitui `out/site`. |
+| `build:site:legacy` / `check:site:legacy` | Site institucional estático de regressão e rollback em `out/site-legacy`, com a mesma build Angular do jogo. |
 | `build:site:clean` | Build de baixo nível para diagnóstico, antes do prerender. O comando padrão é `build:site`. |
 
 ## Abertura do jogo e identidade visual

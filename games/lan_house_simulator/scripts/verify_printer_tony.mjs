@@ -22,7 +22,7 @@ try{
    await dismissPrivacyNotice(page,typeof mobile!=='undefined'?mobile:width<700);
   await press(page.locator("#menu-new"));
   await press(page.locator("#open-shop"));
-  const printerCard=page.locator("#shop-catalog .shop-card").filter({has:page.locator('button[data-buy="printer"]')});
+  const printerCard=page.locator("#angular-shop-catalog .shop-card").filter({has:page.locator('button[data-buy="printer"]')});
   const img=printerCard.locator('.shop-art img');
   assert.equal(await img.count(),1,"printer keeps its own rendered artwork");
   const artwork=await img.evaluate(async image=>{
@@ -36,6 +36,7 @@ try{
   assert.equal(await printerCard.locator('button[data-buy="printer"]').innerText().then(t=>t.includes("320")),true);
   await img.screenshot({path:resolve(output,'printer_catalog_'+width+'.png')});
   await press(printerCard.locator('button[data-buy="printer"]'));
+  await printerCard.locator('button[data-buy="printer"]:disabled').waitFor();
   assert.match(await printerCard.locator('button[data-buy="printer"]').innerText(),/serviço ativo/i);
   assert.equal(await printerCard.locator('button[data-buy="printer"]').isDisabled(),true);
   await press(page.locator("#close-shop"));

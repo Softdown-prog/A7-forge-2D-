@@ -258,7 +258,7 @@ try{
       return !!m&&Number(m[1])*60+Number(m[2])>=10*60+45;
     });
     await page.locator("#open-shop").click();
-    await page.locator('[data-shop-category="decoration"]').click();await page.locator('[data-buy="plant"]').click();
+    await page.locator('[data-shop-category="decoration"]').click();await page.locator('#angular-shop-catalog [data-buy="plant"]').click();
     await page.locator("#placement-toolbar").waitFor({state:"visible"});
     await writeFile(resolve(output,"lhs_furniture_placement_"+config.name+".png"),
       await page.locator(".stage").screenshot({type:"png"}));
@@ -283,7 +283,7 @@ try{
       await page.mouse.click(point.x,point.y);
     }
     await page.locator("#open-shop").click();
-    await page.locator('[data-shop-category="decoration"]').click();await page.locator('[data-buy="plant"]').click();
+    await page.locator('[data-shop-category="decoration"]').click();await page.locator('#angular-shop-catalog [data-buy="plant"]').click();
     await clickFurnitureSlot("floor-1");
     await page.locator("#open-shop").click();
     await page.locator("#organize-furniture").click();

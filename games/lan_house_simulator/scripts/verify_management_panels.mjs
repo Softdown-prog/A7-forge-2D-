@@ -3,9 +3,10 @@ import {spawn} from 'node:child_process';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
-import {selectAdminArea,selectTask} from './management_navigation.mjs';
+import {selectAdminArea,selectTask,taskControl} from './management_navigation.mjs';
 import {createGame} from '../dist/js/sim/engine.js';
 import {SHOP_CATALOG} from '../dist/js/sim/shop.js';
+import {shopCategory} from '../dist/js/ui/shopPanels.js';
 import {GAME_SAVE_KEY,DAY_MINUTES} from '../dist/js/sim/types.js';
 const output=resolve(process.argv[2]??'out/management');await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,'serve.mjs')],{stdio:['ignore','pipe','inherit']});let browser;
@@ -31,7 +32,7 @@ try{
   const cdp=await context.newCDPSession(page);if(mobile)await cdp.send('Emulation.setCPUThrottlingRate',{rate:4});
   const press=locator=>mobile?locator.tap():locator.click();
   await press(page.locator('#menu-continue'));await press(page.locator('#open-admin'));
-  assert.equal(await page.locator('#admin-area').isVisible(),mobile);
+  await page.locator('#angular-admin-area-navigation [role="tablist"]').waitFor();
   assert.equal(await page.locator('.management-summary').getAttribute('open')!==null,!mobile);
   assert.equal(await page.locator('#pc-maintenance').locator('[data-hardware-tab]').count(),0,'Hardware is not built when Prices is open');
   const pages=[];
@@ -42,7 +43,7 @@ try{
     await selectTask(page,area,task);
     assert.equal(await page.locator('#section-'+area+' > .management-page:visible').count(),1,area+'/'+task);
     const overflow=await page.locator('#admin').evaluate(el=>el.scrollWidth-el.clientWidth);assert.ok(overflow<=3,`${area}/${task} overflow ${overflow}`);
-    assert.equal(await page.locator('#section-'+area+' [data-panel-choice="'+task+'"]').getAttribute('aria-pressed'),'true');
+    await taskControl(page,area,task).and(page.locator('[aria-pressed="true"]')).waitFor();
     pages.push(area+'/'+task);
    }
   }
@@ -111,10 +112,14 @@ try{
   await page.screenshot({path:resolve(output,`panels_${width}_${year}.png`)});
   await press(page.locator('#close-admin'));await press(page.locator('#open-shop'));
   const products=[];
+  const catalog=page.locator('#angular-shop-catalog');
   for(const category of ['equipment','consoles','building','decoration']){
    await press(page.locator('[data-shop-category="'+category+'"]'));
-   products.push(...await page.locator('[data-buy]').evaluateAll(nodes=>nodes.map(n=>n.dataset.buy)));
-   assert.ok(await page.locator('#shop-catalog .shop-card').count()<25,'One category is built at a time');
+   const first=SHOP_CATALOG.find(item=>shopCategory(item.id)===category);
+   assert.ok(first,'Category contains at least one expected product');
+   await catalog.locator('[data-buy="'+first.id+'"]').waitFor();
+   products.push(...await catalog.locator('[data-buy]').evaluateAll(nodes=>nodes.map(n=>n.dataset.buy)));
+   assert.ok(await catalog.locator('.angular-catalog-grid .shop-card').count()<25,'One product category is built at a time');
   }
   assert.deepEqual([...new Set(products)].sort(),
    [...SHOP_CATALOG.map(item=>item.id),'ps2','top-games-subscribe'].sort(),

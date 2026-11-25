@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 
 export async function verifyPrivacyChoices({browser,origin,createGame,GAME_SAVE_KEY}){
- // Privacy must remain optional when React is replaced by Angular.
+ // Privacy choices must remain optional in the Angular shell.
  // Exercise the real banner and storage controller rather than injecting a
  // previously accepted choice or simulating a custom DOM event.
  const privacyChoices=[];

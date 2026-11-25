@@ -66,7 +66,7 @@ try{
   if(oldPrice===nextPrice)throw Error("Preço da hora PS1 não muda ao clicar");
   await page.locator("#section-consoles").screenshot({path:resolve(output,"ps1_painel_"+tag+".png")});
   await selectTask(page,"consoles","discs");await page.locator("#ps1-open-shop").click();
-  await page.waitForFunction(()=>document.querySelectorAll('.ps1-cd-shop-card').length===7);
+  await page.waitForFunction(()=>document.querySelectorAll('.angular-ps1-discs .shop-card').length===7);
   // O comprador não deve encontrar coordenadas do Canvas em nenhum seletor.
   // Os valores de option continuam sendo os IDs técnicos, apenas o texto muda.
   const placements=await page.locator('#ps1-placement option').evaluateAll(options=>
@@ -81,7 +81,8 @@ try{
   }
 
   // O Android deve usar setas em vez do picker nativo que toma toda a tela.
-  const location=page.locator('#ps1-location-name');
+  const picker=page.locator('#angular-ps1-placement');
+  const location=picker.locator('output');
   await location.waitFor({state:'visible'});
   if(await page.locator('#ps1-placement').isVisible())
    throw Error("Seletor técnico não deve abrir o popup do Android");
@@ -89,22 +90,23 @@ try{
   if(!original||/[0-9]+[,.][0-9]+/.test(original))
    throw Error("Texto de localização inválido: "+original);
   const originalSlot=await page.locator('#ps1-placement').inputValue();
-  await page.getByRole('button',{name:'Escolher o próximo local para a bancada'}).click();
+  await picker.getByRole('button',{name:'Escolher o próximo local para a bancada'}).click();
   const nextSlot=await page.locator('#ps1-placement').inputValue();
-  const nextLocation=(await location.innerText()).trim();
-  if(nextSlot===originalSlot||nextLocation===original)
+  const nextLabel=await page.locator('#ps1-placement option:checked').textContent();
+  await location.filter({hasText:nextLabel}).waitFor();
+  if(nextSlot===originalSlot||nextLabel===original)
    throw Error("Botão de direção não alternou o local da bancada");
-  await page.getByRole('button',{name:'Escolher o local anterior para a bancada'}).click();
+  await picker.getByRole('button',{name:'Escolher o local anterior para a bancada'}).click();
   if((await page.locator('#ps1-placement').inputValue())!==originalSlot)
    throw Error("Setas não retornam ao local original");
-  await page.locator('.ps1-location-selector').scrollIntoViewIfNeeded();
-  await page.locator('.ps1-location-selector').locator('xpath=..').screenshot({
+  await picker.scrollIntoViewIfNeeded();
+  await picker.locator('xpath=..').screenshot({
    path:resolve(output,"ps1_posicoes_"+tag+".png"),animations:"disabled"
   });
   // Prova que a imagem do PS1 não se sobrepõe ao seletor ou ao botão.
   // A categoria 'equipment' percorre copiadora/impressora usando o mesmo CSS.
   const assertArtFits=async(item)=>{
-   const dims=await page.locator('.shop-art[data-item="'+item+'"]').evaluate(art=>{
+   const dims=await page.locator('#angular-shop-catalog .shop-art[data-item="'+item+'"]').evaluate(art=>{
     const card=art.closest('.shop-card'),img=art.querySelector('img');
     const button=card?.querySelector('button[data-buy]');
     if(!card||!img||!button)throw Error('Card incompleto');
@@ -125,21 +127,21 @@ try{
   };
   await assertArtFits('ps1');
   await page.locator('[data-shop-category="equipment"]').click();
-  await page.locator('.shop-art[data-item="disc-copier"] img').waitFor({state:'visible'});
+  await page.locator('#angular-shop-catalog .shop-art[data-item="disc-copier"] img').waitFor({state:'visible'});
   for(const id of ['disc-copier','printer'])await assertArtFits(id);
-  await page.locator('.shop-art[data-item="disc-copier"]').locator('xpath=..').screenshot({
+  await page.locator('#angular-shop-catalog .shop-art[data-item="disc-copier"]').locator('xpath=..').screenshot({
    path:resolve(output,'loja_copiadora_arte_ajustada_'+tag+'.png'),animations:'disabled'
   });
   await page.locator('[data-shop-category="consoles"]').click();
-  await page.locator('#ps1-location-name').waitFor({state:'visible'});
+  await picker.locator('output').waitFor({state:'visible'});
   await assertArtFits('ps1');
   // Captura o conjunto completo, não apenas a área verde das setas.
-  await page.locator('.shop-art[data-item="ps1"]').locator('xpath=..').screenshot({
+  await page.locator('#angular-shop-catalog .shop-art[data-item="ps1"]').locator('xpath=..').screenshot({
    path:resolve(output,'loja_ps1_arte_ajustada_'+tag+'.png'),animations:'disabled'
   });
   // Imagens locais, originais e decodificadas, sem dependências externas.
   await page.evaluate(async()=>{
-   const images=[...document.querySelectorAll(".ps1-cd-cover")];
+   const images=[...document.querySelectorAll(".angular-ps1-cover")];
    if(images.length!==7)throw Error("Faltam as sete capas de PS1 de 2002 na loja");
    for(const img of images)img.loading="eager";
    await Promise.all(images.map(img=>img.decode()));
@@ -151,7 +153,7 @@ try{
   if(tag==="desktop"){
    // Contato com cinco capas em resolução alta, usado na revisão de arte.
    await page.evaluate(()=>{
-    const imgs=[...document.querySelectorAll(".ps1-cd-cover")];
+    const imgs=[...document.querySelectorAll(".angular-ps1-cover")];
     const cnv=document.createElement("canvas");
     cnv.id="ps1-cover-montage";cnv.width=1330;cnv.height=465;
     cnv.style.cssText="display:block;width:1330px;height:465px";
@@ -165,7 +167,7 @@ try{
      ctx.fillStyle="#d8e5f1";ctx.fillRect(x,y,218,292);
      ctx.drawImage(imgs[i],3+x,3+y,212,286);
      ctx.fillStyle="#9ae5d0";ctx.font="bold 14px Arial";
-     ctx.fillText(imgs[i].closest(".ps1-cd-shop-card").querySelector("h3").textContent.toUpperCase(),x,y+324,230);
+     ctx.fillText(imgs[i].closest(".shop-card").querySelector("h4").textContent.toUpperCase(),x,y+324,230);
      ctx.fillStyle="#b7c4d1";ctx.font="11px Arial";
      ctx.fillText("CD ORIGINAL  •  ARTE EXCLUSIVA",x,y+349);
     }
@@ -178,12 +180,11 @@ try{
   }
   // Capturar o que o jogador vê após seguir o atalho, não o catálogo inteiro
   // (que pode ser muito alto e estar dentro de um painel com rolagem própria).
-  await page.locator(".ps1-shop-heading").scrollIntoViewIfNeeded();
+  await page.locator(".angular-console-shop > h3:first-child").scrollIntoViewIfNeeded();
   await page.screenshot({path:resolve(output,"ps1_loja_cds_"+tag+".png"),animations:"disabled"});
-  const before=await page.locator('#shop-catalog .ps1-cd-shop-card button[data-buy-ps1-disc="gol-de-rua"]').innerText();
-  await page.locator('#shop-catalog .ps1-cd-shop-card button[data-buy-ps1-disc="gol-de-rua"]').click();
-  const after=await page.locator('#shop-catalog .ps1-cd-shop-card').filter({hasText:"Gol de Rua"}).innerText();
-  if(!after.includes("Cópias no acervo: 1"))throw Error("CD não comprado na UI: "+after+" / "+before);
+  await page.locator('.angular-ps1-discs .shop-card button[data-buy-ps1-disc="gol-de-rua"]').click();
+  const disc=page.locator('.angular-ps1-discs .shop-card').filter({hasText:"Gol de Rua"});
+  await disc.getByText(/Cópias no acervo: 1/).waitFor();
   if(errors.length)throw Error("Erros na interface "+tag+": "+errors.join(" | "));
   await context.close();
  }

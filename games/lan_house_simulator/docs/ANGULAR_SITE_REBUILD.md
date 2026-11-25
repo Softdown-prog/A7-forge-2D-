@@ -4,6 +4,8 @@ Registro histórico da implementação por ilhas. Para a aplicação institucion
 única em `src/site-rewrite/`, consulte a [entrega consolidada da issue #78](ANGULAR_MIGRATION_DELIVERY.md).
 Não adicionar funcionalidades institucionais à árvore transitória `src/site/`.
 
+O registro abaixo é histórico. Consulte a [entrega canônica](ANGULAR_CANONICAL_DELIVERY.md) para os comandos atuais.
+
 ## Estado auditado (01/11/2026)
 - `website/content.mjs`, `website/build.mjs` e `website/site.css` geram o site institucional estático; `site.mjs` mantém as interações de menu, eras, FAQ e abertura do iframe.
 - `frontend-angular/src/main.ts` é o Angular do **jogo**; `frontend-angular/src/site/main.ts` é um entrypoint **separado** e novo para o site.

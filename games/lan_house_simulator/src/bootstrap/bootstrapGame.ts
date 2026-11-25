@@ -47,7 +47,7 @@ export function bootstrapGame(document:Document=globalThis.document,win:Window=w
  const loop=createRuntimeLoop({document,window:win,canvas:elements.canvas,state,framePort:application.frame,scene,editor,inspection,renderUI});
  decorateControls();installWindowNavigation();session.showMenu();loop.start();
  const windowsClock=win.setInterval(()=>{if(application.finishRealWindows())renderUI();},1000);
- // React mounts navigation before bootstrap. All imperative menu handlers,
+ // Angular mounts navigation before bootstrap. All imperative menu handlers,
  // session restoration and the runtime loop have now been installed.
  // Menu readiness must not depend on two animation frames: Chromium can
  // throttle/defer RAF under CI video recording, hiding the Continue button

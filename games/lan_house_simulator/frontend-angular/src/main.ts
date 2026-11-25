@@ -1,6 +1,6 @@
 /**
  * Angular 22 presentation islands. This entry is independent of the
- * TypeScript 7 Canvas game and may later replace the React entry.
+ * TypeScript 7 Canvas game and mounts before its native controllers bind the UI.
  */
 import { createComponent, type Type } from '@angular/core';
 import { createApplication } from '@angular/platform-browser';
@@ -25,13 +25,13 @@ import {MerchandiseCatalogComponent} from './merchandise-catalog';
 async function mountUi():Promise<void> {
   const app=await createApplication();
   const islands=[
-    ['react-menu-actions',MenuActionsComponent],
-    ['react-menu-tour',MenuTourComponent],
-    ['react-topbar-actions',HeaderActionsComponent],
-    ['react-quick-deck',QuickDeckComponent],
-    ['react-shop-categories',ShopCategoriesComponent],
-    ['react-shop-search',ShopSearchComponent],
-    ['react-admin-shortcuts',AdminShortcutsComponent],
+    ['lhs-menu-actions',MenuActionsComponent],
+    ['lhs-menu-tour',MenuTourComponent],
+    ['lhs-topbar-actions',HeaderActionsComponent],
+    ['lhs-quick-deck',QuickDeckComponent],
+    ['lhs-shop-categories',ShopCategoriesComponent],
+    ['lhs-shop-search',ShopSearchComponent],
+    ['lhs-admin-shortcuts',AdminShortcutsComponent],
     ['angular-computer-workspace',ComputerWorkspaceComponent],
     ['angular-service-workspace',ServiceWorkspaceComponent],
     ['angular-admin-area-navigation',AdminAreaNavigationComponent]
@@ -45,7 +45,7 @@ async function mountUi():Promise<void> {
     ref.changeDetectorRef.detectChanges();
   }
   // Exclusive Angular HUD/mail ownership is activated only when their
-  // future hosts are present. The published React game has neither host.
+  // corresponding hosts are present.
   const futureStatusIslands=[
     ['angular-time-weather',TimeWeatherComponent],
     ['angular-notice-inbox',NoticeInboxComponent]
@@ -60,7 +60,7 @@ async function mountUi():Promise<void> {
     ref.changeDetectorRef.detectChanges();
   }
   // The Angular shop overview is preview-only until the final coordinated
-  // React removal. Native TypeScript controllers bind its stable button IDs.
+  // Native TypeScript controllers bind its stable button IDs.
   const shopOverviewHost=document.getElementById('angular-shop-overview');
   if(shopOverviewHost){
     const ref=createComponent(ShopOverviewComponent,{
@@ -144,7 +144,7 @@ async function mountUi():Promise<void> {
 
   // These two components will replace their legacy markup at final cutover.
   // In the current game document they have no host, so there are no duplicate
-  // save/input IDs and the React production UI keeps working untouched.
+  // save/input IDs for the TypeScript controllers.
   const futureMenuIslands=[
     ['angular-save-transfer',SaveTransferComponent],
     ['angular-menu-preferences',MenuPreferencesComponent]

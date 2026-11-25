@@ -68,9 +68,10 @@ try{
   await page.keyboard.press("Escape");assert.equal(await page.locator("#admin").isVisible(),false);
   assert.equal(await page.locator("#game-app").isVisible(),true);
   await page.locator("#open-admin").click();
-  if(await page.locator("#admin-area").isVisible())await selectAdminArea(page,"computers");
-  else {await page.locator('[data-admin-tab="prices"]').focus();await page.keyboard.press("ArrowRight");}
-  assert.equal(await page.locator('[data-admin-tab="computers"]').getAttribute("aria-selected"),"true");
+  const adminTabs=page.locator('#angular-admin-area-navigation');
+  await adminTabs.locator('[data-angular-admin-tab="prices"]').focus();
+  await page.keyboard.press("ArrowRight");
+  await adminTabs.locator('[data-angular-admin-tab="computers"][aria-selected="true"]').waitFor();
   for(const tab of ["prices","computers","gpus","licenses","stock","services","finance"]){
    await selectAdminArea(page,tab);
    assert.equal(await page.locator('[data-section="'+tab+'"]').isVisible(),true);
@@ -161,9 +162,9 @@ try{
   assert.equal(repaired.repairJobs?.some(j=>j.pc===0),true);
   await page.keyboard.press("Escape");
   await page.locator("#open-shop").click();await shot("shop","#shop");
-  assert.ok((await page.locator("#shop-catalog .shop-art").count())<SHOP_CATALOG.length);
+  assert.ok((await page.locator("#angular-shop-catalog .shop-art").count())<SHOP_CATALOG.length);
   await page.locator('[data-shop-category="decoration"]').click();
-  await clickSvg('[data-buy="plant"] .ui-icon');
+  await page.locator('#angular-shop-catalog [data-buy="plant"]').click();
   assert.equal(await page.locator("#placement-toolbar").isVisible(),true);
   assert.equal(await page.locator("#panel-backdrop").isVisible(),false);
   await page.locator("#placement-cancel").click();

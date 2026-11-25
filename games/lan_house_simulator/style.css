@@ -1141,101 +1141,101 @@ progress{accent-color:#63804b;max-width:100%;grid-column:1/-1;width:100%;height:
 @media(max-width:700px){#ps2-stations .action-row button{flex:1 1 150px;white-space:normal}}
 
 
-/* React navigation / opening tour — same CRT-inspired identity, cleaner hierarchy. */
-:root{--react-lime:#d8edb8;--react-accent:#e6b77a}
+/* Navigation and opening tour */
+:root{--lhs-lime:#d8edb8;--lhs-accent:#e6b77a}
 .start-screen{background:
  radial-gradient(ellipse at 78% 42%,#66846a35,transparent 49%),
  radial-gradient(ellipse at 14% 80%,#1e3d3620,transparent 43%),var(--ink)}
 .menu-topline{border-bottom-color:#b1c49a37}
 .menu-content h2{text-wrap:balance;text-shadow:0 8px 40px #060e0b50}
-.menu-actions#react-menu-actions button{position:relative;isolation:isolate}
-.menu-actions#react-menu-actions button.primary{
+.menu-actions#lhs-menu-actions button{position:relative;isolation:isolate}
+.menu-actions#lhs-menu-actions button.primary{
  border-radius:12px;background:linear-gradient(110deg,#c8e6a9,#e0f2c8);
  box-shadow:0 5px 0 #142c1f,0 15px 35px #091b1166;
  font-size:15px;letter-spacing:.01em;transition:transform .18s,box-shadow .18s,filter .18s}
-.menu-actions#react-menu-actions button.primary:hover:not(:disabled){
+.menu-actions#lhs-menu-actions button.primary:hover:not(:disabled){
  background:linear-gradient(110deg,#e6f5cd,#d7ebba);filter:brightness(1.03);
  box-shadow:0 6px 0 #142c1f,0 19px 36px #091b1177}
-.menu-actions#react-menu-actions button:not(.primary){background:#304b404f;border-color:#72917755}
-.menu-actions#react-menu-actions button:not(.primary):hover{background:#3e5e4d}
-.react-menu-tour{width:100%;max-width:485px;margin:14px 0 22px}
-.react-chapters{border:1px solid #738e735b;border-radius:15px;padding:15px 17px;
+.menu-actions#lhs-menu-actions button:not(.primary){background:#304b404f;border-color:#72917755}
+.menu-actions#lhs-menu-actions button:not(.primary):hover{background:#3e5e4d}
+.lhs-menu-tour{width:100%;max-width:485px;margin:14px 0 22px}
+.lhs-chapters{border:1px solid #738e735b;border-radius:15px;padding:15px 17px;
  background:linear-gradient(145deg,#2b494080,#1d3731cc);box-shadow:0 10px 29px #10221a50}
-.react-chapters-heading{display:flex;gap:12px;align-items:center;color:var(--react-accent);
+.lhs-chapters-heading{display:flex;gap:12px;align-items:center;color:var(--lhs-accent);
  font:700 10px/1.3 "Courier New",monospace;letter-spacing:.15em}
-.react-chapters-rule{height:1px;background:#9cb39d4d;flex:1}
-.react-chapters-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;padding:3px;
+.lhs-chapters-rule{height:1px;background:#9cb39d4d;flex:1}
+.lhs-chapters-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px;padding:3px;
  border-radius:9px;background:#11272090}
-.react-chapters-tabs button.react-chapter-tab{font-size:10px;flex:1;min-width:105px;
+.lhs-chapters-tabs button.lhs-chapter-tab{font-size:10px;flex:1;min-width:105px;
  min-height:34px;padding:6px;border:1px solid transparent;background:transparent;
  border-radius:7px;font-weight:700;color:#b8cbb8}
-.react-chapters-tabs button.react-chapter-tab.active{background:#b7d89d;color:#19332c;border-color:#d1e9ba}
-.react-chapters-tabs button.react-chapter-tab:hover:not(.active){background:#315147}
-.react-chapter-detail{display:flex;align-items:flex-start;gap:13px;padding:13px 3px 3px;animation:react-in .22s ease-out}
-.react-chapter-marker{display:grid;place-items:center;flex:0 0 33px;height:33px;
+.lhs-chapters-tabs button.lhs-chapter-tab.active{background:#b7d89d;color:#19332c;border-color:#d1e9ba}
+.lhs-chapters-tabs button.lhs-chapter-tab:hover:not(.active){background:#315147}
+.lhs-chapter-detail{display:flex;align-items:flex-start;gap:13px;padding:13px 3px 3px;animation:lhs-in .22s ease-out}
+.lhs-chapter-marker{display:grid;place-items:center;flex:0 0 33px;height:33px;
  background:#59744d4a;border:1px solid #8ead7f62;border-radius:10px;color:#edbc7b}
-.react-chapter-detail strong{font-size:13px;color:#f4f4df}
-.react-chapter-detail p{margin:5px 0 7px;font-size:11px;line-height:1.55;color:#b5cbbd}
-.react-chapter-note{font:700 9px "Courier New",monospace;letter-spacing:.045em;color:#c1daa8}
-#react-topbar-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end}
-#react-topbar-actions button{border-radius:9px;transition:background .18s,transform .18s}
-#react-topbar-actions #open-admin{background:linear-gradient(115deg,#c2e2ac,#e3f0c5);
+.lhs-chapter-detail strong{font-size:13px;color:#f4f4df}
+.lhs-chapter-detail p{margin:5px 0 7px;font-size:11px;line-height:1.55;color:#b5cbbd}
+.lhs-chapter-note{font:700 9px "Courier New",monospace;letter-spacing:.045em;color:#c1daa8}
+#lhs-topbar-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+#lhs-topbar-actions button{border-radius:9px;transition:background .18s,transform .18s}
+#lhs-topbar-actions #open-admin{background:linear-gradient(115deg,#c2e2ac,#e3f0c5);
  border-color:#c5e3b3;box-shadow:0 3px 0 #16281c50}
-@keyframes react-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-@media(max-width:1000px){#react-topbar-actions{gap:5px}#react-topbar-actions button{padding:8px 10px}}
-@media(max-width:700px){.react-menu-tour{max-width:none}
- .react-chapters-tabs{flex-direction:column}.react-chapters-tabs button.react-chapter-tab{min-width:0;text-align:left;justify-content:flex-start}
- #react-topbar-actions{width:100%;justify-content:stretch}
- #react-topbar-actions button{flex:1;min-width:0}
- #react-topbar-actions .keyboard-hint{display:none}}
-@media(prefers-reduced-motion:reduce){.react-chapter-detail{animation:none}}
+@keyframes lhs-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:1000px){#lhs-topbar-actions{gap:5px}#lhs-topbar-actions button{padding:8px 10px}}
+@media(max-width:700px){.lhs-menu-tour{max-width:none}
+ .lhs-chapters-tabs{flex-direction:column}.lhs-chapters-tabs button.lhs-chapter-tab{min-width:0;text-align:left;justify-content:flex-start}
+ #lhs-topbar-actions{width:100%;justify-content:stretch}
+ #lhs-topbar-actions button{flex:1;min-width:0}
+ #lhs-topbar-actions .keyboard-hint{display:none}}
+@media(prefers-reduced-motion:reduce){.lhs-chapter-detail{animation:none}}
 
-/* Hide React controls until legacy event handlers and first Canvas frame are ready. */
-html:not([data-game-ready="true"]) #react-menu-actions,
-html:not([data-game-ready="true"]) #react-topbar-actions{visibility:hidden}
+/* Keep controls hidden while the Canvas game binds its event handlers. */
+html:not([data-game-ready="true"]) #lhs-menu-actions,
+html:not([data-game-ready="true"]) #lhs-topbar-actions{visibility:hidden}
 
 
-/* React management shell v2: visual-only navigation around the existing simulation. */
-#react-quick-deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:12px 0 2px}
-.react-quick-action{min-width:0;min-height:63px;display:flex;justify-content:flex-start;gap:11px;text-align:left;
+/* Navigation for management panels */
+#lhs-quick-deck{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin:12px 0 2px}
+.lhs-quick-action{min-width:0;min-height:63px;display:flex;justify-content:flex-start;gap:11px;text-align:left;
  border:1px solid #54725b;border-radius:11px;background:linear-gradient(145deg,#294b3c,#213a31);padding:11px 12px;
  color:#f3f4e5;box-shadow:0 3px 0 #10281b66;transition:transform .15s,border-color .15s,background .15s}
-.react-quick-action:hover:not(:disabled){background:#355744;border-color:#c0daa5;transform:translateY(-2px)}
-.react-quick-symbol{flex:0 0 34px;height:34px;display:grid;place-items:center;background:#d7eac2;color:#17372a;
+.lhs-quick-action:hover:not(:disabled){background:#355744;border-color:#c0daa5;transform:translateY(-2px)}
+.lhs-quick-symbol{flex:0 0 34px;height:34px;display:grid;place-items:center;background:#d7eac2;color:#17372a;
  border:1px solid #ecf3dc;border-radius:9px;font:800 16px "Courier New",monospace}
-.react-quick-copy{display:grid;gap:3px;min-width:0}
-.react-quick-copy strong{font-size:12px;line-height:1.3;color:#f7f6ea}
-.react-quick-copy small{font-size:10px;line-height:1.3;color:#bbd0b9;overflow-wrap:anywhere}
-#react-admin-shortcuts{margin:0 0 17px}
-.react-admin-shortcuts{border:1px solid #c7d5b8;background:linear-gradient(145deg,#ecf1e3,#f7f7ec);
+.lhs-quick-copy{display:grid;gap:3px;min-width:0}
+.lhs-quick-copy strong{font-size:12px;line-height:1.3;color:#f7f6ea}
+.lhs-quick-copy small{font-size:10px;line-height:1.3;color:#bbd0b9;overflow-wrap:anywhere}
+#lhs-admin-shortcuts{margin:0 0 17px}
+.lhs-admin-shortcuts{border:1px solid #c7d5b8;background:linear-gradient(145deg,#ecf1e3,#f7f7ec);
  padding:15px;border-radius:12px;color:#244132}
-.react-admin-shortcuts-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:12px}
-.react-admin-kicker{display:block;font:700 9px "Courier New",monospace;letter-spacing:.14em;color:#698252;margin-bottom:3px}
-.react-admin-shortcuts h3{font-size:16px!important;letter-spacing:-.02em;margin:0;color:#193e2d}
-.react-admin-helper{font-size:10px;line-height:1.5;color:#6c806b;max-width:230px}
-.react-admin-shortcuts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
-.admin .react-admin-shortcut{min-width:0;display:flex;justify-content:flex-start;align-items:center;gap:9px;text-align:left;
+.lhs-admin-shortcuts-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;margin-bottom:12px}
+.lhs-admin-kicker{display:block;font:700 9px "Courier New",monospace;letter-spacing:.14em;color:#698252;margin-bottom:3px}
+.lhs-admin-shortcuts h3{font-size:16px!important;letter-spacing:-.02em;margin:0;color:#193e2d}
+.lhs-admin-helper{font-size:10px;line-height:1.5;color:#6c806b;max-width:230px}
+.lhs-admin-shortcuts-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.admin .lhs-admin-shortcut{min-width:0;display:flex;justify-content:flex-start;align-items:center;gap:9px;text-align:left;
  padding:10px;background:#fffef8;color:#224031;border:1px solid #d1dccc;border-radius:9px;min-height:63px}
-.admin .react-admin-shortcut:hover:not(:disabled){background:#e6f2dc;border-color:#8fae87;box-shadow:0 2px 7px #29473215}
-.react-admin-shortcut-icon{display:grid;place-items:center;flex:none;width:31px;height:31px;border-radius:8px;
+.admin .lhs-admin-shortcut:hover:not(:disabled){background:#e6f2dc;border-color:#8fae87;box-shadow:0 2px 7px #29473215}
+.lhs-admin-shortcut-icon{display:grid;place-items:center;flex:none;width:31px;height:31px;border-radius:8px;
  background:#e0ebd2;color:#355c3b;font:800 14px "Courier New",monospace}
-.react-admin-shortcut strong,.react-admin-shortcut small{display:block;line-height:1.25}
-.react-admin-shortcut strong{font-size:12px}
-.react-admin-shortcut small{font-size:10px;font-weight:400;color:#637960;margin-top:4px}
-.react-admin-arrow{margin-left:auto;font-size:21px;color:#6d9466}
-.react-admin-shortcut-status{margin:4px 0 0!important;min-height:0;color:#5d7458;font-size:11px}
-.react-admin-shortcut-status:empty{display:none}
-#react-shop-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 15px;overflow:visible}
-.admin #react-shop-categories .react-shop-category{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;
+.lhs-admin-shortcut strong,.lhs-admin-shortcut small{display:block;line-height:1.25}
+.lhs-admin-shortcut strong{font-size:12px}
+.lhs-admin-shortcut small{font-size:10px;font-weight:400;color:#637960;margin-top:4px}
+.lhs-admin-arrow{margin-left:auto;font-size:21px;color:#6d9466}
+.lhs-admin-shortcut-status{margin:4px 0 0!important;min-height:0;color:#5d7458;font-size:11px}
+.lhs-admin-shortcut-status:empty{display:none}
+#lhs-shop-categories{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:12px 0 15px;overflow:visible}
+.admin #lhs-shop-categories .lhs-shop-category{display:flex;flex-direction:column;align-items:flex-start;gap:8px;text-align:left;
  min-width:0;min-height:80px;padding:12px;border:1px solid #ced9c1;border-radius:10px;background:#f9f9f1;
  color:#294a36;font-size:12px;line-height:1.35}
-.admin #react-shop-categories .react-shop-category:hover:not(:disabled){background:#e6f0dd;border-color:#91ad87}
-.admin #react-shop-categories .react-shop-category[aria-pressed="true"]{
+.admin #lhs-shop-categories .lhs-shop-category:hover:not(:disabled){background:#e6f0dd;border-color:#91ad87}
+.admin #lhs-shop-categories .lhs-shop-category[aria-pressed="true"]{
  background:#244333;color:#f3f5df;border-color:#244333;box-shadow:inset 0 0 0 1px #7a9c73}
-.react-shop-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:7px;background:#d9e9cc;
+.lhs-shop-icon{width:29px;height:29px;display:grid;place-items:center;border-radius:7px;background:#d9e9cc;
  color:#244333;font:800 18px "Courier New",monospace}
-.react-shop-category[aria-pressed="true"] .react-shop-icon{background:#c8e4b2;color:#1d3b2b}
-.react-shop-label{font-size:12px;font-weight:700;line-height:1.3}
+.lhs-shop-category[aria-pressed="true"] .lhs-shop-icon{background:#c8e4b2;color:#1d3b2b}
+.lhs-shop-label{font-size:12px;font-weight:700;line-height:1.3}
 #status .hud-card{position:relative;overflow:hidden;border-radius:12px;box-shadow:inset 0 1px 0 #ffffff0c,0 4px 14px #081a1620}
 #status .hud-card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#89ac82}
 #status .hud-card.cash:before{background:#648d53}
@@ -1253,47 +1253,65 @@ html:not([data-game-ready="true"]) #react-topbar-actions{visibility:hidden}
 #shop .shop-grid{gap:12px}
 #shop .shop-card{border-radius:12px;box-shadow:0 2px 7px #24392512;transition:border-color .15s,box-shadow .15s}
 #shop .shop-card:hover{border-color:#98b68d;box-shadow:0 5px 18px #24392522}
-#shop .shop-card button:focus-visible,#admin .react-admin-shortcut:focus-visible{outline:3px solid #b98243;outline-offset:2px}
+#shop .shop-card button:focus-visible,#admin .lhs-admin-shortcut:focus-visible{outline:3px solid #b98243;outline-offset:2px}
 @media(max-width:950px){
- #react-quick-deck{grid-template-columns:repeat(3,minmax(0,1fr))}
- .react-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- #react-shop-categories{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #lhs-quick-deck{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .lhs-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #lhs-shop-categories{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:700px){
- #react-quick-deck{display:flex;overflow-x:auto;gap:8px;padding:1px 2px 9px;scroll-snap-type:x proximity;touch-action:pan-x}
- .react-quick-action{flex:0 0 168px;min-height:58px;scroll-snap-align:start}
- .react-admin-shortcuts{padding:12px}
- .react-admin-shortcuts-heading{align-items:start;flex-direction:column;gap:4px}
- .react-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
- .admin .react-admin-shortcut{padding:8px;gap:6px}
- .react-admin-shortcut-icon{width:27px;height:27px}
- .react-admin-arrow{display:none}
- #react-shop-categories{display:flex;overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 10px;gap:8px;scroll-snap-type:x proximity;touch-action:pan-x}
- .admin #react-shop-categories .react-shop-category{flex:0 0 155px;min-height:77px;scroll-snap-align:start}
+ #lhs-quick-deck{display:flex;overflow-x:auto;gap:8px;padding:1px 2px 9px;scroll-snap-type:x proximity;touch-action:pan-x}
+ .lhs-quick-action{flex:0 0 168px;min-height:58px;scroll-snap-align:start}
+ .lhs-admin-shortcuts{padding:12px}
+ .lhs-admin-shortcuts-heading{align-items:start;flex-direction:column;gap:4px}
+ .lhs-admin-shortcuts-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .admin .lhs-admin-shortcut{padding:8px;gap:6px}
+ .lhs-admin-shortcut-icon{width:27px;height:27px}
+ .lhs-admin-arrow{display:none}
+ #lhs-shop-categories{display:flex;overflow-x:auto;flex-wrap:nowrap;padding:2px 1px 10px;gap:8px;scroll-snap-type:x proximity;touch-action:pan-x}
+ .admin #lhs-shop-categories .lhs-shop-category{flex:0 0 155px;min-height:77px;scroll-snap-align:start}
  #status .hud-card{border-radius:10px}
 }
-@media(max-width:400px){.react-admin-shortcuts-grid{grid-template-columns:1fr 1fr}.react-admin-shortcut small{font-size:9px}}
-@media(prefers-reduced-motion:reduce){.react-quick-action,#shop .shop-card{transition:none}.react-quick-action:hover:not(:disabled){transform:none}}
-html:not([data-game-ready="true"]) #react-quick-deck{visibility:hidden}
+@media(max-width:400px){.lhs-admin-shortcuts-grid{grid-template-columns:1fr 1fr}.lhs-admin-shortcut small{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.lhs-quick-action,#shop .shop-card{transition:none}.lhs-quick-action:hover:not(:disabled){transform:none}}
+html:not([data-game-ready="true"]) #lhs-quick-deck{visibility:hidden}
 
-/* React catalog search, compatible with all existing shop-card buttons and pricing. */
-#react-shop-search{margin:10px 0 15px}
-.react-shop-search{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:12px 14px;
+/* Catalog search */
+#lhs-shop-search{margin:10px 0 15px}
+.lhs-shop-search{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;padding:12px 14px;
  background:#e9efdf;border:1px solid #c9d9b9;border-radius:11px}
-.react-shop-search>label{font-weight:700;font-size:12px;color:#294b36;flex:0 0 100%}
-.react-shop-search-row{flex:1 1 270px;min-width:0;display:flex;gap:7px}
-.react-shop-search-row input{min-height:44px;width:100%;min-width:0;color:#223f2d;
+.lhs-shop-search>label{font-weight:700;font-size:12px;color:#294b36;flex:0 0 100%}
+.lhs-shop-search-row{flex:1 1 270px;min-width:0;display:flex;gap:7px}
+.lhs-shop-search-row input{min-height:44px;width:100%;min-width:0;color:#223f2d;
  background:#fffef8;border:1px solid #a9bda0;border-radius:8px;padding:9px 12px;font:inherit}
-.react-shop-search-row input::placeholder{color:#778e76}
-.react-shop-search-row input:focus-visible{outline:3px solid #e5b66c;outline-offset:1px}
-.admin .react-shop-search-row button{min-height:44px;border-radius:8px;background:#335540;color:#fff;
+.lhs-shop-search-row input::placeholder{color:#778e76}
+.lhs-shop-search-row input:focus-visible{outline:3px solid #e5b66c;outline-offset:1px}
+.admin .lhs-shop-search-row button{min-height:44px;border-radius:8px;background:#335540;color:#fff;
  border-color:#335540}
-.react-shop-search-count{font-size:11px;color:#456b4a;font-variant-numeric:tabular-nums}
-.react-shop-no-match{margin:0!important;flex:0 0 100%;color:#71583e;font-size:12px}
+.lhs-shop-search-count{font-size:11px;color:#456b4a;font-variant-numeric:tabular-nums}
+.lhs-shop-no-match{margin:0!important;flex:0 0 100%;color:#71583e;font-size:12px}
 #shop-catalog>.shop-card[hidden]{display:none!important}
-@media(max-width:700px){.react-shop-search{padding:11px;gap:7px}.react-shop-search-count{flex:0 0 100%}}
+@media(max-width:700px){.lhs-shop-search{padding:11px;gap:7px}.lhs-shop-search-count{flex:0 0 100%}}
 
 /* Installation countdown is a native progress element, shared by Windows and maintenance panels. */
 .windows-install-status{padding:10px 14px;margin:10px 0;border:1px solid #729282;border-radius:6px;background:rgba(20,50,46,.65)}
 .windows-install-status p{margin:6px 0;color:inherit;font-size:.9rem}
 .windows-install-status progress{display:block;width:100%;height:13px;accent-color:#7ec3a0}
+
+/* Angular renders the visible catalog. The game binds commands to its private DOM. */
+#shop-catalog { display: none !important; }
+#angular-shop-catalog { display: block; min-width: 0; }
+
+.menu-topline { gap: 12px; }
+.menu-topline a.game-site-return {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid #718b76;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-decoration: none;
+}

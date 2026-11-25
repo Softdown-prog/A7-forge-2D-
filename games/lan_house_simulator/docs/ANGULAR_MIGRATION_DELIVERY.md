@@ -2,6 +2,8 @@
 
 **Atualização:** [Angular como build e container canônicos](ANGULAR_CANONICAL_DELIVERY.md)
 substitui as instruções históricas de publicação e os caminhos de saída abaixo.
+A fixture React citada no registro foi desativada. A mudança está documentada no
+[ADR 0005](adr/0005-angular-standalone-game.md).
 
 Base: PR #77, mesclado externamente durante a execução. As alterações restantes
 estão em um único PR de conclusão, branch `feat/lhs-angular-migration-complete-78`.
