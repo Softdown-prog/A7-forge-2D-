@@ -155,7 +155,7 @@ test('production Angular site does not compile throwaway React JS',()=>{
  assert.match(standalone,/typescript\/bin\/tsc/);
  assert.match(standalone,/const gameUi=process\.env\.LHS_GAME_UI\?\?"react"/);
  assert.match(standalone,/if\(gameUi==="react"\)/);
- assert.match(standalone,/await import\("esbuild"\)/);
+ assert.match(standalone,/if\(gameUi==="react"\)\{\s*const \{buildLegacyReact\}=await import\("\.\/build_legacy_react\.mjs"\)/);
  assert.match(site,/LHS_GAME_UI:angularSite\?"angular":"react"/);
  assert.match(site,/process\.env\.LHS_SITE_UI!=="react"/);
  // The candidate never needs the React artifact; the standalone /dist

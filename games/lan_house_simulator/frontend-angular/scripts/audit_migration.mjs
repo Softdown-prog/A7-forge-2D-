@@ -76,7 +76,8 @@ export function auditMigration(sources){
   previewQa,angularWorkflow}=sources;
  const publishedEntry=/src=["']\.\/js\/react-entry\.js["']/.test(published);
  const angularInPublished=/src=["'][^"']*(?:__angular|angular-ui|frontend-angular)[^"']*\.js["']/.test(published);
- const reactBuildActive=/entryPoints:\s*\[resolve\(root,["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
+ const reactBuildActive=reactBuild.includes('./build_legacy_react.mjs') &&
+  /entryPoints:\s*\[resolve\(root,\s*["']src\/react\/entry\.jsx["']\)\]/.test(reactBuild);
  const reactHosts=list(reactEntry,/\["(react-[^"]+)",\s*</g);
  const mandatoryIslands=list(angularEntry,/\['(react-[^']+)',\s*[A-Z][A-Za-z0-9]+\]/g);
  // Include hosts mounted individually with getElementById as well as tuple-based
@@ -159,7 +160,8 @@ export function integratedQaEvidence(entry=read("frontend-angular/scripts/verify
 }
 export function readCurrentSources(){
  return {published:read("index.html"),reactEntry:read("src/react/entry.jsx"),
-  reactBuild:read("scripts/build.mjs"),angularEntry:read("frontend-angular/src/main.ts"),
+  reactBuild:[read("scripts/build.mjs"),read("scripts/build_legacy_react.mjs")].join("\n"),
+  angularEntry:read("frontend-angular/src/main.ts"),
   angularPreview:read("frontend-angular/src/index.html"),
   integratedQa:integratedQaEvidence(),
   previewQa:read("frontend-angular/scripts/verify_catalog_preview.mjs"),

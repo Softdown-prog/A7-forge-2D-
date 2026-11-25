@@ -24,6 +24,8 @@ docker build -f backend/Dockerfile -t lhs-backend .
 `build:site:legacy` e `check:site:legacy` existem somente para regressões e
 rollback em `out/site-legacy`; não sobrescrevem o artefato canônico. `npm run build`
 ainda gera a fixture React isolada em `dist/` usada pelos testes existentes.
+Somente esse modo instala React e ReactDOM pelo lockfile de `legacy-react/`.
+O `npm ci` principal e a build do site Angular dispensam esse pacote legado.
 
 A publicação Pages é manual e exige SHA já mesclado na main e autorização
 explícita. O espelho recebe o artefato testado com hashes da fonte e dos arquivos;
@@ -32,10 +34,10 @@ sem recompilar. Nenhum merge ou deploy é executado pelo build/container.
 
 [Validação, aprovação e rollback](docs/ANGULAR_CANONICAL_DELIVERY.md).
 
-Antes de remover definitivamente as dependências React ou reescrever o
-documento-base, eliminar as referências legadas nos testes e ferramentas de
-diagnóstico. Angular é somente camada visual: economia, compras, saves,
-rotas de personagens e Canvas continuam no motor TypeScript.
+Para retirar a fixture React, falta migrar o comando isolado e os testes e
+ferramentas de diagnóstico que usam sua interface. Angular é somente camada
+visual: economia, compras, saves, rotas de personagens e Canvas continuam no
+motor TypeScript.
 
 ---
 

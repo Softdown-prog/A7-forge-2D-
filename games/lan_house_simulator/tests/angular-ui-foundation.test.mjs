@@ -20,7 +20,15 @@ test('Angular 22 uses a separate TypeScript 6 toolchain; TypeScript 7 game stays
   assert.match(ui.dependencies['@angular/core'],/^~22\./);
   assert.equal(ui.devDependencies.typescript,'6.0.2');
   assert.equal(game.devDependencies.typescript,'7.0.2');
-  assert.equal(game.dependencies.react,'19.2.4'); // Unpublished Angular preview must not break production.
+  const gameLock=JSON.parse(file('package-lock.json'));
+  const fixtureLock=JSON.parse(file('legacy-react/package-lock.json'));
+  for(const dependency of ['react','react-dom','scheduler']){
+    assert.ok(!Object.keys(gameLock.packages).some(path=>path.endsWith('/'+dependency)));
+  }
+  for(const dependency of ['react','react-dom']){
+    assert.equal(game.dependencies?.[dependency],undefined);
+    assert.equal(fixtureLock.packages['node_modules/'+dependency].version,'19.2.4');
+  }
   assert.ok(existsSync(new URL('../'+root+'angular.json',import.meta.url)));
 });
 
@@ -100,7 +108,8 @@ test('Angular shop search has exactly one standalone file and a single bootstrap
 
 test('Angular preview cannot accidentally replace the current React runtime',()=>{
   assert.match(file('index.html'),/src="\.\/js\/react-entry\.js"/);
-  assert.match(file('scripts/build.mjs'),/src\/react\/entry\.jsx/);
+  assert.match(file('scripts/build.mjs'),/build_legacy_react\.mjs/);
+  assert.match(file('scripts/build_legacy_react.mjs'),/src\/react\/entry\.jsx/);
   assert.match(file('src/bootstrap/bootstrapGame.ts'),/dataset\.gameReady="true"/);
 });
 

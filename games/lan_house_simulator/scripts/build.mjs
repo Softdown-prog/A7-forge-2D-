@@ -11,15 +11,8 @@ execFileSync(process.execPath,[resolve(root,"node_modules/typescript/bin/tsc"),"
 const gameUi=process.env.LHS_GAME_UI??"react";
 if(gameUi!=="react"&&gameUi!=="angular")throw Error("LHS_GAME_UI inválido: "+gameUi);
 if(gameUi==="react"){
-const {build:buildReact}=await import("esbuild");
-await buildReact({
- entryPoints:[resolve(root,"src/react/entry.jsx")],
- outfile:resolve(root,"dist/js/react-entry.js"),
- bundle:true,minify:true,format:"esm",target:"es2022",
- external:["./main.js"],
- define:{"process.env.NODE_ENV":JSON.stringify("production")},
- logLevel:"warning"
-});
+ const {buildLegacyReact}=await import("./build_legacy_react.mjs");
+ await buildLegacyReact(root);
 }
 for(const file of ["index.html","style.css","online-config.json"])cpSync(resolve(root,file),resolve(root,"dist",file));
 // Site and game use the same account session and token refresh implementation.
