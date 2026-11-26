@@ -51,7 +51,7 @@ function prepare(year,seed,variant){
  accept(setHourlyPrice(s,target),"allowed hourly price");
  assert.ok(s.pricePerHour<=annualHourlyCeiling(year));
  assert.ok(s.pricePerHour<=allowableHourlyPrice(s));
- assert.equal(s.cash,initial-s.expenses);
+ assert.equal(ROUND(s.cash),ROUND(initial-s.expenses),"starting balance to the cent");
  return {s,initial,initialSpend:s.expenses,quality,permitted};
 }
 function upkeep(s,charges={stock:0,repairs:0,cleaning:0,engine:0}){

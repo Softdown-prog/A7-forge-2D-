@@ -49,9 +49,15 @@ try{
   page.on("pageerror",e=>errors.push(String(e)));
   const press=async selector=>mobile?page.locator(selector).tap():page.locator(selector).click();
   await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle"});
+  const consent=page.locator("#privacy-banner");
+  if(await consent.isVisible()){
+   await press("#privacy-reject");
+   await consent.waitFor({state:"hidden"});
+  }
   await press("#menu-continue");await press("#open-notices");
   const list=page.locator("#notices-list");
-  assert.match(await list.innerText(),/2005: jogos avançados pedem placa de vídeo/);
+  const gpuLetter=list.locator("article").filter({hasText:"2005: jogos avançados pedem placa de vídeo"});
+  await gpuLetter.waitFor();
   assert.match(await list.innerText(),/2004: alunos de uniforme durante as aulas/);
   assert.match(await list.innerText(),/Windows compatível/);
   for(const choice of ["gpu-plan","gpu-survey","gpu-defer"]){
@@ -60,6 +66,8 @@ try{
   await list.screenshot({path:resolve(output,"historic_gpu_mail_"+width+".png")});
   const chosen=width===1280?"gpu-survey":"gpu-defer";
   await press('button[data-decision="'+gpu+'"][data-choice="'+chosen+'"]');
+  const decision=gpuLetter.getByText(/Decisão tomada/);
+  await decision.waitFor();
   assert.equal(await list.locator('button[data-decision="'+gpu+'"]').count(),0);
   const getState=async()=>page.evaluate(key=>{
    const raw=JSON.parse(localStorage.getItem(key)||"null");
@@ -73,6 +81,7 @@ try{
   assert.equal(isValidSave(selected),true);
   await page.reload({waitUntil:"networkidle"});
   await press("#menu-continue");await press("#open-notices");
+  await decision.waitFor();
   const restored=await getState();
   assert.equal(restored.notices.find(n=>n.id===gpu)?.resolved,chosen);
   assert.equal(restored.notices.find(n=>n.id===uniform)?.resolved,"uniform-talk");

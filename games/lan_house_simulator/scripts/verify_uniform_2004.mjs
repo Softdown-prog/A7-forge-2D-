@@ -49,7 +49,7 @@ try{
   }
   await press("#menu-continue");await press("#open-notices");
   const notices=page.locator("#notices-list");
-  assert.match(await notices.innerText(),/2004: alunos de uniforme durante as aulas/);
+  await notices.getByRole("heading",{name:"2004: alunos de uniforme durante as aulas"}).waitFor();
   assert.match(await notices.innerText(),/não uma proibição nacional/);
   for(const choice of ["uniform-post-rule","uniform-talk","uniform-ignore"]){
    const btn=notices.locator('button[data-decision="school-uniform-policy"][data-choice="'+choice+'"]');
@@ -57,7 +57,8 @@ try{
   }
   await notices.screenshot({path:resolve(out,"school_uniform_2004_"+width+".png")});
   await press('button[data-decision="school-uniform-policy"][data-choice="uniform-talk"]');
-  await page.waitForTimeout(100);
+  const decision=notices.getByText(/Decisão tomada/);
+  await decision.waitFor();
   const afterChoice=await page.evaluate(key=>{
     const stored=localStorage.getItem(key);
     let saved=null;try{saved=stored?JSON.parse(stored):null;}catch{}
@@ -67,13 +68,13 @@ try{
       toast:document.getElementById("status")?.textContent,
       text:document.getElementById("notices-list")?.textContent?.slice(0,650)};
   },GAME_SAVE_KEY);
-  assert.match(await notices.innerText(),/Decisão tomada/,
+  assert.equal(afterChoice.resolved,"uniform-talk",
     "Escolha nao confirmada: "+JSON.stringify(afterChoice)+" errors "+JSON.stringify(errors));
   const duplicated=await notices.locator('button[data-decision="school-uniform-policy"]').count();
   assert.equal(duplicated,0,"não pode oferecer nova compra da mesma decisão");
   await page.reload({waitUntil:"networkidle"});
   await press("#menu-continue");await press("#open-notices");
-  assert.match(await page.locator("#notices-list").innerText(),/Decisão tomada/);
+  await decision.waitFor();
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   assert.ok(overflow<=3,"interface invadiu viewport "+width+": "+overflow);
   assert.deepEqual(errors,[]);

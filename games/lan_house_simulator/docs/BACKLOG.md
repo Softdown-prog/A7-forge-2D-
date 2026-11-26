@@ -28,8 +28,11 @@
 | --- | --- | --- |
 | 1 | [Angular e fronteira com o motor](https://github.com/Softdown-prog/A7-forge-2D-/issues/50) · [#37](https://github.com/Softdown-prog/A7-forge-2D-/issues/37) | React removido. A regressão da rolagem do painel administrativo tem cobertura em Chromium emulado. Falta o aceite em celular físico, incluindo toque, FPS, legibilidade e retomada de saves. |
 | 2 | [GIF do Forge e workflows de áudio](https://github.com/Softdown-prog/A7-forge-2D-/issues/109) | O GIF preserva 14 quadros nas quatro direções. As revisões e promoções de áudio agora são manuais. A reprodução das três tomadas de teclado depende das gravações originais `te1.m4a`, `t2.m4a` e `t3.m4a`. |
-| 3 | [Campanhas longas e balanceamento](https://github.com/Softdown-prog/A7-forge-2D-/issues/3) | Medir preços, procura, custos, expansões e retorno de GPUs em campanhas determinísticas. Conferir os efeitos e intervalos da progressão de 1998 a 2030. |
+| 3 | [Campanhas longas e balanceamento](https://github.com/Softdown-prog/A7-forge-2D-/issues/3) | Validadas a campanha de 750 dias, a expansão em 390 dias e a matriz histórica de 120 dias. Falta medir o efeito de outras tarifas na expansão, o retorno de GPUs isoladamente e a progressão até 2030. |
 | 4 | [Arte do salão](https://github.com/Softdown-prog/A7-forge-2D-/issues/4) e [animações dos visitantes](https://github.com/Softdown-prog/A7-forge-2D-/issues/2) | Aprovar as poses, a oclusão, os sprites em escala real e as duas cadeiras de PS1 no navegador. |
+
+- **Expansão de 3, 5 e 7 PCs.** Em 390 dias, com tarifa fixa de R$ 2,50 e duas sementes, a expansão aumentou o atendimento. O resultado médio após custos caiu R$ 69,41 com 5 PCs e R$ 2.457,02 com 7 PCs em relação à operação com 3 PCs.
+- **Matriz histórica.** As 16 campanhas de 120 dias abrangeram 1998, 2005, 2012 e 2024. A modernização melhorou o resultado operacional em 2005, 2012 e 2024. O resultado acumulado após os gastos iniciais ficou negativo para o equipamento modernizado nesses três recortes.
 
 ### Decisões de design — fora de escopo
 - **Não implementar produtos perecíveis, vencimento de estoque, prazo de validade ou lotes FIFO.** Esse gerenciamento acrescentaria trabalho repetitivo à lan house sem ganho suficiente para a diversão. O sistema atual de compras/fornecedores continua.

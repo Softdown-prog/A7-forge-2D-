@@ -22,6 +22,11 @@ try{
   await page.addInitScript(({key,s})=>{localStorage.setItem(key,JSON.stringify(s));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,s});
   await page.goto('http://127.0.0.1:4173',{waitUntil:'networkidle'});
   const press=locator=>mobile?locator.tap():locator.click();
+  const consent=page.locator('#privacy-banner');
+  if(await consent.isVisible()){
+   await press(page.locator('#privacy-reject'));
+   await consent.waitFor({state:'hidden'});
+  }
   await press(page.locator('#menu-continue'));await press(page.locator('#open-admin'));await selectAdminArea(page,'computers');await selectTask(page,'computers','hardware');
   await page.evaluate(()=>{
    window.categoryControls=[...document.querySelectorAll('[data-hardware-tab]')];
