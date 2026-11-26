@@ -12,7 +12,11 @@ on:
       - 'games/lan_house_simulator/scripts/verify_ps1_2002.mjs'
       - 'games/lan_house_simulator/scripts/verify_save_on_menu.mjs'
       - 'games/lan_house_simulator/scripts/verify_financial_clarity.mjs'
+      - 'games/lan_house_simulator/scripts/verify_pc_placement.mjs'
+      - 'games/lan_house_simulator/src/application/shopCatalog*.ts'
       - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
+      - 'games/lan_house_simulator/src/sim/shop/**'
+      - 'games/lan_house_simulator/frontend-angular/src/templates/shop-catalog.html'
       - 'games/lan_house_simulator/src/main.ts'
       - 'games/lan_house_simulator/src/ui/**'
       - 'games/lan_house_simulator/src/render/**'
@@ -23,8 +27,10 @@ on:
     branches: [main]
     paths:
       - 'games/lan_house_simulator/scripts/verify_integrated_engine_campaign.mjs'
+      - 'games/lan_house_simulator/scripts/verify_pc_placement.mjs'
       - 'games/lan_house_simulator/src/sim/**'
       - 'games/lan_house_simulator/src/application/**'
+      - 'games/lan_house_simulator/frontend-angular/src/templates/shop-catalog.html'
       - 'games/lan_house_simulator/src/main.ts'
       - '.github/workflows/lhs-mobile-stability.yml'
   workflow_dispatch:
@@ -57,6 +63,9 @@ jobs:
       - name: Verify native scrolling and touch interface
         working-directory: games/lan_house_simulator
         run: node scripts/verify_mobile_interface.mjs out/mobile-stability
+      - name: Verify catalog guidance and installation of PCs 6 and 7
+        working-directory: games/lan_house_simulator
+        run: node scripts/verify_pc_placement.mjs out/mobile-stability/pc-placement
       - name: Verify PS1 admin/shops with real touch and cookie choice
         working-directory: games/lan_house_simulator
         run: node scripts/verify_ps1_2002.mjs out/mobile-stability/ps1

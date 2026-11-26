@@ -20,7 +20,7 @@ test("shop guidance tracks actual availability without mutating saves or prices"
  assert.equal(shopPrice(s,"computer-annex"),320);
  assert.equal(shopPrice(s,"expand"),650);
  assert.equal(shopPrice(s,"extend-west"),500);
- assert.match(shopPlacementStatus(s,"computer"),/0 vagas livres/);
+ assert.match(shopPlacementStatus(s,"computer"),/3\/3 PCs\. Amplie a área principal em Construção/);
  assert.match(shopPlacementStatus(s,"computer-annex"),/Primeiro amplie/);
  assert.match(shopPlacementStatus(s,"expand"),/sem sorteio/);
  assert.equal(JSON.stringify(s),original);
@@ -28,10 +28,10 @@ test("shop guidance tracks actual availability without mutating saves or prices"
  assert.equal(s.expansionLevel,1);
  assert.equal(s.roomExtensions.west,0);
  assert.equal(shopPrice(s,"expand"),1100);
- assert.match(shopPlacementStatus(s,"computer"),/2 vagas livres/);
+ assert.match(shopPlacementStatus(s,"computer"),/3\/5 PCs\. Posição do próximo PC disponível/);
  assert.match(shopPlacementStatus(s,"expand"),/largura 10/);
  assert.ok(buyComputer(s).ok);
- assert.match(shopPlacementStatus(s,"computer"),/1 vaga livre/);
+ assert.match(shopPlacementStatus(s,"computer"),/4\/5 PCs\. Posição do próximo PC disponível/);
  assert.ok(expandDirection(s,"west").ok);
  assert.equal(s.roomExtensions.west,1);
  assert.equal(shopPrice(s,"extend-west"),850);

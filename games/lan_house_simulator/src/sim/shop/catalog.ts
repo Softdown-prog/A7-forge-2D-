@@ -1,7 +1,7 @@
 /** Data-only entries for the shop. Avoid importing simulation systems here. */
 export const SHOP_CATALOG=[
  {id:"expand",label:"Ampliar área principal",category:"Expansão",description:"Aumenta em duas faixas a largura da área principal, sempre no mesmo sentido (sem sorteio). Libera duas vagas de PC e aumenta os custos fixos mensais."},
- {id:"computer",label:"Instalar PC na área principal",category:"Computadores",description:"Computador completo com mesa e cadeira, instalado automaticamente na próxima vaga da área principal. Para abrir duas vagas, use Ampliar área principal."},
+ {id:"computer",label:"Instalar PC na área principal",category:"Computadores",description:"Computador completo com mesa e cadeira para o salão principal."},
  {id:"linux-lab-99",label:"Bancada Linux 99 · máquina nova",category:"Computadores Linux · 1999",description:"PC inteiro pronto para Linux: mesa técnica, gabinete de aço, CRT e cadeira. Desbloqueio após a coleção de revistas, a partir de outubro de 1999; ocupa uma vaga física na área principal."},
  {id:"linux-dev-99",label:"Estação Programador 99 · máquina nova",category:"Computadores Linux · 1999",description:"Novo PC completo para programadores: gabinete reforçado, CRT grafite e bancada de desenvolvimento. Linux já instalado; maior conforto. Ocupa uma vaga física na área principal."},
  {id:"computer-annex",label:"Instalar PC na ampliação",category:"Computadores",description:"O mesmo computador completo, mas você escolhe uma vaga no mapa. Primeiro amplie à esquerda, à direita ou nos fundos; o PC só é cobrado ao escolher a vaga."},

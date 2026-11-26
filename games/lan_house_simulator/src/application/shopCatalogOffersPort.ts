@@ -37,12 +37,11 @@ export function createShopCatalogOffersPort(
   const price=shopPrice(s,id),poor=s.cash<price;
   // A vaga numérica pode estar livre mesmo que móveis ou circulação impeçam a instalação.
   const placementIssue=(id==="computer"||linux)&&!full?nextComputerPlacementIssue(s):null;
-  const hint=shopPlacementStatus(s,id);
   return {
    disabled:full||poor||placementIssue!==null||(!!linux&&!linuxUnlocked(s)),
    text:linux&&!linuxUnlocked(s)?"🔒 Coleção Linux · outubro de 1999":
     full||poor||placementIssue===null?shopPurchaseButtonText(id,full,poor,price,max>0):"Posição do próximo PC bloqueada",
-   placementHint:placementIssue?(hint?hint+" ":"")+placementIssue:hint,
+   placementHint:shopPlacementStatus(s,id,placementIssue),
    ownedText:max>0?"Instalados: "+count+" · posições livres: "+slots:null
   };
  }};

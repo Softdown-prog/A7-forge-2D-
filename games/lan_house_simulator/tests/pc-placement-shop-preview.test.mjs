@@ -41,9 +41,7 @@ test("posição física bloqueada desativa compra na loja, embora exista vaga nu
  const offer=x.offers.snapshot("computer");
  assert.equal(offer.disabled,true);
  assert.equal(offer.text,"Posição do próximo PC bloqueada");
- assert.match(offer.placementHint,/3\/5 PCs/);
- assert.match(offer.placementHint,/Próximo PC sem encaixe/);
- assert.match(offer.placementHint,/Reorganize o salão/);
+ assert.equal(offer.placementHint,`Área principal: 3/5 PCs. ${nextComputerPlacementIssue(x.game)}`);
 });
 test("a prévia e o botão usam o mesmo motivo da recusa",()=>{
  const x=setup();expandShop(x.game);blockNextPc(x.game);
@@ -122,6 +120,7 @@ test("no limite 7/7 o botão permanece bloqueado, mesmo com dinheiro",()=>{
  const before=JSON.stringify(x.game),offer=x.offers.snapshot("computer");
  assert.equal(offer.disabled,true);
  assert.equal(offer.text,"Sem vaga na área principal");
+ assert.equal(offer.placementHint,"Área principal: 7/7 PCs. Limite da área principal atingido.");
  assert.equal(JSON.stringify(x.game),before);
 });
 test("o catálogo conserva outras ofertas e suas regras",()=>{
