@@ -1,8 +1,5 @@
 name: Lan House - Promote soda sound
 on:
-  push:
-    paths:
-      - '.github/workflows/lan-house-promote-soda.yml'
   workflow_dispatch:
 permissions:
   contents: write

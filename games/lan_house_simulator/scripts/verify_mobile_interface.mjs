@@ -7,6 +7,38 @@ import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
 import {createGame} from '../dist/js/sim/engine.js';
 import {purchaseApproach} from '../dist/js/sim/layout.js';
+async function dragTouch(page,cdp,{x,y},dx,dy){
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+ for(let i=1;i<=12;i++){
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',
+   touchPoints:[{x:x+dx*i/12,y:y+dy*i/12}]});
+  await page.waitForTimeout(16);
+ }
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+}
+
+async function verifyTabScrolling(page,cdp){
+ const tabs=page.locator('#angular-admin-area-navigation .angular-admin-tabs');
+ await tabs.scrollIntoViewIfNeeded();
+ const initial=await tabs.evaluate(el=>{
+  el.scrollLeft=0;
+  const {right,top,height,width}=el.getBoundingClientRect();
+  const x=Math.round(right-24),y=Math.round(top+height/2);
+  return {x,y,width,top:el.closest('#admin').scrollTop,
+   hit:el.contains(document.elementFromPoint(x,y))};
+ });
+ assert.ok(initial.hit&&initial.y>=80,'O gesto deve começar sobre a faixa visível de abas');
+ await dragTouch(page,cdp,initial,-Math.min(180,initial.width-45),0);
+ await page.waitForFunction(()=>document.querySelector('.angular-admin-tabs').scrollLeft>20);
+ assert.ok(Math.abs(await page.locator('#admin').evaluate(el=>el.scrollTop)-initial.top)<=3,
+  'O gesto horizontal muda somente a faixa de abas');
+
+ await dragTouch(page,cdp,initial,0,-Math.min(145,initial.y-30));
+ await page.waitForFunction(top=>document.getElementById('admin').scrollTop>top+20,initial.top,
+  {timeout:3500});
+ return true;
+}
+
 const output=resolve(process.argv[2]??'out/mobile-interface');await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,'serve.mjs')],{stdio:['ignore','pipe','inherit']});let browser;
 try{
@@ -30,37 +62,22 @@ try{
   });
   await page.waitForTimeout(1100);
   const stable=await page.evaluate(()=>window.control===document.querySelector('#hardware-tab-ram'));assert.equal(stable,true,'Idle refresh must preserve the touched control');
-  await page.locator('#admin').evaluate(el=>{el.style.scrollBehavior='auto';el.scrollTop=0;});
-  const diagnose=()=>page.locator('#admin').evaluate(el=>{
-   const box=el.getBoundingClientRect(),computed=getComputedStyle(el);
-   const x=Math.max(box.left+12,Math.min(box.right-12,box.left+Math.min(55,box.width*.2)));
-   const y=Math.max(box.top+85,Math.min(box.bottom-40,box.top+box.height*.75));
-   return {top:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight,
-    x:Math.round(x),y:Math.round(y),bounds:{top:box.top,bottom:box.bottom},
-    touching:document.elementFromPoint(x,y)?.id||document.elementFromPoint(x,y)?.tagName,
-    touchAction:computed.touchAction,overflowY:computed.overflowY};
+  const admin=page.locator('#admin');
+  const initial=await admin.evaluate(el=>{
+   el.style.scrollBehavior='auto';el.scrollTop=0;
+   return {top:el.scrollTop,scrollHeight:el.scrollHeight,clientHeight:el.clientHeight};
   });
-  const initial=await diagnose(),before=initial.top;
-  if(initial.scrollHeight-initial.clientHeight<=100){
-   throw Error('O painel escolhido nao oferece 100px de rolagem nativa: '+JSON.stringify({width,initial}));
-  }
-  if(mobile){
-   // Gesto no interior efetivo do painel, não em coordenadas fixas que
-   // podem acertar o aviso de cookies ou uma área fora da janela.
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:initial.x,y:initial.y}]});
-   for(let i=1;i<=12;i++){await cdp.send('Input.dispatchTouchEvent',{
-    type:'touchMove',touchPoints:[{x:initial.x,y:initial.y-i*25}]});await page.waitForTimeout(16);}
-   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-  }else await page.locator('#admin').evaluate(el=>el.scrollTop+=360);
-  const afterState=await diagnose();
-  console.log('admin-scroll',JSON.stringify({width,initial,after:afterState}));
-  assert.ok(afterState.top>before+20,'Rolagem nativa deve avançar: '+JSON.stringify({width,initial,afterState}));
-  const after=afterState.top;
+  assert.ok(initial.scrollHeight-initial.clientHeight>100,
+   'O painel deve oferecer 100px de rolagem nativa: '+JSON.stringify({width,initial}));
+  const tabsScrollBothAxes=mobile?await verifyTabScrolling(page,cdp):null;
+  if(!mobile)await admin.evaluate(el=>el.scrollTop+=360);
+  const after=await admin.evaluate(el=>el.scrollTop);
+  assert.ok(after>initial.top+20,'A rolagem deve avançar: '+JSON.stringify({width,initial,after}));
   await press(page.locator('#hardware-tab-ram'));assert.equal(await page.locator('[data-hardware-catalog]').getAttribute('data-hardware-catalog'),'ram');
   await press(page.locator('#hardware-tab-storage'));assert.equal(await page.locator('[data-hardware-catalog]').getAttribute('data-hardware-catalog'),'storage');
   await press(page.locator('#close-admin'));await page.locator('#events').scrollIntoViewIfNeeded();await page.waitForTimeout(400);
   const report=await page.evaluate(()=>({...window.report,scrollY,overflow:document.documentElement.scrollWidth-innerWidth}));assert.equal(report.hiddenDraws,0);assert.ok(report.overflow<=3);
-  assert.deepEqual(errors,[]);reports.push({width,cpuSlowdown:mobile?4:1,buttonPreserved:stable,panelScrolled:after>before,...report,errors});await context.close();
+  assert.deepEqual(errors,[]);reports.push({width,cpuSlowdown:mobile?4:1,buttonPreserved:stable,panelScrolled:after>initial.top,tabsScrollBothAxes,...report,errors});await context.close();
  }
  // Force only the QA mix roll, so decoding and playback are tested without chance.
  const context=await browser.newContext({viewport:{width:414,height:920},isMobile:true,hasTouch:true}),page=await context.newPage();const state=createGame();const goal=purchaseApproach('soda',state);

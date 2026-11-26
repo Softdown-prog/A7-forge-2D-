@@ -54,7 +54,7 @@
 html[data-ui-framework="angular"] #admin .admin-tabs{display:none!important}
 @media(max-width:700px){
  .angular-admin-tabs{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;
-  touch-action:pan-x;scroll-snap-type:x proximity;padding:6px 6px 10px}
+  scroll-snap-type:x proximity;padding:6px 6px 10px}
  #admin .angular-admin-tab{flex:0 0 120px;min-height:48px;scroll-snap-align:start}
 }
 

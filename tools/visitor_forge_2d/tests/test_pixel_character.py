@@ -1,7 +1,7 @@
 from pathlib import Path
 import json
 
-from PIL import Image
+from PIL import Image, ImageSequence
 
 from visitor_forge_2d.pixel_character import (
     PIXEL_CHARACTER_CONTRACT,
@@ -209,8 +209,9 @@ def test_pixel_wizard_projectile_trajectory_and_full_preview(tmp_path: Path) -> 
     assert north["trajectory"][-1][0] == 0
     assert north["trajectory"][-1][1] < 0
 
-    for preview in result["fullAttackPreviews"].values():
+    for direction, preview in result["fullAttackPreviews"].items():
         path = Path(preview)
         assert path.is_file()
         with Image.open(path) as gif:
-            assert getattr(gif, "n_frames", 1) == 14
+            assert gif.n_frames == 14, direction
+            assert [frame.info["duration"] for frame in ImageSequence.Iterator(gif)] == [110] * 14

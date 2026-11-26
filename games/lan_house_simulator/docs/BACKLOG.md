@@ -2,7 +2,7 @@
 
 > **Ideias grandes ainda em discussão:** consultar [IDEIAS_IMPLEMENTACOES_FUTURAS.md](IDEIAS_IMPLEMENTACOES_FUTURAS.md). O caderno reúne conceitos narrativos e mecânicas que **ainda não foram aprovados para implementação**, começando por Eric, multiplayer e a origem do corujão (2000–2002). Este backlog continua reservado à execução e validação.
 
-> **Prioridades atualizadas em 20/10/2026.** As fases abaixo preservam o histórico; checkboxes antigas podem ter sido superadas por entregas posteriores. Antes de abrir um sistema novo, consultar este painel e a seção datada mais recente. A prioridade é **terminar o jogo sem burocracia desnecessária**.
+> **Prioridades atualizadas em 26/11/2026.** O painel atual registra o que falta concluir. As seções datadas preservam o histórico das entregas.
 
 ### Melhoria de jogabilidade: prévia de instalação dos PCs principais (29/10/2026)
 
@@ -23,11 +23,13 @@
 - [x] Testes automatizados Node.js/Chromium em desktop e mobile emulado. **Não são aprovação em aparelho físico.**
 
 ### Prioridades de desenvolvimento
-1. **Revisão visual:** aprovar no jogo real as duas cadeiras de PS1, as poses e a oclusão, preservando a caminhada atual.
-2. **Campanhas longas e balanceamento:** medir preços, procura, VIPs, salários, expansões, hardware e retorno de GPUs sem gerar clientes/receitas fictícios.
-3. **Eventos e progressão 1998–2030:** conferir intervalos, escolhas e efeitos de longo prazo antes de ampliar cartas.
-4. **Teste em celular físico:** toque, rolagem, FPS, legibilidade, importação/exportação e retomada de partidas.
-5. **Saneamento contínuo:** separar entrega técnica, aprovação humana, ideias futuras e tarefas obsoletas. Planos antigos de serviços online exigem reconciliação com a implementação atual.
+
+| Ordem | Trabalho | Estado |
+| --- | --- | --- |
+| 1 | [Angular e fronteira com o motor](https://github.com/Softdown-prog/A7-forge-2D-/issues/50) · [#37](https://github.com/Softdown-prog/A7-forge-2D-/issues/37) | React removido. A regressão da rolagem do painel administrativo tem cobertura em Chromium emulado. Falta o aceite em celular físico, incluindo toque, FPS, legibilidade e retomada de saves. |
+| 2 | [GIF do Forge e workflows de áudio](https://github.com/Softdown-prog/A7-forge-2D-/issues/109) | O GIF preserva 14 quadros nas quatro direções. As revisões e promoções de áudio agora são manuais. A reprodução das três tomadas de teclado depende das gravações originais `te1.m4a`, `t2.m4a` e `t3.m4a`. |
+| 3 | [Campanhas longas e balanceamento](https://github.com/Softdown-prog/A7-forge-2D-/issues/3) | Medir preços, procura, custos, expansões e retorno de GPUs em campanhas determinísticas. Conferir os efeitos e intervalos da progressão de 1998 a 2030. |
+| 4 | [Arte do salão](https://github.com/Softdown-prog/A7-forge-2D-/issues/4) e [animações dos visitantes](https://github.com/Softdown-prog/A7-forge-2D-/issues/2) | Aprovar as poses, a oclusão, os sprites em escala real e as duas cadeiras de PS1 no navegador. |
 
 ### Decisões de design — fora de escopo
 - **Não implementar produtos perecíveis, vencimento de estoque, prazo de validade ou lotes FIFO.** Esse gerenciamento acrescentaria trabalho repetitivo à lan house sem ganho suficiente para a diversão. O sistema atual de compras/fornecedores continua.

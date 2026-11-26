@@ -1,10 +1,6 @@
 name: Lan House - Keyboard Cleanup Review
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - '.github/workflows/lan-house-keyboard-cleanup.yml'
-      - 'games/lan_house_simulator/assets/Convert/*.m4a'
 permissions:
   contents: read
 jobs:
@@ -21,6 +17,18 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Check original keyboard recordings
+        shell: bash
+        run: |
+          missing=0
+          for take in te1 t2 t3; do
+            source="games/lan_house_simulator/assets/Convert/${take}.m4a"
+            if [[ ! -s "$source" ]]; then
+              echo "::error file=$source::Original keyboard recording is missing or empty. Add the recording to the selected ref before dispatching this workflow."
+              missing=1
+            fi
+          done
+          exit "$missing"
       - name: Install FFmpeg and FFprobe
         run: |
           sudo apt-get update -qq

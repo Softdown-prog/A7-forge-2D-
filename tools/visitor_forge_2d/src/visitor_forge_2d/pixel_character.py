@@ -587,7 +587,9 @@ def _compose_wizard_full_attack_preview(
     frame_duration_ms: int,
 ) -> str:
     """Compose cast, projectile travel and recovery into one review GIF."""
-    stage_size = (112, 112)
+    # Leave room around the caster for the whole projectile, including its
+    # final travel frame. The northward cast reaches 72 px above stage center.
+    stage_size = (160, 160)
     char_origin = (stage_size[0] // 2 - 16, stage_size[1] // 2 - 24)
     projectile_start = {
         "south": (stage_size[0] // 2, stage_size[1] // 2 + 24),

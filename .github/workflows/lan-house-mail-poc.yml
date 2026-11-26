@@ -2,11 +2,6 @@ name: LHS - tratar e selecionar poc do correio
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'tools/a7_audio_lab/review_mail_pocs.py'
-      - 'games/lan_house_simulator/assets/Convert/7 de out. 18.05*.m4a'
-      - '.github/workflows/lan-house-mail-poc.yml'
 
 permissions:
   contents: write

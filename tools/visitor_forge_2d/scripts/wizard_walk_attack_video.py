@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 FPS = 20
-STAGE = (448, 448)
+PREVIEW_SCALE = 4
 DIRECTIONS = ("south", "east", "north", "west")
 
 
@@ -32,6 +32,13 @@ def main() -> None:
         raise SystemExit("Expected canonical wizard output")
     args.output.mkdir(parents=True, exist_ok=True)
     id_ = manifest["id"]
+    attack_previews = {
+        direction: source / "full_attack" / f"{id_}_{direction}_full_attack.gif"
+        for direction in DIRECTIONS
+    }
+    with Image.open(attack_previews[DIRECTIONS[0]]) as gif:
+        stage_size = gif.size
+    native_size = (stage_size[0] // PREVIEW_SCALE, stage_size[1] // PREVIEW_SCALE)
     reel: list[Image.Image] = []
 
     def hold(frame: Image.Image, count: int) -> None:
@@ -41,9 +48,11 @@ def main() -> None:
         filename = source / "frames" / f"{id_}_{direction}_{pose}.png"
         with Image.open(filename) as image:
             sprite = image.convert("RGBA")
-        stage = Image.new("RGBA", (112, 112), (245, 245, 245, 255))
-        stage.alpha_composite(sprite, (56 - sprite.width // 2, 56 - sprite.height // 2))
-        return stage.resize(STAGE, Image.Resampling.NEAREST).convert("RGB")
+        stage = Image.new("RGBA", native_size, (245, 245, 245, 255))
+        stage.alpha_composite(
+            sprite, (native_size[0] // 2 - sprite.width // 2, native_size[1] // 2 - sprite.height // 2)
+        )
+        return stage.resize(stage_size, Image.Resampling.NEAREST).convert("RGB")
 
     with tempfile.TemporaryDirectory(prefix="a7_wizard_video_") as temp:
         for direction in DIRECTIONS:
@@ -53,12 +62,11 @@ def main() -> None:
                     hold(walk_image(direction, pose), 3)
             hold(walk_image(direction, "idle"), 7)
 
-            attack_gif = source / "full_attack" / f"{id_}_{direction}_full_attack.gif"
-            with Image.open(attack_gif) as gif:
+            with Image.open(attack_previews[direction]) as gif:
                 for index in range(gif.n_frames):
                     gif.seek(index)
                     frame = gif.convert("RGB")
-                    if frame.size != STAGE:
+                    if frame.size != stage_size:
                         raise ValueError(f"Unexpected attack frame size: {frame.size}")
                     hold(frame, max(1, round(int(gif.info.get("duration", 110)) * FPS / 1000)))
             hold(walk_image(direction, "idle"), 10)
