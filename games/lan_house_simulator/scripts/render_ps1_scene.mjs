@@ -33,7 +33,7 @@ try{
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
   const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1StationPoint,ps1Seat,ps1SeatApproach,buyPs1Disc},
-    {drawPs1Station,drawPs1Controller},{drawActor},{RoomBackgroundCache}]=await Promise.all([
+    {drawPs1Station,drawPs1Controller,ps1PlayerRig},{drawActor},{RoomBackgroundCache}]=await Promise.all([
    import("./js/sim/engine.js"),import("./js/sim/types.js"),import("./js/sim/ps1.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js"),
    import("./js/render/scene/background.js")
@@ -82,11 +82,13 @@ try{
    // A mesma camada estática é desenhada pelo cache compartilhado do runtime.
    background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
+   const seated=pose==="sitting"||pose==="standing-up",rig=seated?ps1PlayerRig(seat,point):null;
+   if(playing&&rig.padBehind)drawPs1Controller(ctx,cam,seat,point,t);
    // Desenhar a pessoa por cima da cadeira permite inspecionar mãos, sentar e levantar.
    drawActor(ctx,cam,{x:at.x,y:at.y,kind:"regular",id:5,time:t,
     pose,direction,transition,gamepad:playing,
-    consoleSeat:pose==="sitting"||pose==="standing-up"});
-   if(playing)drawPs1Controller(ctx,cam,seat,t);
+    consoleSeat:seated,screenView:rig?.screenView,gamepadGrip:rig?.gamepadGrip});
+   if(playing&&!rig.padBehind)drawPs1Controller(ctx,cam,seat,point,t);
   }
   frame(0);
   window.__lhsForgeDone=false;

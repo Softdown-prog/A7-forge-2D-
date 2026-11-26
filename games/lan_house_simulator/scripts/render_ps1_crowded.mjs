@@ -33,7 +33,7 @@ try{
  page.on("pageerror",e=>errors.push(String(e)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async data=>{
-  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor},{drawInteriorWall}]=await Promise.all([
+  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller,ps1PlayerRig},{drawActor},{drawInteriorWall}]=await Promise.all([
    import("./js/sim/engine.js"),import("./js/render/scene/background.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js"),
     import("./js/render/scene/partitions.js")
@@ -78,18 +78,21 @@ try{
     const stage=prev.stage;
     const sitting=["sitting","using","standing"].includes(stage);
     const seatIndex=prev.ps1StationIndex;
-    const seat=seatIndex===undefined?null:data.stations[seatIndex]?.seat;
+    const station=seatIndex===undefined?null:data.stations[seatIndex];
+    const seat=station?.seat,rig=sitting&&seat?ps1PlayerRig(seat,station.point):null;
     const actor={...prev,x:next?lerp(prev.x,next.x,k):prev.x,
      y:next?lerp(prev.y,next.y,k):prev.y,
      poseMinutes:next&&prev.stage===next.stage?lerp(prev.poseMinutes,next.poseMinutes,k):prev.poseMinutes};
     const playing=stage==="using";
+    const actorTime=t+id*.29;
+    if(playing&&rig?.padBehind)drawPs1Controller(ctx,cam,seat,station.point,actorTime);
     drawActor(ctx,cam,{x:sitting&&seat?seat.x:actor.x,y:sitting&&seat?seat.y:actor.y,
-     kind:"regular",id,time:t+id*.29,
+     kind:"regular",id,time:actorTime,
      pose:sitting?(stage==="standing"?"standing-up":"sitting"):"walking",
      direction:sitting?"north":actor.facing,
      transition:(stage==="standing"||stage==="sitting")?Math.min(1,actor.poseMinutes/3):1,
-     consoleSeat:sitting,gamepad:playing});
-    if(playing&&seat)drawPs1Controller(ctx,cam,seat,t);
+     consoleSeat:sitting,gamepad:playing,screenView:rig?.screenView,gamepadGrip:rig?.gamepadGrip});
+    if(playing&&rig&&!rig.padBehind)drawPs1Controller(ctx,cam,seat,station.point,actorTime);
    }
   }
   window.__lhsCrowdPaint=paint;

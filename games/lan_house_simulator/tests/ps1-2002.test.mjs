@@ -1,4 +1,4 @@
-import {ps1ControllerAnchor,ps1ControllerPort,ps1ScreenFrame} from "../dist/js/render/ps1Art.js";
+import {ps1ControllerAnchor,ps1ControllerPort,ps1PlayerRig,ps1ScreenFrame} from "../dist/js/render/ps1Art.js";
 import {drawPs1MiniGame,ps1MiniGameFrame} from "../dist/js/render/ps1MiniGames.js";
 import {seatTransitionWeight} from "../dist/js/render/actorArt.js";
 import test from "node:test";
@@ -12,7 +12,7 @@ import {shopPrice,placeFurniture,availablePlacementSlots} from "../dist/js/sim/s
 import {ps1PlacementSlots,ps1PlacementLabel,buyPs1Station,ps1StationPoint,ps1Seat,ps1HourPrice,
  setPs1HourlyPrice,ps1SessionPrice,repairPs1Controls,ps1AvailableStation,
  ps1EnergyCostPerMinute,validPs1State,PS1_UNLOCK_YEAR,
- PS1_CD_CATALOG,ps1DiscPrice,buyPs1Disc,ps1DiscCopies,ps1PlayableDisc,setPs1StationDisc} from "../dist/js/sim/ps1.js";
+ PS1_CD_CATALOG,ps1DiscPrice,buyPs1Disc,ps1DiscCopies,ps1PlayableDisc,setPs1StationDisc,buyPs1SecondSeat} from "../dist/js/sim/ps1.js";
 import {annualHourlyCeiling} from "../dist/js/sim/historicalEconomy.js";
 const ok=r=>assert.equal(r.ok,true,r.message);
 function inYear(year=2002){
@@ -180,9 +180,9 @@ test("desvio por aglomeração preserva entrada lateral na cadeira PS1",()=>{
 });
 
 test("controle de PS1 permanece à frente do personagem e conectado ao console",()=>{
- const s=setup(),seat=ps1Seat(s,0);
- assert.ok(seat);
- const pad=ps1ControllerAnchor(seat),port=ps1ControllerPort(seat);
+ const s=setup(),seat=ps1Seat(s,0),station=ps1StationPoint(s,0);
+ assert.ok(seat&&station);
+ const pad=ps1ControllerAnchor(seat,station),port=ps1ControllerPort(station);
  assert.ok(pad.point.y<seat.y&&pad.point.y>seat.y-.5,
   "controle deve ficar diante do colo, voltado à TV");
  assert.ok(pad.height>=20&&pad.height<=35,
@@ -191,7 +191,27 @@ test("controle de PS1 permanece à frente do personagem e conectado ao console",
   "cabo termina na frente do console sobre a bancada");
  for(const n of [pad.point.x,pad.point.y,pad.height,port.point.x,port.point.y,port.height])
   assert.ok(Number.isFinite(n));
- assert.deepEqual(ps1ControllerAnchor(seat),pad,"âncora estável entre frames");
+ assert.deepEqual(ps1ControllerAnchor(seat,station),pad,"âncora estável entre frames");
+});
+
+test("duas cadeiras do PS1 encaram a mesma TV e usam portas distintas do console",()=>{
+ const s=setup();
+ ok(buyPs1SecondSeat(s,0));
+ const station=ps1StationPoint(s,0),left=ps1Seat(s,0,0),right=ps1Seat(s,0,1);
+ assert.ok(station&&left&&right);
+ const leftRig=ps1PlayerRig(left,station),rightRig=ps1PlayerRig(right,station);
+ assert.equal(leftRig.screenView,"profile-right");
+ assert.equal(leftRig.padBehind,false);
+ assert.equal(rightRig.screenView,"back");
+ assert.equal(rightRig.padBehind,true);
+ for(const [index,seat] of [left,right].entries()){
+  const {point}=ps1ControllerAnchor(seat,station),port=ps1ControllerPort(station,index);
+  assert.ok(point.y<seat.y);
+  assert.ok(Math.abs(point.x-(station.x+.40))<Math.abs(seat.x-(station.x+.40)));
+  assert.ok(port.point.x>station.x+.75&&port.point.x<station.x+1.05);
+  assert.equal(port.point.y,station.y+.41);
+ }
+ assert.ok(ps1ControllerPort(station,1).point.x>ps1ControllerPort(station,0).point.x);
 });
 
 test("PS1: sentar e levantar suavizam o movimento sem saltar no começo e fim",()=>{

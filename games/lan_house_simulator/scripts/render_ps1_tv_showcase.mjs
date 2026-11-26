@@ -30,7 +30,7 @@ try{
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async()=>{
   const [{createGame},{DAY_MINUTES},{ps1PlacementSlots,ps1Seat,ps1StationPoint,PS1_CD_CATALOG},
-   {RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor},{drawPs1MiniGame,ps1MiniGameFrame}]
+   {RoomBackgroundCache},{drawPs1Station,drawPs1Controller,ps1PlayerRig},{drawActor},{drawPs1MiniGame,ps1MiniGameFrame}]
     =await Promise.all([
      import("./js/sim/engine.js"),import("./js/sim/types.js"),import("./js/sim/ps1.js"),
      import("./js/render/scene/background.js"),import("./js/render/ps1Art.js"),
@@ -54,6 +54,7 @@ try{
   const cam={zoom,originX:284-(focus.x-focus.y)*64*zoom,
    originY:340-(focus.x+focus.y)*32*zoom};
   const background=new RoomBackgroundCache();
+  const rig=ps1PlayerRig(seat,point);
   const scenes=PS1_CD_CATALOG.map(disc=>({id:disc.id,title:disc.title,genre:disc.genre}));
   const itemSeconds=4,total=itemSeconds*scenes.length;
   const text=(str,x,y,font,color)=>{
@@ -65,9 +66,11 @@ try{
    game.ps1Discs={[item.id]:1};game.ps1Stations[0].discId=item.id;
    background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1040,620);
    drawPs1Station(ctx,cam,point,0,true,local,item.id);
+   if(rig.padBehind)drawPs1Controller(ctx,cam,seat,point,local);
    drawActor(ctx,cam,{x:seat.x,y:seat.y,kind:"regular",id:5,time:local,
-     pose:"sitting",direction:"north",transition:1,gamepad:true,consoleSeat:true});
-   drawPs1Controller(ctx,cam,seat,local);
+     pose:"sitting",direction:"north",transition:1,gamepad:true,consoleSeat:true,
+     screenView:rig.screenView,gamepadGrip:rig.gamepadGrip});
+   if(!rig.padBehind)drawPs1Controller(ctx,cam,seat,point,local);
    // Legendas sobre o gameplay: somente a região da lupa foi ampliada.
    ctx.fillStyle="#0c1b29e8";ctx.fillRect(507,28,497,552);
    ctx.strokeStyle="#7babb6";ctx.lineWidth=2;

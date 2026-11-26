@@ -30,7 +30,7 @@ export interface ActorRender {
   pose?: ActorPose;
   facing?: -1 | 1;
   direction?: ActorDirection;
-  /** Direction of visible movement projected onto the screen; seats keep legacy rig. */
+  /** Projected direction of visible movement or of the TV a console player faces. */
   screenView?: ActorScreenView;
   /** Distance on the projected floor at zoom 1; independent of wall-clock time. */
   walkDistance?:number;

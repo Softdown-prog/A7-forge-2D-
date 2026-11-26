@@ -19,7 +19,7 @@ test("real PS2 screen occupies most of its cabinet at salon zoom, without extra 
  assert.ok(right.x-left.x>=29,"screen should be readable at default salon zoom");
  assert.ok(bottom.y-left.y>=23,"characters and road have enough vertical pixels");
 });
-test("PS2 controllers use the correct mirrored grip for both seats; PS1 still uses cached rig",()=>{
+test("PS2 controllers use mirrored grips and active seat-specific grips use the live rig",()=>{
  const station={x:3.2,y:2.2};
  for(const seat of [{x:3.47,y:2.97},{x:4.05,y:2.97}]){
   const forward=ps2ActorGrip(seat,station,"back-right");
@@ -32,10 +32,9 @@ test("PS2 controllers use the correct mirrored grip for both seats; PS1 still us
   assert.deepEqual(ps2ActorGrip(seat,station,"front-left"),mirrored);
   assert.ok(ps2ControllerAnchor(seat,station).height>=24);
  }
- assert.equal(actorRequiresLiveGamepadRig({gamepad:true,modernGamepad:true,gamepadGrip:{x:1,y:-22}}),true);
- assert.equal(actorRequiresLiveGamepadRig({gamepad:true,modernGamepad:false,gamepadGrip:{x:1,y:-22}}),false);
- assert.equal(actorRequiresLiveGamepadRig({gamepad:false,modernGamepad:true,gamepadGrip:{x:1,y:-22}}),false);
- assert.equal(actorRequiresLiveGamepadRig({gamepad:true,modernGamepad:true}),false);
+ assert.equal(actorRequiresLiveGamepadRig({gamepad:true,gamepadGrip:{x:1,y:-22}}),true);
+ assert.equal(actorRequiresLiveGamepadRig({gamepad:false,gamepadGrip:{x:1,y:-22}}),false);
+ assert.equal(actorRequiresLiveGamepadRig({gamepad:true}),false);
 });
 test("PS2 fifteen game scenes retain distinct, high-contrast visible animated elements",()=>{
  const unique=new Set();

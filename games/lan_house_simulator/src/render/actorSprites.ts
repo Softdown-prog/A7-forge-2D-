@@ -38,12 +38,10 @@ function createCache():SpriteCache{
  }catch{/* Original vector renderer remains available without worker support. */}
  return cache;
 }
-/** The PS2 grip is positioned per station and seat. It cannot share an
- * asynchronous bitmap key with another PS2 seat (or with the PS1).
- * Only these active PS2 rigs bypass the cache; walking and PS1 stay cached.
- */
-export function actorRequiresLiveGamepadRig(a:Pick<ActorRender,"modernGamepad"|"gamepad"|"gamepadGrip">):boolean{
- return !!(a.gamepad&&a.modernGamepad&&a.gamepadGrip);
+/** An active seat-specific grip needs the live arm pose. It cannot share
+ * a rasterized frame with another seat that faces the screen differently. */
+export function actorRequiresLiveGamepadRig(a:Pick<ActorRender,"gamepad"|"gamepadGrip">):boolean{
+ return !!(a.gamepad&&a.gamepadGrip);
 }
 /** Reuse the vector artist's frames, while keeping world movement continuous.
  * Rasterization runs outside the animation/input thread. A pending frame uses

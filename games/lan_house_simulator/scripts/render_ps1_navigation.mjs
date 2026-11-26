@@ -37,7 +37,7 @@ try{
  page.on("pageerror",error=>errors.push(String(error)));
  await page.goto("http://127.0.0.1:"+server.address().port+"/",{waitUntil:"domcontentloaded"});
  await page.evaluate(async data=>{
-  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller},{drawActor}]=await Promise.all([
+  const [{createGame},{RoomBackgroundCache},{drawPs1Station,drawPs1Controller,ps1PlayerRig},{drawActor}]=await Promise.all([
    import("./js/sim/engine.js"),import("./js/render/scene/background.js"),
    import("./js/render/ps1Art.js"),import("./js/render/actorArt.js")
   ]);
@@ -69,16 +69,18 @@ try{
    background.draw(ctx,game,cam,{minX:0,minY:0,maxX:8,maxY:6},1000,610);
    const playing=f.stage==="using",seated=["sitting","using","standing"].includes(f.stage);
    drawPs1Station(ctx,cam,point,0,playing,t,"turbo-circuito");
+   const rig=seated?ps1PlayerRig(seat,point):null,actorTime=t+.29*5;
    const pose=f.stage==="sitting"||f.stage==="using"?"sitting":
     f.stage==="standing"?"standing-up":"walking";
+   if(playing&&rig.padBehind)drawPs1Controller(ctx,cam,seat,point,actorTime);
    drawActor(ctx,cam,{
     x:seated?seat.x:f.x,y:seated?seat.y:f.y,
-    kind:"regular",id:5,time:t+.29*5,pose,
+    kind:"regular",id:5,time:actorTime,pose,
     direction:seated?"north":f.facing,
     transition:f.stage==="sitting"||f.stage==="standing"?Math.min(1,f.poseMinutes/3):1,
-    gamepad:playing,consoleSeat:seated
+    gamepad:playing,consoleSeat:seated,screenView:rig?.screenView,gamepadGrip:rig?.gamepadGrip
    });
-   if(playing)drawPs1Controller(ctx,cam,seat,t);
+   if(playing&&!rig.padBehind)drawPs1Controller(ctx,cam,seat,point,actorTime);
   }
   function playFrame(seconds){
    let t=seconds,phase=phases.at(-1);

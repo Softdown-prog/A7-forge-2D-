@@ -2,6 +2,7 @@ import type {Customer,GameState} from "../../../sim/types.js";
 import {computerSeat} from "../../../sim/route.js";
 import {pcPosition} from "../../../sim/engine.js";
 import {customerConsole,customerConsoleSeat} from "../../../sim/consoleLayout.js";
+import {ps1StationPoint} from "../../../sim/ps1.js";
 import {ps2StationPoint} from "../../../sim/ps2.js";
 import {cosmeticAvailable,headsetOnSession} from "../../../sim/premiumCosmetics.js";
 import {yearFromMinutes} from "../../../sim/historicalEconomy.js";
@@ -12,7 +13,7 @@ import {actorStyleFor,type ActorPose} from "../../actorArt.js";
 import {drawActorSprite as drawActor} from "../../actorSprites.js";
 import {movementDirection,screenViewForMotion} from "../../direction.js";
 import {drawPs2Controller,ps2ActorGrip} from "../../ps2Art.js";
-import {drawPs1Controller} from "../../ps1Art.js";
+import {drawPs1Controller,ps1PlayerRig} from "../../ps1Art.js";
 import type {NightMatchReaction} from "../../nightMatchMarkers.js";
 
   export function drawSceneCustomer(ctx:CanvasRenderingContext2D,camera:Projection,c:Customer,t:number,seated:boolean,s:GameState,
@@ -41,16 +42,24 @@ import type {NightMatchReaction} from "../../nightMatchMarkers.js";
       // The next waypoint can already be around a corner: do not turn early.
       moving?(c.facing??movementDirection({x:c.x,y:c.y},c.target)):(c.facing??"south");
     const ps2Point=c.ps2StationIndex!==undefined?ps2StationPoint(s,c.ps2StationIndex):null;
-    const consoleView=seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined;
-    // Seat-specific PS2 grip must mirror with the actor, not with the TV.
-    const grip=seated&&ps2Point?ps2ActorGrip({x,y},ps2Point,consoleView):undefined;
-    const drawPad=()=>drawPs2Controller(ctx,camera,{x,y},t+.29*c.id,c.ps2SeatIndex??0,
-       ps2Point??undefined,actorStyleFor(c.costume,c.id).skin);
+    const ps1Point=seated&&c.ps1StationIndex!==undefined?ps1StationPoint(s,c.ps1StationIndex):null;
+    const seat={x,y},actorTime=t+.29*c.id;
+    const ps1Rig=ps1Point?ps1PlayerRig(seat,ps1Point):undefined;
+    const consoleView=ps1Rig?.screenView??
+      (seated&&ps2Point?screenViewForMotion(ps2Point.x+.44-x,ps2Point.y+.395-y,"north"):undefined);
+    const grip=ps1Rig?.gamepadGrip??
+      (seated&&ps2Point?ps2ActorGrip(seat,ps2Point,consoleView):undefined);
+    const padInUse=seated&&c.stage==="using"&&(ps1Point!==null||ps2Point!==null);
+    const drawPad=()=>{
+      const skin=actorStyleFor(c.costume,c.id).skin;
+      if(ps1Point)drawPs1Controller(ctx,camera,seat,ps1Point,actorTime,c.ps1SeatIndex??0,skin);
+      else if(ps2Point)drawPs2Controller(ctx,camera,seat,actorTime,c.ps2SeatIndex??0,ps2Point,skin);
+    };
     // A controller in front of a back-facing torso must be occluded by the body.
-    const padBehind=consoleView?.startsWith("back");
-    if(seated&&ps2Point&&c.stage==="using"&&padBehind)drawPad();
+    const padBehind=ps1Rig?.padBehind??consoleView?.startsWith("back");
+    if(padInUse&&padBehind)drawPad();
     drawActor(ctx,camera,{
-      x,y,kind:c.costume,id:c.id,time:t+0.29*c.id,
+      x,y,kind:c.costume,id:c.id,time:actorTime,
       pose,direction,transition,walkDistance:motion?.distance,
       reaction:reaction?.kind,
       // Face the current interpolated world step in SCREEN space (2:1 isometric).
@@ -64,9 +73,7 @@ import type {NightMatchReaction} from "../../nightMatchMarkers.js";
        cosmeticAvailable("headset-rgb-neon",yearFromMinutes(s.totalMinutes))&&
        headsetOnSession(c.id,c.pcIndex)
     });
-    if(seated&&ps2Point&&c.stage==="using"&&!padBehind)drawPad();
-    if(seated&&c.ps1StationIndex!==undefined&&c.stage==="using")
-      drawPs1Controller(ctx,camera,{x,y},t,c.ps1SeatIndex??0);
+    if(padInUse&&!padBehind)drawPad();
     if(seated && c.pcIndex!==null){
       const style=actorStyleFor(c.costume,c.id);
       const weight=reaction?0:c.stage==="using"?1:

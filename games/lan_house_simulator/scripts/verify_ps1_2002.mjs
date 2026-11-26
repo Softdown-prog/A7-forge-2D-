@@ -135,6 +135,17 @@ try{
   await playback.addInitScript(({key,state})=>{
    localStorage.setItem(key,JSON.stringify(state));localStorage.setItem("lhs.sound","off");
   },{key:GAME_SAVE_KEY,state:active});
+  await playback.route("**/js/render/scene/characters/customer.js",async route=>{
+   const response=await route.fetch(),source=await response.text();
+   await route.fulfill({response,body:source+`
+const observedDrawSceneCustomer=drawSceneCustomer;
+drawSceneCustomer=function(ctx,camera,customer,time,seated,state,reaction){
+ observedDrawSceneCustomer(ctx,camera,customer,time,seated,state,reaction);
+ if(seated&&customer.stage==="using"&&customer.ps1StationIndex===0){
+  (globalThis.__ps1DrawnSeats??={})[customer.ps1SeatIndex??0]=customer.id;
+ }
+};`});
+  });
   const playPage=await playback.newPage();
   playPage.on("pageerror",e=>errors.push(String(e)));
   await playPage.goto("http://127.0.0.1:4173",{waitUntil:"domcontentloaded"});
@@ -193,6 +204,8 @@ try{
   }
   await game.waitFor({state:"visible",timeout:30000});
   await playPage.locator("#game").waitFor({state:"visible",timeout:30000});
+  await playPage.waitForFunction(()=>globalThis.__ps1DrawnSeats?.[0]===5&&
+   globalThis.__ps1DrawnSeats?.[1]===6,null,{timeout:15000});
   const captureMode=await captureRealPs1Frame(playPage,resolve(out,"ps1_two_players_"+width+".png"),width);
   if(!mobile)await playPage.waitForTimeout(3500);
   assert.deepEqual(errors,[],"browser PS1 UI has no runtime errors");
