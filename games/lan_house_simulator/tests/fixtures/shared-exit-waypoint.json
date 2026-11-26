@@ -1,0 +1,496 @@
+{
+  "version": 1,
+  "totalMinutes": 472320,
+  "leftoverMinutes": 0,
+  "rng": 777699250,
+  "mailScheduleSeed": 23,
+  "mailStartDay": 1,
+  "mailSeenIds": [],
+  "cash": 19409.76,
+  "revenue": 54236.75,
+  "expenses": 35676.99,
+  "reputation": 85.82078660399777,
+  "monthPcUsedMinutes": 24784,
+  "monthPcCapacityMinutes": 56160,
+  "monthRevenueBase": 52075.84,
+  "monthExpensesBase": 34859.04,
+  "pricePerHour": 2.5,
+  "economyVersion": 2,
+  "topGamesUnlockMode": "magazines",
+  "pcTiers": [
+    1,
+    1,
+    1
+  ],
+  "pcGpus": [
+    null,
+    null,
+    null
+  ],
+  "internetTier": 1,
+  "offlineUntil": 463043,
+  "licensedGames": true,
+  "expansionLevel": 0,
+  "roomExtensions": {
+    "west": 0,
+    "east": 0,
+    "south": 0,
+    "north": 0
+  },
+  "installedPcs": 3,
+  "furniture": {
+    "poster": 0,
+    "plant": 0,
+    "table": 0
+  },
+  "pcWear": [
+    28.350000000000446,
+    75.51000000000222,
+    53.05500000000138
+  ],
+  "inventory": {
+    "soda": 0,
+    "candy": 10,
+    "snacks": 0
+  },
+  "customers": [
+    {
+      "id": 19884,
+      "x": 5.733360585592126,
+      "y": 5.4311445832490435,
+      "facing": "north",
+      "stage": "leaving",
+      "target": {
+        "x": 5.75,
+        "y": 5.25
+      },
+      "costume": "stitched-monster",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 30,
+      "waitingMinutes": 0,
+      "offlineWait": 0,
+      "happy": true,
+      "budgetAware": true,
+      "preference": "quick",
+      "needs": {
+        "thirst": 100,
+        "hunger": 100,
+        "energy": 0
+      },
+      "wallet": 3.33,
+      "route": [
+        {
+          "x": 6.25,
+          "y": 5.25
+        },
+        {
+          "x": 6.75,
+          "y": 5.25
+        },
+        {
+          "x": 7.25,
+          "y": 5.25
+        },
+        {
+          "x": 7.5,
+          "y": 5.35
+        }
+      ],
+      "stalledMinutes": 120,
+      "sessionMinutes": 30,
+      "gpuGameCharged": false,
+      "poseMinutes": 3,
+      "desiredItem": "snacks",
+      "wantsSnack": true,
+      "nextCrowdRetryMinute": 472323,
+      "purchasedDrink": true,
+      "retailConsumption": {
+        "product": "snacks",
+        "untilMinute": 470383
+      },
+      "purchasedFood": true
+    },
+    {
+      "id": 19887,
+      "x": 5.776627999411141,
+      "y": 4.992209933376779,
+      "facing": "south",
+      "stage": "leaving",
+      "target": {
+        "x": 5.75,
+        "y": 5.25
+      },
+      "costume": "regular",
+      "vip": false,
+      "gpuGamer": false,
+      "pcIndex": null,
+      "usedMinutes": 30,
+      "waitingMinutes": 21,
+      "offlineWait": 0,
+      "happy": true,
+      "budgetAware": true,
+      "preference": "gaming",
+      "needs": {
+        "thirst": 100,
+        "hunger": 100,
+        "energy": 0
+      },
+      "wallet": 6.38,
+      "route": [
+        {
+          "x": 6.25,
+          "y": 5.25
+        },
+        {
+          "x": 6.75,
+          "y": 5.25
+        },
+        {
+          "x": 7.25,
+          "y": 5.25
+        },
+        {
+          "x": 7.5,
+          "y": 5.35
+        }
+      ],
+      "stalledMinutes": 120,
+      "sessionMinutes": 30,
+      "gpuGameCharged": false,
+      "poseMinutes": 3,
+      "desiredItem": "soda",
+      "wantsSnack": true,
+      "nextCrowdRetryMinute": 472321,
+      "purchasedDrink": true,
+      "retailConsumption": {
+        "product": "soda",
+        "untilMinute": 470392
+      }
+    }
+  ],
+  "nextCustomerId": 19977,
+  "served": 14052,
+  "lostCustomers": 2477,
+  "purchases": 16275,
+  "weather": "rain",
+  "eventLog": [
+    "D657 10:00 · Dia chuvoso: demanda menor e rede instável.",
+    "D656 21:09 · Cliente elogiou a experiência na lan house.",
+    "D656 20:58 · Venda de Balas sortidas: +R$ 1.02.",
+    "D656 20:46 · Venda de Balas sortidas: +R$ 1.02.",
+    "D656 20:06 · Venda de Balas sortidas: +R$ 1.02.",
+    "D656 20:04 · Cliente pagou R$ 1.88 por 45 minutos.",
+    "D656 19:39 · Cliente elogiou a experiência na lan house.",
+    "D656 19:38 · Cliente pagou R$ 1.88 por 45 minutos.",
+    "D656 19:35 · Cliente elogiou a experiência na lan house.",
+    "D656 19:22 · Venda de Balas sortidas: +R$ 1.02.",
+    "D656 19:17 · Cliente pagou R$ 1.88 por 45 minutos.",
+    "D656 18:44 · Venda de Balas sortidas: +R$ 1.02.",
+    "D656 18:43 · Cliente pagou R$ 1.25 por 30 minutos.",
+    "D656 18:40 · Cliente elogiou a experiência na lan house."
+  ],
+  "contentFilterInstalled": true,
+  "energyAccrued": 172.80228933331665,
+  "stationLedger": [
+    {
+      "sessions": 5237,
+      "vipSessions": 884,
+      "sessionRevenue": 9950.689999999799,
+      "vipRevenue": 1651.5000000000214,
+      "occupiedMinutes": 234010,
+      "energyShare": 1439.8545206109045
+    },
+    {
+      "sessions": 4700,
+      "vipSessions": 812,
+      "sessionRevenue": 8922.640000000065,
+      "vipRevenue": 1558.5600000000154,
+      "occupiedMinutes": 209142,
+      "energyShare": 1439.8545206109045
+    },
+    {
+      "sessions": 4115,
+      "vipSessions": 681,
+      "sessionRevenue": 7778.740000000223,
+      "vipRevenue": 1296.400000000008,
+      "occupiedMinutes": 181615,
+      "energyShare": 1439.8545206109045
+    }
+  ],
+  "repairJobs": [],
+  "counterBusyUntil": 472207,
+  "binFill": [
+    100,
+    100
+  ],
+  "customerFeedback": [
+    {
+      "minute": 472269,
+      "customerId": 19975,
+      "reason": "jogos",
+      "kind": "sessao",
+      "delta": 0.1501,
+      "preference": "gaming"
+    },
+    {
+      "minute": 472247,
+      "customerId": 19974,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": -0.074,
+      "preference": "comfort"
+    },
+    {
+      "minute": 472229,
+      "customerId": 19973,
+      "reason": "espera",
+      "kind": "sessao",
+      "delta": 0.0863,
+      "preference": "economy"
+    },
+    {
+      "minute": 472179,
+      "customerId": 19972,
+      "reason": "atendimento",
+      "kind": "sessao",
+      "delta": 0.1864,
+      "preference": "quick"
+    },
+    {
+      "minute": 472175,
+      "customerId": 19971,
+      "reason": "jogos",
+      "kind": "sessao",
+      "delta": 0.151,
+      "preference": "gaming"
+    },
+    {
+      "minute": 472154,
+      "customerId": 19970,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": 0.1032,
+      "preference": "comfort"
+    },
+    {
+      "minute": 472120,
+      "customerId": 19969,
+      "reason": "preco",
+      "kind": "sessao",
+      "delta": 0.1852,
+      "preference": "economy"
+    },
+    {
+      "minute": 472103,
+      "customerId": 19966,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": 0.0187,
+      "preference": "comfort"
+    },
+    {
+      "minute": 472066,
+      "customerId": 19965,
+      "reason": "preco",
+      "kind": "sessao",
+      "delta": 0.1864,
+      "preference": "economy"
+    },
+    {
+      "minute": 472040,
+      "customerId": 19964,
+      "reason": "atendimento",
+      "kind": "sessao",
+      "delta": 0.2122,
+      "preference": "quick"
+    },
+    {
+      "minute": 472036,
+      "customerId": 19968,
+      "reason": "espera",
+      "kind": "desistencia",
+      "delta": -0.4,
+      "preference": "quick"
+    },
+    {
+      "minute": 472031,
+      "customerId": 19967,
+      "reason": "espera",
+      "kind": "desistencia",
+      "delta": -0.4,
+      "preference": "gaming"
+    },
+    {
+      "minute": 472005,
+      "customerId": 19963,
+      "reason": "jogos",
+      "kind": "sessao",
+      "delta": 0.1461,
+      "preference": "gaming"
+    },
+    {
+      "minute": 471958,
+      "customerId": 19959,
+      "reason": "jogos",
+      "kind": "sessao",
+      "delta": 0.147,
+      "preference": "gaming"
+    },
+    {
+      "minute": 471945,
+      "customerId": 19958,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": 0.044,
+      "preference": "comfort"
+    },
+    {
+      "minute": 471902,
+      "customerId": 19961,
+      "reason": "espera",
+      "kind": "sessao",
+      "delta": 0.1038,
+      "preference": "economy"
+    },
+    {
+      "minute": 471898,
+      "customerId": 19962,
+      "reason": "espera",
+      "kind": "desistencia",
+      "delta": -0.4,
+      "preference": "comfort"
+    },
+    {
+      "minute": 471850,
+      "customerId": 19956,
+      "reason": "atendimento",
+      "kind": "sessao",
+      "delta": 0.1784,
+      "preference": "quick"
+    },
+    {
+      "minute": 471835,
+      "customerId": 19955,
+      "reason": "jogos",
+      "kind": "sessao",
+      "delta": 0.1745,
+      "preference": "gaming"
+    },
+    {
+      "minute": 471831,
+      "customerId": 19954,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": 0.0996,
+      "preference": "comfort"
+    },
+    {
+      "minute": 471792,
+      "customerId": 19953,
+      "reason": "preco",
+      "kind": "sessao",
+      "delta": 0.2026,
+      "preference": "economy"
+    },
+    {
+      "minute": 471765,
+      "customerId": 19952,
+      "reason": "atendimento",
+      "kind": "sessao",
+      "delta": 0.1886,
+      "preference": "quick"
+    },
+    {
+      "minute": 471726,
+      "customerId": 19950,
+      "reason": "equipamentos",
+      "kind": "sessao",
+      "delta": 0.1037,
+      "preference": "comfort"
+    },
+    {
+      "minute": 471716,
+      "customerId": 19949,
+      "reason": "preco",
+      "kind": "sessao",
+      "delta": 0.1881,
+      "preference": "economy"
+    }
+  ],
+  "merchandise": {
+    "products": {
+      "soda": {
+        "stock": 0,
+        "averageCost": 0.5700000000000001,
+        "quality": 1,
+        "sold": 6562,
+        "revenue": 9902.2,
+        "costOfSales": 3722.800000000333
+      },
+      "snacks": {
+        "stock": 0,
+        "averageCost": 0.8133333333333334,
+        "quality": 1,
+        "sold": 7846,
+        "revenue": 15798.2,
+        "costOfSales": 6354.800000000843
+      },
+      "candy": {
+        "stock": 0,
+        "averageCost": 0.4071428571428572,
+        "quality": 1,
+        "sold": 1867,
+        "revenue": 1884.28,
+        "costOfSales": 757.2285714285554
+      }
+    },
+    "orders": [],
+    "nextOrderId": 1442
+  },
+  "overflowWaste": 45,
+  "supplierTier": 2,
+  "pcWindows": [
+    "win98",
+    "win98",
+    "win98"
+  ],
+  "pcWindowsLicenses": [
+    true,
+    true,
+    true
+  ],
+  "lastPaidMonthlyBill": {
+    "endDay": 630,
+    "rent": 274,
+    "internet": 112,
+    "energy": 200,
+    "maintenance": 76,
+    "wages": 0,
+    "total": 662,
+    "cashAfterPayment": 18066.8
+  },
+  "employeePayrollAccrued": 0,
+  "employeeWorkedDays": {
+    "cleaner": 0,
+    "technician": 0
+  },
+  "lastMonthPcUsedMinutes": 28922,
+  "lastMonthPcCapacityMinutes": 64800,
+  "lastMonthRevenue": 2502.980000000003,
+  "lastMonthExpenses": 1600.7999999999956,
+  "notices": [
+    {
+      "id": "linux-forum-contact",
+      "title": "Fórum da cidade · Vocês têm Linux?",
+      "body": "Olá, Tony! Nosso fórum reúne estudantes e programadores da cidade. Procuramos uma lan house com máquinas prontas para Linux, para estudar e programar. Sabemos que o assunto ainda é novidade por aí. Na Banca da Praça Central, aqui da cidade, é possível assinar a coleção mensal fictícia 'Informática Livre'. São seis edições de março a agosto, sobre Linux e equipamentos. Depois de estudar, você poderia receber nosso grupo?",
+      "day": 421,
+      "read": false,
+      "severity": "info"
+    }
+  ],
+  "linuxMailSeenIds": [
+    "linux-forum-contact"
+  ]
+}

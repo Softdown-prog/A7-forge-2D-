@@ -107,17 +107,18 @@ O comando `npm run audit:growth` também compara tarifas fixas de R$ 2,00,
 R$ 2,50 e R$ 3,00 por hora. São 18 campanhas de 390 dias, mantendo o
 caixa inicial, as duas sementes e as regras de expansão do estudo original.
 Cada diferença compara a expansão com três PCs na mesma tarifa e semente.
-A média arredonda para centavos depois da comparação.
+A média arredonda para centavos depois da comparação. A tabela usa o
+motor com a correção da rota de saída.
 
 | Tarifa por hora | Resultado médio com 3 PCs | Diferença com 5 PCs | Diferença com 7 PCs |
 | --- | ---: | ---: | ---: |
-| R$ 2,00 | R$ 7.134,89 | −R$ 651,79 | −R$ 3.573,07 |
-| R$ 2,50 | R$ 10.200,94 | −R$ 69,41 | −R$ 2.457,02 |
-| R$ 3,00 | R$ 12.917,46 | +R$ 1.247,50 | −R$ 898,15 |
+| R$ 2,00 | R$ 7.268,68 | −R$ 584,30 | −R$ 2.870,88 |
+| R$ 2,50 | R$ 10.141,19 | +R$ 363,26 | −R$ 1.656,34 |
+| R$ 3,00 | R$ 12.954,12 | +R$ 1.185,68 | −R$ 409,42 |
 
 Os planos chegaram a cinco e sete PCs nas duas sementes e em todas as
 tarifas. A primeira expansão cobriu o investimento e os custos adicionais
-a R$ 3,00/h no período medido. A segunda expansão aumentou o volume de
+a R$ 2,50/h e R$ 3,00/h no período medido. A segunda expansão aumentou o volume de
 atendimento e encerrou abaixo da base de três PCs nas três tarifas.
 
 Os logs adicionais `LHS_GROWTH_TARIFF_CAMPAIGN` e
@@ -134,14 +135,30 @@ o limite da tarifa, o fechamento mensal nas 32 viradas e a importação do
 save. Em 2030, verifica que tempo, saldo e RNG permanecem no último
 minuto da campanha após novas tentativas de avanço.
 
-A campanha contínua segue pendente. No cenário com reposição de
+A auditoria inicial da campanha contínua revelou uma fila persistente.
+No cenário com reposição de
 mercadorias, semente 23, três PCs originais e reajuste anual da tarifa de
 referência de R$ 2,50 pelo índice do jogo, limitado pelo teto dos PCs, o
 salão chegou ao limite de 14 clientes no fim de 2001. Entre os dias 1.380
 e 1.470, o total permaneceu em 25.939 atendimentos, enquanto as contas
-continuaram sendo cobradas. O rastreamento encontrou buscas repetidas de
-rotas entre clientes. A causa da fila persistente ainda precisa ser
-isolada em uma partida salva.
+continuaram sendo cobradas.
+
+O primeiro bloqueio reproduzível aparece no dia 656. Dois visitantes em
+saída tentam alcançar o mesmo ponto do corredor. O atalho reservava o
+intervalo da recuperação mesmo quando mantinha a rota atual. Com a
+[correção da recuperação](adr/0006-stalled-exit-route-recovery.md),
+os 14 clientes do save bloqueado de 2001 alcançaram a porta em 49
+minutos de jogo. Ao avançar mais um dia, a partida registrou 26 novos
+atendimentos. Uma nova execução com a mesma estratégia terminou 2001
+com 30.867 atendimentos acumulados e 2002 com 38.640.
+
+Essa partida corrigida avançou de 1998 até o minuto 8.553.599, o último
+de 2030, com 262.093 atendimentos acumulados e R$ 392.793,61 em caixa.
+O cenário usou os três PCs originais, reposição de mercadorias, reparos
+e licenças pagos pelo caixa e reajuste anual da tarifa de referência
+limitado pela qualidade do equipamento. Os saves foram exportados e
+reimportados nas viradas. Após o encerramento, novas chamadas do motor
+preservaram o estado final.
 
 ## Limitações e próximo passo
 

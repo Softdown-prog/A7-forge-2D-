@@ -13,6 +13,8 @@ on:
       - 'games/lan_house_simulator/src/sim/types.ts'
       - 'games/lan_house_simulator/src/sim/crowdNavigation.ts'
       - 'games/lan_house_simulator/tests/customer-stall-recovery.test.mjs'
+      - 'games/lan_house_simulator/tests/exit-circulation.test.mjs'
+      - 'games/lan_house_simulator/tests/fixtures/shared-exit-waypoint.json'
       - 'games/lan_house_simulator/scripts/verify_doorway_recovery.mjs'
       - '.github/workflows/lhs-crowd-recovery.yml'
 permissions:
@@ -39,7 +41,7 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npm run build
-          node --test tests/customer-stall-recovery.test.mjs tests/crowd-navigation.test.mjs tests/doorway-recovery.test.mjs
+          node --test tests/customer-stall-recovery.test.mjs tests/crowd-navigation.test.mjs tests/doorway-recovery.test.mjs tests/exit-circulation.test.mjs
       - name: Install real Chromium
         working-directory: games/lan_house_simulator
         run: |
@@ -54,6 +56,7 @@ jobs:
         run: |
           node scripts/verify_doorway_recovery.mjs out/crowd-entrance --record-video
           node scripts/verify_doorway_recovery.mjs out/crowd-corridor --corridor --record-video
+          node scripts/verify_doorway_recovery.mjs out/crowd-shared-exit --shared-exit
           for source in out/crowd-entrance/*.webm out/crowd-corridor/*.webm; do
             ffmpeg -v error -y -i "$source" -an -c:v libx264 -pix_fmt yuv420p -movflags +faststart "${source%.webm}.mp4"
           done
@@ -65,7 +68,9 @@ jobs:
             games/lan_house_simulator/out/crowd-corridor/*.mp4
             games/lan_house_simulator/out/crowd-entrance/*.png
             games/lan_house_simulator/out/crowd-corridor/*.png
+            games/lan_house_simulator/out/crowd-shared-exit/*.png
             games/lan_house_simulator/out/crowd-entrance/*.json
             games/lan_house_simulator/out/crowd-corridor/*.json
+            games/lan_house_simulator/out/crowd-shared-exit/*.json
           retention-days: 30
           if-no-files-found: error

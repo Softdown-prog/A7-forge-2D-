@@ -7,7 +7,7 @@ import {binSpots} from '../dist/js/sim/services.js';
 import {retailQueueSlots} from '../dist/js/sim/retailQueue.js';
 import {AISLE_Y} from '../dist/js/sim/route.js';
 import {serializeSave,parseImportedSave,snapshotGameState} from '../dist/js/sim/saveTransfer.js';
-import {exitNearBinScenario,shoppingCrossingScenario} from '../scripts/corridor_scenarios.mjs';
+import {exitNearBinScenario,sharedExitWaypointScenario,shoppingCrossingScenario} from '../scripts/corridor_scenarios.mjs';
 
 test('a full product queue retains all 14 places while leaving the exit aisle walkable',()=>{
  const s=createGame(),exit=entrance(s);
@@ -60,4 +60,17 @@ test('saving during corridor recovery preserves the exact resumed campaign',()=>
  for(let i=0;i<80;i++){stepGame(s,1);stepGame(resumed,1);}
  assert.deepEqual(snapshotGameState(resumed),snapshotGameState(s));
  assert.equal(s.customers.some(c=>c.id===22),false);
+});
+
+test('two departures blocked at a shared waypoint use the clear exit route after importing the save',()=>{
+ const s=parseImportedSave(serializeSave(sharedExitWaypointScenario()));
+ const [first,second]=s.customers,departing=new Set([first.id,second.id]);
+ assert.deepEqual(first.target,second.target);
+ assert.ok(s.customers.every(c=>c.stage==='leaving'&&c.route.length>3&&c.stalledMinutes>0));
+ const {cash,served,purchases}=s;
+ for(let minute=0;minute<20&&s.customers.some(c=>departing.has(c.id));minute++)advanceSafely(s);
+ assert.ok(s.customers.every(c=>!departing.has(c.id)),'both customers must walk across the doorway');
+ assert.equal(s.cash,cash);
+ assert.equal(s.served,served);
+ assert.equal(s.purchases,purchases);
 });

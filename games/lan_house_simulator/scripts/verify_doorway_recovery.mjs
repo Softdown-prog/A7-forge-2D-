@@ -6,11 +6,15 @@ import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,sep,extname} from 'node:path';
 import {doorwayScenario} from './doorway_scenario.mjs';
-import {exitNearBinScenario} from './corridor_scenarios.mjs';
+import {exitNearBinScenario,sharedExitWaypointScenario} from './corridor_scenarios.mjs';
 import {GAME_SAVE_KEY} from '../dist/js/sim/types.js';
 const root=resolve(import.meta.dirname,'../dist'),out=resolve(process.argv[2]??'out/doorway');
 const corridor=process.argv.includes('--corridor');
+const sharedExit=process.argv.includes('--shared-exit');
+const exitOnly=corridor||sharedExit;
 const recordVideo=process.argv.includes('--record-video');
+const loadScenario=sharedExit?sharedExitWaypointScenario:corridor?exitNearBinScenario:doorwayScenario;
+const label=sharedExit?'Shared exit waypoint':corridor?'Exit corridor':'Doorway';
 await mkdir(out,{recursive:true});
 const mime={'.html':'text/html','.js':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{
@@ -38,7 +42,7 @@ stepGame=function(s,delta){const result=observedStep(s,delta);globalThis.__doorw
  if(s.customers.some(c=>c.id===17&&c.stage==='using'))globalThis.__doorwayUsed=true;
  return result;};\n`});
   });
-  const state=corridor?exitNearBinScenario():doorwayScenario(),departing=state.customers.filter(c=>c.stage==='leaving').map(c=>c.id);
+  const state=loadScenario(),departing=state.customers.filter(c=>c.stage==='leaving').map(c=>c.id);
   await context.addInitScript(({key,state})=>{localStorage.setItem(key,JSON.stringify(state));localStorage.setItem('lhs.sound','off');},{key:GAME_SAVE_KEY,state});
   const page=await context.newPage(),errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
@@ -47,17 +51,17 @@ stepGame=function(s,delta){const result=observedStep(s,delta);globalThis.__doorw
   await page.locator('#game-app').waitFor({state:'visible'});
   await page.locator('#game').scrollIntoViewIfNeeded();
   await page.screenshot({path:resolve(out,'doorway_before_'+width+'.png')});
-  await page.waitForFunction(({ids,corridor})=>{
+  await page.waitForFunction(({ids,exitOnly})=>{
    const s=globalThis.__doorwayState;
-   return s&&(corridor||globalThis.__doorwayUsed)&&ids.every(id=>!s.customers.some(c=>c.id===id));
-  },{ids:departing,corridor},{timeout:45000});
+   return s&&(exitOnly||globalThis.__doorwayUsed)&&ids.every(id=>!s.customers.some(c=>c.id===id));
+  },{ids:departing,exitOnly},{timeout:45000});
   const result=await page.evaluate(()=>{
    const s=globalThis.__doorwayState;
    return {minute:s.totalMinutes,served:s.served,cash:s.cash,revenue:s.revenue,expenses:s.expenses,customer:s.customers.find(c=>c.id===17),zoom:document.querySelector('#scene-zoom')?.value};
   });
   // Normal arrivals continue while this application runtime is recovering.
-  if(corridor){
-   assert.ok(result.minute-state.totalMinutes<=32,'customer near the bin exits promptly before closing');
+  if(exitOnly){
+   assert.ok(result.minute-state.totalMinutes<=(sharedExit?20:32),'departures must reach the door promptly');
   }else{
    assert.ok(result.served>=1);assert.equal(result.customer.stage,'using');
   }
@@ -67,8 +71,8 @@ stepGame=function(s,delta){const result=observedStep(s,delta);globalThis.__doorw
   results.push({width,...result,errors});
   const video=recordVideo?await page.video():null;
   await context.close();
-  if(video)await video.saveAs(resolve(out,(corridor?'corredor_':'entrada_')+width+'.webm'));
+  if(video)await video.saveAs(resolve(out,(sharedExit?'saida_':corridor?'corredor_':'entrada_')+width+'.webm'));
  }
  await writeFile(resolve(out,'doorway-runtime.json'),JSON.stringify(results,null,2)+'\n');
- console.log((corridor?'Exit corridor':'Doorway')+' recovery: real runtime resumes on desktop and touch mobile.');
+ console.log(label+' recovery: real runtime resumes on desktop and touch mobile.');
 }finally{await browser?.close();server.close();}

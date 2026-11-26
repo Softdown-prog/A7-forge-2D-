@@ -73,7 +73,10 @@ export const EXIT_REACH_DISTANCE=.32;
 export function moveRoute(s:GameState,c: Customer): boolean {
   // A temporary crowd detour can outlive the obstacle that caused it. Keep
   // departures from following a long stale loop after the aisle opens again.
-  if(c.stage==="leaving"&&(c.route?.length??0)>3&&s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
+  // A stalled visitor needs the recovery below, even if the new path is
+  // only slightly shorter. Leave its retry interval to that recovery.
+  if(c.stage==="leaving"&&(c.stalledMinutes??0)===0&&(c.route?.length??0)>3&&
+     s.totalMinutes>=(c.nextCrowdRetryMinute??0)){
     c.nextCrowdRetryMinute=s.totalMinutes+4;
     const destination=c.route!.at(-1)!,path=crowdRoute(s,c,destination)??crowdRoute(s,c,destination,.25);
     const length=(points:Point[])=>points.reduce((sum,p,i)=>sum+Math.hypot(p.x-(i?points[i-1]!.x:c.x),p.y-(i?points[i-1]!.y:c.y)),0);
