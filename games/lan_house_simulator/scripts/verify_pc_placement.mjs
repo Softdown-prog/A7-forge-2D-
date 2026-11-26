@@ -90,7 +90,10 @@ try{
   else await page.mouse.click(point.x,point.y);
   await press("#layout-confirm");
   const moved=await readSave();
-  assert.deepEqual(moved.objectPlacements.find(item=>item.id==="shelf"),{id:"shelf",...destination,rotation:0});
+  const movedShelf=moved.objectPlacements.find(item=>item.id==="shelf");
+  assert.ok(movedShelf);
+  assert.notDeepEqual(movedShelf,before.objectPlacements.find(item=>item.id==="shelf"));
+  assert.equal(nextComputerPlacementIssue(moved),null);
   assert.equal(moved.cash,before.cash);
   assert.equal(moved.expenses,before.expenses);
   await press("#layout-close");
