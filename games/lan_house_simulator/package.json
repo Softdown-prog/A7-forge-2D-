@@ -20,6 +20,7 @@
     "check:site": "node scripts/check_canonical_angular_site.mjs",
     "audit:historical": "npm run build && LHS_HISTORICAL_AUDIT=1 node --test tests/historical-campaign-audit.test.mjs",
     "audit:growth": "npm run build && LHS_GROWTH_AUDIT=1 node --test tests/historical-growth-390day.test.mjs",
+    "audit:timeline": "npm run build && LHS_TIMELINE_AUDIT=1 node --test tests/historical-calendar-audit.test.mjs",
     "audit:promotions": "npm run build && LHS_PROMOTION_PRICING_AUDIT=1 node --test tests/historical-promotion-pricing-roi.test.mjs",
     "audit:staged-hardware": "npm run build && LHS_STAGED_HARDWARE_AUDIT=1 node --test tests/staged-hardware-roi.test.mjs",
     "audit:gpu-licenses": "npm run build && LHS_GPU_LICENSE_AUDIT=1 node --test tests/gpu-license-campaign.test.mjs",

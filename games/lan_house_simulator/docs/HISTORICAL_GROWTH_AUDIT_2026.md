@@ -101,10 +101,52 @@ https://github.com/Softdown-prog/A7-forge-2D-/actions/runs/38579209062).
 Os **três testes** (incluindo seis campanhas e a de 750 dias)
 passaram sem falhas.
 
+## Comparação por tarifa — 26/11/2026
+
+O comando `npm run audit:growth` também compara tarifas fixas de R$ 2,00,
+R$ 2,50 e R$ 3,00 por hora. São 18 campanhas de 390 dias, mantendo o
+caixa inicial, as duas sementes e as regras de expansão do estudo original.
+Cada diferença compara a expansão com três PCs na mesma tarifa e semente.
+A média arredonda para centavos depois da comparação.
+
+| Tarifa por hora | Resultado médio com 3 PCs | Diferença com 5 PCs | Diferença com 7 PCs |
+| --- | ---: | ---: | ---: |
+| R$ 2,00 | R$ 7.134,89 | −R$ 651,79 | −R$ 3.573,07 |
+| R$ 2,50 | R$ 10.200,94 | −R$ 69,41 | −R$ 2.457,02 |
+| R$ 3,00 | R$ 12.917,46 | +R$ 1.247,50 | −R$ 898,15 |
+
+Os planos chegaram a cinco e sete PCs nas duas sementes e em todas as
+tarifas. A primeira expansão cobriu o investimento e os custos adicionais
+a R$ 3,00/h no período medido. A segunda expansão aumentou o volume de
+atendimento e encerrou abaixo da base de três PCs nas três tarifas.
+
+Os logs adicionais `LHS_GROWTH_TARIFF_CAMPAIGN` e
+`LHS_GROWTH_TARIFF_SUMMARY` registram os cenários de R$ 2,00 e R$ 3,00.
+Os resultados de R$ 2,50 continuam nas linhas `LHS_GROWTH_CAMPAIGN` e
+`LHS_GROWTH_SUMMARY`.
+
+## Fechamentos do calendário até 2030
+
+`npm run audit:timeline` exercita dezembro de cada ano, de 1998 a 2030,
+em 33 amostras independentes com a configuração inicial de três PCs.
+O motor roda o mês inteiro de cada amostra. A auditoria confere o caixa,
+o limite da tarifa, o fechamento mensal nas 32 viradas e a importação do
+save. Em 2030, verifica que tempo, saldo e RNG permanecem no último
+minuto da campanha após novas tentativas de avanço.
+
+A campanha contínua segue pendente. No cenário com reposição de
+mercadorias, semente 23, três PCs originais e reajuste anual da tarifa de
+referência de R$ 2,50 pelo índice do jogo, limitado pelo teto dos PCs, o
+salão chegou ao limite de 14 clientes no fim de 2001. Entre os dias 1.380
+e 1.470, o total permaneceu em 25.939 atendimentos, enquanto as contas
+continuaram sendo cobradas. O rastreamento encontrou buscas repetidas de
+rotas entre clientes. A causa da fila persistente ainda precisa ser
+isolada em uma partida salva.
+
 ## Limitações e próximo passo
 
 Esta não é uma previsão universal de retorno financeiro. A análise
-tem somente duas sementes, tarifa mantida em R$ 2,50/h,
+tem somente duas sementes, tarifas mantidas fixas dentro de cada cenário,
 nenhuma campanha publicitária paga, equipamento básico de 1998
 e nenhuma atualização gradual de CPU, RAM, fonte, armazenamento,
 placa-mãe, GPU ou Windows. A reserva de caixa é uma política

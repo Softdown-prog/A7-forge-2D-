@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import {createGame,pcCount,pcWear,stepGame,isValidSave} from "../dist/js/sim/engine.js";
 import {DAY_MINUTES} from "../dist/js/sim/types.js";
 import {gameYear} from "../dist/js/sim/era.js";
-import {licenseGames,contractSupplier,stockItem,wholesaleCost,expandShop,monthlyBills} from "../dist/js/sim/economy.js";
+import {licenseGames,contractSupplier,stockItem,wholesaleCost,expandShop,monthlyBills,setHourlyPrice} from "../dist/js/sim/economy.js";
 import {hireContentProgrammer} from "../dist/js/sim/notices.js";
 import {buyComputer,shopPrice} from "../dist/js/sim/shop.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
@@ -13,8 +13,18 @@ import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
 
 const SEEDS=[23,137],TARGETS=[3,5,7],DAYS=390,START=850;
 const TWO_YEARS=750,RESERVE=550;
+const REFERENCE_TARIFF=2.5;
 const money=n=>Math.round(100*n)/100;
 const must=(result,label)=>assert.equal(result.ok,true,label+": "+result.message);
+
+function restoreCampaign(state,checkpoint){
+ const restored=parseImportedSave(serializeSave(state));
+ for(const key of ["cash","revenue","expenses","rng","totalMinutes","served","purchases","pricePerHour"])
+  assert.equal(restored[key],state[key],key+" em "+checkpoint);
+ for(const key of ["pcWindowsLicenses","stationLedger","lastPaidMonthlyBill","mailSeenIds","storyRecords"])
+  assert.deepEqual(restored[key],state[key],key+" em "+checkpoint);
+ return restored;
+}
 
 function upkeep(s){
  for(let pc=0;pc<pcCount(s);pc++){
@@ -67,9 +77,10 @@ function expandFromEarnings(s,target,day){
  return investment;
 }
 
-function campaign(seed,target,days=DAYS){
+function campaign(seed,target,days=DAYS,hourlyPrice=REFERENCE_TARIFF){
  let s=createGame(seed,"historical");
  assert.equal(s.cash,START);
+ must(setHourlyPrice(s,hourlyPrice),"set comparison tariff");
  must(licenseGames(s),"licensed games");
  must(hireContentProgrammer(s),"content filter");
  let expansionInvestment=0,lowest=s.cash,yearChangeChecked=false;
@@ -99,7 +110,7 @@ function campaign(seed,target,days=DAYS){
    assert.ok(Math.abs(s.cash-(START+s.revenue-s.expenses))<.001,
     "cash conservation at day "+day+" / "+seed+" / "+target);
    assert.ok(isValidSave(s));
-   assert.equal(s.pricePerHour,2.5,"fixed reference tariff for fair paired comparison");
+   assert.equal(s.pricePerHour,hourlyPrice,"fixed tariff for fair paired comparison");
    assert.ok(s.pricePerHour<=allowableHourlyPrice(s));
    assert.ok(s.reputation>=10&&s.reputation<=100);
    assert.ok(Math.abs(s.lastMonthRevenue-(s.revenue-previousRevenue))<.001);
@@ -114,14 +125,7 @@ function campaign(seed,target,days=DAYS){
     customers:s.served-previousServed,occupancy:money(occupied)});
    previousRevenue=s.revenue;previousExpenses=s.expenses;previousServed=s.served;
   }
-  if(day===180||day===365||day===720){
-   const imported=parseImportedSave(serializeSave(s));
-   for(const k of ["cash","revenue","expenses","rng","totalMinutes","served","purchases","pricePerHour"])
-    assert.equal(imported[k],s[k],"save "+k+" day "+day);
-   assert.deepEqual(imported.pcWindowsLicenses,s.pcWindowsLicenses);
-   assert.deepEqual(imported.stationLedger,s.stationLedger);
-   s=imported;
-  }
+  if(day===180||day===365||day===720)s=restoreCampaign(s,"dia "+day);
  }
  assert.equal(yearChangeChecked,true);
  assert.equal(months.length,days/30);
@@ -147,11 +151,10 @@ test("novo jogo histórico mantém save, caixa e limites após 30 dias",()=>{
 });
 
 const full=process.env.LHS_GROWTH_AUDIT==="1";
-test("crescimento real 1998–1999: 3 vs 5 vs 7 PCs com caixa inicial R$ 850",
- {skip:!full},()=>{
+function compareGrowth(hourlyPrice,logPrefix){
  const rows=[];
  for(const seed of SEEDS)for(const target of TARGETS)
-  rows.push(campaign(seed,target));
+  rows.push(campaign(seed,target,DAYS,hourlyPrice));
  assert.equal(rows.length,6);
  for(const seed of SEEDS){
   const group=rows.filter(r=>r.seed===seed);
@@ -162,21 +165,29 @@ test("crescimento real 1998–1999: 3 vs 5 vs 7 PCs com caixa inicial R$ 850",
    assert.ok(r.actualPcs>=3&&r.actualPcs<=r.targetPcs);
    assert.equal(r.months[11].year,1999);
    assert.equal(r.months[12].year,1999);
-   console.log("LHS_GROWTH_CAMPAIGN "+JSON.stringify({...r,incrementalNet:money(r.net-baseline.net)}));
+   console.log(logPrefix+"_CAMPAIGN "+JSON.stringify({...r,hourlyPrice,incrementalNet:money(r.net-baseline.net)}));
   }
  }
+ const netCents=campaigns=>campaigns.reduce((sum,row)=>sum+Math.round(row.net*100),0);
+ const baselineNet=netCents(rows.filter(r=>r.targetPcs===3));
  for(const targetPcs of TARGETS){
   const group=rows.filter(r=>r.targetPcs===targetPcs);
-  const baseline=rows.filter(r=>r.targetPcs===3);
   const avg=k=>money(group.reduce((n,r)=>n+r[k],0)/group.length);
-  const oldNet=baseline.reduce((n,r)=>n+r.net,0)/baseline.length;
-  console.log("LHS_GROWTH_SUMMARY "+JSON.stringify({
-   targetPcs,avgActualPcs:avg("actualPcs"),avgExpansionInvestment:avg("expansionInvestment"),
-   avgNet:avg("net"),avgIncrementalNet:targetPcs===3?0:money(avg("net")-oldNet),
+  const totalNet=netCents(group);
+  console.log(logPrefix+"_SUMMARY "+JSON.stringify({
+   hourlyPrice,targetPcs,avgActualPcs:avg("actualPcs"),avgExpansionInvestment:avg("expansionInvestment"),
+   avgNet:Math.round(totalNet/group.length)/100,
+   avgIncrementalNet:Math.round((totalNet-baselineNet)/group.length)/100,
    avgCustomers:avg("customers"),avgSales:avg("purchases"),
    avgMinimumCash:avg("lowestCash")}));
  }
-});
+}
+test("crescimento real 1998–1999: 3 vs 5 vs 7 PCs com caixa inicial R$ 850",
+ {skip:!full},()=>compareGrowth(REFERENCE_TARIFF,"LHS_GROWTH"));
+for(const tariff of [2,3]){
+ test("crescimento 1998–1999 com tarifa fixa de R$ "+tariff,
+  {skip:!full},()=>compareGrowth(tariff,"LHS_GROWTH_TARIFF"));
+}
 test("1998–2000: a mesma campanha atravessa duas viradas anuais e salva",
  {skip:!full},()=>{
  const result=campaign(23,3,TWO_YEARS);
