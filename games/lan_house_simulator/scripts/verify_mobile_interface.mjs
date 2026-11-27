@@ -39,6 +39,28 @@ async function verifyTabScrolling(page,cdp){
  return true;
 }
 
+async function verifyPageScrolling(page,cdp){
+ const initial=await page.evaluate(()=>{
+  window.scrollTo({top:0,behavior:'instant'});
+  const root=document.scrollingElement;
+  const {overscrollBehaviorX,overscrollBehaviorY}=getComputedStyle(root);
+  return {overscrollBehaviorX,overscrollBehaviorY,timeOrigin:performance.timeOrigin,
+   scrollable:root.scrollHeight-root.clientHeight};
+ });
+ assert.equal(initial.overscrollBehaviorY,'contain','O documento do jogo bloqueia a atualização por gesto no topo');
+ assert.equal(initial.overscrollBehaviorX,'auto','A contenção vale somente no eixo vertical');
+ assert.ok(initial.scrollable>120,'A partida deve ter espaço para rolagem vertical');
+
+ // A margem do jogo pertence à página e fica fora do Canvas e das faixas de abas.
+ await dragTouch(page,cdp,{x:8,y:90},0,150);
+ assert.equal(await page.evaluate(()=>scrollY),0);
+ await dragTouch(page,cdp,{x:8,y:240},0,-150);
+ await page.waitForFunction(()=>scrollY>20);
+ assert.equal(await page.evaluate(()=>performance.timeOrigin),initial.timeOrigin);
+ assert.equal(await page.locator('#game-app').isVisible(),true);
+ return true;
+}
+
 const output=resolve(process.argv[2]??'out/mobile-interface');await mkdir(output,{recursive:true});
 const server=spawn(process.execPath,[resolve(import.meta.dirname,'serve.mjs')],{stdio:['ignore','pipe','inherit']});let browser;
 try{
@@ -75,9 +97,11 @@ try{
   assert.ok(after>initial.top+20,'A rolagem deve avançar: '+JSON.stringify({width,initial,after}));
   await press(page.locator('#hardware-tab-ram'));assert.equal(await page.locator('[data-hardware-catalog]').getAttribute('data-hardware-catalog'),'ram');
   await press(page.locator('#hardware-tab-storage'));assert.equal(await page.locator('[data-hardware-catalog]').getAttribute('data-hardware-catalog'),'storage');
-  await press(page.locator('#close-admin'));await page.locator('#events').scrollIntoViewIfNeeded();await page.waitForTimeout(400);
+  await press(page.locator('#close-admin'));
+  const pageScrollPreserved=mobile?await verifyPageScrolling(page,cdp):null;
+  await page.locator('#events').scrollIntoViewIfNeeded();await page.waitForTimeout(400);
   const report=await page.evaluate(()=>({...window.report,scrollY,overflow:document.documentElement.scrollWidth-innerWidth}));assert.equal(report.hiddenDraws,0);assert.ok(report.overflow<=3);
-  assert.deepEqual(errors,[]);reports.push({width,cpuSlowdown:mobile?4:1,buttonPreserved:stable,panelScrolled:after>initial.top,tabsScrollBothAxes,...report,errors});await context.close();
+  assert.deepEqual(errors,[]);reports.push({width,cpuSlowdown:mobile?4:1,buttonPreserved:stable,panelScrolled:after>initial.top,tabsScrollBothAxes,pageScrollPreserved,...report,errors});await context.close();
  }
  // Force only the QA mix roll, so decoding and playback are tested without chance.
  const context=await browser.newContext({viewport:{width:414,height:920},isMobile:true,hasTouch:true}),page=await context.newPage();const state=createGame();const goal=purchaseApproach('soda',state);

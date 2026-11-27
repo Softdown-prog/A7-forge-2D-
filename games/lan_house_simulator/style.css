@@ -2,7 +2,8 @@
 :root{color-scheme:dark;--ink:#192e2a;--ink-deep:#102320;--panel:#213b35;--panel-soft:#2b4840;--paper:#f0eadc;--paper-light:#faf6eb;--line:#426055;--mint:#b9d7a3;--mint-bright:#c9e8b1;--amber:#e2a664;--text:#f0eadc;--muted:#a6b9ad;--radius:12px;--shadow:0 24px 70px #08171366}
 
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* Impede o recarregamento por gesto no topo e mantém a rolagem nativa. */
+html{scroll-behavior:smooth;overscroll-behavior-y:contain}
 body{margin:0;background:var(--ink);color:var(--text);font:15px/1.5 "Trebuchet MS","Segoe UI",system-ui,sans-serif}
 button,input{font:inherit}
 button{display:inline-flex;align-items:center;justify-content:center;gap:9px;color:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);border-radius:7px;min-height:44px;padding:10px 15px;font-size:13px;font-weight:700;transition:background .16s,border-color .16s,box-shadow .16s,transform .16s}
