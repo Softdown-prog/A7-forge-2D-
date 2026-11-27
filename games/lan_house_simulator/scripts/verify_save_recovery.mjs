@@ -8,6 +8,52 @@ import assert from "node:assert/strict";
 import {createGame} from "../dist/js/sim/engine.js";
 import {GAME_SAVE_KEY} from "../dist/js/sim/types.js";
 import {GAME_SAVE_BACKUP_KEY} from "../dist/js/sim/localSave.js";
+import {snapshotGameState} from "../dist/js/sim/saveTransfer.js";
+
+async function verifyNativeQuota(browser){
+ const context=await browser.newContext({viewport:{width:360,height:920},isMobile:true,hasTouch:true});
+ const page=await context.newPage();
+ await page.goto('http://127.0.0.1:4173/');
+ await dismissPrivacyNotice(page,true);
+ const fixture=createGame(6240,"historical");
+ fixture.totalMinutes=25;
+ const progressed={...fixture,totalMinutes:41,cash:1234.56,eventLog:[...fixture.eventLog,"Atendimento encerrado. ".repeat(20)]};
+ const result=await page.evaluate(async ({primary,backup,fixture,progressed,payload})=>{
+  const {writeLocalSave}=await import('./js/sim/localSave.js');
+  const filler='lhs-qa-quota-filler';
+  writeLocalSave(localStorage,fixture);
+  const previous=localStorage.getItem(primary);
+  // Calibrate the real origin quota with room for the previous checkpoint, but not the larger save plus that checkpoint.
+  localStorage.setItem(backup,previous);
+  let lower=0,upper=16*1024*1024;
+  while(upper-lower>32){
+   const length=Math.floor((lower+upper)/2);
+   try{localStorage.setItem(filler,'x'.repeat(length));lower=length;}
+   catch(error){if(error.name!=='QuotaExceededError')throw error;upper=length;}
+  }
+  try{
+   let nativeQuotaReached=false;
+   try{localStorage.setItem(primary,payload);}
+   catch(error){if(error.name!=='QuotaExceededError')throw error;nativeQuotaReached=true;}
+   if(!nativeQuotaReached)throw Error('O navegador ainda aceita o save maior com as duas cópias');
+   if(localStorage.getItem(primary)!==previous)throw Error('O navegador alterou o save após rejeitar a gravação');
+
+   localStorage.removeItem(backup);
+   writeLocalSave(localStorage,progressed);
+   return {nativeQuotaReached,primarySaved:localStorage.getItem(primary)===payload,
+    optionalBackupSkipped:localStorage.getItem(backup)===null};
+  }finally{localStorage.removeItem(filler);}
+ },{primary:GAME_SAVE_KEY,backup:GAME_SAVE_BACKUP_KEY,fixture,progressed,payload:JSON.stringify(snapshotGameState(progressed))});
+ assert.deepEqual(result,{nativeQuotaReached:true,primarySaved:true,optionalBackupSkipped:true});
+ await page.close();
+ const reopened=await context.newPage();
+ await reopened.goto('http://127.0.0.1:4173/');
+ await dismissPrivacyNotice(reopened,true);
+ await reopened.locator('#menu-continue').tap();
+ assert.match(await reopened.locator('#status .cash strong').innerText(),/1\.234,56/);
+ await context.close();
+ return {...result,reopened:true};
+}
 
 const output=resolve(process.argv[2]??"out/save-recovery");
 await mkdir(output,{recursive:true});
@@ -76,8 +122,9 @@ try {
   reports.push({width,recovered:true,exported:true,failedSaveVisible:visible,retryOk:true,overflow:persisted.overflow});
   await context.close();
  }
- await writeFile(resolve(output,"save_recovery_validation.json"),JSON.stringify({reports},null,2));
- console.log(JSON.stringify({reports}));
+ const nativeQuota=await verifyNativeQuota(browser);
+ await writeFile(resolve(output,"save_recovery_validation.json"),JSON.stringify({reports,nativeQuota},null,2));
+ console.log(JSON.stringify({reports,nativeQuota}));
 }finally{
  await browser?.close();
  server.kill();

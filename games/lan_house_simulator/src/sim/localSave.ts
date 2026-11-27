@@ -34,7 +34,10 @@ function encode(state:GameState):string{
 }
 /** Guarda uma versão válida anterior; renova a cópia por dia do jogo, não por frame. */
 export function writeLocalSave(store:SaveStore,state:GameState):void{
- const payload=encode(state),old=store.getItem(GAME_SAVE_KEY),existing=decode(old);
+ const payload=encode(state),old=store.getItem(GAME_SAVE_KEY);
+ // O checkpoint opcional não pode consumir a cota necessária para a partida atual.
+ store.setItem(GAME_SAVE_KEY,payload);
+ const existing=decode(old);
  if(existing){
   // Falha de leitura do checkpoint não deve bloquear uma gravação principal válida.
   let last:GameState|null=null;
@@ -46,7 +49,6 @@ export function writeLocalSave(store:SaveStore,state:GameState):void{
    catch{/* Backup opcional: a cópia principal tem prioridade. */}
   }
  }
- store.setItem(GAME_SAVE_KEY,payload);
 }
 /** Substituições explícitas nunca recuperam um backup de campanha anterior. */
 export function replaceLocalSave(store:SaveStore,state:GameState):void{

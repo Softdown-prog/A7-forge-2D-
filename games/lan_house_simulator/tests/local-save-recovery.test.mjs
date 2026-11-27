@@ -43,6 +43,35 @@ test("quota do backup não bloqueia principal e falha principal preserva estado"
  assert.throws(()=>replaceLocalSave({...store,setItem:()=>{throw Error("quota");}},createGame()),/quota/);
  assert.equal(loadLocalSave(store).state.cash,999);
 });
+test("backup opcional não ocupa a cota necessária ao novo save principal",()=>{
+ const store=makeStore(),s=createGame(18);
+ writeLocalSave(store,s);
+ const capacity=2*store.getItem(GAME_SAVE_KEY).length;
+ const limited={...store,setItem(key,value){
+  const other=key===GAME_SAVE_KEY?GAME_SAVE_BACKUP_KEY:GAME_SAVE_KEY;
+  if(value.length+(store.getItem(other)?.length??0)>capacity)throw Error("quota");
+  store.setItem(key,value);
+ }};
+ s.cash=1210;s.eventLog.push("Receita acumulada neste expediente.");
+ writeLocalSave(limited,s);
+ assert.equal(loadLocalSave(store).state.cash,1210);
+ assert.equal(store.getItem(GAME_SAVE_BACKUP_KEY),null);
+});
+test("falha ao salvar a partida não gira o backup do último dia gravado",()=>{
+ const store=makeStore(),s=createGame(19);
+ writeLocalSave(store,s);
+ s.totalMinutes=DAY_MINUTES;writeLocalSave(store,s);
+ const checkpoint=store.getItem(GAME_SAVE_BACKUP_KEY);
+ assert.equal(JSON.parse(checkpoint).totalMinutes,0);
+ const unavailable={...store,setItem(key,value){
+  if(key===GAME_SAVE_KEY)throw Error("quota");
+  store.setItem(key,value);
+ }};
+ s.totalMinutes+=10;
+ assert.throws(()=>writeLocalSave(unavailable,s),/quota/);
+ assert.equal(loadLocalSave(store).state.totalMinutes,DAY_MINUTES);
+ assert.equal(store.getItem(GAME_SAVE_BACKUP_KEY),checkpoint);
+});
 test("validação e armazenamento indisponível",()=>{
  const store=makeStore(),s=createGame();s.totalMinutes=-1;
  assert.throws(()=>writeLocalSave(store,s));
