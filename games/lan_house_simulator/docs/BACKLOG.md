@@ -2,7 +2,7 @@
 
 > **Ideias grandes ainda em discussão:** consultar [IDEIAS_IMPLEMENTACOES_FUTURAS.md](IDEIAS_IMPLEMENTACOES_FUTURAS.md). O caderno reúne conceitos narrativos e mecânicas que **ainda não foram aprovados para implementação**, começando por Eric, multiplayer e a origem do corujão (2000–2002). Este backlog continua reservado à execução e validação.
 
-> **Prioridades atualizadas em 26/11/2026.** O painel atual registra o que falta concluir. As seções datadas preservam o histórico das entregas.
+> **Prioridades atualizadas em 27/11/2026.** O painel atual registra o que falta concluir. As seções datadas preservam o histórico das entregas.
 
 ### Melhoria de jogabilidade: prévia de instalação dos PCs principais (29/10/2026)
 
@@ -33,6 +33,7 @@
 | 4 | [Arte do salão](https://github.com/Softdown-prog/A7-forge-2D-/issues/4) e [animações dos visitantes](https://github.com/Softdown-prog/A7-forge-2D-/issues/2) | A bancada dupla do PS1 tem portas próprias para os cabos e poses orientadas pela TV. As duas cadeiras foram verificadas no Canvas em desktop e celular emulado. A aprovação visual das demais artes e a inspeção em celular físico seguem pendentes. |
 
 - **Expansão de 3, 5 e 7 PCs.** Em 390 dias e duas sementes, cinco PCs renderam R$ 363,26 a mais que três a R$ 2,50/h e R$ 1.185,68 a mais a R$ 3,00/h. A R$ 2,00/h, cinco PCs ficaram abaixo da base. Sete PCs ficaram abaixo da base nas três tarifas. Consulte a [matriz de expansão por tarifa](HISTORICAL_GROWTH_AUDIT_2026.md#comparação-por-tarifa--26112026).
+- **Segunda expansão comparada a manter cinco PCs.** Até o dia 750, com tarifa de R$ 3/h, sete PCs ficaram R$ 1.294,68 abaixo sem panfletagem e R$ 1.320,38 abaixo com panfletagem semanal. O aluguel foi a maior despesa adicional. [Contas e ocupação](HISTORICAL_GROWTH_AUDIT_2026.md#segunda-expansão-comparada-até-o-dia-750--27112026)
 - **Matriz histórica.** As 16 campanhas de 120 dias abrangeram 1998, 2005, 2012 e 2024. A modernização melhorou o resultado operacional em 2005, 2012 e 2024. O resultado acumulado após os gastos iniciais ficou negativo para o equipamento modernizado nesses três recortes.
 
 ### Decisões de design — fora de escopo

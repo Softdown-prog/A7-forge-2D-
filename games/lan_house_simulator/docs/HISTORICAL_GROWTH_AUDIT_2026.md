@@ -126,6 +126,48 @@ Os logs adicionais `LHS_GROWTH_TARIFF_CAMPAIGN` e
 Os resultados de R$ 2,50 continuam nas linhas `LHS_GROWTH_CAMPAIGN` e
 `LHS_GROWTH_SUMMARY`.
 
+## Segunda expansão comparada até o dia 750 — 27/11/2026
+
+Oito campanhas partiram de R$ 850, com tarifa fixa de R$ 3/h e sementes
+23 e 137. Dentro de cada semente, as partidas chegaram ao dia 240 com
+cinco PCs e a mesma contabilidade. A partir do dia 241, cada par compara
+manter cinco PCs com ampliar o salão e comprar mais dois. Cada tamanho
+foi testado com e sem panfletagem semanal paga pelo caixa. Foram 22
+panfletagens até o dia 390 e 73 até o dia 750 em cada salão do cenário
+com divulgação.
+
+As diferenças são médias das duas sementes, calculadas do dia 241 até
+cada data, sempre comparando sete PCs com cinco na mesma frequência de
+panfletagem. A ocupação usa minutos de sessão divididos pelos minutos
+de capacidade instalada.
+
+| Panfletagem | Dia | Ocupação com 5 PCs | Ocupação com 7 PCs | Clientes a mais | Receita a mais | Diferença líquida |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sem | 390 | 37,60% | 31,79% | 887,0 | R$ 2.162,80 | −R$ 1.595,10 |
+| Sem | 750 | 37,66% | 31,38% | 2.771,5 | R$ 6.702,31 | −R$ 1.294,68 |
+| Semanal | 390 | 38,25% | 31,64% | 763,5 | R$ 1.827,15 | −R$ 1.850,19 |
+| Semanal | 750 | 38,23% | 31,79% | 2.762,0 | R$ 6.606,38 | −R$ 1.320,38 |
+
+Até o dia 750, sem panfletagem, sete PCs adicionaram R$ 2.944,00 de
+aluguel, R$ 599,00 de manutenção fixa e R$ 1.132,50 de energia. As
+diferenças vieram dos comprovantes mensais pagos. Internet e salários
+tiveram a mesma cobrança nos dois tamanhos. Os demais gastos ficaram
+R$ 1.581,49 acima e incluem licenças, reposição e reparos. Depois desses
+custos, sobraram R$ 445,32 de ganho operacional adicional para recuperar
+os R$ 1.740,00 pagos pela obra e pelos dois PCs.
+
+A panfletagem semanal custou R$ 1.782,72 por salão até o dia 750 e reduziu
+o resultado de ambos os tamanhos em relação às partidas sem campanha.
+A expansão para sete PCs ficou atrás da opção de manter cinco nas duas
+sementes, com e sem panfletagem. O aluguel foi a maior despesa adicional
+nas duas políticas. A auditoria cobre máquinas iniciais e divulgação
+semanal. Estratégias com outros equipamentos e períodos de divulgação
+exigem novas comparações.
+
+`npm run audit:growth` registra os pares e os comprovantes agregados em
+`LHS_SECOND_EXPANSION`. Cada linha inclui a receita, o investimento, as
+contas pagas, os demais gastos, os clientes e os minutos de sessão.
+
 ## Fechamentos do calendário até 2030
 
 `npm run audit:timeline` exercita dezembro de cada ano, de 1998 a 2030,
@@ -169,6 +211,7 @@ e nenhuma atualização gradual de CPU, RAM, fonte, armazenamento,
 placa-mãe, GPU ou Windows. A reserva de caixa é uma política
 dos testes, não um comportamento obrigatório dos jogadores.
 
-Antes de oferecer dicas automáticas ao jogador, testar preço mensal,
-demanda reforçada por anúncios, períodos de 720+ dias também com
-sete PCs e modernização de peças, além da influência de divisórias.
+Antes de oferecer dicas automáticas ao jogador, testar preços ajustados
+mensalmente, outras frequências de anúncios, modernização de peças e a
+influência de divisórias. A comparação de cinco e sete PCs até o dia 750
+cobre tarifa fixa e panfletagem semanal.

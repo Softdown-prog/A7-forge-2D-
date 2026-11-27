@@ -10,9 +10,12 @@ import {buyComputer,shopPrice} from "../dist/js/sim/shop.js";
 import {startRepair,requestCleaning} from "../dist/js/sim/services.js";
 import {annualHourlyCeiling,allowableHourlyPrice,priceIndex} from "../dist/js/sim/historicalEconomy.js";
 import {serializeSave,parseImportedSave} from "../dist/js/sim/saveTransfer.js";
+import {launchPromotion,promotionCost} from "../dist/js/sim/promotion.js";
 
 const SEEDS=[23,137],TARGETS=[3,5,7],DAYS=390,START=850;
 const TWO_YEARS=750,RESERVE=550;
+const SECOND_EXPANSION_DAY=240;
+const BILL_ITEMS=["rent","internet","energy","maintenance","wages"];
 const REFERENCE_TARIFF=2.5;
 const money=n=>Math.round(100*n)/100;
 const must=(result,label)=>assert.equal(result.ok,true,label+": "+result.message);
@@ -51,7 +54,7 @@ function upkeep(s){
 
 function expandFromEarnings(s,target,day){
  if(target===3||day<=120)return 0;
- const allowed=day<=240?5:target;
+ const allowed=day<=SECOND_EXPANSION_DAY?5:target;
  let investment=0;
  if(pcCount(s)>=allowed)return 0;
  const levelNeeded=allowed===7?2:1;
@@ -77,18 +80,24 @@ function expandFromEarnings(s,target,day){
  return investment;
 }
 
-function campaign(seed,target,days=DAYS,hourlyPrice=REFERENCE_TARIFF){
+function campaign(seed,target,days=DAYS,hourlyPrice=REFERENCE_TARIFF,weeklyPromotion=false){
  let s=createGame(seed,"historical");
  assert.equal(s.cash,START);
  must(setHourlyPrice(s,hourlyPrice),"set comparison tariff");
  must(licenseGames(s),"licensed games");
  must(hireContentProgrammer(s),"content filter");
- let expansionInvestment=0,lowest=s.cash,yearChangeChecked=false;
+ let expansionInvestment=0,promotionInvestment=0,lowest=s.cash,yearChangeChecked=false;
  let previousRevenue=0,previousExpenses=0,previousServed=0;
  const months=[];
  for(let day=1;day<=days;day++){
   expansionInvestment+=expandFromEarnings(s,target,day);
   upkeep(s);
+  if(weeklyPromotion&&day>SECOND_EXPANSION_DAY&&(day-SECOND_EXPANSION_DAY-1)%7===0){
+   const cost=promotionCost(s);
+   assert.ok(s.cash>=cost+RESERVE,"divulgação paga pelo caixa mantendo a reserva");
+   must(launchPromotion(s),"panfletagem semanal");
+   promotionInvestment+=cost;
+  }
   for(let part=0;part<6;part++)stepGame(s,120);
   lowest=Math.min(lowest,s.cash);
   if(day===360){
@@ -119,10 +128,15 @@ function campaign(seed,target,days=DAYS,hourlyPrice=REFERENCE_TARIFF){
    const occupied=s.lastMonthPcCapacityMinutes?
     100*s.lastMonthPcUsedMinutes/s.lastMonthPcCapacityMinutes:0;
    assert.ok(occupied>=0&&occupied<=100);
+   const bill=s.lastPaidMonthlyBill;
+   assert.equal(bill.endDay,day);
+   assert.equal(money(BILL_ITEMS.reduce((sum,key)=>sum+bill[key],0)),bill.total);
    months.push({month:day/30,year:gameYear(s),cash:money(s.cash),
     pcs:pcCount(s),revenue:money(s.lastMonthRevenue),
     expenses:money(s.lastMonthExpenses),
-    customers:s.served-previousServed,occupancy:money(occupied)});
+    customers:s.served-previousServed,occupancy:money(occupied),
+    usedPcMinutes:s.lastMonthPcUsedMinutes,availablePcMinutes:s.lastMonthPcCapacityMinutes,
+    bill,expansionInvestment:money(expansionInvestment),promotionInvestment:money(promotionInvestment)});
    previousRevenue=s.revenue;previousExpenses=s.expenses;previousServed=s.served;
   }
   if(day===180||day===365||day===720)s=restoreCampaign(s,"dia "+day);
@@ -196,4 +210,44 @@ test("1998–2000: a mesma campanha atravessa duas viradas anuais e salva",
  assert.equal(result.months[23].year,2000);
  assert.equal(result.months[24].year,2000);
  console.log("LHS_GROWTH_TWO_YEARS "+JSON.stringify(result));
+});
+
+function expansionWindow(row,endDay){
+ const baseline=row.months[SECOND_EXPANSION_DAY/30-1];
+ const months=row.months.slice(SECOND_EXPANSION_DAY/30,endDay/30);
+ const end=months.at(-1);
+ const sum=read=>money(months.reduce((total,month)=>total+read(month),0));
+ const bill=Object.fromEntries(BILL_ITEMS.map(key=>[key,sum(month=>month.bill[key])]));
+ const investment=money(end.expansionInvestment-baseline.expansionInvestment);
+ const promotion=money(end.promotionInvestment-baseline.promotionInvestment);
+ const revenue=sum(month=>month.revenue),expenses=sum(month=>month.expenses);
+ const usedMinutes=sum(month=>month.usedPcMinutes),capacityMinutes=sum(month=>month.availablePcMinutes);
+ const other=money(expenses-investment-promotion-sum(month=>month.bill.total));
+ const net=money(revenue-expenses);
+ assert.ok(Math.abs(net-money(end.cash-baseline.cash))<=.01);
+ return {revenue,net,investment,promotion,other,bill,
+  clients:sum(month=>month.customers),usedMinutes,occupancy:money(100*usedMinutes/capacityMinutes)};
+}
+
+test("segunda expansão: receita, ocupação e custos com e sem panfletagem até 2000",{skip:!full},()=>{
+ const tariff=3;
+ for(const seed of SEEDS)for(const weeklyPromotion of [false,true]){
+  const five=campaign(seed,5,TWO_YEARS,tariff,weeklyPromotion);
+  const seven=campaign(seed,7,TWO_YEARS,tariff,weeklyPromotion);
+  assert.deepEqual(five.months.slice(0,SECOND_EXPANSION_DAY/30),seven.months.slice(0,SECOND_EXPANSION_DAY/30));
+  assert.equal(five.actualPcs,5);
+  assert.equal(seven.actualPcs,7);
+  for(const endDay of [DAYS,TWO_YEARS]){
+   const base=expansionWindow(five,endDay),expanded=expansionWindow(seven,endDay);
+   assert.equal(expanded.promotion,base.promotion);
+   assert.equal(expanded.investment,1740,"segunda ampliação e dois PCs históricos");
+   const diff=key=>money(expanded[key]-base[key]);
+   const bill=Object.fromEntries(BILL_ITEMS.map(key=>[key,money(expanded.bill[key]-base.bill[key])]));
+   const delta={revenue:diff("revenue"),investment:diff("investment"),other:diff("other"),bill,
+    net:diff("net"),clients:diff("clients"),usedMinutes:diff("usedMinutes")};
+   const billTotal=Object.values(bill).reduce((total,value)=>total+value,0);
+   assert.equal(money(delta.revenue-delta.investment-delta.other-billTotal),delta.net);
+   console.log("LHS_SECOND_EXPANSION "+JSON.stringify({seed,weeklyPromotion,tariff,endDay,base,expanded,delta}));
+  }
+ }
 });
